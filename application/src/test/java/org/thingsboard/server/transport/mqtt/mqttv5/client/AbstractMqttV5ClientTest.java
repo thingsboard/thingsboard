@@ -17,7 +17,12 @@ package org.thingsboard.server.transport.mqtt.mqttv5.client;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
+import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
+import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
@@ -26,9 +31,50 @@ import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class AbstractMqttV5ClientTest extends AbstractMqttIntegrationTest {
+
+    protected void processClientWithCorrectAccessTokenTest() throws Exception {
+        MqttV5TestClient client = new MqttV5TestClient();
+        IMqttToken connectionResult = client.connectAndWait(accessToken);
+        MqttWireMessage response = connectionResult.getResponse();
+
+        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
+
+        MqttConnAck connAckMsg = (MqttConnAck) response;
+
+        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
+        client.disconnect();
+    }
+
+    protected void processClientWithWrongAccessTokenTest() throws Exception {
+        MqttV5TestClient client = new MqttV5TestClient();
+        try {
+            client.connectAndWait("wrongAccessToken");
+        } catch (MqttException e) {
+            Assert.assertEquals(MqttReturnCode.RETURN_CODE_BAD_USERNAME_OR_PASSWORD, e.getReasonCode());
+        }
+    }
+
+    protected void processClientWithWrongClientIdAndEmptyUsernamePasswordTest() throws Exception {
+        MqttV5TestClient client = new MqttV5TestClient("unknownClientId");
+        try {
+            client.connectAndWait();
+        } catch (MqttException e) {
+            Assert.assertEquals(MqttReturnCode.RETURN_CODE_IDENTIFIER_NOT_VALID, e.getReasonCode());
+        }
+    }
+
+    protected void processClientWithNoCredentialsTest() throws Exception {
+        MqttV5TestClient client = new MqttV5TestClient(false);
+        try {
+            client.connectAndWait();
+        } catch (MqttException e) {
+            Assert.assertEquals(MqttReturnCode.RETURN_CODE_NOT_AUTHORIZED, e.getReasonCode());
+        }
+    }
 
     protected void processClientWithPacketSizeLimitationTest() throws Exception {
         int packetSizeLimit = 99;

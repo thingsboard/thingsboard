@@ -33,6 +33,26 @@ public class MqttV5ClientTest extends AbstractMqttV5ClientTest {
     }
 
     @Test
+    public void testClientWithCorrectAccessToken() throws Exception {
+        processClientWithCorrectAccessTokenTest();
+    }
+
+    @Test
+    public void testClientWithWrongAccessToken() throws Exception {
+        processClientWithWrongAccessTokenTest();
+    }
+
+    @Test
+    public void testClientWithWrongClientIdAndEmptyUsernamePassword() throws Exception {
+        processClientWithWrongClientIdAndEmptyUsernamePasswordTest();
+    }
+
+    @Test
+    public void testClientWithNoCredentialsTest() throws Exception {
+        processClientWithNoCredentialsTest();
+    }
+
+    @Test
     @Ignore("Not implemented on the server.")
     public void testClientWithPacketSizeLimitation() throws Exception {
         processClientWithPacketSizeLimitationTest();

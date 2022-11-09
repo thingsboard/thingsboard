@@ -47,17 +47,22 @@ public class MqttV5TestClient {
         this.client = createClient(clientId);
     }
 
-    public void connectAndWait(String userName, String password) throws MqttException {
+    public MqttV5TestClient(boolean generateClientId) throws MqttException {
+        this.client = createClient(generateClientId);
+    }
+
+    public IMqttToken connectAndWait(String userName, String password) throws MqttException {
         IMqttToken connect = connect(userName, password);
         connect.waitForCompletion(TIMEOUT_MS);
+        return connect;
     }
 
-    public void connectAndWait(String userName) throws MqttException {
-        connectAndWait(userName, null);
+    public IMqttToken connectAndWait(String userName) throws MqttException {
+        return connectAndWait(userName, null);
     }
 
-    public void connectAndWait() throws MqttException {
-        connectAndWait(null, null);
+    public IMqttToken connectAndWait() throws MqttException {
+        return connectAndWait(null, null);
     }
 
     public IMqttToken connectAndWait(MqttConnectionOptions options) throws MqttException {
@@ -138,15 +143,20 @@ public class MqttV5TestClient {
         client.messageArrivedComplete(mqttMessage.getId(), mqttMessage.getQos());
     }
 
-    private MqttAsyncClient createClient(String clientId) throws MqttException {
-        if (StringUtils.isEmpty(clientId)) {
-            clientId = "test" + System.nanoTime();
-        }
-        return new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
+    private MqttAsyncClient createClient() throws MqttException {
+        return createClient(true);
     }
 
-    private MqttAsyncClient createClient() throws MqttException {
-        return createClient(null);
+    private MqttAsyncClient createClient(boolean generateClientId) throws MqttException {
+        String clientId = null;
+        if (generateClientId) {
+            clientId = "test" + System.nanoTime();
+        }
+        return createClient(clientId);
+    }
+
+    private MqttAsyncClient createClient(String clientId) throws MqttException {
+        return new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
     }
 
 }
