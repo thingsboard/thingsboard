@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -68,6 +69,7 @@ public class AdminController extends BaseController {
     @Autowired
     private SystemSecurityService systemSecurityService;
 
+    @Lazy
     @Autowired
     private JwtSettingsService jwtSettingsService;
 

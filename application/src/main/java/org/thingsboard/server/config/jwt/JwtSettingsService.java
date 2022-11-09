@@ -19,6 +19,8 @@ public interface JwtSettingsService {
 
     JwtSettings getJwtSettings();
 
+    void reloadJwtSettings();
+
     void createJwtAdminSettings();
 
     JwtSettings saveJwtSettings(JwtSettings jwtSettings);

@@ -19,7 +19,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -33,6 +36,7 @@ import javax.validation.ValidationException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,24 +46,37 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
     static final String ADMIN_SETTINGS_JWT_KEY = "jwt";
     static final String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
     static final String TB_ALLOW_DEFAULT_JWT_SIGNING_KEY = "TB_ALLOW_DEFAULT_JWT_SIGNING_KEY";
-
+    @Lazy
     private final AdminSettingsService adminSettingsService;
-    private final TbClusterService tbClusterService;
-
+    @Lazy
+    private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
-
+    private final Environment environment;
     @Getter
     private final JwtSettings jwtSettings;
+    @Value("${install.upgrade:false}")
+    private boolean isUpgrade;
 
     @PostConstruct
     public void init() {
-        reloadJwtSettings();
+        if (!isFirstInstall()) {
+            reloadJwtSettings();
+        }
     }
 
-    void reloadJwtSettings() {
+    private boolean isInstall() {
+        return environment.acceptsProfiles(Profiles.of("install"));
+    }
+
+    private boolean isFirstInstall() {
+        return isInstall() && !isUpgrade;
+    }
+
+    @Override
+    public void reloadJwtSettings() {
         AdminSettings adminJwtSettings = findJwtAdminSettings();
         if (adminJwtSettings != null) {
-            log.debug("Loading the JWT admin settings from database");
+            log.info("Reloading the JWT admin settings from database");
             JwtSettings jwtLoaded = mapAdminToJwtSettings(adminJwtSettings);
             jwtSettings.setRefreshTokenExpTime(jwtLoaded.getRefreshTokenExpTime());
             jwtSettings.setTokenExpirationTime(jwtLoaded.getTokenExpirationTime());
@@ -67,7 +84,7 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
             jwtSettings.setTokenSigningKey(jwtLoaded.getTokenSigningKey());
         }
 
-        if (hasDefaultTokenSigningKey()) {
+        if (hasDefaultTokenSigningKey() && !isFirstInstall()) {
             log.warn("JWT token signing key is default. This is a security issue. Please, consider to set unique value");
         }
     }
@@ -107,12 +124,20 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
     }
 
     @Override
-    public JwtSettings saveJwtSettings(JwtSettings jwtSettings){
+    public JwtSettings saveJwtSettings(JwtSettings jwtSettings) {
         jwtSettingsValidator.validate(jwtSettings);
-        AdminSettings adminJwtSettings = mapJwtToAdminSettings(jwtSettings);
+        final AdminSettings adminJwtSettings = mapJwtToAdminSettings(jwtSettings);
+        final AdminSettings existedSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
+        if (existedSettings != null) {
+            adminJwtSettings.setId(existedSettings.getId());
+        }
+
         log.info("Saving new JWT admin settings. From this moment, the JWT parameters from YAML and ENV will be ignored");
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminJwtSettings);
-        tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, ComponentLifecycleEvent.UPDATED);
+
+        if (!isInstall()) {
+            tbClusterService.orElseThrow().broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, ComponentLifecycleEvent.UPDATED);
+        }
         reloadJwtSettings();
         return getJwtSettings();
     }
@@ -122,12 +147,7 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
     }
 
     AdminSettings findJwtAdminSettings() {
-        try {
-            return adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
-        } catch (InvalidDataAccessResourceUsageException ignored) {
-            log.debug("findAdminSettingsByKey is returning InvalidDataAccessResourceUsageException. This is an installation case when the database is not initialized yet");
-            return null;
-        }
+        return adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
     }
 
     /*
