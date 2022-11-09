@@ -39,7 +39,7 @@ import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.model.sql.TbPair;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.sql.tenant.TenantRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -59,9 +59,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -629,11 +627,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         conn.createStatement().execute("DELETE FROM asset a WHERE NOT exists(SELECT id FROM tenant WHERE id = a.tenant_id);");
 
                         log.info("Creating default asset profiles...");
-                        List<ListenableFuture<?>> futures = new ArrayList<>();
 
                         PageLink pageLink = new PageLink(1000);
                         PageData<TenantId> tenantIds;
                         do {
+                            List<ListenableFuture<?>> futures = new ArrayList<>();
                             tenantIds = tenantService.findTenantsIds(pageLink);
                             for (TenantId tenantId : tenantIds.getData()) {
                                 futures.add(dbUpgradeExecutor.submit(() -> {
@@ -642,13 +640,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                     } catch (Exception e) {}
                                 }));
                             }
+                            Futures.allAsList(futures).get();
                             pageLink = pageLink.nextPageLink();
                         } while (tenantIds.hasNext());
 
                         pageLink = new PageLink(1000);
                         PageData<TbPair<UUID, String>> pairs;
-                        Set<UUID> tenants = new HashSet<>();
                         do {
+                            List<ListenableFuture<?>> futures = new ArrayList<>();
                             pairs = assetDao.getAllAssetTypes(pageLink);
                             for (TbPair<UUID, String> pair : pairs.getData()) {
                                 TenantId tenantId = new TenantId(pair.getFirst());
@@ -661,16 +660,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                     }));
                                 }
                             }
+                            Futures.allAsList(futures).get();
                             pageLink = pageLink.nextPageLink();
                         } while (pairs.hasNext());
 
-                        Futures.allAsList(futures).get();
-
                         log.info("Updating asset profiles...");
                         conn.createStatement().execute("call update_asset_profiles()");
-
-                        conn.createStatement().execute("UPDATE asset a SET asset_profile_id = " +
-                                "(SELECT id FROM asset_profile ap WHERE ap.tenant_id = a.tenant_id AND name='default') WHERE a.asset_profile_id IS NULL;");
 
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_after.sql");
                         loadSql(schemaUpdateFile, conn);

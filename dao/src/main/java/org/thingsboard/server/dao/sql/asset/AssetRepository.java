@@ -23,7 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
-import org.thingsboard.server.dao.model.sql.TbPair;
+import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.List;
 import java.util.UUID;
@@ -197,7 +197,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
     @Query("SELECT externalId FROM AssetEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
-    @Query(value = "SELECT DISTINCT new org.thingsboard.server.dao.model.sql.TbPair(a.tenantId , a.type) FROM  AssetEntity a")
+    @Query(value = "SELECT DISTINCT new org.thingsboard.server.common.data.util.TbPair(a.tenantId , a.type) FROM  AssetEntity a")
     Page<TbPair<UUID, String>> getAllAssetTypes(Pageable pageable);
 
 }
