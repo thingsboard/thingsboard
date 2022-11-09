@@ -369,36 +369,22 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
 
     private ListenableFuture<Void> processDeviceRpcRequestFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
-        UUID requestUUID = new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB());
         try {
-            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
             TbMsgMetaData metaData = new TbMsgMetaData();
             String requestId = Integer.toString(deviceRpcCallMsg.getRequestId());
             metaData.putValue("requestId", requestId);
-            metaData.putValue("requestUUID", requestUUID.toString());
             metaData.putValue("serviceId", deviceRpcCallMsg.getServiceId());
             metaData.putValue("sessionId", deviceRpcCallMsg.getSessionId());
-            metaData.putValue("expirationTime", Long.toString(deviceRpcCallMsg.getExpirationTime()));
-            metaData.putValue("oneway", Boolean.toString(deviceRpcCallMsg.getOneway()));
-            metaData.putValue(DataConstants.PERSISTENT, Boolean.toString(deviceRpcCallMsg.getPersisted()));
-
-            if (deviceRpcCallMsg.getRetries() > 0) {
-                metaData.putValue(DataConstants.RETRIES, Integer.toString(deviceRpcCallMsg.getRetries()));
-            }
-
             metaData.putValue(DataConstants.EDGE_ID, edge.getId().toString());
-
             Device device = deviceService.findDeviceById(tenantId, deviceId);
             if (device != null) {
                 metaData.putValue("deviceName", device.getName());
                 metaData.putValue("deviceType", device.getType());
                 metaData.putValue(DataConstants.DEVICE_ID, deviceId.getId().toString());
             }
-
+            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
             entityNode.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
             entityNode.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
-
-            entityNode.put(DataConstants.ADDITIONAL_INFO, deviceRpcCallMsg.getAdditionalInfo());
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,
                     TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {

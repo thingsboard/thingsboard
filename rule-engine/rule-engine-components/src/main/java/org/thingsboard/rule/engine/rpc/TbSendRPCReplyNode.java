@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.rpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -80,11 +79,7 @@ public class TbSendRPCReplyNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Request body is empty!"));
         } else {
             if (StringUtils.isNotBlank(msg.getMetaData().getValue(DataConstants.EDGE_ID))) {
-                try {
-                    saveRpcResponseToEdgeQueue(ctx, msg, serviceIdStr, sessionIdStr, requestIdStr);
-                } catch (Exception e) {
-                    ctx.tellFailure(msg, e);
-                }
+                saveRpcResponseToEdgeQueue(ctx, msg, serviceIdStr, sessionIdStr, requestIdStr);
             } else {
                 ctx.getRpcService().sendRpcReplyToDevice(serviceIdStr, UUID.fromString(sessionIdStr), Integer.parseInt(requestIdStr), msg.getData());
                 ctx.tellSuccess(msg);
@@ -92,36 +87,16 @@ public class TbSendRPCReplyNode implements TbNode {
         }
     }
 
-    private void saveRpcResponseToEdgeQueue(TbContext ctx, TbMsg msg, String serviceIdStr, String sessionIdStr, String requestIdStr) throws JsonProcessingException {
-//        EdgeEvent edgeEvent = new EdgeEvent();
-//        edgeEvent.setTenantId(tenantId);
-//        edgeEvent.setAction(eventAction);
-//        edgeEvent.setEntityId(entityId);
-//        edgeEvent.setType(eventType);
-//        edgeEvent.setBody(entityBody);
-//        edgeEvent.setEdgeId(edgeId);
-//
+    private void saveRpcResponseToEdgeQueue(TbContext ctx, TbMsg msg, String serviceIdStr, String sessionIdStr, String requestIdStr) {
         ObjectNode body = JacksonUtil.OBJECT_MAPPER.createObjectNode();
         body.put("serviceId", serviceIdStr);
         body.put("sessionId", sessionIdStr);
         body.put("requestId", requestIdStr);
-        body.put("response", JacksonUtil.OBJECT_MAPPER.writeValueAsString(msg.getData()));
-//        body.put("requestUUID", msg.getId().toString());
-//        body.put("oneway", msg.isOneway());
-//        body.put("expirationTime", msg.getExpirationTime());
-//        body.put("method", msg.getBody().getMethod());
-//        body.put("params", msg.getBody().getParams());
-//        body.put("persisted", msg.isPersisted());
-//        body.put("retries", msg.getRetries());
-//        body.put("additionalInfo", msg.getAdditionalInfo());
-
+        body.put("response", msg.getData());
         EdgeId edgeId = new EdgeId(UUID.fromString(msg.getMetaData().getValue(DataConstants.EDGE_ID)));
         DeviceId deviceId = new DeviceId(UUID.fromString(msg.getMetaData().getValue(DataConstants.DEVICE_ID)));
-        // TODO: add body
-        EdgeEvent edgeEvent =
-                EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
                         EdgeEventActionType.RPC_CALL_RESPONSE, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree(body));
-
         ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
         Futures.addCallback(future, new FutureCallback<Void>() {
             @Override
