@@ -141,6 +141,10 @@
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.cassandraunit</groupId>
             <artifactId>cassandra-unit</artifactId>
             <exclusions>
