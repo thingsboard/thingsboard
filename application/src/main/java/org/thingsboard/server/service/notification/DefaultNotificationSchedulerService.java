@@ -83,12 +83,16 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
     }
 
     private void scheduleNotificationRequest(TenantId tenantId, NotificationRequest request, long requestTs) {
-        int delayInMinutes = Optional.ofNullable(request)
+        int delayInSec = Optional.ofNullable(request)
                 .map(NotificationRequest::getAdditionalConfig)
-                .map(NotificationRequestConfig::getSendingDelayInMinutes)
+                .map(NotificationRequestConfig::getSendingDelayInSec)
                 .orElse(0);
-        if (delayInMinutes <= 0) return; // todo: think about: if server was down for some time and delayMs will be negative - need to send these requests as well (but when the value is within some range)
-        long delayMs = TimeUnit.MINUTES.toMillis(delayInMinutes) - (System.currentTimeMillis() - requestTs);
+        if (delayInSec <= 0) return;
+        long delayInMs = TimeUnit.SECONDS.toMillis(delayInSec) - (System.currentTimeMillis() - requestTs);
+        if (delayInMs < 0) { // in case the scheduled request processing time was during the downtime
+            delayInMs = 0;
+            // or maybe no need to process outdated notification requests ?
+        }
 
         ListenableScheduledFuture<?> scheduledTask = scheduledExecutor.schedule(() -> {
             NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, request.getId());
@@ -96,7 +100,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
             notificationManager.processNotificationRequest(tenantId, notificationRequest);
             scheduledNotificationRequests.remove(notificationRequest.getId());
-        }, delayMs, TimeUnit.MILLISECONDS);
+        }, delayInMs, TimeUnit.MILLISECONDS);
         scheduledNotificationRequests.put(request.getId(), scheduledTask);
     }
 

@@ -784,7 +784,7 @@ CREATE TABLE IF NOT EXISTS notification_target (
     created_time BIGINT NOT NULL,
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
-    configuration varchar(1000) NOT NULL
+    configuration VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS notification_rule (

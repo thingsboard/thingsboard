@@ -87,7 +87,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         notificationRequest.setTenantId(tenantId);
         if (notificationRequest.getAdditionalConfig() != null) {
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
-            if (config.getSendingDelayInMinutes() > 0 && notificationRequest.getId() == null) {
+            if (config.getSendingDelayInSec() > 0 && notificationRequest.getId() == null) {
                 notificationRequest.setStatus(NotificationRequestStatus.SCHEDULED);
                 NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
                 forwardToNotificationSchedulerService(tenantId, savedNotificationRequest.getId(), false);

@@ -77,6 +77,13 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
     }
 
     @Override
+    public void registerWaitForUpdate(int count) {
+        lastDataUpdate = null;
+        lastCountUpdate = null;
+        super.registerWaitForUpdate(count);
+    }
+
+    @Override
     public void onMessage(String s) {
         JsonNode update = JacksonUtil.toJsonNode(s);
         CmdUpdateType updateType = CmdUpdateType.valueOf(update.get("cmdUpdateType").asText());

@@ -97,7 +97,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             }
             if (notificationRule.getEscalationConfig() != null) {
                 for (NonConfirmedNotificationEscalation escalation : notificationRule.getEscalationConfig().getEscalations()) {
-                    submitNotificationRequest(tenantId, escalation.getNotificationTargetId(), notificationRule, alarm, escalation.getDelayInMinutes());
+                    submitNotificationRequest(tenantId, escalation.getNotificationTargetId(), notificationRule, alarm, escalation.getDelayInSec());
                 }
             }
         } else {
@@ -116,10 +116,10 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         return alarm.getStatus().isAck() && alarm.getStatus().isCleared();
     }
 
-    private void submitNotificationRequest(TenantId tenantId, NotificationTargetId targetId, NotificationRule notificationRule, Alarm alarm, int delayInMinutes) {
+    private void submitNotificationRequest(TenantId tenantId, NotificationTargetId targetId, NotificationRule notificationRule, Alarm alarm, int delayInSec) {
         NotificationRequestConfig config = new NotificationRequestConfig();
-        if (delayInMinutes > 0) {
-            config.setSendingDelayInMinutes(delayInMinutes);
+        if (delayInSec > 0) {
+            config.setSendingDelayInSec(delayInSec);
         }
         NotificationInfo notificationInfo = constructNotificationInfo(alarm, notificationRule);
 

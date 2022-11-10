@@ -25,7 +25,7 @@ import javax.validation.constraints.NotNull;
 public class NonConfirmedNotificationEscalation {
 
     @Min(1)
-    private int delayInMinutes; // delay since initial notification request // if no one from previous escalation item has read the notification, send notifications after this time to other recipients
+    private int delayInSec;
     @NotNull
     private NotificationTargetId notificationTargetId;
 
