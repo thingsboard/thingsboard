@@ -174,11 +174,6 @@
         "fromIndex": 3,
         "toIndex": 7,
         "type": "Timeseries Updated"
-      },
-      {
-        "fromIndex": 4,
-        "toIndex": 7,
-        "type": "Success"
       }
     ],
     "ruleChainConnections": null
