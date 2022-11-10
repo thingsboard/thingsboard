@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.mqttv5.client;
+package org.thingsboard.server.transport.mqtt.mqttv5.client.connection;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import org.apache.commons.lang3.StringUtils;
@@ -87,11 +87,11 @@ public abstract class AbstractMqttV5ClientConnectionTest extends AbstractMqttInt
 
         MqttV5TestCallback possibleSizeCallback = updateAttributeWithStringValue(client, packetSizeLimit / 2);
 
-        Assert.assertTrue("Server should send messages if size less then limitation.",possibleSizeCallback.getPayloadBytes().length < packetSizeLimit);
+        Assert.assertTrue("Server should send messages if size less then limitation.", possibleSizeCallback.getPayloadBytes().length < packetSizeLimit);
 
         MqttV5TestCallback bigMessageCallback = updateAttributeWithStringValue(client, packetSizeLimit * 2);
 
-        Assert.assertNull("Server should not send a message if the message size bigger then set limit.",bigMessageCallback.getLastReceivedMessage());
+        Assert.assertNull("Server should not send a message if the message size bigger then set limit.", bigMessageCallback.getLastReceivedMessage());
 
         client.disconnect();
 

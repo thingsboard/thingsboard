@@ -26,6 +26,7 @@ import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageBuilders;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
 import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
@@ -101,7 +102,6 @@ import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.UNSUBACK;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
-import static io.netty.handler.codec.mqtt.MqttQoS.FAILURE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
 
@@ -356,14 +356,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
                 default:
-                    ack(ctx, msgId);
+                    ack(ctx, msgId, ReturnCode.TOPIC_NAME_INVALID);
             }
         } catch (RuntimeException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            ack(ctx, msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
             ctx.close();
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendAckOrCloseSession(ctx, topicName, msgId);
+            sendAckOrCloseSession(ctx, topicName, ReturnCode.PAYLOAD_FORMAT_INVALID, msgId);
         }
     }
 
@@ -448,18 +449,18 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 attrReqTopicType = TopicType.V2;
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
-                ack(ctx, msgId);
+                ack(ctx, msgId, ReturnCode.TOPIC_NAME_INVALID);
             }
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendAckOrCloseSession(ctx, topicName, msgId);
+            sendAckOrCloseSession(ctx, topicName, ReturnCode.PAYLOAD_FORMAT_INVALID, msgId);
         }
     }
 
-    private void sendAckOrCloseSession(ChannelHandlerContext ctx, String topicName, int msgId) {
-        if (deviceSessionCtx.isSendAckOnValidationException() && msgId > 0) {
+    private void sendAckOrCloseSession(ChannelHandlerContext ctx, String topicName, ReturnCode returnCode, int msgId) {
+        if ((deviceSessionCtx.isSendAckOnValidationException() || MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) && msgId > 0) {
             log.debug("[{}] Send pub ack on invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-            ctx.writeAndFlush(createMqttPubAckMsg(msgId));
+            ctx.writeAndFlush(createMqttPubAckMsg(deviceSessionCtx, msgId, returnCode));
         } else {
             log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
             ctx.close();
@@ -501,9 +502,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void ack(ChannelHandlerContext ctx, int msgId) {
+    private void ack(ChannelHandlerContext ctx, int msgId, ReturnCode returnCode) {
         if (msgId > 0) {
-            ctx.writeAndFlush(createMqttPubAckMsg(msgId));
+            ctx.writeAndFlush(createMqttPubAckMsg(deviceSessionCtx, msgId, returnCode));
         }
     }
 
@@ -512,7 +513,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             @Override
             public void onSuccess(Void dummy) {
                 log.trace("[{}] Published msg: {}", sessionId, msg);
-                ack(ctx, msgId);
+                ack(ctx, msgId, ReturnCode.SUCCESS);
             }
 
             @Override
@@ -537,7 +538,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         @Override
         public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg provisionResponseMsg) {
             log.trace("[{}] Published msg: {}", sessionId, msg);
-            ack(ctx, msgId);
+            ack(ctx, msgId, ReturnCode.SUCCESS);
             try {
                 if (deviceSessionCtx.getProvisionPayloadType().equals(TransportPayloadType.JSON)) {
                     deviceSessionCtx.getContext().getJsonMqttAdaptor().convertToPublish(deviceSessionCtx, provisionResponseMsg).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
@@ -546,13 +547,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
                 scheduler.schedule((Callable<ChannelFuture>) ctx::close, 60, TimeUnit.SECONDS);
             } catch (Exception e) {
-                log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+                log.trace("[{}] Failed to convert device provision response to MQTT msg", sessionId, e);
             }
         }
 
         @Override
         public void onError(Throwable e) {
             log.trace("[{}] Failed to publish msg: {}", sessionId, msg, e);
+            ack(ctx, msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
             ctx.close();
         }
     }
@@ -594,7 +596,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void sendOtaPackage(ChannelHandlerContext ctx, int msgId, String firmwareId, String requestId, int chunkSize, int chunk, OtaPackageType type) {
         log.trace("[{}] Send firmware [{}] to device!", sessionId, firmwareId);
-        ack(ctx, msgId);
+        ack(ctx, msgId, ReturnCode.SUCCESS);
         try {
             byte[] firmwareChunk = context.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk);
             deviceSessionCtx.getPayloadAdaptor()
@@ -685,12 +687,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         break;
                     default:
                         log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
-                        grantedQoSList.add(FAILURE.value());
+                        grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), ReturnCode.TOPIC_FILTER_INVALID));
                         break;
                 }
             } catch (Exception e) {
                 log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
-                grantedQoSList.add(FAILURE.value());
+                grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), ReturnCode.IMPLEMENTATION_SPECIFIC));
             }
         }
         if (!activityReported) {
@@ -788,7 +790,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         deviceSessionCtx.setMqttVersion(getMqttVersion(msg.variableHeader().version()));
         if (DataConstants.PROVISION.equals(userName) || DataConstants.PROVISION.equals(clientId)) {
             deviceSessionCtx.setProvisionOnly(true);
-            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.CONNECTION_ACCEPTED, msg));
+            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SUCCESS, msg));
         } else {
             X509Certificate cert;
             if (sslHandler != null && (cert = getX509Certificate()) != null) {
@@ -933,12 +935,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    public static MqttPubAckMessage createMqttPubAckMsg(int requestId) {
-        MqttFixedHeader mqttFixedHeader =
-                new MqttFixedHeader(PUBACK, false, AT_MOST_ONCE, false, 0);
-        MqttMessageIdVariableHeader mqttMsgIdVariableHeader =
-                MqttMessageIdVariableHeader.from(requestId);
-        return new MqttPubAckMessage(mqttFixedHeader, mqttMsgIdVariableHeader);
+    public static MqttMessage createMqttPubAckMsg(DeviceSessionCtx deviceSessionCtx, int requestId, ReturnCode returnCode) {
+        MqttMessageBuilders.PubAckBuilder pubAckMsgBuilder = MqttMessageBuilders.pubAck().packetId(requestId);
+        if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
+            pubAckMsgBuilder.reasonCode(returnCode.byteValue());
+        }
+        return pubAckMsgBuilder.build();
     }
 
     private boolean checkConnected(ChannelHandlerContext ctx, MqttMessage msg) {
@@ -1011,7 +1013,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     checkGatewaySession(sessionMetaData);
-                    ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.CONNECTION_ACCEPTED, connectMessage));
+                    ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SUCCESS, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.debug("[{}] Client connected!", sessionId);
                     transportService.getCallbackExecutor().execute(() -> processMsgQueue(ctx)); //this callback will execute in Producer worker thread and hard or blocking work have to be submitted to the separate thread.

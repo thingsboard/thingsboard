@@ -104,9 +104,10 @@ public class MqttV5TestClient {
         client.disconnectForcibly(TIMEOUT_MS);
     }
 
-    public void publishAndWait(String topic, byte[] payload) throws MqttException {
-        publish(topic, payload).waitForCompletion(TIMEOUT_MS);
-        publish(topic, payload);
+    public IMqttToken publishAndWait(String topic, byte[] payload) throws MqttException {
+        IMqttToken iMqttToken = publish(topic, payload);
+        iMqttToken.waitForCompletion(TIMEOUT_MS);
+        return iMqttToken;
     }
 
     public IMqttToken publish(String topic, byte[] payload) throws MqttException {
@@ -123,8 +124,10 @@ public class MqttV5TestClient {
         return client.publish(topic, payload, qos, retain);
     }
 
-    public void subscribeAndWait(String topic, MqttQoS qoS) throws MqttException {
-        subscribe(topic, qoS).waitForCompletion(TIMEOUT_MS);
+    public IMqttToken subscribeAndWait(String topic, MqttQoS qoS) throws MqttException {
+        IMqttToken iMqttToken = subscribe(topic, qoS);
+        iMqttToken.waitForCompletion(TIMEOUT_MS);
+        return iMqttToken;
     }
 
     public IMqttToken subscribe(String topic, MqttQoS qoS) throws MqttException {
