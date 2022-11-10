@@ -26,11 +26,11 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class MvcConfig implements WebMvcConfigurer {
 
-    @Value("${spring.mvc.cache.enabled}")
+    @Value("${cache.ui.enabled:false}")
     private Boolean cacheEnabled;
-    @Value("${spring.mvc.cache.public}")
+    @Value("${cache.ui.public:true}")
     private Boolean publicCache;
-    @Value("${spring.mvc.cache.period}")
+    @Value("${cache.ui.period:31536000}")
     private Integer period;
 
     private static final String[] CLASSPATH_RESOURCE_LOCATIONS = {

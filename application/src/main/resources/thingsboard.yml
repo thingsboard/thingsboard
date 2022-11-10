@@ -433,6 +433,11 @@ cache:
     versionControlTask:
       timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:5}"
       maxSize: "${CACHE_SPECS_VERSION_CONTROL_TASK_MAX_SIZE:100000}"
+  # caching static UI resources (1 year by default)
+  ui:
+    enabled: "${CACHE_STATIC_UI_RESOURCE_ENABLED:false}"
+    public: "${CACHE_STATIC_UI_RESOURCE_PUBLIC:true}"
+    period: "${CACHE_STATIC_UI_RESOURCE_PERIOD_IN_SEC:31536000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
@@ -543,12 +548,6 @@ spring:
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
-
-# spring configuration for caching static resources (1 year by default)
-spring.mvc.cache:
-  enabled: "${SPRING_MVC_CACHE_ENABLED:true}"
-  public: "${SPRING_MVC_CACHE_PUBLIC:true}"
-  period: "${SPRING_MVC_CACHE_PERIOD:31536000}"
 
 # Audit log parameters
 audit-log:
