@@ -24,6 +24,10 @@ public enum ReturnCode {
     BAD_USER_NAME_OR_PASSWORD((byte) 0x04),
     NOT_AUTHORIZED((byte) 0x05),
     //MQTT 5 codes
+    NO_MATCHING_SUBSCRIBERS((byte) 0x10),
+    NO_SUBSCRIPTION_EXISTED((byte) 0x11),
+    CONTINUE_AUTHENTICATION((byte) 0x18),
+    REAUTHENTICATE((byte) 0x19),
     UNSPECIFIED_ERROR((byte) 0x80),
     MALFORMED_PACKET((byte) 0x81),
     PROTOCOL_ERROR((byte) 0x82),
@@ -82,7 +86,7 @@ public enum ReturnCode {
         return byteValue;
     }
 
-
+    public short shortValue(){return byteValue;}
 
     public static ReturnCode valueOf(byte b) {
         final int unsignedByte = b & 0xFF;

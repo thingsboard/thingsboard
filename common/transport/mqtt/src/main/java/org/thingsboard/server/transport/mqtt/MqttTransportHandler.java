@@ -35,6 +35,7 @@ import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckPayload;
 import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttUnsubAckPayload;
 import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslHandler;
@@ -97,7 +98,6 @@ import static com.amazonaws.util.StringUtils.UTF8;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
-import static io.netty.handler.codec.mqtt.MqttMessageType.PUBACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.UNSUBACK;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
@@ -723,10 +723,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             return;
         }
         boolean activityReported = false;
+        List<Short> unSubResults = new ArrayList<>();
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
         for (String topicName : mqttMsg.payload().topics()) {
             mqttQoSMap.remove(new MqttTopicMatcher(topicName));
             try {
+                short resultValue = ReturnCode.SUCCESS.shortValue();
                 switch (topicName) {
                     case MqttTopics.DEVICE_ATTRIBUTES_TOPIC:
                     case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC:
@@ -765,22 +767,32 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         activityReported = true;
                         break;
                     }
+                    default:
+                        log.trace("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
+                        resultValue = ReturnCode.TOPIC_FILTER_INVALID.shortValue();
                 }
+                unSubResults.add(resultValue);
             } catch (Exception e) {
                 log.debug("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
+                unSubResults.add(ReturnCode.IMPLEMENTATION_SPECIFIC.shortValue());
             }
         }
         if (!activityReported) {
             transportService.reportActivity(deviceSessionCtx.getSessionInfo());
         }
-        ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId()));
+        ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));
     }
 
-    private MqttMessage createUnSubAckMessage(int msgId) {
+    private MqttMessage createUnSubAckMessage(int msgId, List<Short> resultCodes) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(UNSUBACK, false, AT_MOST_ONCE, false, 0);
         MqttMessageIdVariableHeader mqttMessageIdVariableHeader = MqttMessageIdVariableHeader.from(msgId);
-        return new MqttMessage(mqttFixedHeader, mqttMessageIdVariableHeader);
+        if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
+            MqttUnsubAckPayload mqttUnsubAckPayload = new MqttUnsubAckPayload(resultCodes);
+            return new MqttMessage(mqttFixedHeader, mqttMessageIdVariableHeader, mqttUnsubAckPayload);
+        } else {
+            return new MqttMessage(mqttFixedHeader, mqttMessageIdVariableHeader);
+        }
     }
 
     void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
