@@ -511,6 +511,8 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         body.put("expirationTime", System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10));
         body.put("method", "test_method");
         body.put("params", "{\"param1\":\"value1\"}");
+        body.put("persisted", true);
+        body.put("retries", 2);
 
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.RPC_CALL,
                 device.getId().getId(), EdgeEventType.DEVICE, body);
@@ -523,6 +525,8 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(latestMessage instanceof DeviceRpcCallMsg);
         DeviceRpcCallMsg latestDeviceRpcCallMsg = (DeviceRpcCallMsg) latestMessage;
         Assert.assertEquals("test_method", latestDeviceRpcCallMsg.getRequestMsg().getMethod());
+        Assert.assertTrue(latestDeviceRpcCallMsg.getPersisted());
+        Assert.assertEquals(2, latestDeviceRpcCallMsg.getRetries());
     }
 
     private void sendAttributesRequestAndVerify(Device device, String scope, String attributesDataStr, String expectedKey,

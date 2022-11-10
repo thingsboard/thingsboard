@@ -87,13 +87,22 @@ public class TbSendRPCReplyNode implements TbNode {
     }
 
     private void saveRpcResponseToEdgeQueue(TbContext ctx, TbMsg msg, String serviceIdStr, String sessionIdStr, String requestIdStr) {
+        EdgeId edgeId;
+        DeviceId deviceId;
+        try {
+            edgeId = new EdgeId(UUID.fromString(msg.getMetaData().getValue(DataConstants.EDGE_ID)));
+            deviceId = new DeviceId(UUID.fromString(msg.getMetaData().getValue(DataConstants.DEVICE_ID)));
+        } catch (Exception e) {
+            String errMsg = String.format("[%s] Failed to parse edgeId or deviceId from metadata %s!", ctx.getTenantId(), msg.getMetaData());
+            ctx.tellFailure(msg, new RuntimeException(errMsg));
+            return;
+        }
+
         ObjectNode body = JacksonUtil.OBJECT_MAPPER.createObjectNode();
         body.put("serviceId", serviceIdStr);
         body.put("sessionId", sessionIdStr);
         body.put("requestId", requestIdStr);
         body.put("response", msg.getData());
-        EdgeId edgeId = new EdgeId(UUID.fromString(msg.getMetaData().getValue(DataConstants.EDGE_ID)));
-        DeviceId deviceId = new DeviceId(UUID.fromString(msg.getMetaData().getValue(DataConstants.DEVICE_ID)));
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
                         EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree(body));
         ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
