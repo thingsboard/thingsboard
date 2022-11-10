@@ -109,7 +109,7 @@ security:
   # JWT Token parameters
   jwt:
     tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000}" # Number of seconds (2.5 hours)
-    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week)
+    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week).
     tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
@@ -200,6 +200,14 @@ cassandra:
   username: "${CASSANDRA_USERNAME:}"
   # Specify your password
   password: "${CASSANDRA_PASSWORD:}"
+  # Astra DB connect https://astra.datastax.com/
+  cloud:
+    # /etc/thingsboard/astra/secure-connect-thingsboard.zip
+    secure_connect_bundle_path: "${CASSANDRA_CLOUD_SECURE_BUNDLE_PATH:}"
+    # DucitQPHMzPCBOZqFYexAfKk
+    client_id: "${CASSANDRA_CLOUD_CLIENT_ID:}"
+    # ZnF7FpuHp43FP5BzM+KY8wGmSb4Ql6BhT4Z7sOU13ze+gXQ-n7OkFpNuB,oACUIQObQnK0g4bSPoZhK5ejkcF9F.j6f64j71Sr.tiRe0Fsq2hPS1ZCGSfAaIgg63IydG
+    client_secret: "${CASSANDRA_CLOUD_CLIENT_SECRET:}"
 
   # Cassandra cluster connection socket parameters #
   socket:
@@ -265,6 +273,7 @@ sql:
     batch_size: "${SQL_EDGE_EVENTS_BATCH_SIZE:1000}"
     batch_max_delay: "${SQL_EDGE_EVENTS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_EDGE_EVENTS_BATCH_STATS_PRINT_MS:10000}"
+    partition_size: "${SQL_EDGE_EVENTS_PARTITION_SIZE_HOURS:168}" # Number of hours to partition the events. The current value corresponds to one week.
   audit_logs:
     partition_size: "${SQL_AUDIT_LOGS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
@@ -310,7 +319,9 @@ sql:
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. Accuracy of the cleanup depends on the sql.audit_logs.partition_size
       checking_interval_ms: "${SQL_TTL_AUDIT_LOGS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
-    max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # //This value has to be reasonable small to prevent infinite recursion as early as possible
+    max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonable small to prevent infinite recursion as early as possible
+    pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
+    query_timeout: "${SQL_RELATIONS_QUERY_TIMEOUT_SEC:20}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
 
 # Actor system parameters
 actors:
@@ -418,8 +429,9 @@ cache:
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
-    usersUpdateTime:
-      timeToLiveInMinutes: "${CACHE_SPECS_USERS_UPDATE_TIME_TTL:20000}"
+    userSessionsInvalidation:
+      # The value of this TTL is ignored and replaced by JWT refresh token expiration time
+      timeToLiveInMinutes: "0"
       maxSize: "${CACHE_SPECS_USERS_UPDATE_TIME_MAX_SIZE:10000}"
     otaPackages:
       timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_TTL:60}"
@@ -531,6 +543,7 @@ spring.servlet.multipart.max-file-size: "50MB"
 spring.servlet.multipart.max-request-size: "50MB"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
+# Note: as for current Spring JPA version, custom NullHandling for the Sort.Order is ignored and this parameter is used
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}"
 
 # SQL DAO Configuration

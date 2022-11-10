@@ -15,7 +15,6 @@
  */
 package org.thingsboard.script.api.mvel;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -24,7 +23,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
-import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.SandboxedParserContext;
 import org.mvel2.ScriptMemoryOverflowException;
@@ -44,6 +42,7 @@ import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -111,8 +110,16 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
         parserConfig = new SandboxedParserConfiguration();
         parserConfig.addImport("JSON", TbJson.class);
+        parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
+        try {
+            // Special command to warm up MVEL engine
+            Serializable script = MVEL.compileExpression("var warmUp = {}; warmUp", new SandboxedParserContext(parserConfig));
+            MVEL.executeTbExpression(script, new ExecutionContext(parserConfig), Collections.emptyMap());
+        } catch (Exception e) {
+            // do nothing
+        }
     }
 
     @PreDestroy
@@ -139,11 +146,6 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
 
     @Override
     protected ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames) {
-        if (NEW_KEYWORD_PATTERN.matcher(scriptBody).matches()) {
-            //TODO: output line number and char pos.
-            return Futures.immediateFailedFuture(new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody,
-                    new IllegalArgumentException("Keyword 'new' is forbidden!")));
-        }
         return executor.submit(() -> {
             try {
                 Serializable compiledScript = MVEL.compileExpression(scriptBody, new SandboxedParserContext(parserConfig));
@@ -158,7 +160,7 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
 
     @Override
     protected MvelScriptExecutionTask doInvokeFunction(UUID scriptId, Object[] args) {
-        ExecutionContext executionContext = new ExecutionContext(maxMemoryLimitMb * 1024 * 1024);
+        ExecutionContext executionContext = new ExecutionContext(this.parserConfig, maxMemoryLimitMb * 1024 * 1024);
         return new MvelScriptExecutionTask(executionContext, executor.submit(() -> {
             MvelScript script = scriptMap.get(scriptId);
             if (script == null) {

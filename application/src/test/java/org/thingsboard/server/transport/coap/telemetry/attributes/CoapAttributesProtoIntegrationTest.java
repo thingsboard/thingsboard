@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
+import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -55,18 +56,7 @@ public class CoapAttributesProtoIntegrationTest extends CoapAttributesIntegratio
 
     @Test
     public void testPushAttributes() throws Exception {
-        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-        assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
-        CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
-        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration = coapTransportConfiguration.getCoapDeviceTypeConfiguration();
-        assertTrue(coapDeviceTypeConfiguration instanceof DefaultCoapDeviceTypeConfiguration);
-        DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = (DefaultCoapDeviceTypeConfiguration) coapDeviceTypeConfiguration;
-        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
-        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
-        ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
-        DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
-
+        DynamicSchema attributesSchema = getDynamicSchema();
         DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
         Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
         assertNotNull(nestedJsonObjectBuilderDescriptor);
@@ -98,18 +88,7 @@ public class CoapAttributesProtoIntegrationTest extends CoapAttributesIntegratio
 
     @Test
     public void testPushAttributesWithExplicitPresenceProtoKeys() throws Exception {
-        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-        assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
-        CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
-        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration = coapTransportConfiguration.getCoapDeviceTypeConfiguration();
-        assertTrue(coapDeviceTypeConfiguration instanceof DefaultCoapDeviceTypeConfiguration);
-        DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = (DefaultCoapDeviceTypeConfiguration) coapDeviceTypeConfiguration;
-        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
-        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
-        ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
-        DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
-
+        DynamicSchema attributesSchema = getDynamicSchema();
         DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
         Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
         assertNotNull(nestedJsonObjectBuilderDescriptor);
@@ -133,6 +112,21 @@ public class CoapAttributesProtoIntegrationTest extends CoapAttributesIntegratio
                 .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
         processAttributesTest(Arrays.asList("key1", "key5"), postAttributesMsg.toByteArray(), true);
+    }
+
+    private DynamicSchema getDynamicSchema() {
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
+        CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
+        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration = coapTransportConfiguration.getCoapDeviceTypeConfiguration();
+        assertTrue(coapDeviceTypeConfiguration instanceof DefaultCoapDeviceTypeConfiguration);
+        DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = (DefaultCoapDeviceTypeConfiguration) coapDeviceTypeConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        String deviceAttributesProtoSchema = protoTransportPayloadConfiguration.getDeviceAttributesProtoSchema();
+        ProtoFileElement protoFileElement = DynamicProtoUtils.getProtoFileElement(deviceAttributesProtoSchema);
+        return DynamicProtoUtils.getDynamicSchema(protoFileElement, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
     }
 
 }

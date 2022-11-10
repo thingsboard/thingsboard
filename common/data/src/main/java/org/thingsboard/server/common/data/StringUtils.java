@@ -156,6 +156,10 @@ public class StringUtils {
         return false;
     }
 
+    public static boolean contains(final CharSequence seq, final CharSequence searchSeq) {
+        return org.apache.commons.lang3.StringUtils.contains(seq, searchSeq);
+    }
+
     public static String randomNumeric(int length) {
         return RandomStringUtils.randomNumeric(length);
     }

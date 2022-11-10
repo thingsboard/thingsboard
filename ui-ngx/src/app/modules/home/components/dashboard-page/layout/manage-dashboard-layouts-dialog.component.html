@@ -65,12 +65,15 @@
                     mat-raised-button
                     color="primary"
                     class="tb-layout-button"
-                    [matTooltip]="layoutButtonText('main')"
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-layout-button-tooltip"
+                    (mouseover)="mainLayoutTooltip.show()"
+                    (mouseleave)="mainLayoutTooltip.hide()"
                     (click)="setFixedLayout('main')"
                     [ngClass]="layoutButtonClass('main', true)">
-              <span>{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
+              <span [matTooltip]="layoutButtonText('main')"
+                    #mainLayoutTooltip="matTooltip"
+                    matTooltipPosition="above">
+                {{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}
+              </span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('main')">
               <input *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.FIXED"
@@ -106,12 +109,15 @@
                     mat-raised-button
                     color="primary"
                     class="tb-layout-button tb-layout-button-right"
-                    [matTooltip]="layoutButtonText('right')"
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-layout-button-tooltip"
+                    (mouseover)="rightLayoutTooltip.show()"
+                    (mouseleave)="rightLayoutTooltip.hide()"
                     (click)="setFixedLayout('right')"
                     [ngClass]="layoutButtonClass('right')">
-              <span>{{ 'layout.right' | translate }}</span>
+              <span [matTooltip]="layoutButtonText('right')"
+                    #rightLayoutTooltip="matTooltip"
+                    matTooltipPosition="above">
+                {{ 'layout.right' | translate }}
+              </span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('right')">
               <input *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.FIXED"

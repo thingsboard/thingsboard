@@ -39,6 +39,7 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ResourceService } from '@core/http/resource.service';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -65,6 +66,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['otaPackageService', OtaPackageService],
    ['authService', AuthService],
    ['resourceService', ResourceService],
-   ['twoFactorAuthenticationService', TwoFactorAuthenticationService]
+   ['twoFactorAuthenticationService', TwoFactorAuthenticationService],
+   ['telemetryWsService', TelemetryWebsocketService]
   ]
 );

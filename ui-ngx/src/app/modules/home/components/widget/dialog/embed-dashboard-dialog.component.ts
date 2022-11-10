@@ -29,6 +29,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { IDashboardComponent } from '@home/models/dashboard-component.models';
 
 export interface EmbedDashboardDialogData {
   dashboard: Dashboard;
@@ -37,6 +38,7 @@ export interface EmbedDashboardDialogData {
   hideToolbar: boolean;
   width?: number;
   height?: number;
+  parentDashboard?: IDashboardComponent;
 }
 
 @Component({
@@ -53,6 +55,7 @@ export class EmbedDashboardDialogComponent extends DialogComponent<EmbedDashboar
   state = this.data.state;
   title = this.data.title;
   hideToolbar = this.data.hideToolbar;
+  parentDashboard = this.data.parentDashboard;
 
   dialogStyle: any = {};
 

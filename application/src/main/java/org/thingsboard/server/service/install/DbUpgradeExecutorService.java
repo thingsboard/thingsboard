@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.jwt;
+package org.thingsboard.server.service.install;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 @Component
-public class RefreshTokenRepository {
-
-    private final JwtTokenFactory tokenFactory;
-
-    @Autowired
-    public RefreshTokenRepository(final JwtTokenFactory tokenFactory) {
-        this.tokenFactory = tokenFactory;
-    }
-
-    public JwtToken requestRefreshToken(SecurityUser user) {
-        return tokenFactory.createRefreshToken(user);
-    }
+@Profile("install")
+public class DbUpgradeExecutorService extends DbCallbackExecutorService {
 
 }

@@ -31,14 +31,13 @@ import java.util.UUID;
 @TimescaleDBTsOrTsLatestDao
 public interface TsKvTimescaleRepository extends JpaRepository<TimescaleTsKvEntity, TimescaleTsKvCompositeKey> {
 
-    @Query("SELECT tskv FROM TimescaleTsKvEntity tskv WHERE tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey " +
-            "AND tskv.ts >= :startTs AND tskv.ts < :endTs")
-    List<TimescaleTsKvEntity> findAllWithLimit(
-            @Param("entityId") UUID entityId,
-            @Param("entityKey") int key,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs, Pageable pageable);
+    @Query(value = "SELECT * FROM ts_kv WHERE entity_id = :entityId " +
+            "AND key = :entityKey AND ts >= :startTs AND ts < :endTs", nativeQuery = true)
+    List<TimescaleTsKvEntity> findAllWithLimit(@Param("entityId") UUID entityId,
+                                               @Param("entityKey") int key,
+                                               @Param("startTs") long startTs,
+                                               @Param("endTs") long endTs,
+                                               Pageable pageable);
 
     @Transactional
     @Modifying

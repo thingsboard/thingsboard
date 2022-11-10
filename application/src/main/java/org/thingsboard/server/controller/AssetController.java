@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -87,7 +86,6 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
-import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
 @RestController
 @TbCoreComponent
@@ -141,9 +139,6 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
     public Asset saveAsset(@ApiParam(value = "A JSON value representing the asset.") @RequestBody Asset asset) throws Exception {
-        if (TB_SERVICE_QUEUE.equals(asset.getType())) {
-            throw new ThingsboardException("Unable to save asset with type " + TB_SERVICE_QUEUE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
         asset.setTenantId(getTenantId());
         checkEntity(asset.getId(), asset, Resource.ASSET);
         return tbAssetService.save(asset, getCurrentUser());

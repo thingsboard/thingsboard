@@ -56,6 +56,10 @@
             <artifactId>cassandra-all</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-thrift</artifactId>
+        </dependency>
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
