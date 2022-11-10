@@ -77,7 +77,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         device.setCustomerId(customerId);
         customerDevice = doPost("/api/device", device, Device.class);
 
-        logout();
+        resetTokens();
     }
 
     @After
@@ -423,7 +423,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         testNotifyEntityNeverMsgToEdgeServiceOneTime(alarm, alarm.getId(), tenantId, ActionType.ADDED);
 
-        logout();
+        resetTokens();
 
         JsonNode publicLoginRequest = JacksonUtil.toJsonNode("{\"publicId\": \"" + publicId + "\"}");
         JsonNode tokens = doPost("/api/auth/login/public", publicLoginRequest, JsonNode.class);

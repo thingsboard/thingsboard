@@ -23,13 +23,13 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -257,10 +257,14 @@ public class AuditLogServiceImpl implements AuditLogService {
                 String browser = extractParameter(String.class, 1, additionalInfo);
                 String os = extractParameter(String.class, 2, additionalInfo);
                 String device = extractParameter(String.class, 3, additionalInfo);
+                String provider = extractParameter(String.class, 4, additionalInfo);
                 actionData.put("clientAddress", clientAddress);
                 actionData.put("browser", browser);
                 actionData.put("os", os);
                 actionData.put("device", device);
+                if (StringUtils.hasText(provider)) {
+                    actionData.put("provider", provider);
+                }
                 break;
             case PROVISION_SUCCESS:
             case PROVISION_FAILURE:

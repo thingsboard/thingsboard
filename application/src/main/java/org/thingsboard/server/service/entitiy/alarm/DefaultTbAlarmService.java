@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -43,7 +42,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         ActionType actionType = alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = alarm.getTenantId();
         try {
-            Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm).getAlarm());
+            Alarm savedAlarm = checkNotNull(alarmSubscriptionService.createOrUpdateAlarm(alarm));
             notificationEntityService.notifyCreateOrUpdateAlarm(savedAlarm, actionType, user);
             return savedAlarm;
         } catch (Exception e) {
@@ -55,7 +54,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public ListenableFuture<Void> ack(Alarm alarm, User user) {
         long ackTs = System.currentTimeMillis();
-        ListenableFuture<AlarmOperationResult> future = alarmService.ackAlarm(alarm.getTenantId(), alarm.getId(), ackTs);
+        ListenableFuture<Boolean> future = alarmSubscriptionService.ackAlarm(alarm.getTenantId(), alarm.getId(), ackTs);
         return Futures.transform(future, result -> {
             alarm.setAckTs(ackTs);
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
@@ -67,7 +66,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public ListenableFuture<Void> clear(Alarm alarm, User user) {
         long clearTs = System.currentTimeMillis();
-        ListenableFuture<AlarmOperationResult> future = alarmService.clearAlarm(alarm.getTenantId(), alarm.getId(), null, clearTs);
+        ListenableFuture<Boolean> future = alarmSubscriptionService.clearAlarm(alarm.getTenantId(), alarm.getId(), null, clearTs);
         return Futures.transform(future, result -> {
             alarm.setClearTs(clearTs);
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
@@ -82,6 +81,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarm.getOriginator());
         notificationEntityService.notifyDeleteAlarm(tenantId, alarm, alarm.getOriginator(), alarm.getCustomerId(),
                 relatedEdgeIds, user, JacksonUtil.toString(alarm));
-        return alarmService.deleteAlarm(tenantId, alarm.getId()).isSuccessful();
+        return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 }

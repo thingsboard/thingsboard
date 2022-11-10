@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.apiusage;
 
 import org.springframework.context.ApplicationListener;
-import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -26,7 +26,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
-public interface TbApiUsageStateService extends TbApiUsageStateClient, ApplicationListener<PartitionChangeEvent> {
+public interface TbApiUsageStateService extends TbApiUsageStateClient, RuleEngineApiUsageStateService, ApplicationListener<PartitionChangeEvent> {
 
     void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback);
 
