@@ -44,7 +44,6 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
 
     static final String ADMIN_SETTINGS_JWT_KEY = "jwt";
     static final String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
-    static final String TB_ALLOW_DEFAULT_JWT_SIGNING_KEY = "TB_ALLOW_DEFAULT_JWT_SIGNING_KEY";
     @Lazy
     private final AdminSettingsService adminSettingsService;
     @Lazy
