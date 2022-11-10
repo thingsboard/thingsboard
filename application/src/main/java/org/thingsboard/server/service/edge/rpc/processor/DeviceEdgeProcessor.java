@@ -451,10 +451,8 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                             .build();
                 }
                 break;
-            case RPC_CALL_REQUEST:
-                return convertRpcCallRequestEventToDownlink(edgeEvent);
-            case RPC_CALL_RESPONSE:
-                return convertRpcCallResponseEventToDownlink(edgeEvent);
+            case RPC_CALL:
+                return convertRpcCallEventToDownlink(edgeEvent);
             case CREDENTIALS_REQUEST:
                 return convertCredentialsRequestEventToDownlink(edgeEvent);
             case ENTITY_MERGE_REQUEST:
@@ -463,20 +461,11 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         return downlinkMsg;
     }
 
-    private DownlinkMsg convertRpcCallRequestEventToDownlink(EdgeEvent edgeEvent) {
-        log.trace("Executing convertRpcCallRequestEventToDownlink, edgeEvent [{}]", edgeEvent);
+    private DownlinkMsg convertRpcCallEventToDownlink(EdgeEvent edgeEvent) {
+        log.trace("Executing convertRpcCallEventToDownlink, edgeEvent [{}]", edgeEvent);
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addDeviceRpcCallMsg(deviceMsgConstructor.constructDeviceRpcRequestMsg(edgeEvent.getEntityId(), edgeEvent.getBody()))
-                .build();
-    }
-
-    private DownlinkMsg convertRpcCallResponseEventToDownlink(EdgeEvent edgeEvent) {
-        log.trace("Executing convertRpcCallResponseEventToDownlink, edgeEvent [{}]", edgeEvent);
-        DeviceRpcCallMsg deviceRpcCallMsg = deviceMsgConstructor.constructDeviceRpcResponseMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
-        return DownlinkMsg.newBuilder()
-                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addDeviceRpcCallMsg(deviceRpcCallMsg)
+                .addDeviceRpcCallMsg(deviceMsgConstructor.constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody()))
                 .build();
     }
 

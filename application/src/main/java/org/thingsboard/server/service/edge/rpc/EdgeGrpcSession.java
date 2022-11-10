@@ -463,8 +463,7 @@ public final class EdgeGrpcSession implements Closeable {
                 case UNASSIGNED_FROM_CUSTOMER:
                 case CREDENTIALS_REQUEST:
                 case ENTITY_MERGE_REQUEST:
-                case RPC_CALL_REQUEST:
-                case RPC_CALL_RESPONSE:
+                case RPC_CALL:
                     downlinkMsg = convertEntityEventToDownlink(edgeEvent);
                     log.trace("[{}][{}] entity message processed [{}]", edgeEvent.getTenantId(), this.sessionId, downlinkMsg);
                     break;

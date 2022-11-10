@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
@@ -97,30 +96,22 @@ public class DeviceMsgConstructor {
                 .setIdLSB(deviceId.getId().getLeastSignificantBits()).build();
     }
 
-    public DeviceRpcCallMsg constructDeviceRpcRequestMsg(UUID deviceId, JsonNode body) {
+    public DeviceRpcCallMsg constructDeviceRpcCallMsg(UUID deviceId, JsonNode body) {
         DeviceRpcCallMsg.Builder builder = constructDeviceRpcMsg(deviceId, body);
-
-        String method = body.get("method").asText();
-        String params = body.get("params").asText();
-        RpcRequestMsg.Builder requestBuilder = RpcRequestMsg.newBuilder();
-        requestBuilder.setMethod(method);
-        requestBuilder.setParams(params);
-        builder.setRequestMsg(requestBuilder.build());
-
-        return builder.build();
-    }
-
-    public DeviceRpcCallMsg constructDeviceRpcResponseMsg(UUID deviceId, JsonNode body) {
-        DeviceRpcCallMsg.Builder builder = constructDeviceRpcMsg(deviceId, body);
-
-        RpcResponseMsg.Builder responseBuilder = RpcResponseMsg.newBuilder();
-        if (body.has("error")) {
-            responseBuilder.setError(body.get("error").asText());
+        if (body.has("error") || body.has("response")) {
+            RpcResponseMsg.Builder responseBuilder = RpcResponseMsg.newBuilder();
+            if (body.has("error")) {
+                responseBuilder.setError(body.get("error").asText());
+            } else {
+                responseBuilder.setResponse(body.get("response").asText());
+            }
+            builder.setResponseMsg(responseBuilder.build());
         } else {
-            responseBuilder.setResponse(body.get("response").asText());
+            RpcRequestMsg.Builder requestBuilder = RpcRequestMsg.newBuilder();
+            requestBuilder.setMethod(body.get("method").asText());
+            requestBuilder.setParams(body.get("params").asText());
+            builder.setRequestMsg(requestBuilder.build());
         }
-        builder.setResponseMsg(responseBuilder.build());
-
         return builder.build();
     }
 
