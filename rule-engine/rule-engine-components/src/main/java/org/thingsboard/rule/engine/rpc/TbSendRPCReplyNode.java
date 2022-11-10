@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -98,9 +97,9 @@ public class TbSendRPCReplyNode implements TbNode {
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
                         EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree(body));
         ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
-        Futures.addCallback(future, new FutureCallback<Void>() {
+        Futures.addCallback(future, new FutureCallback<>() {
             @Override
-            public void onSuccess(@Nullable Void result) {
+            public void onSuccess(Void result) {
                 ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
                 ctx.tellSuccess(msg);
             }
