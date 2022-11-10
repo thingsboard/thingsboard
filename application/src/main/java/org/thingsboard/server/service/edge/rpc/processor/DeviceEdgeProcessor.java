@@ -52,6 +52,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
@@ -325,8 +326,17 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         return metaData;
     }
 
-    public ListenableFuture<Void> processDeviceRpcCallResponseFromEdge(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
-        log.trace("[{}] processDeviceRpcCallResponseMsg [{}]", tenantId, deviceRpcCallMsg);
+    public ListenableFuture<Void> processDeviceRpcCallFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
+        log.trace("[{}] processDeviceRpcCallFromEdge [{}]", tenantId, deviceRpcCallMsg);
+        if (deviceRpcCallMsg.hasResponseMsg()) {
+            return processDeviceRpcResponseFromEdge(tenantId, deviceRpcCallMsg);
+        } else if (deviceRpcCallMsg.hasRequestMsg()) {
+            return processDeviceRpcRequestFromEdge(tenantId, edge, deviceRpcCallMsg);
+        }
+        return Futures.immediateFuture(null);
+    }
+
+    private ListenableFuture<Void> processDeviceRpcResponseFromEdge(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         UUID requestUuid = new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB());
         DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
@@ -355,6 +365,46 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         deviceId, response);
         tbClusterService.pushMsgToCore(msg, callback);
         return futureToSet;
+    }
+
+    private ListenableFuture<Void> processDeviceRpcRequestFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
+        DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
+        try {
+            TbMsgMetaData metaData = new TbMsgMetaData();
+            String requestId = Integer.toString(deviceRpcCallMsg.getRequestId());
+            metaData.putValue("requestId", requestId);
+            metaData.putValue("serviceId", deviceRpcCallMsg.getServiceId());
+            metaData.putValue("sessionId", deviceRpcCallMsg.getSessionId());
+            metaData.putValue(DataConstants.EDGE_ID, edge.getId().toString());
+            Device device = deviceService.findDeviceById(tenantId, deviceId);
+            if (device != null) {
+                metaData.putValue("deviceName", device.getName());
+                metaData.putValue("deviceType", device.getType());
+                metaData.putValue(DataConstants.DEVICE_ID, deviceId.getId().toString());
+            }
+            ObjectNode data = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
+            data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
+            TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,
+                    TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(data));
+            tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    log.debug("Successfully send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
+                            device, deviceRpcCallMsg);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.debug("Failed to send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
+                            device, deviceRpcCallMsg, t);
+                }
+            });
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            log.warn("[{}] Failed to push TO_SERVER_RPC_REQUEST to rule engine. deviceRpcCallMsg {}", deviceId, deviceRpcCallMsg, e);
+        }
+
+        return Futures.immediateFuture(null);
     }
 
     public DownlinkMsg convertDeviceEventToDownlink(EdgeEvent edgeEvent) {
@@ -413,11 +463,9 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
 
     private DownlinkMsg convertRpcCallEventToDownlink(EdgeEvent edgeEvent) {
         log.trace("Executing convertRpcCallEventToDownlink, edgeEvent [{}]", edgeEvent);
-        DeviceRpcCallMsg deviceRpcCallMsg =
-                deviceMsgConstructor.constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addDeviceRpcCallMsg(deviceRpcCallMsg)
+                .addDeviceRpcCallMsg(deviceMsgConstructor.constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody()))
                 .build();
     }
 
