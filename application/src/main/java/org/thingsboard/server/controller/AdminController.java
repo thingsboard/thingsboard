@@ -43,6 +43,9 @@ import org.thingsboard.server.config.jwt.JwtSettings;
 import org.thingsboard.server.config.jwt.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -72,6 +75,10 @@ public class AdminController extends BaseController {
     @Lazy
     @Autowired
     private JwtSettingsService jwtSettingsService;
+
+    @Lazy
+    @Autowired
+    private JwtTokenFactory tokenFactory;
 
     @Autowired
     private EntitiesVersionControlService versionControlService;
@@ -175,19 +182,20 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Update JWT Settings (saveSecuritySettings)",
+    @ApiOperation(value = "Update JWT Settings (saveJwtSettings)",
             notes = "Updates the JWT Settings object that contains JWT token policy, etc. The tokenSigningKey field is a Base64 encoded string." + SYSTEM_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.POST)
     @ResponseBody
-    public JwtSettings saveJwtSettings(
+    public JwtTokenPair saveJwtSettings(
             @ApiParam(value = "A JSON value representing the JWT Settings.")
             @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
         try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-            jwtSettings = checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
-            return jwtSettings;
+            SecurityUser securityUser = getCurrentUser();
+            accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
+            checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
+            return tokenFactory.createTokenPair(securityUser);
         } catch (Exception e) {
             throw handleException(e);
         }
