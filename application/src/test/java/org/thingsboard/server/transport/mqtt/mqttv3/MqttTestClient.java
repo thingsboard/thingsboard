@@ -43,10 +43,6 @@ public class MqttTestClient {
         this.client = createClient();
     }
 
-    public MqttTestClient(boolean generateClientId) throws MqttException {
-        this.client = createClient(generateClientId);
-    }
-
     public MqttTestClient(String clientId) throws MqttException {
         this.client = createClient(clientId);
     }
@@ -121,18 +117,13 @@ public class MqttTestClient {
     }
 
     private MqttAsyncClient createClient() throws MqttException {
-        return createClient(true);
-    }
-
-    private MqttAsyncClient createClient(boolean generateClientId) throws MqttException {
-        String clientId = null;
-        if (generateClientId) {
-            clientId = MqttAsyncClient.generateClientId();
-        }
-        return createClient(clientId);
+        return createClient(null);
     }
 
     private MqttAsyncClient createClient(String clientId) throws MqttException {
+        if (clientId == null) {
+            clientId = MqttAsyncClient.generateClientId();
+        }
         return new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
     }
 

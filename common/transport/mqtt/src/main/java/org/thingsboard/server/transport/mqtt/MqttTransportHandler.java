@@ -891,12 +891,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private MqttConnAckMessage createMqttConnAckMsg(ReturnCode returnCode, MqttConnectMessage msg) {
-        MqttFixedHeader mqttFixedHeader =
-                new MqttFixedHeader(CONNACK, false, AT_MOST_ONCE, false, 0);
+        MqttMessageBuilders.ConnAckBuilder connAckBuilder = MqttMessageBuilders.connAck();
+        connAckBuilder.sessionPresent(!msg.variableHeader().isCleanSession());
         MqttConnectReturnCode finalReturnCode = ReturnCodeResolver.getConnectionReturnCode(deviceSessionCtx.getMqttVersion(), returnCode);
-        MqttConnAckVariableHeader mqttConnAckVariableHeader =
-                new MqttConnAckVariableHeader(finalReturnCode, !msg.variableHeader().isCleanSession());
-        return new MqttConnAckMessage(mqttFixedHeader, mqttConnAckVariableHeader);
+        connAckBuilder.returnCode(finalReturnCode);
+        return connAckBuilder.build();
     }
 
     @Override

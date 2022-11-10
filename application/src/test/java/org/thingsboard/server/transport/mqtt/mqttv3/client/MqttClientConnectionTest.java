@@ -45,9 +45,4 @@ public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
     public void testClientWithWrongClientIdAndEmptyUsernamePassword() throws Exception {
         processClientWithWrongClientIdAndEmptyUsernamePasswordTest();
     }
-
-    @Test
-    public void testClientWithNoCredentialsTest() throws Exception {
-        processClientWithNoCredentialsTest();
-    }
 }

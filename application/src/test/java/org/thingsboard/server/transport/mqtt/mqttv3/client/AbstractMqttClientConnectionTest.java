@@ -47,13 +47,4 @@ public abstract class AbstractMqttClientConnectionTest extends AbstractMqttInteg
         }
     }
 
-    protected void processClientWithNoCredentialsTest() throws Exception {
-        MqttTestClient client = new MqttTestClient(false);
-        try {
-            client.connectAndWait();
-        } catch (MqttException e) {
-            Assert.assertEquals(MqttException.REASON_CODE_NOT_AUTHORIZED, e.getReasonCode());
-        }
-    }
-
 }
