@@ -178,6 +178,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                 } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
                         jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                        return;
                     } else {
                         tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
                         partitionService.removeTenant(componentLifecycleMsg.getTenantId());

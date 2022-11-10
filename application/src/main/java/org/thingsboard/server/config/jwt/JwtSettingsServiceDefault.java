@@ -164,7 +164,11 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
             if (isAllowedDefaultJwtSigningKey()) {
                 log.warn("Default JWT signing key is allowed. This is a security issue. Please, consider to set a strong key in admin settings");
             } else {
-                String message = "Please, set a unique signing key with env variable JWT_TOKEN_SIGNING_KEY. Key is a Base64 encoded phrase. This will require to generate new tokens for all users and API that uses JWT tokens. To allow insecure JWS use TB_ALLOW_DEFAULT_JWT_SIGNING_KEY=true";
+                String message = "UPGRADE ERROR. YOUR ACTION REQUIRED. Please, set a unique signing key with env variable JWT_TOKEN_SIGNING_KEY. " +
+                        "The key should be a Base64 encoded string representing at least 256 bits of data. " +
+                        "This will require to generate new tokens for all UI users and scripts that use JWT. " +
+                        "To keep the default non-secure JWT signing key set TB_ALLOW_DEFAULT_JWT_SIGNING_KEY=true and restart the upgrade. " +
+                        "You may change the JWT signing key later in the Admin Settings UI.";
                 log.error(message);
                 throw new ValidationException(message);
             }
