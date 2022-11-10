@@ -35,7 +35,6 @@ import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckPayload;
 import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
-import io.netty.handler.codec.mqtt.MqttUnsubAckPayload;
 import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslHandler;
@@ -84,6 +83,7 @@ import java.net.InetSocketAddress;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -364,7 +364,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.close();
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendAckOrCloseSession(ctx, topicName, ReturnCode.PAYLOAD_FORMAT_INVALID, msgId);
+            sendAckOrCloseSession(ctx, topicName, msgId);
         }
     }
 
@@ -453,14 +453,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendAckOrCloseSession(ctx, topicName, ReturnCode.PAYLOAD_FORMAT_INVALID, msgId);
+            sendAckOrCloseSession(ctx, topicName, msgId);
         }
     }
 
-    private void sendAckOrCloseSession(ChannelHandlerContext ctx, String topicName, ReturnCode returnCode, int msgId) {
+    private void sendAckOrCloseSession(ChannelHandlerContext ctx, String topicName, int msgId) {
         if ((deviceSessionCtx.isSendAckOnValidationException() || MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) && msgId > 0) {
             log.debug("[{}] Send pub ack on invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-            ctx.writeAndFlush(createMqttPubAckMsg(deviceSessionCtx, msgId, returnCode));
+            ctx.writeAndFlush(createMqttPubAckMsg(deviceSessionCtx, msgId, ReturnCode.PAYLOAD_FORMAT_INVALID));
         } else {
             log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
             ctx.close();
@@ -617,6 +617,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processSubscribe(ChannelHandlerContext ctx, MqttSubscribeMessage mqttMsg) {
         if (!checkConnected(ctx, mqttMsg)) {
+            int returnCode = ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), ReturnCode.NOT_AUTHORIZED_5);
+            ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), Collections.singletonList(returnCode)));
             return;
         }
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
@@ -720,61 +722,68 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processUnsubscribe(ChannelHandlerContext ctx, MqttUnsubscribeMessage mqttMsg) {
         if (!checkConnected(ctx, mqttMsg)) {
+            ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), Collections.singletonList(ReturnCode.NOT_AUTHORIZED_5.shortValue())));
             return;
         }
         boolean activityReported = false;
         List<Short> unSubResults = new ArrayList<>();
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
         for (String topicName : mqttMsg.payload().topics()) {
-            mqttQoSMap.remove(new MqttTopicMatcher(topicName));
-            try {
-                short resultValue = ReturnCode.SUCCESS.shortValue();
-                switch (topicName) {
-                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC: {
-                        transportService.process(deviceSessionCtx.getSessionInfo(),
-                                TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(), null);
-                        activityReported = true;
-                        break;
+            MqttTopicMatcher matcher = new MqttTopicMatcher(topicName);
+            if (mqttQoSMap.containsKey(matcher)) {
+                mqttQoSMap.remove(matcher);
+                try {
+                    short resultValue = ReturnCode.SUCCESS.shortValue();
+                    switch (topicName) {
+                        case MqttTopics.DEVICE_ATTRIBUTES_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC: {
+                            transportService.process(deviceSessionCtx.getSessionInfo(),
+                                    TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(), null);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC:
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC:
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC:
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC: {
+                            transportService.process(deviceSessionCtx.getSessionInfo(),
+                                    TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(), null);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_TOPIC:
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_JSON_TOPIC:
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_PROTO_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC:
+                        case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
+                        case MqttTopics.GATEWAY_RPC_TOPIC:
+                        case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
+                        case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
+                        case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
+                        case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
+                        case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
+                        case MqttTopics.DEVICE_SOFTWARE_ERROR_TOPIC: {
+                            activityReported = true;
+                            break;
+                        }
+                        default:
+                            log.trace("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
+                            resultValue = ReturnCode.TOPIC_FILTER_INVALID.shortValue();
                     }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC:
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC:
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC:
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC: {
-                        transportService.process(deviceSessionCtx.getSessionInfo(),
-                                TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(), null);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_TOPIC:
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_JSON_TOPIC:
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_PROTO_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC:
-                    case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
-                    case MqttTopics.GATEWAY_RPC_TOPIC:
-                    case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-                    case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
-                    case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
-                    case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
-                    case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
-                    case MqttTopics.DEVICE_SOFTWARE_ERROR_TOPIC: {
-                        activityReported = true;
-                        break;
-                    }
-                    default:
-                        log.trace("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
-                        resultValue = ReturnCode.TOPIC_FILTER_INVALID.shortValue();
+                    unSubResults.add(resultValue);
+                } catch (Exception e) {
+                    log.debug("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
+                    unSubResults.add(ReturnCode.IMPLEMENTATION_SPECIFIC.shortValue());
                 }
-                unSubResults.add(resultValue);
-            } catch (Exception e) {
-                log.debug("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
-                unSubResults.add(ReturnCode.IMPLEMENTATION_SPECIFIC.shortValue());
+            } else {
+                log.debug("[{}] Failed to process unsubscription [{}] to [{}] - Subscription not found", sessionId, mqttMsg.variableHeader().messageId(), topicName);
+                unSubResults.add(ReturnCode.NO_SUBSCRIPTION_EXISTED.shortValue());
             }
         }
         if (!activityReported) {
@@ -784,15 +793,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private MqttMessage createUnSubAckMessage(int msgId, List<Short> resultCodes) {
-        MqttFixedHeader mqttFixedHeader =
-                new MqttFixedHeader(UNSUBACK, false, AT_MOST_ONCE, false, 0);
-        MqttMessageIdVariableHeader mqttMessageIdVariableHeader = MqttMessageIdVariableHeader.from(msgId);
+        MqttMessageBuilders.UnsubAckBuilder unsubAckBuilder = MqttMessageBuilders.unsubAck();
+        unsubAckBuilder.packetId(msgId);
         if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
-            MqttUnsubAckPayload mqttUnsubAckPayload = new MqttUnsubAckPayload(resultCodes);
-            return new MqttMessage(mqttFixedHeader, mqttMessageIdVariableHeader, mqttUnsubAckPayload);
-        } else {
-            return new MqttMessage(mqttFixedHeader, mqttMessageIdVariableHeader);
+            unsubAckBuilder.addReasonCodes(resultCodes.toArray(Short[]::new));
         }
+        return unsubAckBuilder.build();
     }
 
     void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {

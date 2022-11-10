@@ -85,7 +85,7 @@ public class MqttV5TestClient {
         return client.connect(options);
     }
 
-    private IMqttToken connect(MqttConnectionOptions options) throws MqttException {
+    public IMqttToken connect(MqttConnectionOptions options) throws MqttException {
         if (client == null) {
             throw new RuntimeException("Failed to connect! MqttAsyncClient is not initialized!");
         }
@@ -132,6 +132,16 @@ public class MqttV5TestClient {
 
     public IMqttToken subscribe(String topic, MqttQoS qoS) throws MqttException {
         return client.subscribe(topic, qoS.value());
+    }
+
+    public IMqttToken unsubscribeAndWait(String topic) throws MqttException {
+        IMqttToken iMqttToken = unsubscribe(topic);
+        iMqttToken.waitForCompletion(TIMEOUT_MS);
+        return iMqttToken;
+    }
+
+    public IMqttToken unsubscribe(String topic) throws MqttException {
+        return client.unsubscribe(topic);
     }
 
     public boolean isConnected() {
