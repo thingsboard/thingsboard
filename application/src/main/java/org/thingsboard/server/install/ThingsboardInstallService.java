@@ -34,7 +34,6 @@ import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
-import org.thingsboard.server.service.install.ConditionValidatorUpgradeService;
 
 @Service
 @Profile("install")
@@ -89,15 +88,10 @@ public class ThingsboardInstallService {
     @Autowired(required = false)
     private TsLatestMigrateService latestMigrateService;
 
-    @Autowired
-    private ConditionValidatorUpgradeService conditionValidatorUpgradeService;
-
     public void performInstall() {
         try {
             if (isUpgrade) {
                 log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
-
-                conditionValidatorUpgradeService.validateConditionsBeforeUpgrade(upgradeFromVersion);
 
                 cacheCleanupService.clearCache(upgradeFromVersion);
 

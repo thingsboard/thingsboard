@@ -15,53 +15,6 @@
  */
 package org.thingsboard.server.config.jwt;
 
-import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.util.Arrays;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.exception.DataValidationException;
-
-import java.util.Base64;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-@Component
-@AllArgsConstructor
-public class JwtSettingsValidator {
-
-    public void validate(JwtSettings jwtSettings) {
-        if (StringUtils.isEmpty(jwtSettings.getTokenIssuer())) {
-            throw new DataValidationException("JWT token issuer should be specified!");
-        }
-        if (Optional.ofNullable(jwtSettings.getRefreshTokenExpTime()).orElse(0) <= TimeUnit.MINUTES.toSeconds(15)) {
-            throw new DataValidationException("JWT refresh token expiration time should be at least 15 minutes!");
-        }
-        if (Optional.ofNullable(jwtSettings.getTokenExpirationTime()).orElse(0) <= TimeUnit.MINUTES.toSeconds(1)) {
-            throw new DataValidationException("JWT token expiration time should be at least 1 minute!");
-        }
-        if (jwtSettings.getTokenExpirationTime() >= jwtSettings.getRefreshTokenExpTime()) {
-            throw new DataValidationException("JWT token expiration time should greater than JWT refresh token expiration time!");
-        }
-        if (StringUtils.isEmpty(jwtSettings.getTokenSigningKey())) {
-            throw new DataValidationException("JWT token signing key should be specified!");
-        }
-
-        byte[] decodedKey;
-        try {
-            decodedKey = Base64.getDecoder().decode(jwtSettings.getTokenSigningKey());
-        } catch (Exception e) {
-            throw new DataValidationException("JWT token signing key should be valid Base64 encoded string! " + e.getCause());
-        }
-
-        if (Arrays.isNullOrEmpty(decodedKey)) {
-            throw new DataValidationException("JWT token signing key should be non-empty after Base64 decoding!");
-        }
-        if (decodedKey.length * Byte.SIZE < 256) {
-            throw new DataValidationException("JWT token signing key should be a Base64 encoded string representing at least 256 bits of data!");
-        }
-
-        System.arraycopy(decodedKey, 0, RandomUtils.nextBytes(decodedKey.length), 0, decodedKey.length); //secure memory
-    }
-
+public interface JwtSettingsValidator {
+    void validate(JwtSettings jwtSettings);
 }

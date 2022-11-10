@@ -25,6 +25,4 @@ public interface JwtSettingsService {
 
     JwtSettings saveJwtSettings(JwtSettings jwtSettings);
 
-    void validateJwtTokenSigningKey();
-
 }

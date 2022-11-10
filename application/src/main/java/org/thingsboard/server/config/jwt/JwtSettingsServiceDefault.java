@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import javax.annotation.PostConstruct;
-import javax.validation.ValidationException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
@@ -84,8 +83,10 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
             jwtSettings.setTokenSigningKey(jwtLoaded.getTokenSigningKey());
         }
 
-        if (hasDefaultTokenSigningKey() && !isFirstInstall()) {
-            log.warn("JWT token signing key is default. This is a security issue. Please, consider to set unique value");
+        if (hasDefaultTokenSigningKey()) {
+            log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
+                    "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
+                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
         }
     }
 
@@ -107,17 +108,18 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
         return TOKEN_SIGNING_KEY_DEFAULT.equals(jwtSettings.getTokenSigningKey());
     }
 
+    /**
+     * Create JWT admin settings is intended to be called from Install or Upgrade scripts
+     * */
     @Override
     public void createJwtAdminSettings() {
-        log.debug("Creating JWT admin settings...");
+        log.info("Creating JWT admin settings...");
         Objects.requireNonNull(jwtSettings, "JWT settings is null");
         if (isJwtAdminSettingsNotExists()) {
-            if (hasDefaultTokenSigningKey()) {
-                if (!isAllowedDefaultJwtSigningKey()) {
-                    log.info("JWT token signing key is default. Generating a new random key");
-                    jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                            RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
-                }
+            if (hasDefaultTokenSigningKey() && isFirstInstall()) {
+                log.info("JWT token signing key is default. Generating a new random key");
+                jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
+                        RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
             }
             saveJwtSettings(jwtSettings);
         }
@@ -148,31 +150,6 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
 
     AdminSettings findJwtAdminSettings() {
         return adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
-    }
-
-    /*
-     * Allowing default JWT signing key is not secure
-     * */
-    boolean isAllowedDefaultJwtSigningKey() {
-        String allowDefaultJwtSigningKey = System.getenv(TB_ALLOW_DEFAULT_JWT_SIGNING_KEY);
-        return "true".equalsIgnoreCase(allowDefaultJwtSigningKey);
-    }
-
-    @Override
-    public void validateJwtTokenSigningKey() {
-        if (isJwtAdminSettingsNotExists() && hasDefaultTokenSigningKey()) {
-            if (isAllowedDefaultJwtSigningKey()) {
-                log.warn("Default JWT signing key is allowed. This is a security issue. Please, consider to set a strong key in admin settings");
-            } else {
-                String message = "UPGRADE ERROR. YOUR ACTION REQUIRED. Please, set a unique signing key with env variable JWT_TOKEN_SIGNING_KEY. " +
-                        "The key should be a Base64 encoded string representing at least 256 bits of data. " +
-                        "This will require to generate new tokens for all UI users and scripts that use JWT. " +
-                        "To keep the default non-secure JWT signing key set TB_ALLOW_DEFAULT_JWT_SIGNING_KEY=true and restart the upgrade. " +
-                        "You may change the JWT signing key later in the Admin Settings UI.";
-                log.error(message);
-                throw new ValidationException(message);
-            }
-        }
     }
 
 }

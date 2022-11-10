@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.config.jwt;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.config.jwt.JwtSettingsService;
+import org.springframework.stereotype.Component;
 
-@Service
+@Primary
 @Profile("install")
+@Component
 @RequiredArgsConstructor
-@Slf4j
-public class ConditionValidatorUpgradeServiceImpl implements ConditionValidatorUpgradeService {
+public class JwtSettingsValidatorInstall implements JwtSettingsValidator {
 
-    private final JwtSettingsService jwtSettingsService;
-
+    /**
+     * During Install or upgrade the validation is suppressed to keep existing data
+     * */
     @Override
-    public void validateConditionsBeforeUpgrade(String fromVersion) throws Exception {
-        log.info("Validating conditions before upgrade...");
-        jwtSettingsService.validateJwtTokenSigningKey();
+    public void validate(JwtSettings jwtSettings) {
+
     }
 
 }
