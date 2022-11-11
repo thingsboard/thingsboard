@@ -64,7 +64,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.fail;
 import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
-import static org.thingsboard.server.msa.TestProperties.HTTPS_URL;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
 @Slf4j

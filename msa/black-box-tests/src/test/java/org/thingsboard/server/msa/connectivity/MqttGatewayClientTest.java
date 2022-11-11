@@ -28,7 +28,6 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -52,8 +51,15 @@ import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.DataConstants.DEVICE;

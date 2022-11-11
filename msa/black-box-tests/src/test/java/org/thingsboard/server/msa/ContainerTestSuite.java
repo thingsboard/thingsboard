@@ -54,7 +54,7 @@ public class ContainerTestSuite {
 
     private  DockerComposeContainer<?> testContainer;
     private  ThingsBoardDbInstaller installTb;
-    public  boolean isActive;
+    private boolean isActive;
 
     private static ContainerTestSuite containerTestSuite;
 

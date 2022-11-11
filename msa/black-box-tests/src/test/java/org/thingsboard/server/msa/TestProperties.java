@@ -15,44 +15,49 @@
  */
 package org.thingsboard.server.msa;
 
-import java.io.FileInputStream;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+@Slf4j
+@Component
 public class TestProperties {
-    public static final String HTTPS_URL = "https://localhost";
 
-    protected static final String WSS_URL = "wss://localhost";
+    private static final String HTTPS_URL = "https://localhost";
 
-    public static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
+    private static final String WSS_URL = "wss://localhost";
 
-    public static String getBaseUrl(){
+    private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
+
+    private static Properties properties;
+
+    public static String getBaseUrl() {
         if (instance.isActive()) {
             return HTTPS_URL;
         }
-        return getProperty("tb.baseUrl");
+        return getProperties().getProperty("tb.baseUrl");
     }
 
-    public static String getWebSocketUrl(){
+    public static String getWebSocketUrl() {
         if (instance.isActive()) {
             return WSS_URL;
         }
-        return getProperty("tb.wsUrl");
+        return getProperties().getProperty("tb.wsUrl");
     }
 
-    private static String getProperty(String propertyName) {
-
-        try (InputStream input = TestProperties.class.getClassLoader().getResourceAsStream("config.properties")) {
-            Properties prop = new Properties();
-            prop.load(input);
-            return  prop.getProperty(propertyName);
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
+    private static Properties getProperties() {
+        if (properties == null) {
+            try (InputStream input = TestProperties.class.getClassLoader().getResourceAsStream("config.properties")) {
+                properties = new Properties();
+                properties.load(input);
+            } catch (IOException ex) {
+                log.error("Exception while reading test properties " + ex.getMessage());
+            }
         }
-        return null;
-
+        return properties;
     }
 
 }

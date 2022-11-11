@@ -29,8 +29,10 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
+
 import java.net.URI;
-import java.util.*;
+import java.util.Map;
+import java.util.Random;
 
 
 @Slf4j

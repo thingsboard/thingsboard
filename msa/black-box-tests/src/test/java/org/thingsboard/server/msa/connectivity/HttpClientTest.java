@@ -25,12 +25,12 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.DEVICE;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
 public class HttpClientTest extends AbstractContainerTest {

@@ -17,10 +17,8 @@ package org.thingsboard.server.msa;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.restassured.RestAssured;
-import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.config.HeaderConfig;
-import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
@@ -28,9 +26,10 @@ import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import io.restassured.specification.ResponseSpecification;
-import org.hamcrest.Matchers;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,8 +47,6 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.apache.http.params.CoreConnectionPNames.CONNECTION_TIMEOUT;
-import static org.apache.http.params.CoreConnectionPNames.SO_TIMEOUT;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
@@ -59,9 +56,7 @@ public class TestRestClient {
     private final String baseURL;
     private String token;
     private String refreshToken;
-    private RequestSpecification requestSpec;
-    private ResponseSpecification responseSpec;
-    protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
+    private final RequestSpecification requestSpec;
 
     public TestRestClient(String url) {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
@@ -78,7 +73,7 @@ public class TestRestClient {
         }
     }
 
-    public void login(String username, String password) throws Exception {
+    public void login(String username, String password) {
         Map<String, String> loginRequest = new HashMap<>();
         loginRequest.put("username", username);
         loginRequest.put("password", password);
