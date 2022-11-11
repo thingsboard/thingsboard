@@ -16,25 +16,16 @@
 package org.thingsboard.server.transport.mqtt.mqttv5.client.subscribe;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
-import org.eclipse.paho.mqttv5.common.MqttException;
-import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttSubAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
-import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_SUBACK;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class AbstractMqttV5ClientSubscriptionTest extends AbstractMqttIntegrationTest {
 

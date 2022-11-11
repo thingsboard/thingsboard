@@ -1010,15 +1010,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
         if (!msg.hasDeviceInfo()) {
             context.onAuthFailure(address);
-            ReturnCode returnCode = ReturnCode.NOT_AUTHORIZED_5;
-            if (sslHandler == null || getX509Certificate() == null) {
-                if (connectMessage.payload().userName() == null ^ connectMessage.payload().passwordInBytes() == null) {
-                    returnCode = ReturnCode.BAD_USERNAME_OR_PASSWORD;
-                } else if (!StringUtils.isBlank(connectMessage.payload().clientIdentifier())) {
-                    returnCode = ReturnCode.CLIENT_IDENTIFIER_NOT_VALID;
+            if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
+                ReturnCode returnCode = ReturnCode.NOT_AUTHORIZED_5;
+                if (sslHandler == null || getX509Certificate() == null) {
+                    if (connectMessage.payload().userName() == null ^ connectMessage.payload().passwordInBytes() == null) {
+                        returnCode = ReturnCode.BAD_USERNAME_OR_PASSWORD;
+                    } else if (!StringUtils.isBlank(connectMessage.payload().clientIdentifier())) {
+                        returnCode = ReturnCode.CLIENT_IDENTIFIER_NOT_VALID;
+                    }
                 }
+                ctx.writeAndFlush(createMqttConnAckMsg(returnCode, connectMessage));
             }
-            ctx.writeAndFlush(createMqttConnAckMsg(returnCode, connectMessage));
             ctx.close();
         } else {
             context.onAuthSuccess(address);

@@ -121,7 +121,7 @@ public class MqttTestClient {
     }
 
     private MqttAsyncClient createClient(String clientId) throws MqttException {
-        if (clientId == null) {
+        if (StringUtils.isEmpty(clientId)) {
             clientId = MqttAsyncClient.generateClientId();
         }
         return new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());

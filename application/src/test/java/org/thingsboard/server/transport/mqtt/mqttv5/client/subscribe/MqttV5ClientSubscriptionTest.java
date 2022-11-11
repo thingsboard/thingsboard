@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.mqtt.mqttv5.client.subscribe;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;

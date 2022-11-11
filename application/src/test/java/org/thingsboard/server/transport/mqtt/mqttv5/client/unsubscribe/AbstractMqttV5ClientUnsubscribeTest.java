@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.mqtt.mqttv5.client.unsubscribe;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttUnsubAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;

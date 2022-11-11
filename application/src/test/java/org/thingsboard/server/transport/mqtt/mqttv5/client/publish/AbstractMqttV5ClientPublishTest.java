@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.transport.mqtt.mqttv5.client.publish;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.common.packet.MqttPubAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
-import org.eclipse.paho.mqttv5.common.packet.MqttSubAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
@@ -27,7 +25,6 @@ import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_PUBACK;
-import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_SUBACK;
 
 public abstract class AbstractMqttV5ClientPublishTest extends AbstractMqttIntegrationTest {
 

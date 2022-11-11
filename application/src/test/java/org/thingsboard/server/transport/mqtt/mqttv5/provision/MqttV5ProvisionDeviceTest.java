@@ -42,7 +42,7 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVIC
 
 @Slf4j
 @DaoSqlTest
-public class MqttProvisionJsonDeviceTest extends AbstractMqttV5Test {
+public class MqttV5ProvisionDeviceTest extends AbstractMqttV5Test {
 
     @Autowired
     DeviceCredentialsService deviceCredentialsService;
