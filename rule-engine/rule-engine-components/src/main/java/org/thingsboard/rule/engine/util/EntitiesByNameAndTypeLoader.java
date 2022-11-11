@@ -45,15 +45,6 @@ public class EntitiesByNameAndTypeLoader {
                     targetEntityId = asset.getId();
                 }
                 break;
-            case CUSTOMER:
-                Optional<Customer> customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), entityName);
-                if (customerOptional.isPresent()) {
-                    targetEntityId = customerOptional.get().getId();
-                }
-                break;
-            case TENANT:
-                targetEntityId = ctx.getTenantId();
-                break;
             case ENTITY_VIEW:
                 EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
                 if (entityView != null) {
@@ -66,14 +57,8 @@ public class EntitiesByNameAndTypeLoader {
                     targetEntityId = edge.getId();
                 }
                 break;
-            case DASHBOARD:
-                DashboardInfo dashboardInfo = ctx.getDashboardService().findFirstDashboardInfoByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (dashboardInfo != null) {
-                    targetEntityId = dashboardInfo.getId();
-                }
-                break;
             case USER:
-                User user = ctx.getUserService().findUserByEmail(ctx.getTenantId(), entityName);
+                User user = ctx.getUserService().findUserByTenantIdAndEmail(ctx.getTenantId(), entityName);
                 if (user != null) {
                     targetEntityId = user.getId();
                 }
