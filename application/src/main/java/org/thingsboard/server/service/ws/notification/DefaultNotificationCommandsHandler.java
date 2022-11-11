@@ -20,30 +20,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
-import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
-import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
+import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
+import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsCountSubscription;
-import org.thingsboard.server.service.ws.WebSocketService;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 
@@ -168,11 +167,11 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
             }
         } else {
-            NotificationInfo notificationInfo = update.getNotificationInfo();
             subscription.getLatestUnreadNotifications().values().stream()
                     .filter(notification -> notification.getRequestId().equals(notificationRequestId))
                     .forEach(notification -> {
-                        notification.setInfo(notificationInfo);
+                        notification.setReason(update.getNotificationReason());
+                        notification.setInfo(update.getNotificationInfo());
                         sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
                     });
         }

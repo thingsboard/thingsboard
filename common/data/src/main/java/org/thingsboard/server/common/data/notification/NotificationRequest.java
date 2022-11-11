@@ -61,7 +61,20 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationRequestConfig additionalConfig;
     private NotificationRequestStatus status;
 
-    public static final String GENERAL_NOTIFICATION_REASON = "General";
+    public NotificationRequest(NotificationRequest other) {
+        super(other);
+        this.tenantId = other.tenantId;
+        this.targetId = other.targetId;
+        this.notificationReason = other.notificationReason;
+        this.textTemplate = other.textTemplate;
+        this.notificationInfo = other.notificationInfo;
+        this.notificationSeverity = other.notificationSeverity;
+        this.originatorType = other.originatorType;
+        this.originatorEntityId = other.originatorEntityId;
+        this.ruleId = other.ruleId;
+        this.additionalConfig = other.additionalConfig;
+        this.status = other.status;
+    }
 
     @JsonIgnore
     @Override

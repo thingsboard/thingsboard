@@ -18,8 +18,10 @@ package org.thingsboard.server.service.notification;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -38,10 +40,12 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
+@Slf4j
 public class DefaultNotificationRuleProcessingService implements NotificationRuleProcessingService {
 
     private final NotificationRuleService notificationRuleService;
@@ -78,6 +82,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
     // todo: think about: what if notification rule was updated?
     private void onAlarmUpdate(TenantId tenantId, NotificationRuleId notificationRuleId, Alarm alarm, boolean deleted) {
+        log.debug("Processing alarm update ({}) with notification rule {}", alarm.getId(), notificationRuleId);
         List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(tenantId, notificationRuleId, alarm.getId());
         NotificationRule notificationRule = notificationRuleService.findNotificationRuleById(tenantId, notificationRuleId);
         if (notificationRule == null) return;
@@ -101,7 +106,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 }
             }
         } else {
-            NotificationInfo newNotificationInfo = constructNotificationInfo(alarm, notificationRule);
+            NotificationInfo newNotificationInfo = constructNotificationInfo(alarm);
             for (NotificationRequest notificationRequest : notificationRequests) {
                 NotificationInfo previousNotificationInfo = notificationRequest.getNotificationInfo();
                 if (!previousNotificationInfo.equals(newNotificationInfo)) {
@@ -121,13 +126,13 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         if (delayInSec > 0) {
             config.setSendingDelayInSec(delayInSec);
         }
-        NotificationInfo notificationInfo = constructNotificationInfo(alarm, notificationRule);
+        NotificationInfo notificationInfo = constructNotificationInfo(alarm);
 
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .targetId(targetId)
                 .notificationReason("Alarm")
-                .textTemplate(notificationRule.getNotificationTextTemplate()) // todo: format with alarm vars
+                .textTemplate(formatNotificationTextTemplate(notificationRule.getNotificationTextTemplate(), alarm))
                 .notificationInfo(notificationInfo)
                 .notificationSeverity(NotificationSeverity.NORMAL) // todo: from alarm severity
                 .originatorType(NotificationOriginatorType.ALARM)
@@ -138,7 +143,19 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         notificationManager.processNotificationRequest(tenantId, notificationRequest);
     }
 
-    private NotificationInfo constructNotificationInfo(Alarm alarm, NotificationRule notificationRule) {
+    private String formatNotificationTextTemplate(String textTemplate, Alarm alarm) {
+        Map<String, String> context = Map.of( // fixme: notification text is not updatable
+                "alarmType", alarm.getType(),
+                "alarmId", alarm.getId().toString(),
+                "alarmOriginatorEntityType", alarm.getOriginator().getEntityType().toString(),
+                "alarmOriginatorId", alarm.getOriginator().getId().toString(),
+                "alarmSeverity", alarm.getSeverity().toString(),
+                "alarmStatus", alarm.getStatus().toString()
+        );
+        return TbNodeUtils.processTemplate(textTemplate, context);
+    }
+
+    private NotificationInfo constructNotificationInfo(Alarm alarm) {
         return AlarmOriginatedNotificationInfo.builder()
                 .alarmId(alarm.getId())
                 .alarmType(alarm.getType())

@@ -38,6 +38,6 @@ public interface NotificationService {
 
     int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId);
 
-    int updateNotificationsInfosByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationInfo notificationInfo);
+    int updateNotificationsByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, String notificationReason, NotificationInfo notificationInfo);
 
 }

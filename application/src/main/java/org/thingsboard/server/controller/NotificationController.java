@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -88,34 +89,43 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRequest createNotificationRequest(@RequestBody NotificationRequest notificationRequest,
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
         // todo: check permission for notification target
-        if (notificationRequest.getId() != null) {
-            // TODO: think about notification request update
-            throw new IllegalArgumentException("Notification request cannot be changed. You can delete it and create a new one");
-        }
-        notificationRequest.setOriginatorType(NotificationOriginatorType.USER);
-        notificationRequest.setOriginatorEntityId(user.getId());
-        if (StringUtils.isBlank(notificationRequest.getNotificationReason())) {
-            notificationRequest.setNotificationReason(NotificationRequest.GENERAL_NOTIFICATION_REASON);
-        }
-        if (notificationRequest.getNotificationSeverity() == null) {
-            notificationRequest.setNotificationSeverity(NotificationSeverity.NORMAL);
-        }
-        if (notificationRequest.getNotificationInfo() != null && notificationRequest.getNotificationInfo().getOriginatorType() != null) {
-            throw new IllegalArgumentException("Unsupported notification info type");
-        }
-        notificationRequest.setRuleId(null);
-        notificationRequest.setStatus(null);
 
-        try {
-            NotificationRequest savedNotificationRequest = notificationManager.processNotificationRequest(user.getTenantId(), notificationRequest);
-            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, savedNotificationRequest, ActionType.ADDED);
-            return savedNotificationRequest;
-        } catch (Exception e) {
-            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, null, ActionType.ADDED, e);
-            throw e;
+        if (notificationRequest.getId() == null) {
+            accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
+            notificationRequest.setOriginatorType(NotificationOriginatorType.USER);
+            notificationRequest.setOriginatorEntityId(user.getId());
+            if (StringUtils.isBlank(notificationRequest.getNotificationReason())) {
+                notificationRequest.setNotificationReason("General");
+            }
+            if (notificationRequest.getNotificationSeverity() == null) {
+                notificationRequest.setNotificationSeverity(NotificationSeverity.NORMAL);
+            }
+            if (notificationRequest.getNotificationInfo() != null && notificationRequest.getNotificationInfo().getOriginatorType() != null) {
+                throw new IllegalArgumentException("Unsupported notification info type");
+            }
+            notificationRequest.setRuleId(null);
+            notificationRequest.setStatus(null);
+            return notificationManager.processNotificationRequest(user.getTenantId(), notificationRequest);
+        } else {
+            NotificationRequest existingNotificationRequest = notificationRequestService.findNotificationRequestById(user.getTenantId(), notificationRequest.getId());
+            checkNotNull(existingNotificationRequest);
+            accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.WRITE, notificationRequest.getId(), notificationRequest);
+
+            existingNotificationRequest.setNotificationReason(notificationRequest.getNotificationReason());
+            existingNotificationRequest.setTextTemplate(notificationRequest.getTextTemplate());
+            existingNotificationRequest.setNotificationSeverity(notificationRequest.getNotificationSeverity());
+            return notificationManager.updateNotificationRequest(user.getTenantId(), existingNotificationRequest);
         }
+//
+//        try {
+//            NotificationRequest savedNotificationRequest = ;
+//            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, savedNotificationRequest, ActionType.ADDED);
+//            return savedNotificationRequest;
+//        } catch (Exception e) {
+//            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, null, ActionType.ADDED, e);
+//            throw e;
+//        }
     }
 
     @GetMapping("/notification/request/{id}")
@@ -124,6 +134,15 @@ public class NotificationController extends BaseController {
                                                           @AuthenticationPrincipal SecurityUser user) {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
         return notificationRequestService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
+    }
+
+    @GetMapping("/notification/request/info/{id}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public NotificationRequestInfo getNotificationRequestInfoById(@PathVariable UUID id,
+                                                                  @AuthenticationPrincipal SecurityUser user) {
+        // fixme: permission checks
+        NotificationRequestId notificationRequestId = new NotificationRequestId(id);
+        return notificationRequestService.getNotificationRequestInfoById(user.getTenantId(), notificationRequestId);
     }
 
     @GetMapping("/notification/requests")

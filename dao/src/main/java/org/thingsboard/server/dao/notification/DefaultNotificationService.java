@@ -17,27 +17,18 @@ package org.thingsboard.server.dao.notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
-
-import java.util.List;
 
 @Service
 @Slf4j
@@ -83,8 +74,8 @@ public class DefaultNotificationService implements NotificationService {
     }
 
     @Override
-    public int updateNotificationsInfosByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationInfo notificationInfo) {
-        return notificationDao.updateInfosByRequestId(tenantId, notificationRequestId, notificationInfo);
+    public int updateNotificationsByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, String notificationReason, NotificationInfo notificationInfo) {
+        return notificationDao.updateByRequestId(tenantId, notificationRequestId, notificationReason, notificationInfo);
     }
 
 }

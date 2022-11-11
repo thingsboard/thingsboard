@@ -153,15 +153,18 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     }
 
     @Override
-    public void updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+    public NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         log.debug("Updating notification request {}", notificationRequest.getId());
-        notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
-        notificationService.updateNotificationsInfosByRequestId(tenantId, notificationRequest.getId(), notificationRequest.getNotificationInfo());
+        notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
+        notificationService.updateNotificationsByRequestId(tenantId, notificationRequest.getId(),
+                notificationRequest.getNotificationReason(), notificationRequest.getNotificationInfo());
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequest.getId())
+                .notificationReason(notificationRequest.getNotificationReason())
                 .notificationInfo(notificationRequest.getNotificationInfo())
                 .deleted(false)
                 .build());
+        return notificationRequest;
     }
 
     private Notification createNotification(User recipient, NotificationRequest notificationRequest) {

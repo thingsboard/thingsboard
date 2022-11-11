@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.notification.sub;
+package org.thingsboard.server.common.data.notification;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
+import lombok.EqualsAndHashCode;
+
+import java.util.Map;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NotificationRequestUpdate {
-    private NotificationRequestId notificationRequestId;
-    private String notificationReason;
-    private NotificationInfo notificationInfo;
-    private boolean deleted;
+@EqualsAndHashCode(callSuper = true)
+public class NotificationRequestInfo extends NotificationRequest {
+
+    private int sent;
+    private int read;
+    private Map<String, NotificationStatus> statusesByRecipient;
+
+    public NotificationRequestInfo(NotificationRequest notificationRequest) {
+        super(notificationRequest);
+    }
+
 }

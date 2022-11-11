@@ -247,7 +247,7 @@ public class NotificationApiTest extends AbstractControllerTest {
 
     @Test
     public void testNotificationUpdatesForUsersInTarget() throws Exception {
-        Map<User, NotificationApiWsClient> wsSessions = createUsersAndSetUpWsSessions(150);
+        Map<User, NotificationApiWsClient> wsSessions = createUsersAndSetUpWsSessions(100);
         wsSessions.forEach((user, wsClient) -> {
             wsClient.subscribeForUnreadNotifications(10);
             wsClient.waitForReply(true);
@@ -258,14 +258,14 @@ public class NotificationApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         UserListNotificationTargetConfig config = new UserListNotificationTargetConfig();
         config.setUsersIds(wsSessions.keySet().stream().map(User::getUuidId).collect(Collectors.toList()));
-        notificationTarget.setName("150 users");
+        notificationTarget.setName("100 users");
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setConfiguration(config);
         notificationTarget = saveNotificationTarget(notificationTarget);
 
         wsSessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
         NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Hello, ${recipientEmail}");
-        await().atMost(3, TimeUnit.SECONDS)
+        await().atMost(5, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> wsSessions.values().stream()
                         .allMatch(wsClient -> wsClient.getLastDataUpdate() != null

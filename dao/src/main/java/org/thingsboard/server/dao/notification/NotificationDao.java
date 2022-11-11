@@ -38,6 +38,6 @@ public interface NotificationDao extends Dao<Notification> {
 
     PageData<Notification> findByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, PageLink pageLink);
 
-    int updateInfosByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationInfo notificationInfo);
+    int updateByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, String notificationReason, NotificationInfo notificationInfo);
 
 }

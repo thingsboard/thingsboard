@@ -29,6 +29,6 @@ public interface NotificationManager {
 
     void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 
-    void updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
+    NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
 }
