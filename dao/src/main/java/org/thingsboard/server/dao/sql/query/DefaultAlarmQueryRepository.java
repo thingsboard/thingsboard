@@ -237,7 +237,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
             String mainQuery = String.format("%s%s", selectPart, fromPart);
             if (textSearchQuery.isEmpty()) {
-                mainQuery += String.format("%s%s", joinPart, wherePart);
+                mainQuery = String.format("%s%s%s", mainQuery, joinPart, wherePart);
             } else {
                 mainQuery = String.format("select * from (%s%s) a %s WHERE %s", mainQuery, wherePart, joinPart, textSearchQuery);
             }
