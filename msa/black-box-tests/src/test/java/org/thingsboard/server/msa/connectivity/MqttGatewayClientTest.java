@@ -72,6 +72,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     private MqttClient mqttClient;
     private Device createdDevice;
     private MqttMessageListener listener;
+    private JsonParser jsonParser = new JsonParser();
 
     @BeforeMethod
     public void createGateway() throws Exception {

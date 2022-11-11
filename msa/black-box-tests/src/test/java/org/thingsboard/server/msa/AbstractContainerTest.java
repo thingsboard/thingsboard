@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -40,7 +39,6 @@ import java.util.Random;
 public abstract class AbstractContainerTest {
     protected static long timeoutMultiplier = 1;
     protected ObjectMapper mapper = new ObjectMapper();
-    protected JsonParser jsonParser = new JsonParser();
     private static final ContainerTestSuite containerTestSuite = ContainerTestSuite.getInstance();
     protected static TestRestClient testRestClient;
 

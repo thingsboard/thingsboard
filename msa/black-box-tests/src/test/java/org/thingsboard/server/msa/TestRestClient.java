@@ -51,7 +51,7 @@ import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 
 public class TestRestClient {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    private final String baseURL;
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private final RequestSpecification requestSpec;
     private String token;
     private String refreshToken;
@@ -59,12 +59,11 @@ public class TestRestClient {
     public TestRestClient(String url) {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
 
-        baseURL = url;
-        requestSpec = given().baseUri(baseURL)
+        requestSpec = given().baseUri(url)
                 .contentType(ContentType.JSON)
                 .config(RestAssuredConfig.config()
                         .headerConfig(HeaderConfig.headerConfig()
-                                .overwriteHeadersWithName(JWT_TOKEN_HEADER_PARAM)));
+                                .overwriteHeadersWithName(JWT_TOKEN_HEADER_PARAM, CONTENT_TYPE_HEADER)));
 
         if (url.matches("^(https)://.*$")) {
             requestSpec.relaxedHTTPSValidation();
@@ -76,7 +75,8 @@ public class TestRestClient {
         loginRequest.put("username", username);
         loginRequest.put("password", password);
 
-        JsonPath jsonPath = given().relaxedHTTPSValidation().body(loginRequest).post(baseURL + "/api/auth/login")
+        JsonPath jsonPath = given().spec(requestSpec).body(loginRequest)
+                .post( "/api/auth/login")
                 .getBody().jsonPath();
         token = jsonPath.get("token");
         refreshToken = jsonPath.get("refreshToken");
