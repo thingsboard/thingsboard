@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.fetch;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -37,5 +35,4 @@ public class CustomerUsersEdgeEventFetcher extends BaseUsersEdgeEventFetcher {
     protected PageData<User> findUsers(TenantId tenantId, PageLink pageLink) {
         return userService.findCustomerUsers(tenantId, customerId, pageLink);
     }
-
 }

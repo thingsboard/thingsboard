@@ -64,6 +64,30 @@
             {{ 'widgets.maps.cluster-markers-lazy-load' | translate }}
           </mat-slide-toggle>
         </fieldset>
+        <fieldset class="fields-group fields-group-slider">
+          <legend class="group-title" translate>widgets.maps.clustering-markers</legend>
+          <mat-expansion-panel class="tb-settings" [expanded]="markerClusteringSettingsFormGroup.get('useIconCreateFunction').value">
+            <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-panel-title>
+                <mat-slide-toggle formControlName="useIconCreateFunction" (click)="$event.stopPropagation()"
+                                  fxLayoutAlign="center">
+                  {{ 'widgets.maps.use-icon-create-function' | translate }}
+                </mat-slide-toggle>
+              </mat-panel-title>
+              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+                widget-config.advanced-settings
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-js-func formControlName="clusterMarkerFunction"
+                          [globalVariables]="functionScopeVariables"
+                          [functionArgs]="['data', 'childCount']"
+                          functionTitle="{{ 'widgets.maps.marker-color-function' | translate }}"
+                          helpId="widget/lib/map/clustering_color_fn">
+              </tb-js-func>
+            </ng-template>
+          </mat-expansion-panel>
+        </fieldset>
       </ng-template>
     </mat-expansion-panel>
   </fieldset>

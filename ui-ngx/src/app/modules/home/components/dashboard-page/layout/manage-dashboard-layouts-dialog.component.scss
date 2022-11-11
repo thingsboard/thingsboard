@@ -1,0 +1,181 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@use '~@angular/material' as mat;
+@import '../theme.scss';
+
+$tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
+
+:host {
+  .tb-layout-fixed-container {
+    width: 100%;
+    min-width: 368px;
+    padding: 8px 8px 8px 0;
+    min-height: 48px;
+  }
+
+  .tb-hint-group {
+    padding: 0;
+    margin-top: -14px;
+    display: block;
+  }
+
+  .tb-layout-preview {
+    width: 120%;
+    background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.6);
+    padding: 35px;
+
+    &-container {
+      width: 75%;
+
+      button.tb-fixed-layout-button {
+        background-color: transparent;
+        color: #000000;
+        cursor: pointer;
+
+        .mat-icon {
+          color: rgba(0, 0, 0, 0.38);
+        }
+
+        &:hover {
+          background-color: rgba(211, 211, 211, 0.6);
+        }
+      }
+
+      div {
+        transition-duration: 0.5s;
+        transition-property: max-width;
+        position: relative;
+
+        .mat-icon-button {
+          align-self: end;
+        }
+      }
+
+      .tb-layout-preview-element {
+        position: absolute;
+        z-index: 99;
+
+        .mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          line-height: 20px;
+          color: rgba(255, 255, 255, 0.76);
+
+          &:hover {
+            transform: rotate(180deg);
+            transition: transform 0.5s;
+          }
+        }
+      }
+
+      &-main {
+        min-width: 25%;
+      }
+
+      /* remove arrows from input for Chrome, Safari, Edge, Opera */
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      /* remove arrows from input for Firefox */
+      input[type=number] {
+        -moz-appearance: textfield;
+      }
+
+      .tb-layout-preview-input {
+        margin: 80px 0 0;
+
+        input {
+          border: 1px solid #778899;
+          background-color: transparent;
+          color: #ffffff;
+          border-radius: 4px;
+          text-align: center;
+          outline: none;
+          width: 37px;
+          height: 28px;
+          font-size: 14px;
+
+          &:invalid {
+            outline: 2px solid $tb-warn;
+            border: 1px solid transparent;
+            background-color: rgba($tb-warn, 0.2);
+          }
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mat-slider-wrapper {
+    .mat-slider-thumb-container {
+      .mat-slider-thumb-label {
+        width: 35px;
+        height: 35px;
+      }
+    }
+  }
+
+  .mat-button-toggle-group {
+    width: 100%;
+    min-width: 354px;
+    border: 2px solid rgba(0, 0, 0, 0.06);
+
+    .mat-button-toggle-checked  {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .mat-button-toggle {
+      border: none !important;
+    }
+  }
+
+  /* Make mat-slider tooltip always visible */
+  .mat-slider-thumb-label {
+    transform: rotate(45deg) !important;
+    border-radius: 50% 50% 0 !important;
+  }
+
+  .mat-slider-thumb {
+    transform: scale(0) !important;
+  }
+
+  .mat-slider-thumb-label-text {
+    opacity: 1 !important;
+  }
+}
+
+::ng-deep {
+  /* Alarm tooltip with side-to-side movement */
+  .tb-layout-error-tooltip-right {
+    background-color: $tb-warn !important;
+    margin: 5px 0 0 105px;
+    width: 160px;
+    text-align: center;
+  }
+
+  .tb-layout-error-tooltip-main {
+    background-color: $tb-warn !important;
+    margin: 5px 105px 0 0;
+    width: 160px;
+    text-align: center;
+  }
+}

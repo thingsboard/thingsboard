@@ -109,7 +109,7 @@ security:
   # JWT Token parameters
   jwt:
     tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000}" # Number of seconds (2.5 hours)
-    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week)
+    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week).
     tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
@@ -200,6 +200,14 @@ cassandra:
   username: "${CASSANDRA_USERNAME:}"
   # Specify your password
   password: "${CASSANDRA_PASSWORD:}"
+  # Astra DB connect https://astra.datastax.com/
+  cloud:
+    # /etc/thingsboard/astra/secure-connect-thingsboard.zip
+    secure_connect_bundle_path: "${CASSANDRA_CLOUD_SECURE_BUNDLE_PATH:}"
+    # DucitQPHMzPCBOZqFYexAfKk
+    client_id: "${CASSANDRA_CLOUD_CLIENT_ID:}"
+    # ZnF7FpuHp43FP5BzM+KY8wGmSb4Ql6BhT4Z7sOU13ze+gXQ-n7OkFpNuB,oACUIQObQnK0g4bSPoZhK5ejkcF9F.j6f64j71Sr.tiRe0Fsq2hPS1ZCGSfAaIgg63IydG
+    client_secret: "${CASSANDRA_CLOUD_CLIENT_SECRET:}"
 
   # Cassandra cluster connection socket parameters #
   socket:
@@ -265,6 +273,7 @@ sql:
     batch_size: "${SQL_EDGE_EVENTS_BATCH_SIZE:1000}"
     batch_max_delay: "${SQL_EDGE_EVENTS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_EDGE_EVENTS_BATCH_STATS_PRINT_MS:10000}"
+    partition_size: "${SQL_EDGE_EVENTS_PARTITION_SIZE_HOURS:168}" # Number of hours to partition the events. The current value corresponds to one week.
   audit_logs:
     partition_size: "${SQL_AUDIT_LOGS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
@@ -310,7 +319,9 @@ sql:
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. Accuracy of the cleanup depends on the sql.audit_logs.partition_size
       checking_interval_ms: "${SQL_TTL_AUDIT_LOGS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
-    max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # //This value has to be reasonable small to prevent infinite recursion as early as possible
+    max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonable small to prevent infinite recursion as early as possible
+    pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
+    query_timeout: "${SQL_RELATIONS_QUERY_TIMEOUT_SEC:20}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
 
 # Actor system parameters
 actors:
@@ -332,8 +343,6 @@ actors:
   rule:
     # Specify thread pool size for database request callbacks executor service
     db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:50}"
-    # Specify thread pool size for javascript executor service
-    js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:40}"
     # Specify thread pool size for password reset emails
@@ -420,8 +429,9 @@ cache:
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
-    usersUpdateTime:
-      timeToLiveInMinutes: "${CACHE_SPECS_USERS_UPDATE_TIME_TTL:20000}"
+    userSessionsInvalidation:
+      # The value of this TTL is ignored and replaced by JWT refresh token expiration time
+      timeToLiveInMinutes: "0"
       maxSize: "${CACHE_SPECS_USERS_UPDATE_TIME_MAX_SIZE:10000}"
     otaPackages:
       timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_TTL:60}"
@@ -533,6 +543,7 @@ spring.servlet.multipart.max-file-size: "50MB"
 spring.servlet.multipart.max-request-size: "50MB"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
+# Note: as for current Spring JPA version, custom NullHandling for the Sort.Order is ignored and this parameter is used
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}"
 
 # SQL DAO Configuration
@@ -599,6 +610,25 @@ state:
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}"
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
+mvel:
+  enabled: "${MVEL_ENABLED:true}"
+  max_total_args_size: "${MVEL_MAX_TOTAL_ARGS_SIZE:100000}"
+  max_result_size: "${MVEL_MAX_RESULT_SIZE:300000}"
+  max_script_body_size: "${MVEL_MAX_SCRIPT_BODY_SIZE:50000}"
+  # Maximum allowed MVEL script execution memory
+  max_memory_limit_mb: "${MVEL_MAX_MEMORY_LIMIT_MB: 8}"
+  # Maximum allowed MVEL script execution errors before it will be blacklisted
+  max_errors: "${MVEL_MAX_ERRORS:3}"
+  # MVEL Eval max request timeout in milliseconds. 0 - no timeout
+  max_requests_timeout: "${MVEL_MAX_REQUEST_TIMEOUT:500}"
+  # Maximum time in seconds for black listed function to stay in the list.
+  max_black_list_duration_sec: "${MVEL_MAX_BLACKLIST_DURATION_SEC:60}"
+  # Specify thread pool size for javascript executor service
+  thread_pool_size: "${MVEL_THREAD_POOL_SIZE:50}"
+  stats:
+    enabled: "${TB_MVEL_STATS_ENABLED:false}"
+    print_interval_ms: "${TB_MVEL_STATS_PRINT_INTERVAL_MS:10000}"
+
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
   max_total_args_size: "${JS_MAX_TOTAL_ARGS_SIZE:100000}"
@@ -606,6 +636,8 @@ js:
   max_script_body_size: "${JS_MAX_SCRIPT_BODY_SIZE:50000}"
   # Built-in JVM JavaScript environment properties
   local:
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${LOCAL_JS_THREAD_POOL_SIZE:50}"
     # Use Sandboxed (secured) JVM JavaScript environment
     use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor
@@ -623,6 +655,8 @@ js:
       print_interval_ms: "${TB_JS_LOCAL_STATS_PRINT_INTERVAL_MS:10000}"
   # Remote JavaScript environment properties
   remote:
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${REMOTE_JS_THREAD_POOL_SIZE:50}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
     # Maximum time in seconds for black listed function to stay in the list.

@@ -63,20 +63,20 @@
         </mat-form-field>
       </div>
       <section *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries" fxLayout="column">
-        <mat-form-field style="padding-bottom: 46px;">
+        <mat-form-field>
           <mat-label translate>datakey.aggregation</mat-label>
           <mat-select formControlName="aggregationType" style="min-width: 150px;">
             <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
               {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
             </mat-option>
           </mat-select>
-          <mat-hint style="line-height: 15px;">
-            {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
-            <section *ngIf="dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE">
-              {{ 'datakey.aggregation-type-hint-common' | translate }}
-            </section>
-          </mat-hint>
         </mat-form-field>
+        <div class="tb-hint after-fields">
+          {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
+          <section *ngIf="dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE">
+            {{ 'datakey.aggregation-type-hint-common' | translate }}
+          </section>
+        </div>
         <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
           <legend class="group-title" translate>datakey.delta-calculation</legend>
           <mat-expansion-panel class="tb-settings comparison" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">

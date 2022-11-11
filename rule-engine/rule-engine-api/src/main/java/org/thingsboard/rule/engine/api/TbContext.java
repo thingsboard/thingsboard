@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -61,6 +62,8 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 import java.util.Set;
@@ -196,6 +199,8 @@ public interface TbContext {
      *
      */
 
+    void checkTenantEntity(EntityId entityId);
+
     boolean isLocalEntity(EntityId entityId);
 
     RuleNodeId getSelfId();
@@ -266,7 +271,16 @@ public interface TbContext {
 
     SmsSenderFactory getSmsSenderFactory();
 
+    /**
+     * Creates JS Script Engine
+     * @deprecated
+     * <p> Use {@link #createScriptEngine} instead.
+     *
+     */
+    @Deprecated
     ScriptEngine createJsScriptEngine(String script, String... argNames);
+
+    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
     void logJsEvalRequest();
 
@@ -303,4 +317,10 @@ public interface TbContext {
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
+    WidgetsBundleService getWidgetBundleService();
+
+    WidgetTypeService getWidgetTypeService();
+
+    RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
 }

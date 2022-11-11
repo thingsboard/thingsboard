@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.github.benmanes.caffeine.cache.Weigher;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -71,6 +72,7 @@ public class TbCaffeineCacheConfiguration {
     }
 
     private CaffeineCache buildCache(String name, CacheSpecs cacheSpec) {
+
         final Caffeine<Object, Object> caffeineBuilder
                 = Caffeine.newBuilder()
                 .weigher(collectionSafeWeigher())
