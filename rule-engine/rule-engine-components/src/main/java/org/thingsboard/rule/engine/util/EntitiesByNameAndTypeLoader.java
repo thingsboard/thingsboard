@@ -16,60 +16,37 @@
 package org.thingsboard.rule.engine.util;
 
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
-
-import java.util.Optional;
 
 public class EntitiesByNameAndTypeLoader {
 
     public static EntityId findEntityId(TbContext ctx, EntityType entityType, String entityName) {
-        EntityId targetEntityId = null;
+        SearchTextBasedWithAdditionalInfo<? extends EntityId> targetEntity;
         switch (entityType) {
             case DEVICE:
-                Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (device != null) {
-                    targetEntityId = device.getId();
-                }
+                targetEntity = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case ASSET:
-                Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (asset != null) {
-                    targetEntityId = asset.getId();
-                }
+                targetEntity = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case ENTITY_VIEW:
-                EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (entityView != null) {
-                    targetEntityId = entityView.getId();
-                }
+                targetEntity = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case EDGE:
-                Edge edge = ctx.getEdgeService().findEdgeByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (edge != null) {
-                    targetEntityId = edge.getId();
-                }
+                targetEntity = ctx.getEdgeService().findEdgeByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case USER:
-                User user = ctx.getUserService().findUserByTenantIdAndEmail(ctx.getTenantId(), entityName);
-                if (user != null) {
-                    targetEntityId = user.getId();
-                }
+                targetEntity = ctx.getUserService().findUserByTenantIdAndEmail(ctx.getTenantId(), entityName);
                 break;
             default:
                 throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
-        if (targetEntityId == null) {
+        if (targetEntity == null) {
             throw new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!");
         }
-        return targetEntityId;
+        return targetEntity.getId();
     }
 
 }
