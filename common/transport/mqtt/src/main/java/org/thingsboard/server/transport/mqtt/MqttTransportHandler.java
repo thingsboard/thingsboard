@@ -1010,17 +1010,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
         if (!msg.hasDeviceInfo()) {
             context.onAuthFailure(address);
-            if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
-                ReturnCode returnCode = ReturnCode.NOT_AUTHORIZED_5;
-                if (sslHandler == null || getX509Certificate() == null) {
-                    if (connectMessage.payload().userName() == null ^ connectMessage.payload().passwordInBytes() == null) {
-                        returnCode = ReturnCode.BAD_USERNAME_OR_PASSWORD;
-                    } else if (!StringUtils.isBlank(connectMessage.payload().clientIdentifier())) {
-                        returnCode = ReturnCode.CLIENT_IDENTIFIER_NOT_VALID;
-                    }
+            ReturnCode returnCode = ReturnCode.NOT_AUTHORIZED_5;
+            if (sslHandler == null || getX509Certificate() == null) {
+                String username = connectMessage.payload().userName();
+                byte[] passwordBytes = connectMessage.payload().passwordInBytes();
+                String clientId = connectMessage.payload().clientIdentifier();
+                if ((username != null && passwordBytes != null && clientId != null)
+                        || (username == null ^ passwordBytes == null)) {
+                    returnCode = ReturnCode.BAD_USERNAME_OR_PASSWORD;
+                } else if (!StringUtils.isBlank(clientId)) {
+                    returnCode = ReturnCode.CLIENT_IDENTIFIER_NOT_VALID;
                 }
-                ctx.writeAndFlush(createMqttConnAckMsg(returnCode, connectMessage));
             }
+            ctx.writeAndFlush(createMqttConnAckMsg(returnCode, connectMessage));
             ctx.close();
         } else {
             context.onAuthSuccess(address);
