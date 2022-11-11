@@ -26,10 +26,6 @@ import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -47,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
@@ -54,9 +52,9 @@ import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 public class TestRestClient {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
     private final String baseURL;
+    private final RequestSpecification requestSpec;
     private String token;
     private String refreshToken;
-    private final RequestSpecification requestSpec;
 
     public TestRestClient(String url) {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
@@ -90,7 +88,7 @@ public class TestRestClient {
                 .pathParams("accessToken", accessToken)
                 .post("/api/device?accessToken={accessToken}")
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(Device.class);
     }
@@ -103,7 +101,7 @@ public class TestRestClient {
                 .statusCode(statusCode);
     }
     public Device getDeviceById(DeviceId deviceId) {
-        return  getDeviceById(deviceId, HttpStatus.OK.value())
+        return  getDeviceById(deviceId, HTTP_OK)
                 .extract()
                 .as(Device.class);
     }
@@ -111,7 +109,7 @@ public class TestRestClient {
         return given().spec(requestSpec).get("/api/device/{deviceId}/credentials", deviceId.getId())
                     .then()
                     .assertThat()
-                    .statusCode(HttpStatus.OK.value())
+                    .statusCode(HTTP_OK)
                     .extract()
                     .as(DeviceCredentials.class);
     }
@@ -120,34 +118,34 @@ public class TestRestClient {
          return  given().spec(requestSpec).body(telemetry)
                  .post("/api/v1/{credentialsId}/telemetry", credentialsId)
                  .then()
-                 .statusCode(HttpStatus.OK.value());
+                 .statusCode(HTTP_OK);
     }
 
     public ValidatableResponse deleteDevice(DeviceId deviceId) {
         return  given().spec(requestSpec)
                 .delete("/api/device/{deviceId}", deviceId.getId())
                 .then()
-                .statusCode(HttpStatus.OK.value());
+                .statusCode(HTTP_OK);
     }
     public ValidatableResponse deleteDeviceIfExists(DeviceId deviceId) {
         return  given().spec(requestSpec)
                 .delete("/api/device/{deviceId}", deviceId.getId())
                 .then()
-                .statusCode(anyOf(is(HttpStatus.OK.value()),is(HttpStatus.NOT_FOUND.value())));
+                .statusCode(anyOf(is(HTTP_OK),is(HTTP_NOT_FOUND)));
     }
 
     public ValidatableResponse postTelemetryAttribute(String entityType, DeviceId deviceId, String scope, JsonNode attribute) {
         return  given().spec(requestSpec).body(attribute)
                 .post("/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}", entityType, deviceId.getId(), scope)
                 .then()
-                .statusCode(HttpStatus.OK.value());
+                .statusCode(HTTP_OK);
     }
 
     public ValidatableResponse postAttribute(String accessToken, JsonNode attribute) {
         return  given().spec(requestSpec).body(attribute)
                 .post("/api/v1/{accessToken}/attributes/", accessToken)
                 .then()
-                .statusCode(HttpStatus.OK.value());
+                .statusCode(HTTP_OK);
     }
 
     public JsonNode getAttributes(String accessToken, String clientKeys, String sharedKeys) {
@@ -156,7 +154,7 @@ public class TestRestClient {
                 .queryParam("sharedKeys", sharedKeys)
                 .get("/api/v1/{accessToken}/attributes", accessToken)
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(JsonNode.class);
     }
@@ -167,7 +165,7 @@ public class TestRestClient {
         return given().spec(requestSpec).queryParams(params)
                 .get("/api/ruleChains")
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(new TypeRef<PageData<RuleChain>>() {});
     }
@@ -177,7 +175,7 @@ public class TestRestClient {
                 .body(ruleChain)
                 .post("/api/ruleChain")
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(RuleChain.class);
     }
@@ -187,7 +185,7 @@ public class TestRestClient {
                 .body(ruleChainMetaData)
                 .post("/api/ruleChain/metadata")
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(RuleChainMetaData.class);
     }
@@ -196,14 +194,14 @@ public class TestRestClient {
         given().spec(requestSpec)
                 .post("/api/ruleChain/{ruleChainId}/root", ruleChainId.getId())
                 .then()
-                .statusCode(HttpStatus.OK.value());
+                .statusCode(HTTP_OK);
     }
 
     public void deleteRuleChain(RuleChainId ruleChainId) {
         given().spec(requestSpec)
                 .delete("/api/ruleChain/{ruleChainId}", ruleChainId.getId())
                 .then()
-                .statusCode(HttpStatus.OK.value());
+                .statusCode(HTTP_OK);
     }
 
     private String getUrlParams(PageLink pageLink) {
@@ -239,7 +237,7 @@ public class TestRestClient {
                 .pathParams(params)
                 .get("/api/relations?fromId={fromId}&fromType={fromType}&relationTypeGroup={relationTypeGroup}")
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(new TypeRef<List<EntityRelation>>() {});
     }
@@ -249,7 +247,7 @@ public class TestRestClient {
                 .body(serverRpcPayload)
                 .post("/api/rpc/twoway/{deviceId}", deviceId.getId())
                 .then()
-                .statusCode(HttpStatus.OK.value())
+                .statusCode(HTTP_OK)
                 .extract()
                 .as(JsonNode.class);
     }

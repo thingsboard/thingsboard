@@ -16,14 +16,12 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 @Slf4j
-@Component
 public class TestProperties {
 
     private static final String HTTPS_URL = "https://localhost";
