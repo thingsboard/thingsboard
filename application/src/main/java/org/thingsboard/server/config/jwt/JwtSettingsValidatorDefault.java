@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.config.jwt;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +52,7 @@ public class JwtSettingsValidatorDefault implements JwtSettingsValidator {
         try {
             decodedKey = Base64.getDecoder().decode(jwtSettings.getTokenSigningKey());
         } catch (Exception e) {
-            throw new DataValidationException("JWT token signing key should be valid Base64 encoded string! " + e.getCause());
+            throw new DataValidationException("JWT token signing key should be a valid Base64 encoded string! " + e.getMessage());
         }
 
         if (Arrays.isNullOrEmpty(decodedKey)) {
