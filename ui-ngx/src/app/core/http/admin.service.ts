@@ -20,16 +20,18 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
-  RepositorySettings,
+  AutoCommitSettings,
+  JwtSettings,
   MailServerSettings,
+  RepositorySettings,
+  RepositorySettingsInfo,
   SecuritySettings,
   TestSmsRequest,
-  UpdateMessage,
-  AutoCommitSettings,
-  RepositorySettingsInfo
+  UpdateMessage
 } from '@shared/models/settings.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { tap } from 'rxjs/operators';
+import { LoginResponse } from '@shared/models/login.models';
 
 @Injectable({
   providedIn: 'root'
@@ -68,6 +70,14 @@ export class AdminService {
                               config?: RequestConfig): Observable<SecuritySettings> {
     return this.http.post<SecuritySettings>('/api/admin/securitySettings', securitySettings,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getJwtSettings(config?: RequestConfig): Observable<JwtSettings> {
+    return this.http.get<JwtSettings>(`/api/admin/jwtSettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveJwtSettings(jwtSettings: JwtSettings, config?: RequestConfig): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/admin/jwtSettings', jwtSettings, defaultHttpOptionsFromConfig(config));
   }
 
   public getRepositorySettings(config?: RequestConfig): Observable<RepositorySettings> {
