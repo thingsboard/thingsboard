@@ -115,7 +115,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         testTelemetryIsDelivered(accessToken2Device, mqttTestClient5);
     }
 
-    @Test
+    @Test(expected = MqttException.class)
     public void testCorrectClientIdAndUserNameButWrongPassword() throws Exception {
         // Not correct. Correct clientId and username, but wrong password
         MqttTestClient mqttTestClient = new MqttTestClient(CLIENT_ID);
