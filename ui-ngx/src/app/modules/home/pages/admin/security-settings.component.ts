@@ -121,6 +121,10 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     this.jwtSecuritySettingsFormGroup.reset(this.jwtSettings);
   }
 
+  markAsTouched() {
+    this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').markAsTouched();
+  }
+
   private confirmChangeJWTSettings(): Observable<boolean> {
     if (this.jwtSecuritySettingsFormGroup.get('tokenIssuer').value !== (this.jwtSettings?.tokenIssuer || '') ||
       this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').value !== (this.jwtSettings?.tokenSigningKey || '')) {
@@ -170,6 +174,9 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   private base64Format(control: FormControl): { [key: string]: boolean } | null {
     try {
       const value = atob(control.value);
+      if (value.length < 32 && control.value !== 'thingsboardDefaultSigningKey') {
+        return {minLength: true};
+      }
       return null;
     } catch (e) {
       return {base64: true};
