@@ -27,4 +27,4 @@ source "${CONF_FOLDER}/${configfile}"
 cd ${pkg.installFolder}
 
 # This will forward this PID 1 to the node.js and forward SIGTERM for graceful shutdown as well
-exec node--no-compilation-cache server.js
+exec node --no-compilation-cache server.js
