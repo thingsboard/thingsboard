@@ -135,7 +135,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   }
 
   generateSigningKey() {
-    this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').setValue(randomAlphanumeric(64));
+    this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').setValue(btoa(randomAlphanumeric(64)));
     if (this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').pristine) {
       this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').markAsDirty();
       this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').markAsTouched();
@@ -169,7 +169,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
 
   private base64Format(control: FormControl): { [key: string]: boolean } | null {
     try {
-      const value = btoa(control.value);
+      const value = atob(control.value);
       return null;
     } catch (e) {
       return {base64: true};
