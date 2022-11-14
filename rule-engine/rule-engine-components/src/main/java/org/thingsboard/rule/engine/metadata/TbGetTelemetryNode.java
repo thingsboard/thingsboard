@@ -74,6 +74,9 @@ public class TbGetTelemetryNode implements TbNode {
     private String fetchMode;
     private String orderByFetchAll;
     private Aggregation aggregation;
+    private boolean isUseMetadataIntervalPatterns;
+    private String aggregationIntervalPattern;
+    private long aggregationInterval;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -86,6 +89,9 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
+        isUseMetadataIntervalPatterns = config.isUseMetadataIntervalPatterns();
+        aggregationIntervalPattern = config.getAggIntervalPattern();
+        aggregationInterval = config.getAggInterval();
     }
 
     Aggregation parseAggregationConfig(String aggName) {
@@ -101,7 +107,7 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                Interval interval = getInterval(msg);
+                Interval interval = getPeriod(msg);
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
@@ -115,13 +121,8 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private List<ReadTsKvQuery> buildQueries(Interval interval, List<String> keys) {
-        final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
-                // exact how it validates on BaseTimeseriesService.validate()
-                // see CassandraBaseTimeseriesDao.findAllAsync()
-                interval.getEndTs() - interval.getStartTs();
-
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, getOrderBy()))
+                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), interval.getAggInterval(), limit, aggregation, getOrderBy()))
                 .collect(Collectors.toList());
     }
 
@@ -173,16 +174,29 @@ public class TbGetTelemetryNode implements TbNode {
         return obj;
     }
 
-    private Interval getInterval(TbMsg msg) {
-        if (config.isUseMetadataIntervalPatterns()) {
-            return getIntervalFromPatterns(msg);
+    private void setAggInterval(TbMsg msg, Interval interval) {
+        long aggInterval = aggregationInterval;
+        if (Aggregation.NONE.equals(aggregation)) {
+            aggInterval = 1;
         } else {
-            Interval interval = new Interval();
+            if (isUseMetadataIntervalPatterns) {
+                aggInterval = StringUtils.isEmpty(aggregationIntervalPattern) ? 0 : checkPattern(msg, aggregationIntervalPattern);
+            }
+        }
+        interval.setAggInterval(aggInterval == 0 ? interval.getEndTs() - interval.getStartTs() : aggInterval);
+    }
+
+    private Interval getPeriod(TbMsg msg) {
+        Interval interval = new Interval();
+        if (isUseMetadataIntervalPatterns) {
+            interval = getIntervalFromPatterns(msg);
+        } else {
             long ts = System.currentTimeMillis();
             interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
             interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
-            return interval;
         }
+        setAggInterval(msg, interval);
+        return interval;
     }
 
     private Interval getIntervalFromPatterns(TbMsg msg) {
@@ -228,6 +242,7 @@ public class TbGetTelemetryNode implements TbNode {
     private static class Interval {
         private Long startTs;
         private Long endTs;
+        private Long aggInterval;
     }
 
 }

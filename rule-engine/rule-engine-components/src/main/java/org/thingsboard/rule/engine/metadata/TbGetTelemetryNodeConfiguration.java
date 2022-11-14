@@ -37,9 +37,11 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
 
     private int startInterval;
     private int endInterval;
+    private long aggInterval;
 
     private String startIntervalPattern;
     private String endIntervalPattern;
+    private String aggIntervalPattern;
 
     private boolean useMetadataIntervalPatterns;
 
