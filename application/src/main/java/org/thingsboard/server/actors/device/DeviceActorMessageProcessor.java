@@ -823,6 +823,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         body.put("expirationTime", msg.getExpirationTime());
         body.put("method", msg.getBody().getMethod());
         body.put("params", msg.getBody().getParams());
+        body.put("persisted", msg.isPersisted());
+        body.put("retries", msg.getRetries());
+        body.put("additionalInfo", msg.getAdditionalInfo());
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
 
