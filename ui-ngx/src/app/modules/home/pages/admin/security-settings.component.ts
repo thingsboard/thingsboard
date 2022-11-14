@@ -126,7 +126,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
       this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').value !== (this.jwtSettings?.tokenSigningKey || '')) {
       return this.dialogService.confirm(
         this.translate.instant('admin.jwt.info-header'),
-        `<div style="max-width: 400px">${this.translate.instant('admin.jwt.info-message')}</div>`,
+        `<div style="max-width: 640px">${this.translate.instant('admin.jwt.info-message')}</div>`,
         this.translate.instant('action.discard-changes'),
         this.translate.instant('action.confirm')
       );
@@ -135,7 +135,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   }
 
   generateSigningKey() {
-    this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').setValue(randomAlphanumeric(44));
+    this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').setValue(randomAlphanumeric(64));
     if (this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').pristine) {
       this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').markAsDirty();
       this.jwtSecuritySettingsFormGroup.get('tokenSigningKey').markAsTouched();
