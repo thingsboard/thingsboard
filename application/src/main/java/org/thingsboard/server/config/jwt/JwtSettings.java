@@ -15,15 +15,22 @@
  */
 package org.thingsboard.server.config.jwt;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 
 @Component
 @ConfigurationProperties(prefix = "security.jwt")
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class JwtSettings {
+    static final String ADMIN_SETTINGS_JWT_KEY = "jwt";
+    static final String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
+
     /**
      * {@link JwtToken} will expire after this time.
      */

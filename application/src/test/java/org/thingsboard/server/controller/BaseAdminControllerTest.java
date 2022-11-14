@@ -17,14 +17,22 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.config.jwt.JwtSettings;
+import org.thingsboard.server.config.jwt.JwtSettingsService;
 import org.thingsboard.server.service.mail.DefaultMailService;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -32,8 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
+@Slf4j
 public abstract class BaseAdminControllerTest extends AbstractControllerTest {
+    final JwtSettings defaultJwtSettings = new JwtSettings(9000, "thingsboard.io", "thingsboardDefaultSigningKey", 604800);
 
     @Autowired
     MailService mailService;
@@ -45,67 +54,67 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
     public void testFindAdminSettingsByKey() throws Exception {
         loginSysAdmin();
         doGet("/api/admin/settings/general")
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(contentType))
-        .andExpect(jsonPath("$.id", notNullValue()))
-        .andExpect(jsonPath("$.key", is("general")))
-        .andExpect(jsonPath("$.jsonValue.baseUrl", is("http://localhost:8080")));
-        
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.id", notNullValue()))
+                .andExpect(jsonPath("$.key", is("general")))
+                .andExpect(jsonPath("$.jsonValue.baseUrl", is("http://localhost:8080")));
+
         doGet("/api/admin/settings/mail")
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(contentType))
-        .andExpect(jsonPath("$.id", notNullValue()))
-        .andExpect(jsonPath("$.key", is("mail")))
-        .andExpect(jsonPath("$.jsonValue.smtpProtocol", is("smtp")))
-        .andExpect(jsonPath("$.jsonValue.smtpHost", is("localhost")))
-        .andExpect(jsonPath("$.jsonValue.smtpPort", is("25")));
-        
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.id", notNullValue()))
+                .andExpect(jsonPath("$.key", is("mail")))
+                .andExpect(jsonPath("$.jsonValue.smtpProtocol", is("smtp")))
+                .andExpect(jsonPath("$.jsonValue.smtpHost", is("localhost")))
+                .andExpect(jsonPath("$.jsonValue.smtpPort", is("25")));
+
         doGet("/api/admin/settings/unknown")
-        .andExpect(status().isNotFound());
-        
+                .andExpect(status().isNotFound());
+
     }
-    
+
     @Test
     public void testSaveAdminSettings() throws Exception {
         loginSysAdmin();
-        AdminSettings adminSettings = doGet("/api/admin/settings/general", AdminSettings.class); 
-        
+        AdminSettings adminSettings = doGet("/api/admin/settings/general", AdminSettings.class);
+
         JsonNode jsonValue = adminSettings.getJsonValue();
         ((ObjectNode) jsonValue).put("baseUrl", "http://myhost.org");
         adminSettings.setJsonValue(jsonValue);
 
         doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
-        
+
         doGet("/api/admin/settings/general")
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(contentType))
-        .andExpect(jsonPath("$.jsonValue.baseUrl", is("http://myhost.org")));
-        
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.jsonValue.baseUrl", is("http://myhost.org")));
+
         ((ObjectNode) jsonValue).put("baseUrl", "http://localhost:8080");
         adminSettings.setJsonValue(jsonValue);
-        
+
         doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isOk());
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testSaveAdminSettingsWithEmptyKey() throws Exception {
         loginSysAdmin();
-        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class); 
+        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
         adminSettings.setKey(null);
         doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Key should be specified")));
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Key should be specified")));
     }
-    
+
     @Test
     public void testChangeAdminSettingsKey() throws Exception {
         loginSysAdmin();
-        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class); 
+        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
         adminSettings.setKey("newKey");
         doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("is prohibited")));
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("is prohibited")));
     }
 
     @Test
@@ -113,7 +122,7 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
         doPost("/api/admin/settings/testMail", adminSettings)
-        .andExpect(status().isOk());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -139,4 +148,48 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
         doPost("/api/admin/settings/testMail", adminSettings).andExpect(status().is5xxServerError());
         Mockito.doNothing().when(mailService).sendTestMail(Mockito.any(), Mockito.any());
     }
+
+    void resetJwtSettingsToDefault() throws Exception {
+        loginSysAdmin();
+        doPost("/api/admin/jwtSettings", defaultJwtSettings).andExpect(status().isOk()); // jwt test scenarios are always started from
+        loginTenantAdmin();
+    }
+
+    @Test
+    public void testGetAndSaveDefaultJwtSettings() throws Exception {
+        JwtSettings jwtSettings;
+        loginSysAdmin();
+
+        jwtSettings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        assertThat(jwtSettings).isEqualTo(defaultJwtSettings);
+
+        doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
+
+        jwtSettings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        assertThat(jwtSettings).isEqualTo(defaultJwtSettings);
+
+        resetJwtSettingsToDefault();
+    }
+
+    @Test
+    public void testCreateJwtSettings() throws Exception {
+        loginSysAdmin();
+
+        JwtSettings jwtSettings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        assertThat(jwtSettings).isEqualTo(defaultJwtSettings);
+
+        jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
+                RandomStringUtils.randomAlphanumeric(256 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
+
+        doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
+
+        doGet("/api/admin/jwtSettings").andExpect(status().isUnauthorized()); //the old JWT token does not work after signing key was changed!
+
+        loginSysAdmin();
+        JwtSettings newJwtSettings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        assertThat(jwtSettings).isEqualTo(newJwtSettings);
+
+        resetJwtSettingsToDefault();
+    }
+
 }

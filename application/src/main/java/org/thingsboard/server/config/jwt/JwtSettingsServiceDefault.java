@@ -37,13 +37,14 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
+import static org.thingsboard.server.config.jwt.JwtSettings.ADMIN_SETTINGS_JWT_KEY;
+import static org.thingsboard.server.config.jwt.JwtSettings.TOKEN_SIGNING_KEY_DEFAULT;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class JwtSettingsServiceDefault implements JwtSettingsService {
 
-    static final String ADMIN_SETTINGS_JWT_KEY = "jwt";
-    static final String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
     @Lazy
     private final AdminSettingsService adminSettingsService;
     @Lazy
