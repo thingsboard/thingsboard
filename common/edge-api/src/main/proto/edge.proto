@@ -430,6 +430,11 @@ message DeviceRpcCallMsg {
   bool oneway = 7;
   RpcRequestMsg requestMsg = 8;
   RpcResponseMsg responseMsg = 9;
+  optional bool persisted = 10;
+  optional int32 retries = 11;
+  optional string additionalInfo = 12;
+  optional string serviceId = 13;
+  optional string sessionId = 14;
 }
 
 message RpcRequestMsg {
