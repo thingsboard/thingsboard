@@ -53,6 +53,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -100,10 +102,12 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     @Value("${mvel.max_memory_limit_mb:8}")
     private long maxMemoryLimitMb;
 
-    @Value("${mvel.compiled_scripts_cache_size:2000}")
+    @Value("${mvel.compiled_scripts_cache_size:1000}")
     private int compiledScriptsCacheSize;
 
     private ListeningExecutorService executor;
+
+    private final Lock lock = new ReentrantLock();
 
     protected DefaultMvelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
         super(apiUsageStateClient, apiUsageReportClient);
@@ -166,10 +170,15 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
                 compiledScriptsCache.get(scriptHash, k -> {
                     return compileScript(scriptBody);
                 });
-                scriptIdToHash.put(scriptId, scriptHash);
-                scriptMap.computeIfAbsent(scriptHash, k -> {
-                    return new MvelScript(scriptBody, argNames);
-                });
+                lock.lock();
+                try {
+                    scriptIdToHash.put(scriptId, scriptHash);
+                    scriptMap.computeIfAbsent(scriptHash, k -> {
+                        return new MvelScript(scriptBody, argNames);
+                    });
+                } finally {
+                    lock.unlock();
+                }
                 return scriptId;
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
@@ -203,11 +212,15 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     protected void doRelease(UUID scriptId) throws Exception {
         String scriptHash = scriptIdToHash.remove(scriptId);
         if (scriptHash != null) {
-            if (scriptIdToHash.containsValue(scriptHash)) {
-                return;
+            lock.lock();
+            try {
+                if (!scriptIdToHash.containsValue(scriptHash)) {
+                    scriptMap.remove(scriptHash);
+                    compiledScriptsCache.invalidate(scriptHash);
+                }
+            } finally {
+                lock.unlock();
             }
-            scriptMap.remove(scriptHash);
-            compiledScriptsCache.invalidate(scriptHash);
         }
     }
 
