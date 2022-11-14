@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config.jwt;
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
-public interface JwtSettingsService {
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 
-    JwtSettings getJwtSettings();
+public interface JwtSettingsValidator {
+    String ADMIN_SETTINGS_JWT_KEY = "jwt";
+    String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
 
-    void reloadJwtSettings();
-
-    void createJwtAdminSettings();
-
-    JwtSettings saveJwtSettings(JwtSettings jwtSettings);
-
+    void validate(JwtSettings jwtSettings);
 }

@@ -82,7 +82,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.config.jwt.JwtSettingsService;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;

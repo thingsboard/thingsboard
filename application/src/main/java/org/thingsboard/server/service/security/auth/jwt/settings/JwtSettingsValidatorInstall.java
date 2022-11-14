@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config.jwt;
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 
 @Primary
 @Profile("install")

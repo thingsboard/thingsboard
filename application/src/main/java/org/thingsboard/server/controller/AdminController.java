@@ -39,11 +39,11 @@ import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
-import org.thingsboard.server.config.jwt.JwtSettings;
-import org.thingsboard.server.config.jwt.JwtSettingsService;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -188,7 +188,7 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.POST)
     @ResponseBody
-    public JwtTokenPair saveJwtSettings(
+    public JwtPair saveJwtSettings(
             @ApiParam(value = "A JSON value representing the JWT Settings.")
             @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
         try {

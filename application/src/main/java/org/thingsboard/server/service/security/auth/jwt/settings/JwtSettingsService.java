@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config.jwt;
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
-public interface JwtSettingsValidator {
-    void validate(JwtSettings jwtSettings);
+import org.thingsboard.server.common.data.security.model.JwtSettings;
+
+public interface JwtSettingsService {
+
+    JwtSettings getJwtSettings();
+
+    void reloadJwtSettings();
+
+    void createJwtAdminSettings();
+
+    JwtSettings saveJwtSettings(JwtSettings jwtSettings);
+
 }

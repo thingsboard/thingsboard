@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config.jwt;
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import javax.annotation.PostConstruct;
@@ -37,8 +38,8 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.thingsboard.server.config.jwt.JwtSettings.ADMIN_SETTINGS_JWT_KEY;
-import static org.thingsboard.server.config.jwt.JwtSettings.TOKEN_SIGNING_KEY_DEFAULT;
+import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsValidator.ADMIN_SETTINGS_JWT_KEY;
+import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsValidator.TOKEN_SIGNING_KEY_DEFAULT;
 
 @Service
 @RequiredArgsConstructor
@@ -52,12 +53,25 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
     private final JwtSettingsValidator jwtSettingsValidator;
     private final Environment environment;
     @Getter
-    private final JwtSettings jwtSettings;
+    private final JwtSettings jwtSettings = new JwtSettings();
     @Value("${install.upgrade:false}")
     private boolean isUpgrade;
 
+    @Value("${security.jwt.tokenExpirationTime:9000}")
+    private Integer tokenExpirationTime;
+    @Value("${security.jwt.refreshTokenExpTime:604800}")
+    private Integer refreshTokenExpTime;
+    @Value("${security.jwt.tokenIssuer:thingsboard.io}")
+    private String tokenIssuer;
+    @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
+    private String tokenSigningKey;
+
     @PostConstruct
     public void init() {
+        jwtSettings.setTokenExpirationTime(this.tokenExpirationTime);
+        jwtSettings.setRefreshTokenExpTime(this.refreshTokenExpTime);
+        jwtSettings.setTokenIssuer(this.tokenIssuer);
+        jwtSettings.setTokenSigningKey(this.tokenSigningKey);
         if (!isFirstInstall()) {
             reloadJwtSettings();
         }
@@ -77,8 +91,8 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
         if (adminJwtSettings != null) {
             log.info("Reloading the JWT admin settings from database");
             JwtSettings jwtLoaded = mapAdminToJwtSettings(adminJwtSettings);
-            jwtSettings.setRefreshTokenExpTime(jwtLoaded.getRefreshTokenExpTime());
             jwtSettings.setTokenExpirationTime(jwtLoaded.getTokenExpirationTime());
+            jwtSettings.setRefreshTokenExpTime(jwtLoaded.getRefreshTokenExpTime());
             jwtSettings.setTokenIssuer(jwtLoaded.getTokenIssuer());
             jwtSettings.setTokenSigningKey(jwtLoaded.getTokenSigningKey());
         }

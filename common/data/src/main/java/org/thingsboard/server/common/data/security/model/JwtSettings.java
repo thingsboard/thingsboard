@@ -13,43 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config.jwt;
+package org.thingsboard.server.common.data.security.model;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 
-@Component
-@ConfigurationProperties(prefix = "security.jwt")
+@ApiModel(value = "JWT Settings")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 public class JwtSettings {
-    static final String ADMIN_SETTINGS_JWT_KEY = "jwt";
-    static final String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
 
     /**
      * {@link JwtToken} will expire after this time.
      */
+    @ApiModelProperty(position = 1, value = "The JWT will expire after seconds.", example = "9000")
     private Integer tokenExpirationTime;
+
+    /**
+     * {@link JwtToken} can be refreshed during this timeframe.
+     */
+    @ApiModelProperty(position = 2, value = "The JWT can be refreshed during seconds.", example = "604800")
+    private Integer refreshTokenExpTime;
 
     /**
      * Token issuer.
      */
+    @ApiModelProperty(position = 3, value = "The JWT issuer.", example = "thingsboard.io")
     private String tokenIssuer;
 
     /**
      * Key is used to sign {@link JwtToken}.
      * Base64 encoded
      */
+    @ApiModelProperty(position = 4, value = "The JWT key is used to sing token. Base64 encoded.", example = "cTU4WnNqemI2aU5wbWVjdm1vYXRzanhjNHRUcXliMjE=")
     private String tokenSigningKey;
-
-    /**
-     * {@link JwtToken} can be refreshed during this timeframe.
-     */
-    private Integer refreshTokenExpTime;
 
 }

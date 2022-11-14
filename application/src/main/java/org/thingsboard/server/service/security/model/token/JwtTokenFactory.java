@@ -35,9 +35,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.config.jwt.JwtSettingsService;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
@@ -214,10 +214,10 @@ public class JwtTokenFactory {
         }
     }
 
-    public JwtTokenPair createTokenPair(SecurityUser securityUser) {
+    public JwtPair createTokenPair(SecurityUser securityUser) {
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
-        return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+        return new JwtPair(accessToken.getToken(), refreshToken.getToken());
     }
 
 }

@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.config.jwt.JwtSettingsService;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;

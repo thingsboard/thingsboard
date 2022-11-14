@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config.jwt;
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.Arrays;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
-import static org.thingsboard.server.config.jwt.JwtSettings.TOKEN_SIGNING_KEY_DEFAULT;
 
 @Component
 @RequiredArgsConstructor
