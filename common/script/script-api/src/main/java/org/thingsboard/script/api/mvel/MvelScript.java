@@ -24,7 +24,6 @@ import java.util.Map;
 @Data
 public class MvelScript {
 
-    private final Serializable compiledScript;
     private final String scriptBody;
     private final String[] argNames;
 

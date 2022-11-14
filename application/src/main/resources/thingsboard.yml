@@ -625,6 +625,7 @@ mvel:
   max_black_list_duration_sec: "${MVEL_MAX_BLACKLIST_DURATION_SEC:60}"
   # Specify thread pool size for javascript executor service
   thread_pool_size: "${MVEL_THREAD_POOL_SIZE:50}"
+  compiled_scripts_cache_size: "${MVEL_COMPILED_SCRIPTS_CACHE_SIZE:2000}"
   stats:
     enabled: "${TB_MVEL_STATS_ENABLED:false}"
     print_interval_ms: "${TB_MVEL_STATS_PRINT_INTERVAL_MS:10000}"

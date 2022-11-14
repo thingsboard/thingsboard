@@ -15,6 +15,10 @@
  */
 package org.thingsboard.script.api.mvel;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -42,6 +46,7 @@ import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -55,7 +60,10 @@ import java.util.regex.Pattern;
 @Service
 public class DefaultMvelInvokeService extends AbstractScriptInvokeService implements MvelInvokeService {
 
-    protected Map<UUID, MvelScript> scriptMap = new ConcurrentHashMap<>();
+    protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
+    protected final Map<String, MvelScript> scriptMap = new ConcurrentHashMap<>();
+    protected Cache<String, Serializable> compiledScriptsCache;
+
     private SandboxedParserConfiguration parserConfig;
 
     private static final Pattern NEW_KEYWORD_PATTERN = Pattern.compile("new\\s");
@@ -92,6 +100,9 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     @Value("${mvel.max_memory_limit_mb:8}")
     private long maxMemoryLimitMb;
 
+    @Value("${mvel.compiled_scripts_cache_size:2000}")
+    private int compiledScriptsCacheSize;
+
     private ListeningExecutorService executor;
 
     protected DefaultMvelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
@@ -115,11 +126,14 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
         try {
             // Special command to warm up MVEL engine
-            Serializable script = MVEL.compileExpression("var warmUp = {}; warmUp", new SandboxedParserContext(parserConfig));
+            Serializable script = compileScript("var warmUp = {}; warmUp");
             MVEL.executeTbExpression(script, new ExecutionContext(parserConfig), Collections.emptyMap());
         } catch (Exception e) {
             // do nothing
         }
+        compiledScriptsCache = Caffeine.newBuilder()
+                .maximumSize(compiledScriptsCacheSize)
+                .build();
     }
 
     @PreDestroy
@@ -141,16 +155,21 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
 
     @Override
     protected boolean isScriptPresent(UUID scriptId) {
-        return scriptMap.containsKey(scriptId);
+        return scriptIdToHash.containsKey(scriptId);
     }
 
     @Override
     protected ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames) {
         return executor.submit(() -> {
             try {
-                Serializable compiledScript = MVEL.compileExpression(scriptBody, new SandboxedParserContext(parserConfig));
-                MvelScript script = new MvelScript(compiledScript, scriptBody, argNames);
-                scriptMap.put(scriptId, script);
+                String scriptHash = hash(scriptBody, argNames);
+                compiledScriptsCache.get(scriptHash, k -> {
+                    return compileScript(scriptBody);
+                });
+                scriptIdToHash.put(scriptId, scriptHash);
+                scriptMap.computeIfAbsent(scriptHash, k -> {
+                    return new MvelScript(scriptBody, argNames);
+                });
                 return scriptId;
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
@@ -162,12 +181,16 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     protected MvelScriptExecutionTask doInvokeFunction(UUID scriptId, Object[] args) {
         ExecutionContext executionContext = new ExecutionContext(this.parserConfig, maxMemoryLimitMb * 1024 * 1024);
         return new MvelScriptExecutionTask(executionContext, executor.submit(() -> {
-            MvelScript script = scriptMap.get(scriptId);
-            if (script == null) {
+            String scriptHash = scriptIdToHash.get(scriptId);
+            if (scriptHash == null) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException("Script not found!"));
             }
+            MvelScript script = scriptMap.get(scriptHash);
+            Serializable compiledScript = compiledScriptsCache.get(scriptHash, k -> {
+                return compileScript(script.getScriptBody());
+            });
             try {
-                return MVEL.executeTbExpression(script.getCompiledScript(), executionContext, script.createVars(args));
+                return MVEL.executeTbExpression(compiledScript, executionContext, script.createVars(args));
             } catch (ScriptMemoryOverflowException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Script memory overflow!"));
             } catch (Exception e) {
@@ -178,6 +201,28 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
 
     @Override
     protected void doRelease(UUID scriptId) throws Exception {
-        scriptMap.remove(scriptId);
+        String scriptHash = scriptIdToHash.remove(scriptId);
+        if (scriptHash != null) {
+            if (scriptIdToHash.containsValue(scriptHash)) {
+                return;
+            }
+            scriptMap.remove(scriptHash);
+            compiledScriptsCache.invalidate(scriptHash);
+        }
     }
+
+    private Serializable compileScript(String scriptBody) {
+        return MVEL.compileExpression(scriptBody, new SandboxedParserContext(parserConfig));
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    protected String hash(String scriptBody, String[] argNames) {
+        Hasher hasher = Hashing.murmur3_128().newHasher();
+        hasher.putUnencodedChars(scriptBody);
+        for (String argName : argNames) {
+            hasher.putString(argName, StandardCharsets.UTF_8);
+        }
+        return hasher.hash().toString();
+    }
+
 }
