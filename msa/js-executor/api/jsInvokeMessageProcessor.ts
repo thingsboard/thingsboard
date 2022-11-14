@@ -175,8 +175,8 @@ export class JsInvokeMessageProcessor {
         this.getOrCompileScript(scriptId, invokeRequest.scriptBody).then(
             (script) => {
                 this.executor.executeScript(script, invokeRequest.args, invokeRequest.timeout).then(
-                    (result) => {
-                        if (result.length <= maxResultSize) {
+                    (result: string | undefined) => {
+                        if (!result || result.length <= maxResultSize) {
                             const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse(result, true);
                             this.logger.debug('[%s] Sending success invoke response, scriptId: [%s]', requestId, scriptId);
                             this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
@@ -328,7 +328,7 @@ export class JsInvokeMessageProcessor {
         }
     }
 
-    private static createInvokeResponse(result: string, success: boolean, errorCode?: number, err?: any): JsInvokeResponse {
+    private static createInvokeResponse(result: string | undefined, success: boolean, errorCode?: number, err?: any): JsInvokeResponse {
         return {
             errorCode: errorCode,
             success: success,
