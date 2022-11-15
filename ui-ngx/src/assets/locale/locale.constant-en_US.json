@@ -2300,6 +2300,7 @@
          "ignore-case": "ignore case",
          "value": "Value",
          "remove-filter": "Remove filter",
+         "duplicate-filter": "Duplicate filter",
          "preview": "Filter preview",
          "no-filters": "No filters configured",
          "add-filter": "Add filter",

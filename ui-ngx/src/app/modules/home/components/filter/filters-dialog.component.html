@@ -68,6 +68,15 @@
                   mat-icon-button color="primary"
                   style="min-width: 40px;"
                   type="button"
+                  (click)="duplicateFilter($index)"
+                  matTooltip="{{ 'filter.duplicate-filter' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <button [disabled]="isLoading$ | async"
+                  mat-icon-button color="primary"
+                  style="min-width: 40px;"
+                  type="button"
                   (click)="removeFilter($index)"
                   matTooltip="{{ 'filter.remove-filter' | translate }}"
                   matTooltipPosition="above">
