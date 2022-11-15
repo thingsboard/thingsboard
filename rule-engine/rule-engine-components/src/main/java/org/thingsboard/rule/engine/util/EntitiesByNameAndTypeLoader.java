@@ -20,7 +20,16 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.List;
+
 public class EntitiesByNameAndTypeLoader {
+
+    private static final List<EntityType> AVAILABLE_ENTITY_TYPES = List.of(
+            EntityType.DEVICE,
+            EntityType.ASSET,
+            EntityType.ENTITY_VIEW,
+            EntityType.EDGE,
+            EntityType.USER);
 
     public static EntityId findEntityId(TbContext ctx, EntityType entityType, String entityName) {
         SearchTextBasedWithAdditionalInfo<? extends EntityId> targetEntity;
@@ -47,6 +56,12 @@ public class EntitiesByNameAndTypeLoader {
             throw new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!");
         }
         return targetEntity.getId();
+    }
+
+    public static void checkEntityType(EntityType entityType) {
+        if (!AVAILABLE_ENTITY_TYPES.contains(entityType)) {
+            throw new IllegalStateException("Unexpected entity type " + entityType.name());
+        }
     }
 
 }
