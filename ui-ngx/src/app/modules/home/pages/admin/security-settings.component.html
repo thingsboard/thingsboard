@@ -180,6 +180,7 @@
             <mat-label translate>admin.jwt.signings-key</mat-label>
             <input matInput (focus)="markAsTouched()" required formControlName="tokenSigningKey"/>
             <button type="button"
+                    style="line-height: 32px"
                     matSuffix
                     mat-button
                     (click)="generateSigningKey()"

@@ -172,9 +172,12 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   }
 
   private base64Format(control: FormControl): { [key: string]: boolean } | null {
+    if (control.value === '' || control.value === 'thingsboardDefaultSigningKey') {
+      return null;
+    }
     try {
       const value = atob(control.value);
-      if (value.length < 32 && control.value !== 'thingsboardDefaultSigningKey') {
+      if (value.length < 32) {
         return {minLength: true};
       }
       return null;
