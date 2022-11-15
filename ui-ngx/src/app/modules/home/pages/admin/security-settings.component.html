@@ -167,8 +167,8 @@
   </mat-card-title>
   <mat-card-content style="padding-top: 16px;">
     <form [formGroup]="jwtSecuritySettingsFormGroup" (ngSubmit)="saveJwtSettings()" autocomplete="off">
-      <fieldset [disabled]="isLoading$ | async">
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+      <fieldset [disabled]="isLoading$ | async" fxLayout="column" fxLayoutGap="8px">
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>admin.jwt.issuer-name</mat-label>
             <input matInput required formControlName="tokenIssuer"/>
@@ -198,7 +198,7 @@
             </mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>admin.jwt.expiration-time</mat-label>
             <input matInput type="number" required
