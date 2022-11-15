@@ -18,17 +18,24 @@ import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
-import { StateControllerState } from './state-controller.models';
+import { DefaultEntitiesData, StateControllerState } from './state-controller.models';
 import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
-import { base64toObj, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
+import { base64toObj, deepClone, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
-import { EntityType } from '@shared/models/entity-type.models';
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
 import { MobileService } from '@core/services/mobile.service';
+import { AliasFilterType } from '@shared/models/alias.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Authority } from '@shared/models/authority.enum';
+import { BaseData } from '@shared/models/base-data';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-entity-state-controller',
@@ -38,11 +45,15 @@ import { MobileService } from '@core/services/mobile.service';
 export class EntityStateControllerComponent extends StateControllerComponent implements OnInit, OnDestroy {
 
   selectedStateIndex = -1;
+  authUser = getCurrentAuthUser(this.store);
+  defaultEntitiesFromAliases: DefaultEntitiesData = {};
+  defaultEntitiesData: DefaultEntitiesData;
 
   constructor(protected router: Router,
               protected route: ActivatedRoute,
               protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
+              private store: Store<AppState>,
               private utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
@@ -59,20 +70,25 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   public init() {
-    if (this.preservedState) {
-      this.stateObject = this.preservedState;
-      this.selectedStateIndex = this.stateObject.length - 1;
-      setTimeout(() => {
-        this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
-      }, 1);
-    } else {
-      const initialState = this.currentState;
-      this.stateObject = this.parseState(initialState);
-      this.selectedStateIndex = this.stateObject.length - 1;
-      setTimeout(() => {
-        this.gotoState(this.stateObject[this.stateObject.length - 1].id, false);
-      }, 1);
-    }
+    this.extractDefaultEntities().subscribe((entitiesDataMap) => {
+      if (entitiesDataMap) {
+        this.defaultEntitiesData = entitiesDataMap;
+      }
+      if (this.preservedState) {
+        this.stateObject = this.preservedState;
+        this.selectedStateIndex = this.stateObject.length - 1;
+        setTimeout(() => {
+          this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
+        }, 1);
+      } else {
+        const initialState = this.currentState;
+        this.stateObject = this.parseState(initialState);
+        this.selectedStateIndex = this.stateObject.length - 1;
+        setTimeout(() => {
+          this.gotoState(this.stateObject[this.stateObject.length - 1].id, false);
+        }, 1);
+      }
+    });
   }
 
   protected onMobileChanged() {
@@ -218,16 +234,45 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
         let stateName = dashboardState.name;
         stateName = this.utils.customTranslation(stateName, stateName);
         const params = this.stateObject[index].params;
-        const entityName = params && params.entityName ? params.entityName : '';
-        const entityLabel = params && params.entityLabel ? params.entityLabel : '';
+        const defaultParams = this.defaultEntitiesFromAliases["default"];
+        let entityName: string = '';
+        let entityLabel: string = '';
+
+        if (params && Object.keys(params).length) {
+          entityName = params.entityName ? params.entityName : '';
+          entityLabel = params.entityLabel ? params.entityLabel : '';
+        } else if (defaultParams) {
+          const data = this.defaultEntitiesData[defaultParams.id];
+          entityName = data ? data.name : '';
+          entityLabel = data ? data.label : '';
+        }
+
         result = insertVariable(stateName, 'entityName', entityName);
         result = insertVariable(result, 'entityLabel', entityLabel);
-        for (const prop of Object.keys(params)) {
-          if (params[prop] && params[prop].entityName) {
-            result = insertVariable(result, prop + ':entityName', params[prop].entityName);
+
+        if (params && Object.keys(params).length) {
+          for (const prop of Object.keys(params)) {
+            if (params[prop] && params[prop].entityName) {
+              result = insertVariable(result, prop + ':entityName', params[prop].entityName);
+            }
+            if (params[prop] && params[prop].entityLabel) {
+              result = insertVariable(result, prop + ':entityLabel', params[prop].entityLabel);
+            }
           }
-          if (params[prop] && params[prop].entityLabel) {
-            result = insertVariable(result, prop + ':entityLabel', params[prop].entityLabel);
+        } else if (this.defaultEntitiesFromAliases && Object.keys(this.defaultEntitiesFromAliases))  {
+          for (const prop of Object.keys(this.defaultEntitiesFromAliases)) {
+            if (this.defaultEntitiesFromAliases[prop] &&
+                this.defaultEntitiesFromAliases[prop].id &&
+                this.defaultEntitiesData[this.defaultEntitiesFromAliases[prop].id]
+            ) {
+              const entityData: BaseData<EntityId> = this.defaultEntitiesData[this.defaultEntitiesFromAliases[prop].id];
+              if (entityData.name) {
+                result = insertVariable(result, prop + ':entityName', entityData.name);
+              }
+              if (entityData.label) {
+                result = insertVariable(result, prop + ':entityLabel', entityData.label);
+              }
+            }
           }
         }
       }
@@ -336,5 +381,72 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   private getStateObjById(id: string): StateObject {
     return this.stateObject.find((stateObj) => stateObj.id === id);
+  }
+
+  private extractDefaultEntities(): Observable<DefaultEntitiesData | null> {
+    const entityAliases = this.dashboardCtrl.dashboardCtx.aliasController.getEntityAliases();
+    const entitiesObs: Array<Observable<BaseData<EntityId>>> = [];
+
+    Object.values(entityAliases).forEach((alias) => {
+      if (alias.filter.type === AliasFilterType.stateEntity && alias.filter.defaultStateEntity) {
+        const entityId = this.extractEntityId(deepClone(alias.filter.defaultStateEntity));
+        const paramKey = alias.filter.stateEntityParamName ? alias.filter.stateEntityParamName : "default";
+        if (!this.defaultEntitiesFromAliases[paramKey] && entityId.id !== NULL_UUID) {
+          this.defaultEntitiesFromAliases[paramKey] = entityId;
+          entitiesObs.push(this.entityService.getEntity(entityId.entityType as EntityType,
+            entityId.id, {ignoreLoading: true, ignoreErrors: true}));
+        }
+      }
+    });
+
+    if (entitiesObs.length) {
+      try {
+        return forkJoin(entitiesObs).pipe(
+          map((entitiesData) => {
+            const entitiesDataMap: DefaultEntitiesData = {};
+            (entitiesData as Array<BaseData<EntityId>>).forEach((entity) => {
+              if (entity) {
+                entitiesDataMap[entity.id.id] = entity;
+              }
+            })
+            return entitiesDataMap;
+          })
+        );
+      } catch {
+        return of(null);
+      }
+    } else {
+      return of(null);
+    }
+  }
+
+  private extractEntityId(aliasDefaultEntity: EntityId): EntityId {
+    const entityType = aliasDefaultEntity.entityType;
+    let id: string;
+    switch (entityType) {
+      case AliasEntityType.CURRENT_CUSTOMER:
+        id = aliasDefaultEntity.id && this.authUser.customerId === NULL_UUID ? aliasDefaultEntity.id :
+          this.authUser.customerId;
+        aliasDefaultEntity.entityType = EntityType.CUSTOMER;
+        break;
+      case AliasEntityType.CURRENT_TENANT:
+        id = this.authUser.tenantId;
+        aliasDefaultEntity.entityType = EntityType.TENANT;
+        break;
+      case AliasEntityType.CURRENT_USER:
+        id = this.authUser.userId;
+        aliasDefaultEntity.entityType = EntityType.USER;
+        break;
+      case AliasEntityType.CURRENT_USER_OWNER:
+        id = this.authUser.authority === Authority.CUSTOMER_USER ? this.authUser.customerId : this.authUser.tenantId;
+        aliasDefaultEntity.entityType = this.authUser.authority === Authority.CUSTOMER_USER ? EntityType.CUSTOMER :
+          EntityType.TENANT;
+    }
+
+    if (id) {
+      aliasDefaultEntity.id = id;
+    }
+
+    return aliasDefaultEntity;
   }
 }
