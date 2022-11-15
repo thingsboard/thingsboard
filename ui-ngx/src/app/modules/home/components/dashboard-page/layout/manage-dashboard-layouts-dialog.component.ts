@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Inject, SkipSelf, ViewChild } from '@angular/core';
+import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -85,8 +85,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
-              private dialog: MatDialog,
-              private elementRef: ElementRef) {
+              private dialog: MatDialog) {
     super(store, router, dialogRef);
 
     this.layouts = this.data.layouts;
@@ -96,10 +95,13 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         right: [isDefined(this.layouts.right)],
         sliderPercentage: [50],
         sliderFixed: [this.layoutFixedSize.MIN],
-        leftWidthPercentage: [50, [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
-        rightWidthPercentage: [50, [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
+        leftWidthPercentage: [50,
+          [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
+        rightWidthPercentage: [50,
+          [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
         type: [LayoutWidthType.PERCENTAGE],
-        fixedWidth: [this.layoutFixedSize.MIN, [Validators.min(this.layoutFixedSize.MIN), Validators.max(this.layoutFixedSize.MAX), Validators.required]],
+        fixedWidth: [this.layoutFixedSize.MIN,
+          [Validators.min(this.layoutFixedSize.MIN), Validators.max(this.layoutFixedSize.MAX), Validators.required]],
         fixedLayout: ['main', []]
       }
     );
@@ -293,22 +295,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   }
 
   setFixedLayout(layout: string): void {
-    const layoutButtons = this.elementRef.nativeElement.querySelectorAll('.tb-layout-button');
-    if (layoutButtons?.length) {
-      let elementToDisable: HTMLButtonElement;
-      if (layout === 'right') {
-        elementToDisable = layoutButtons[0];
-      } else {
-        elementToDisable = layoutButtons[1];
-      }
-
-      elementToDisable.disabled = true;
-      setTimeout(() => {
-        elementToDisable.disabled = false;
-      }, 250);
-    }
-
-    if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED) {
+    if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED && this.layoutsFormGroup.get('right').value) {
       this.layoutsFormGroup.get('fixedLayout').setValue(layout);
     }
   }

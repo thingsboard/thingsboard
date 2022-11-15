@@ -64,6 +64,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
@@ -142,6 +143,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private AuditLogDao auditLogDao;
 
+    @Autowired
+    private EdgeEventDao edgeEventDao;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -181,13 +185,20 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
                 break;
             case "3.4.1":
+                log.info("Updating data from version 3.4.1 to 3.4.2 ...");
                 boolean skipAuditLogsMigration = getEnv("TB_SKIP_AUDIT_LOGS_MIGRATION", false);
                 if (!skipAuditLogsMigration) {
-                    log.info("Updating data from version 3.4.1 to 3.4.2 ...");
                     log.info("Starting audit logs migration. Can be skipped with TB_SKIP_AUDIT_LOGS_MIGRATION env variable set to true");
                     auditLogDao.migrateAuditLogs();
                 } else {
                     log.info("Skipping audit logs migration");
+                }
+                boolean skipEdgeEventsMigration = getEnv("TB_SKIP_EDGE_EVENTS_MIGRATION", false);
+                if (!skipEdgeEventsMigration) {
+                    log.info("Starting edge events migration. Can be skipped with TB_SKIP_EDGE_EVENTS_MIGRATION env variable set to true");
+                    edgeEventDao.migrateEdgeEvents();
+                } else {
+                    log.info("Skipping edge events migration");
                 }
                 break;
             default:

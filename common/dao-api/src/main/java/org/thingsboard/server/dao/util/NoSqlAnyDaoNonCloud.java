@@ -13,28 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.server.dao.util;
 
-import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-@Data
-public class MvelScript {
-
-    private final String scriptBody;
-    private final String[] argNames;
-
-    public Map createVars(Object[] args) {
-        if (args == null || args.length != argNames.length) {
-            throw new IllegalArgumentException("Invalid number of argument values");
-        }
-        var result = new HashMap<>();
-        for (int i = 0; i < argNames.length; i++) {
-            result.put(argNames[i], args[i]);
-        }
-        return result;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("('${database.ts.type}'=='cassandra' || '${database.ts_latest.type}'=='cassandra') " +
+        "&& ('${cassandra.cloud.secure_connect_bundle_path}' == null || '${cassandra.cloud.secure_connect_bundle_path}'.isBlank() )")
+public @interface NoSqlAnyDaoNonCloud {
 }

@@ -13,28 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.server.service.install;
 
-import lombok.Data;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+@Component
+@Profile("install")
+public class DbUpgradeExecutorService extends DbCallbackExecutorService {
 
-@Data
-public class MvelScript {
-
-    private final String scriptBody;
-    private final String[] argNames;
-
-    public Map createVars(Object[] args) {
-        if (args == null || args.length != argNames.length) {
-            throw new IllegalArgumentException("Invalid number of argument values");
-        }
-        var result = new HashMap<>();
-        for (int i = 0; i < argNames.length; i++) {
-            result.put(argNames[i], args[i]);
-        }
-        return result;
-    }
 }

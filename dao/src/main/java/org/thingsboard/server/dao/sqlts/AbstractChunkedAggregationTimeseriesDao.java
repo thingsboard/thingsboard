@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -143,8 +143,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 keyId,
                 query.getStartTs(),
                 query.getEndTs(),
-                PageRequest.of(0, query.getLimit(),
-                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()), "ts").nullsNative())));
+                PageRequest.ofSize(query.getLimit()).withSort(Direction.fromString(query.getOrder()), "ts"));
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         List<TsKvEntry> tsKvEntries = DaoUtil.convertDataList(tsKvEntities);
         long lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
