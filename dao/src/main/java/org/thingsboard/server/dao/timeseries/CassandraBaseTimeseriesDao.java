@@ -227,46 +227,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public ListenableFuture<Void> removePartition(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        long minPartition = toPartitionTs(query.getStartTs());
-        long maxPartition = toPartitionTs(query.getEndTs());
-        if (minPartition == maxPartition) {
-            return Futures.immediateFuture(null);
-        } else {
-            TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
-
-            final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
-            final ListenableFuture<List<Long>> partitionsListFuture = Futures.transformAsync(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
-
-            Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
-                @Override
-                public void onSuccess(@Nullable List<Long> partitions) {
-                    int index = 0;
-                    if (minPartition != query.getStartTs()) {
-                        index = 1;
-                    }
-                    List<Long> partitionsToDelete = new ArrayList<>();
-                    for (int i = index; i < partitions.size() - 1; i++) {
-                        partitionsToDelete.add(partitions.get(i));
-                    }
-                    QueryCursor cursor = new QueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
-                    deletePartitionAsync(tenantId, cursor, resultFuture);
-
-                    for (Long partition : partitionsToDelete) {
-                        cassandraTsPartitionsCache.invalidate(new CassandraPartitionCacheKey(entityId, query.getKey(), partition));
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
-                }
-            }, readResultsProcessingExecutor);
-            return resultFuture;
-        }
-    }
-
-    @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(tenantId, entityId, query);
