@@ -37,7 +37,7 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 pageSize,
                 0,
                 null,
-                new SortOrder("createdTime", SortOrder.Direction.ASC),
+                new SortOrder("id", SortOrder.Direction.ASC),
                 queueStartTs,
                 null);
     }
