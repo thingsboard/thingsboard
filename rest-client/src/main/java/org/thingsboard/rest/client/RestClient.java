@@ -2032,10 +2032,15 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public PageData<RuleChain> getRuleChains(PageLink pageLink) {
+        return getRuleChains(RuleChainType.CORE, pageLink);
+    }
+
+    public PageData<RuleChain> getRuleChains(RuleChainType ruleChainType, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
+        params.put("type", ruleChainType.name());
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/ruleChains?" + getUrlParams(pageLink),
+                baseURL + "/api/ruleChains?type={type}&" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<RuleChain>>() {
