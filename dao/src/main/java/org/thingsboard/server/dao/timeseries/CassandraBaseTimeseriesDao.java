@@ -107,7 +107,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private boolean setNullValuesEnabled;
 
     private NoSqlTsPartitionDate tsFormat;
-    private long partitionDurationPlusOneMs;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement partitionInsertTtlStmt;
@@ -132,9 +131,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
-            if (!isFixedPartitioning()) {
-                partitionDurationPlusOneMs = partitionToMs(tsFormat) + 1;
-            }
             if (!isFixedPartitioning() && partitionsCacheSize > 0) {
                 cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
             }
@@ -142,18 +138,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             log.warn("Incorrect configuration of partitioning {}", partitioning);
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
         }
-    }
-
-    long partitionToMs(final NoSqlTsPartitionDate partition) {
-        switch (partition) {
-            case MINUTES: return TimeUnit.MINUTES.toMillis(1);
-            case HOURS: return TimeUnit.HOURS.toMillis(1);
-            case DAYS: return TimeUnit.DAYS.toMillis(1);
-            case MONTHS: return TimeUnit.DAYS.toMillis(31); //the longest month
-            case YEARS: return TimeUnit.DAYS.toMillis(366); // leap year
-        }
-        log.warn("Can not convert partition to milliseconds. There are no mapping [{}] for partitioning [{}]", partition, partitioning);
-        throw new RuntimeException("Failed to convert partition to ms: " + partitioning + "!");
     }
 
     @PreDestroy
@@ -452,12 +436,17 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         partitions.add(minPartition);
 
         long currentPartition = minPartition;
-        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + partitionDurationPlusOneMs))){
+        while (maxPartition > (currentPartition = calculateNextPartition(currentPartition))) {
             partitions.add(currentPartition);
         }
 
         partitions.add(maxPartition);
         return partitions;
+    }
+
+    private long calculateNextPartition(long ts) {
+        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+        return time.plus(1, tsFormat.getTruncateUnit()).toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
     private AsyncFunction<List<Long>, List<TbResultSet>> getFetchChunksAsyncFunction(TenantId tenantId, EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {

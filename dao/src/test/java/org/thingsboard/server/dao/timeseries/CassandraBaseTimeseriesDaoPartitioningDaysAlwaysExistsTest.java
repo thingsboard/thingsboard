@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.timeseries;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
@@ -84,10 +83,33 @@ public class CassandraBaseTimeseriesDaoPartitioningDaysAlwaysExistsTest {
     }
 
 
-    @Ignore //TODO make test for Days
     @Test
     public void testCalculatePartitionsDays() throws ParseException {
+        long startTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-10T00:00:00Z").getTime());
+        long nextTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-12T23:59:59Z").getTime());
+        long endTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-15T00:00:00Z").getTime());
+        log.info("startTs {}, nextTs {}, endTs {}", startTs, nextTs, endTs);
 
+        assertThat(tsDao.calculatePartitions(0, 0)).isEqualTo(List.of(0L));
+        assertThat(tsDao.calculatePartitions(0, 1)).isEqualTo(List.of(0L, 1L));
+
+        assertThat(tsDao.calculatePartitions(startTs, startTs)).isEqualTo(List.of(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-10T00:00:00Z").getTime()));
+        assertThat(tsDao.calculatePartitions(startTs, nextTs)).isEqualTo(List.of(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-10T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-11T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-12T00:00:00Z").getTime()));
+
+        assertThat(tsDao.calculatePartitions(startTs, endTs)).hasSize(6).isEqualTo(List.of(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-10T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-11T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-12T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-13T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-14T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-15T00:00:00Z").getTime()));
     }
 
 }
