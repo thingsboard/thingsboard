@@ -73,7 +73,8 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
     this.loadDataOnInit = updateOnInit;
     this.tableTitle = '';
     this.useTimePageLink = false;
-    this.pageMode = pageMode;
+    this.pageMode = false;
+    this.displayPagination = false;
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = true;
@@ -140,7 +141,7 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
     }
     return request.pipe(
       map(pageData => {
-        pageData.data = pageData.data.filter(device => device.additionalInfo.gateway);
+        pageData.data = pageData.data.filter(device => device.additionalInfo?.gateway);
         pageData.totalElements = pageData.data.length;
         return pageData;
       })

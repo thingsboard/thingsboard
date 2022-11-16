@@ -38,10 +38,17 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {Device, DeviceCredentials} from "@shared/models/device.models";
 import {ActionNotificationShow} from "@core/notification/notification.actions";
+import {FormControl} from "@angular/forms";
 
 export interface GatewayCommandDialogData {
   device: Device,
   credentials: DeviceCredentials
+}
+
+enum OsType {
+  linux = 'linux',
+  macos = 'macos',
+  windows = 'win'
 }
 
 @Component({
@@ -52,6 +59,8 @@ export interface GatewayCommandDialogData {
 export class GatewayCommandDialogComponent extends DialogComponent<GatewayCommandDialogComponent> implements OnInit {
   linuxCode: string;
   windowsCode: string;
+  selectedOSControll: FormControl;
+  osTypes = OsType;
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
@@ -60,13 +69,30 @@ export class GatewayCommandDialogComponent extends DialogComponent<GatewayComman
               public dialogRef: MatDialogRef<GatewayCommandDialogComponent, boolean>,) {
     super(store, router, dialogRef);
     const ACCESS_TOKEN = data.credentials.credentialsId;
+    const HOST = window.location.hostname;
+    this.selectedOSControll = new FormControl('');
+    // @ts-ignore
+    const platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
+      macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+      windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
+    if (macosPlatforms.indexOf(platform) !== -1) {
+      this.selectedOSControll.setValue(OsType.macos);
+    } else if (windowsPlatforms.indexOf(platform) !== -1) {
+      this.selectedOSControll.setValue(OsType.windows);
+    } else if (/Linux/.test(platform)) {
+      this.selectedOSControll.setValue(OsType.linux);
+    }
     this.linuxCode = "docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v " +
-      "~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e accessToken=" +
+      "~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e host=" +
+      HOST +
+      " accessToken=" +
       ACCESS_TOKEN +
       " --restart always thingsboard/tb-gateway";
     this.windowsCode = "docker run -it -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config -v " +
       "%HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs " +
-      "--name tb-gateway -e host=thingsboard.cloud -p 1883 -e accessToken=" +
+      "--name tb-gateway -e host=" +
+      HOST +
+      " -p 1883 -e accessToken=" +
       ACCESS_TOKEN +
       " --restart always thingsboard/tb-gateway";
 

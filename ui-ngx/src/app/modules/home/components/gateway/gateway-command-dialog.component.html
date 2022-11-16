@@ -44,8 +44,12 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content tb-toast toastTarget="dockerCommandDialogContent">
-    <div class="mat-content" fxLayout="column">
-      <span translate>gateway.linux-macos</span>
+    <mat-button-toggle-group [formControl]="selectedOSControll" aria-label="Favorite Color">
+      <mat-button-toggle [value]="osTypes.windows"><span translate>gateway.windows </span></mat-button-toggle>
+      <mat-button-toggle [value]="osTypes.linux"><span translate>gateway.linux-macos </span></mat-button-toggle>
+    </mat-button-toggle-group>
+    <div class="mat-content" fxLayout="column" *ngIf="selectedOSControll.value !== osTypes.windows">
+<!--      <span translate>gateway.linux-macos</span>-->
       <div fxLayout="row" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ linuxCode }}</code></pre>
         <button mat-icon-button
@@ -58,7 +62,9 @@
           <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
         </button>
       </div>
-      <span translate>gateway.windows</span>
+    </div>
+    <div class="mat-content" fxLayout="column" *ngIf="selectedOSControll.value === osTypes.windows">
+<!--      <span translate>gateway.windows</span>-->
       <div fxLayout="row" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ windowsCode }}</code></pre>
         <button mat-icon-button
