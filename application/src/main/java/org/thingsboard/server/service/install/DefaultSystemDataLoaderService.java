@@ -268,8 +268,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
-    public void createJwtAdminSettings() throws Exception {
-        jwtSettingsService.createJwtAdminSettings();
+    public void createRandomJwtSettings() throws Exception {
+        jwtSettingsService.createRandomJwtSettings();
+    }
+
+    @Override
+    public void saveLegacyYmlSettings() throws Exception {
+        jwtSettingsService.saveLegacyYmlSettings();
     }
 
     @Override

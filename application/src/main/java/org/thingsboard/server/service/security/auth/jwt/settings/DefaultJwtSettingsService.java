@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.service.security.auth.jwt.settings;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -44,16 +41,14 @@ import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSetti
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class JwtSettingsServiceDefault implements JwtSettingsService {
+public class DefaultJwtSettingsService implements JwtSettingsService {
 
     @Lazy
     private final AdminSettingsService adminSettingsService;
     @Lazy
     private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
-    private final Environment environment;
-    @Getter
-    private final JwtSettings jwtSettings = new JwtSettings();
+    private volatile JwtSettings jwtSettings = null; //lazy init
     @Value("${install.upgrade:false}")
     private boolean isUpgrade;
 
@@ -68,21 +63,7 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
 
     @PostConstruct
     public void init() {
-        jwtSettings.setTokenExpirationTime(this.tokenExpirationTime);
-        jwtSettings.setRefreshTokenExpTime(this.refreshTokenExpTime);
-        jwtSettings.setTokenIssuer(this.tokenIssuer);
-        jwtSettings.setTokenSigningKey(this.tokenSigningKey);
-        if (!isFirstInstall()) {
-            reloadJwtSettings();
-        }
-    }
 
-    private boolean isInstall() {
-        return environment.acceptsProfiles(Profiles.of("install"));
-    }
-
-    private boolean isFirstInstall() {
-        return isInstall() && !isUpgrade;
     }
 
     @Override
@@ -90,11 +71,9 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
         AdminSettings adminJwtSettings = findJwtAdminSettings();
         if (adminJwtSettings != null) {
             log.info("Reloading the JWT admin settings from database");
-            JwtSettings jwtLoaded = mapAdminToJwtSettings(adminJwtSettings);
-            jwtSettings.setTokenExpirationTime(jwtLoaded.getTokenExpirationTime());
-            jwtSettings.setRefreshTokenExpTime(jwtLoaded.getRefreshTokenExpTime());
-            jwtSettings.setTokenIssuer(jwtLoaded.getTokenIssuer());
-            jwtSettings.setTokenSigningKey(jwtLoaded.getTokenSigningKey());
+            synchronized (this) {
+                this.jwtSettings = mapAdminToJwtSettings(adminJwtSettings);
+            }
         }
 
         if (hasDefaultTokenSigningKey()) {
@@ -119,23 +98,34 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
     }
 
     boolean hasDefaultTokenSigningKey() {
-        return TOKEN_SIGNING_KEY_DEFAULT.equals(jwtSettings.getTokenSigningKey());
+        return TOKEN_SIGNING_KEY_DEFAULT.equals(getJwtSettings().getTokenSigningKey());
     }
 
     /**
-     * Create JWT admin settings is intended to be called from Install or Upgrade scripts
+     * Create JWT admin settings is intended to be called from Install scripts only
      * */
     @Override
-    public void createJwtAdminSettings() {
+    public void createRandomJwtSettings() {
         log.info("Creating JWT admin settings...");
-        Objects.requireNonNull(jwtSettings, "JWT settings is null");
+        Objects.requireNonNull(getJwtSettings(), "JWT settings is null");
+
+        if (hasDefaultTokenSigningKey()) {
+            log.info("JWT token signing key is default. Generating a new random key");
+            getJwtSettings().setTokenSigningKey(Base64.getEncoder().encodeToString(
+                    RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+        }
+        saveJwtSettings(getJwtSettings());
+    }
+
+    /**
+     * Create JWT admin settings is intended to be called from Upgrade scripts only
+     * */
+    @Override
+    public void saveLegacyYmlSettings() {
+        log.info("Saving legacy JWT admin settings from YML...");
+        Objects.requireNonNull(getJwtSettings(), "JWT settings is null");
         if (isJwtAdminSettingsNotExists()) {
-            if (hasDefaultTokenSigningKey() && isFirstInstall()) {
-                log.info("JWT token signing key is default. Generating a new random key");
-                jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                        RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
-            }
-            saveJwtSettings(jwtSettings);
+            saveJwtSettings(getJwtSettings());
         }
     }
 
@@ -151,9 +141,7 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
         log.info("Saving new JWT admin settings. From this moment, the JWT parameters from YAML and ENV will be ignored");
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminJwtSettings);
 
-        if (!isInstall()) {
-            tbClusterService.orElseThrow().broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, ComponentLifecycleEvent.UPDATED);
-        }
+        tbClusterService.ifPresent(cs -> cs.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, ComponentLifecycleEvent.UPDATED));
         reloadJwtSettings();
         return getJwtSettings();
     }
@@ -166,4 +154,15 @@ public class JwtSettingsServiceDefault implements JwtSettingsService {
         return adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
     }
 
+    public JwtSettings getJwtSettings() {
+        if (this.jwtSettings == null) {
+            synchronized (this) {
+                if (this.jwtSettings == null) {
+                    this.jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
+                    reloadJwtSettings();
+                }
+            }
+        }
+        return this.jwtSettings;
+    }
 }

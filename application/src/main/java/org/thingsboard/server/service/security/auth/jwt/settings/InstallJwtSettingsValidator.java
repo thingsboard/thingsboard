@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.security.model.JwtSettings;
 @Profile("install")
 @Component
 @RequiredArgsConstructor
-public class JwtSettingsValidatorInstall implements JwtSettingsValidator {
+public class InstallJwtSettingsValidator implements JwtSettingsValidator {
 
     /**
      * During Install or upgrade the validation is suppressed to keep existing data

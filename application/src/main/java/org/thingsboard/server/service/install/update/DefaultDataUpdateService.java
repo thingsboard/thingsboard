@@ -186,7 +186,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 break;
             case "3.4.1":
                 log.info("Updating data from version 3.4.1 to 3.4.2 ...");
-                systemDataLoaderService.createJwtAdminSettings();
+                systemDataLoaderService.saveLegacyYmlSettings();
                 boolean skipAuditLogsMigration = getEnv("TB_SKIP_AUDIT_LOGS_MIGRATION", false);
                 if (!skipAuditLogsMigration) {
                     log.info("Starting audit logs migration. Can be skipped with TB_SKIP_AUDIT_LOGS_MIGRATION env variable set to true");

@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
-public class JwtSettingsValidatorDefault implements JwtSettingsValidator {
+public class DefaultJwtSettingsValidator implements JwtSettingsValidator {
 
     @Override
     public void validate(JwtSettings jwtSettings) {
