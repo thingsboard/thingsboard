@@ -82,7 +82,6 @@ public class CassandraBaseTimeseriesDaoPartitioningDaysAlwaysExistsTest {
                 ISO_DATETIME_TIME_ZONE_FORMAT.parse("2023-12-31T00:00:00Z").getTime());
     }
 
-
     @Test
     public void testCalculatePartitionsDays() throws ParseException {
         long startTs = tsDao.toPartitionTs(
@@ -110,6 +109,25 @@ public class CassandraBaseTimeseriesDaoPartitioningDaysAlwaysExistsTest {
                 ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-13T00:00:00Z").getTime(),
                 ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-14T00:00:00Z").getTime(),
                 ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-15T00:00:00Z").getTime()));
+
+        long leapStartTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-02-27T00:00:00Z").getTime());
+        long leapEndTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-03-01T00:00:00Z").getTime());
+        assertThat(tsDao.calculatePartitions(leapStartTs, leapEndTs)).isEqualTo(List.of(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-02-27T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-02-28T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-02-29T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-03-01T00:00:00Z").getTime()));
+
+        long newYearStartTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-12-30T00:00:00Z").getTime());
+        long newYearEndTs = tsDao.toPartitionTs(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-01T00:00:00Z").getTime());
+        assertThat(tsDao.calculatePartitions(newYearStartTs, newYearEndTs)).isEqualTo(List.of(
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-12-30T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-12-31T00:00:00Z").getTime(),
+                ISO_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-01T00:00:00Z").getTime()));
     }
 
 }
