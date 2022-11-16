@@ -60,7 +60,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -83,8 +82,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     protected static final int MIN_AGGREGATION_STEP_MS = 1000;
     public static final String ASC_ORDER = "ASC";
     public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
-    static final long DAYS_32_MS = TimeUnit.DAYS.toMillis(32);
-
     protected static final List<Long> FIXED_PARTITION = List.of(0L);
 
     private CassandraTsPartitionsCache cassandraTsPartitionsCache;
@@ -110,6 +107,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private boolean setNullValuesEnabled;
 
     private NoSqlTsPartitionDate tsFormat;
+    private long partitionDurationPlusOneMs;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement partitionInsertTtlStmt;
@@ -134,6 +132,9 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
+            if (!isFixedPartitioning()) {
+                partitionDurationPlusOneMs = partitionToMs(tsFormat) + 1;
+            }
             if (!isFixedPartitioning() && partitionsCacheSize > 0) {
                 cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
             }
@@ -141,6 +142,18 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             log.warn("Incorrect configuration of partitioning {}", partitioning);
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
         }
+    }
+
+    long partitionToMs(final NoSqlTsPartitionDate partition) {
+        switch (partition) {
+            case MINUTES: return TimeUnit.MINUTES.toMillis(1);
+            case HOURS: return TimeUnit.HOURS.toMillis(1);
+            case DAYS: return TimeUnit.DAYS.toMillis(1);
+            case MONTHS: return TimeUnit.DAYS.toMillis(31); //the longest month
+            case YEARS: return TimeUnit.DAYS.toMillis(366); // leap year
+        }
+        log.warn("Can not convert partition to milliseconds. There are no mapping [{}] for partitioning [{}]", partition, partitioning);
+        throw new RuntimeException("Failed to convert partition to ms: " + partitioning + "!");
     }
 
     @PreDestroy
@@ -439,7 +452,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         partitions.add(minPartition);
 
         long currentPartition = minPartition;
-        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + DAYS_32_MS))){
+        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + partitionDurationPlusOneMs))){
             partitions.add(currentPartition);
         }
 
