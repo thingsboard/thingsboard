@@ -182,7 +182,7 @@ public class UserController extends BaseController {
             @RequestBody User user,
             @ApiParam(value = "Send activation email (or use activation link)", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail, HttpServletRequest request) throws ThingsboardException {
-        if (Authority.TENANT_ADMIN.equals(getCurrentUser().getAuthority())) {
+        if (!Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
