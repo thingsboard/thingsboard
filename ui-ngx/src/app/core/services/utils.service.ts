@@ -430,6 +430,7 @@ export class UtilsService {
       params = this.updateUrlQueryString(params, key, null);
     }
     const baseUrlPart = [baseUrl(), this.window.location.pathname].join('');
+    params = params.replace('/', '');
     this.window.history.replaceState({}, '', baseUrlPart + params);
   }
 
