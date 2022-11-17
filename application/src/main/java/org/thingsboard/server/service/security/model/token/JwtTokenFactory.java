@@ -205,10 +205,10 @@ public class JwtTokenFactory {
             return Jwts.parser()
                     .setSigningKey(jwtSettingsService.getJwtSettings().getTokenSigningKey())
                     .parseClaimsJws(token.getToken());
-        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException | SignatureException ex) {
+        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException ex) {
             log.debug("Invalid JWT Token", ex);
             throw new BadCredentialsException("Invalid JWT token: ", ex);
-        } catch (ExpiredJwtException expiredEx) {
+        } catch (SignatureException | ExpiredJwtException expiredEx) {
             log.debug("JWT Token is expired", expiredEx);
             throw new JwtExpiredTokenException(token, "JWT Token expired", expiredEx);
         }

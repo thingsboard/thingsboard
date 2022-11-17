@@ -103,27 +103,29 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
 
     @Override
     public JwtSettings reloadJwtSettings() {
-        synchronized (this) {
-            this.jwtSettings = null;
-        }
-        return getJwtSettings();
+        return getJwtSettings(true);
     }
 
     @Override
     public JwtSettings getJwtSettings() {
-        if (this.jwtSettings == null) {
+        return getJwtSettings(false);
+    }
+
+    public JwtSettings getJwtSettings(boolean forceReload) {
+        if (this.jwtSettings == null || forceReload) {
             synchronized (this) {
-                if (this.jwtSettings == null) {
-                    this.jwtSettings = getJwtSettingsFromDb();
-                    if (this.jwtSettings == null) {
-                        this.jwtSettings = getJwtSettingsFromYml();
+                if (this.jwtSettings == null || forceReload) {
+                    JwtSettings result = getJwtSettingsFromDb();
+                    if (result == null) {
+                        result = getJwtSettingsFromYml();
                         log.warn("Loading the JWT settings from YML since there are no settings in DB. Looks like the upgrade script was not applied.");
                     }
-                    if (isSigningKeyDefault(jwtSettings)) {
+                    if (isSigningKeyDefault(result)) {
                         log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
                                 "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
                                 "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
                     }
+                    this.jwtSettings = result;
                 }
             }
         }
