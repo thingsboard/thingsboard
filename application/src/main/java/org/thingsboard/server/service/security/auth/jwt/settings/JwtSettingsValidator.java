@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .mat-headline {
-    margin-bottom: 8px;
-  }
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
-  .mat-card-title {
-    margin: 0;
-  }
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 
-  .mat-card-content {
-    padding: 0 !important;
-  }
+public interface JwtSettingsValidator {
+    String ADMIN_SETTINGS_JWT_KEY = "jwt";
+    String TOKEN_SIGNING_KEY_DEFAULT = "thingsboardDefaultSigningKey";
 
-  .fields-group {
-    padding: 8px 16px 0;
-    margin: 10px 0;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
-
-    legend {
-      color: rgba(0, 0, 0, .7);
-    }
-  }
+    void validate(JwtSettings jwtSettings);
 }
