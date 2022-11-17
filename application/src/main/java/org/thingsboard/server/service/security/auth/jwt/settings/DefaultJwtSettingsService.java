@@ -29,14 +29,10 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsValidator.ADMIN_SETTINGS_JWT_KEY;
-import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsValidator.TOKEN_SIGNING_KEY_DEFAULT;
 
 @Service
 @RequiredArgsConstructor
@@ -48,9 +44,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     @Lazy
     private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
-    private volatile JwtSettings jwtSettings = null; //lazy init
-    @Value("${install.upgrade:false}")
-    private boolean isUpgrade;
 
     @Value("${security.jwt.tokenExpirationTime:9000}")
     private Integer tokenExpirationTime;
@@ -61,10 +54,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
     private String tokenSigningKey;
 
-    @PostConstruct
-    public void init() {
-
-    }
+    private volatile JwtSettings jwtSettings = null; //lazy init
 
     @Override
     public void reloadJwtSettings() {
@@ -142,6 +132,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminJwtSettings);
 
         tbClusterService.ifPresent(cs -> cs.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, ComponentLifecycleEvent.UPDATED));
+
         reloadJwtSettings();
         return getJwtSettings();
     }
@@ -165,4 +156,5 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         }
         return this.jwtSettings;
     }
+
 }

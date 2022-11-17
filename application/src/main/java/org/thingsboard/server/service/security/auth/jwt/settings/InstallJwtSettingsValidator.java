@@ -21,15 +21,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 
+/**
+ * During Install or upgrade the validation is suppressed to keep existing data
+ * */
+
 @Primary
 @Profile("install")
 @Component
 @RequiredArgsConstructor
 public class InstallJwtSettingsValidator implements JwtSettingsValidator {
 
-    /**
-     * During Install or upgrade the validation is suppressed to keep existing data
-     * */
     @Override
     public void validate(JwtSettings jwtSettings) {
 
