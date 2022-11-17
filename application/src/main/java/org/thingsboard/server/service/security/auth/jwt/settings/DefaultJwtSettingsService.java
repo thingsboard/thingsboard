@@ -18,7 +18,6 @@ package org.thingsboard.server.service.security.auth.jwt.settings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -30,14 +29,10 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsValidator.ADMIN_SETTINGS_JWT_KEY;
-import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsValidator.TOKEN_SIGNING_KEY_DEFAULT;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +44,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     @Lazy
     private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
-    private volatile JwtSettings jwtSettings = null; //lazy init
 
     @Value("${security.jwt.tokenExpirationTime:9000}")
     private Integer tokenExpirationTime;
@@ -59,6 +53,8 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     private String tokenIssuer;
     @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
     private String tokenSigningKey;
+
+    private volatile JwtSettings jwtSettings = null; //lazy init
 
     /**
      * Create JWT admin settings is intended to be called from Install scripts only
@@ -160,4 +156,5 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     private boolean isSigningKeyDefault(JwtSettings settings) {
         return TOKEN_SIGNING_KEY_DEFAULT.equals(settings.getTokenSigningKey());
     }
+
 }
