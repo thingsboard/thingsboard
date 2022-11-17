@@ -94,8 +94,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private String partitioning;
 
     @Getter
-    @Value("${cassandra.query.ts_key_value_partitioning_always_exist_in_reading:false}")
-    private boolean partitioningAlwaysExistInReading;
+    @Value("${cassandra.query.use_ts_key_value_partitioning_on_read:true}")
+    private boolean useTsKeyValuePartitioningOnRead;
 
     @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
     private long partitionsCacheSize;
@@ -381,7 +381,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
-        if (isPartitioningAlwaysExistInReading()) {
+        if (!isUseTsKeyValuePartitioningOnRead()) {
             return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition));
         }
         TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
@@ -393,20 +393,23 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             return Collections.singletonList(minPartition);
         }
         List<Long> partitions = new ArrayList<>();
-        partitions.add(minPartition);
 
         long currentPartition = minPartition;
-        while (maxPartition > (currentPartition = calculateNextPartition(currentPartition))) {
+        LocalDateTime currentPartitionTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(currentPartition), ZoneOffset.UTC);
+
+        while (maxPartition > currentPartition) {
             partitions.add(currentPartition);
+            currentPartitionTime = calculateNextPartition(currentPartitionTime);
+            currentPartition = currentPartitionTime.toInstant(ZoneOffset.UTC).toEpochMilli();
         }
 
         partitions.add(maxPartition);
+
         return partitions;
     }
 
-    private long calculateNextPartition(long ts) {
-        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
-        return time.plus(1, tsFormat.getTruncateUnit()).toInstant(ZoneOffset.UTC).toEpochMilli();
+    private LocalDateTime calculateNextPartition(LocalDateTime time) {
+        return time.plus(1, tsFormat.getTruncateUnit());
     }
 
     private AsyncFunction<List<Long>, List<TbResultSet>> getFetchChunksAsyncFunction(TenantId tenantId, EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {

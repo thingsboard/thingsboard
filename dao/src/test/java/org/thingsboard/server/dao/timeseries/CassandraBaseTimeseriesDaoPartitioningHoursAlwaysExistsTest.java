@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestPropertySource(properties = {
         "database.ts.type=cassandra",
         "cassandra.query.ts_key_value_partitioning=HOURS",
-        "cassandra.query.ts_key_value_partitioning_always_exist_in_reading=true",
+        "cassandra.query.use_ts_key_value_partitioning_on_read=false",
         "cassandra.query.ts_key_value_partitions_max_cache_size=100000",
         "cassandra.query.ts_key_value_partitions_cache_stats_enabled=true",
         "cassandra.query.ts_key_value_partitions_cache_stats_interval=60",
