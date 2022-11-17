@@ -195,18 +195,22 @@ export class AuthService {
       ));
   }
 
-  public logout(captureLastUrl: boolean = false) {
+  public logout(captureLastUrl: boolean = false, ignoreRequest = false) {
     if (captureLastUrl) {
       this.redirectUrl = this.router.url;
     }
-    this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
-      .subscribe(() => {
-          this.clearJwtToken();
-        },
-        () => {
-          this.clearJwtToken();
-        }
-      );
+    if (!ignoreRequest) {
+      this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
+        .subscribe(() => {
+            this.clearJwtToken();
+          },
+          () => {
+            this.clearJwtToken();
+          }
+        );
+    } else {
+      this.clearJwtToken();
+    }
   }
 
   private notifyUserLoaded(isUserLoaded: boolean) {
