@@ -106,7 +106,8 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             clearAuthenticationAttributes(request, response);
 
-            getRedirectStrategy().sendRedirect(request, response, getRedirectUrl(baseUrl, securityUser));
+            JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
+            getRedirectStrategy().sendRedirect(request, response, getRedirectUrl(baseUrl, tokenPair));
             systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, registration.getName(), null);
         } catch (Exception e) {
             log.debug("Error occurred during processing authentication success result. " +
@@ -128,8 +129,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
     }
 
-    String getRedirectUrl(String baseUrl, SecurityUser securityUser) {
-        JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
+    String getRedirectUrl(String baseUrl, JwtPair tokenPair) {
         if (baseUrl.indexOf("?") > 0) {
             baseUrl += "&";
         } else {
