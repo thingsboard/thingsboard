@@ -928,7 +928,7 @@ edges:
   storage:
     max_read_records_count: "${EDGES_STORAGE_MAX_READ_RECORDS_COUNT:50}"
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
-    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:1000}"
+    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:10000}"
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   send_scheduler_pool_size: "${EDGES_SEND_SCHEDULER_POOL_SIZE:1}"
   grpc_callback_thread_pool_size: "${EDGES_GRPC_CALLBACK_POOL_SIZE:1}"

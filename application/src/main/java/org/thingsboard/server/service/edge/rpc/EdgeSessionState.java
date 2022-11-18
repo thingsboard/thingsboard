@@ -19,14 +19,14 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.Data;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 
 @Data
 public class EdgeSessionState {
 
-    private final Map<Integer, DownlinkMsg> pendingMsgsMap = new LinkedHashMap<>();
+    private final ConcurrentMap<Integer, DownlinkMsg> pendingMsgsMap = new ConcurrentHashMap<>();
     private SettableFuture<Void> sendDownlinkMsgsFuture;
     private ScheduledFuture<?> scheduledSendDownlinkTask;
 }
