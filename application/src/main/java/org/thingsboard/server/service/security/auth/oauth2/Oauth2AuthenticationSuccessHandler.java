@@ -130,7 +130,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private String getRedirectUrl(String baseUrl, SecurityUser securityUser) {
         JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
-        if (baseUrl.contains("state")) {
+        if (baseUrl.indexOf("?") > 0) {
             baseUrl += "&";
         } else {
             baseUrl += "/?";
