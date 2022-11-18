@@ -104,10 +104,10 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
 
-            JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
-
             clearAuthenticationAttributes(request, response);
-            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken());
+
+            JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
+            getRedirectStrategy().sendRedirect(request, response, getRedirectUrl(baseUrl, tokenPair));
             systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, registration.getName(), null);
         } catch (Exception e) {
             log.debug("Error occurred during processing authentication success result. " +
@@ -127,5 +127,14 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
         super.clearAuthenticationAttributes(request);
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
+    }
+
+    String getRedirectUrl(String baseUrl, JwtPair tokenPair) {
+        if (baseUrl.indexOf("?") > 0) {
+            baseUrl += "&";
+        } else {
+            baseUrl += "/?";
+        }
+        return baseUrl + "accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken();
     }
 }
