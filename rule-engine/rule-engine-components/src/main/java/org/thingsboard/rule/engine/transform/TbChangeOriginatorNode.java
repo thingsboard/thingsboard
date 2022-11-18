@@ -127,6 +127,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                 log.error("EntityNamePattern not specified for type [{}]", conf.getEntityType());
                 throw new IllegalArgumentException("Wrong config for [{}] in TbChangeOriginatorNode!" + ENTITY_SOURCE);
             }
+            EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }
 
     }

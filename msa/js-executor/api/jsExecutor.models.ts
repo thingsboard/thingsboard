@@ -56,7 +56,7 @@ export interface JsCompileResponse extends TbMessage {
 
 export interface JsInvokeResponse {
     success: boolean;
-    result: string;
+    result?: string;
     errorCode?: number;
     errorDetails?: string;
 }

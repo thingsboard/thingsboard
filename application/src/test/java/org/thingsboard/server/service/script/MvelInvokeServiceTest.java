@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.script;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.benmanes.caffeine.cache.Cache;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,15 +25,22 @@ import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.mvel.MvelInvokeService;
+import org.thingsboard.script.api.mvel.MvelScript;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
@@ -41,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "mvel.max_total_args_size=50",
         "mvel.max_result_size=50",
         "mvel.max_errors=2",
+        "mvel.compiled_scripts_cache_size=100"
 })
 class MvelInvokeServiceTest extends AbstractControllerTest {
 
@@ -110,6 +119,89 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
         assertThatScriptIsBlocked(scriptId);
     }
 
+    @Test
+    void givenScriptsWithSameBody_thenCompileAndCacheOnlyOnce() throws Exception {
+        String script = "return msg.temperature > 20;";
+        List<UUID> scriptsIds = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            UUID scriptId = evalScript(script);
+            scriptsIds.add(scriptId);
+        }
+
+        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
+        Map<String, MvelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
+        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+
+        String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
+
+        assertThat(scriptsIds.stream().map(scriptIdToHash::get)).containsOnly(scriptHash);
+        assertThat(scriptMap).containsKey(scriptHash);
+        assertThat(compiledScriptsCache.getIfPresent(scriptHash)).isNotNull();
+    }
+
+    @Test
+    public void whenReleasingScript_thenCheckForScriptHashUsages() throws Exception {
+        String script = "return msg.temperature > 20;";
+        List<UUID> scriptsIds = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            UUID scriptId = evalScript(script);
+            scriptsIds.add(scriptId);
+        }
+
+        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
+        Map<String, MvelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
+        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+
+        String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
+        for (int i = 0; i < 9; i++) {
+            UUID scriptId = scriptsIds.get(i);
+            assertThat(scriptIdToHash).containsKey(scriptId);
+            invokeService.release(scriptId);
+            assertThat(scriptIdToHash).doesNotContainKey(scriptId);
+        }
+        assertThat(scriptMap).containsKey(scriptHash);
+        assertThat(compiledScriptsCache.getIfPresent(scriptHash)).isNotNull();
+
+        invokeService.release(scriptsIds.get(9));
+        assertThat(scriptMap).doesNotContainKey(scriptHash);
+        assertThat(compiledScriptsCache.getIfPresent(scriptHash)).isNull();
+    }
+
+    @Test
+    public void whenCompiledScriptsCacheIsTooBig_thenRemoveRarelyUsedScripts() throws Exception {
+        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
+        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+
+        List<UUID> scriptsIds = new ArrayList<>();
+        for (int i = 0; i < 110; i++) { // mvel.compiled_scripts_cache_size = 100
+            String script = "return msg.temperature > " + i;
+            UUID scriptId = evalScript(script);
+            scriptsIds.add(scriptId);
+
+            for (int j = 0; j < i; j++) {
+                invokeScript(scriptId, "{ \"temperature\": 12 }"); // so that scriptsIds is ordered by number of invocations
+            }
+        }
+
+        ConcurrentMap<String, Serializable> cache = compiledScriptsCache.asMap();
+
+        for (int i = 0; i < 10; i++) { // iterating rarely used scripts
+            UUID scriptId = scriptsIds.get(i);
+            String scriptHash = scriptIdToHash.get(scriptId);
+            assertThat(cache).doesNotContainKey(scriptHash);
+        }
+        for (int i = 10; i < 110; i++) {
+            UUID scriptId = scriptsIds.get(i);
+            String scriptHash = scriptIdToHash.get(scriptId);
+            assertThat(cache).containsKey(scriptHash);
+        }
+
+        UUID scriptRemovedFromCache = scriptsIds.get(0);
+        assertThat(compiledScriptsCache.getIfPresent(scriptIdToHash.get(scriptRemovedFromCache))).isNull();
+        invokeScript(scriptRemovedFromCache, "{ \"temperature\": 12 }");
+        assertThat(compiledScriptsCache.getIfPresent(scriptIdToHash.get(scriptRemovedFromCache))).isNotNull();
+    }
+
     private void assertThatScriptIsBlocked(UUID scriptId) {
         assertThatThrownBy(() -> {
             invokeScript(scriptId, "{}");
@@ -123,6 +215,12 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
     private String invokeScript(UUID scriptId, String str) throws ExecutionException, InterruptedException {
         var msg = JacksonUtil.fromString(str, Map.class);
         return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get().toString();
+    }
+
+    private <T> T getFieldValue(Object target, String fieldName) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (T) field.get(target);
     }
 
 }

@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,7 +60,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -82,16 +82,20 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     protected static final int MIN_AGGREGATION_STEP_MS = 1000;
     public static final String ASC_ORDER = "ASC";
     public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
-
-    protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
+    protected static final List<Long> FIXED_PARTITION = List.of(0L);
 
     private CassandraTsPartitionsCache cassandraTsPartitionsCache;
 
     @Autowired
     private Environment environment;
 
+    @Getter
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
+
+    @Getter
+    @Value("${cassandra.query.use_ts_key_value_partitioning_on_read:true}")
+    private boolean useTsKeyValuePartitioningOnRead;
 
     @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
     private long partitionsCacheSize;
@@ -223,46 +227,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public ListenableFuture<Void> removePartition(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        long minPartition = toPartitionTs(query.getStartTs());
-        long maxPartition = toPartitionTs(query.getEndTs());
-        if (minPartition == maxPartition) {
-            return Futures.immediateFuture(null);
-        } else {
-            TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
-
-            final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
-            final ListenableFuture<List<Long>> partitionsListFuture = Futures.transformAsync(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
-
-            Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
-                @Override
-                public void onSuccess(@Nullable List<Long> partitions) {
-                    int index = 0;
-                    if (minPartition != query.getStartTs()) {
-                        index = 1;
-                    }
-                    List<Long> partitionsToDelete = new ArrayList<>();
-                    for (int i = index; i < partitions.size() - 1; i++) {
-                        partitionsToDelete.add(partitions.get(i));
-                    }
-                    QueryCursor cursor = new QueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
-                    deletePartitionAsync(tenantId, cursor, resultFuture);
-
-                    for (Long partition : partitionsToDelete) {
-                        cassandraTsPartitionsCache.invalidate(new CassandraPartitionCacheKey(entityId, query.getKey(), partition));
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
-                }
-            }, readResultsProcessingExecutor);
-            return resultFuture;
-        }
-    }
-
-    @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(tenantId, entityId, query);
@@ -337,7 +301,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }, MoreExecutors.directExecutor());
     }
 
-    private long toPartitionTs(long ts) {
+    long toPartitionTs(long ts) {
         LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
         return tsFormat.truncatedTo(time).toInstant(ZoneOffset.UTC).toEpochMilli();
     }
@@ -417,8 +381,35 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
+        if (!isUseTsKeyValuePartitioningOnRead()) {
+            return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition));
+        }
         TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
         return Futures.transformAsync(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+    }
+
+    List<Long> calculatePartitions(long minPartition, long maxPartition) {
+        if (minPartition == maxPartition) {
+            return Collections.singletonList(minPartition);
+        }
+        List<Long> partitions = new ArrayList<>();
+
+        long currentPartition = minPartition;
+        LocalDateTime currentPartitionTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(currentPartition), ZoneOffset.UTC);
+
+        while (maxPartition > currentPartition) {
+            partitions.add(currentPartition);
+            currentPartitionTime = calculateNextPartition(currentPartitionTime);
+            currentPartition = currentPartitionTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
+
+        partitions.add(maxPartition);
+
+        return partitions;
+    }
+
+    private LocalDateTime calculateNextPartition(LocalDateTime time) {
+        return time.plus(1, tsFormat.getTruncateUnit());
     }
 
     private AsyncFunction<List<Long>, List<TbResultSet>> getFetchChunksAsyncFunction(TenantId tenantId, EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {

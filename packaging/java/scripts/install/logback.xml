@@ -56,6 +56,10 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
+    <logger name="org.thingsboard.server.config.jwt" level="INFO">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <logger name="org.thingsboard.server" level="INFO" />
 
     <root level="INFO">

@@ -731,6 +731,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {
                 throw new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!");
+            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_asset_profile")) {
+                throw new DataValidationException("The rule chain referenced by the asset profiles cannot be deleted!");
             } else {
                 throw t;
             }
