@@ -128,7 +128,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
     }
 
-    private String getRedirectUrl(String baseUrl, SecurityUser securityUser) {
+    protected String getRedirectUrl(String baseUrl, SecurityUser securityUser) {
         JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
         if (baseUrl.indexOf("?") > 0) {
             baseUrl += "&";
