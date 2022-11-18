@@ -34,7 +34,7 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testTimeseriesWithFailures() throws Exception {
-        int numberOfTimeseriesToSend = 1000;
+        int numberOfTimeseriesToSend = 333;
 
         Device device = findDeviceByName("Edge Device 1");
 
