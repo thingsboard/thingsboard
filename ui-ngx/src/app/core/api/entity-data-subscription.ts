@@ -120,6 +120,7 @@ export class EntityDataSubscription {
 
   private entityDataResolveSubject: Subject<EntityDataLoadResult>;
   private pageData: PageData<EntityData>;
+  private prematureUpdates: Array<Array<EntityData>>;
   private data: Array<Array<DataSetHolder>>;
   private subsTw: SubscriptionTimewindow;
   private latestTsOffset: number;
@@ -348,8 +349,21 @@ export class EntityDataSubscription {
         (entityDataUpdate) => {
           if (entityDataUpdate.data) {
             this.onPageData(entityDataUpdate.data);
+            if (this.prematureUpdates) {
+              for (const update of this.prematureUpdates) {
+                this.onDataUpdate(update);
+              }
+              this.prematureUpdates = null;
+            }
           } else if (entityDataUpdate.update) {
-            this.onDataUpdate(entityDataUpdate.update);
+            if (!this.pageData) {
+              if (!this.prematureUpdates) {
+                this.prematureUpdates = [];
+              }
+              this.prematureUpdates.push(entityDataUpdate.update);
+            } else {
+              this.onDataUpdate(entityDataUpdate.update);
+            }
           }
         }
       );
