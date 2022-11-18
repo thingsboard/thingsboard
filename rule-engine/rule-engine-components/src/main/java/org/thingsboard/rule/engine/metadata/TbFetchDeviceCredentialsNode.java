@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -78,16 +79,20 @@ public class TbFetchDeviceCredentialsNode implements TbNode {
         }
 
         TbMsg transformedMsg;
-        String credentialsType = deviceCredentials.getCredentialsType().name();
+        DeviceCredentialsType credentialsType = deviceCredentials.getCredentialsType();
         JsonNode credentialsInfo = ctx.getDeviceCredentialsService().toCredentialsInfo(deviceCredentials);
         if (fetchToMetadata) {
             TbMsgMetaData metaData = msg.getMetaData();
-            metaData.putValue(CREDENTIALS_TYPE, credentialsType);
-            metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
+            metaData.putValue(CREDENTIALS_TYPE, credentialsType.name());
+            if (credentialsType.equals(DeviceCredentialsType.ACCESS_TOKEN) || credentialsType.equals(DeviceCredentialsType.X509_CERTIFICATE)) {
+                metaData.putValue(CREDENTIALS, credentialsInfo.asText());
+            } else {
+                metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
+            }
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, metaData, msg.getData());
         } else {
             ObjectNode data = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
-            data.put(CREDENTIALS_TYPE, credentialsType);
+            data.put(CREDENTIALS_TYPE, credentialsType.name());
             data.set(CREDENTIALS, credentialsInfo);
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, msg.getMetaData(), JacksonUtil.toString(data));
         }
