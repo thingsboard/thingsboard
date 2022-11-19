@@ -1,0 +1,78 @@
+#
+# Copyright © 2016-2022 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+monitoring:
+  auth:
+    base_url: '${AUTH_BASE_URL:http://localhost:8080}'
+    username: '${AUTH_USERNAME:tenant@thingsboard.org}'
+    password: '${AUTH_PASSWORD:tenant}'
+  ws:
+    base_url: '${WS_BASE_URL:ws://localhost:8080}'
+    check_timeout_ms: '${WS_CHECK_TIMEOUT_MS:3000}'
+    request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:5000}'
+
+  failure_threshold: '${MONITORING_FAILURE_THRESHOLD:1}'
+
+  transports:
+    mqtt:
+      enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:true}'
+      monitoring_rate_ms: '${MQTT_TRANSPORT_MONITORING_RATE_MS:10000}'
+      request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
+      initial_delay_ms: '${MQTT_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
+      qos: '${MQTT_QOS_LEVEL:1}'
+      targets:
+        - base_url: "tcp://localhost"
+          device:
+            id:
+            access_token:
+
+    coap:
+      enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:false}'
+      monitoring_rate_ms: '${COAP_TRANSPORT_MONITORING_RATE_MS:10000}'
+      request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
+      initial_delay_ms: '${COAP_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
+      targets:
+        - base_url:
+          device:
+            id:
+            access_token:
+
+    lwm2m:
+      enabled: '${LWM2M_TRANSPORT_MONITORING_ENABLED:false}'
+      monitoring_rate_ms: '${LWM2M_TRANSPORT_MONITORING_RATE_MS:10000}'
+      request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
+      initial_delay_ms: '${LWM2M_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
+      targets:
+        - base_url:
+          device:
+            id:
+            access_token:
+
+    http:
+      enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:false}'
+      monitoring_rate_ms: '${HTTP_TRANSPORT_MONITORING_RATE_MS:10000}'
+      request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
+      initial_delay_ms: '${HTTP_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
+      targets:
+        - base_url:
+          device:
+            id:
+            access_token:
+
+  notification_channels:
+    slack:
+      enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'
+      webhook_url: '${SLACK_WEBHOOK_URL:}'
