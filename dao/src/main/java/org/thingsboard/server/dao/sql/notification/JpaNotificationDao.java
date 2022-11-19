@@ -91,11 +91,6 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     }
 
     @Override
-    public int updateByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, String notificationReason, NotificationInfo notificationInfo) {
-        return notificationRepository.updateReasonAndInfoByRequestId(notificationRequestId.getId(), notificationReason, JacksonUtil.valueToTree(notificationInfo));
-    }
-
-    @Override
     protected Class<NotificationEntity> getEntityClass() {
         return NotificationEntity.class;
     }

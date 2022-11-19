@@ -170,7 +170,6 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
             subscription.getLatestUnreadNotifications().values().stream()
                     .filter(notification -> notification.getRequestId().equals(notificationRequestId))
                     .forEach(notification -> {
-                        notification.setReason(update.getNotificationReason());
                         notification.setInfo(update.getNotificationInfo());
                         sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
                     });

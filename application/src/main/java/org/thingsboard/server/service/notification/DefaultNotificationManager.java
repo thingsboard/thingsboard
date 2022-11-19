@@ -156,11 +156,8 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     public NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         log.debug("Updating notification request {}", notificationRequest.getId());
         notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
-        notificationService.updateNotificationsByRequestId(tenantId, notificationRequest.getId(),
-                notificationRequest.getNotificationReason(), notificationRequest.getNotificationInfo());
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequest.getId())
-                .notificationReason(notificationRequest.getNotificationReason())
                 .notificationInfo(notificationRequest.getNotificationInfo())
                 .deleted(false)
                 .build());

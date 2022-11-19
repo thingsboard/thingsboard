@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
@@ -60,7 +61,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     private String text;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.NOTIFICATION_INFO_PROPERTY)
+    @Formula("(SELECT r.notification_info FROM notification_request r WHERE r.id = request_id)")
     private JsonNode info;
 
     @Enumerated(EnumType.STRING)

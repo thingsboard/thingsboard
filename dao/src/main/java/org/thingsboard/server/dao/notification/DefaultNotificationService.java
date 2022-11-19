@@ -73,9 +73,4 @@ public class DefaultNotificationService implements NotificationService {
         return notificationDao.countUnreadByUserId(tenantId, userId);
     }
 
-    @Override
-    public int updateNotificationsByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, String notificationReason, NotificationInfo notificationInfo) {
-        return notificationDao.updateByRequestId(tenantId, notificationRequestId, notificationReason, notificationInfo);
-    }
-
 }
