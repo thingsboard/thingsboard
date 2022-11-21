@@ -85,7 +85,7 @@ export class GatewayCommandDialogComponent extends DialogComponent<GatewayComman
     this.linuxCode = "docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v " +
       "~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e host=" +
       HOST +
-      " -e port=1883 accessToken=" +
+      " -e port=1883 -e accessToken=" +
       ACCESS_TOKEN +
       " --restart always thingsboard/tb-gateway";
     this.windowsCode = "docker run -it -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config -v " +
