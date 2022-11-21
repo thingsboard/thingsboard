@@ -110,7 +110,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
 
         Futures.allAsList(futures).get();
 
-        TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("id", SortOrder.Direction.DESC), startTime, endTime);
+        TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
         PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
 
         Assert.assertNotNull(edgeEvents.getData());
@@ -135,7 +135,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
         TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
-        TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("id", SortOrder.Direction.ASC));
+        TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
 
         EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.TIMESERIES_UPDATED);
         edgeEventService.saveAsync(edgeEventWithTsUpdate).get();
