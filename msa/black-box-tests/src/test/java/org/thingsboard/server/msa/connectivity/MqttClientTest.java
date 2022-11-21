@@ -34,7 +34,14 @@ import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -68,6 +75,9 @@ import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevi
 
 @Slf4j
 public class MqttClientTest extends AbstractContainerTest {
+
+    private final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
+    private final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
 
     private Device device;
     @BeforeMethod
@@ -322,6 +332,116 @@ public class MqttClientTest extends AbstractContainerTest {
         assertThat(mqttClient.isConnected()).isFalse();
     }
 
+    @Test
+    public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
+
+        String testProvisionDeviceKey = "test_provision_key";
+        String testProvisionDeviceSecret = "test_provision_secret";
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient("provision", listener);
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", testProvisionDeviceKey);
+        provisionRequest.addProperty("provisionDeviceSecret", testProvisionDeviceSecret);
+        provisionRequest.addProperty("deviceName", device.getName());
+
+        mqttClient.publish("/provision/request", Unpooled.wrappedBuffer(provisionRequest.toString().getBytes())).get();
+
+        //Wait for response
+
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+
+        MqttEvent provisionResponseMsg = listener.getEvents().poll(timeoutMultiplier, TimeUnit.SECONDS);
+
+        assertThat(provisionResponseMsg).isNotNull();
+
+        JsonNode provisionResponse = mapper.readTree(provisionResponseMsg.getMessage());
+
+        assertThat(provisionResponse.get("credentialsType").asText()).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(provisionResponse.get("credentialsValue").asText()).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(provisionResponse.get("status").asText()).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+
+    }
+
+    @Test
+    public void provisionRequestForDeviceWithAllowToCreateNewDevicesStrategy() throws Exception {
+
+        String testDeviceName = "test_provision_device";
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient("provision", listener);
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+        provisionRequest.addProperty("deviceName", testDeviceName);
+
+        mqttClient.publish("/provision/request", Unpooled.wrappedBuffer(provisionRequest.toString().getBytes())).get();
+
+        //Wait for response
+
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+
+        MqttEvent provisionResponseMsg = listener.getEvents().poll(timeoutMultiplier, TimeUnit.SECONDS);
+
+        assertThat(provisionResponseMsg).isNotNull();
+
+        JsonNode provisionResponse = mapper.readTree(provisionResponseMsg.getMessage());
+
+        testRestClient.deleteDeviceIfExists(device.getId());
+        device = testRestClient.getDeviceByName(testDeviceName);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        assertThat(provisionResponse.get("credentialsType").asText()).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(provisionResponse.get("credentialsValue").asText()).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(provisionResponse.get("status").asText()).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+
+    }
+
+    private DeviceProfile updateDeviceProfileWithProvisioningStrategy(DeviceProfile deviceProfile, DeviceProfileProvisionType provisionType) {
+        DeviceProfileProvisionConfiguration provisionConfiguration;
+        String testProvisionDeviceKey;
+        switch(provisionType) {
+            case ALLOW_CREATE_NEW_DEVICES:
+                testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
+                provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
+                deviceProfile.setProvisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+                break;
+            case CHECK_PRE_PROVISIONED_DEVICES:
+                testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
+                provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
+                deviceProfile.setProvisionType(DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+                break;
+            default:
+            case DISABLED:
+                testProvisionDeviceKey = null;
+                provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
+                deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+                break;
+        }
+        DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
+        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setProvisionDeviceKey(testProvisionDeviceKey);
+        return testRestClient.postDeviceProfile(deviceProfile);
+    }
+
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {
         RuleChain newRuleChain = new RuleChain();
         newRuleChain.setName("testRuleChain");
@@ -356,9 +476,13 @@ public class MqttClientTest extends AbstractContainerTest {
     }
 
     private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener) throws InterruptedException, ExecutionException {
+        return getMqttClient(deviceCredentials.getCredentialsId(), listener);
+    }
+
+    private MqttClient getMqttClient(String username, MqttMessageListener listener) throws InterruptedException, ExecutionException {
         MqttClientConfig clientConfig = new MqttClientConfig();
         clientConfig.setClientId("MQTT client from test");
-        clientConfig.setUsername(deviceCredentials.getCredentialsId());
+        clientConfig.setUsername(username);
         MqttClient mqttClient = MqttClient.create(clientConfig, listener);
         mqttClient.connect("localhost", 1883).get();
         return mqttClient;
