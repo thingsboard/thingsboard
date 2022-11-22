@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -49,12 +50,14 @@ public class TbMsgDeleteAttributes implements TbNode {
     private TbMsgDeleteAttributesConfiguration config;
     private String scope;
     private List<String> keys;
+    private boolean sendAttributesDeletedNotification;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
         this.scope = config.getScope();
         this.keys = config.getKeys();
+        this.sendAttributesDeletedNotification = config.isSendAttributesDeletedNotification();
     }
 
     @Override
@@ -67,7 +70,11 @@ public class TbMsgDeleteAttributes implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete));
+            FutureCallback<Void> callback = new TelemetryNodeCallback(ctx, msg);
+            if (sendAttributesDeletedNotification) {
+                callback = new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete);
+            }
+            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, callback);
         }
     }
 }

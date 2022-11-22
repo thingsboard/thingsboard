@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
@@ -65,10 +66,14 @@ public class TbMsgAttributesNode implements TbNode {
             return;
         }
         String src = msg.getData();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(new JsonParser().parse(src)));
+        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(src)));
         if (attributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
+        }
+        FutureCallback<Void> callback = new TelemetryNodeCallback(ctx, msg);
+        if (config.isSendAttributesUpdatedNotification()) {
+            callback = new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes);
         }
         String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
         ctx.getTelemetryService().saveAndNotify(
@@ -77,7 +82,7 @@ public class TbMsgAttributesNode implements TbNode {
                 config.getScope(),
                 attributes,
                 config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
-                new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes)
+                callback
         );
     }
 
