@@ -3013,7 +3013,7 @@
         "invalid-target-rulechain": "Unable to resolve target rule chain!",
         "test-script-function": "Test script function",
         "script-lang-java-script": "Java Script",
-        "script-lang-mvel": "MVEL",
+        "script-lang-tbel": "TBEL",
         "message": "Message",
         "message-type": "Message type",
         "select-message-type": "Select message type",

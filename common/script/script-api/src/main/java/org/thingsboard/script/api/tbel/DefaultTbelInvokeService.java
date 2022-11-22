@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -58,12 +58,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 @Slf4j
-@ConditionalOnProperty(prefix = "mvel", value = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "tbel", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Service
-public class DefaultMvelInvokeService extends AbstractScriptInvokeService implements MvelInvokeService {
+public class DefaultTbelInvokeService extends AbstractScriptInvokeService implements TbelInvokeService {
 
     protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
-    protected final Map<String, MvelScript> scriptMap = new ConcurrentHashMap<>();
+    protected final Map<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
     protected Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
@@ -71,49 +71,49 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     private static final Pattern NEW_KEYWORD_PATTERN = Pattern.compile("new\\s");
 
     @Getter
-    @Value("${mvel.max_total_args_size:100000}")
+    @Value("${tbel.max_total_args_size:100000}")
     private long maxTotalArgsSize;
     @Getter
-    @Value("${mvel.max_result_size:300000}")
+    @Value("${tbel.max_result_size:300000}")
     private long maxResultSize;
     @Getter
-    @Value("${mvel.max_script_body_size:50000}")
+    @Value("${tbel.max_script_body_size:50000}")
     private long maxScriptBodySize;
 
     @Getter
-    @Value("${mvel.max_errors:3}")
+    @Value("${tbel.max_errors:3}")
     private int maxErrors;
 
     @Getter
-    @Value("${mvel.max_black_list_duration_sec:60}")
+    @Value("${tbel.max_black_list_duration_sec:60}")
     private int maxBlackListDurationSec;
 
     @Getter
-    @Value("${mvel.max_requests_timeout:0}")
+    @Value("${tbel.max_requests_timeout:0}")
     private long maxInvokeRequestsTimeout;
 
     @Getter
-    @Value("${mvel.stats.enabled:false}")
+    @Value("${tbel.stats.enabled:false}")
     private boolean statsEnabled;
 
-    @Value("${mvel.thread_pool_size:50}")
+    @Value("${tbel.thread_pool_size:50}")
     private int threadPoolSize;
 
-    @Value("${mvel.max_memory_limit_mb:8}")
+    @Value("${tbel.max_memory_limit_mb:8}")
     private long maxMemoryLimitMb;
 
-    @Value("${mvel.compiled_scripts_cache_size:1000}")
+    @Value("${tbel.compiled_scripts_cache_size:1000}")
     private int compiledScriptsCacheSize;
 
     private ListeningExecutorService executor;
 
     private final Lock lock = new ReentrantLock();
 
-    protected DefaultMvelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
+    protected DefaultTbelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
         super(apiUsageStateClient, apiUsageReportClient);
     }
 
-    @Scheduled(fixedDelayString = "${mvel.stats.print_interval_ms:10000}")
+    @Scheduled(fixedDelayString = "${tbel.stats.print_interval_ms:10000}")
     public void printStats() {
         super.printStats();
     }
@@ -127,9 +127,9 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         parserConfig.addImport("JSON", TbJson.class);
         parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
         TbUtils.register(parserConfig);
-        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {
-            // Special command to warm up MVEL engine
+            // Special command to warm up TBEL engine
             Serializable script = compileScript("var warmUp = {}; warmUp");
             MVEL.executeTbExpression(script, new ExecutionContext(parserConfig), Collections.emptyMap());
         } catch (Exception e) {
@@ -149,7 +149,7 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
 
     @Override
     protected String getStatsName() {
-        return "MVEL Scripts Stats";
+        return "TBEL Scripts Stats";
     }
 
     @Override
@@ -167,15 +167,11 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         return executor.submit(() -> {
             try {
                 String scriptHash = hash(scriptBody, argNames);
-                compiledScriptsCache.get(scriptHash, k -> {
-                    return compileScript(scriptBody);
-                });
+                compiledScriptsCache.get(scriptHash, k -> compileScript(scriptBody));
                 lock.lock();
                 try {
                     scriptIdToHash.put(scriptId, scriptHash);
-                    scriptMap.computeIfAbsent(scriptHash, k -> {
-                        return new MvelScript(scriptBody, argNames);
-                    });
+                    scriptMap.computeIfAbsent(scriptHash, k -> new TbelScript(scriptBody, argNames));
                 } finally {
                     lock.unlock();
                 }
@@ -187,17 +183,15 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     }
 
     @Override
-    protected MvelScriptExecutionTask doInvokeFunction(UUID scriptId, Object[] args) {
+    protected TbelScriptExecutionTask doInvokeFunction(UUID scriptId, Object[] args) {
         ExecutionContext executionContext = new ExecutionContext(this.parserConfig, maxMemoryLimitMb * 1024 * 1024);
-        return new MvelScriptExecutionTask(executionContext, executor.submit(() -> {
+        return new TbelScriptExecutionTask(executionContext, executor.submit(() -> {
             String scriptHash = scriptIdToHash.get(scriptId);
             if (scriptHash == null) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException("Script not found!"));
             }
-            MvelScript script = scriptMap.get(scriptHash);
-            Serializable compiledScript = compiledScriptsCache.get(scriptHash, k -> {
-                return compileScript(script.getScriptBody());
-            });
+            TbelScript script = scriptMap.get(scriptHash);
+            Serializable compiledScript = compiledScriptsCache.get(scriptHash, k -> compileScript(script.getScriptBody()));
             try {
                 return MVEL.executeTbExpression(compiledScript, executionContext, script.createVars(args));
             } catch (ScriptMemoryOverflowException e) {
@@ -209,7 +203,7 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     }
 
     @Override
-    protected void doRelease(UUID scriptId) throws Exception {
+    protected void doRelease(UUID scriptId) {
         String scriptHash = scriptIdToHash.remove(scriptId);
         if (scriptHash != null) {
             lock.lock();

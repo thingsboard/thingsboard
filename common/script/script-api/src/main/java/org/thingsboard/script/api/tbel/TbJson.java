@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.mvel2.ExecutionContext;
