@@ -97,7 +97,7 @@ public class TestRestClient {
 
     public Device getDeviceByName(String deviceName) {
         return given().spec(requestSpec).pathParam("deviceName", deviceName)
-                .get("/api/tenant/devices{deviceName}")
+                .get("/api/tenant/devices?deviceName={deviceName}")
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()

@@ -335,11 +335,7 @@ public class MqttClientTest extends AbstractContainerTest {
     @Test
     public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
 
-        String testProvisionDeviceKey = "test_provision_key";
-        String testProvisionDeviceSecret = "test_provision_secret";
-
         DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
-
         deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
 
         DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
@@ -348,14 +344,13 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttClient mqttClient = getMqttClient("provision", listener);
 
         JsonObject provisionRequest = new JsonObject();
-        provisionRequest.addProperty("provisionDeviceKey", testProvisionDeviceKey);
-        provisionRequest.addProperty("provisionDeviceSecret", testProvisionDeviceSecret);
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
         provisionRequest.addProperty("deviceName", device.getName());
 
         mqttClient.publish("/provision/request", Unpooled.wrappedBuffer(provisionRequest.toString().getBytes())).get();
 
         //Wait for response
-
         TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
         MqttEvent provisionResponseMsg = listener.getEvents().poll(timeoutMultiplier, TimeUnit.SECONDS);
@@ -369,7 +364,6 @@ public class MqttClientTest extends AbstractContainerTest {
         assertThat(provisionResponse.get("status").asText()).isEqualTo("SUCCESS");
 
         updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
-
     }
 
     @Test
@@ -392,7 +386,6 @@ public class MqttClientTest extends AbstractContainerTest {
         mqttClient.publish("/provision/request", Unpooled.wrappedBuffer(provisionRequest.toString().getBytes())).get();
 
         //Wait for response
-
         TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
         MqttEvent provisionResponseMsg = listener.getEvents().poll(timeoutMultiplier, TimeUnit.SECONDS);
@@ -411,28 +404,47 @@ public class MqttClientTest extends AbstractContainerTest {
         assertThat(provisionResponse.get("status").asText()).isEqualTo("SUCCESS");
 
         updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
 
+    @Test
+    public void provisionRequestForDeviceWithDisabledProvisioningStrategy() throws Exception {
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient("provision", listener);
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+
+        mqttClient.publish("/provision/request", Unpooled.wrappedBuffer(provisionRequest.toString().getBytes())).get();
+
+        //Wait for response
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+
+        MqttEvent provisionResponseMsg = listener.getEvents().poll(timeoutMultiplier, TimeUnit.SECONDS);
+
+        assertThat(provisionResponseMsg).isNotNull();
+
+        JsonNode provisionResponse = mapper.readTree(provisionResponseMsg.getMessage());
+
+        assertThat(provisionResponse.get("status").asText()).isEqualTo("NOT_FOUND");
     }
 
     private DeviceProfile updateDeviceProfileWithProvisioningStrategy(DeviceProfile deviceProfile, DeviceProfileProvisionType provisionType) {
         DeviceProfileProvisionConfiguration provisionConfiguration;
-        String testProvisionDeviceKey;
+        String testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
+        deviceProfile.setProvisionType(provisionType);
         switch(provisionType) {
             case ALLOW_CREATE_NEW_DEVICES:
-                testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
                 provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
-                deviceProfile.setProvisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
                 break;
             case CHECK_PRE_PROVISIONED_DEVICES:
-                testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
                 provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
-                deviceProfile.setProvisionType(DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
                 break;
             default:
             case DISABLED:
                 testProvisionDeviceKey = null;
                 provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
-                deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
                 break;
         }
         DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
