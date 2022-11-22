@@ -1,0 +1,180 @@
+package org.thingsboard.server.msa.ui.pages;
+
+import lombok.extern.slf4j.Slf4j;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.testng.Assert;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.rule.RuleChain;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+@Slf4j
+public class RuleChainsPageHelperAbstract extends RuleChainsPageElementsAbstract {
+    public RuleChainsPageHelperAbstract(WebDriver driver) {
+        super(driver);
+    }
+
+    public void openCreateRuleChainView() {
+        plusBtn().click();
+        createRuleChainBtn().click();
+    }
+
+    public void openImportRuleChainView() {
+        plusBtn().click();
+        importRuleChainBtn().click();
+    }
+
+    private int getRandomNumberFromRuleChainsCount() {
+        Random random = new Random();
+        return random.nextInt(notRootRuleChainsNames().size());
+    }
+
+    private String ruleChainName;
+
+    public void setRuleChainNameWithoutRoot() {
+        this.ruleChainName = notRootRuleChainsNames().get(getRandomNumberFromRuleChainsCount()).getText();
+    }
+
+    public void setRuleChainNameWithoutRoot(int number) {
+        this.ruleChainName = notRootRuleChainsNames().get(number).getText();
+    }
+
+    public void setRuleChainName(int number) {
+        this.ruleChainName = allNames().get(number).getText();
+    }
+
+    public String getRuleChainName() {
+        return this.ruleChainName;
+    }
+
+    public String getRuleChainId(String entityName) {
+        PageData<RuleChain> tenantRuleChains;
+        tenantRuleChains = client.getRuleChains(pageLink);
+        return String.valueOf(tenantRuleChains.getData().stream().filter(s -> s.getName().equals(entityName)).collect(Collectors.toList()).get(0).getId());
+    }
+
+    public void deleteRuleChain(String entityName) {
+        try {
+            PageData<RuleChain> tenantRuleChains;
+            tenantRuleChains = client.getRuleChains(pageLink);
+            try {
+                client.deleteRuleChain(tenantRuleChains.getData().stream().filter(s -> s.getName().equals(entityName)).collect(Collectors.toList()).get(0).getId());
+            } catch (Exception e) {
+                client.deleteRuleChain(tenantRuleChains.getData().stream().filter(s -> s.getName().equals(entityName)).collect(Collectors.toList()).get(1).getId());
+            }
+        } catch (Exception e) {
+            log.info("Can't delete!");
+        }
+    }
+
+    public void deleteAllRuleChain(String entityName) {
+        try {
+            PageData<RuleChain> tenantRuleChains;
+            tenantRuleChains = client.getRuleChains(pageLink);
+            tenantRuleChains.getData().stream().filter(s -> s.getName().equals(entityName)).collect(Collectors.toList()).forEach(x -> client.deleteRuleChain(x.getId()));
+        } catch (Exception e) {
+            log.info("Can't delete!");
+        }
+    }
+
+    public void createRuleChain(String entityName) {
+        try {
+            PageData<RuleChain> tenantRuleChains;
+            tenantRuleChains = client.getRuleChains(pageLink);
+            RuleChain ruleChain = new RuleChain();
+            ruleChain.setName(entityName);
+            client.saveRuleChain(ruleChain);
+            tenantRuleChains.getData().add(ruleChain);
+        } catch (Exception e) {
+            log.info("Can't create!");
+        }
+    }
+
+    public void makeRoot() {
+        try {
+            PageData<RuleChain> tenantRuleChains;
+            tenantRuleChains = client.getRuleChains(pageLink);
+            tenantRuleChains.getData().stream().filter(s -> s.getName().equals("Root Rule Chain")).collect(Collectors.toList()).forEach(x -> client.setRootRuleChain(x.getId()));
+        } catch (Exception e) {
+            log.info("Can't make root!");
+        }
+    }
+
+    public void createRuleChains(String entityName, int count) {
+        try {
+            PageData<RuleChain> tenantRuleChains;
+            tenantRuleChains = client.getRuleChains(pageLink);
+            RuleChain ruleChain = new RuleChain();
+            for (int i = 0; i < count; i++) {
+                ruleChain.setName(entityName);
+                client.saveRuleChain(ruleChain);
+                tenantRuleChains.getData().add(ruleChain);
+            }
+        } catch (Exception e) {
+            log.info("Can't create!");
+        }
+    }
+
+    public String deleteRuleChainFromView(String ruleChainName) {
+        String s = "";
+        if (deleteBtnFromView() != null) {
+            deleteBtnFromView().click();
+            warningPopUpYesBtn().click();
+            if (elementIsNotPresent(getWarningMessage())) {
+                return getEntity(ruleChainName);
+            }
+        } else {
+            for (int i = 0; i < notRootRuleChainsNames().size(); i++) {
+                notRootRuleChainsNames().get(i).click();
+                if (deleteBtnFromView() != null) {
+                    deleteBtnFromView().click();
+                    warningPopUpYesBtn().click();
+                    if (elementIsNotPresent(getWarningMessage())) {
+                        s = notRootRuleChainsNames().get(i).getText();
+                        break;
+                    }
+                }
+            }
+        }
+        return s;
+    }
+
+    public void assertCheckBoxIsNotDisplayed(String entityName) {
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//mat-checkbox)[2]")));
+        Assert.assertFalse(driver.findElement(By.xpath(getCheckbox(entityName))).isDisplayed());
+    }
+
+    public void assertDeleteBtnInRootRuleChainIsNotDisplayed() {
+        Assert.assertFalse(driver.findElement(By.xpath(getDeleteRuleChainFromViewBtn())).isDisplayed());
+    }
+
+    public boolean ruleChainsIsNotPresent(String ruleChainName) {
+        return elementsIsNotPresent(getEntity(ruleChainName));
+    }
+
+    public void doubleClickOnRuleChain(String ruleChainName) {
+        doubleClick(entity(ruleChainName));
+    }
+
+    public void sortByNameDown() {
+        doubleClick(sortByNameBtn());
+    }
+
+    ArrayList<String> sort;
+
+    public void setSort() {
+        ArrayList<String> createdTime = new ArrayList<>();
+        createdTime().forEach(x -> createdTime.add(x.getText()));
+        Collections.sort(createdTime);
+        sort = createdTime;
+    }
+
+    public ArrayList<String> getSort() {
+        return sort;
+    }
+}
