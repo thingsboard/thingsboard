@@ -71,10 +71,6 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
-        FutureCallback<Void> callback = new TelemetryNodeCallback(ctx, msg);
-        if (config.isSendAttributesUpdatedNotification()) {
-            callback = new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes);
-        }
         String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
@@ -82,7 +78,9 @@ public class TbMsgAttributesNode implements TbNode {
                 config.getScope(),
                 attributes,
                 config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
-                callback
+                config.isSendAttributesUpdatedNotification() ?
+                        new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes) :
+                        new TelemetryNodeCallback(ctx, msg)
         );
     }
 

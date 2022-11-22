@@ -50,14 +50,12 @@ public class TbMsgDeleteAttributes implements TbNode {
     private TbMsgDeleteAttributesConfiguration config;
     private String scope;
     private List<String> keys;
-    private boolean sendAttributesDeletedNotification;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
         this.scope = config.getScope();
         this.keys = config.getKeys();
-        this.sendAttributesDeletedNotification = config.isSendAttributesDeletedNotification();
     }
 
     @Override
@@ -70,11 +68,15 @@ public class TbMsgDeleteAttributes implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            FutureCallback<Void> callback = new TelemetryNodeCallback(ctx, msg);
-            if (sendAttributesDeletedNotification) {
-                callback = new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete);
-            }
-            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, callback);
+            ctx.getTelemetryService().deleteAndNotify(
+                    ctx.getTenantId(),
+                    msg.getOriginator(),
+                    scope,
+                    keysToDelete,
+                    config.isSendAttributesDeletedNotification() ?
+                            new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete) :
+                            new TelemetryNodeCallback(ctx, msg)
+            );
         }
     }
 }
