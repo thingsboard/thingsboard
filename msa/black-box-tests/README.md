@@ -30,9 +30,14 @@ As result, in REPOSITORY column, next images should be present:
 
         mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.hybridMode=true
 
-To run the black box tests with using local env run tests in the [msa/black-box-tests](../black-box-tests) directory with runLocal property:
+- To run the black box tests with using local env run tests in the [msa/black-box-tests](../black-box-tests) directory with runLocal property:
 
         mvn clean install -DblackBoxTests.skip=false -DrunLocal=true
+
+- To run ui tests run tests in the [msa/black-box-tests](../black-box-tests) directory specifying suiteFile property: 
+
+        mvn clean install -DblackBoxTests.skip=false -DsuiteFile=src/test/resources/smokeTests.xml 
+
 
 
 
