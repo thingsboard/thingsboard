@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
@@ -6,17 +21,20 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
+import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelper;
+import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
-import static org.thingsboard.server.msa.ui.utils.Const.*;
+import java.util.ArrayList;
 
-public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBaseTest {
+import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
+
+public class CreateRuleChainImportTest extends AbstractDiverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelperAbstract ruleChainsPage;
-    private OpenRuleChainPageHelperAbstract openRuleChainPage;
+    private RuleChainsPageHelper ruleChainsPage;
+    private OpenRuleChainPageHelper openRuleChainPage;
     private final String absolutePathToFileImportRuleChain = getClass().getClassLoader().getResource(IMPORT_RULE_CHAIN_FILE_NAME).getPath();
     private final String absolutePathToFileImportTxt = getClass().getClassLoader().getResource(IMPORT_TXT_FILE_NAME).getPath();
     private String ruleChainName;
@@ -24,22 +42,23 @@ public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBas
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelperAbstract(driver);
-        openRuleChainPage = new OpenRuleChainPageHelperAbstract(driver);
+        ruleChainsPage = new RuleChainsPageHelper(driver);
+        openRuleChainPage = new OpenRuleChainPageHelper(driver);
     }
 
     @AfterMethod
     public void delete() {
         if (ruleChainName != null) {
-            ruleChainsPage.deleteRuleChain(ruleChainName);
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
             ruleChainName = null;
         }
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can drop a JSON file and import it")
+    @Description
     public void importRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -50,7 +69,7 @@ public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBas
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can delete a file by clicking on the icon Remove")
+    @Description
     public void importRuleChainAndDeleteFile() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -63,7 +82,7 @@ public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBas
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t Select / drop a file of a different format than JSON")
+    @Description
     public void importTxtFile() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -74,7 +93,7 @@ public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBas
     }
 
     @Test(priority = 30, groups = "smoke")
-    @Description("After clicking on Import - imported rule chain opens (need to save by clicking on the Apply changes icon)")
+    @Description
     public void importRuleChainAndSave() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -90,9 +109,11 @@ public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBas
     }
 
     @Test(priority = 40, groups = "smoke")
-    @Description("Can create a rule chain with the same name")
+    @Description
     public void importRuleChainAndSaveWithSameName() {
-        ruleChainsPage.createRuleChain(IMPORT_RULE_CHAIN_NAME);
+        ruleChainName = IMPORT_RULE_CHAIN_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        ;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -101,10 +122,16 @@ public class CreateRuleChainImportAbstractDiverBaseTest extends AbstractDiverBas
         openRuleChainPage.doneBtn().click();
         openRuleChainPage.waitUntilDoneBtnDisable();
         sideBarMenuView.ruleChainsBtn().click();
-        boolean sizeBigger1 = ruleChainsPage.entities(IMPORT_RULE_CHAIN_NAME).size() > 1;
 
-        ruleChainsPage.deleteAllRuleChain(IMPORT_RULE_CHAIN_NAME);
+        boolean entityNotNull = ruleChainsPage.entity(ruleChainName) != null;
+        boolean entitiesSizeMoreOne = ruleChainsPage.entities(ruleChainName).size() > 1;
+        ArrayList<Boolean> entityIsDisplayed = new ArrayList<>();
+        ruleChainsPage.entities(ruleChainName).forEach(x -> entityIsDisplayed.add(x.isDisplayed()));
 
-        Assert.assertTrue(sizeBigger1);
+        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+
+        Assert.assertTrue(entityNotNull);
+        Assert.assertTrue(entitiesSizeMoreOne);
+        entityIsDisplayed.forEach(Assert::assertTrue);
     }
 }

@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -5,27 +20,27 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.CustomerPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
-public class ManageCustomersDashboardsAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class ManageCustomersDashboardsTest extends AbstractDiverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
-    private CustomerPageHelperAbstract customerPage;
+    private CustomerPageHelper customerPage;
     private final String manage = "Dashboards";
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        customerPage = new CustomerPageHelperAbstract(driver);
+        customerPage = new CustomerPageHelper(driver);
     }
 
     @Test(groups = "smoke")
-    @Description("Can go to the 'Customer Dashboards' window by clicking on the 'Manage customer users' icon in the right corner")
+    @Description
     public void openWindowByRightCornerBtn() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
@@ -38,7 +53,7 @@ public class ManageCustomersDashboardsAbstractDiverBaseTest extends AbstractDive
     }
 
     @Test(groups = "smoke")
-    @Description("Can go to the 'Customer Dashboards' window by clicking on the name/row of the customer and click on the 'Manage users' button")
+    @Description
     public void openWindowByView() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();

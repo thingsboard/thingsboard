@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.base;
 
 import lombok.SneakyThrows;
@@ -9,33 +24,22 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.thingsboard.rest.client.RestClient;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.msa.ui.utils.Const;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Slf4j
-abstract public class BasePage extends Base {
+abstract public class AbstractBasePage {
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected Actions actions;
-    protected RestClient client;
-    protected PageLink pageLink;
 
-    public BasePage(WebDriver driver) {
+    public AbstractBasePage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofMillis(5000));
         this.actions = new Actions(driver);
-        try {
-            client = new RestClient(Const.URL);
-            client.login(Const.TENANT_EMAIL, Const.TENANT_PASSWORD);
-            pageLink = new PageLink(10);
-        } catch (Exception e) {
-            log.info("Can't login");
-        }
     }
 
     @SneakyThrows
@@ -125,5 +129,15 @@ abstract public class BasePage extends Base {
         waitUntilNumberOfTabToBe(tabNumber);
         ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
         driver.switchTo().window(tabs.get(tabNumber - 1));
+    }
+
+    public static long getRandomNumber() {
+        return System.currentTimeMillis();
+    }
+
+    public static char getRandomSymbol() {
+        Random rand = new Random();
+        String s = "~`!@#$^&*()_+=-";
+        return s.charAt(rand.nextInt(s.length()));
     }
 }

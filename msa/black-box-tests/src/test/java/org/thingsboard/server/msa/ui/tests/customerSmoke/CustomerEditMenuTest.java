@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -6,62 +21,64 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.CustomerPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.DashboardPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
+import org.thingsboard.server.msa.ui.pages.DashboardPageHelper;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
 import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 
-public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class CustomerEditMenuTest extends AbstractDiverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
-    private CustomerPageHelperAbstract customerPage;
-    private DashboardPageHelperAbstract dashboardPage;
+    private CustomerPageHelper customerPage;
+    private DashboardPageHelper dashboardPage;
     private String customerName;
+
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        customerPage = new CustomerPageHelperAbstract(driver);
-        dashboardPage = new DashboardPageHelperAbstract(driver);
+        customerPage = new CustomerPageHelper(driver);
+        dashboardPage = new DashboardPageHelper(driver);
     }
 
     @AfterMethod
     public void delete() {
         if (customerName != null) {
-            customerPage.deleteCustomer(customerName);
+            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
             customerName = null;
         }
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can click by pencil icon and edit the title (change the title) and save the changes. All changes have been applied")
+    @Description
     public void changeTitle() {
-        customerPage.createCustomer(ENTITY_NAME);
-        String title = "Changed" + getRandomNumber();
+        customerName = "Changed" + getRandomNumber();
+        testRestClient.postCustomer(defaultCustomerPrototype(ENTITY_NAME));
 
         sideBarMenuView.customerBtn().click();
         customerPage.entityTitles().get(0).click();
         customerPage.setHeaderName();
         String titleBefore = customerPage.getHeaderName();
         customerPage.editPencilBtn().click();
-        customerPage.changeTitleEditMenu(title);
+        customerPage.changeTitleEditMenu(customerName);
         customerPage.doneBtnEditView().click();
         customerPage.setHeaderName();
         String titleAfter = customerPage.getHeaderName();
-        customerName = title;
 
         Assert.assertNotEquals(titleBefore, titleAfter);
-        Assert.assertEquals(titleAfter, title);
+        Assert.assertEquals(titleAfter, customerName);
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t delete the title and save changes")
+    @Description
     public void deleteTitle() {
         sideBarMenuView.customerBtn().click();
         customerPage.entityTitles().get(0).click();
@@ -72,7 +89,7 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t save just a space in the title")
+    @Description
     public void saveOnlyWithSpace() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
@@ -89,10 +106,10 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can write/change/delete the descriptionEntityView and save the changes. All changes have been applied")
+    @Description
     public void editDescription() {
-        String title = ENTITY_NAME;
-        customerPage.createCustomer(title);
+        customerName = ENTITY_NAME;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         String description = "Description";
 
         sideBarMenuView.customerBtn().click();
@@ -108,7 +125,6 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
         customerPage.editPencilBtn().click();
         customerPage.changeDescription("");
         customerPage.doneBtnEditView().click();
-        customerName = title;
 
         Assert.assertEquals(description, description1);
         Assert.assertEquals(description + description, description2);
@@ -118,24 +134,23 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboardFromDashboard() {
-        String title = ENTITY_NAME;
-        customerPage.createCustomer(title);
+        customerName = ENTITY_NAME;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName));
 
         sideBarMenuView.dashboardBtn().click();
         dashboardPage.setDashboardTitle();
         dashboardPage.assignedBtn(dashboardPage.getDashboardTitle()).click();
-        dashboardPage.assignedCustomer(title);
+        dashboardPage.assignedCustomer(customerName);
         sideBarMenuView.customerBtn().click();
-        customerPage.entity(title).click();
+        customerPage.entity(customerName).click();
         customerPage.editPencilBtn().click();
         customerPage.chooseDashboard();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(title).click();
+        customerPage.manageCustomersUserBtn(customerName).click();
         customerPage.createCustomersUser();
         customerPage.userLoginBtn().click();
-        customerName = title;
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -145,23 +160,22 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboard() {
-        String title = ENTITY_NAME;
-        customerPage.createCustomer(title);
+        customerName = ENTITY_NAME;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName));
 
         sideBarMenuView.customerBtn().click();
-        customerPage.manageCustomersDashboardsBtn(title).click();
+        customerPage.manageCustomersDashboardsBtn(customerName).click();
         customerPage.assignedDashboard();
         sideBarMenuView.customerBtn().click();
-        customerPage.entity(title).click();
+        customerPage.entity(customerName).click();
         customerPage.editPencilBtn().click();
         customerPage.chooseDashboard();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(title).click();
+        customerPage.manageCustomersUserBtn(customerName).click();
         customerPage.createCustomersUser();
         customerPage.userLoginBtn().click();
-        customerName = title;
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -171,24 +185,23 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboardWithoutHide() {
-        String title = ENTITY_NAME;
-        customerPage.createCustomer(title);
+        customerName = ENTITY_NAME;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName));
 
         sideBarMenuView.customerBtn().click();
-        customerPage.manageCustomersDashboardsBtn(title).click();
+        customerPage.manageCustomersDashboardsBtn(customerName).click();
         customerPage.assignedDashboard();
         sideBarMenuView.customerBtn().click();
-        customerPage.entity(title).click();
+        customerPage.entity(customerName).click();
         customerPage.editPencilBtn().click();
         customerPage.chooseDashboard();
         customerPage.hideHomeDashboardToolbarCheckbox().click();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(title).click();
+        customerPage.manageCustomersUserBtn(customerName).click();
         customerPage.createCustomersUser();
         customerPage.userLoginBtn().click();
-        customerName = title;
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -204,8 +217,8 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     @Test(priority = 20, groups = "smoke")
     @Description
     public void addPhoneNumber() {
-        String title = ENTITY_NAME;
-        customerPage.createCustomer(title);
+        customerName = ENTITY_NAME;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         String number = "2015550123";
 
         sideBarMenuView.customerBtn().click();
@@ -213,7 +226,6 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
         customerPage.editPencilBtn().click();
         customerPage.phoneNumberEntityView().sendKeys(number);
         customerPage.doneBtnEditView().click();
-        customerName = title;
 
         Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").contains(number));
     }
@@ -235,9 +247,11 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
     }
 
     @Test(priority = 30, groups = "smoke")
+    @Description
     public void addAllInformation() {
-        String title = ENTITY_NAME;
-        customerPage.createCustomer(title);
+        customerName = ENTITY_NAME;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        ;
         String text = "Text";
         String email = "email@mail.com";
         String number = "2015550123";
@@ -255,7 +269,6 @@ public class CustomerEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest
         customerPage.phoneNumberEntityView().sendKeys(number);
         customerPage.emailEntityView().sendKeys(email);
         customerPage.doneBtnEditView().click();
-        customerName = title;
 
         Assert.assertEquals(customerPage.countrySelectMenuEntityView().getText(), customerPage.getCountry());
         Assert.assertEquals(customerPage.descriptionEntityView().getAttribute("value"), text);

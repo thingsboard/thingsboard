@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -6,56 +21,57 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.CustomerPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.*;
 
-public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class CreateCustomerTest extends AbstractDiverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
-    private CustomerPageHelperAbstract customerPage;
+    private CustomerPageHelper customerPage;
     private String customerName;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        customerPage = new CustomerPageHelperAbstract(driver);
+        customerPage = new CustomerPageHelper(driver);
     }
 
     @AfterMethod
     public void delete() {
         if (customerName != null) {
-            customerPage.deleteCustomer(customerName);
+            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
             customerName = null;
         }
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can click on Add after specifying the name (text/numbers /special characters)")
+    @Description
     public void createCustomer() {
-        String customerName = ENTITY_NAME;
+        customerName = ENTITY_NAME;
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
         customerPage.titleFieldAddEntityView().sendKeys(customerName);
         customerPage.addBtnC().click();
         customerPage.refreshBtn().click();
-        this.customerName = customerName;
 
         Assert.assertNotNull(customerPage.customer(customerName));
         Assert.assertTrue(customerPage.customer(customerName).isDisplayed());
     }
 
     @Test(priority = 20, groups = "smoke")
+    @Description
     public void createCustomerWithFullInformation() {
-        String customerName = ENTITY_NAME;
+        customerName = ENTITY_NAME;
         String text = "Text";
         String email = "email@mail.com";
-        String number = "2015550123";
+        String number = "12015550123";
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
@@ -74,7 +90,6 @@ public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
         customerPage.setCustomerCountry(customerName);
         customerPage.setCustomerCity(customerName);
         customerPage.entity(customerName).click();
-        this.customerName = customerName;
 
         Assert.assertNotNull(customerPage.customer(customerName));
         Assert.assertEquals(customerPage.entityViewTitle().getText(), customerName);
@@ -86,7 +101,7 @@ public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
         Assert.assertEquals(customerPage.zipEntityView().getAttribute("value"), text);
         Assert.assertEquals(customerPage.addressEntityView().getAttribute("value"), text);
         Assert.assertEquals(customerPage.address2EntityView().getAttribute("value"), text);
-        Assert.assertEquals(customerPage.phoneNumberEntityView().getAttribute("value"), "+1" + number);
+        Assert.assertEquals(customerPage.phoneNumberEntityView().getAttribute("value"), "+" + number);
         Assert.assertEquals(customerPage.emailEntityView().getAttribute("value"), email);
         Assert.assertEquals(customerPage.getCustomerEmail(), email);
         Assert.assertEquals(customerPage.getCustomerCountry(), customerPage.getCountry());
@@ -94,7 +109,7 @@ public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t add customer without the name (empty field or just space)")
+    @Description
     public void createCustomerWithoutName() {
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
@@ -103,7 +118,7 @@ public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description()
+    @Description
     public void createCustomerWithOnlySpace() {
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
@@ -118,7 +133,7 @@ public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can't create a customer with the same name")
+    @Description
     public void createCustomerSameName() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
@@ -135,22 +150,21 @@ public class CreateCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can click on Add after specifying the name (text/numbers /special characters)")
+    @Description
     public void createCustomerWithoutRefresh() {
-        String customerName = ENTITY_NAME;
+        customerName = ENTITY_NAME;
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
         customerPage.titleFieldAddEntityView().sendKeys(customerName);
         customerPage.addBtnC().click();
-        this.customerName = customerName;
 
         Assert.assertNotNull(customerPage.customer(customerName));
         Assert.assertTrue(customerPage.customer(customerName).isDisplayed());
     }
 
     @Test(priority = 40, groups = "smoke")
-    @Description("Question mark icon leads to rule chain documentation (PE)")
+    @Description
     public void documentation() {
         String urlPath = "docs/user-guide/ui/customers/";
 

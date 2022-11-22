@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
@@ -6,38 +21,41 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
+import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
-public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class RuleChainEditMenuTest extends AbstractDiverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelperAbstract ruleChainsPage;
+    private RuleChainsPageHelper ruleChainsPage;
     private String ruleChainName;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelperAbstract(driver);
+        ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
     @AfterMethod
     public void delete() {
         if (ruleChainName != null) {
-            ruleChainsPage.deleteRuleChain(ruleChainName);
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
             ruleChainName = null;
         }
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can click by pencil icon and edit the name (change the name) and save the changes. All changes have been applied")
+    @Description
     public void changeName() {
-        ruleChainsPage.createRuleChain(ENTITY_NAME);
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ENTITY_NAME));
+        ;
         String name = "Changed";
 
         sideBarMenuView.ruleChainsBtn().click();
@@ -56,7 +74,7 @@ public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTes
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t delete the name and save changes")
+    @Description
     public void deleteName() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.notRootRuleChainsNames().get(0).click();
@@ -67,7 +85,7 @@ public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTes
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t save just a space in the name")
+    @Description
     public void saveOnlyWithSpace() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.notRootRuleChainsNames().get(0).click();
@@ -81,10 +99,10 @@ public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTes
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can write/change/delete the descriptionEntityView and save the changes. All changes have been applied")
+    @Description
     public void editDescription() {
-        String name = ENTITY_NAME;
-        ruleChainsPage.createRuleChain(name);
+        ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         String description = "Description";
 
         sideBarMenuView.ruleChainsBtn().click();
@@ -100,7 +118,6 @@ public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTes
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.changeDescription("");
         ruleChainsPage.doneBtnEditView().click();
-        ruleChainName = name;
 
         Assert.assertTrue(ruleChainsPage.descriptionEntityView().getAttribute("value").isEmpty());
         Assert.assertEquals(description, description1);
@@ -108,10 +125,10 @@ public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTes
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can enable / disable debug and save changes. All changes have been applied")
+    @Description
     public void debugMode() {
-        String name = ENTITY_NAME;
-        ruleChainsPage.createRuleChain(name);
+        ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.notRootRuleChainsNames().get(0).click();
@@ -122,7 +139,6 @@ public class RuleChainEditMenuAbstractDiverBaseTest extends AbstractDiverBaseTes
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.debugCheckboxEdit().click();
         ruleChainsPage.doneBtnEditView().click();
-        ruleChainName = name;
 
         Assert.assertFalse(Boolean.parseBoolean(ruleChainsPage.debugCheckboxView().getAttribute("aria-checked")));
         Assert.assertTrue(debugMode);

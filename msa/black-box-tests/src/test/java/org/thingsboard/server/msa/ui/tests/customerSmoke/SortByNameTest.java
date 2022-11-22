@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -6,30 +21,32 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.CustomerPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 
-import static org.thingsboard.server.msa.ui.utils.Const.URL;
+import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 
-public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class SortByNameTest extends AbstractDiverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
-    private CustomerPageHelperAbstract customerPage;
+    private CustomerPageHelper customerPage;
     private String customerName;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        customerPage = new CustomerPageHelperAbstract(driver);
+        customerPage = new CustomerPageHelper(driver);
     }
 
     @AfterMethod
     public void delete() {
         if (customerName != null) {
-            customerPage.deleteCustomer(customerName);
+            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
             customerName = null;
         }
     }
@@ -37,12 +54,12 @@ public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterUp(String title) {
-        customerPage.createCustomer(title);
+        customerName = title;
+        testRestClient.postCustomer(defaultCustomerPrototype(title));
 
         sideBarMenuView.customerBtn().click();
         customerPage.sortByTitleBtn().click();
         customerPage.setCustomerName();
-        customerName = title;
 
         Assert.assertEquals(customerPage.getCustomerName(), title);
     }
@@ -50,9 +67,9 @@ public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
     public void allSortUp(String customer, String customerSymbol, String customerNumber) {
-        customerPage.createCustomer(customerSymbol);
-        customerPage.createCustomer(customer);
-        customerPage.createCustomer(customerNumber);
+        testRestClient.postCustomer(defaultCustomerPrototype(customerSymbol));
+        testRestClient.postCustomer(defaultCustomerPrototype(customer));
+        testRestClient.postCustomer(defaultCustomerPrototype(customerNumber));
 
         sideBarMenuView.customerBtn().click();
         customerPage.sortByTitleBtn().click();
@@ -67,9 +84,9 @@ public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
         boolean secondEquals = secondCustomer.equals(customerNumber);
         boolean thirdEquals = thirdCustomer.equals(customer);
 
-        customerPage.deleteCustomer(customer);
-        customerPage.deleteCustomer(customerNumber);
-        customerPage.deleteCustomer(customerSymbol);
+        testRestClient.deleteCustomer(getCustomerByName(customer).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerNumber).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerSymbol).getId());
 
         Assert.assertTrue(firstEquals);
         Assert.assertTrue(secondEquals);
@@ -79,12 +96,12 @@ public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterDown(String title) {
-        customerPage.createCustomer(title);
+        customerName = title;
+        testRestClient.postCustomer(defaultCustomerPrototype(title));
 
         sideBarMenuView.customerBtn().click();
         customerPage.sortByNameDown();
         customerPage.setCustomerName(customerPage.allEntity().size() - 1);
-        customerName = title;
 
         Assert.assertEquals(customerPage.getCustomerName(), title);
     }
@@ -92,9 +109,9 @@ public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
     public void allSortDown(String customer, String customerSymbol, String customerNumber) {
-        customerPage.createCustomer(customerSymbol);
-        customerPage.createCustomer(customer);
-        customerPage.createCustomer(customerNumber);
+        testRestClient.postCustomer(defaultCustomerPrototype(customerSymbol));
+        testRestClient.postCustomer(defaultCustomerPrototype(customer));
+        testRestClient.postCustomer(defaultCustomerPrototype(customerNumber));
 
         sideBarMenuView.customerBtn().click();
         int lastIndex = customerPage.allEntity().size() - 1;
@@ -110,9 +127,9 @@ public class SortByNameAbstractDiverBaseTest extends AbstractDiverBaseTest {
         boolean secondEquals = secondCustomer.equals(customerNumber);
         boolean thirdEquals = thirdCustomer.equals(customer);
 
-        customerPage.deleteCustomer(customer);
-        customerPage.deleteCustomer(customerNumber);
-        customerPage.deleteCustomer(customerSymbol);
+        testRestClient.deleteCustomer(getCustomerByName(customer).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerNumber).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerSymbol).getId());
 
         Assert.assertTrue(firstEquals);
         Assert.assertTrue(secondEquals);

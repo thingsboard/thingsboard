@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
@@ -5,41 +20,44 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
+import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
-public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class DeleteRuleChainTest extends AbstractDiverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelperAbstract ruleChainsPage;
+    private RuleChainsPageHelper ruleChainsPage;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelperAbstract(driver);
+        ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can remove the rule chain by clicking on the trash can icon in the right corner")
+    @Description
     public void removeRuleChainByRightSideBtn() {
-        ruleChainsPage.createRuleChain(ENTITY_NAME);
+        String ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
-        String deletedRuleChain = ruleChainsPage.deleteRuleChainTrash(ENTITY_NAME);
+        String deletedRuleChain = ruleChainsPage.deleteRuleChainTrash(ruleChainName);
         ruleChainsPage.refreshBtn().click();
 
         Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can mark the rule chain in the checkbox and then click on the trash can icon in the menu that appears at the top")
+    @Description
     public void removeSelectedRuleChain() {
         String ruleChainName = ENTITY_NAME;
-        ruleChainsPage.createRuleChain(ruleChainName);
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         String deletedRuleChain = ruleChainsPage.deleteSelected(ruleChainName);
@@ -49,20 +67,21 @@ public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can click on the name of the rule chain and click on the 'Delete rule chain' button")
+    @Description
     public void removeFromRuleChainView() {
-        ruleChainsPage.createRuleChain(ENTITY_NAME);
+        String ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.entity(ENTITY_NAME).click();
-        String deletedRuleChain = ruleChainsPage.deleteRuleChainFromView(ENTITY_NAME);
+        String deletedRuleChain = ruleChainsPage.deleteRuleChainFromView(ruleChainName);
         ruleChainsPage.refreshBtn().click();
 
         Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t remove Root Rule Chain (the trash can is disabled in the right corner)")
+    @Description
     public void removeRootRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
 
@@ -70,7 +89,7 @@ public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t remove Root Rule Chain (can`t mark the rule chain in the checkbox )")
+    @Description
     public void removeSelectedRootRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
 
@@ -78,17 +97,17 @@ public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t remove Root Rule Chain (missing delete button)")
+    @Description
     public void removeFromRootRuleChainView() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.entity(ROOT_RULE_CHAIN_NAME).click();
         ruleChainsPage.deleteBtnFromView();
 
-        ruleChainsPage.assertDeleteBtnInRootRuleChainIsNotDisplayed();
+        Assert.assertTrue(ruleChainsPage.deleteBtnInRootRuleChainIsNotDisplayed());
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can remove the rule chain by clicking on the trash can icon in the right corner")
+    @Description
     public void removeProfileRuleChainByRightSideBtn() {
         String deletedRuleChain = "Thermostat";
 
@@ -105,7 +124,7 @@ public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can mark the rule chain in the checkbox and then click on the trash can icon in the menu that appears at the top")
+    @Description
     public void removeSelectedProfileRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
         String deletedRuleChain = ruleChainsPage.deleteSelected("Thermostat");
@@ -119,7 +138,7 @@ public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can click on the name of the rule chain and click on the 'Delete rule chain' button")
+    @Description
     public void removeFromProfileRuleChainView() {
         String deletedRuleChain = "Thermostat";
 
@@ -135,10 +154,10 @@ public class DeleteRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 30, groups = "smoke")
-    @Description("The rule chain is deleted immediately after clicking remove (no need to refresh the page)")
+    @Description
     public void removeRuleChainByRightSideBtnWithoutRefresh() {
         String ruleChainName = ENTITY_NAME;
-        ruleChainsPage.createRuleChain(ruleChainName);
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         String deletedRuleChain = ruleChainsPage.deleteRuleChainTrash(ruleChainName);

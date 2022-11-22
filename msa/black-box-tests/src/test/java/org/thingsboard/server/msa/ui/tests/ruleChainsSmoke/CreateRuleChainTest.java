@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
@@ -6,54 +21,57 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
+import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
+
+import java.util.ArrayList;
 
 import static org.thingsboard.server.msa.ui.utils.Const.*;
 
-public class CreateRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class CreateRuleChainTest extends AbstractDiverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelperAbstract ruleChainsPage;
+    private RuleChainsPageHelper ruleChainsPage;
     private String ruleChainName;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelperAbstract(driver);
+        ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
     @AfterMethod
     public void delete() {
         if (ruleChainName != null) {
-            ruleChainsPage.deleteRuleChain(ruleChainName);
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
             ruleChainName = null;
         }
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can click on Add after specifying the name (text/numbers /special characters)")
+    @Description
     public void createRuleChain() {
-        String ruleChainName = ENTITY_NAME;
+        ruleChainName = ENTITY_NAME;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
         ruleChainsPage.nameField().sendKeys(ruleChainName);
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
-        this.ruleChainName = ruleChainName;
 
         Assert.assertNotNull(ruleChainsPage.entity(ruleChainName));
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description()
+    @Description
     public void createRuleChainWithDescription() {
-        String ruleChainName = ENTITY_NAME;
+        ruleChainName = ENTITY_NAME;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -63,14 +81,13 @@ public class CreateRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
         ruleChainsPage.refreshBtn().click();
         ruleChainsPage.entity(ENTITY_NAME).click();
         ruleChainsPage.setHeaderName();
-        this.ruleChainName = ruleChainName;
 
         Assert.assertEquals(ruleChainsPage.getHeaderName(), ruleChainName);
         Assert.assertEquals(ruleChainsPage.descriptionEntityView().getAttribute("value"), ruleChainName);
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t add rule chain without the name (empty field or just space)")
+    @Description
     public void createRuleChainWithoutName() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -79,7 +96,7 @@ public class CreateRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description()
+    @Description
     public void createRuleChainWithOnlySpace() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -94,38 +111,45 @@ public class CreateRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest 
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can create a rule chain with the same name")
+    @Description
     public void createRuleChainWithSameName() {
+        ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
+
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.setRuleChainNameWithoutRoot();
         ruleChainsPage.openCreateRuleChainView();
-        String ruleChainName = ruleChainsPage.getRuleChainName();
         ruleChainsPage.nameField().sendKeys(ruleChainName);
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
-        this.ruleChainName = ruleChainName;
 
-        Assert.assertNotNull(ruleChainsPage.entity(ruleChainName));
-        Assert.assertTrue(ruleChainsPage.entities(ruleChainName).size() > 1);
+        boolean entityNotNull = ruleChainsPage.entity(ruleChainName) != null;
+        boolean entitiesSizeMoreOne = ruleChainsPage.entities(ruleChainName).size() > 1;
+        ArrayList<Boolean> entityIsDisplayed = new ArrayList<>();
+        ruleChainsPage.entities(ruleChainName).forEach(x -> entityIsDisplayed.add(x.isDisplayed()));
+
+        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+
+        Assert.assertTrue(entityNotNull);
+        Assert.assertTrue(entitiesSizeMoreOne);
+        entityIsDisplayed.forEach(Assert::assertTrue);
     }
 
     @Test(priority = 30, groups = "smoke")
-    @Description("After clicking on Add - appears immediately in the list (no need to refresh the page)")
+    @Description
     public void createRuleChainWithoutRefresh() {
-        String ruleChainName = ENTITY_NAME;
+        ruleChainName = ENTITY_NAME;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
         ruleChainsPage.nameField().sendKeys(ruleChainName);
         ruleChainsPage.addBtnC().click();
-        this.ruleChainName = ruleChainName;
 
         Assert.assertNotNull(ruleChainsPage.entity(ruleChainName));
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
     }
 
     @Test(priority = 40, groups = "smoke")
-    @Description("Question mark icon leads to rule chain documentation (PE)")
+    @Description
     public void documentation() {
         String urlPath = "docs/user-guide/ui/rule-chains/";
 

@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -5,41 +20,37 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.CustomerPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
-import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.URL;
+import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 
-public class DeleteSeveralCustomerAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class DeleteSeveralCustomerTest extends AbstractDiverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
-    private CustomerPageHelperAbstract customerPage;
+    private CustomerPageHelper customerPage;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        customerPage = new CustomerPageHelperAbstract(driver);
+        customerPage = new CustomerPageHelper(driver);
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can mark several customers in the checkbox near the names and then click on the trash can icon in the menu that appears at the top")
+    @Description
     public void canDeleteSeveralCustomersByTopBtn() {
         String title1 = ENTITY_NAME + "1";
         String title2 = ENTITY_NAME + "2";
-        int count = 2;
-        customerPage.createCustomer(title1);
-        customerPage.createCustomer(title2);
+        testRestClient.postCustomer(defaultCustomerPrototype(title1));
+        testRestClient.postCustomer(defaultCustomerPrototype(title2));
 
         sideBarMenuView.customerBtn().click();
-        customerPage.clickOnCheckBoxes(count);
-
-        Assert.assertEquals(customerPage.markCheckbox().size(), count);
-        customerPage.markCheckbox().forEach(x -> Assert.assertTrue(x.isDisplayed()));
-
+        customerPage.clickOnCheckBoxes(2);
         customerPage.deleteSelectedBtn().click();
         customerPage.warningPopUpYesBtn().click();
         customerPage.refreshBtn().click();
@@ -49,7 +60,7 @@ public class DeleteSeveralCustomerAbstractDiverBaseTest extends AbstractDiverBas
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can mark several rule chains in the checkbox near the names and then click on the trash can icon in the menu that appears at the top")
+    @Description
     public void selectAllCustomers() {
         sideBarMenuView.customerBtn().click();
         customerPage.selectAllCheckBox().click();
@@ -61,17 +72,15 @@ public class DeleteSeveralCustomerAbstractDiverBaseTest extends AbstractDiverBas
     }
 
     @Test(priority = 30, groups = "smoke")
-    @Description("The rule chains are deleted immediately after clicking remove (no need to refresh the page)")
+    @Description
     public void deleteSeveralCustomersByTopBtnWithoutRefresh() {
         String title1 = ENTITY_NAME + "1";
         String title2 = ENTITY_NAME + "2";
-        int count = 2;
-        customerPage.createCustomer(title1);
-        customerPage.createCustomer(title2);
+        testRestClient.postCustomer(defaultCustomerPrototype(title1));
+        testRestClient.postCustomer(defaultCustomerPrototype(title2));
 
         sideBarMenuView.customerBtn().click();
-        customerPage.clickOnCheckBoxes(count);
-
+        customerPage.clickOnCheckBoxes(2);
         customerPage.deleteSelectedBtn().click();
         customerPage.warningPopUpYesBtn().click();
 

@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
@@ -5,30 +20,31 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelperAbstract;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelperAbstract;
+import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
+import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelper;
+import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
-import static org.thingsboard.server.msa.ui.utils.Const.URL;
+import static org.thingsboard.server.msa.ui.utils.Const.*;
 
-public class OpenRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest {
+public class OpenRuleChainTest extends AbstractDiverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelperAbstract ruleChainsPage;
-    private OpenRuleChainPageHelperAbstract openRuleChainPage;
+    private RuleChainsPageHelper ruleChainsPage;
+    private OpenRuleChainPageHelper openRuleChainPage;
 
     @BeforeMethod
     public void login() {
         openUrl(URL);
-        new LoginPageHelperAbstract(driver).authorizationTenant();
+        new LoginPageHelper(driver).authorizationTenant();
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelperAbstract(driver);
-        openRuleChainPage = new OpenRuleChainPageHelperAbstract(driver);
+        ruleChainsPage = new RuleChainsPageHelper(driver);
+        openRuleChainPage = new OpenRuleChainPageHelper(driver);
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can open the rule chain by clicking on the 'Open rule chain' icon in the right corner")
+    @Description
     public void openRuleChainByRightCornerBtn() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot(0);
@@ -36,14 +52,14 @@ public class OpenRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest {
         ruleChainsPage.openRuleChainBtn(ruleChain).click();
         openRuleChainPage.setHeadName();
 
-        Assert.assertTrue(urlContains(ruleChainsPage.getRuleChainId(ruleChainsPage.getRuleChainName())));
+        Assert.assertTrue(urlContains(String.valueOf(getRuleChainByName(ruleChainsPage.getRuleChainName()).getId())));
         Assert.assertTrue(openRuleChainPage.headRuleChainName().isDisplayed());
         Assert.assertTrue(openRuleChainPage.inputNode().isDisplayed());
         Assert.assertEquals(ruleChainsPage.getRuleChainName(), openRuleChainPage.getHeadName());
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description("Can open the rule chain by clicking on the name/row of the rule chain and click on the 'Open rule chain' button")
+    @Description
     public void openRuleChainByViewBtn() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot(0);
@@ -52,14 +68,14 @@ public class OpenRuleChainAbstractDiverBaseTest extends AbstractDiverBaseTest {
         ruleChainsPage.openRuleChainFromViewBtn().click();
         openRuleChainPage.setHeadName();
 
-        Assert.assertTrue(urlContains(ruleChainsPage.getRuleChainId(ruleChain)));
+        Assert.assertTrue(urlContains(String.valueOf(getRuleChainByName(ruleChainsPage.getRuleChainName()).getId())));
         Assert.assertTrue(openRuleChainPage.headRuleChainName().isDisplayed());
         Assert.assertTrue(openRuleChainPage.inputNode().isDisplayed());
         Assert.assertEquals(ruleChain, openRuleChainPage.getHeadName());
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description("Can`t open the rule chain by clicking twice on the row/name")
+    @Description
     public void openRuleChainDoubleClick() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot(0);

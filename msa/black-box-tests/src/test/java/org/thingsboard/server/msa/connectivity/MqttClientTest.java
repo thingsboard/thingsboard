@@ -326,7 +326,7 @@ public class MqttClientTest extends AbstractContainerTest {
         RuleChain newRuleChain = new RuleChain();
         newRuleChain.setName("testRuleChain");
 
-        RuleChain ruleChain = testRestClient.postRootRuleChain(newRuleChain);
+        RuleChain ruleChain = testRestClient.postRuleChain(newRuleChain);
 
         JsonNode configuration = mapper.readTree(this.getClass().getClassLoader().getResourceAsStream("RpcResponseRuleChainMetadata.json"));
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
