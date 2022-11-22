@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
