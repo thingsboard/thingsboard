@@ -58,6 +58,11 @@ module.exports = (config, options) => {
       contextRegExp: /moment$/,
     })
   );
+  config.watchOptions = {
+    ignored: [
+      "/node_modules/"
+    ]
+  };
 
   const index = config.plugins.findIndex(p => p instanceof ngWebpack.ivy.AngularWebpackPlugin || p instanceof ngWebpack.AngularWebpackPlugin);
   let angularWebpackPlugin = config.plugins[index];
