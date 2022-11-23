@@ -63,6 +63,13 @@ export interface SecuritySettings {
   passwordPolicy: UserPasswordPolicy;
 }
 
+export interface JwtSettings {
+  tokenIssuer: string;
+  tokenSigningKey: string;
+  tokenExpirationTime: number;
+  refreshTokenExpTime: number;
+}
+
 export interface UpdateMessage {
   message: string;
   updateAvailable: boolean;

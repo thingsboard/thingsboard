@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model;
+package org.thingsboard.server.common.data.security.model;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.security.Authority;
 
-@ApiModel(value = "JWT Token Pair")
+@ApiModel(value = "JWT Pair")
 @Data
 @NoArgsConstructor
-public class JwtTokenPair {
+public class JwtPair {
 
     @ApiModelProperty(position = 1, value = "The JWT Access Token. Used to perform API calls.", example = "AAB254FF67D..")
     private String token;
@@ -34,7 +33,7 @@ public class JwtTokenPair {
 
     private Authority scope;
 
-    public JwtTokenPair(String token, String refreshToken) {
+    public JwtPair(String token, String refreshToken) {
         this.token = token;
         this.refreshToken = refreshToken;
     }

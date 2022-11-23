@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.server.service.security.auth.jwt.settings;
 
-import org.thingsboard.script.api.ScriptInvokeService;
-import org.thingsboard.server.common.data.script.ScriptLanguage;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 
-public interface MvelInvokeService extends ScriptInvokeService {
+public interface JwtSettingsValidator {
 
-    @Override
-    default ScriptLanguage getLanguage() {
-        return ScriptLanguage.MVEL;
-    }
-
+    void validate(JwtSettings jwtSettings);
 }

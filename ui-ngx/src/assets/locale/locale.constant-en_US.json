@@ -381,6 +381,28 @@
             "within-time": "Within time (sec)",
             "within-time-pattern": "Time must be a positive integer.",
             "within-time-required": "Time is required."
+        },
+        "jwt": {
+            "security-settings": "JWT security settings",
+            "issuer-name": "Issuer name",
+            "issuer-name-required": "Issuer name is required.",
+            "signings-key": "Signing key",
+            "signings-key-hint": "Base64 encoded string representing at least 256 bits of data.",
+            "signings-key-required": "Signing key is required.",
+            "signings-key-min-length": "Signing key must be at least 256 bits of data.",
+            "signings-key-base64": "Signing key must be base64 format.",
+            "expiration-time": "Token expiration time (sec)",
+            "expiration-time-required": "Token expiration time is required.",
+            "expiration-time-pattern": "Token expiration time be a positive integer.",
+            "expiration-time-min": "Minimum time is 60 seconds (1 minute).",
+            "refresh-expiration-time": "Refresh token expiration time (sec)",
+            "refresh-expiration-time-required": "Refresh token expiration time is required.",
+            "refresh-expiration-time-pattern": "Refresh token expiration time be a positive integer.",
+            "refresh-expiration-time-min": "Minimum time is 900 seconds (15 minute).",
+            "refresh-expiration-time-less-token": "Refresh token time must be greater token time.",
+            "generate-key": "Generate key",
+            "info-header": "All users will be to re-logined",
+            "info-message": "Change of the JWT Signing Key will cause all issued tokens to be invalid. All users will need to re-login. This will also affect scripts that use Rest API/Websockets."
         }
       },
     "alarm": {
@@ -2991,7 +3013,7 @@
         "invalid-target-rulechain": "Unable to resolve target rule chain!",
         "test-script-function": "Test script function",
         "script-lang-java-script": "Java Script",
-        "script-lang-mvel": "MVEL",
+        "script-lang-tbel": "TBEL",
         "message": "Message",
         "message-type": "Message type",
         "select-message-type": "Select message type",

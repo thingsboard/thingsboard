@@ -24,14 +24,14 @@ public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguratio
 
     private ScriptLanguage scriptLang;
     private String jsScript;
-    private String mvelScript;
+    private String tbelScript;
 
     @Override
     public TbTransformMsgNodeConfiguration defaultConfiguration() {
         TbTransformMsgNodeConfiguration configuration = new TbTransformMsgNodeConfiguration();
-        configuration.setScriptLang(ScriptLanguage.MVEL);
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setJsScript("return {msg: msg, metadata: metadata, msgType: msgType};");
-        configuration.setMvelScript("return {msg: msg, metadata: metadata, msgType: msgType};");
+        configuration.setTbelScript("return {msg: msg, metadata: metadata, msgType: msgType};");
         return configuration;
     }
 }

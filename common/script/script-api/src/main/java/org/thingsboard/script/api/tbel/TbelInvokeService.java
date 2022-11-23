@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
-import lombok.Getter;
-import org.mvel2.ExecutionContext;
-import org.thingsboard.script.api.TbScriptExecutionTask;
+import org.thingsboard.script.api.ScriptInvokeService;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 
-
-public class MvelScriptExecutionTask extends TbScriptExecutionTask {
-
-    private final ExecutionContext context;
-
-    public MvelScriptExecutionTask(ExecutionContext context, ListenableFuture<Object> resultFuture) {
-        super(resultFuture);
-        this.context = context;
-    }
+public interface TbelInvokeService extends ScriptInvokeService {
 
     @Override
-    public void stop(){
-        context.stop();
+    default ScriptLanguage getLanguage() {
+        return ScriptLanguage.TBEL;
     }
+
 }
