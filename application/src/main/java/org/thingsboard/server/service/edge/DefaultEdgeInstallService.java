@@ -17,11 +17,12 @@ package org.thingsboard.server.service.edge;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -33,6 +34,8 @@ import java.nio.file.Paths;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class DefaultEdgeInstallService implements EdgeInstallService {
 
     private static final String EDGE_DIR = "edge";
@@ -40,7 +43,6 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
     private static final String EDGE_INSTALL_INSTRUCTIONS_DIR = "install_instructions";
 
     private final InstallScripts installScripts;
-    private final SystemSecurityService systemSecurityService;
 
     @Override
     public String getDockerInstallInstructions(TenantId tenantId, Edge edge, HttpServletRequest request) {
