@@ -20,21 +20,21 @@ import lombok.Data;
 @Data
 public class SqlPartition {
 
-    private static final String TABLE_REGEX = "ts_kv_";
+    public static final String TS_KV = "ts_kv";
 
     private long start;
     private long end;
     private String partitionDate;
     private String query;
 
-    public SqlPartition(long start, long end, String partitionDate) {
+    public SqlPartition(String table, long start, long end, String partitionDate) {
         this.start = start;
         this.end = end;
         this.partitionDate = partitionDate;
-        this.query = createStatement(start, end, partitionDate);
+        this.query = createStatement(table, start, end, partitionDate);
     }
 
-    private String createStatement(long start, long end, String partitionDate) {
-        return "CREATE TABLE IF NOT EXISTS " + TABLE_REGEX + partitionDate + " PARTITION OF ts_kv FOR VALUES FROM (" + start + ") TO (" + end + ")";
+    private String createStatement(String table, long start, long end, String partitionDate) {
+        return "CREATE TABLE IF NOT EXISTS " + table + "_" + partitionDate + " PARTITION OF " + table + " FOR VALUES FROM (" + start + ") TO (" + end + ")";
     }
 }

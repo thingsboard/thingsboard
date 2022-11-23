@@ -71,10 +71,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
     protected S buildEvent(TbMsg msg, TbContext ctx) {
         String msgType = msg.getType();
         if (DataConstants.ALARM.equals(msgType)) {
@@ -146,8 +142,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else {
+        } else if (DataConstants.ATTRIBUTES_DELETED.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
+        } else {
+            log.warn("Unsupported msg type [{}]", msgType);
+            throw new IllegalArgumentException("Unsupported msg type: " + msgType);
         }
         return actionType;
     }

@@ -18,7 +18,7 @@
 <mat-tab-group class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" *ngIf="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
-      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm" fxFlex="100"
+      <div *ngIf="displayTimewindowConfig()" fxFlex="100"
            fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
         <div fxLayout="column" fxLayoutGap="8px" fxFlex.gt-xs>
           <mat-checkbox formControlName="useDashboardTimewindow">
@@ -34,6 +34,9 @@
                 style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
                          isEdit="true"
+                         alwaysDisplayTypePrefix
+                         [historyOnly]="onlyHistoryTimewindow()"
+                         quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
                          fxFlex formControlName="timewindow"></tb-timewindow>
         </section>
@@ -83,16 +86,24 @@
         </div>
       </div>
       <mat-accordion multi>
-        <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
+        <mat-expansion-panel (opened)="extensionPanelIsOpen(true)" (closed)="extensionPanelIsOpen(false)" class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                     widgetType !== widgetTypes.alarm &&
                                     modelValue?.isDataEnabled" [expanded]="true">
           <mat-expansion-panel-header>
-            <mat-panel-title fxLayout="column">
-              <div class="tb-panel-title" translate>widget-config.datasources</div>
-              <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
-                   class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
-              <tb-error [error]="dataError"></tb-error>
+            <mat-panel-title fxLayout="row">
+              <div fxLayout="column">
+                <div class="tb-panel-title" translate>widget-config.datasources</div>
+                <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
+                     class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+              </div>
+              <mat-icon *ngIf = '(datasourceError.length > 0 || !datasourcesFormArray().valid) && !openExtensionPanel'
+                        style = "color: red; font-size: 18px; margin-left: 5px;">
+                report_gmailerrorred
+              </mat-icon>
             </mat-panel-title>
+            <mat-panel-description *ngIf = "timeseriesKeyError">
+              <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
+            </mat-panel-description>
           </mat-expansion-panel-header>
           <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">
                 <span translate fxLayoutAlign="center center"
@@ -480,6 +491,9 @@
               <mat-panel-title>
                 <mat-slide-toggle formControlName="mobileHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
                   {{ 'widget-config.mobile-hide' | translate }}
+                </mat-slide-toggle>
+                <mat-slide-toggle formControlName="desktopHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
+                  {{ 'widget-config.desktop-hide' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
               <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>

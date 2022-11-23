@@ -15,25 +15,22 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -41,7 +38,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +71,6 @@ public class TbGetTelemetryNode implements TbNode {
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
-    private ObjectMapper mapper;
     private String fetchMode;
     private String orderByFetchAll;
     private Aggregation aggregation;
@@ -91,14 +86,10 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
-
-        mapper = new ObjectMapper();
-        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FETCH_MODE_ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -110,11 +101,9 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                if (config.isUseMetadataIntervalPatterns()) {
-                    checkMetadataKeyPatterns(msg);
-                }
+                Interval interval = getInterval(msg);
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg, keys));
+                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg, keys);
                     ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
@@ -125,12 +114,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
-    private List<ReadTsKvQuery> buildQueries(TbMsg msg, List<String> keys) {
-        final Interval interval = getInterval(msg);
+    private List<ReadTsKvQuery> buildQueries(Interval interval, List<String> keys) {
         final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
                 // exact how it validates on BaseTimeseriesService.validate()
                 // see CassandraBaseTimeseriesDao.findAllAsync()
@@ -153,7 +137,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
-        ObjectNode resultNode = mapper.createObjectNode();
+        ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
@@ -176,105 +160,59 @@ public class TbGetTelemetryNode implements TbNode {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
         } else {
-            ArrayNode arrayNode = mapper.createArrayNode();
+            ArrayNode arrayNode = JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER.createArrayNode();
             arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
 
     private ObjectNode buildNode(TsKvEntry entry) {
-        ObjectNode obj = mapper.createObjectNode()
-                .put("ts", entry.getTs());
-        switch (entry.getDataType()) {
-            case STRING:
-                obj.put("value", entry.getValueAsString());
-                break;
-            case LONG:
-                obj.put("value", entry.getLongValue().get());
-                break;
-            case BOOLEAN:
-                obj.put("value", entry.getBooleanValue().get());
-                break;
-            case DOUBLE:
-                obj.put("value", entry.getDoubleValue().get());
-                break;
-            case JSON:
-                try {
-                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
-                } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
-                }
-                break;
-        }
+        ObjectNode obj = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
+        obj.put("ts", entry.getTs());
+        JacksonUtil.addKvEntry(obj, entry, "value", JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         return obj;
     }
 
     private Interval getInterval(TbMsg msg) {
-        Interval interval = new Interval();
         if (config.isUseMetadataIntervalPatterns()) {
-            if (isParsable(msg, config.getStartIntervalPattern())) {
-                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg)));
-            }
-            if (isParsable(msg, config.getEndIntervalPattern())) {
-                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg)));
-            }
+            return getIntervalFromPatterns(msg);
         } else {
+            Interval interval = new Interval();
             long ts = System.currentTimeMillis();
             interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
             interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
+            return interval;
         }
+    }
+
+    private Interval getIntervalFromPatterns(TbMsg msg) {
+        Interval interval = new Interval();
+        interval.setStartTs(checkPattern(msg, config.getStartIntervalPattern()));
+        interval.setEndTs(checkPattern(msg, config.getEndIntervalPattern()));
         return interval;
     }
 
-    private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
-    }
-
-    private void checkMetadataKeyPatterns(TbMsg msg) {
-        isUndefined(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
-        isInvalid(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
-    }
-
-    private void isUndefined(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
-        if (getMetadataValue(msg, startIntervalPattern) == null && getMetadataValue(msg, endIntervalPattern) == null) {
-            throw new IllegalArgumentException("Message metadata values: '" +
-                    replaceRegex(startIntervalPattern) + "' and '" +
-                    replaceRegex(endIntervalPattern) + "' are undefined");
-        } else {
-            if (getMetadataValue(msg, startIntervalPattern) == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(startIntervalPattern) + "' is undefined");
-            }
-            if (getMetadataValue(msg, endIntervalPattern) == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(endIntervalPattern) + "' is undefined");
-            }
+    private long checkPattern(TbMsg msg, String pattern) {
+        String value = getValuePattern(msg, pattern);
+        if (value == null) {
+            throw new IllegalArgumentException("Message value: '" +
+                    replaceRegex(pattern) + "' is undefined");
         }
-    }
-
-    private void isInvalid(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
-        if (getInterval(msg).getStartTs() == null && getInterval(msg).getEndTs() == null) {
-            throw new IllegalArgumentException("Message metadata values: '" +
-                    replaceRegex(startIntervalPattern) + "' and '" +
-                    replaceRegex(endIntervalPattern) + "' have invalid format");
-        } else {
-            if (getInterval(msg).getStartTs() == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(startIntervalPattern) + "' has invalid format");
-            }
-            if (getInterval(msg).getEndTs() == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(endIntervalPattern) + "' has invalid format");
-            }
+        boolean parsable = NumberUtils.isParsable(value);
+        if (!parsable) {
+            throw new IllegalArgumentException("Message value: '" +
+                    replaceRegex(pattern) + "' has invalid format");
         }
+        return Long.parseLong(value);
     }
 
-    private String getMetadataValue(TbMsg msg, String pattern) {
-        return msg.getMetaData().getValue(replaceRegex(pattern));
+    private String getValuePattern(TbMsg msg, String pattern) {
+        String value = TbNodeUtils.processPattern(pattern, msg);
+        return value.equals(pattern) ? null : value;
     }
 
     private String replaceRegex(String pattern) {
-        return pattern.replaceAll("[${}]", "");
+        return pattern.replaceAll("[$\\[{}\\]]", "");
     }
 
     private int validateLimit(int limit) {

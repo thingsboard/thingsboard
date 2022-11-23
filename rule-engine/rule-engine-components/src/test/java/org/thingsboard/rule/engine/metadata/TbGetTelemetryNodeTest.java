@@ -15,8 +15,12 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.server.common.data.kv.Aggregation;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -24,14 +28,25 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class TbGetTelemetryNodeTest {
 
     TbGetTelemetryNode node;
+    TbGetTelemetryNodeConfiguration config;
+    TbNodeConfiguration nodeConfiguration;
+    TbContext ctx;
 
     @Before
     public void setUp() throws Exception {
-        node = mock(TbGetTelemetryNode.class);
+        ctx = mock(TbContext.class);
+        node = spy(new TbGetTelemetryNode());
+        config = new TbGetTelemetryNodeConfiguration();
+        config.setFetchMode("ALL");
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
         willCallRealMethod().given(node).parseAggregationConfig(any());
     }
 

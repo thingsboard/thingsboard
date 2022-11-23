@@ -18,11 +18,11 @@ package org.thingsboard.server.service.queue.processing;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -33,16 +33,18 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
@@ -70,22 +72,27 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final DataDecodingEncodingService encodingService;
     protected final TbTenantProfileCache tenantProfileCache;
     protected final TbDeviceProfileCache deviceProfileCache;
+    protected final TbAssetProfileCache assetProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
+    protected final Optional<JwtSettingsService> jwtSettingsService;
+
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
-                                   TbApiUsageStateService apiUsageStateService, PartitionService partitionService,
-                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
+                                   PartitionService partitionService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
         this.deviceProfileCache = deviceProfileCache;
+        this.assetProfileCache = assetProfileCache;
         this.apiUsageStateService = apiUsageStateService;
         this.partitionService = partitionService;
         this.nfConsumer = nfConsumer;
+        this.jwtSettingsService = jwtSettingsService;
     }
 
     public void init(String mainConsumerThreadName, String nfConsumerThreadName) {
@@ -169,17 +176,26 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
                     }
                 } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
-                    partitionService.removeTenant(componentLifecycleMsg.getTenantId());
-                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                        apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
-                    } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                        apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
+                    if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
+                        jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                        return;
+                    } else {
+                        tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
+                        partitionService.removeTenant(componentLifecycleMsg.getTenantId());
+                        if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                            apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                            apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
+                        }
                     }
                 } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    assetProfileCache.evict(componentLifecycleMsg.getTenantId(), new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.ASSET.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    assetProfileCache.evict(componentLifecycleMsg.getTenantId(), new AssetId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.ENTITY_VIEW.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     actorContext.getTbEntityViewService().onComponentLifecycleMsg(componentLifecycleMsg);
                 } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {

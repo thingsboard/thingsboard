@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
@@ -41,6 +42,7 @@ import java.lang.annotation.Target;
         @Type(name = "DEVICE", value = Device.class),
         @Type(name = "RULE_CHAIN", value = RuleChain.class),
         @Type(name = "DEVICE_PROFILE", value = DeviceProfile.class),
+        @Type(name = "ASSET_PROFILE", value = AssetProfile.class),
         @Type(name = "ASSET", value = Asset.class),
         @Type(name = "DASHBOARD", value = Dashboard.class),
         @Type(name = "CUSTOMER", value = Customer.class),

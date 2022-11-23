@@ -40,6 +40,8 @@ public class DataConstants {
     public static final String EXPIRATION_TIME = "expirationTime";
     public static final String ADDITIONAL_INFO = "additionalInfo";
     public static final String RETRIES = "retries";
+    public static final String EDGE_ID = "edgeId";
+    public static final String DEVICE_ID = "deviceId";
     public static final String COAP_TRANSPORT_NAME = "COAP";
     public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
@@ -52,12 +54,6 @@ public class DataConstants {
     }
 
     public static final String ALARM = "ALARM";
-    public static final String ERROR = "ERROR";
-    public static final String LC_EVENT = "LC_EVENT";
-    public static final String STATS = "STATS";
-    public static final String DEBUG_RULE_NODE = "DEBUG_RULE_NODE";
-    public static final String DEBUG_RULE_CHAIN = "DEBUG_RULE_CHAIN";
-
     public static final String IN = "IN";
     public static final String OUT = "OUT";
 
@@ -84,6 +80,10 @@ public class DataConstants {
     public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
     public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
+
+    public static final String RELATION_ADD_OR_UPDATE = "RELATION_ADD_OR_UPDATE";
+    public static final String RELATION_DELETED = "RELATION_DELETED";
+    public static final String RELATIONS_DELETED = "RELATIONS_DELETED";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 

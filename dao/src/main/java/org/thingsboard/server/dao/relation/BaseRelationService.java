@@ -20,7 +20,10 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -28,8 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -44,13 +48,22 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
+import org.thingsboard.server.dao.sql.relation.JpaRelationQueryExecutorService;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -67,15 +80,34 @@ public class BaseRelationService implements RelationService {
     private final TbTransactionalCache<RelationCacheKey, RelationCacheValue> cache;
     private final ApplicationEventPublisher eventPublisher;
     private final JpaExecutorService executor;
+    private final JpaRelationQueryExecutorService relationsExecutor;
+    protected ScheduledExecutorService timeoutExecutorService;
+
+    @Value("${sql.relations.query_timeout:20}")
+    private Integer relationQueryTimeout;
 
     public BaseRelationService(RelationDao relationDao, @Lazy EntityService entityService,
                                TbTransactionalCache<RelationCacheKey, RelationCacheValue> cache,
-                               ApplicationEventPublisher eventPublisher, JpaExecutorService executor) {
+                               ApplicationEventPublisher eventPublisher, JpaExecutorService executor,
+                               JpaRelationQueryExecutorService relationsExecutor) {
         this.relationDao = relationDao;
         this.entityService = entityService;
         this.cache = cache;
         this.eventPublisher = eventPublisher;
         this.executor = executor;
+        this.relationsExecutor = relationsExecutor;
+    }
+
+    @PostConstruct
+    public void init() {
+        timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("relations-query-timeout"));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (timeoutExecutorService != null) {
+            timeoutExecutorService.shutdownNow();
+        }
     }
 
     @TransactionalEventListener(classes = EntityRelationEvent.class)
@@ -375,7 +407,6 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByQuery(TenantId tenantId, EntityRelationsQuery query) {
-        //boolean fetchLastLevelOnly = true;
         log.trace("Executing findByQuery [{}]", query);
         RelationsSearchParameters params = query.getParameters();
         final List<RelationEntityTypeFilter> filters = query.getFilters();
@@ -386,7 +417,8 @@ public class BaseRelationService implements RelationService {
         int maxLvl = params.getMaxLevel() > 0 ? params.getMaxLevel() : Integer.MAX_VALUE;
 
         try {
-            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
+            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(),
+                    params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
             return Futures.transform(relationSet, input -> {
                 List<EntityRelation> relations = new ArrayList<>();
                 if (filters == null || filters.isEmpty()) {
@@ -510,53 +542,89 @@ public class BaseRelationService implements RelationService {
         }
     }
 
+    @RequiredArgsConstructor
+    private static class RelationQueueCtx {
+        final SettableFuture<Set<EntityRelation>> future = SettableFuture.create();
+        final Set<EntityRelation> result = ConcurrentHashMap.newKeySet();
+        final Queue<RelationTask> tasks = new ConcurrentLinkedQueue<>();
+
+        final TenantId tenantId;
+        final EntitySearchDirection direction;
+        final RelationTypeGroup relationTypeGroup;
+        final boolean fetchLastLevelOnly;
+        final int maxLvl;
+        final ConcurrentHashMap<EntityId, Boolean> uniqueMap;
+
+    }
+
+    @RequiredArgsConstructor
+    private static class RelationTask {
+        private final int currentLvl;
+        private final EntityId root;
+        private final List<EntityRelation> prevRelations;
+    }
+
+    private void processQueue(RelationQueueCtx ctx) {
+        RelationTask task = ctx.tasks.poll();
+        while (task != null) {
+            List<EntityRelation> relations = findRelations(ctx.tenantId, task.root, ctx.direction, ctx.relationTypeGroup);
+            Map<EntityId, List<EntityRelation>> newChildrenRelations = new HashMap<>();
+            for (EntityRelation childRelation : relations) {
+                log.trace("Found Relation: {}", childRelation);
+                EntityId childId = ctx.direction == EntitySearchDirection.FROM ? childRelation.getTo() : childRelation.getFrom();
+                if (ctx.uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
+                    log.trace("Adding Relation: {}", childId);
+                    newChildrenRelations.put(childId, new ArrayList<>());
+                }
+                if (ctx.fetchLastLevelOnly) {
+                    var list = newChildrenRelations.get(childId);
+                    if (list != null) {
+                        list.add(childRelation);
+                    }
+                }
+            }
+            if (ctx.fetchLastLevelOnly) {
+                if (relations.isEmpty()) {
+                    ctx.result.addAll(task.prevRelations);
+                } else if (task.currentLvl == ctx.maxLvl) {
+                    ctx.result.addAll(relations);
+                }
+            } else {
+                ctx.result.addAll(relations);
+            }
+            var finalTask = task;
+            newChildrenRelations.forEach((child, childRelations) -> {
+                var newLvl = finalTask.currentLvl + 1;
+                if (newLvl <= ctx.maxLvl)
+                    ctx.tasks.add(new RelationTask(newLvl, child, childRelations));
+            });
+            task = ctx.tasks.poll();
+        }
+        ctx.future.set(ctx.result);
+    }
+
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
                                                                            RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
-                                                                           final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
+                                                                           final ConcurrentHashMap<EntityId, Boolean> uniqueMap) {
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
         }
-        lvl--;
-        //TODO: try to remove this blocking operation
-        Set<EntityRelation> children = new HashSet<>(findRelations(tenantId, rootId, direction, relationTypeGroup).get());
-        Set<EntityId> childrenIds = new HashSet<>();
-        for (EntityRelation childRelation : children) {
-            log.trace("Found Relation: {}", childRelation);
-            EntityId childId;
-            if (direction == EntitySearchDirection.FROM) {
-                childId = childRelation.getTo();
-            } else {
-                childId = childRelation.getFrom();
-            }
-            if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
-                log.trace("Adding Relation: {}", childId);
-                if (childrenIds.add(childId)) {
-                    log.trace("Added Relation: {}", childId);
-                }
-            }
-        }
-        List<ListenableFuture<Set<EntityRelation>>> futures = new ArrayList<>();
-        for (EntityId entityId : childrenIds) {
-            futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, fetchLastLevelOnly, uniqueMap));
-        }
-        //TODO: try to remove this blocking operation
-        List<Set<EntityRelation>> relations = Futures.successfulAsList(futures).get();
-        if (fetchLastLevelOnly && lvl > 0) {
-            children.clear();
-        }
-        relations.forEach(r -> r.forEach(children::add));
-        return Futures.immediateFuture(children);
+        var relationQueueCtx = new RelationQueueCtx(tenantId, direction, relationTypeGroup, fetchLastLevelOnly, lvl, uniqueMap);
+        relationQueueCtx.tasks.add(new RelationTask(1, rootId, Collections.emptyList()));
+        relationsExecutor.submit(() -> processQueue(relationQueueCtx));
+        return Futures.withTimeout(relationQueueCtx.future, relationQueryTimeout, TimeUnit.SECONDS, timeoutExecutorService);
     }
 
-    private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
-        ListenableFuture<List<EntityRelation>> relations;
+
+    private List<EntityRelation> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
+        List<EntityRelation> relations;
         if (relationTypeGroup == null) {
             relationTypeGroup = RelationTypeGroup.COMMON;
         }
         if (direction == EntitySearchDirection.FROM) {
-            relations = findByFromAsync(tenantId, rootId, relationTypeGroup);
+            relations = findByFrom(tenantId, rootId, relationTypeGroup);
         } else {
-            relations = findByToAsync(tenantId, rootId, relationTypeGroup);
+            relations = findByTo(tenantId, rootId, relationTypeGroup);
         }
         return relations;
     }

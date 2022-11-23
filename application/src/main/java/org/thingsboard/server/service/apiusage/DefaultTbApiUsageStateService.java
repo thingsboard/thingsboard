@@ -16,10 +16,8 @@
 package org.thingsboard.server.service.apiusage;
 
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +32,7 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -70,6 +69,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -395,6 +395,11 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         }
     }
 
+    @Override
+    public ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id) {
+        return apiUsageStateService.findApiUsageStateById(tenantId, id);
+    }
+
     private interface StateChecker {
         boolean check(long threshold, long warnThreshold, long value);
     }
@@ -500,19 +505,19 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     }
 
     @Override
-    protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
+    protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
+        var result = new HashMap<TopicPartitionInfo, List<ListenableFuture<?>>>();
         try {
             log.info("Initializing tenant states.");
             updateLock.lock();
             try {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
-                List<ListenableFuture<?>> futures = new ArrayList<>();
                 for (Tenant tenant : tenantIterator) {
                     TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId());
                     if (addedPartitions.contains(tpi)) {
                         if (!myUsageStates.containsKey(tenant.getId()) && tpi.isMyPartition()) {
                             log.debug("[{}] Initializing tenant state.", tenant.getId());
-                            futures.add(dbExecutor.submit(() -> {
+                            result.computeIfAbsent(tpi, tmp -> new ArrayList<>()).add(dbExecutor.submit(() -> {
                                 try {
                                     updateTenantState((TenantApiUsageState) getOrFetchState(tenant.getId(), tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
                                     log.debug("[{}] Initialized tenant state.", tenant.getId());
@@ -526,14 +531,13 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                         log.debug("[{}][{}] Tenant doesn't belong to current partition. tpi [{}]", tenant.getName(), tenant.getId(), tpi);
                     }
                 }
-                Futures.whenAllComplete(futures);
             } finally {
                 updateLock.unlock();
             }
-            log.info("Initialized {} tenant states.", myUsageStates.size());
         } catch (Exception e) {
             log.warn("Unknown failure", e);
         }
+        return result;
     }
 
     @PreDestroy

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Inject, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -40,7 +40,7 @@ export interface EventContentDialogData {
   templateUrl: './event-content-dialog.component.html',
   styleUrls: ['./event-content-dialog.component.scss']
 })
-export class EventContentDialogComponent extends DialogComponent<EventContentDialogData> implements OnInit {
+export class EventContentDialogComponent extends DialogComponent<EventContentDialogData> implements OnInit, OnDestroy {
 
   @ViewChild('eventContentEditor', {static: true})
   eventContentEditorElmRef: ElementRef;
@@ -48,6 +48,7 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
   content: string;
   title: string;
   contentType: ContentType;
+  aceEditor: Ace.Editor;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -63,6 +64,13 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
     this.contentType = this.data.contentType;
 
     this.createEditor(this.eventContentEditorElmRef, this.content);
+  }
+
+  ngOnDestroy(): void {
+    if (this.aceEditor) {
+      this.aceEditor.destroy();
+    }
+    super.ngOnDestroy();
   }
 
   isJson(str) {
@@ -116,10 +124,10 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
         editorOptions = {...editorOptions, ...advancedOptions};
         getAce().subscribe(
           (ace) => {
-            const editor = ace.edit(editorElement, editorOptions);
-            editor.session.setUseWrapMode(false);
-            editor.setValue(processedContent, -1);
-            this.updateEditorSize(editorElement, processedContent, editor);
+            this.aceEditor = ace.edit(editorElement, editorOptions);
+            this.aceEditor.session.setUseWrapMode(false);
+            this.aceEditor.setValue(processedContent, -1);
+            this.updateEditorSize(editorElement, processedContent, this.aceEditor);
           }
         );
       }

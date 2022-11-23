@@ -63,10 +63,6 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    @Override
-    public void destroy() {
-    }
-
     protected abstract C loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected abstract ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg);
@@ -123,6 +119,9 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     private JsonElement setProperties(ContactBased entity, JsonElement data, EntityDetails entityDetails, String prefix) {
         JsonObject dataAsObject = data.getAsJsonObject();
         switch (entityDetails) {
+            case ID:
+                dataAsObject.addProperty(prefix + "id", entity.getId().toString());
+                break;
             case TITLE:
                 dataAsObject.addProperty(prefix + "title", entity.getName());
                 break;

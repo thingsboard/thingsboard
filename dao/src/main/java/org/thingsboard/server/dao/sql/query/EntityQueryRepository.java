@@ -28,4 +28,6 @@ public interface EntityQueryRepository {
 
     PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
 
+    PageData<EntityData> findEntityDataByQueryInternal(EntityDataQuery query);
+
 }

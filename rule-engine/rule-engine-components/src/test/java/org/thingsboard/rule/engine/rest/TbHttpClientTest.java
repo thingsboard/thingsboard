@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
@@ -26,6 +27,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,6 +36,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -200,5 +204,23 @@ public class TbHttpClientTest {
         );
     }
 
+    @Test
+    public void testHeadersToMetaData() {
+        Map<String, List<String>> headers = new LinkedMultiValueMap<>();
+        headers.put("Content-Type", List.of("binary"));
+        headers.put("Set-Cookie", List.of("sap-context=sap-client=075; path=/", "sap-token=sap-client=075; path=/"));
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+
+        willCallRealMethod().given(client).headersToMetaData(any(), any());
+
+        client.headersToMetaData(headers, metaData::putValue);
+
+        Map<String, String> data = metaData.getData();
+
+        Assertions.assertThat(data).hasSize(2);
+        Assertions.assertThat(data.get("Content-Type")).isEqualTo("binary");
+        Assertions.assertThat(data.get("Set-Cookie")).isEqualTo("[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
+    }
 
 }

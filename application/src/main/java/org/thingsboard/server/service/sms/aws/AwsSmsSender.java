@@ -23,10 +23,10 @@ import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.sms.config.AwsSnsSmsProviderConfiguration;
 import org.thingsboard.rule.engine.api.sms.exception.SmsException;
 import org.thingsboard.rule.engine.api.sms.exception.SmsSendException;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.sms.config.AwsSnsSmsProviderConfiguration;
 import org.thingsboard.server.service.sms.AbstractSmsSender;
 
 import java.util.HashMap;
