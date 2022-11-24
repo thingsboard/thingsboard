@@ -99,7 +99,19 @@ public class TbMsgDeleteAttributesTest {
     }
 
     @Test
-    void givenMsg_whenOnMsg_thenVerifyOutput() throws Exception {
+    void givenMsg_whenOnMsg_thenVerifyOutput_NoSendAttributesDeletedNotification() throws Exception {
+        onMsg_thenVerifyOutput(false);
+    }
+
+    @Test
+    void givenMsg_whenOnMsg_thenVerifyOutput_SendAttributesDeletedNotification() throws Exception {
+        config.setSendAttributesDeletedNotification(true);
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+        onMsg_thenVerifyOutput(true);
+    }
+
+    void onMsg_thenVerifyOutput(boolean sendAttributesDeletedNotification) throws Exception {
         final Map<String, String> mdMap = Map.of(
                 "TestAttribute_1", "temperature",
                 "city", "NY"
@@ -114,11 +126,12 @@ public class TbMsgDeleteAttributesTest {
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
 
-        verify(ctx, times(1)).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
-        successCaptor.getValue().run();
+        if (sendAttributesDeletedNotification) {
+            verify(ctx, times(1)).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+            successCaptor.getValue().run();
+            verify(ctx, times(1)).attributesDeletedActionMsg(any(), any(), anyString(), anyList());
+        }
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
-
-        verify(ctx, times(1)).attributesDeletedActionMsg(any(), any(), anyString(), anyList());
         verify(ctx, never()).tellFailure(any(), any());
         verify(telemetryService, times(1)).deleteAndNotify(any(), any(), anyString(), anyList(), any());
     }

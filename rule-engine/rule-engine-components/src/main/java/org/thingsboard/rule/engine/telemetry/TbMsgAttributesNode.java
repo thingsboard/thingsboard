@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -40,8 +41,9 @@ import java.util.List;
         configClazz = TbMsgAttributesNodeConfiguration.class,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
-                      "If upsert(update/insert) operation is completed successfully, rule node will send the \"Attributes Updated\" " +
-                      "event to the root chain of the message originator and send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
+                      "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
+                      "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
+                      "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
@@ -49,6 +51,8 @@ import java.util.List;
 public class TbMsgAttributesNode implements TbNode {
 
     private TbMsgAttributesNodeConfiguration config;
+    private String scope;
+    private boolean sendAttributesUpdateNotification;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -56,6 +60,10 @@ public class TbMsgAttributesNode implements TbNode {
         if (config.getNotifyDevice() == null) {
             config.setNotifyDevice(true);
         }
+        this.scope = config.getScope();
+        this.sendAttributesUpdateNotification = config.isSendAttributesUpdatedNotification()
+                && !DataConstants.CLIENT_SCOPE.equals(scope);
+
     }
 
     @Override
@@ -65,7 +73,7 @@ public class TbMsgAttributesNode implements TbNode {
             return;
         }
         String src = msg.getData();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(new JsonParser().parse(src)));
+        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(src)));
         if (attributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
@@ -74,10 +82,12 @@ public class TbMsgAttributesNode implements TbNode {
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
                 msg.getOriginator(),
-                config.getScope(),
+                scope,
                 attributes,
                 config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
-                new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes)
+                sendAttributesUpdateNotification ?
+                        new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes) :
+                        new TelemetryNodeCallback(ctx, msg)
         );
     }
 
