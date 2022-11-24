@@ -45,9 +45,10 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
-import { isMobileApp } from '@core/utils';
+import { isMobileApp, objToBase64URI } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
+import { StateObject } from '@core/api/widget-api.models';
 
 @Injectable({
     providedIn: 'root'
@@ -285,10 +286,20 @@ export class AuthService {
         if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
           if (this.userHasDefaultDashboard(authState)) {
             const dashboardId = authState.userDetails.additionalInfo.defaultDashboardId;
+            const dashboardState = authState.userDetails.additionalInfo.defaultDashboardState;
+            let stateStr: string = '';
+            if (dashboardState) {
+              // Despite params is optional if it is not initialized even with empty object, state controller crashes
+              const stateObject: StateObject = {
+                id: dashboardState,
+                params: {}
+              };
+              stateStr = `?state=${objToBase64URI([ stateObject ])}`;
+            }
             if (authState.forceFullscreen) {
-              result = this.router.parseUrl(`dashboard/${dashboardId}`);
+              result = this.router.parseUrl(`dashboard/${dashboardId}${stateStr}`);
             } else {
-              result = this.router.parseUrl(`dashboards/${dashboardId}`);
+              result = this.router.parseUrl(`dashboards/${dashboardId}${stateStr}`);
             }
           } else if (authState.authUser.isPublic) {
             result = this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
