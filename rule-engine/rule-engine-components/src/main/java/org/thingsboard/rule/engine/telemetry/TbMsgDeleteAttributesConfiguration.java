@@ -27,12 +27,14 @@ public class TbMsgDeleteAttributesConfiguration implements NodeConfiguration<TbM
 
     private String scope;
     private List<String> keys;
+    private boolean sendAttributesDeletedNotification;
 
     @Override
     public TbMsgDeleteAttributesConfiguration defaultConfiguration() {
         TbMsgDeleteAttributesConfiguration configuration = new TbMsgDeleteAttributesConfiguration();
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setKeys(Collections.emptyList());
+        configuration.setSendAttributesDeletedNotification(false);
         return configuration;
     }
 }

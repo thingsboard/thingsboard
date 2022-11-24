@@ -67,7 +67,15 @@ public class TbMsgDeleteAttributes implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete));
+            ctx.getTelemetryService().deleteAndNotify(
+                    ctx.getTenantId(),
+                    msg.getOriginator(),
+                    scope,
+                    keysToDelete,
+                    config.isSendAttributesDeletedNotification() ?
+                            new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete) :
+                            new TelemetryNodeCallback(ctx, msg)
+            );
         }
     }
 }
