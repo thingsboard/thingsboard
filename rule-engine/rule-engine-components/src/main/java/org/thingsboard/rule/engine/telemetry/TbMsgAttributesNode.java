@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -49,6 +50,8 @@ import java.util.List;
 public class TbMsgAttributesNode implements TbNode {
 
     private TbMsgAttributesNodeConfiguration config;
+    private String scope;
+    private boolean sendAttributesUpdateNotification;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -56,6 +59,10 @@ public class TbMsgAttributesNode implements TbNode {
         if (config.getNotifyDevice() == null) {
             config.setNotifyDevice(true);
         }
+        this.scope = config.getScope();
+        this.sendAttributesUpdateNotification = config.isSendAttributesUpdatedNotification()
+                && !DataConstants.CLIENT_SCOPE.equals(scope);
+
     }
 
     @Override
@@ -74,10 +81,10 @@ public class TbMsgAttributesNode implements TbNode {
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
                 msg.getOriginator(),
-                config.getScope(),
+                scope,
                 attributes,
                 config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
-                config.isSendAttributesUpdatedNotification() ?
+                sendAttributesUpdateNotification ?
                         new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes) :
                         new TelemetryNodeCallback(ctx, msg)
         );
