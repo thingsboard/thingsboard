@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -112,5 +112,9 @@ export class EdgeService {
 
   public bulkImportEdges(entitiesData: BulkImportRequest, config?: RequestConfig): Observable<BulkImportResult> {
     return this.http.post<BulkImportResult>('/api/edge/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeInstructions(edgeId: string, config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/edge/instructions/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
 }

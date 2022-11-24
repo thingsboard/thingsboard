@@ -112,6 +112,15 @@
       <span translate>edge.sync</span>
     </button>
   </div>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openInstructions')"
+            [fxShow]="!isEdit">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ 'edge.install-connect-instructions' | translate }}</span>
+    </button>
+  </div>
 </div>
 <div class="mat-padding" fxLayout="column">
   <mat-form-field class="mat-block"
