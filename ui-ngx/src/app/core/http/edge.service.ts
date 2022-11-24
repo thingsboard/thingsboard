@@ -114,7 +114,7 @@ export class EdgeService {
     return this.http.post<BulkImportResult>('/api/edge/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
   }
 
-  public getEdgeInstructions(edgeId: string, config?: RequestConfig): Observable<string> {
-    return this.http.get<string>(`/api/edge/instructions/${edgeId}`, defaultHttpOptionsFromConfig(config));
+  public getEdgeDockerInstallInstructions(edgeId: string, config?: RequestConfig): Observable<any> {
+    return this.http.get<any>(`/api/edge/instructions/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
 }

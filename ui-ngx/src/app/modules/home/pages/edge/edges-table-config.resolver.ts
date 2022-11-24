@@ -534,7 +534,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     if ($event) {
       $event.stopPropagation();
     }
-    this.edgeService.getEdgeInstructions(edge.id.id).subscribe(
+    this.edgeService.getEdgeDockerInstallInstructions(edge.id.id).subscribe(
       (edgeInstructionsTemplate: string) => {
         this.dialog.open<EdgeInstructionsDialogComponent, EdgeInstructionsData>(EdgeInstructionsDialogComponent, {
           disableClose: false,
