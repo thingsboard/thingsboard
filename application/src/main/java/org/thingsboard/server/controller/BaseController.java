@@ -131,6 +131,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.edge.EdgeInstallService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
@@ -280,6 +281,9 @@ public abstract class BaseController {
 
     @Autowired(required = false)
     protected EdgeRpcService edgeRpcService;
+
+    @Autowired(required = false)
+    protected EdgeInstallService edgeInstallService;
 
     @Autowired
     protected TbNotificationEntityService notificationEntityService;

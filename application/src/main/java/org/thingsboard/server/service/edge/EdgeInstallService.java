@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc;
+package org.thingsboard.server.service.edge;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Data;
-import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
+import javax.servlet.http.HttpServletRequest;
 
-@Data
-public class EdgeSessionState {
+public interface EdgeInstallService {
 
-    private final Map<Integer, DownlinkMsg> pendingMsgsMap = Collections.synchronizedMap(new LinkedHashMap<>());
-    private SettableFuture<Void> sendDownlinkMsgsFuture;
-    private ScheduledFuture<?> scheduledSendDownlinkTask;
+    String getDockerInstallInstructions(TenantId tenantId, Edge edge, HttpServletRequest request);
+
 }

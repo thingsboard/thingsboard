@@ -63,6 +63,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -594,5 +595,25 @@ public class EdgeController extends BaseController {
         }
 
         return edgeBulkImportService.processBulkImport(request, user);
+    }
+
+    @ApiOperation(value = "Get Edge Docker Install Instructions (getEdgeDockerInstallInstructions)",
+            notes = "Get a docker install instructions for provided edge id." + TENANT_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/instructions/{edgeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public String getEdgeDockerInstallInstructions(
+            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("edgeId") String strEdgeId,
+            HttpServletRequest request) throws ThingsboardException {
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 }
