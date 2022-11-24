@@ -51,8 +51,8 @@ import java.util.List;
 public class TbMsgAttributesNode implements TbNode {
 
     private TbMsgAttributesNodeConfiguration config;
-    private String scope;
-    private boolean sendAttributesUpdateNotification;
+
+    private static final String SCOPE = "scope";
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -60,10 +60,6 @@ public class TbMsgAttributesNode implements TbNode {
         if (config.getNotifyDevice() == null) {
             config.setNotifyDevice(true);
         }
-        this.scope = config.getScope();
-        this.sendAttributesUpdateNotification = config.isSendAttributesUpdatedNotification()
-                && !DataConstants.CLIENT_SCOPE.equals(scope);
-
     }
 
     @Override
@@ -78,7 +74,12 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
+        String scope = msg.getMetaData().getValue(SCOPE);
+        if (StringUtils.isEmpty(scope)) {
+            scope = config.getScope();
+        }
         String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
+        boolean sendAttributesUpdateNotification = checkSendNotification(scope);
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
                 msg.getOriginator(),
@@ -89,6 +90,10 @@ public class TbMsgAttributesNode implements TbNode {
                         new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes) :
                         new TelemetryNodeCallback(ctx, msg)
         );
+    }
+
+    private boolean checkSendNotification(String scope){
+        return config.isSendAttributesUpdatedNotification() && !DataConstants.CLIENT_SCOPE.equals(scope);
     }
 
 }
