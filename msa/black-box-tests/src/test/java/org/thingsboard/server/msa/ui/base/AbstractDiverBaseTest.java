@@ -56,14 +56,17 @@ abstract public class AbstractDiverBaseTest extends AbstractContainerTest {
         log.info("*----------------------* Setup driver *----------------------*");
         if (HEADLESS == true) {
             ChromeOptions options = new ChromeOptions();
+            options.addArguments("--ignore-certificate-errors");
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--headless");
             WebDriverManager.chromedriver().setup();
             driver = new ChromeDriver(options);
         } else {
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--ignore-certificate-errors");
             WebDriverManager.chromedriver().setup();
-            driver = new ChromeDriver();
+            driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
     }

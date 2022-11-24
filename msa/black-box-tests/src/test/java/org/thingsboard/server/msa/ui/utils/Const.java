@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.msa.ui.utils;
 
+import static org.thingsboard.server.msa.TestProperties.getBaseUrl;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
 
 public class Const {
 
-    public static final String URL = "http://localhost:8080/";
+    public static final String URL = getBaseUrl();
     public static final String TENANT_EMAIL = "tenant@thingsboard.org";
     public static final String TENANT_PASSWORD = "tenant";
     public static final String ENTITY_NAME = "Az!@#$%^&*()_-+=~`" + getRandomNumber();

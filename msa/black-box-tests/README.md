@@ -34,7 +34,7 @@ As result, in REPOSITORY column, next images should be present:
 
         mvn clean install -DblackBoxTests.skip=false -DrunLocal=true
 
-- To run ui tests run tests in the [msa/black-box-tests](../black-box-tests) directory specifying suiteFile property: 
+- To run ui smoke tests in the [msa/black-box-tests](../black-box-tests) directory specifying suiteFile property: 
 
         mvn clean install -DblackBoxTests.skip=false -DsuiteFile=src/test/resources/smokeTests.xml 
 

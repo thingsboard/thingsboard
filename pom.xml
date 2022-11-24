@@ -144,6 +144,9 @@
         <jgit.version>6.1.0.202203080745-r</jgit.version>
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
+        <selenium.version>4.1.1</selenium.version>
+        <webdrivermanager.version>5.3.0</webdrivermanager.version>
+        <allure-testng.version>2.19.0</allure-testng.version>
     </properties>
 
     <modules>
@@ -1654,6 +1657,24 @@
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
                 <version>${rest-assured.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-java</artifactId>
+                <version>${selenium.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.github.bonigarcia</groupId>
+                <artifactId>webdrivermanager</artifactId>
+                <version>${webdrivermanager.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-testng</artifactId>
+                <version>${allure-testng.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
