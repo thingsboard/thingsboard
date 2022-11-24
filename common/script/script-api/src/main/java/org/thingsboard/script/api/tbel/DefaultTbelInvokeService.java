@@ -47,9 +47,11 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -126,6 +128,8 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         parserConfig = new SandboxedParserConfiguration();
         parserConfig.addImport("JSON", TbJson.class);
         parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
+        parserConfig.registerDataType("Random", Random.class, date -> 8L);
+        parserConfig.registerDataType("Calendar", Calendar.class, date -> 8L);
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {
