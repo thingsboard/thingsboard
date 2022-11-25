@@ -108,7 +108,6 @@ public class TbMsgDeleteAttributesNodeTest {
     @Test
     void givenMsg_whenOnMsg_thenVerifyOutput_SendAttributesDeletedNotification_NoNotifyDevice() throws Exception {
         config.setSendAttributesDeletedNotification(true);
-        config.setNotifyDevice(false);
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node.init(ctx, nodeConfiguration);
         onMsg_thenVerifyOutput(true, false, false);
@@ -117,6 +116,7 @@ public class TbMsgDeleteAttributesNodeTest {
     @Test
     void givenMsg_whenOnMsg_thenVerifyOutput_SendAttributesDeletedNotification_NotifyDevice() throws Exception {
         config.setSendAttributesDeletedNotification(true);
+        config.setNotifyDevice(true);
         config.setScope(SHARED_SCOPE);
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node.init(ctx, nodeConfiguration);

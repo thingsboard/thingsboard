@@ -69,7 +69,7 @@ public class TbMsgDeleteAttributesNode implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            String scope = getScope(msg);
+            String scope = getScope(msg.getMetaData().getValue(SCOPE));
             ctx.getTelemetryService().deleteAndNotify(
                     ctx.getTenantId(),
                     msg.getOriginator(),
@@ -83,16 +83,15 @@ public class TbMsgDeleteAttributesNode implements TbNode {
         }
     }
 
-    private String getScope(TbMsg msg) {
-        String mdScope = msg.getMetaData().getValue(SCOPE);
-        if (StringUtils.isNotEmpty(mdScope)) {
-            return mdScope;
+    private String getScope(String mdScopeValue) {
+        if (StringUtils.isNotEmpty(mdScopeValue)) {
+            return mdScopeValue;
         }
         return config.getScope();
     }
 
-    private boolean checkNotifyDevice(String notifyDevice, String scope) {
-        return SHARED_SCOPE.equals(scope) && (config.isNotifyDevice() || Boolean.parseBoolean(notifyDevice));
+    private boolean checkNotifyDevice(String notifyDeviceMdValue, String scope) {
+        return SHARED_SCOPE.equals(scope) && (config.isNotifyDevice() || Boolean.parseBoolean(notifyDeviceMdValue));
     }
 
 }

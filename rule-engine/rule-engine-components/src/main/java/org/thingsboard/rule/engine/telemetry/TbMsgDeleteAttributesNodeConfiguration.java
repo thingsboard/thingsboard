@@ -36,7 +36,7 @@ public class TbMsgDeleteAttributesNodeConfiguration implements NodeConfiguration
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setKeys(Collections.emptyList());
         configuration.setSendAttributesDeletedNotification(false);
-        configuration.setNotifyDevice(true);
+        configuration.setNotifyDevice(false);
         return configuration;
     }
 }

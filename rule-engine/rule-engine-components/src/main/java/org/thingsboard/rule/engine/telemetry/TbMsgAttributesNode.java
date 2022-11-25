@@ -75,7 +75,7 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
-        String scope = getScope(msg);
+        String scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
@@ -93,14 +93,13 @@ public class TbMsgAttributesNode implements TbNode {
         return config.isSendAttributesUpdatedNotification() && !CLIENT_SCOPE.equals(scope);
     }
 
-    private boolean checkNotifyDevice(String notifyDeviceStr) {
-        return config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr);
+    private boolean checkNotifyDevice(String notifyDeviceMdValue) {
+        return config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
     }
 
-    private String getScope(TbMsg msg) {
-        String mdScope = msg.getMetaData().getValue(SCOPE);
-        if (StringUtils.isNotEmpty(mdScope)) {
-            return mdScope;
+    private String getScope(String mdScopeValue) {
+        if (StringUtils.isNotEmpty(mdScopeValue)) {
+            return mdScopeValue;
         }
         return config.getScope();
     }
