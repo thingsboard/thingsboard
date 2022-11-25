@@ -22,10 +22,11 @@ is a raw String field, and it needs to be converted into object using this const
 
 ```javascript
 var details = {};
-if (metadata.prevAlarmDetails) {
-  // remove prevAlarmDetails from metadata
-  delete metadata.prevAlarmDetails;
+if (metadata.prevAlarmDetails != null) {
   details = JSON.parse(metadata.prevAlarmDetails);
+  // remove prevAlarmDetails from metadata
+  metadata.remove('prevAlarmDetails');
+  //now metadata is the same as it comes IN this rule node
 }
 {:copy-code}
 ```
@@ -44,11 +45,11 @@ Also put <code>temperature</code> attribute from inbound Message payload into Al
 ```javascript
 var details = {temperature: msg.temperature, count: 1};
 
-if (metadata.prevAlarmDetails) {
+if (metadata.prevAlarmDetails != null) {
   var prevDetails = JSON.parse(metadata.prevAlarmDetails);
   // remove prevAlarmDetails from metadata
-  delete metadata.prevAlarmDetails;
-  if (prevDetails.count) {
+  metadata.remove('prevAlarmDetails');
+  if (prevDetails.count != null) {
     details.count = prevDetails.count + 1;
   }
 }
