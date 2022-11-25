@@ -14,9 +14,6 @@
 # limitations under the License.
 #
 
-
-version: '2.2'
-
 services:
   zookeeper:
     restart: always
@@ -30,7 +27,8 @@ services:
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
-    scale: 10
+    deploy:
+      replicas: 10
     env_file:
       - tb-js-executor.env
   tb-core1:
