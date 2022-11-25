@@ -51,7 +51,7 @@ import {
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { Edge, EdgeInfo } from '@shared/models/edge.models';
+import { Edge, EdgeInfo, EdgeInstallInstructions } from '@shared/models/edge.models';
 import { EdgeService } from '@core/http/edge.service';
 import { EdgeComponent } from '@home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
@@ -535,12 +535,12 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       $event.stopPropagation();
     }
     this.edgeService.getEdgeDockerInstallInstructions(edge.id.id).subscribe(
-      (edgeInstructionsTemplate: string) => {
+      (edgeInstructionsTemplate: EdgeInstallInstructions) => {
         this.dialog.open<EdgeInstructionsDialogComponent, EdgeInstructionsData>(EdgeInstructionsDialogComponent, {
           disableClose: false,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            instructions: edgeInstructionsTemplate
+            instructions: edgeInstructionsTemplate.dockerInstallInstructions
           }
         });
       }

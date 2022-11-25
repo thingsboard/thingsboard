@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeBulkImportService;
+import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructions;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
@@ -603,7 +604,7 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/instructions/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
-    public String getEdgeDockerInstallInstructions(
+    public EdgeInstallInstructions getEdgeDockerInstallInstructions(
             @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("edgeId") String strEdgeId,
             HttpServletRequest request) throws ThingsboardException {

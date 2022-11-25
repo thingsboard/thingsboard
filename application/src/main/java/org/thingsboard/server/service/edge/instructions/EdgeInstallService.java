@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.service.edge.instructions;
 
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -22,6 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 
 public interface EdgeInstallService {
 
-    String getDockerInstallInstructions(TenantId tenantId, Edge edge, HttpServletRequest request);
+    EdgeInstallInstructions getDockerInstallInstructions(TenantId tenantId, Edge edge, HttpServletRequest request);
 
 }
