@@ -96,7 +96,6 @@ public class HttpClientTest extends AbstractContainerTest {
         assertThat(attributes3.get("client").get("stringKey")).isEqualTo(clientAttribute.get("stringKey"));
     }
 
-
     @Test
     public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
 

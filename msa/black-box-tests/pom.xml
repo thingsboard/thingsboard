@@ -93,6 +93,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.californium</groupId>
+            <artifactId>californium-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
@@ -159,6 +163,12 @@
             <groupId>org.thingsboard.msa.transport</groupId>
             <artifactId>snmp</artifactId>
             <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>message</artifactId>
+            <version>3.4.2PE-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
