@@ -37,11 +37,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
-import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
-import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -75,9 +70,6 @@ import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevi
 
 @Slf4j
 public class MqttClientTest extends AbstractContainerTest {
-
-    private final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
-    private final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
 
     private Device device;
     @BeforeMethod
@@ -428,30 +420,6 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonNode provisionResponse = mapper.readTree(provisionResponseMsg.getMessage());
 
         assertThat(provisionResponse.get("status").asText()).isEqualTo("NOT_FOUND");
-    }
-
-    private DeviceProfile updateDeviceProfileWithProvisioningStrategy(DeviceProfile deviceProfile, DeviceProfileProvisionType provisionType) {
-        DeviceProfileProvisionConfiguration provisionConfiguration;
-        String testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
-        deviceProfile.setProvisionType(provisionType);
-        switch(provisionType) {
-            case ALLOW_CREATE_NEW_DEVICES:
-                provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
-                break;
-            case CHECK_PRE_PROVISIONED_DEVICES:
-                provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
-                break;
-            default:
-            case DISABLED:
-                testProvisionDeviceKey = null;
-                provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
-                break;
-        }
-        DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
-        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setProvisionDeviceKey(testProvisionDeviceKey);
-        return testRestClient.postDeviceProfile(deviceProfile);
     }
 
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {

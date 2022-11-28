@@ -170,6 +170,14 @@ public class TestRestClient {
                 .as(JsonNode.class);
     }
 
+    public JsonPath postProvisionRequest(String provisionRequest) {
+        return  given().spec(requestSpec)
+                .body(provisionRequest)
+                .post("/api/v1/provision")
+                .getBody()
+                .jsonPath();
+    }
+
     public PageData<RuleChain> getRuleChains(PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
