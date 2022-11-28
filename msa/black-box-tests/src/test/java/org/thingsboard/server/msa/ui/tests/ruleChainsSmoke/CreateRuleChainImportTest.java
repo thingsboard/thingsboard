@@ -28,7 +28,13 @@ import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import java.util.ArrayList;
 
-import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_IMPORT_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_RULE_CHAIN_FILE_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_RULE_CHAIN_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_TXT_FILE_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
+import static org.thingsboard.server.msa.ui.utils.Const.URL;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
 public class CreateRuleChainImportTest extends AbstractDiverBaseTest {

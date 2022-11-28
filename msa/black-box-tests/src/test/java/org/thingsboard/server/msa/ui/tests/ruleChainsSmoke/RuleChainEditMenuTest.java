@@ -25,7 +25,11 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
-import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_RULE_CHAIN_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
+import static org.thingsboard.server.msa.ui.utils.Const.URL;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
 public class RuleChainEditMenuTest extends AbstractDiverBaseTest {
@@ -55,7 +59,6 @@ public class RuleChainEditMenuTest extends AbstractDiverBaseTest {
     @Description
     public void changeName() {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ENTITY_NAME));
-        ;
         String name = "Changed";
 
         sideBarMenuView.ruleChainsBtn().click();
