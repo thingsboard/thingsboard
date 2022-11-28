@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -33,6 +32,10 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
 @Slf4j
 @RuleNode(
@@ -51,8 +54,6 @@ import java.util.List;
 public class TbMsgAttributesNode implements TbNode {
 
     private TbMsgAttributesNodeConfiguration config;
-
-    private static final String SCOPE = "scope";
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -74,26 +75,33 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
-        String scope = msg.getMetaData().getValue(SCOPE);
-        if (StringUtils.isEmpty(scope)) {
-            scope = config.getScope();
-        }
-        String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
+        String scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
                 msg.getOriginator(),
                 scope,
                 attributes,
-                config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
+                checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
                 sendAttributesUpdateNotification ?
-                        new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes) :
+                        new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
                         new TelemetryNodeCallback(ctx, msg)
         );
     }
 
-    private boolean checkSendNotification(String scope){
-        return config.isSendAttributesUpdatedNotification() && !DataConstants.CLIENT_SCOPE.equals(scope);
+    private boolean checkSendNotification(String scope) {
+        return config.isSendAttributesUpdatedNotification() && !CLIENT_SCOPE.equals(scope);
+    }
+
+    private boolean checkNotifyDevice(String notifyDeviceMdValue) {
+        return config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
+    }
+
+    private String getScope(String mdScopeValue) {
+        if (StringUtils.isNotEmpty(mdScopeValue)) {
+            return mdScopeValue;
+        }
+        return config.getScope();
     }
 
 }

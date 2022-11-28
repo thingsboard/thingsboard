@@ -287,12 +287,8 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
         List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
         attributesService.removeAll(tenantId, entityId, scope, attributeNames);
         if (EntityType.DEVICE.name().equals(entityType)) {
-            Set<AttributeKey> attributeKeys = new HashSet<>();
-            for (String attributeName : attributeNames) {
-                attributeKeys.add(new AttributeKey(scope, attributeName));
-            }
             tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                    tenantId, (DeviceId) entityId, attributeKeys), new TbQueueCallback() {
+                    tenantId, (DeviceId) entityId, scope, attributeNames), new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
                     futureToSet.set(null);

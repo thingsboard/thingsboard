@@ -23,18 +23,20 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
-public class TbMsgDeleteAttributesConfiguration implements NodeConfiguration<TbMsgDeleteAttributesConfiguration> {
+public class TbMsgDeleteAttributesNodeConfiguration implements NodeConfiguration<TbMsgDeleteAttributesNodeConfiguration> {
 
     private String scope;
     private List<String> keys;
     private boolean sendAttributesDeletedNotification;
+    private boolean notifyDevice;
 
     @Override
-    public TbMsgDeleteAttributesConfiguration defaultConfiguration() {
-        TbMsgDeleteAttributesConfiguration configuration = new TbMsgDeleteAttributesConfiguration();
+    public TbMsgDeleteAttributesNodeConfiguration defaultConfiguration() {
+        TbMsgDeleteAttributesNodeConfiguration configuration = new TbMsgDeleteAttributesNodeConfiguration();
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setKeys(Collections.emptyList());
         configuration.setSendAttributesDeletedNotification(false);
+        configuration.setNotifyDevice(false);
         return configuration;
     }
 }
