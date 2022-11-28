@@ -218,15 +218,15 @@ public class TbUtils {
         return parseBytesToInt(data, 0, data.length, bigEndian);
     }
 
-    public static ExecutionArrayList<Integer> hexToBytes(ExecutionContext ctx, String hex) {
+    public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String hex) {
         int len = hex.length();
         if (len % 2 > 0) {
             throw new IllegalArgumentException("Hex string must be even-length.");
         }
-        ExecutionArrayList<Integer> data = new ExecutionArrayList<>(ctx);
+        ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
         for (int i = 0; i < len; i += 2) {
-            data.add((Character.digit(hex.charAt(i), 16) << 4)
-                    + Character.digit(hex.charAt(i + 1), 16));
+            data.add((byte)((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16)));
         }
         return data;
     }
