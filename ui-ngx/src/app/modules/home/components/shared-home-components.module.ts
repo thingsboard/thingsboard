@@ -20,6 +20,7 @@ import { SharedModule } from '@app/shared/shared.module';
 import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 import { GatewayCommandDialogComponent } from "@home/components/gateway/gateway-command-dialog.component";
 import { SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { DeviceCredentialsModule } from "@home/components/device/device-credentials.module";
 
 @NgModule({
   providers: [
@@ -32,7 +33,8 @@ import { SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
     ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    DeviceCredentialsModule
   ],
   exports: [
     AlarmDetailsDialogComponent,

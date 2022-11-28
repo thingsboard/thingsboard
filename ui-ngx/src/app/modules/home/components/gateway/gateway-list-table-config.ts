@@ -71,7 +71,7 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
               pageMode = false) {
     super();
     this.loadDataOnInit = updateOnInit;
-    this.tableTitle = '';
+    this.tableTitle = 'Gateway list';
     this.useTimePageLink = false;
     this.pageMode = false;
     this.displayPagination = false;

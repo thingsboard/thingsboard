@@ -29,16 +29,14 @@
 /// OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Router } from '@angular/router';
-import { DialogComponent } from '@app/shared/components/dialog.component';
-import { TranslateService } from '@ngx-translate/core';
+import {Component, Inject, OnInit} from '@angular/core';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {Router} from '@angular/router';
+import {DialogComponent} from '@app/shared/components/dialog.component';
+import {TranslateService} from '@ngx-translate/core';
 import {Device, DeviceCredentials} from "@shared/models/device.models";
-import {ActionNotificationShow} from "@core/notification/notification.actions";
-import {FormControl} from "@angular/forms";
 
 export interface GatewayCommandDialogData {
   device: Device,
@@ -57,63 +55,19 @@ enum OsType {
   styleUrls: []
 })
 export class GatewayCommandDialogComponent extends DialogComponent<GatewayCommandDialogComponent> implements OnInit {
-  linuxCode: string;
-  windowsCode: string;
-  selectedOSControll: FormControl;
-  osTypes = OsType;
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
-              private translate: TranslateService,
               @Inject(MAT_DIALOG_DATA) public data: GatewayCommandDialogData,
               public dialogRef: MatDialogRef<GatewayCommandDialogComponent, boolean>,) {
     super(store, router, dialogRef);
-    const ACCESS_TOKEN = data.credentials.credentialsId;
-    const HOST = window.location.hostname;
-    this.selectedOSControll = new FormControl('');
-    // @ts-ignore
-    const platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
-      macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
-      windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
-    if (macosPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSControll.setValue(OsType.macos);
-    } else if (windowsPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSControll.setValue(OsType.windows);
-    } else if (/Linux/.test(platform)) {
-      this.selectedOSControll.setValue(OsType.linux);
-    }
-    this.linuxCode = "docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v " +
-      "~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e host=" +
-      HOST +
-      " -e port=1883 -e accessToken=" +
-      ACCESS_TOKEN +
-      " --restart always thingsboard/tb-gateway";
-    this.windowsCode = "docker run -it -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config -v " +
-      "%HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs " +
-      "--name tb-gateway -e host=" +
-      HOST +
-      " -e port=1883 -e accessToken=" +
-      ACCESS_TOKEN +
-      " --restart always thingsboard/tb-gateway";
-
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
   }
 
   close(): void {
     this.dialogRef.close();
   }
 
-  onDockerCodeCopied() {
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message: this.translate.instant('gateway.command-copied-message'),
-        type: 'success',
-        target: 'dockerCommandDialogContent',
-        duration: 1200,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'left'
-      }));
-  }
 }

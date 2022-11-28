@@ -148,5 +148,6 @@
         </mat-form-field>
       </div>
     </fieldset>
+    <tb-gateway-command *ngIf="entity?.id?.id && entityForm.get('additionalInfo.gateway').value && !isEdit" [deviceId]="entity?.id?.id" ></tb-gateway-command>
   </form>
 </div>
