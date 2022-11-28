@@ -70,7 +70,7 @@ public class TbJsonPathNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         if (!TbJsonPathNodeConfiguration.DEFAULT_JSON_PATH.equals(this.jsonPathValue)) {
             try {
-                JsonNode jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
+                Object jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
                 ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(jsonPathData)));
             } catch (PathNotFoundException e) {
                 ctx.tellFailure(msg, e);
