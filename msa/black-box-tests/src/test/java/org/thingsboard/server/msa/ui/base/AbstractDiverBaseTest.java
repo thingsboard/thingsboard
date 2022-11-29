@@ -47,7 +47,7 @@ abstract public class AbstractDiverBaseTest extends AbstractContainerTest {
     private final Dimension dimension = new Dimension(WIDTH, HEIGHT);
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
-    private static final boolean HEADLESS = false;
+    private static final boolean HEADLESS = true;
     protected static final PageLink pageLink = new PageLink(10);
 
 
