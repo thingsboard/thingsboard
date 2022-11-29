@@ -145,7 +145,7 @@
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
         <selenium.version>4.1.1</selenium.version>
-        <webdrivermanager.version>5.3.0</webdrivermanager.version>
+        <webdrivermanager.version>5.2.0</webdrivermanager.version>
         <allure-testng.version>2.19.0</allure-testng.version>
     </properties>
 

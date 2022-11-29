@@ -84,6 +84,6 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
         String ruleChain = ruleChainsPage.getRuleChainName();
         ruleChainsPage.doubleClickOnRuleChain(ruleChain);
 
-        Assert.assertEquals(getUrl(), URL + "ruleChains");
+        Assert.assertEquals(getUrl(), URL + "/ruleChains");
     }
 }
