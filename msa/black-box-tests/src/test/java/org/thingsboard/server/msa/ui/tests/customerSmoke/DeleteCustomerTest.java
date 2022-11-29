@@ -81,10 +81,11 @@ public class DeleteCustomerTest extends AbstractDiverBaseTest {
 
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        String deletedCustomer = ruleChainsPage.deleteRuleChainFromView(customerName);
-        ruleChainsPage.refreshBtn().click();
+        customerPage.customerViewDeleteBtn().click();
+        customerPage.warningPopUpYesBtn().click();
+        customerPage.refreshBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(customerPage.entityIsNotPresent(customerName));
     }
 
     @Test(priority = 20, groups = "smoke")

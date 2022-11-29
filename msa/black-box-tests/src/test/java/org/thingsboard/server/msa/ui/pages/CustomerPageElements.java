@@ -70,6 +70,7 @@ public class CustomerPageElements extends OtherPageElementsHelper {
     private static final String MANAGE_CUSTOMERS_DEVICE_BTN_VIEW = "Manage devices";
     private static final String MANAGE_CUSTOMERS_DASHBOARD_BTN_VIEW = "Manage dashboards";
     private static final String MANAGE_CUSTOMERS_EDGE_BTN_VIEW = "Manage edges ";
+    private static final String DELETE_FROM_VIEW_BTN = "//tb-customer//span[contains(text(),' Delete')]";
 
     public WebElement titleFieldAddEntityView() {
         return waitUntilElementToBeClickable(ADD_ENTITY_VIEW + String.format(INPUT_FIELD, INPUT_FIELD_NAME_TITLE));
@@ -273,5 +274,9 @@ public class CustomerPageElements extends OtherPageElementsHelper {
 
     public WebElement manageCustomersEdgeBtnView() {
         return waitUntilElementToBeClickable(String.format(MANAGE_BTN_VIEW, MANAGE_CUSTOMERS_EDGE_BTN_VIEW));
+    }
+
+    public WebElement customerViewDeleteBtn() {
+        return waitUntilElementToBeClickable(DELETE_FROM_VIEW_BTN);
     }
 }

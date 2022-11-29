@@ -256,7 +256,6 @@ public class CustomerEditMenuTest extends AbstractDiverBaseTest {
     public void addAllInformation() {
         customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
-        ;
         String text = "Text";
         String email = "email@mail.com";
         String number = "2015550123";

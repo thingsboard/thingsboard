@@ -34,7 +34,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <suiteFile>src/test/resources/testNG.xml</suiteFile>
+        <suite>blackBox</suite>
     </properties>
 
     <dependencies>
@@ -184,7 +184,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <suiteXmlFiles>
-                        <suiteXmlFile>${suiteFile}</suiteXmlFile>
+                        <suiteXmlFile>src/test/resources/${suite}.xml</suiteXmlFile>
                     </suiteXmlFiles>
                     <skipTests>${blackBoxTests.skip}</skipTests>
                 </configuration>

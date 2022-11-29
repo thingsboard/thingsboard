@@ -101,6 +101,7 @@ public class CreateRuleChainImportTest extends AbstractDiverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void importRuleChainAndSave() {
+        ruleChainName = IMPORT_RULE_CHAIN_NAME;
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
@@ -108,7 +109,6 @@ public class CreateRuleChainImportTest extends AbstractDiverBaseTest {
         openRuleChainPage.doneBtn().click();
         openRuleChainPage.waitUntilDoneBtnDisable();
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainName = IMPORT_RULE_CHAIN_NAME;
 
         Assert.assertNotNull(ruleChainsPage.entity(IMPORT_RULE_CHAIN_NAME));
         Assert.assertTrue(ruleChainsPage.entity(IMPORT_RULE_CHAIN_NAME).isDisplayed());
@@ -119,7 +119,6 @@ public class CreateRuleChainImportTest extends AbstractDiverBaseTest {
     public void importRuleChainAndSaveWithSameName() {
         ruleChainName = IMPORT_RULE_CHAIN_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
-        ;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();

@@ -18,9 +18,9 @@
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Smoke tests">
+<suite name="All tests">
     <suite-files>
-        <suite-file path="smokesRuleChain.xml"/>
-        <suite-file path="smokesCustomer.xml"/>
+        <suite-file path="blackBox.xml"/>
+        <suite-file path="uiTests.xml"/>
     </suite-files>
 </suite>
