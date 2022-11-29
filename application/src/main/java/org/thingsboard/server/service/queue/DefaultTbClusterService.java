@@ -88,10 +88,8 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Value("${cluster.stats.enabled:false}")
     private boolean statsEnabled;
-    @Value("${edges.enabled}")
+    @Value("${edges.enabled:true}")
     protected boolean edgesEnabled;
-    @Value("${service.type:monolith}")
-    private String serviceType;
 
     private final AtomicInteger toCoreMsgs = new AtomicInteger(0);
     private final AtomicInteger toCoreNfs = new AtomicInteger(0);
