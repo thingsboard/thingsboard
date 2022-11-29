@@ -19,7 +19,7 @@ import io.qameta.allure.Description;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
+import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
@@ -29,7 +29,7 @@ import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
-public class OpenRuleChainTest extends AbstractDiverBaseTest {
+public class OpenRuleChainTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
     private RuleChainsPageHelper ruleChainsPage;

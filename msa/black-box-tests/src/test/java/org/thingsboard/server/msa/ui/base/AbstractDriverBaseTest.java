@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Listeners(TestListener.class)
-abstract public class AbstractDiverBaseTest extends AbstractContainerTest {
+abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     protected WebDriver driver;
     private final Dimension dimension = new Dimension(WIDTH, HEIGHT);

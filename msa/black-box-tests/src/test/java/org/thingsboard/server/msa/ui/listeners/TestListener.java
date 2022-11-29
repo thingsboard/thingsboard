@@ -22,9 +22,9 @@ import org.openqa.selenium.WebDriver;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-import org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest;
+import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 
-import static org.thingsboard.server.msa.ui.base.AbstractDiverBaseTest.captureScreen;
+import static org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest.captureScreen;
 
 @Slf4j
 public class TestListener implements ITestListener {
@@ -37,7 +37,7 @@ public class TestListener implements ITestListener {
         Allure.getLifecycle().updateTestCase((t) -> {
             t.setStatusDetails(t.getStatusDetails().setMessage(str));
         });
-        driver = ((AbstractDiverBaseTest) tr.getInstance()).getDriver();
+        driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
         captureScreen(driver, "success");
     }
 
@@ -50,7 +50,7 @@ public class TestListener implements ITestListener {
             t.setStatusDetails(t.getStatusDetails().setMessage(str));
             t.setStatusDetails(t.getStatusDetails().setMessage(str1));
         });
-        driver = ((AbstractDiverBaseTest) tr.getInstance()).getDriver();
+        driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
         captureScreen(driver, "failure");
     }
 
@@ -63,7 +63,7 @@ public class TestListener implements ITestListener {
             t.setStatusDetails(t.getStatusDetails().setMessage(str));
             t.setStatusDetails(t.getStatusDetails().setMessage(str1));
         });
-        driver = ((AbstractDiverBaseTest) tr.getInstance()).getDriver();
+        driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
         captureScreen(driver, "skipped");
     }
 
