@@ -584,25 +584,27 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void doSendQueueNotifications(ToRuleEngineNotificationMsg ruleEngineMsg, ToCoreNotificationMsg coreMsg, ToTransportMsg transportMsg) {
-        Set<TransportProtos.ServiceInfo> tbRuleEngineServices = partitionService.getAllServices(ServiceType.TB_RULE_ENGINE);
-        for (TransportProtos.ServiceInfo ruleEngineService : tbRuleEngineServices) {
-            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineService.getServiceId());
+        Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
+        Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
+        Set<String> tbTransportServices = partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT);
+        // No need to push notifications twice
+        tbTransportServices.removeAll(tbCoreServices);
+        tbCoreServices.removeAll(tbRuleEngineServices);
+
+        for (String ruleEngineServiceId : tbRuleEngineServices) {
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineServiceId);
             producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), null);
             toRuleEngineNfs.incrementAndGet();
         }
-        if (!serviceType.equals("monolith")) {
-            Set<TransportProtos.ServiceInfo> tbCoreServices = partitionService.getAllServices(ServiceType.TB_CORE);
-            for (TransportProtos.ServiceInfo coreService : tbCoreServices) {
-                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreService.getServiceId());
-                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), null);
-                toCoreNfs.incrementAndGet();
-            }
-            Set<TransportProtos.ServiceInfo> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT);
-            for (TransportProtos.ServiceInfo transportService : tbTransportServices) {
-                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportService.getServiceId());
-                producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), null);
-                toTransportNfs.incrementAndGet();
-            }
+        for (String coreServiceId : tbCoreServices) {
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreServiceId);
+            producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), null);
+            toCoreNfs.incrementAndGet();
+        }
+        for (String transportServiceId : tbTransportServices) {
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);
+            producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), null);
+            toTransportNfs.incrementAndGet();
         }
     }
 }
