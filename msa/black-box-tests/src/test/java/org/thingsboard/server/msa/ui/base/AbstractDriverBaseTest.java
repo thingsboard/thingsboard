@@ -21,13 +21,18 @@ import io.qameta.allure.Attachment;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.*;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -50,11 +55,14 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final boolean HEADLESS = true;
     protected static final PageLink pageLink = new PageLink(10);
 
+    @BeforeSuite
+    public void beforeUISuite() {
+        WebDriverManager.chromedriver().setup();
+    }
 
     @BeforeMethod
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
-        WebDriverManager.chromedriver().setup();
         if (HEADLESS == true) {
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--ignore-certificate-errors");
@@ -68,6 +76,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
+
     }
 
     @AfterMethod
