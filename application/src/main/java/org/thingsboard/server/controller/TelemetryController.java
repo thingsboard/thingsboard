@@ -58,7 +58,6 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
@@ -92,11 +91,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -106,10 +103,11 @@ import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_J
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_KEYS_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_ALLOWED_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_SAVE_ATTRIBUTES_ALLOWED_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTE_DATA_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ATTRIBUTE_SCOPES;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_SAVE_ATTRIBUTE_SCOPES;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION;
@@ -241,7 +239,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get attributes by scope (getAttributesByScope)",
             notes = "Returns all attributes of a specified scope that belong to specified entity." +
-                    ENTITY_ATTRIBUTE_SCOPES +
+                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
                     "Use optional 'keys' parameter to return specific attributes."
                     + "\n Example of the result: \n\n"
                     + MARKDOWN_CODE_BLOCK_START
@@ -383,7 +381,7 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> saveDeviceAttributes(
             @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION, required = true) @PathVariable("deviceId") String deviceIdStr,
-            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_SAVE_ATTRIBUTES_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody JsonNode request) throws ThingsboardException {
         try {
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
@@ -395,7 +393,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save entity attributes (saveEntityAttributesV1)",
             notes = "Creates or updates the entity attributes based on Entity Id and the specified attribute scope. " +
-                    ENTITY_ATTRIBUTE_SCOPES +
+                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
                     SAVE_ATTRIBUTES_REQUEST_PAYLOAD
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -411,7 +409,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityAttributesV1(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE") @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_SAVE_ATTRIBUTES_ALLOWED_VALUES) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody JsonNode request) throws ThingsboardException {
         try {
             EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -423,7 +421,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save entity attributes (saveEntityAttributesV2)",
             notes = "Creates or updates the entity attributes based on Entity Id and the specified attribute scope. " +
-                    ENTITY_ATTRIBUTE_SCOPES +
+                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
                     SAVE_ATTRIBUTES_REQUEST_PAYLOAD
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -439,7 +437,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityAttributesV2(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE") @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_SAVE_ATTRIBUTES_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody JsonNode request) throws ThingsboardException {
         try {
             EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
