@@ -28,7 +28,7 @@ import { TbFlotKeyThreshold } from '@home/components/widget/lib/flot-widget.mode
 @Component({
   selector: 'tb-flot-threshold',
   templateUrl: './flot-threshold.component.html',
-  styleUrls: ['./flot-threshold.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./flot-threshold.component.scss', '../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

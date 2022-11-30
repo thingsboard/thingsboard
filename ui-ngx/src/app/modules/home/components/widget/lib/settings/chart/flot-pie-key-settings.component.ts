@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-flot-pie-key-settings',
   templateUrl: './flot-pie-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class FlotPieKeySettingsComponent extends WidgetSettingsComponent {
 

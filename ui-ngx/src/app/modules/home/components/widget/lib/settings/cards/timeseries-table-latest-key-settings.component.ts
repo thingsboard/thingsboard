@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-timeseries-table-latest-key-settings',
   templateUrl: './timeseries-table-latest-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsComponent {
 

@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-flot-pie-widget-settings',
   templateUrl: './flot-pie-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class FlotPieWidgetSettingsComponent extends WidgetSettingsComponent {
 

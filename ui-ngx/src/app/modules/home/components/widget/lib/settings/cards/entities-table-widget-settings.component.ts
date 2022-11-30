@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-entities-table-widget-settings',
   templateUrl: './entities-table-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 

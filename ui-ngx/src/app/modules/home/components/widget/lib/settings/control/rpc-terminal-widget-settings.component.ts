@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-rpc-terminal-widget-settings',
   templateUrl: './rpc-terminal-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class RpcTerminalWidgetSettingsComponent extends WidgetSettingsComponent {
 

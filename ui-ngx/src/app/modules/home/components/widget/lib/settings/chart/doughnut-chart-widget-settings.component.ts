@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-doughnut-chart-widget-settings',
   templateUrl: './doughnut-chart-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class DoughnutChartWidgetSettingsComponent extends WidgetSettingsComponent {
 

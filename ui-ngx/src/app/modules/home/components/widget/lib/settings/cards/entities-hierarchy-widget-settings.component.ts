@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-entities-hierarchy-widget-settings',
   templateUrl: './entities-hierarchy-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class EntitiesHierarchyWidgetSettingsComponent extends WidgetSettingsComponent {
 

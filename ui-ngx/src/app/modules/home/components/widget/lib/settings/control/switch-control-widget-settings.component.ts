@@ -25,7 +25,7 @@ import { deepClone } from '@core/utils';
 @Component({
   selector: 'tb-switch-control-widget-settings',
   templateUrl: './switch-control-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponent {
 

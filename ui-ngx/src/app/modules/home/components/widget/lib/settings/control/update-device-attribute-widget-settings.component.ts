@@ -24,7 +24,7 @@ import { ContentType } from '@shared/models/constants';
 @Component({
   selector: 'tb-update-device-attribute-widget-settings',
   templateUrl: './update-device-attribute-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class UpdateDeviceAttributeWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -30,7 +30,7 @@ export interface RpcButtonStyle {
 @Component({
   selector: 'tb-rpc-button-style',
   templateUrl: './rpc-button-style.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

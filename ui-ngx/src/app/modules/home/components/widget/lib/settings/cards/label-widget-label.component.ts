@@ -33,7 +33,7 @@ export interface LabelWidgetLabel {
 @Component({
   selector: 'tb-label-widget-label',
   templateUrl: './label-widget-label.component.html',
-  styleUrls: ['./label-widget-label.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./label-widget-label.component.scss', '../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

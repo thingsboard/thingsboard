@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-chart-widget-settings',
   templateUrl: './chart-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class ChartWidgetSettingsComponent extends WidgetSettingsComponent {
 

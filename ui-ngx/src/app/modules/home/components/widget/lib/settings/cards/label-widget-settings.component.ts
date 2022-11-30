@@ -25,7 +25,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 @Component({
   selector: 'tb-label-widget-settings',
   templateUrl: './label-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
 

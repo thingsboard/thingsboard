@@ -25,7 +25,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 @Component({
   selector: 'tb-led-indicator-widget-settings',
   templateUrl: './led-indicator-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent {
 

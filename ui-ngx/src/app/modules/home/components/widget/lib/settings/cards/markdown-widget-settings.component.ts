@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-markdown-widget-settings',
   templateUrl: './markdown-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class MarkdownWidgetSettingsComponent extends WidgetSettingsComponent {
 

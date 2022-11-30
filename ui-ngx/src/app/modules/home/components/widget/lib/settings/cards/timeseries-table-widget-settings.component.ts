@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-timeseries-table-widget-settings',
   templateUrl: './timeseries-table-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -25,7 +25,7 @@ import { deepClone } from '@core/utils';
 @Component({
   selector: 'tb-round-switch-widget-settings',
   templateUrl: './round-switch-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class RoundSwitchWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -102,7 +102,7 @@ export function flotDefaultSettings(chartType: ChartType): Partial<TbFlotSetting
 @Component({
   selector: 'tb-flot-widget-settings',
   templateUrl: './flot-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

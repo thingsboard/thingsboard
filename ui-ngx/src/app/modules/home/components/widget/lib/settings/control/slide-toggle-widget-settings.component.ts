@@ -25,7 +25,7 @@ import { deepClone } from '@core/utils';
 @Component({
   selector: 'tb-slide-toggle-widget-settings',
   templateUrl: './slide-toggle-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['../widget-settings.scss']
 })
 export class SlideToggleWidgetSettingsComponent extends WidgetSettingsComponent {
 

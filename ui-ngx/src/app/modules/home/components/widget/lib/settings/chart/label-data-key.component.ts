@@ -47,7 +47,7 @@ export function labelDataKeyValidator(control: AbstractControl): ValidationError
 @Component({
   selector: 'tb-label-data-key',
   templateUrl: './label-data-key.component.html',
-  styleUrls: ['./label-data-key.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./label-data-key.component.scss', '../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
