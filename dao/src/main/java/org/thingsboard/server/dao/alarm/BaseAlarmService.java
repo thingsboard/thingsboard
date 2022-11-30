@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -262,6 +263,42 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
+    public ListenableFuture<AlarmOperationResult> assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime) {
+        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+            @Nullable
+            @Override
+            public AlarmOperationResult apply(@Nullable Alarm alarm) {
+                if (alarm == null || assigneeId.equals(alarm.getAssigneeId())) {
+                    return new AlarmOperationResult(alarm, false);
+                } else {
+                    alarm.setAssigneeId(assigneeId);
+                    alarm.setAssignTs(assignTime);
+                    alarm = alarmDao.save(alarm.getTenantId(), alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                }
+            }
+        });
+    }
+
+    @Override
+    public ListenableFuture<AlarmOperationResult> unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTime) {
+        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+            @Nullable
+            @Override
+            public AlarmOperationResult apply(@Nullable Alarm alarm) {
+                if (alarm == null || alarm.getAssigneeId() == null) {
+                    return new AlarmOperationResult(alarm, false);
+                } else {
+                    alarm.setAssigneeId(null);
+                    alarm.setAssignTs(assignTime);
+                    alarm = alarmDao.save(alarm.getTenantId(), alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                }
+            }
+        });
+    }
+
+    @Override
     public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
@@ -328,7 +365,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
-                                                  AlarmStatus alarmStatus) {
+                                                  AlarmStatus alarmStatus, UserId assigneeUserId) {
         Set<AlarmStatus> statusList = null;
         if (alarmSearchStatus != null) {
             statusList = alarmSearchStatus.getStatuses();
@@ -336,7 +373,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             statusList = Collections.singleton(alarmStatus);
         }
 
-        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList);
+        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList, assigneeUserId);
 
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }
@@ -390,7 +427,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private void createEntityAlarmRecord(TenantId tenantId, EntityId entityId, Alarm alarm) {
-        EntityAlarm entityAlarm = new EntityAlarm(tenantId, entityId, alarm.getCreatedTime(), alarm.getType(), alarm.getCustomerId(), alarm.getId());
+        // TODO Add ability to automatically assign created alarm to some user
+        EntityAlarm entityAlarm = new EntityAlarm(tenantId, entityId, alarm.getCreatedTime(), alarm.getType(), alarm.getCustomerId(), null,alarm.getId());
         try {
             alarmDao.createEntityAlarmRecord(entityAlarm);
         } catch (Exception e) {

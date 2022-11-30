@@ -41,6 +41,7 @@ public class ModelConstants {
     public static final String USER_ID_PROPERTY = "user_id";
     public static final String TENANT_ID_PROPERTY = "tenant_id";
     public static final String CUSTOMER_ID_PROPERTY = "customer_id";
+    public static final String ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String DEVICE_ID_PROPERTY = "device_id";
     public static final String TITLE_PROPERTY = "title";
     public static final String ALIAS_PROPERTY = "alias";
@@ -286,10 +287,12 @@ public class ModelConstants {
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_STATUS_PROPERTY = "status";
+    public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String ALARM_START_TS_PROPERTY = "start_ts";
     public static final String ALARM_END_TS_PROPERTY = "end_ts";
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
+    public static final String ALARM_ASSIGN_TS_PROPERTY = "assign_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
     public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
     public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";

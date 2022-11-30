@@ -28,6 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_entity_alarm_created_time ON entity_alarm(tenant_
 
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_alarm_id ON entity_alarm(alarm_id);
 
+CREATE INDEX IF NOT EXISTS idx_entity_alarm_assignee_id ON entity_alarm(assignee_id);
+
 CREATE INDEX IF NOT EXISTS idx_relation_to_id ON relation(relation_type_group, to_type, to_id);
 
 CREATE INDEX IF NOT EXISTS idx_relation_from_id ON relation(relation_type_group, from_type, from_id);

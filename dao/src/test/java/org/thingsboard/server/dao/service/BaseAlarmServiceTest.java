@@ -425,7 +425,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         customerDevice = deviceService.saveDevice(customerDevice);
 
         // no one alarms was created
-        Assert.assertNull(alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
+        Assert.assertNull(alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null, null));
 
         Alarm alarm1 = Alarm.builder()
                 .tenantId(tenantId)
@@ -459,11 +459,11 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .build();
         alarm3 = alarmService.createOrUpdateAlarm(alarm3).getAlarm();
 
-        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.UNACK, null));
-        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
-        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_UNACK));
-        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.ACTIVE, null));
-        Assert.assertEquals(AlarmSeverity.MINOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_ACK));
+        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.UNACK, null, null));
+        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null, null));
+        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_UNACK, null));
+        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.ACTIVE, null, null));
+        Assert.assertEquals(AlarmSeverity.MINOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_ACK, null));
     }
 
     @Test

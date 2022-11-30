@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -48,9 +49,13 @@ import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.UUID;
+
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.ASSIGNEE_ID;
+import static org.thingsboard.server.controller.ControllerConstants.ASSIGN_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE;
@@ -79,6 +84,7 @@ public class AlarmController extends BaseController {
     private static final String ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES = "ANY, ACTIVE, CLEARED, ACK, UNACK";
     private static final String ALARM_QUERY_STATUS_DESCRIPTION = "A string value representing one of the AlarmStatus enumeration value";
     private static final String ALARM_QUERY_STATUS_ALLOWABLE_VALUES = "ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK";
+    private static final String ALARM_QUERY_ASSIGNEE_DESCRIPTION = "A string value representing the assignee user id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     private static final String ALARM_QUERY_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on of next alarm fields: type, severity or status";
     private static final String ALARM_QUERY_START_TIME_DESCRIPTION = "The start timestamp in milliseconds of the search time range over the Alarm class field: 'createdTime'.";
     private static final String ALARM_QUERY_END_TIME_DESCRIPTION = "The end timestamp in milliseconds of the search time range over the Alarm class field: 'createdTime'.";
@@ -179,6 +185,45 @@ public class AlarmController extends BaseController {
         tbAlarmService.clear(alarm, getCurrentUser()).get();
     }
 
+    @ApiOperation(value = "Assign/Reassign Alarm (assignAlarm)",
+            notes = "Assign the Alarm. " +
+                    "Once assigned, the 'assign_ts' field will be set to current timestamp and special rule chain event 'ALARM_ASSIGNED' " +
+                    "(or ALARM_REASSIGNED in case of assigning already assigned alarm) will be generated. " +
+                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{alarmId}/assign/{assigneeId}", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void assignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+                            @PathVariable(ALARM_ID) String strAlarmId,
+                            @ApiParam(value = ASSIGN_ID_PARAM_DESCRIPTION)
+                            @PathVariable(ASSIGNEE_ID) String strAssigneeId
+    ) throws Exception {
+        checkParameter(ALARM_ID, strAlarmId);
+        checkParameter(ASSIGNEE_ID, strAssigneeId);
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        // TODO Add special permissions for assignment
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
+        tbAlarmService.assign(alarm, getCurrentUser(), assigneeId).get();
+    }
+
+    @ApiOperation(value = "Unassign Alarm (unassignAlarm)",
+            notes = "Unassign the Alarm. " +
+                    "Once unassigned, the 'assign_ts' field will be set to current timestamp and special rule chain event 'ALARM_UNASSIGNED' will be generated. " +
+                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{alarmId}/assign", method = RequestMethod.DELETE)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void assignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+                            @PathVariable(ALARM_ID) String strAlarmId
+    ) throws Exception {
+        checkParameter(ALARM_ID, strAlarmId);
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        // TODO Add special permissions for unassignment
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        tbAlarmService.unassign(alarm, getCurrentUser()).get();
+    }
+
     @ApiOperation(value = "Get Alarms (getAlarms)",
             notes = "Returns a page of alarms for the selected entity. Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -194,6 +239,8 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String searchStatus,
             @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -221,10 +268,14 @@ public class AlarmController extends BaseController {
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         checkEntityId(entityId, Operation.READ);
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
         try {
-            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)).get());
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -244,6 +295,8 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String searchStatus,
             @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -267,13 +320,17 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
         try {
             if (getCurrentUser().isCustomerUser()) {
-                return checkNotNull(alarmService.findCustomerAlarms(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+                return checkNotNull(alarmService.findCustomerAlarms(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)).get());
             } else {
-                return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+                return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)).get());
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -295,7 +352,9 @@ public class AlarmController extends BaseController {
             @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String searchStatus,
             @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -306,9 +365,13 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
         checkEntityId(entityId, Operation.READ);
         try {
-            return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus);
+            return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus, assigneeUserId);
         } catch (Exception e) {
             throw handleException(e);
         }

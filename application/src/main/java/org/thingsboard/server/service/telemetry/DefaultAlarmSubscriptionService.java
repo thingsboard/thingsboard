@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -125,6 +126,20 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
+    public ListenableFuture<Boolean> assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
+        ListenableFuture<AlarmOperationResult> result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
+        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
+        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+    }
+
+    @Override
+    public ListenableFuture<Boolean> unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
+        ListenableFuture<AlarmOperationResult> result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
+        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
+        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+    }
+
+    @Override
     public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId) {
         return alarmService.findAlarmByIdAsync(tenantId, alarmId);
     }
@@ -150,8 +165,8 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus) {
-        return alarmService.findHighestAlarmSeverity(tenantId, entityId, alarmSearchStatus, alarmStatus);
+    public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus, UserId assigneeUserId) {
+        return alarmService.findHighestAlarmSeverity(tenantId, entityId, alarmSearchStatus, alarmStatus, assigneeUserId);
     }
 
     @Override

@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 
 import java.util.List;
@@ -58,23 +59,27 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     private AlarmSeverity severity;
     @ApiModelProperty(position = 9, required = true, value = "Alarm status", example = "CLEARED_UNACK")
     private AlarmStatus status;
-    @ApiModelProperty(position = 10, value = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
+    @ApiModelProperty(position = 10, value = "Alarm assignee user id")
+    private UserId assigneeId;
+    @ApiModelProperty(position = 11, value = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
     private long startTs;
-    @ApiModelProperty(position = 11, value = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
+    @ApiModelProperty(position = 12, value = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
     private long endTs;
-    @ApiModelProperty(position = 12, value = "Timestamp of the alarm acknowledgement, in milliseconds", example = "1634115221948")
+    @ApiModelProperty(position = 13, value = "Timestamp of the alarm acknowledgement, in milliseconds", example = "1634115221948")
     private long ackTs;
-    @ApiModelProperty(position = 13, value = "Timestamp of the alarm clearing, in milliseconds", example = "1634114528465")
+    @ApiModelProperty(position = 14, value = "Timestamp of the alarm clearing, in milliseconds", example = "1634114528465")
     private long clearTs;
-    @ApiModelProperty(position = 14, value = "JSON object with alarm details")
+    @ApiModelProperty(position = 15, value = "Timestamp of the alarm assigning0, in milliseconds", example = "1634115928465")
+    private long assignTs;
+    @ApiModelProperty(position = 16, value = "JSON object with alarm details")
     private transient JsonNode details;
-    @ApiModelProperty(position = 15, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
+    @ApiModelProperty(position = 17, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
-    @ApiModelProperty(position = 16, value = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
+    @ApiModelProperty(position = 18, value = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
     private boolean propagateToOwner;
-    @ApiModelProperty(position = 17, value = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
+    @ApiModelProperty(position = 19, value = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
-    @ApiModelProperty(position = 18, value = "JSON array of relation types that should be used for propagation. " +
+    @ApiModelProperty(position = 20, value = "JSON array of relation types that should be used for propagation. " +
             "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
             "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;
@@ -96,10 +101,12 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
         this.originator = alarm.getOriginator();
         this.severity = alarm.getSeverity();
         this.status = alarm.getStatus();
+        this.assigneeId = alarm.getAssigneeId();
         this.startTs = alarm.getStartTs();
         this.endTs = alarm.getEndTs();
         this.ackTs = alarm.getAckTs();
         this.clearTs = alarm.getClearTs();
+        this.assignTs = alarm.getAssignTs();
         this.details = alarm.getDetails();
         this.propagate = alarm.isPropagate();
         this.propagateToOwner = alarm.isPropagateToOwner();

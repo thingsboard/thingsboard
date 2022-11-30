@@ -23,6 +23,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/table-widget.models';
+import { UserId } from "@shared/models/id/user-id";
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -89,6 +90,7 @@ export const alarmSeverityColors = new Map<AlarmSeverity, string>(
 export interface Alarm extends BaseData<AlarmId> {
   tenantId: TenantId;
   customerId: CustomerId;
+  assigneeId: UserId;
   type: string;
   originator: EntityId;
   severity: AlarmSeverity;
@@ -97,6 +99,7 @@ export interface Alarm extends BaseData<AlarmId> {
   endTs: number;
   ackTs: number;
   clearTs: number;
+  assignTs: number;
   propagate: boolean;
   details?: any;
 }
@@ -115,11 +118,13 @@ export const simulatedAlarm: AlarmInfo = {
   id: new AlarmId(NULL_UUID),
   tenantId: new TenantId(NULL_UUID),
   customerId: new CustomerId(NULL_UUID),
+  assigneeId: new UserId(NULL_UUID),
   createdTime: new Date().getTime(),
   startTs: new Date().getTime(),
   endTs: 0,
   ackTs: 0,
   clearTs: 0,
+  assignTs: 0,
   originatorName: 'Simulated',
   originator: {
     entityType: EntityType.DEVICE,
@@ -172,6 +177,12 @@ export const alarmFields: {[fieldName: string]: AlarmField} = {
     name: 'alarm.clear-time',
     time: true
   },
+  assignTime: {
+    keyName: 'assignTime',
+    value: 'assignTs',
+    name: 'alarm.assign-time',
+    time: true
+  },
   originator: {
     keyName: 'originator',
     value: 'originatorName',
@@ -205,15 +216,17 @@ export class AlarmQuery {
   pageLink: TimePageLink;
   searchStatus: AlarmSearchStatus;
   status: AlarmStatus;
+  assigneeId: UserId;
   fetchOriginator: boolean;
 
   constructor(entityId: EntityId, pageLink: TimePageLink,
               searchStatus: AlarmSearchStatus, status: AlarmStatus,
-              fetchOriginator: boolean) {
+              assigneeId: UserId, fetchOriginator: boolean) {
     this.affectedEntityId = entityId;
     this.pageLink = pageLink;
     this.searchStatus = searchStatus;
     this.status = status;
+    this.assigneeId = assigneeId;
     this.fetchOriginator = fetchOriginator;
   }
 
@@ -224,6 +237,8 @@ export class AlarmQuery {
       query += `&searchStatus=${this.searchStatus}`;
     } else if (this.status) {
       query += `&status=${this.status}`;
+    } else if (this.assigneeId) {
+      query += `&assigneeId=${this.assigneeId.id}`;
     }
     if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
       query += `&fetchOriginator=${this.fetchOriginator}`;
