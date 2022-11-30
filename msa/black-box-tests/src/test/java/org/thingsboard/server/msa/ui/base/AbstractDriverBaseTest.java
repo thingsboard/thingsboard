@@ -54,18 +54,17 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     @BeforeMethod
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
+        WebDriverManager.chromedriver().driverVersion("100.0.04896.20").setup();
         if (HEADLESS == true) {
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--ignore-certificate-errors");
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--headless");
-            WebDriverManager.chromedriver().setup();
             driver = new ChromeDriver(options);
         } else {
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--ignore-certificate-errors");
-            WebDriverManager.chromedriver().setup();
             driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
@@ -87,6 +86,10 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     public WebDriver getDriver() {
         return driver;
+    }
+
+    public boolean getHeadless() {
+        return HEADLESS;
     }
 
     protected boolean urlContains(String urlPath) {

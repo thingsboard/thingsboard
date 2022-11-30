@@ -34,11 +34,10 @@ public class TestListener implements ITestListener {
     public void onTestSuccess(ITestResult tr) {
         String str = "Test " + tr.getMethod().getMethodName() + " success";
         log.info("*----------------------* " + str + " *----------------------*");
-        Allure.getLifecycle().updateTestCase((t) -> {
-            t.setStatusDetails(t.getStatusDetails().setMessage(str));
-        });
-        driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
-        captureScreen(driver, "success");
+        if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
+            driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
+            captureScreen(driver, "success");
+        }
     }
 
     public void onTestFailure(ITestResult tr) {
@@ -46,12 +45,10 @@ public class TestListener implements ITestListener {
         String str1 = "Failed because of - " + tr.getThrowable();
         log.info("*----------------------* " + str + " *----------------------*");
         log.info("*----------------------* " + str1 + " *----------------------*");
-        Allure.getLifecycle().updateTestCase((t) -> {
-            t.setStatusDetails(t.getStatusDetails().setMessage(str));
-            t.setStatusDetails(t.getStatusDetails().setMessage(str1));
-        });
-        driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
-        captureScreen(driver, "failure");
+        if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
+            driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
+            captureScreen(driver, "failure");
+        }
     }
 
     public void onTestSkipped(ITestResult tr) {
@@ -59,12 +56,10 @@ public class TestListener implements ITestListener {
         String str1 = "Skipped because of - " + tr.getThrowable();
         log.info("*----------------------* " + str + " *----------------------*");
         log.info("*----------------------* " + str1 + " *----------------------*");
-        Allure.getLifecycle().updateTestCase((t) -> {
-            t.setStatusDetails(t.getStatusDetails().setMessage(str));
-            t.setStatusDetails(t.getStatusDetails().setMessage(str1));
-        });
-        driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
-        captureScreen(driver, "skipped");
+        if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
+            driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
+            captureScreen(driver, "skipped");
+        }
     }
 
     public void onStart(ITestContext testContext) {

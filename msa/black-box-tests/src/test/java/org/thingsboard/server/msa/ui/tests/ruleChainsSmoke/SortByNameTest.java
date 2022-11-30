@@ -58,7 +58,6 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Description
     public void specialCharacterUp(String ruleChainName) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
-        ;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByNameBtn().click();
