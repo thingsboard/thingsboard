@@ -15,7 +15,7 @@
 #
 
 
-version: '2.2'
+version: '3'
 
 services:
   zookeeper:
@@ -30,10 +30,8 @@ services:
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
-    # 'scale' configuration is not supported in V2
-    # in case docker compose plugin V2 is used please update next line in docker-start-services.sh file:
-    # docker compose $COMPOSE_ARGS --scale tb-js-executor=10
-    scale: 10
+    deploy:
+      replicas: 10
     env_file:
       - tb-js-executor.env
   tb-core1:
