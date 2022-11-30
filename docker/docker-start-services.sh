@@ -40,7 +40,7 @@ case $COMPOSE_VERSION in
         docker compose $COMPOSE_ARGS
     ;;
     V1)
-        docker-compose $COMPOSE_ARGS --scale tb-js-executor=10
+        docker-compose --compatibility $COMPOSE_ARGS
     ;;
     *)
         # unknown option
