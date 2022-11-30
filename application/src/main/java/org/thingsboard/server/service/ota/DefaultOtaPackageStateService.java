@@ -181,7 +181,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
     private void update(TenantId tenantId, DeviceProfile deviceProfile, OtaPackageType otaPackageType) {
         Consumer<Device> updateConsumer;
-        OtaPackageId packageId = otaPackageType.equals(FIRMWARE)? deviceProfile.getFirmwareId() : deviceProfile.getSoftwareId();
+        OtaPackageId packageId = OtaPackageUtil.getOtaPackageId(deviceProfile, otaPackageType);
 
         if (packageId != null) {
             long ts = System.currentTimeMillis();
