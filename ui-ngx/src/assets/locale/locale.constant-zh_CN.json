@@ -2991,7 +2991,7 @@
         "invalid-target-rulechain": "无法解析目标规则链！",
         "test-script-function": "测试脚本功能",
         "script-lang-java-script": "Java Script",
-        "script-lang-mvel": "MVEL",
+        "script-lang-tbel": "TBEL",
         "message": "消息",
         "message-type": "消息类型",
         "select-message-type": "选择消息类型",
