@@ -167,7 +167,7 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>message</artifactId>
-            <version>3.4.2PE-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
