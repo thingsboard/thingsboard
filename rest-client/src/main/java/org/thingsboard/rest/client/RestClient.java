@@ -414,6 +414,14 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/clear", null, alarmId.getId());
     }
 
+    public void assignAlarm(AlarmId alarmId, UserId userId) {
+        restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/assign/{userId}", null, alarmId.getId(), userId.getId());
+    }
+
+    public void unassignAlarm(AlarmId alarmId) {
+        restTemplate.delete(baseURL + "/api/alarm/{alarmId}/assign", alarmId.getId());
+    }
+
     public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
         String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}";
         Map<String, String> params = new HashMap<>();
