@@ -1462,10 +1462,6 @@ public class ControllerConstants {
 
     protected static final String ENTITY_ATTRIBUTE_SCOPES = " List of possible attribute scopes depends on the entity type: " +
             "\n\n * SERVER_SCOPE - supported for all entity types;" +
-            "\n * CLIENT_SCOPE - supported for devices;" +
-            "\n * SHARED_SCOPE - supported for devices. "+ "\n\n";
-    protected static final String ENTITY_SAVE_ATTRIBUTE_SCOPES = " List of possible attribute scopes depends on the entity type: " +
-            "\n\n * SERVER_SCOPE - supported for all entity types;" +
             "\n * SHARED_SCOPE - supported for devices. "+ "\n\n";
 
     protected static final String ATTRIBUTE_DATA_EXAMPLE = "[\n" +

@@ -110,7 +110,7 @@ import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_S
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTE_DATA_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_SAVE_ATTRIBUTE_SCOPES;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ATTRIBUTE_SCOPES;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION;
@@ -242,7 +242,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get attributes by scope (getAttributesByScope)",
             notes = "Returns all attributes of a specified scope that belong to specified entity." +
-                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
+                    ENTITY_ATTRIBUTE_SCOPES +
                     "Use optional 'keys' parameter to return specific attributes."
                     + "\n Example of the result: \n\n"
                     + MARKDOWN_CODE_BLOCK_START
@@ -396,7 +396,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save entity attributes (saveEntityAttributesV1)",
             notes = "Creates or updates the entity attributes based on Entity Id and the specified attribute scope. " +
-                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
+                    ENTITY_ATTRIBUTE_SCOPES +
                     SAVE_ATTRIBUTES_REQUEST_PAYLOAD
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -424,7 +424,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save entity attributes (saveEntityAttributesV2)",
             notes = "Creates or updates the entity attributes based on Entity Id and the specified attribute scope. " +
-                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
+                    ENTITY_ATTRIBUTE_SCOPES +
                     SAVE_ATTRIBUTES_REQUEST_PAYLOAD
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
