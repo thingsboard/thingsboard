@@ -37,7 +37,7 @@ COMPOSE_ARGS="\
 
 case $COMPOSE_VERSION in
     V2)
-        docker compose $COMPOSE_ARGS
+        docker compose $COMPOSE_ARGS --scale tb-js-executor=10
     ;;
     V1)
         docker-compose $COMPOSE_ARGS
