@@ -54,7 +54,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     @BeforeMethod
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
-        WebDriverManager.chromedriver().driverVersion("100.0.04896.20").setup();
+        WebDriverManager.chromedriver().setup();
         if (HEADLESS == true) {
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--ignore-certificate-errors");
