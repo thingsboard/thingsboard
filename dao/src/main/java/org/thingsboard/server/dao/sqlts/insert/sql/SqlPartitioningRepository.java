@@ -69,8 +69,10 @@ public class SqlPartitioningRepository {
                 String error = ExceptionUtils.getRootCauseMessage(e);
                 if (StringUtils.containsAny(error, "would overlap partition", "already exists")) {
                     partitions.put(partition.getStart(), partition);
+                    log.debug("Couldn't save partition {}-{} for table {}: {}", partition.getStart(), partition.getEnd(), table, error);
+                } else {
+                    log.warn("Couldn't save partition {}-{} for table {}: {}", partition.getStart(), partition.getEnd(), table, error);
                 }
-                log.warn("Couldn't save partition {}-{} for table {}: {}", partition.getStart(), partition.getEnd(), table, error);
             } finally {
                 partitionCreationLock.unlock();
             }
