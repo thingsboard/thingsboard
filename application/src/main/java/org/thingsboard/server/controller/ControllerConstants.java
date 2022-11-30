@@ -1433,7 +1433,8 @@ public class ControllerConstants {
 
     protected static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
     protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'.";
-    protected static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = "SERVER_SCOPE, CLIENT_SCOPE, SHARED_SCOPE";
+    protected static final String ATTRIBUTES_SCOPE_SAVE_ATTRIBUTES_ALLOWED_VALUES = "SERVER_SCOPE, SHARED_SCOPE";
+    protected static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = ATTRIBUTES_SCOPE_SAVE_ATTRIBUTES_ALLOWED_VALUES + ", CLIENT_SCOPE";
     protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
 
     protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
@@ -1461,7 +1462,6 @@ public class ControllerConstants {
 
     protected static final String ENTITY_ATTRIBUTE_SCOPES = " List of possible attribute scopes depends on the entity type: " +
             "\n\n * SERVER_SCOPE - supported for all entity types;" +
-            "\n * CLIENT_SCOPE - supported for devices;" +
             "\n * SHARED_SCOPE - supported for devices. "+ "\n\n";
 
     protected static final String ATTRIBUTE_DATA_EXAMPLE = "[\n" +
