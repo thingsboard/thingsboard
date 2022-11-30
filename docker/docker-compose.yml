@@ -30,6 +30,9 @@ services:
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
+    # 'deploy.replicas' configuration is not supported in docker-compose
+    # in case outdated docker-compose is used please update next line in docker-start-services.sh file to scale tb-js-executors:
+    # docker-compose scale tb-js-executor=10
     deploy:
       replicas: 10
     env_file:
