@@ -191,6 +191,8 @@ public class TbHttpClient {
             HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
             config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
+        } else if (config.isTrimDoubleQuotes()) {
+            entity = new HttpEntity<>(trimDoubleQuotes(msg.getData()), headers);
         } else {
             entity = new HttpEntity<>(msg.getData(), headers);
         }
@@ -332,6 +334,13 @@ public class TbHttpClient {
         if (proxyPort < 0 || proxyPort > 65535) {
             throw new TbNodeException("Proxy port out of range:" + proxyPort);
         }
+    }
+
+    private static String trimDoubleQuotes(String s) {
+        if(s.startsWith("\"") && s.endsWith("\"")) {
+            return s.substring(1, s.length()-1);
+        }
+        return s;
     }
 
 }
