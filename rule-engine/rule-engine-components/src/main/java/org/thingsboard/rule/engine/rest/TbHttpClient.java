@@ -191,10 +191,12 @@ public class TbHttpClient {
             HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
             config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
-        } else if (config.isTrimDoubleQuotes()) {
-            entity = new HttpEntity<>(trimDoubleQuotes(msg.getData()), headers);
         } else {
-            entity = new HttpEntity<>(msg.getData(), headers);
+            String data = msg.getData();
+            if (config.isTrimDoubleQuotes()) {
+                data = trimDoubleQuotes(data);
+            }
+            entity = new HttpEntity<>(data, headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
