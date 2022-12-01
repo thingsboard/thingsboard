@@ -23,5 +23,5 @@ services:
 
 volumes:
   redis-data:
-    external: true
-    name: ${REDIS_DATA_VOLUME}
+    external:
+      name: ${REDIS_DATA_VOLUME}

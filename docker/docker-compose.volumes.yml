@@ -59,23 +59,23 @@ services:
 
 volumes:
   tb-log-volume:
-    external: true
-    name: ${TB_LOG_VOLUME}
+    external:
+      name: ${TB_LOG_VOLUME}
   tb-coap-transport-log-volume:
-    external: true
-    name: ${TB_COAP_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_COAP_TRANSPORT_LOG_VOLUME}
   tb-lwm2m-transport-log-volume:
-    external: true
-    name: ${TB_LWM2M_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_LWM2M_TRANSPORT_LOG_VOLUME}
   tb-http-transport-log-volume:
-    external: true
-    name: ${TB_HTTP_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_HTTP_TRANSPORT_LOG_VOLUME}
   tb-mqtt-transport-log-volume:
-    external: true
-    name: ${TB_MQTT_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_MQTT_TRANSPORT_LOG_VOLUME}
   tb-snmp-transport-log-volume:
-    external: true
-    name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}
   tb-vc-executor-log-volume:
-    external: true
-    name: ${TB_VC_EXECUTOR_LOG_VOLUME}
+    external:
+      name: ${TB_VC_EXECUTOR_LOG_VOLUME}

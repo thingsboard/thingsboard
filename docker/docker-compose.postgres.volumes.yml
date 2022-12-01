@@ -23,5 +23,5 @@ services:
 
 volumes:
   postgres-db-volume:
-    external: true
-    name: ${POSTGRES_DATA_VOLUME}
+    external:
+      name: ${POSTGRES_DATA_VOLUME}
