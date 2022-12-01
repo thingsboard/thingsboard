@@ -26,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.thingsboard.server.common.data.DataConstants;
@@ -87,11 +88,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 public abstract class BaseEntityServiceTest extends AbstractServiceTest {
@@ -1724,6 +1729,17 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals(devices.size(), loadedEntities.size());
 
         deviceService.deleteDevicesByTenantId(tenantId);
+    }
+
+    @Test
+    public void givenEntityIdAllTypes_whenFetchEntityNameAsync_thenAllImplemented() throws ExecutionException, InterruptedException, TimeoutException {
+        EntityId entityId = mock(EntityId.class);
+        willReturn(UUID.fromString("6b1e010e-cfe7-4ecf-8910-946ddc2fbe8d")).given(entityId).getId();
+        for (EntityType entityType: EntityType.values()) {
+            willReturn(entityType).given(entityId).getEntityType();
+            log.info("fetching entity name for entity type [{}]", entityId.getEntityType());
+            entityService.fetchEntityNameAsync(tenantId, entityId).get(30, TimeUnit.SECONDS);
+        }
     }
 
     private Boolean listEqualWithoutOrder(List<String> A, List<String> B) {

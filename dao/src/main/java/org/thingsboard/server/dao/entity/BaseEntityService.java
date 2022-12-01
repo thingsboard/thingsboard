@@ -168,8 +168,21 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case OTA_PACKAGE:
                 hasName = otaPackageService.findOtaPackageInfoByIdAsync(tenantId, new OtaPackageId(entityId.getId()));
                 break;
+            case RULE_NODE: 
+            case WIDGETS_BUNDLE:
+            case WIDGET_TYPE:
+            case GROUP_PERMISSION:
+            case TENANT_PROFILE:
+            case DEVICE_PROFILE:
+            case API_USAGE_STATE:
+            case RPC:
+            case QUEUE:
+                Device fakeDevice = new Device();
+                fakeDevice.setName("[" + entityId.getEntityType() + "]");
+                hasName = Futures.immediateFuture(fakeDevice);
+                break;
             default:
-                throw new IllegalStateException("Not Implemented!");
+                throw new IllegalStateException("fetchEntityNameAsync Not Implemented for entity type [" + entityId.getEntityType() + "] !");
         }
         entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
         return entityName;
