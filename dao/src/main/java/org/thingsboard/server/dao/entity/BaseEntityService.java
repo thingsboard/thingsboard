@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -171,12 +172,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case RULE_NODE: 
             case WIDGETS_BUNDLE:
             case WIDGET_TYPE:
-            case GROUP_PERMISSION:
             case TENANT_PROFILE:
             case DEVICE_PROFILE:
             case API_USAGE_STATE:
             case RPC:
             case QUEUE:
+            case ASSET_PROFILE:
                 Device fakeDevice = new Device();
                 fakeDevice.setName("[" + entityId.getEntityType() + "]");
                 hasName = Futures.immediateFuture(fakeDevice);
