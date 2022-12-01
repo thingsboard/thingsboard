@@ -600,6 +600,7 @@ message TbAttributeDeleteProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated string keys = 7;
+  bool notifyDevice = 8;
 }
 
 message TbTimeSeriesDeleteProto {
@@ -932,6 +933,8 @@ message ToCoreNotificationMsg {
   QueueUpdateMsg queueUpdateMsg = 5;
   QueueDeleteMsg queueDeleteMsg = 6;
   VersionControlResponseMsg vcResponseMsg = 7;
+  bytes toEdgeSyncRequestMsg = 8;
+  bytes fromEdgeSyncResponseMsg = 9;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

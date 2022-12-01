@@ -36,6 +36,8 @@ public interface EdgeRpcClient {
 
     void sendSyncRequestMsg(boolean syncRequired);
 
+    void sendSyncRequestMsg(boolean syncRequired, boolean fullSync);
+
     void sendUplinkMsg(UplinkMsg uplinkMsg);
 
     void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg);

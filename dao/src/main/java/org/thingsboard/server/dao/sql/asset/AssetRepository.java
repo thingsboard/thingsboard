@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
+import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,9 +33,10 @@ import java.util.UUID;
  */
 public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, ExportableEntityRepository<AssetEntity> {
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.id = :assetId")
     AssetInfoEntity findAssetInfoById(@Param("assetId") UUID assetId);
 
@@ -44,11 +46,15 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                      @Param("textSearch") String textSearch,
                                      Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(a.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(p.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<AssetInfoEntity> findAssetInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
@@ -61,9 +67,18 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                   @Param("textSearch") String textSearch,
                                                   Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+            "AND a.assetProfileId = :profileId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    Page<AssetEntity> findByTenantIdAndProfileId(@Param("tenantId") UUID tenantId,
+                                                 @Param("profileId") UUID profileId,
+                                                 @Param("searchText") String searchText,
+                                                 Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
@@ -86,16 +101,33 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                             @Param("textSearch") String textSearch,
                                             Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(a.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
                                                           Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.assetProfileId = :assetProfileId " +
+            "AND (LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(a.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
+    Page<AssetInfoEntity> findAssetInfosByTenantIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
+                                                                    @Param("assetProfileId") UUID assetProfileId,
+                                                                    @Param("textSearch") String textSearch,
+                                                                    Pageable pageable);
 
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
@@ -107,9 +139,10 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                          @Param("textSearch") String textSearch,
                                                          Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.type = :type " +
@@ -120,8 +153,24 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                                        @Param("textSearch") String textSearch,
                                                                        Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId " +
+            "AND a.assetProfileId = :assetProfileId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+    Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
+                                                                                 @Param("customerId") UUID customerId,
+                                                                                 @Param("assetProfileId") UUID assetProfileId,
+                                                                                 @Param("textSearch") String textSearch,
+                                                                                 Pageable pageable);
+
     @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
     List<String> findTenantAssetTypes(@Param("tenantId") UUID tenantId);
+
+    Long countByAssetProfileId(UUID assetProfileId);
 
     @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
@@ -138,14 +187,17 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.type = :type " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
-                                              @Param("edgeId") UUID edgeId,
-                                              @Param("type") String type,
-                                              @Param("searchText") String searchText,
-                                              Pageable pageable);
+                                                     @Param("edgeId") UUID edgeId,
+                                                     @Param("type") String type,
+                                                     @Param("searchText") String searchText,
+                                                     Pageable pageable);
 
     Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
 
     @Query("SELECT externalId FROM AssetEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query(value = "SELECT DISTINCT new org.thingsboard.server.common.data.util.TbPair(a.tenantId , a.type) FROM  AssetEntity a")
+    Page<TbPair<UUID, String>> getAllAssetTypes(Pageable pageable);
 
 }

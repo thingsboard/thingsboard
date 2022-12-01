@@ -22,7 +22,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -36,8 +38,14 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -63,6 +71,14 @@ public class AdminController extends BaseController {
 
     @Autowired
     private SystemSecurityService systemSecurityService;
+
+    @Lazy
+    @Autowired
+    private JwtSettingsService jwtSettingsService;
+
+    @Lazy
+    @Autowired
+    private JwtTokenFactory tokenFactory;
 
     @Autowired
     private EntitiesVersionControlService versionControlService;
@@ -151,6 +167,40 @@ public class AdminController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get the JWT Settings object (getJwtSettings)",
+            notes = "Get the JWT Settings object that contains JWT token policy, etc. " + SYSTEM_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/jwtSettings", method = RequestMethod.GET)
+    @ResponseBody
+    public JwtSettings getJwtSettings() throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+            return checkNotNull(jwtSettingsService.getJwtSettings());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Update JWT Settings (saveJwtSettings)",
+            notes = "Updates the JWT Settings object that contains JWT token policy, etc. The tokenSigningKey field is a Base64 encoded string." + SYSTEM_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/jwtSettings", method = RequestMethod.POST)
+    @ResponseBody
+    public JwtPair saveJwtSettings(
+            @ApiParam(value = "A JSON value representing the JWT Settings.")
+            @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
+        try {
+            SecurityUser securityUser = getCurrentUser();
+            accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
+            checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
+            return tokenFactory.createTokenPair(securityUser);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @ApiOperation(value = "Send test email (sendTestMail)",
             notes = "Attempts to send test email to the System Administrator User using Mail Settings provided as a parameter. " +
                     "You may change the 'To' email in the user profile of the System Administrator. " + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -195,7 +245,6 @@ public class AdminController extends BaseController {
             notes = "Get the repository settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/repositorySettings")
-    @ResponseBody
     public RepositorySettings getRepositorySettings() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
@@ -213,13 +262,29 @@ public class AdminController extends BaseController {
             notes = "Check whether the repository settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/repositorySettings/exists")
-    @ResponseBody
     public Boolean repositorySettingsExists() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
             return versionControlService.getVersionControlSettings(getTenantId()) != null;
         } catch (Exception e) {
             throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/repositorySettings/info")
+    public RepositorySettingsInfo getRepositorySettingsInfo() throws Exception {
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        RepositorySettings repositorySettings = versionControlService.getVersionControlSettings(getTenantId());
+        if (repositorySettings != null) {
+            return RepositorySettingsInfo.builder()
+                    .configured(true)
+                    .readOnly(repositorySettings.isReadOnly())
+                    .build();
+        } else {
+            return RepositorySettingsInfo.builder()
+                    .configured(false)
+                    .build();
         }
     }
 
@@ -274,7 +339,6 @@ public class AdminController extends BaseController {
             notes = "Get the auto commit settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/autoCommitSettings")
-    @ResponseBody
     public AutoCommitSettings getAutoCommitSettings() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
@@ -288,7 +352,6 @@ public class AdminController extends BaseController {
             notes = "Check whether the auto commit settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/autoCommitSettings/exists")
-    @ResponseBody
     public Boolean autoCommitSettingsExists() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);

@@ -257,10 +257,14 @@ public class AuditLogServiceImpl implements AuditLogService {
                 String browser = extractParameter(String.class, 1, additionalInfo);
                 String os = extractParameter(String.class, 2, additionalInfo);
                 String device = extractParameter(String.class, 3, additionalInfo);
+                String provider = extractParameter(String.class, 4, additionalInfo);
                 actionData.put("clientAddress", clientAddress);
                 actionData.put("browser", browser);
                 actionData.put("os", os);
                 actionData.put("device", device);
+                if (StringUtils.hasText(provider)) {
+                    actionData.put("provider", provider);
+                }
                 break;
             case PROVISION_SUCCESS:
             case PROVISION_FAILURE:
@@ -382,7 +386,15 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLog auditLogEntry = createAuditLogEntry(tenantId, entityId, entityName, customerId, userId, userName,
                 actionType, actionData, actionStatus, actionFailureDetails);
         log.trace("Executing logAction [{}]", auditLogEntry);
-        auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
+        try {
+            auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
+        } catch (Exception e) {
+            if (StringUtils.contains(e.getMessage(), "value is malformed")) {
+                auditLogEntry.setEntityName("MALFORMED");
+            } else {
+                return Futures.immediateFailedFuture(e);
+            }
+        }
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         futures.add(auditLogDao.saveByTenantId(auditLogEntry));
 

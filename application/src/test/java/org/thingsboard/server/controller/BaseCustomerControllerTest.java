@@ -24,7 +24,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -36,6 +41,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -46,6 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseCustomerControllerTest.Config.class})
 public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<Customer>> PAGE_DATA_CUSTOMER_TYPE_REFERENCE = new TypeReference<>() {
     };
@@ -54,6 +61,18 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private CustomerDao customerDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public CustomerDao customerDao(CustomerDao customerDao) {
+            return Mockito.mock(CustomerDao.class, AdditionalAnswers.delegatesTo(customerDao));
+        }
+    }
+
 
     @Before
     public void beforeTest() throws Exception {
@@ -401,5 +420,23 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testDeleteCustomerWithDeleteRelationsOk() throws Exception {
+        CustomerId customerId = createCustomer("Customer for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), customerId, "/api/customer/" + customerId);
+    }
+
+    @Test
+    public void testDeleteCustomerExceptionWithRelationsTransactional() throws Exception {
+        CustomerId customerId = createCustomer("Customer for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(customerDao, savedTenant.getId(), customerId, "/api/customer/" + customerId);
+    }
+
+    private Customer createCustomer(String title) {
+        Customer customer = new Customer();
+        customer.setTitle(title);
+        return doPost("/api/customer", customer, Customer.class);
     }
 }

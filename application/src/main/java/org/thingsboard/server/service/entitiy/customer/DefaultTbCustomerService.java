@@ -53,7 +53,7 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         TenantId tenantId = customer.getTenantId();
         CustomerId customerId = customer.getId();
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customer.getId());
+            List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, customer.getId());
             customerService.deleteCustomer(tenantId, customerId);
             notificationEntityService.notifyDeleteEntity(tenantId, customer.getId(), customer, customerId,
                     ActionType.DELETED, relatedEdgeIds, user, customerId.toString());

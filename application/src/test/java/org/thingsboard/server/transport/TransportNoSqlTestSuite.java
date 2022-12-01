@@ -35,6 +35,7 @@ public class TransportNoSqlTestSuite {
     public static CustomCassandraCQLUnit cassandraUnit =
             new CustomCassandraCQLUnit(
                     Arrays.asList(
+                            new ClassPathCQLDataSet("cassandra/schema-keyspace.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/schema-ts-latest.cql", false, false)
                     ),

@@ -205,8 +205,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId()).get();
                 sent = true;
             } catch (InterruptedException | ExecutionException e) {
-                String errMsg = String.format("[%s][%s][%s] Failed to save rpc request to edge queue %s", tenantId, deviceId, edgeId.getId(), request);
-                log.error(errMsg, e);
+                log.error("[{}][{}][{}] Failed to save rpc request to edge queue {}", tenantId, deviceId, edgeId.getId(), request, e);
             }
         } else if (isSendNewRpcAvailable()) {
             sent = rpcSubscriptions.size() > 0;
@@ -824,6 +823,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         body.put("expirationTime", msg.getExpirationTime());
         body.put("method", msg.getBody().getMethod());
         body.put("params", msg.getBody().getParams());
+        body.put("persisted", msg.isPersisted());
+        body.put("retries", msg.getRetries());
+        body.put("additionalInfo", msg.getAdditionalInfo());
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
 

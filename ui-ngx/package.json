@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
     "build": "ng build",
-    "build:prod": "ng build --configuration production --vendor-chunk",
+    "build:prod": "node --max_old_space_size=3072 ./node_modules/@angular/cli/bin/ng build --configuration production --vendor-chunk",
     "build:types": "node generate-types.js",
     "test": "ng test",
     "lint": "ng lint",

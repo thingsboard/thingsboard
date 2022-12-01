@@ -23,6 +23,7 @@ enum JsInvokeErrorCode {
   COMPILATION_ERROR = 0;
   RUNTIME_ERROR = 1;
   TIMEOUT_ERROR = 2;
+  NOT_FOUND_ERROR = 3;
 }
 
 message RemoteJsRequest {
@@ -40,39 +41,34 @@ message RemoteJsResponse {
 }
 
 message JsCompileRequest {
-  int64 scriptIdMSB = 1;
-  int64 scriptIdLSB = 2;
   string functionName = 3;
   string scriptBody = 4;
+  string scriptHash = 5;
 }
 
 message JsReleaseRequest {
-  int64 scriptIdMSB = 1;
-  int64 scriptIdLSB = 2;
   string functionName = 3;
+  string scriptHash = 4;
 }
 
 message JsReleaseResponse {
   bool success = 1;
-  int64 scriptIdMSB = 2;
-  int64 scriptIdLSB = 3;
+  string scriptHash = 4;
 }
 
 message JsCompileResponse {
   bool success = 1;
-  int64 scriptIdMSB = 2;
-  int64 scriptIdLSB = 3;
   JsInvokeErrorCode errorCode = 4;
   string errorDetails = 5;
+  string scriptHash = 6;
 }
 
 message JsInvokeRequest {
-  int64 scriptIdMSB = 1;
-  int64 scriptIdLSB = 2;
   string functionName = 3;
   string scriptBody = 4;
   int32 timeout = 5;
   repeated string args = 6;
+  string scriptHash = 7;
 }
 
 message JsInvokeResponse {
@@ -81,4 +77,3 @@ message JsInvokeResponse {
   JsInvokeErrorCode errorCode = 3;
   string errorDetails = 4;
 }
-

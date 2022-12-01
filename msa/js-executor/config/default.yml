@@ -20,6 +20,7 @@ http_port: "8888" # /livenessProbe
 
 js:
   response_poll_interval: "25"
+  max_result_size: "300000"
 
 kafka:
   bootstrap:
@@ -63,6 +64,7 @@ logger:
 
 script:
   use_sandbox: "true"
+  memory_usage_trace_frequency: "1000"
   script_body_trace_frequency: "10000"
   stat_print_frequency: "10000"
   max_active_scripts: "1000"

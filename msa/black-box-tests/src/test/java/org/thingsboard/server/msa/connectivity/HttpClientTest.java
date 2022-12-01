@@ -16,109 +16,156 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Sets;
-import org.junit.Assert;
-import org.junit.Test;
-import org.springframework.http.ResponseEntity;
+import com.google.gson.JsonObject;
+import io.restassured.path.json.JsonPath;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-
-import java.util.Optional;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
+import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
 public class HttpClientTest extends AbstractContainerTest {
+    private Device device;
+    @BeforeMethod
+    public void setUp() throws Exception {
+        testRestClient.login("tenant@thingsboard.org", "tenant");
+        device = testRestClient.postDevice("", defaultDevicePrototype("http_"));
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        testRestClient.deleteDeviceIfExists(device.getId());
+    }
 
     @Test
     public void telemetryUpload() throws Exception {
-        restClient.login("tenant@thingsboard.org", "tenant");
-
-        Device device = createDevice("http_");
-        DeviceCredentials deviceCredentials = restClient.getDeviceCredentialsByDeviceId(device.getId()).get();
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
-        ResponseEntity deviceTelemetryResponse = restClient.getRestTemplate()
-                .postForEntity(HTTPS_URL + "/api/v1/{credentialsId}/telemetry",
-                        mapper.readTree(createPayload().toString()),
-                        ResponseEntity.class,
-                        deviceCredentials.getCredentialsId());
-        Assert.assertTrue(deviceTelemetryResponse.getStatusCode().is2xxSuccessful());
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.readTree(createPayload().toString()));
+
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         wsClient.closeBlocking();
 
-        Assert.assertEquals(Sets.newHashSet("booleanKey", "stringKey", "doubleKey", "longKey"),
-                actualLatestTelemetry.getLatestValues().keySet());
+        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
 
-        Assert.assertTrue(verify(actualLatestTelemetry, "booleanKey", Boolean.TRUE.toString()));
-        Assert.assertTrue(verify(actualLatestTelemetry, "stringKey", "value1"));
-        Assert.assertTrue(verify(actualLatestTelemetry, "doubleKey", Double.toString(42.0)));
-        Assert.assertTrue(verify(actualLatestTelemetry, "longKey", Long.toString(73)));
-
-        restClient.deleteDevice(device.getId());
+        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
     }
 
     @Test
     public void getAttributes() throws Exception {
-        restClient.login("tenant@thingsboard.org", "tenant");
-        TB_TOKEN = restClient.getToken();
+        String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
+        assertThat(accessToken).isNotNull();
 
-        Device device = createDevice("test");
-        String accessToken = restClient.getDeviceCredentialsByDeviceId(device.getId()).get().getCredentialsId();
-        assertNotNull(accessToken);
+        JsonNode sharedAttribute = mapper.readTree(createPayload().toString());
+        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
 
-        ResponseEntity deviceSharedAttributes = restClient.getRestTemplate()
-                .postForEntity(HTTPS_URL + "/api/plugins/telemetry/" + DEVICE + "/" + device.getId().toString() + "/attributes/" + SHARED_SCOPE, mapper.readTree(createPayload().toString()),
-                        ResponseEntity.class,
-                        accessToken);
-
-        Assert.assertTrue(deviceSharedAttributes.getStatusCode().is2xxSuccessful());
-
-        ResponseEntity deviceClientsAttributes = restClient.getRestTemplate()
-                .postForEntity(HTTPS_URL + "/api/v1/" + accessToken + "/attributes/", mapper.readTree(createPayload().toString()),
-                        ResponseEntity.class,
-                        accessToken);
-
-        Assert.assertTrue(deviceClientsAttributes.getStatusCode().is2xxSuccessful());
+        JsonNode clientAttribute = mapper.readTree(createPayload().toString());
+        testRestClient.postAttribute(accessToken, clientAttribute);
 
         TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
-        @SuppressWarnings("deprecation")
-        Optional<JsonNode> allOptional = restClient.getAttributes(accessToken, null, null);
-        assertTrue(allOptional.isPresent());
+        JsonNode attributes = testRestClient.getAttributes(accessToken, null, null);
+        assertThat(attributes.get("shared")).isEqualTo(sharedAttribute);
+        assertThat(attributes.get("client")).isEqualTo(clientAttribute);
 
+        JsonNode attributes2 = testRestClient.getAttributes(accessToken, null, "stringKey");
+        assertThat(attributes2.get("shared").get("stringKey")).isEqualTo(sharedAttribute.get("stringKey"));
+        assertThat(attributes2.has("client")).isFalse();
 
-        JsonNode all = allOptional.get();
-        assertEquals(2, all.size());
-        assertEquals(mapper.readTree(createPayload().toString()), all.get("shared"));
-        assertEquals(mapper.readTree(createPayload().toString()), all.get("client"));
+        JsonNode attributes3 =  testRestClient.getAttributes(accessToken, "longKey,stringKey", null);
 
-        @SuppressWarnings("deprecation")
-        Optional<JsonNode> sharedOptional = restClient.getAttributes(accessToken, null, "stringKey");
-        assertTrue(sharedOptional.isPresent());
-
-        JsonNode shared = sharedOptional.get();
-        assertEquals(shared.get("shared").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
-        assertFalse(shared.has("client"));
-
-        @SuppressWarnings("deprecation")
-        Optional<JsonNode> clientOptional = restClient.getAttributes(accessToken, "longKey,stringKey", null);
-        assertTrue(clientOptional.isPresent());
-
-        JsonNode client = clientOptional.get();
-        assertFalse(client.has("shared"));
-        assertEquals(mapper.readTree(createPayload().get("longKey").toString()), client.get("client").get("longKey"));
-        assertEquals(client.get("client").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
-
-        restClient.deleteDevice(device.getId());
+        assertThat(attributes3.has("shared")).isFalse();
+        assertThat(attributes3.get("client").get("longKey")).isEqualTo(clientAttribute.get("longKey"));
+        assertThat(attributes3.get("client").get("stringKey")).isEqualTo(clientAttribute.get("stringKey"));
     }
+
+    @Test
+    public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+        provisionRequest.addProperty("deviceName", device.getName());
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String credentialsType = provisionResponse.get("credentialsType");
+        String credentialsValue = provisionResponse.get("credentialsValue");
+        String status = provisionResponse.get("status");
+
+        assertThat(credentialsType).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(credentialsValue).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(status).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
+
+    @Test
+    public void provisionRequestForDeviceWithAllowToCreateNewDevicesStrategy() throws Exception {
+
+        String testDeviceName = "test_provision_device";
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+        provisionRequest.addProperty("deviceName", testDeviceName);
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String credentialsType = provisionResponse.get("credentialsType");
+        String credentialsValue = provisionResponse.get("credentialsValue");
+        String status = provisionResponse.get("status");
+
+        testRestClient.deleteDeviceIfExists(device.getId());
+        device = testRestClient.getDeviceByName(testDeviceName);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        assertThat(credentialsType).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(credentialsValue).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(status).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
+
+    @Test
+    public void provisionRequestForDeviceWithDisabledProvisioningStrategy() throws Exception {
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String status = provisionResponse.get("status");
+
+        assertThat(status).isEqualTo("NOT_FOUND");
+    }
+
 }

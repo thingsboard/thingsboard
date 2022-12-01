@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-version: '2.2'
+version: '3.0'
 
 services:
   redis:
@@ -23,5 +23,5 @@ services:
 
 volumes:
   redis-data:
-    external: true
-    name: ${REDIS_DATA_VOLUME}
+    external:
+      name: ${REDIS_DATA_VOLUME}
