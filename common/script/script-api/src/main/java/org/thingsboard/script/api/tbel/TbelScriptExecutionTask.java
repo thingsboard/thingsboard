@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
-import lombok.Getter;
 import org.mvel2.ExecutionContext;
 import org.thingsboard.script.api.TbScriptExecutionTask;
 
 
-public class MvelScriptExecutionTask extends TbScriptExecutionTask {
+public class TbelScriptExecutionTask extends TbScriptExecutionTask {
 
     private final ExecutionContext context;
 
-    public MvelScriptExecutionTask(ExecutionContext context, ListenableFuture<Object> resultFuture) {
+    public TbelScriptExecutionTask(ExecutionContext context, ListenableFuture<Object> resultFuture) {
         super(resultFuture);
         this.context = context;
     }

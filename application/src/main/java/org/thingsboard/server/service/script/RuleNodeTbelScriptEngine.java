@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.RuleNodeScriptFactory;
-import org.thingsboard.script.api.mvel.MvelInvokeService;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -42,9 +42,9 @@ import java.util.stream.Collectors;
 
 
 @Slf4j
-public class RuleNodeMvelScriptEngine extends RuleNodeScriptEngine<MvelInvokeService, Object> {
+public class RuleNodeTbelScriptEngine extends RuleNodeScriptEngine<TbelInvokeService, Object> {
 
-    public RuleNodeMvelScriptEngine(TenantId tenantId, MvelInvokeService scriptInvokeService, String script, String... argNames) {
+    public RuleNodeTbelScriptEngine(TenantId tenantId, TbelInvokeService scriptInvokeService, String script, String... argNames) {
         super(tenantId, scriptInvokeService, script, argNames);
     }
 
@@ -64,7 +64,7 @@ public class RuleNodeMvelScriptEngine extends RuleNodeScriptEngine<MvelInvokeSer
             List<TbMsg> res = new ArrayList<>();
             for (Object resObject : (Collection) result) {
                 if (resObject instanceof Map) {
-                    res.add(unbindMsg((Map) result, msg));
+                    res.add(unbindMsg((Map) resObject, msg));
                 } else {
                     return wrongResultType(resObject);
                 }

@@ -13,16 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
 public class TbDate extends Date {
+
+    private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
+            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
+
+    private static final DateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     public TbDate() {
         super();
@@ -60,8 +73,7 @@ public class TbDate extends Date {
     }
 
     public String toISOString() {
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sssZ");
-        return formatter.format(this);
+        return isoDateFormat.format(this);
     }
 
     public String toLocaleString(String locale) {
@@ -79,11 +91,29 @@ public class TbDate extends Date {
         return System.currentTimeMillis();
     }
 
+    public static long parse(String value, String format) {
+        try {
+            DateFormat dateFormat = new SimpleDateFormat(format);
+            return dateFormat.parse(value).getTime();
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
     public static long parse(String value) {
         try {
-           return Date.parse(value);
-        } catch (IllegalArgumentException e) {
-            return -1;
+            TemporalAccessor accessor = isoDateFormatter.parseBest(value,
+                    ZonedDateTime::from,
+                    LocalDateTime::from,
+                    LocalDate::from);
+            Instant instant = Instant.from(accessor);
+            return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
+        } catch (Exception e) {
+            try {
+                return Date.parse(value);
+            } catch (IllegalArgumentException e2) {
+                return -1;
+            }
         }
     }
 

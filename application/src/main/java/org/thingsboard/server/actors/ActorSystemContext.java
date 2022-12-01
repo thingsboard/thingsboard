@@ -33,7 +33,7 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
-import org.thingsboard.script.api.mvel.MvelInvokeService;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -274,7 +274,7 @@ public class ActorSystemContext {
 
     @Autowired(required = false)
     @Getter
-    private MvelInvokeService mvelInvokeService;
+    private TbelInvokeService tbelInvokeService;
 
     @Autowired
     @Getter

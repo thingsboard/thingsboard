@@ -24,14 +24,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
-import org.thingsboard.script.api.mvel.MvelInvokeService;
-import org.thingsboard.script.api.mvel.MvelScript;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.script.api.tbel.TbelScript;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,18 +44,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "mvel.max_script_body_size=100",
-        "mvel.max_total_args_size=50",
-        "mvel.max_result_size=50",
-        "mvel.max_errors=2",
-        "mvel.compiled_scripts_cache_size=100"
+        "tbel.max_script_body_size=100",
+        "tbel.max_total_args_size=50",
+        "tbel.max_result_size=50",
+        "tbel.max_errors=2",
+        "tbel.compiled_scripts_cache_size=100"
 })
-class MvelInvokeServiceTest extends AbstractControllerTest {
+class TbelInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
-    private MvelInvokeService invokeService;
+    private TbelInvokeService invokeService;
 
-    @Value("${mvel.max_errors}")
+    @Value("${tbel.max_errors}")
     private int maxJsErrors;
 
     @Test
@@ -129,7 +128,7 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
         }
 
         Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Map<String, MvelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
+        Map<String, TbelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
         Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
 
         String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
@@ -149,7 +148,7 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
         }
 
         Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Map<String, MvelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
+        Map<String, TbelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
         Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
 
         String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
@@ -173,7 +172,7 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
         Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
 
         List<UUID> scriptsIds = new ArrayList<>();
-        for (int i = 0; i < 110; i++) { // mvel.compiled_scripts_cache_size = 100
+        for (int i = 0; i < 110; i++) { // tbel.compiled_scripts_cache_size = 100
             String script = "return msg.temperature > " + i;
             UUID scriptId = evalScript(script);
             scriptsIds.add(scriptId);
@@ -215,12 +214,6 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
     private String invokeScript(UUID scriptId, String str) throws ExecutionException, InterruptedException {
         var msg = JacksonUtil.fromString(str, Map.class);
         return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get().toString();
-    }
-
-    private <T> T getFieldValue(Object target, String fieldName) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return (T) field.get(target);
     }
 
 }

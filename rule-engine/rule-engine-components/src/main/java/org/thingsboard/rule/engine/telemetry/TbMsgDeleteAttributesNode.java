@@ -30,11 +30,15 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "delete attributes",
-        configClazz = TbMsgDeleteAttributesConfiguration.class,
+        configClazz = TbMsgDeleteAttributesNodeConfiguration.class,
         nodeDescription = "Delete attributes for Message Originator.",
         nodeDetails = "Attempt to remove attributes by selected keys. If msg originator doesn't have an attribute with " +
                 " a key selected in the configuration, it will be ignored. If delete operation is completed successfully, " +
@@ -44,16 +48,14 @@ import java.util.stream.Collectors;
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
 )
-public class TbMsgDeleteAttributes implements TbNode {
+public class TbMsgDeleteAttributesNode implements TbNode {
 
-    private TbMsgDeleteAttributesConfiguration config;
-    private String scope;
+    private TbMsgDeleteAttributesNodeConfiguration config;
     private List<String> keys;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
-        this.scope = config.getScope();
+        this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesNodeConfiguration.class);
         this.keys = config.getKeys();
     }
 
@@ -67,7 +69,29 @@ public class TbMsgDeleteAttributes implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete));
+            String scope = getScope(msg.getMetaData().getValue(SCOPE));
+            ctx.getTelemetryService().deleteAndNotify(
+                    ctx.getTenantId(),
+                    msg.getOriginator(),
+                    scope,
+                    keysToDelete,
+                    checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope),
+                    config.isSendAttributesDeletedNotification() ?
+                            new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete) :
+                            new TelemetryNodeCallback(ctx, msg)
+            );
         }
     }
+
+    private String getScope(String mdScopeValue) {
+        if (StringUtils.isNotEmpty(mdScopeValue)) {
+            return mdScopeValue;
+        }
+        return config.getScope();
+    }
+
+    private boolean checkNotifyDevice(String notifyDeviceMdValue, String scope) {
+        return SHARED_SCOPE.equals(scope) && (config.isNotifyDevice() || Boolean.parseBoolean(notifyDeviceMdValue));
+    }
+
 }
