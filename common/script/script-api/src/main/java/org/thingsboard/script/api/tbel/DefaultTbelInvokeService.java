@@ -27,8 +27,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
+import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
-import org.mvel2.SandboxedParserContext;
 import org.mvel2.ScriptMemoryOverflowException;
 import org.mvel2.optimizers.OptimizerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,15 +47,16 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Pattern;
 
 @Slf4j
 @ConditionalOnProperty(prefix = "tbel", value = "enabled", havingValue = "true", matchIfMissing = true)
@@ -67,8 +68,6 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     protected Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
-
-    private static final Pattern NEW_KEYWORD_PATTERN = Pattern.compile("new\\s");
 
     @Getter
     @Value("${tbel.max_total_args_size:100000}")
@@ -123,9 +122,11 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     public void init() {
         super.init();
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
-        parserConfig = new SandboxedParserConfiguration();
+        parserConfig = ParserContext.enableSandboxedMode();
         parserConfig.addImport("JSON", TbJson.class);
         parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
+        parserConfig.registerDataType("Random", Random.class, date -> 8L);
+        parserConfig.registerDataType("Calendar", Calendar.class, date -> 8L);
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {
@@ -219,7 +220,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     }
 
     private Serializable compileScript(String scriptBody) {
-        return MVEL.compileExpression(scriptBody, new SandboxedParserContext(parserConfig));
+        return MVEL.compileExpression(scriptBody, new ParserContext());
     }
 
     @SuppressWarnings("UnstableApiUsage")

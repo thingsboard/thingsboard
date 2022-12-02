@@ -3707,6 +3707,7 @@
         "order": "Order",
         "height": "Height",
         "mobile-hide": "Hide widget in mobile mode",
+        "desktop-hide": "Hide widget in desktop mode",
         "units": "Special symbol to show next to value",
         "decimals": "Number of digits after floating point",
         "timewindow": "Timewindow",

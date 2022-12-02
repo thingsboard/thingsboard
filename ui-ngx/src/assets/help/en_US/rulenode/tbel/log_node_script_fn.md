@@ -5,7 +5,7 @@
 
 *function toString(msg, metadata, msgType): string*
 
-JavaScript function transforming incoming Message to String for further logging to the server log file.
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function transforming incoming Message to String for further logging to the server log file.
 
 **Parameters:**
 

@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
@@ -65,12 +67,24 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("parseHexToInt", new MethodStub(TbUtils.class.getMethod("parseHexToInt",
                 String.class, boolean.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                byte[].class, int.class, int.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                byte[].class, int.class, int.class, boolean.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
                 double.class, int.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("base64ToHex", new MethodStub(TbUtils.class.getMethod("base64ToHex",
                 String.class)));
+        parserConfig.addImport("base64ToBytes", new MethodStub(TbUtils.class.getMethod("base64ToBytes",
+                String.class)));
+        parserConfig.addImport("bytesToBase64", new MethodStub(TbUtils.class.getMethod("bytesToBase64",
+                byte[].class)));
         parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
                 byte[].class)));
         parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
@@ -119,8 +133,8 @@ public class TbUtils {
 
     private static List<Byte> bytesToList(ExecutionContext ctx, byte[] bytes) {
         List<Byte> list = new ExecutionArrayList<>(ctx);
-        for (int i = 0; i < bytes.length; i++) {
-            list.add(bytes[i]);
+        for (byte aByte : bytes) {
+            list.add(aByte);
         }
         return list;
     }
@@ -194,31 +208,75 @@ public class TbUtils {
         if (length > 8) {
             throw new IllegalArgumentException("Hex string is too large. Maximum 8 symbols allowed.");
         }
-        if (bigEndian) {
-            return Integer.parseInt(hex, 16);
-        } else {
-            if (length < 8) {
-                hex = hex + "0".repeat(8 - length);
-            }
-            return Integer.reverseBytes(Integer.parseInt(hex, 16));
+        if (length % 2 > 0) {
+            throw new IllegalArgumentException("Hex string must be even-length.");
         }
+        byte[] data = new byte[length / 2];
+        for (int i = 0; i < length; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return parseBytesToInt(data, 0, data.length, bigEndian);
     }
 
-    public static ExecutionArrayList<Integer> hexToBytes(ExecutionContext ctx, String hex) {
+    public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String hex) {
         int len = hex.length();
         if (len % 2 > 0) {
             throw new IllegalArgumentException("Hex string must be even-length.");
         }
-        ExecutionArrayList<Integer> data = new ExecutionArrayList<>(ctx);
+        ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
         for (int i = 0; i < len; i += 2) {
-            data.add((Character.digit(hex.charAt(i), 16) << 4)
-                    + Character.digit(hex.charAt(i+1), 16));
+            data.add((byte)((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16)));
         }
         return data;
     }
 
     public static String base64ToHex(String base64) {
         return bytesToHex(Base64.getDecoder().decode(base64));
+    }
+
+    public static String bytesToBase64(byte[] bytes) {
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    public static byte[] base64ToBytes(String input) {
+        return Base64.getDecoder().decode(input);
+    }
+
+    public static int parseBytesToInt(List<Byte> data, int offset, int length) {
+        return parseBytesToInt(data, offset, length, true);
+    }
+
+    public static int parseBytesToInt(List<Byte> data, int offset, int length, boolean bigEndian) {
+        final byte[] bytes = new byte[data.size()];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = data.get(i);
+        }
+        return parseBytesToInt(bytes, offset, length, bigEndian);
+    }
+
+    public static int parseBytesToInt(byte[] data, int offset, int length) {
+        return parseBytesToInt(data, offset, length, true);
+    }
+
+    public static int parseBytesToInt(byte[] data, int offset, int length, boolean bigEndian) {
+        if (offset > data.length) {
+            throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
+        }
+        if (length > 4) {
+            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum 4 bytes is allowed!");
+        }
+        if (offset + length > data.length) {
+            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+        }
+        var bb = ByteBuffer.allocate(4);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+        }
+        bb.position(bigEndian ? 4 - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+        return bb.getInt();
     }
 
     public static String bytesToHex(ExecutionArrayList<?> bytesList) {

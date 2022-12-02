@@ -5,7 +5,7 @@
 
 *function Switch(msg, metadata, msgType): string[]*
 
-JavaScript function computing **an array of Link names** to forward the incoming Message.
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function computing **an array of Link names** to forward the incoming Message.
 
 **Parameters:**
 
@@ -72,16 +72,16 @@ Example of the rule chain configuration:
 </ul>
 
 ```javascript
-if (msgType === 'POST_TELEMETRY_REQUEST') {
+if (msgType == 'POST_TELEMETRY_REQUEST') {
   if (msg.temperature < 18) {
     return ['Low Temperature Telemetry'];
   } else {
     return ['Normal Temperature Telemetry'];
   }
-} else if (msgType === 'POST_ATTRIBUTES_REQUEST') {
-  if (msg.currentState === 'IDLE') {
+} else if (msgType == 'POST_ATTRIBUTES_REQUEST') {
+  if (msg.currentState == 'IDLE') {
     return ['Idle State', 'Update State Attribute'];
-  } else if (msg.currentState === 'RUNNING') {
+  } else if (msg.currentState == 'RUNNING') {
     return ['Running State', 'Update State Attribute'];
   } else {
     return ['Unknown State'];

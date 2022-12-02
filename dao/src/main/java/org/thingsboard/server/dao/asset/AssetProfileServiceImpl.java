@@ -95,7 +95,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         log.trace("Executing findAssetProfileByName [{}][{}]", tenantId, profileName);
         Validator.validateString(profileName, INCORRECT_ASSET_PROFILE_NAME + profileName);
         return cache.getAndPutInTransaction(AssetProfileCacheKey.fromName(tenantId, profileName),
-                () -> assetProfileDao.findByName(tenantId, profileName), true);
+                () -> assetProfileDao.findByName(tenantId, profileName), false);
     }
 
     @Override

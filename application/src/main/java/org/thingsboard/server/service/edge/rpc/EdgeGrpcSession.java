@@ -187,10 +187,7 @@ public final class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId, boolean fullSync) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
-        if (sessionState.getSendDownlinkMsgsFuture() != null && sessionState.getSendDownlinkMsgsFuture().isDone()) {
-            String errorMsg = String.format("[%s][%s] Sync process started. General processing interrupted!", tenantId, edgeId);
-            sessionState.getSendDownlinkMsgsFuture().setException(new RuntimeException(errorMsg));
-        }
+        interruptGeneralProcessingOnSync(tenantId, edgeId);
         doSync(new EdgeSyncCursor(ctx, edge, fullSync));
     }
 
@@ -265,10 +262,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (sessionState.getPendingMsgsMap().isEmpty()) {
                 log.debug("[{}] Pending msgs map is empty. Stopping current iteration", edge.getRoutingKey());
-                if (sessionState.getScheduledSendDownlinkTask() != null) {
-                    sessionState.getScheduledSendDownlinkTask().cancel(false);
-                }
-                sessionState.getSendDownlinkMsgsFuture().set(null);
+                stopCurrentSendDownlinkMsgsTask(null);
             }
         } catch (Exception e) {
             log.error("[{}] Can't process downlink response message [{}]", this.sessionId, msg, e);
@@ -391,15 +385,14 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private ListenableFuture<Void> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
-        if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
-            String errorMsg = "[" + this.sessionId + "] Previous send downlink future was not properly completed, stopping it now";
-            log.error(errorMsg);
-            sessionState.getSendDownlinkMsgsFuture().setException(new RuntimeException(errorMsg));
-        }
+        interruptPreviousSendDownlinkMsgsTask();
+
         sessionState.setSendDownlinkMsgsFuture(SettableFuture.create());
         sessionState.getPendingMsgsMap().clear();
+
         downlinkMsgsPack.forEach(msg -> sessionState.getPendingMsgsMap().put(msg.getDownlinkMsgId(), msg));
         scheduleDownlinkMsgsPackSend(1);
+
         return sessionState.getSendDownlinkMsgsFuture();
     }
 
@@ -422,13 +415,13 @@ public final class EdgeGrpcSession implements Closeable {
                     } else {
                         log.warn("[{}] Failed to deliver the batch after {} attempts. Next messages are going to be discarded {}",
                                 this.sessionId, MAX_DOWNLINK_ATTEMPTS, copy);
-                        sessionState.getSendDownlinkMsgsFuture().set(null);
+                        stopCurrentSendDownlinkMsgsTask(null);
                     }
                 } else {
-                    sessionState.getSendDownlinkMsgsFuture().set(null);
+                    stopCurrentSendDownlinkMsgsTask(null);
                 }
             } catch (Exception e) {
-                sessionState.getSendDownlinkMsgsFuture().setException(e);
+                stopCurrentSendDownlinkMsgsTask(e);
             }
         };
 
@@ -673,4 +666,29 @@ public final class EdgeGrpcSession implements Closeable {
             log.debug("[{}] Failed to close output stream: {}", sessionId, e.getMessage());
         }
     }
+
+    private void interruptPreviousSendDownlinkMsgsTask() {
+        String msg = String.format("[%s] Previous send downlink future was not properly completed, stopping it now!", this.sessionId);
+        stopCurrentSendDownlinkMsgsTask(new RuntimeException(msg));
+    }
+
+    private void interruptGeneralProcessingOnSync(TenantId tenantId, EdgeId edgeId) {
+        String msg = String.format("[%s][%s] Sync process started. General processing interrupted!", tenantId, edgeId);
+        stopCurrentSendDownlinkMsgsTask(new RuntimeException(msg));
+    }
+
+    public void stopCurrentSendDownlinkMsgsTask(Exception e) {
+        if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
+            if (e != null) {
+                log.warn(e.getMessage(), e);
+                sessionState.getSendDownlinkMsgsFuture().setException(e);
+            } else {
+                sessionState.getSendDownlinkMsgsFuture().set(null);
+            }
+        }
+        if (sessionState.getScheduledSendDownlinkTask() != null) {
+            sessionState.getScheduledSendDownlinkTask().cancel(true);
+        }
+    }
+
 }
