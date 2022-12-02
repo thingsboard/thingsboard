@@ -66,8 +66,8 @@ monitoring:
   ui:
     enabled: '${UI_MONITORING_ENABLED:false}'
     url: '${UI_URL:http://localhost:4200}'
+    remote_webdriver_url: '${UI_MONITORING_REMOTE_WEBDRIVER_URL:http://localhost:4444}'
     monitoring_rate_sec: '${UI_MONITORING_RATE_SEC:300}'
-    webdriver_location: '${WEBDRIVER_LOCATION:classpath:geckodriver}'
 
   notification_channels:
     slack:

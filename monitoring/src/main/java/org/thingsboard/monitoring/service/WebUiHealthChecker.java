@@ -18,8 +18,8 @@ package org.thingsboard.monitoring.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,8 +30,8 @@ import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
-import javax.annotation.PostConstruct;
-import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,8 +56,8 @@ public class WebUiHealthChecker {
     private int monitoringRateSec;
     @Value("${monitoring.rest_request_timeout_ms}")
     private int timeoutMs;
-    @Value("${monitoring.ui.webdriver_location}")
-    private File webdriverLocation;
+    @Value("${monitoring.ui.remote_webdriver_url}")
+    private String remoteWebdriverUrl;
 
     private final MonitoringReporter monitoringReporter;
     private final ScheduledExecutorService monitoringExecutor;
@@ -68,21 +68,13 @@ public class WebUiHealthChecker {
     private static final String SUBMIT_BTN = "//button[@type='submit']";
     private static final String DEVICES_BTN = "//mat-toolbar//a[@href='/devices']";
 
-    @PostConstruct
-    private void init() {
-        System.setProperty("webdriver.gecko.driver", webdriverLocation.getAbsolutePath());
-        System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
-    }
-
     @EventListener(ApplicationReadyEvent.class)
     public void startMonitoring() {
         monitoringExecutor.scheduleWithFixedDelay(() -> {
-            WebDriver driver = null;
+            RemoteWebDriver driver = null;
             try {
-                FirefoxOptions options = new FirefoxOptions();
-                options.setHeadless(true);
-                driver = new FirefoxDriver(options);
-                WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(timeoutMs));
+                driver = createDriver();
+                WebDriverWait wait = createDriverWait(driver);
                 driver.manage().window().maximize();
                 driver.get(url + "/login");
 
@@ -106,6 +98,16 @@ public class WebUiHealthChecker {
                 if (driver != null) driver.quit();
             }
         }, 0, monitoringRateSec, TimeUnit.SECONDS);
+    }
+
+    private RemoteWebDriver createDriver() throws MalformedURLException {
+        ChromeOptions options = new ChromeOptions();
+        options.setPageLoadTimeout(Duration.ofMillis(timeoutMs));
+        return new RemoteWebDriver(new URL(remoteWebdriverUrl + "/wd/hub"), options);
+    }
+
+    private WebDriverWait createDriverWait(WebDriver driver) {
+        return new WebDriverWait(driver, Duration.ofMillis(timeoutMs));
     }
 
 }
