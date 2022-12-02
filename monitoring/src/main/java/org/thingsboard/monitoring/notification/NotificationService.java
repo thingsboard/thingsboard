@@ -17,25 +17,36 @@ package org.thingsboard.monitoring.notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.thingsboard.monitoring.data.notification.Notification;
 import org.thingsboard.monitoring.notification.channels.NotificationChannel;
-import org.thingsboard.monitoring.data.notification.NotificationInfo;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
-    private final List<NotificationChannel> notificationChannels;
 
-    public void notify(NotificationInfo notificationInfo) {
+    private final List<NotificationChannel> notificationChannels;
+    private final ExecutorService notificationExecutor = Executors.newSingleThreadExecutor();
+
+    public void sendNotification(Notification notification) {
+        forEachNotificationChannel(notificationChannel -> notificationChannel.sendNotification(notification));
+    }
+
+    private void forEachNotificationChannel(Consumer<NotificationChannel> function) {
         notificationChannels.forEach(notificationChannel -> {
-            try {
-                notificationChannel.sendNotification(notificationInfo);
-            } catch (Exception e) {
-                log.error("Failed to send notification to {} ({})", notificationChannel.getClass().getSimpleName(), notificationInfo, e);
-            }
+            notificationExecutor.submit(() -> {
+                try {
+                    function.accept(notificationChannel);
+                } catch (Exception e) {
+                    log.error("Failed to send notification to {}", notificationChannel.getClass().getSimpleName(), e);
+                }
+            });
         });
     }
 

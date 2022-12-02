@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @AllArgsConstructor
@@ -32,9 +31,5 @@ public class TimeseriesSubscriptionCmd {
     private String entityId;
     private String keys;
     private String scope;
-
-    public String getType() {
-        return "TIMESERIES";
-    }
 
 }

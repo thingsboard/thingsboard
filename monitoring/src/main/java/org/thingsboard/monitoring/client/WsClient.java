@@ -15,8 +15,10 @@
  */
 package org.thingsboard.monitoring.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.thingsboard.common.util.JacksonUtil;
@@ -24,6 +26,7 @@ import org.thingsboard.monitoring.data.cmd.CmdsWrapper;
 import org.thingsboard.monitoring.data.cmd.TimeseriesSubscriptionCmd;
 import org.thingsboard.monitoring.data.cmd.TimeseriesUpdate;
 
+import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
 import java.util.List;
@@ -92,10 +95,10 @@ public class WsClient extends WebSocketClient {
         send(JacksonUtil.toString(wrapper));
     }
 
-    public String waitForUpdate(long ms) {
+    public JsonNode waitForUpdate(long ms) {
         try {
             if (update.await(ms, TimeUnit.MILLISECONDS)) {
-                return lastMsg;
+                return getLastMsg();
             }
         } catch (InterruptedException e) {
             log.debug("Failed to await reply", e);
@@ -103,21 +106,41 @@ public class WsClient extends WebSocketClient {
         return null;
     }
 
-    public String waitForReply(int ms) {
+    public JsonNode waitForReply(int ms) {
         try {
             if (reply.await(ms, TimeUnit.MILLISECONDS)) {
-                return lastMsg;
+                return getLastMsg();
             }
         } catch (InterruptedException e) {
             log.debug("Failed to await reply", e);
         }
         return null;
+    }
+
+    public JsonNode getLastMsg() {
+        JsonNode msg = JacksonUtil.toJsonNode(lastMsg);
+        if (msg != null) {
+            JsonNode errorMsg = msg.get("errorMsg");
+            if (errorMsg != null && !errorMsg.isNull() && StringUtils.isNotEmpty(errorMsg.asText())) {
+                throw new RuntimeException("WS error from server: " + errorMsg.asText());
+            } else {
+                return msg;
+            }
+        } else {
+            return null;
+        }
     }
 
     public Object getTelemetryKeyUpdate(String key) {
-        if (lastMsg == null) return null;
-        TimeseriesUpdate update = JacksonUtil.fromString(lastMsg, TimeseriesUpdate.class);
+        JsonNode lastMsg = getLastMsg();
+        if (lastMsg == null || lastMsg.isNull()) return null;
+        TimeseriesUpdate update = JacksonUtil.treeToValue(lastMsg, TimeseriesUpdate.class);
         return update.getLatest(key);
+    }
+
+    @Override
+    protected void onSetSSLParameters(SSLParameters sslParameters) {
+        sslParameters.setEndpointIdentificationAlgorithm(null);
     }
 
 }

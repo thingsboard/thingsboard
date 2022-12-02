@@ -21,13 +21,13 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-import org.thingsboard.monitoring.config.TransportType;
+import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
+import org.thingsboard.monitoring.config.TransportType;
 import org.thingsboard.monitoring.config.service.MqttTransportMonitoringServiceConfig;
 import org.thingsboard.monitoring.service.TransportMonitoringService;
 
-@Service
+@Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MqttTransportMonitoringService extends TransportMonitoringService<MqttTransportMonitoringServiceConfig> {
 
@@ -41,12 +41,15 @@ public class MqttTransportMonitoringService extends TransportMonitoringService<M
 
     @Override
     protected void initClient() throws Exception {
-        String clientId = MqttAsyncClient.generateClientId();
-        mqttClient = new MqttAsyncClient(target.getBaseUrl(), clientId, new MemoryPersistence());
+        if (mqttClient == null || !mqttClient.isConnected()) {
+            String clientId = MqttAsyncClient.generateClientId();
+            String accessToken = target.getDevice().getCredentials().getCredentialsId();
+            mqttClient = new MqttAsyncClient(target.getBaseUrl(), clientId, new MemoryPersistence());
 
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(target.getDevice().getAccessToken());
-        mqttClient.connect(options).waitForCompletion(config.getRequestTimeoutMs());
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setUserName(accessToken);
+            mqttClient.connect(options).waitForCompletion(config.getRequestTimeoutMs());
+        }
     }
 
     @Override
@@ -59,9 +62,10 @@ public class MqttTransportMonitoringService extends TransportMonitoringService<M
 
     @Override
     protected void destroyClient() throws Exception {
-        mqttClient.disconnect();
-        mqttClient.close();
-        mqttClient = null;
+        if (mqttClient != null) {
+            mqttClient.disconnect();
+            mqttClient = null;
+        }
     }
 
     @Override

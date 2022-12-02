@@ -15,45 +15,12 @@
  */
 package org.thingsboard.monitoring.notification.channels;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.thingsboard.monitoring.data.notification.MonitoringFailureNotificationInfo;
-import org.thingsboard.monitoring.data.notification.NotificationInfo;
-import org.thingsboard.monitoring.data.notification.TransportFailureNotificationInfo;
+import org.thingsboard.monitoring.data.notification.Notification;
 
-@Slf4j
-public abstract class NotificationChannel {
+public interface NotificationChannel {
 
-    public abstract void sendNotification(NotificationInfo notificationInfo);
+    void sendNotification(Notification notification);
 
-
-    protected String createNotificationMessage(NotificationInfo notificationInfo) {
-        String message = String.format("[%s transport (%s)]", notificationInfo.getTransportInfo().getTransportType(), notificationInfo.getTransportInfo().getUrl());
-
-        switch (notificationInfo.getType()) {
-            case TRANSPORT_FAILURE:
-                TransportFailureNotificationInfo transportFailureNotificationInfo = (TransportFailureNotificationInfo) notificationInfo;
-                message += " Transport failure: " + getErrorMessage(transportFailureNotificationInfo.getError());
-                break;
-            case MONITORING_FAILURE:
-                MonitoringFailureNotificationInfo monitoringFailureNotificationInfo = (MonitoringFailureNotificationInfo) notificationInfo;
-                message += " Monitoring failure: " + getErrorMessage(monitoringFailureNotificationInfo.getError());
-                break;
-            case TRANSPORT_RECOVERY:
-                message += " Transport is now working";
-                break;
-            case MONITORING_RECOVERY:
-                message += " Monitoring is now working";
-                break;
-            default:
-                throw new UnsupportedOperationException("Notification type " + notificationInfo.getType() + " not supported");
-        }
-
-        return message;
-    }
-
-    protected String getErrorMessage(Exception error) {
-        return ExceptionUtils.getMessage(error);
-    }
+    void sendNotification(String message);
 
 }

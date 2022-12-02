@@ -15,7 +15,9 @@
  */
 package org.thingsboard.monitoring;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -23,8 +25,19 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.monitoring.client.TbClient;
+import org.thingsboard.monitoring.config.DeviceConfig;
+import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.service.TransportMonitoringServiceConfig;
+import org.thingsboard.monitoring.service.TransportMonitoringService;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -33,6 +46,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @SpringBootApplication
 @EnableScheduling
+@Slf4j
 public class ThingsboardMonitoringApplication {
 
     public static void main(String[] args) {
@@ -42,22 +56,55 @@ public class ThingsboardMonitoringApplication {
     }
 
     @Bean
-    public ApplicationRunner initMonitoringServices(List<TransportMonitoringServiceConfig> configs, ApplicationContext context) {
+    public ApplicationRunner initAndStartMonitoringServices(List<TransportMonitoringServiceConfig> configs, TbClient tbClient, ApplicationContext context) {
         return args -> {
+            List<TransportMonitoringService<?>> monitoringServices = new LinkedList<>();
             configs.forEach(config -> {
                 config.getTargets().stream()
                         .filter(target -> StringUtils.isNotBlank(target.getBaseUrl()))
+                        .peek(target -> checkMonitoringTarget(config, target, tbClient))
                         .forEach(target -> {
-                            context.getBean(config.getTransportType().getMonitoringServiceClass(), config, target);
+                            TransportMonitoringService<?> monitoringService = context.getBean(config.getTransportType().getMonitoringServiceClass(), config, target);
+                            monitoringServices.add(monitoringService);
                         });
             });
+            monitoringServices.forEach(TransportMonitoringService::startMonitoring);
         };
     }
 
+    private void checkMonitoringTarget(TransportMonitoringServiceConfig config, MonitoringTargetConfig target, TbClient tbClient) {
+        DeviceConfig deviceConfig = target.getDevice();
+        tbClient.logIn();
+
+        DeviceId deviceId;
+        if (deviceConfig == null || deviceConfig.getId() == null) {
+            String deviceName = String.format("[%s] Monitoring device (%s)", config.getTransportType(), target.getBaseUrl());
+            Device device = tbClient.getTenantDevice(deviceName)
+                    .orElseGet(() -> {
+                        log.info("Creating new device '{}'", deviceName);
+                        Device monitoringDevice = new Device();
+                        monitoringDevice.setName(deviceName);
+                        monitoringDevice.setType("default");
+                        DeviceData deviceData = new DeviceData();
+                        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+                        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+                        return tbClient.saveDevice(monitoringDevice);
+                    });
+            deviceId = device.getId();
+            target.getDevice().setId(deviceId.toString());
+        } else {
+            deviceId = new DeviceId(deviceConfig.getId());
+        }
+
+        log.debug("Loading credentials for device {}", deviceId);
+        DeviceCredentials credentials = tbClient.getDeviceCredentialsByDeviceId(deviceId)
+                .orElseThrow(() -> new IllegalArgumentException("No credentials found for device " + deviceId));
+        target.getDevice().setCredentials(credentials);
+    }
+
     @Bean
-    public ScheduledExecutorService monitoringExecutor(List<TransportMonitoringServiceConfig> configs) {
-        int targetsCount = configs.stream().mapToInt(config -> config.getTargets().size()).sum();
-        return Executors.newScheduledThreadPool(targetsCount, ThingsBoardThreadFactory.forName("monitoring-executor"));
+    public ScheduledExecutorService monitoringExecutor(@Value("${monitoring.monitoring_thread_pool_size}") int threadPoolSize) {
+        return Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("monitoring-executor"));
     }
 
     @Bean

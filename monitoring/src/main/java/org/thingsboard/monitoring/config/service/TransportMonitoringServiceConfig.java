@@ -16,7 +16,6 @@
 package org.thingsboard.monitoring.config.service;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
 
@@ -24,11 +23,10 @@ import java.util.List;
 
 @Data
 public abstract class TransportMonitoringServiceConfig {
+
     private int monitoringRateMs;
     private int requestTimeoutMs;
     private int initialDelayMs;
-    @Value("${monitoring.failure_threshold}")
-    private int failureThreshold;
 
     private List<MonitoringTargetConfig> targets;
 

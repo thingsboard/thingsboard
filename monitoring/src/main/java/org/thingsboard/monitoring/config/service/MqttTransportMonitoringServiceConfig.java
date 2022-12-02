@@ -16,6 +16,7 @@
 package org.thingsboard.monitoring.config.service;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,9 @@ import org.thingsboard.monitoring.config.TransportType;
 @ConditionalOnProperty(name = "monitoring.transports.mqtt.enabled", havingValue = "true")
 @ConfigurationProperties(prefix = "monitoring.transports.mqtt")
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class MqttTransportMonitoringServiceConfig extends TransportMonitoringServiceConfig {
+
     private Integer qos;
 
     @Override

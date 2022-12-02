@@ -23,8 +23,4 @@ public class MonitoringTargetConfig {
     private String baseUrl;
     private DeviceConfig device;
 
-    @Override
-    public String toString() {
-        return "Monitoring target [base url: '" + baseUrl + "', device: " + device.getId() + "]";
-    }
 }

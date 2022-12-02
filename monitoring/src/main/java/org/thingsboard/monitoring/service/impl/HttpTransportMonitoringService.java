@@ -18,17 +18,16 @@ package org.thingsboard.monitoring.service.impl;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
 import org.thingsboard.monitoring.config.service.HttpTransportMonitoringServiceConfig;
 import org.thingsboard.monitoring.service.TransportMonitoringService;
 
-import javax.annotation.PostConstruct;
 import java.time.Duration;
 
-@Service
+@Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class HttpTransportMonitoringService extends TransportMonitoringService<HttpTransportMonitoringServiceConfig> {
 
@@ -50,7 +49,8 @@ public class HttpTransportMonitoringService extends TransportMonitoringService<H
 
     @Override
     protected void sendTestPayload(String payload) throws Exception {
-        restTemplate.postForObject(target.getBaseUrl() + "/api/v1/" + target.getDevice().getAccessToken() + "/telemetry", payload, String.class);
+        String accessToken = target.getDevice().getCredentials().getCredentialsId();
+        restTemplate.postForObject(target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry", payload, String.class);
     }
 
     @Override

@@ -20,6 +20,13 @@ import org.thingsboard.monitoring.config.TransportType;
 
 @Data
 public class TransportInfo {
+
     private final TransportType transportType;
     private final String url;
+
+    @Override
+    public String toString() {
+        return String.format("%s (%s)", transportType, url);
+    }
+
 }

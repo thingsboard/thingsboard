@@ -21,15 +21,15 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-import org.thingsboard.monitoring.config.TransportType;
+import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
+import org.thingsboard.monitoring.config.TransportType;
 import org.thingsboard.monitoring.config.service.CoapTransportMonitoringServiceConfig;
 import org.thingsboard.monitoring.service.TransportMonitoringService;
 
 import java.io.IOException;
 
-@Service
+@Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CoapTransportMonitoringService extends TransportMonitoringService<CoapTransportMonitoringServiceConfig> {
 
@@ -41,9 +41,12 @@ public class CoapTransportMonitoringService extends TransportMonitoringService<C
 
     @Override
     protected void initClient() throws Exception {
-        String uri = target.getBaseUrl() + "/api/v1/" + target.getDevice().getAccessToken() + "/telemetry";
-        coapClient = new CoapClient(uri);
-        coapClient.setTimeout((long) config.getRequestTimeoutMs());
+        if (coapClient == null) {
+            String accessToken = target.getDevice().getCredentials().getCredentialsId();
+            String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
+            coapClient = new CoapClient(uri);
+            coapClient.setTimeout((long) config.getRequestTimeoutMs());
+        }
     }
 
     @Override
@@ -57,8 +60,10 @@ public class CoapTransportMonitoringService extends TransportMonitoringService<C
 
     @Override
     protected void destroyClient() throws Exception {
-        coapClient.shutdown();
-        coapClient = null;
+        if (coapClient != null) {
+            coapClient.shutdown();
+            coapClient = null;
+        }
     }
 
     @Override

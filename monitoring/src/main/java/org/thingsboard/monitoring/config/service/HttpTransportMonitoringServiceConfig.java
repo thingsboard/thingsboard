@@ -24,8 +24,10 @@ import org.thingsboard.monitoring.config.TransportType;
 @ConditionalOnProperty(name = "monitoring.transports.http.enabled", havingValue = "true")
 @ConfigurationProperties(prefix = "monitoring.transports.http")
 public class HttpTransportMonitoringServiceConfig extends TransportMonitoringServiceConfig {
+
     @Override
     public TransportType getTransportType() {
         return TransportType.HTTP;
     }
+
 }

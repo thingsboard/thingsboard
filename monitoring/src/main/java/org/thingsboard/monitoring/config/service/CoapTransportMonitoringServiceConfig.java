@@ -19,9 +19,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.rest.client.RestClient;
-
-import javax.annotation.PostConstruct;
 
 @Component
 @ConditionalOnProperty(name = "monitoring.transports.coap.enabled", havingValue = "true")

@@ -21,8 +21,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.monitoring.data.notification.Notification;
 import org.thingsboard.monitoring.notification.channels.NotificationChannel;
-import org.thingsboard.monitoring.data.notification.NotificationInfo;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
@@ -31,7 +31,8 @@ import java.util.Map;
 @Component
 @ConditionalOnProperty(value = "monitoring.notification_channels.slack.enabled", havingValue = "true")
 @Slf4j
-public class SlackNotificationChannel extends NotificationChannel {
+public class SlackNotificationChannel implements NotificationChannel {
+
     @Value("${monitoring.notification_channels.slack.webhook_url}")
     private String webhookUrl;
 
@@ -46,8 +47,12 @@ public class SlackNotificationChannel extends NotificationChannel {
     }
 
     @Override
-    public void sendNotification(NotificationInfo notificationInfo) {
-        String message = createNotificationMessage(notificationInfo);
+    public void sendNotification(Notification notification) {
+        sendNotification(notification.getText());
+    }
+
+    @Override
+    public void sendNotification(String message) {
         restTemplate.postForObject(webhookUrl, Map.of("text", message), String.class);
     }
 

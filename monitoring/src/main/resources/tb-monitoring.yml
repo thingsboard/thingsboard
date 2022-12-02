@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+server:
+  port: '${SERVER_PORT:8990}'
+
 monitoring:
   auth:
     base_url: '${AUTH_BASE_URL:http://localhost:8080}'
@@ -21,23 +24,24 @@ monitoring:
     password: '${AUTH_PASSWORD:tenant}'
   ws:
     base_url: '${WS_BASE_URL:ws://localhost:8080}'
-    check_timeout_ms: '${WS_CHECK_TIMEOUT_MS:3000}'
-    request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:5000}'
+    check_timeout_ms: '${WS_CHECK_TIMEOUT_MS:5000}'
+    request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'
+  rest_request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
 
-  failure_threshold: '${MONITORING_FAILURE_THRESHOLD:1}'
+  failures_threshold: '${FAILURES_THRESHOLD:2}'
+  send_repeated_failure_notification: '${SEND_REPEATED_FAILURE_NOTIFICATION:true}'
 
   transports:
     mqtt:
-      enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:true}'
-      monitoring_rate_ms: '${MQTT_TRANSPORT_MONITORING_RATE_MS:10000}'
+      enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:false}'
+      monitoring_rate_ms: '${MQTT_TRANSPORT_MONITORING_RATE_MS:3000}'
       request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
       initial_delay_ms: '${MQTT_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
-        - base_url: "tcp://localhost"
+        - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://localhost:1883}'
           device:
-            id:
-            access_token:
+            id: '${MQTT_TRANSPORT_TARGET_DEVICE_ID:}'
 
     coap:
       enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:false}'
@@ -45,21 +49,9 @@ monitoring:
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       initial_delay_ms: '${COAP_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
       targets:
-        - base_url:
+        - base_url: '${COAP_TRANSPORT_BASE_URL:coap://localhost}'
           device:
-            id:
-            access_token:
-
-    lwm2m:
-      enabled: '${LWM2M_TRANSPORT_MONITORING_ENABLED:false}'
-      monitoring_rate_ms: '${LWM2M_TRANSPORT_MONITORING_RATE_MS:10000}'
-      request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
-      initial_delay_ms: '${LWM2M_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
-      targets:
-        - base_url:
-          device:
-            id:
-            access_token:
+            id: '${COAP_TRANSPORT_TARGET_DEVICE_ID:}'
 
     http:
       enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:false}'
@@ -67,12 +59,25 @@ monitoring:
       request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
       initial_delay_ms: '${HTTP_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
       targets:
-        - base_url:
+        - base_url: '${HTTP_TRANSPORT_BASE_URL:http://localhost:8080}'
           device:
-            id:
-            access_token:
+            id: '${HTTP_TRANSPORT_TARGET_DEVICE_ID:}'
+
+  ui:
+    enabled: '${UI_MONITORING_ENABLED:false}'
+    url: '${UI_URL:http://localhost:4200}'
+    monitoring_rate_sec: '${UI_MONITORING_RATE_SEC:300}'
+    webdriver_location: '${WEBDRIVER_LOCATION:classpath:geckodriver}'
 
   notification_channels:
     slack:
       enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'
       webhook_url: '${SLACK_WEBHOOK_URL:}'
+
+  latency:
+    monitoring_rate_ms: '${LATENCY_MONITORING_RATE_MS:30000}'
+    threshold_ms: '${LATENCY_THRESHOLD:2000}'
+    reporting_entity_type: '${LATENCY_REPORTING_ENTITY_TYPE:ASSET}'
+    reporting_entity_id: '${LATENCY_REPORTING_ENTITY_ID:}'
+
+  monitoring_thread_pool_size: '${MONITORING_THREAD_POOL_SIZE:10}'

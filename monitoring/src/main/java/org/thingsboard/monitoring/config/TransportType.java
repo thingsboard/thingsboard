@@ -20,7 +20,6 @@ import lombok.Getter;
 import org.thingsboard.monitoring.service.TransportMonitoringService;
 import org.thingsboard.monitoring.service.impl.CoapTransportMonitoringService;
 import org.thingsboard.monitoring.service.impl.HttpTransportMonitoringService;
-import org.thingsboard.monitoring.service.impl.Lwm2mTransportMonitoringService;
 import org.thingsboard.monitoring.service.impl.MqttTransportMonitoringService;
 
 @AllArgsConstructor
@@ -28,7 +27,6 @@ import org.thingsboard.monitoring.service.impl.MqttTransportMonitoringService;
 public enum TransportType {
     MQTT(MqttTransportMonitoringService.class),
     COAP(CoapTransportMonitoringService.class),
-    LWM2M(Lwm2mTransportMonitoringService.class),
     HTTP(HttpTransportMonitoringService.class);
 
     private final Class<? extends TransportMonitoringService<?>> monitoringServiceClass;
