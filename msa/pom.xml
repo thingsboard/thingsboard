@@ -46,6 +46,7 @@
         <module>web-ui</module>
         <module>tb-node</module>
         <module>transport</module>
+        <module>monitoring</module>
     </modules>
 
     <profiles>

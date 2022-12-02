@@ -90,8 +90,8 @@ public class MonitoringReporter {
                     ObjectNode msg = JacksonUtil.newObjectNode();
                     latencies.forEach((key, latency) -> {
                         msg.set(key, new DoubleNode(latency.getAvg()));
-                        latency.reset();
                     });
+                    latencies.clear();
                     tbClient.saveEntityTelemetry(entityId, "time", msg);
                 } catch (Exception e) {
                     log.error("Failed to report latencies: {}", e.getMessage());
@@ -118,7 +118,6 @@ public class MonitoringReporter {
     public void serviceIsOk(Object serviceKey) {
         ServiceRecoveryNotification notification = new ServiceRecoveryNotification(serviceKey);
         log.info(notification.getText());
-
         AtomicInteger failuresCounter = failuresCounters.get(serviceKey);
         if (failuresCounter != null) {
             if (failuresCounter.get() >= failuresThreshold) {
