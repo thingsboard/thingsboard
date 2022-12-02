@@ -5,7 +5,7 @@
 
 *function Generate(prevMsg, prevMetadata, prevMsgType): {msg: object, metadata: object, msgType: string}*
 
-JavaScript function generating new Message using previous Message payload, Metadata and Message type as input arguments.
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function generating new Message using previous Message payload, Metadata and Message type as input arguments.
 
 **Parameters:**
 
@@ -78,16 +78,14 @@ var temperature = lower;
 
 // Get previous values
 
-if (typeof prevMetadata !== 'undefined' &&
-  typeof prevMetadata.isDecrement !== 'undefined') {
+if (prevMetadata != null && prevMetadata.isDecrement != null) {
   isDecrement = prevMetadata.isDecrement;
 }
-if (typeof prevMsg !== 'undefined' &&
-  typeof prevMsg.temperature !== 'undefined') {
+if (prevMsg != null && prevMsg.temperature != null) {
   temperature = prevMsg.temperature;
 }
 
-if (isDecrement === 'true') {
+if (isDecrement == 'true') {
   temperature--;
   if (temperature <= lower) {
     isDecrement = 'false';

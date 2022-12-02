@@ -88,6 +88,7 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -766,6 +767,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 return Collections.emptyList();
         }
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
+    }
+
+    protected <T> T getFieldValue(Object target, String fieldName) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (T) field.get(target);
     }
 
 }

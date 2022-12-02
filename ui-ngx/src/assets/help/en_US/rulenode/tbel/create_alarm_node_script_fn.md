@@ -5,7 +5,7 @@
 
 *function Details(msg, metadata, msgType): any*
 
-JavaScript function generating **Alarm Details** object. Used for storing additional parameters inside Alarm.<br>
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function generating **Alarm Details** object. Used for storing additional parameters inside Alarm.<br>
 For example you can save attribute name/value pair from Original Message payload or Metadata.
 
 **Parameters:**
