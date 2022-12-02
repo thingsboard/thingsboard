@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data.script;
 
 public enum ScriptLanguage {
-    JS, MVEL
+    JS, TBEL
 }

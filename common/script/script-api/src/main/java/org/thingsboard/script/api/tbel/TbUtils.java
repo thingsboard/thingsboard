@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.util.MethodStub;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
 public class TbUtils {
+
+    private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
 
     public static void register(ParserConfiguration parserConfig) throws Exception {
         parserConfig.addImport("btoa", new MethodStub(TbUtils.class.getMethod("btoa",
@@ -35,6 +41,10 @@ public class TbUtils {
                 List.class)));
         parserConfig.addImport("bytesToString", new MethodStub(TbUtils.class.getMethod("bytesToString",
                 List.class, String.class)));
+        parserConfig.addImport("decodeToString", new MethodStub(TbUtils.class.getMethod("bytesToString",
+                List.class)));
+        parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
+                ExecutionContext.class, List.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
@@ -47,10 +57,24 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("parseDouble", new MethodStub(TbUtils.class.getMethod("parseDouble",
                 String.class)));
-    }
-
-    public static void main(String[] args) {
-        System.out.println(Integer.class == int.class);
+        parserConfig.addImport("parseLittleEndianHexToInt", new MethodStub(TbUtils.class.getMethod("parseLittleEndianHexToInt",
+                String.class)));
+        parserConfig.addImport("parseBigEndianHexToInt", new MethodStub(TbUtils.class.getMethod("parseBigEndianHexToInt",
+                String.class)));
+        parserConfig.addImport("parseHexToInt", new MethodStub(TbUtils.class.getMethod("parseHexToInt",
+                String.class)));
+        parserConfig.addImport("parseHexToInt", new MethodStub(TbUtils.class.getMethod("parseHexToInt",
+                String.class, boolean.class)));
+        parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
+                double.class, int.class)));
+        parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
+                ExecutionContext.class, String.class)));
+        parserConfig.addImport("base64ToHex", new MethodStub(TbUtils.class.getMethod("base64ToHex",
+                String.class)));
+        parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
+                byte[].class)));
+        parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
+                ExecutionArrayList.class)));
     }
 
     public static String btoa(String input) {
@@ -59,6 +83,10 @@ public class TbUtils {
 
     public static String atob(String encoded) {
         return new String(Base64.getDecoder().decode(encoded));
+    }
+
+    public static Object decodeToJson(ExecutionContext ctx, List<Byte> bytesList) throws IOException {
+        return TbJson.parse(ctx, bytesToString(bytesList));
     }
 
     public static String bytesToString(List<Byte> bytesList) {
@@ -147,6 +175,72 @@ public class TbUtils {
             }
         }
         return null;
+    }
+
+    public static int parseLittleEndianHexToInt(String hex) {
+        return parseHexToInt(hex, false);
+    }
+
+    public static int parseBigEndianHexToInt(String hex) {
+        return parseHexToInt(hex, true);
+    }
+
+    public static int parseHexToInt(String hex) {
+        return parseHexToInt(hex, true);
+    }
+
+    public static int parseHexToInt(String hex, boolean bigEndian) {
+        int length = hex.length();
+        if (length > 8) {
+            throw new IllegalArgumentException("Hex string is too large. Maximum 8 symbols allowed.");
+        }
+        if (bigEndian) {
+            return Integer.parseInt(hex, 16);
+        } else {
+            if (length < 8) {
+                hex = hex + "0".repeat(8 - length);
+            }
+            return Integer.reverseBytes(Integer.parseInt(hex, 16));
+        }
+    }
+
+    public static ExecutionArrayList<Integer> hexToBytes(ExecutionContext ctx, String hex) {
+        int len = hex.length();
+        if (len % 2 > 0) {
+            throw new IllegalArgumentException("Hex string must be even-length.");
+        }
+        ExecutionArrayList<Integer> data = new ExecutionArrayList<>(ctx);
+        for (int i = 0; i < len; i += 2) {
+            data.add((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+    public static String base64ToHex(String base64) {
+        return bytesToHex(Base64.getDecoder().decode(base64));
+    }
+
+    public static String bytesToHex(ExecutionArrayList<?> bytesList) {
+        byte[] bytes = new byte[bytesList.size()];
+        for (int i = 0; i < bytesList.size(); i++) {
+            bytes[i] = Byte.parseByte(bytesList.get(i).toString());
+        }
+        return bytesToHex(bytes);
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        byte[] hexChars = new byte[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars, StandardCharsets.UTF_8);
+    }
+
+    public static double toFixed(double value, int precision) {
+        return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).doubleValue();
     }
 
     private static boolean isHexadecimal(String value) {

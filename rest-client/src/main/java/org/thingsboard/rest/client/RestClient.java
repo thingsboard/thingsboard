@@ -136,6 +136,8 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
@@ -284,6 +286,23 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public SecuritySettings saveSecuritySettings(SecuritySettings securitySettings) {
         return restTemplate.postForEntity(baseURL + "/api/admin/securitySettings", securitySettings, SecuritySettings.class).getBody();
+    }
+
+    public Optional<JwtSettings> getJwtSettings() {
+        try {
+            ResponseEntity<JwtSettings> jwtSettings = restTemplate.getForEntity(baseURL + "/api/admin/jwtSettings", JwtSettings.class);
+            return Optional.ofNullable(jwtSettings.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public JwtPair saveJwtSettings(JwtSettings jwtSettings) {
+        return restTemplate.postForEntity(baseURL + "/api/admin/jwtSettings", jwtSettings, JwtPair.class).getBody();
     }
 
     public Optional<RepositorySettings> getRepositorySettings() {
@@ -2032,10 +2051,15 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public PageData<RuleChain> getRuleChains(PageLink pageLink) {
+        return getRuleChains(RuleChainType.CORE, pageLink);
+    }
+
+    public PageData<RuleChain> getRuleChains(RuleChainType ruleChainType, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
+        params.put("type", ruleChainType.name());
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/ruleChains?" + getUrlParams(pageLink),
+                baseURL + "/api/ruleChains?type={type}&" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<RuleChain>>() {

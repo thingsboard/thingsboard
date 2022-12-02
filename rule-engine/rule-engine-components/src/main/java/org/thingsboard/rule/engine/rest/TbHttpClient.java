@@ -41,6 +41,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
@@ -59,8 +60,11 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 @Data
 @Slf4j
@@ -244,9 +248,24 @@ public class TbHttpClient {
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
-        response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
+        headersToMetaData(response.getHeaders(), metaData::putValue);
         String body = response.getBody() == null ? "{}" : response.getBody();
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, body);
+    }
+
+    void headersToMetaData(Map<String, List<String>> headers, BiConsumer<String, String> consumer) {
+        if (headers == null) {
+            return;
+        }
+        headers.forEach((key, values) -> {
+            if (values != null && !values.isEmpty()) {
+                if (values.size() == 1) {
+                    consumer.accept(key, values.get(0));
+                } else {
+                    consumer.accept(key, JacksonUtil.toString(values));
+                }
+            }
+        });
     }
 
     private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
@@ -255,6 +274,7 @@ public class TbHttpClient {
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
+        headersToMetaData(response.getHeaders(), metaData::putValue);
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
     }
 

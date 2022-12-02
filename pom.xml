@@ -77,7 +77,7 @@
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
-        <mvel.version>2.4.23TB</mvel.version>
+        <tbel.version>1.0.0</tbel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -135,6 +135,10 @@
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <!--      BLACKBOX TEST SCOPE     -->
+        <testng.version>7.6.1</testng.version>
+        <assertj.version>3.23.1</assertj.version>
+        <rest-assured.version>5.2.0</rest-assured.version>
+        <hamcrest.version>1.3</hamcrest.version>
         <testcontainers.version>1.17.3</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
@@ -1572,8 +1576,8 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard</groupId>
-                <artifactId>mvel2</artifactId>
-                <version>${mvel.version}</version>
+                <artifactId>tbel</artifactId>
+                <version>${tbel.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -1634,6 +1638,30 @@
                         <artifactId>hamcrest-core</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.rest-assured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>${rest-assured.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-all</artifactId>
+                <version>${hamcrest.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.awaitility</groupId>

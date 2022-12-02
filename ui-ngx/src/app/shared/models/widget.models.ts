@@ -606,6 +606,7 @@ export interface WidgetConfig {
   showLegend?: boolean;
   legendConfig?: LegendConfig;
   timewindow?: Timewindow;
+  desktopHide?: boolean;
   mobileHide?: boolean;
   mobileHeight?: number;
   mobileOrder?: number;

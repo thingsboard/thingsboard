@@ -39,9 +39,9 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     @Override
     public TbCreateAlarmNodeConfiguration defaultConfiguration() {
         TbCreateAlarmNodeConfiguration configuration = new TbCreateAlarmNodeConfiguration();
-        configuration.setScriptLang(ScriptLanguage.MVEL);
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setAlarmDetailsBuildJs(ALARM_DETAILS_BUILD_JS_TEMPLATE);
-        configuration.setAlarmDetailsBuildMvel(ALARM_DETAILS_BUILD_MVEL_TEMPLATE);
+        configuration.setAlarmDetailsBuildTbel(ALARM_DETAILS_BUILD_TBEL_TEMPLATE);
         configuration.setAlarmType("General Alarm");
         configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);

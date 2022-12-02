@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.script.api.tbel;
 
 import lombok.Data;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class MvelScript {
+public class TbelScript {
 
-    private final Serializable compiledScript;
     private final String scriptBody;
     private final String[] argNames;
 
