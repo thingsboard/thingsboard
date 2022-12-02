@@ -16,49 +16,64 @@
 
 -->
 <form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
-    <div fxLayoutGap="8px" fxLayout="column">
-      <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-        <mat-form-field fxFlex>
-          <mat-label translate>device-profile.telemetry-topic-filter</mat-label>
-          <input matInput required
-                 formControlName="deviceTelemetryTopic"
-                 type="text">
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').hasError('required')">
-            {{ 'device-profile.telemetry-topic-filter-required' | translate}}
-          </mat-error>
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').hasError('invalidSingleTopicCharacter')">
-            {{ 'device-profile.not-valid-single-character' | translate}}
-          </mat-error>
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').hasError('invalidMultiTopicCharacter')">
-            {{ 'device-profile.not-valid-multi-character' | translate}}
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex>
-          <mat-label translate>device-profile.attributes-topic-filter</mat-label>
-          <input matInput required
-                 formControlName="deviceAttributesTopic"
-                 type="text">
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('required')">
-            {{ 'device-profile.attributes-topic-filter-required' | translate}}
-          </mat-error>
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('invalidSingleTopicCharacter')">
-            {{ 'device-profile.not-valid-single-character' | translate}}
-          </mat-error>
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('invalidMultiTopicCharacter')">
-            {{ 'device-profile.not-valid-multi-character' | translate}}
-          </mat-error>
-        </mat-form-field>
+  <div>
+    <mat-checkbox formControlName="sparkPlugIs">
+      {{ 'device-profile.mqtt-device-topic-filters-spark-plug' | translate }}
+    </mat-checkbox>
+    <div  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugIs').value"
+      class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
+  </div>
+  <div *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugIs').value">
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
+      <div fxLayoutGap="8px" fxLayout="column">
+        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.telemetry-topic-filter</mat-label>
+            <input matInput required
+                   formControlName="deviceTelemetryTopic"
+                   type="text">
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').hasError('required')">
+              {{ 'device-profile.telemetry-topic-filter-required' | translate}}
+            </mat-error>
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').hasError('invalidSingleTopicCharacter')">
+              {{ 'device-profile.not-valid-single-character' | translate}}
+            </mat-error>
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').hasError('invalidMultiTopicCharacter')">
+              {{ 'device-profile.not-valid-multi-character' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.attributes-topic-filter</mat-label>
+            <input matInput required
+                   formControlName="deviceAttributesTopic"
+                   type="text">
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('required')">
+              {{ 'device-profile.attributes-topic-filter-required' | translate}}
+            </mat-error>
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('invalidSingleTopicCharacter')">
+              {{ 'device-profile.not-valid-single-character' | translate}}
+            </mat-error>
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('invalidMultiTopicCharacter')">
+              {{ 'device-profile.not-valid-multi-character' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.hasError('unique')">
+          {{ 'device-profile.mqtt-device-topic-filters-unique' | translate }}
+        </mat-error>
+        <div class="tb-hint" innerHTML="{{ 'device-profile.support-level-wildcards' | translate }}"></div>
+        <div class="tb-hint" innerHTML="{{ 'device-profile.single-level-wildcards-hint' | translate }}"></div>
+        <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
       </div>
-      <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.hasError('unique')">
-        {{ 'device-profile.mqtt-device-topic-filters-unique' | translate }}
-      </mat-error>
-      <div class="tb-hint" innerHTML="{{ 'device-profile.support-level-wildcards' | translate }}"></div>
-      <div class="tb-hint" innerHTML="{{ 'device-profile.single-level-wildcards-hint' | translate }}"></div>
-      <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
-    </div>
-  </fieldset>
+    </fieldset>
+  </div>
   <section formGroupName="transportPayloadTypeConfiguration">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-payload-type</legend>
@@ -69,7 +84,8 @@
               {{transportPayloadTypeTranslations.get(type) | translate}}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
+          <mat-error
+            *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
             {{ 'device-profile.mqtt-payload-type-required' | translate }}
           </mat-error>
         </mat-form-field>
@@ -77,12 +93,14 @@
           <mat-checkbox formControlName="enableCompatibilityWithJsonPayloadFormat">
             {{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format' | translate }}
           </mat-checkbox>
-          <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format-hint' | translate }}"></div>
+          <div class="tb-hint"
+               innerHTML="{{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format-hint' | translate }}"></div>
           <div *ngIf="compatibilityWithJsonPayloadFormatEnabled">
             <mat-checkbox formControlName="useJsonPayloadFormatForDefaultDownlinkTopics">
               {{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics' | translate }}
             </mat-checkbox>
-            <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics-hint' | translate }}"></div>
+            <div class="tb-hint"
+                 innerHTML="{{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics-hint' | translate }}"></div>
           </div>
         </div>
         <div *ngIf="protoPayloadType" fxLayout="column">
@@ -93,7 +111,8 @@
               label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
               [fillHeight]="true">
             </tb-protobuf-content>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
               {{ 'device-profile.telemetry-proto-schema-required' | translate}}
             </mat-error>
           </ng-container>
@@ -104,7 +123,8 @@
               label="{{ 'device-profile.attributes-proto-schema' | translate }}"
               [fillHeight]="true">
             </tb-protobuf-content>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
               {{ 'device-profile.attributes-proto-schema-required' | translate}}
             </mat-error>
           </ng-container>
@@ -115,7 +135,8 @@
               label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
               [fillHeight]="true">
             </tb-protobuf-content>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
               {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
             </mat-error>
           </ng-container>
@@ -126,7 +147,8 @@
               label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
               [fillHeight]="true">
             </tb-protobuf-content>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
+            <mat-error
+              *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
               {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
             </mat-error>
           </ng-container>
@@ -138,6 +160,7 @@
     <mat-checkbox formControlName="sendAckOnValidationException">
       {{ 'device-profile.mqtt-send-ack-on-validation-exception' | translate }}
     </mat-checkbox>
-    <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-send-ack-on-validation-exception-hint' | translate }}"></div>
+    <div class="tb-hint"
+         innerHTML="{{ 'device-profile.mqtt-send-ack-on-validation-exception-hint' | translate }}"></div>
   </div>
 </form>
