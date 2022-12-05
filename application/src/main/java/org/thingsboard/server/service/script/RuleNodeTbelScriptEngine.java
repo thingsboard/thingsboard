@@ -64,7 +64,7 @@ public class RuleNodeTbelScriptEngine extends RuleNodeScriptEngine<TbelInvokeSer
             List<TbMsg> res = new ArrayList<>();
             for (Object resObject : (Collection) result) {
                 if (resObject instanceof Map) {
-                    res.add(unbindMsg((Map) result, msg));
+                    res.add(unbindMsg((Map) resObject, msg));
                 } else {
                     return wrongResultType(resObject);
                 }

@@ -5,7 +5,7 @@
 
 *function Transform(msg, metadata, msgType): {msg: object, metadata: object, msgType: string}*
 
-The JavaScript function to transform input Message payload, Metadata and/or Message type to the output message.  
+The [TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function to transform input Message payload, Metadata and/or Message type to the output message.  
 
 **Parameters:**
 
@@ -32,7 +32,7 @@ All fields in resulting object are optional and will be taken from original mess
 * Add sum of two fields ('a' and 'b') as a new field ('sum') of existing message:
 
 ```javascript
-if(typeof msg.a !== "undefined" && typeof msg.b !== "undefined"){
+if(msg.a != null && msg.b != null){
     msg.sum = msg.a + msg.b;
 }
 return {msg: msg};
@@ -41,7 +41,7 @@ return {msg: msg};
 * Transform value of the 'temperature' field from °F to °C:
 
 ```javascript
-msg.temperature = (msg.temperature - 32) * 5 / 9;
+msg.temperature = toFixed((msg.temperature - 32) * 5 / 9, 1);
 return {msg: msg};
 ```
 
@@ -49,7 +49,7 @@ return {msg: msg};
 
 ```javascript
 var newMsg = {
-    count: Object.keys(msg).length
+    count: msg.size()
 };
 return {msg: newMsg};
 ```
@@ -73,9 +73,9 @@ var sum = msg.a + msg.b;
 var diff = msg.a - msg.b;
 
 return [
-    {msg: {sum: sum}, metadata: metadata, msgType: msgType},
-    {msg: {difference: diff}, metadata: metadata, msgType: msgType}
-    ];
+            {msg: {sum: sum}, metadata: metadata, msgType: msgType},
+            {msg: {difference: diff}, metadata: metadata, msgType: msgType}
+       ];
 ```
 
 <br>

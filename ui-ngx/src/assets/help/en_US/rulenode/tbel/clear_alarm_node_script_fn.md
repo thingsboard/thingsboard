@@ -5,7 +5,7 @@
 
 *function Details(msg, metadata, msgType): any*
 
-JavaScript function generating **Alarm Details** object to update existing one. Used for storing additional parameters inside Alarm.<br>
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function generating **Alarm Details** object to update existing one. Used for storing additional parameters inside Alarm.<br>
 For example you can save attribute name/value pair from Original Message payload or Metadata.
 
 **Parameters:**
@@ -21,10 +21,11 @@ Current Alarm Details can be accessed via `metadata.prevAlarmDetails`.<br>
 
 ```javascript
 var details = {};
-if (metadata.prevAlarmDetails) {
-  // remove prevAlarmDetails from metadata
-  delete metadata.prevAlarmDetails;
+if (metadata.prevAlarmDetails != null) {
   details = JSON.parse(metadata.prevAlarmDetails);
+  // remove prevAlarmDetails from metadata
+  metadata.remove('prevAlarmDetails');
+  //now metadata is the same as it comes IN this rule node
 }
 {:copy-code}
 ```
@@ -43,11 +44,11 @@ Also put <code>temperature</code> attribute from inbound Message payload into Al
 ```javascript
 var details = {temperature: msg.temperature, count: 1};
 
-if (metadata.prevAlarmDetails) {
+if (metadata.prevAlarmDetails != null) {
   var prevDetails = JSON.parse(metadata.prevAlarmDetails);
   // remove prevAlarmDetails from metadata
-  delete metadata.prevAlarmDetails;
-  if (prevDetails.count) {
+  metadata.remove('prevAlarmDetails');
+  if (prevDetails.count != null) {
     details.count = prevDetails.count + 1;
   }
 }

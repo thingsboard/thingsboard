@@ -28,6 +28,7 @@ public class DataConstants {
     public static final String CLIENT_SCOPE = "CLIENT_SCOPE";
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
+    public static final String NOTIFY_DEVICE_METADATA_KEY = "notifyDevice";
     public static final String LATEST_TS = "LATEST_TS";
     public static final String IS_NEW_ALARM = "isNewAlarm";
     public static final String IS_EXISTING_ALARM = "isExistingAlarm";

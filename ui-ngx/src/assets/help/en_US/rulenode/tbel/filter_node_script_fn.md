@@ -5,7 +5,7 @@
 
 *function Filter(msg, metadata, msgType): boolean*
 
-JavaScript function defines a boolean expression based on the incoming Message and Metadata.
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function defines a boolean expression based on the incoming Message and Metadata.
 
 **Parameters:**
 
@@ -37,14 +37,14 @@ Example of the rule chain configuration:
 * Same as above, but checks that the message has 'temperature' field to **avoid failures** on unexpected messages:
 
 ```javascript
-return typeof msg.temperature !== 'undefined' && msg.temperature > 20;
+return msg.temperature != null && msg.temperature > 20;
 {:copy-code}
 ```
 
 * Forward all messages with type `ATTRIBUTES_UPDATED` to the **True** chain and all other messages to the **False** chain:
 
 ```javascript
-if (msgType === 'ATTRIBUTES_UPDATED') {
+if (msgType == 'ATTRIBUTES_UPDATED') {
     return true;
 } else {
     return false;
@@ -61,10 +61,10 @@ Otherwise send message to the <strong>False</strong> chain:
 </ul>
 
 ```javascript
-if (msgType === 'POST_TELEMETRY_REQUEST') {
-  if (metadata.deviceType === 'vehicle') {
+if (msgType == 'POST_TELEMETRY_REQUEST') {
+  if (metadata.deviceType == 'vehicle') {
     return msg.humidity > 50;
-  } else if (metadata.deviceType === 'controller') {
+  } else if (metadata.deviceType == 'controller') {
     return msg.temperature > 20 && msg.humidity > 60;
   }
 }

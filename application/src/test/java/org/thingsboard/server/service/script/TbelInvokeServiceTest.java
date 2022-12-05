@@ -31,7 +31,6 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -215,12 +214,6 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
     private String invokeScript(UUID scriptId, String str) throws ExecutionException, InterruptedException {
         var msg = JacksonUtil.fromString(str, Map.class);
         return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get().toString();
-    }
-
-    private <T> T getFieldValue(Object target, String fieldName) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return (T) field.get(target);
     }
 
 }
