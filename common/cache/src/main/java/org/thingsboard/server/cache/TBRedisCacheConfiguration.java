@@ -26,14 +26,19 @@ import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisNode;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.util.Assert;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
@@ -76,6 +81,9 @@ public abstract class TBRedisCacheConfiguration {
 
     @Value("${redis.pool_config.blockWhenExhausted:true}")
     private boolean blockWhenExhausted;
+
+    private static final String COMMA = ",";
+    private static final String COLON = ":";
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -125,5 +133,20 @@ public abstract class TBRedisCacheConfiguration {
         poolConfig.setNumTestsPerEvictionRun(numberTestsPerEvictionRun);
         poolConfig.setBlockWhenExhausted(blockWhenExhausted);
         return poolConfig;
+    }
+
+    protected List<RedisNode> getNodes(String nodes) {
+        List<RedisNode> result;
+        if (StringUtils.isBlank(nodes)) {
+            result = Collections.emptyList();
+        } else {
+            result = new ArrayList<>();
+            for (String hostPort : nodes.split(COMMA)) {
+                String host = hostPort.split(COLON)[0];
+                int port = Integer.parseInt(hostPort.split(COLON)[1]);
+                result.add(new RedisNode(host, port));
+            }
+        }
+        return result;
     }
 }

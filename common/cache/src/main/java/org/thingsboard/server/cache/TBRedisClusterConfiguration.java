@@ -33,9 +33,6 @@ import java.util.List;
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "cluster")
 public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
 
-    private static final String COMMA = ",";
-    private static final String COLON = ":";
-
     @Value("${redis.cluster.nodes:}")
     private String clusterNodes;
 
@@ -48,11 +45,15 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.password:}")
     private String password;
 
+    @Value("${redis.username:}")
+    private String username;
+
     public JedisConnectionFactory loadFactory() {
         RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration();
         clusterConfiguration.setClusterNodes(getNodes(clusterNodes));
         clusterConfiguration.setMaxRedirects(maxRedirects);
         clusterConfiguration.setPassword(password);
+        clusterConfiguration.setUsername(username);
         if (useDefaultPoolConfig) {
             return new JedisConnectionFactory(clusterConfiguration);
         } else {
@@ -60,18 +61,4 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
         }
     }
 
-    private List<RedisNode> getNodes(String nodes) {
-        List<RedisNode> result;
-        if (StringUtils.isBlank(nodes)) {
-            result = Collections.emptyList();
-        } else {
-            result = new ArrayList<>();
-            for (String hostPort : nodes.split(COMMA)) {
-                String host = hostPort.split(COLON)[0];
-                Integer port = Integer.valueOf(hostPort.split(COLON)[1]);
-                result.add(new RedisNode(host, port));
-            }
-        }
-        return result;
-    }
 }
