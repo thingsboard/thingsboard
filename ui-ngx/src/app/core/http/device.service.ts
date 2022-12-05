@@ -42,11 +42,6 @@ export class DeviceService {
     private http: HttpClient
   ) { }
 
-  public getTenantDevices(pageLink: PageLink, config?: RequestConfig): Observable<PageData<Device>> {
-    return this.http.get<PageData<Device>>(`/api/tenant/devices${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
   public getTenantDeviceInfos(pageLink: PageLink, type: string = '',
                               config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/tenant/deviceInfos${pageLink.toQuery()}&type=${type}`,
