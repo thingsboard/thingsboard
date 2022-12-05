@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -201,9 +202,15 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         checkParameter(ASSIGNEE_ID, strAssigneeId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        // TODO Add special permissions for assignment
-        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
         UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        if (!getCurrentUser().getId().equals(assigneeId)) {
+            try {
+                checkEntityId(alarm.getOriginator(), Operation.WRITE, new SecurityUser(assigneeId));
+            } catch (Exception e) {
+                throw new ThingsboardException("Assignee user doesn't have permission for alarm originator", ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+        }
         tbAlarmService.assign(alarm, getCurrentUser(), assigneeId).get();
     }
 
@@ -219,7 +226,6 @@ public class AlarmController extends BaseController {
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        // TODO Add special permissions for unassignment
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
         tbAlarmService.unassign(alarm, getCurrentUser()).get();
     }
