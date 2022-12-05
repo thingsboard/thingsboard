@@ -15,13 +15,16 @@
     limitations under the License.
 
 -->
-<div mat-dialog-content tb-toast toastTarget="dockerCommandDialogContent">
-  <mat-button-toggle-group [formControl]="selectedOSControll" aria-label="Favorite Color">
-    <mat-button-toggle [value]="osTypes.windows"><span translate>gateway.windows </span></mat-button-toggle>
-    <mat-button-toggle [value]="osTypes.linux"><span translate>gateway.linux-macos </span></mat-button-toggle>
-  </mat-button-toggle-group>
+<div mat-dialog-content tb-toast fxLayout="column" toastTarget="dockerCommandDialogContent">
+  <span style="padding-bottom: 15px;">In order to run ThingsBoard IoT gateway (<a [href]="helpLink" target="_blank">ThingsBoard IoT gateway</a>) in docker with credentials for this device you can use the following commands.</span>
+  <div fxFlex fxLayout="row" style="justify-content: space-between">
+    <mat-button-toggle-group [formControl]="selectedOSControll" aria-label="Favorite Color" style="width: max-content">
+      <mat-button-toggle [value]="osTypes.windows"><span translate>gateway.windows </span></mat-button-toggle>
+      <mat-button-toggle [value]="osTypes.linux"><span translate>gateway.linux-macos </span></mat-button-toggle>
+    </mat-button-toggle-group>
+    <div class="tb-help" [tb-help]="helpLink"></div>
+  </div>
   <div class="mat-content" fxLayout="column" *ngIf="selectedOSControll.value !== osTypes.windows">
-    <!--      <span translate>gateway.linux-macos</span>-->
     <div fxLayout="row" fxLayoutAlign="start center">
       <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ linuxCode }}</code></pre>
       <button mat-icon-button

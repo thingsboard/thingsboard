@@ -34,14 +34,14 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {EntityTypeResource} from '@shared/models/entity-type.models';
+import {EntityType, EntityTypeResource} from '@shared/models/entity-type.models';
 import {TranslateService} from '@ngx-translate/core';
 import {DatePipe} from '@angular/common';
 import {Direction} from '@shared/models/page/sort-order';
 import {MatDialog} from '@angular/material/dialog';
 import {TimePageLink} from '@shared/models/page/page-link';
 import {Observable} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
+import {emptyPageData, PageData} from '@shared/models/page/page-data';
 import {UtilsService} from '@core/services/utils.service';
 import {DeviceService} from "@core/http/device.service";
 import {AttributeService} from "@core/http/attribute.service";
@@ -54,21 +54,19 @@ import {ActionNotificationShow} from "@core/notification/notification.actions";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
 import {map} from "rxjs/operators";
-import {getCurrentAuthUser} from "@core/auth/auth.selectors";
-import {Authority} from "@shared/models/authority.enum";
+import {EntityService} from "@core/http/entity.service";
 
 export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLink> {
-  private authUser = getCurrentAuthUser(this.store);
 
   constructor(protected store: Store<AppState>,
               private deviceService: DeviceService,
               private attributeService: AttributeService,
+              private entityService: EntityService,
               private datePipe: DatePipe,
               private translate: TranslateService,
               private utils: UtilsService,
               private dialog: MatDialog,
-              updateOnInit = true,
-              pageMode = false) {
+              updateOnInit = true) {
     super();
     this.loadDataOnInit = updateOnInit;
     this.tableTitle = 'Gateway list';
@@ -77,7 +75,7 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
     this.displayPagination = false;
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
-    this.searchEnabled = true;
+    this.searchEnabled = false;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
     this.actionsColumnTitle = '';
@@ -87,7 +85,7 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
     };
     this.entityResources = {} as EntityTypeResource<Device>;
 
-    this.entitiesFetchFunction = pageLink => this.fetchGateways(pageLink);
+    this.entitiesFetchFunction = () => this.fetchGateways();
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
@@ -134,17 +132,14 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
     })
   }
 
-  fetchGateways(pageLink: TimePageLink): Observable<PageData<Device>> {
-    let request = this.deviceService.getTenantDevices(pageLink);
-    if (this.authUser.authority === Authority.CUSTOMER_USER) {
-      request = this.deviceService.getCustomerDeviceInfos(this.authUser.customerId, pageLink);
-    }
-    return request.pipe(
-      map(pageData => {
-        pageData.data = pageData.data.filter(device => device.additionalInfo?.gateway);
-        pageData.totalElements = pageData.data.length;
+  fetchGateways(): Observable<PageData<Device>> {
+    return this.entityService.getEntitiesByNameFilter(EntityType.DEVICE, "", -1).pipe(
+      map((array: Array<Device>) => {
+        const pageData = emptyPageData<Device>();
+        pageData.data = array.filter(device => device.additionalInfo?.gateway);
+        pageData.totalPages = 1;
+        pageData.totalElements = array.length;
         return pageData;
-      })
-    );
+      }))
   }
 }

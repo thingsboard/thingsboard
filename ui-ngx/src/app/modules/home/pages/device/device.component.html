@@ -142,12 +142,14 @@
             {{ 'device.overwrite-activity-time' | translate }}
           </mat-checkbox>
         </div>
-        <mat-form-field class="mat-block">
-          <mat-label translate>device.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
       </div>
     </fieldset>
-    <tb-gateway-command *ngIf="entity?.id?.id && entityForm.get('additionalInfo.gateway').value && !isEdit" [deviceId]="entity?.id?.id" ></tb-gateway-command>
+    <tb-gateway-command *ngIf="entity?.id?.id && entityForm.get('additionalInfo.gateway').value && !isEdit" [deviceId]="entity?.id?.id"></tb-gateway-command>
+    <div formGroupName="additionalInfo" fxLayout="column">
+      <mat-form-field class="mat-block" >
+        <mat-label translate>device.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
+    </div>
   </form>
 </div>

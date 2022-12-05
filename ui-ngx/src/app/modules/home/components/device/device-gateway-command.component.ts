@@ -24,6 +24,7 @@ import {AppState} from "@core/core.state";
 import {TranslateService} from "@ngx-translate/core";
 import {ActionNotificationShow} from "@core/notification/notification.actions";
 import {DeviceService} from "@core/http/device.service";
+import {helpBaseUrl} from "@shared/models/constants";
 
 enum OsType {
   linux = 'linux',
@@ -49,6 +50,7 @@ export class DeviceGatewayCommandComponent implements OnInit {
   windowsCode: string;
   selectedOSControll: FormControl;
   osTypes = OsType;
+  helpLink: string = helpBaseUrl + '/docs/iot-gateway/install/docker-installation/';
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
@@ -94,6 +96,10 @@ export class DeviceGatewayCommandComponent implements OnInit {
       " -e port=1883 -e accessToken=" +
       this.token +
       " --restart always thingsboard/tb-gateway";
+  }
+
+  goToDocumentationPage() {
+    window.open(this.helpLink, '_blank');
   }
 
   onDockerCodeCopied() {

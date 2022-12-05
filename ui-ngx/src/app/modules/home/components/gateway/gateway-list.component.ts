@@ -39,6 +39,7 @@ import {DatePipe} from "@angular/common";
 import {MatDialog} from "@angular/material/dialog";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
+import {EntityService} from "@core/http/entity.service";
 
 @Component({
   selector: 'tb-gateway-list',
@@ -56,6 +57,7 @@ export class GatewayListComponent implements OnInit {
     private translate: TranslateService,
     private datePipe: DatePipe,
     private deviceService: DeviceService,
+    private entityService: EntityService,
     private attributeService: AttributeService,
     private dialog: MatDialog,
   ) {
@@ -66,6 +68,7 @@ export class GatewayListComponent implements OnInit {
       this.store,
       this.deviceService,
       this.attributeService,
+      this.entityService,
       this.datePipe,
       this.translate,
       this.utils,
