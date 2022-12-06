@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 import java.util.Collections;
@@ -35,6 +36,8 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     private boolean dynamicSeverity;
 
     private List<String> relationTypes;
+
+    private NotificationRuleId notificationRuleId;
 
     @Override
     public TbCreateAlarmNodeConfiguration defaultConfiguration() {

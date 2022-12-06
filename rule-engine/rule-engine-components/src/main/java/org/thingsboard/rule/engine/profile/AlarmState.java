@@ -241,6 +241,7 @@ class AlarmState {
             // Skip update if severity is decreased.
             if (severity.ordinal() <= oldSeverity.ordinal()) {
                 currentAlarm.setDetails(createDetails(ruleState));
+                currentAlarm.setNotificationRuleId(alarmDefinition.getNotificationRuleId());
                 if (!oldSeverity.equals(severity)) {
                     currentAlarm.setSeverity(severity);
                     currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
