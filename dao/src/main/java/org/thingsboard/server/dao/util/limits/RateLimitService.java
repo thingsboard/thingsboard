@@ -13,14 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage;
+package org.thingsboard.server.dao.util.limits;
 
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface RateLimitService {
 
-    boolean checkEntityExportLimit(TenantId tenantId);
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId);
 
-    boolean checkEntityImportLimit(TenantId tenantId);
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId, boolean ignoreMissingProfileConfig);
+
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId, EntityId entityId);
+
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId, String key);
+
+    boolean checkRateLimit(LimitedApi api, String rateLimitConfig, Object... keyParts);
+
+    void cleanUp(LimitedApi api, Object... keyParts);
+
+    void cleanUpAll(LimitedApi api, Object keyPart);
 
 }

@@ -23,14 +23,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.dao.util.limits.DefaultRateLimitService;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.exception.MissingProfileException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.FilterChain;
@@ -39,9 +37,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
@@ -52,27 +47,28 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
 
     @Autowired
     @Lazy
-    private TbTenantProfileCache tenantProfileCache;
-
-    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
-    private final ConcurrentMap<CustomerId, TbRateLimits> perCustomerLimits = new ConcurrentHashMap<>();
+    private DefaultRateLimitService rateLimitService;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
-            var profile = tenantProfileCache.get(user.getTenantId());
-            if (profile == null) {
+            boolean success;
+            try {
+                success = rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS, user.getTenantId(), false);
+            } catch (MissingProfileException e) {
                 log.debug("[{}] Failed to lookup tenant profile", user.getTenantId());
                 errorResponseHandler.handle(new BadCredentialsException("Failed to lookup tenant profile"), (HttpServletResponse) response);
                 return;
             }
-            var profileConfiguration = profile.getDefaultProfileConfiguration();
-            if (!checkRateLimits(user.getTenantId(), profileConfiguration.getTenantServerRestLimitsConfiguration(), perTenantLimits, response)) {
+            if (!success) {
+                rateLimitExceeded(EntityType.TENANT, response);
                 return;
             }
             if (user.isCustomerUser()) {
-                if (!checkRateLimits(user.getCustomerId(), profileConfiguration.getCustomerServerRestLimitsConfiguration(), perCustomerLimits, response)) {
+                success = rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS, user.getTenantId(), user.getCustomerId());
+                if (!success) {
+                    rateLimitExceeded(EntityType.CUSTOMER, response);
                     return;
                 }
             }
@@ -80,23 +76,8 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
         chain.doFilter(request, response);
     }
 
-    private <I extends EntityId> boolean checkRateLimits(I ownerId, String rateLimitConfig, Map<I, TbRateLimits> rateLimitsMap, ServletResponse response) {
-        if (StringUtils.isNotEmpty(rateLimitConfig)) {
-            TbRateLimits rateLimits = rateLimitsMap.get(ownerId);
-            if (rateLimits == null || !rateLimits.getConfiguration().equals(rateLimitConfig)) {
-                rateLimits = new TbRateLimits(rateLimitConfig);
-                rateLimitsMap.put(ownerId, rateLimits);
-            }
-
-            if (!rateLimits.tryConsume()) {
-                errorResponseHandler.handle(new TbRateLimitsException(ownerId.getEntityType()), (HttpServletResponse) response);
-                return false;
-            }
-        } else {
-            rateLimitsMap.remove(ownerId);
-        }
-
-        return true;
+    private void rateLimitExceeded(EntityType type, ServletResponse response) {
+        errorResponseHandler.handle(new TbRateLimitsException(type), (HttpServletResponse) response);
     }
 
     protected SecurityUser getCurrentUser() {

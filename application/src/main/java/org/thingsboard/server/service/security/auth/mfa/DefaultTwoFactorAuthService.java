@@ -29,8 +29,9 @@ import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettin
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFaProvider;
@@ -41,8 +42,6 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Service
 @RequiredArgsConstructor
@@ -52,14 +51,13 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     private final TwoFaConfigManager configManager;
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
+    private final RateLimitService rateLimitService;
     private final Map<TwoFaProviderType, TwoFaProvider<TwoFaProviderConfig, TwoFaAccountConfig>> providers = new EnumMap<>(TwoFaProviderType.class);
 
     private static final ThingsboardException ACCOUNT_NOT_CONFIGURED_ERROR = new ThingsboardException("2FA is not configured for account", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
     private static final ThingsboardException PROVIDER_NOT_CONFIGURED_ERROR = new ThingsboardException("2FA provider is not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
     private static final ThingsboardException PROVIDER_NOT_AVAILABLE_ERROR = new ThingsboardException("2FA provider is not available", ThingsboardErrorCode.GENERAL);
-
-    private final ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> verificationCodeSendingRateLimits = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> verificationCodeCheckingRateLimits = new ConcurrentHashMap<>();
+    private static final ThingsboardException TOO_MANY_REQUESTS_ERROR = new ThingsboardException("Too many requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
 
     @Override
     public boolean isTwoFaEnabled(TenantId tenantId, UserId userId) {
@@ -91,7 +89,9 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
             if (minVerificationCodeSendPeriod != null && minVerificationCodeSendPeriod > 4) {
                 rateLimit = "1:" + minVerificationCodeSendPeriod;
             }
-            checkRateLimits(user.getId(), accountConfig.getProviderType(), rateLimit, verificationCodeSendingRateLimits);
+            if (!rateLimitService.checkRateLimit(LimitedApi.TWO_FA_VERIFICATION_CODE_SENDING, rateLimit, user.getId(), accountConfig.getProviderType())) {
+                throw TOO_MANY_REQUESTS_ERROR;
+            }
         }
 
         TwoFaProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
@@ -116,7 +116,9 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         PlatformTwoFaSettings twoFaSettings = configManager.getPlatformTwoFaSettings(user.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {
-            checkRateLimits(user.getId(), accountConfig.getProviderType(), twoFaSettings.getVerificationCodeCheckRateLimit(), verificationCodeCheckingRateLimits);
+            if (!rateLimitService.checkRateLimit(LimitedApi.TWO_FA_VERIFICATION_CODE_CHECKING, twoFaSettings.getVerificationCodeCheckRateLimit(), user.getId(), accountConfig.getProviderType())) {
+                throw TOO_MANY_REQUESTS_ERROR;
+            }
         }
         TwoFaProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
@@ -131,36 +133,15 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
             try {
                 systemSecurityService.validateTwoFaVerification(user, verificationSuccess, twoFaSettings);
             } catch (LockedException e) {
-                verificationCodeCheckingRateLimits.remove(user.getId());
-                verificationCodeSendingRateLimits.remove(user.getId());
+                cleanUpRateLimits(user.getId());
                 throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.AUTHENTICATION);
             }
             if (verificationSuccess) {
-                verificationCodeCheckingRateLimits.remove(user.getId());
-                verificationCodeSendingRateLimits.remove(user.getId());
+                cleanUpRateLimits(user.getId());
             }
         }
         return verificationSuccess;
     }
-
-    private void checkRateLimits(UserId userId, TwoFaProviderType providerType, String rateLimitConfig,
-                                 ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> rateLimits) throws ThingsboardException {
-        if (StringUtils.isNotEmpty(rateLimitConfig)) {
-            ConcurrentMap<TwoFaProviderType, TbRateLimits> providersRateLimits = rateLimits.computeIfAbsent(userId, i -> new ConcurrentHashMap<>());
-
-            TbRateLimits rateLimit = providersRateLimits.get(providerType);
-            if (rateLimit == null || !rateLimit.getConfiguration().equals(rateLimitConfig)) {
-                rateLimit = new TbRateLimits(rateLimitConfig, true);
-                providersRateLimits.put(providerType, rateLimit);
-            }
-            if (!rateLimit.tryConsume()) {
-                throw new ThingsboardException("Too many requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
-            }
-        } else {
-            rateLimits.remove(userId);
-        }
-    }
-
 
     @Override
     public TwoFaAccountConfig generateNewAccountConfig(User user, TwoFaProviderType providerType) throws ThingsboardException {
@@ -178,6 +159,11 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     private TwoFaProvider<TwoFaProviderConfig, TwoFaAccountConfig> getTwoFaProvider(TwoFaProviderType providerType) throws ThingsboardException {
         return Optional.ofNullable(providers.get(providerType))
                 .orElseThrow(() -> PROVIDER_NOT_AVAILABLE_ERROR);
+    }
+
+    private void cleanUpRateLimits(UserId userId) {
+        rateLimitService.cleanUpAll(LimitedApi.TWO_FA_VERIFICATION_CODE_SENDING, userId);
+        rateLimitService.cleanUpAll(LimitedApi.TWO_FA_VERIFICATION_CODE_CHECKING, userId);
     }
 
     @Autowired

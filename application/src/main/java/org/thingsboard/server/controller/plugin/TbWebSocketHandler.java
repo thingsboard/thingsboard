@@ -27,15 +27,15 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.telemetry.SessionEvent;
@@ -74,13 +74,15 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
 
     private ConcurrentMap<String, TelemetryWebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, TbRateLimits> perSessionUpdateLimits = new ConcurrentHashMap<>();
 
     private ConcurrentMap<TenantId, Set<String>> tenantSessionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<CustomerId, Set<String>> customerSessionsMap = new ConcurrentHashMap<>();
@@ -316,22 +318,18 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
             if (sessionMd != null) {
-                var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
-                if (StringUtils.isNotEmpty(tenantProfileConfiguration.getWsUpdatesPerSessionRateLimit())) {
-                    TbRateLimits rateLimits = perSessionUpdateLimits.computeIfAbsent(sessionRef.getSessionId(), sid -> new TbRateLimits(tenantProfileConfiguration.getWsUpdatesPerSessionRateLimit()));
-                    if (!rateLimits.tryConsume()) {
-                        if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
-                            log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
-                                    , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
-                            sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
-                        }
-                        return;
-                    } else {
-                        log.debug("[{}][{}][{}] Session is no longer blacklisted.", sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
-                        blacklistedSessions.remove(externalId);
+                TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
+                boolean success = rateLimitService.checkRateLimit(LimitedApi.WS_UPDATES_PER_SESSION, tenantId, sessionRef.getSessionId());
+                if (!success) {
+                    if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
+                        log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
+                                , tenantId, sessionRef.getSecurityCtx().getId(), externalId);
+                        sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
                     }
+                    return;
                 } else {
-                    perSessionUpdateLimits.remove(sessionRef.getSessionId());
+                    log.debug("[{}][{}][{}] Session is no longer blacklisted.", tenantId, sessionRef.getSecurityCtx().getId(), externalId);
+                    blacklistedSessions.remove(externalId);
                 }
                 sessionMd.sendMsg(msg);
             } else {
@@ -447,7 +445,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
 
         String sessionId = session.getId();
-        perSessionUpdateLimits.remove(sessionRef.getSessionId());
+        rateLimitService.cleanUp(LimitedApi.WS_UPDATES_PER_SESSION, sessionRef.getSessionId());
         blacklistedSessions.remove(sessionRef.getSessionId());
         if (tenantProfileConfiguration.getMaxWsSessionsPerTenant() > 0) {
             Set<String> tenantSessions = tenantSessionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
