@@ -65,18 +65,20 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--ignore-certificate-errors");
-        if (HEADLESS) {
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--headless");
-        }
 
         // https://sites.google.com/a/chromium.org/chromedriver/capabilities#TOC-Using-a-Chrome-executable-in-a-non-standard-location
         var chromeBinary = System.getProperty("chromeBinary");
         if (StringUtils.isNotBlank(chromeBinary)) {
             options.setBinary(chromeBinary);
         }
+
+        if (HEADLESS) {
+            options.addArguments("--no-sandbox"); //have to be a very first option to not face DevToolsActivePort issue
+            options.addArguments("--headless");
+            options.addArguments("--disable-dev-shm-usage");
+        }
+
+        options.addArguments("--ignore-certificate-errors");
 
         driver = new ChromeDriver(options);
         driver.manage().window().setSize(dimension);
