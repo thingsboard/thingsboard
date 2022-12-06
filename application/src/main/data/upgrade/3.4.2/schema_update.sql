@@ -17,10 +17,10 @@
 
 -- ALARM ASSIGN TO USER START
 
-ALTER TABLE alarm ADD COLUMN assign_ts BIGINT;
-ALTER TABLE alarm ADD COLUMN assignee_id UUID;
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assign_ts BIGINT;
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assignee_id UUID;
 
-ALTER TABLE entity_alarm ADD COLUMN assignee_id UUID;
+ALTER TABLE entity_alarm ADD COLUMN IF NOT EXISTS assignee_id UUID;
 
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_assignee_id ON entity_alarm(assignee_id);
 
