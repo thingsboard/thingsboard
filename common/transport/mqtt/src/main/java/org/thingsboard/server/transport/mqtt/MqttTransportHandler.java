@@ -947,7 +947,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case 5:
                 return MqttVersion.MQTT_5;
             default:
-            case 4:
                 return MqttVersion.MQTT_3_1_1;
         }
     }

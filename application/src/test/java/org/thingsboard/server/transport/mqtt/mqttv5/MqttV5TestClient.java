@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.concurrent.TimeUnit;
 
-public class MqttV5TestClient {
+public class MqttV5TestClient { // We should copy part of MqttV3TestClient, due to different package names in import
 
     private static final String MQTT_URL = "tcp://localhost:1883";
     private static final int TIMEOUT = 30; // seconds

@@ -79,8 +79,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     @Setter
     private MqttVersion mqttVersion;
 
-
-
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;

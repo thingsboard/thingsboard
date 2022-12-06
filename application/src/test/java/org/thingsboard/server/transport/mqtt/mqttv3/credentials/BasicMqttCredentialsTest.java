@@ -121,6 +121,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         MqttTestClient mqttTestClient = new MqttTestClient(CLIENT_ID);
         try {
             mqttTestClient.connectAndWait(USER_NAME3, "WRONG PASSWORD");
+            Assert.fail(); // This should not happens, because we have a wrong password
         } catch (MqttException e) {
             Assert.assertEquals(4, e.getReasonCode()); // 4 - Reason code for bad username or password in MQTT v3
         }
