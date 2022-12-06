@@ -76,6 +76,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             options.addArguments("--no-sandbox"); //have to be a very first option to not face DevToolsActivePort issue
             options.addArguments("--headless");
             options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--remote-debugging-port=9222");
+            options.setHeadless(true);
         }
 
         options.addArguments("--ignore-certificate-errors");
