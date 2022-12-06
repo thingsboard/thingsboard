@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -63,18 +64,21 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     @BeforeMethod
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
-        if (HEADLESS == true) {
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--ignore-certificate-errors");
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--ignore-certificate-errors");
+        if (HEADLESS) {
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--headless");
-            driver = new ChromeDriver(options);
-        } else {
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--ignore-certificate-errors");
-            driver = new ChromeDriver(options);
         }
+
+        // https://sites.google.com/a/chromium.org/chromedriver/capabilities#TOC-Using-a-Chrome-executable-in-a-non-standard-location
+        var chromeBinary = System.getProperty("chromeBinary");
+        if (StringUtils.isNotBlank(chromeBinary)) {
+            options.setBinary(chromeBinary);
+        }
+
+        driver = new ChromeDriver(options);
         driver.manage().window().setSize(dimension);
 
     }
