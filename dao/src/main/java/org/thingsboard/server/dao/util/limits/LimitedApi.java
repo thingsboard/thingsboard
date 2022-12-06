@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.util.limits;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 
@@ -49,9 +50,17 @@ public enum LimitedApi {
     TWO_FA_VERIFICATION_CODE_CHECKING;
 
     private final Map<LimitLevel, Function<DefaultTenantProfileConfiguration, String>> extractors;
+    @Getter
+    private final boolean refillRateLimitIntervally;
+
+    LimitedApi(Map<LimitLevel, Function<DefaultTenantProfileConfiguration, String>> extractors) {
+        this.extractors = extractors;
+        this.refillRateLimitIntervally = false;
+    }
 
     LimitedApi() {
         this.extractors = Collections.emptyMap();
+        this.refillRateLimitIntervally = true;
     }
 
     String getLimitConfig(DefaultTenantProfileConfiguration profileConfiguration, LimitLevel limitLevel) {

@@ -92,7 +92,7 @@ public class DefaultRateLimitService implements RateLimitService {
 
         TbRateLimits rateLimit = rateLimits.get(key);
         if (rateLimit == null || !rateLimit.getConfiguration().equals(rateLimitConfig)) {
-            rateLimit = new TbRateLimits(rateLimitConfig);
+            rateLimit = new TbRateLimits(rateLimitConfig, api.isRefillRateLimitIntervally());
             rateLimits.put(key, rateLimit);
         }
         return rateLimit.tryConsume();
