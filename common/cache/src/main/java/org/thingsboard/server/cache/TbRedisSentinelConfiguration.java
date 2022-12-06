@@ -22,13 +22,13 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.sentinel.master:}")
     private String master;
 
-    @Value("${redis.cluster.nodes:}")
-    private String nodes;
+    @Value("${redis.sentinel.sentinels:}")
+    private String sentinels;
 
     @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
 
-    @Value("${redis.database:}")
+    @Value("${redis.database:0}")
     private Integer database;
 
     @Value("${redis.password:}")
@@ -36,7 +36,7 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
 
     public JedisConnectionFactory loadFactory() {
         RedisSentinelConfiguration redisSentinelConfiguration = new RedisSentinelConfiguration();
-        redisSentinelConfiguration.setSentinels(getNodes(nodes));
+        redisSentinelConfiguration.setSentinels(getNodes(sentinels));
         redisSentinelConfiguration.setMaster(this.master);
         redisSentinelConfiguration.setDatabase(this.database);
         redisSentinelConfiguration.setSentinelPassword(sentinelPassword);
