@@ -75,6 +75,7 @@ logger:
 
 script:
   use_sandbox: "SCRIPT_USE_SANDBOX"
+  memory_usage_trace_frequency: "MEMORY_USAGE_TRACE_FREQUENCY"
   stat_print_frequency: "SCRIPT_STAT_PRINT_FREQUENCY"
   script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
   max_active_scripts: "MAX_ACTIVE_SCRIPTS"

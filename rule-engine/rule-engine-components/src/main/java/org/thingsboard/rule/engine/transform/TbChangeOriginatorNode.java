@@ -57,7 +57,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     protected static final String TENANT_SOURCE = "TENANT";
     protected static final String RELATED_SOURCE = "RELATED";
     protected static final String ALARM_ORIGINATOR_SOURCE = "ALARM_ORIGINATOR";
-    protected static final String ENTITY_SOURCE = "ENTITY_SOURCE";
+    protected static final String ENTITY_SOURCE = "ENTITY";
 
     private TbChangeOriginatorNodeConfiguration config;
 
@@ -127,6 +127,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                 log.error("EntityNamePattern not specified for type [{}]", conf.getEntityType());
                 throw new IllegalArgumentException("Wrong config for [{}] in TbChangeOriginatorNode!" + ENTITY_SOURCE);
             }
+            EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }
 
     }

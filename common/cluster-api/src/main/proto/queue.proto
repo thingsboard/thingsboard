@@ -600,6 +600,7 @@ message TbAttributeDeleteProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated string keys = 7;
+  bool notifyDevice = 8;
 }
 
 message TbTimeSeriesDeleteProto {

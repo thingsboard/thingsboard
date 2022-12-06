@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-version: '2.2'
+version: '3.0'
 
 services:
   cassandra:
@@ -23,5 +23,5 @@ services:
 
 volumes:
   cassandra-volume:
-    external: true
-    name: ${CASSANDRA_DATA_VOLUME}
+    external:
+      name: ${CASSANDRA_DATA_VOLUME}

@@ -328,6 +328,11 @@ export interface FcRuleEdge extends FcEdge {
   labels?: string[];
 }
 
+export enum ScriptLanguage {
+  JS = 'JS',
+  TBEL = 'TBEL'
+}
+
 export interface TestScriptInputParams {
   script: string;
   scriptType: string;

@@ -146,6 +146,20 @@ public class StringUtils {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }
 
+    public static boolean containedByAny(String searchString, String... strings) {
+        if (searchString == null) return false;
+        for (String string : strings) {
+            if (string != null && string.contains(searchString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean contains(final CharSequence seq, final CharSequence searchSeq) {
+        return org.apache.commons.lang3.StringUtils.contains(seq, searchSeq);
+    }
+
     public static String randomNumeric(int length) {
         return RandomStringUtils.randomNumeric(length);
     }

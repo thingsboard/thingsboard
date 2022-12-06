@@ -39,7 +39,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -87,8 +87,8 @@ public class TwoFactorAuthController extends BaseController {
                     "and Too Many Requests error if rate limits are exceeded.")
     @PostMapping("/verification/check")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam TwoFaProviderType providerType,
-                                                   @RequestParam String verificationCode, HttpServletRequest servletRequest) throws Exception {
+    public JwtPair checkTwoFaVerificationCode(@RequestParam TwoFaProviderType providerType,
+                                              @RequestParam String verificationCode, HttpServletRequest servletRequest) throws Exception {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, providerType, verificationCode, true);
         if (verificationSuccess) {

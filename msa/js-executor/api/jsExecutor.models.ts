@@ -16,8 +16,9 @@
 
 
 export interface TbMessage {
-    scriptIdMSB: string;
-    scriptIdLSB: string;
+    scriptIdMSB: string; // deprecated
+    scriptIdLSB: string; // deprecated
+    scriptHash: string;
 }
 
 export interface RemoteJsRequest {
@@ -55,7 +56,7 @@ export interface JsCompileResponse extends TbMessage {
 
 export interface JsInvokeResponse {
     success: boolean;
-    result: string;
+    result?: string;
     errorCode?: number;
     errorDetails?: string;
 }

@@ -43,11 +43,11 @@ import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -77,7 +77,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final AttributesService attrService;
     private final TimeseriesService tsService;
     private final TbEntityViewService tbEntityViewService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
@@ -87,7 +87,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService,
-                                               TbApiUsageClient apiUsageClient,
+                                               TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.attrService = attrService;
@@ -271,14 +271,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        deleteAndNotifyInternal(tenantId, entityId, scope, keys, callback);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, false, callback);
     }
 
     @Override
-    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addVoidCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice));
     }
 
     @Override
@@ -382,16 +388,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
+                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }
         } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }

@@ -33,11 +33,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.RefreshAuthenticationToken;
+import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -66,7 +66,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
         } else {
             securityUser = authenticateByPublicId(principal.getValue());
         }
-
+        securityUser.setSessionId(unsafeUser.getSessionId());
         if (tokenOutdatingService.isOutdated(rawAccessToken, securityUser.getId())) {
             throw new CredentialsExpiredException("Token is outdated");
         }

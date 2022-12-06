@@ -26,6 +26,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.DatabaseEntitiesUpgradeService;
 import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
+import org.thingsboard.server.service.install.NoSqlKeyspaceService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
@@ -50,6 +51,9 @@ public class ThingsboardInstallService {
 
     @Autowired
     private EntityDatabaseSchemaService entityDatabaseSchemaService;
+
+    @Autowired(required = false)
+    private NoSqlKeyspaceService noSqlKeyspaceService;
 
     @Autowired
     private TsDatabaseSchemaService tsDatabaseSchemaService;
@@ -252,6 +256,10 @@ public class ThingsboardInstallService {
 
                 log.info("Installing DataBase schema for timeseries...");
 
+                if (noSqlKeyspaceService != null) {
+                    noSqlKeyspaceService.createDatabaseSchema();
+                }
+
                 tsDatabaseSchemaService.createDatabaseSchema();
 
                 if (tsLatestDatabaseSchemaService != null) {
@@ -265,6 +273,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createSysAdmin();
                 systemDataLoaderService.createDefaultTenantProfiles();
                 systemDataLoaderService.createAdminSettings();
+                systemDataLoaderService.createRandomJwtSettings();
                 systemDataLoaderService.loadSystemWidgets();
                 systemDataLoaderService.createOAuth2Templates();
                 systemDataLoaderService.createQueues();

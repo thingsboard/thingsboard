@@ -170,8 +170,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   public layoutSettings: FormGroup;
   public advancedSettings: FormGroup;
   public actionsSettings: FormGroup;
-
-  public dataError = '';
+  public openExtensionPanel = true;
+  public timeseriesKeyError = false;
 
   public datasourceError: string[] = [];
 
@@ -255,7 +255,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]],
-      mobileHide: [false]
+      mobileHide: [false],
+      desktopHide: [false]
     });
     this.actionsSettings = this.fb.group({
       actionsData: [null, []]
@@ -554,7 +555,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             {
               mobileOrder: layout.mobileOrder,
               mobileHeight: layout.mobileHeight,
-              mobileHide: layout.mobileHide
+              mobileHide: layout.mobileHide,
+              desktopHide: layout.desktopHide
             },
             {emitEvent: false}
           );
@@ -563,7 +565,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             {
               mobileOrder: null,
               mobileHeight: null,
-              mobileHide: false
+              mobileHide: false,
+              desktopHide: false
             },
             {emitEvent: false}
           );
@@ -939,7 +942,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public validate(c: FormControl) {
-    this.dataError = '';
+    this.timeseriesKeyError = false;
     this.datasourceError = [];
     if (!this.dataSettings.valid) {
       return {
@@ -994,7 +997,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
           let valid = config.datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
           if (!valid) {
-            this.dataError = 'At least one timeseries data key should be specified';
+            this.timeseriesKeyError = true;
             return {
               timeseriesDataKeys: {
                 valid: false
@@ -1022,4 +1025,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return null;
   }
 
+  public extensionPanelIsOpen(value) {
+    this.openExtensionPanel = value;
+  }
 }
