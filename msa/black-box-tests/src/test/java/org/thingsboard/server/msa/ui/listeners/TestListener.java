@@ -29,13 +29,11 @@ import static org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest.captureS
 @Slf4j
 public class TestListener implements ITestListener {
 
-    WebDriver driver;
-
     public void onTestSuccess(ITestResult tr) {
         String str = "Test " + tr.getMethod().getMethodName() + " success";
         log.info("*----------------------* " + str + " *----------------------*");
         if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
-            driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
+            WebDriver driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
             captureScreen(driver, "success");
         }
     }
@@ -46,7 +44,7 @@ public class TestListener implements ITestListener {
         log.info("*----------------------* " + str + " *----------------------*");
         log.info("*----------------------* " + str1 + " *----------------------*");
         if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
-            driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
+            WebDriver driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
             captureScreen(driver, "failure");
         }
     }
@@ -57,7 +55,7 @@ public class TestListener implements ITestListener {
         log.info("*----------------------* " + str + " *----------------------*");
         log.info("*----------------------* " + str1 + " *----------------------*");
         if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
-            driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
+            WebDriver driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
             captureScreen(driver, "skipped");
         }
     }
