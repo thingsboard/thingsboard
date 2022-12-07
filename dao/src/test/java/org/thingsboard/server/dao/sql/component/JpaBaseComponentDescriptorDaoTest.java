@@ -57,7 +57,7 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
             List<ComponentDescriptor> byTypeAndPageLink = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
                     componentType, new PageLink(20)).getData();
             for (ComponentDescriptor descriptor : byTypeAndPageLink) {
-                componentDescriptorDao.deleteById(AbstractServiceTest.SYSTEM_TENANT_ID, descriptor.getId());
+                componentDescriptorDao.removeById(AbstractServiceTest.SYSTEM_TENANT_ID, descriptor.getId().getId());
             }
         }
     }

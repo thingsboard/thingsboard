@@ -41,8 +41,6 @@ public interface ComponentDescriptorDao extends Dao<ComponentDescriptor> {
 
     PageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, PageLink pageLink);
 
-    void deleteById(TenantId tenantId, ComponentDescriptorId componentId);
-
     void deleteByClazz(TenantId tenantId, String clazz);
 
 }

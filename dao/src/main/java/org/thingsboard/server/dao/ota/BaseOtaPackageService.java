@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -40,7 +41,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -186,6 +186,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
+    @Transactional
     public void deleteOtaPackage(TenantId tenantId, OtaPackageId otaPackageId) {
         log.trace("Executing deleteOtaPackage [{}]", otaPackageId);
         validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
