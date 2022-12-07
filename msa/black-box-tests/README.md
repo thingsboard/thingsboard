@@ -36,11 +36,7 @@ As result, in REPOSITORY column, next images should be present:
 
 - To run ui smoke tests in the [msa/black-box-tests](../black-box-tests) directory specifying suite name: 
 
-        mvn clean install -DblackBoxTests.skip=false -Dsuite=uiTests 
-
-  Optionally you can specify a custom Chrome binary location that might be useful for your CI/CD tool 
-
-        mvn clean install -DblackBoxTests.skip=false -Dsuite=uiTests -DchromeBinary=/tmp/google-chrome/opt/google/chrome/chrome
+        mvn clean install -DblackBoxTests.skip=false -Dsuite=uiTests
 
 - To run all tests in the [msa/black-box-tests](../black-box-tests) directory specifying suite name:
 
