@@ -16,7 +16,6 @@
 package org.thingsboard.server.msa.ui.listeners;
 
 
-import io.qameta.allure.Allure;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.testng.ITestContext;
@@ -32,7 +31,7 @@ public class TestListener implements ITestListener {
     public void onTestSuccess(ITestResult tr) {
         String str = "Test " + tr.getMethod().getMethodName() + " success";
         log.info("*----------------------* " + str + " *----------------------*");
-        if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
+        if (!((AbstractDriverBaseTest) tr.getInstance()).isHeadless()) {
             WebDriver driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
             captureScreen(driver, "success");
         }
@@ -43,7 +42,7 @@ public class TestListener implements ITestListener {
         String str1 = "Failed because of - " + tr.getThrowable();
         log.info("*----------------------* " + str + " *----------------------*");
         log.info("*----------------------* " + str1 + " *----------------------*");
-        if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
+        if (!((AbstractDriverBaseTest) tr.getInstance()).isHeadless()) {
             WebDriver driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
             captureScreen(driver, "failure");
         }
@@ -54,7 +53,7 @@ public class TestListener implements ITestListener {
         String str1 = "Skipped because of - " + tr.getThrowable();
         log.info("*----------------------* " + str + " *----------------------*");
         log.info("*----------------------* " + str1 + " *----------------------*");
-        if (!((AbstractDriverBaseTest) tr.getInstance()).getHeadless()) {
+        if (!((AbstractDriverBaseTest) tr.getInstance()).isHeadless()) {
             WebDriver driver = ((AbstractDriverBaseTest) tr.getInstance()).getDriver();
             captureScreen(driver, "skipped");
         }

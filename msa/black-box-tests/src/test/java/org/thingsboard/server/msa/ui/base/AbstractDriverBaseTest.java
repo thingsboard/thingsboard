@@ -16,7 +16,6 @@
 package org.thingsboard.server.msa.ui.base;
 
 import com.google.common.io.Files;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import io.qameta.allure.Attachment;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -97,7 +96,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         return driver;
     }
 
-    public boolean getHeadless() {
+    public boolean isHeadless() {
         return HEADLESS;
     }
 
