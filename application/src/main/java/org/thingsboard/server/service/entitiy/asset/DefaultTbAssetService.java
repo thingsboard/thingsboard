@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -63,6 +64,8 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             autoCommit(user, savedAsset.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAsset.getId(), savedAsset,
                     asset.getCustomerId(), actionType, user);
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedAsset.getId(),
+                    asset.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedAsset;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), asset, actionType, user, e);
@@ -79,7 +82,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             assetService.deleteAsset(tenantId, assetId);
             notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(),
                     ActionType.DELETED, relatedEdgeIds, user, assetId.toString());
-
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
             return removeAlarmsByEntityId(tenantId, assetId);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), ActionType.DELETED, user, e,
