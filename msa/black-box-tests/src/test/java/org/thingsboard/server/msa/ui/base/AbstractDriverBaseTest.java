@@ -26,8 +26,9 @@ import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.LocalFileDetector;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
@@ -35,13 +36,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ui.listeners.TestListener;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 import java.util.stream.Collectors;
 
@@ -53,35 +55,26 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private final Dimension dimension = new Dimension(WIDTH, HEIGHT);
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
-    private static final boolean HEADLESS = true;
+    private static final boolean HEADLESS = false;
     protected static final PageLink pageLink = new PageLink(10);
 
     @BeforeSuite
     public void beforeUISuite() {
-        WebDriverManager.chromedriver().setup();
     }
 
     @BeforeMethod
-    public void openBrowser() {
+    public void openBrowser() throws MalformedURLException {
         log.info("*----------------------* Setup driver *----------------------*");
         ChromeOptions options = new ChromeOptions();
+        options.setHeadless(HEADLESS);
+        options.setAcceptInsecureCerts(true);
 
-        // https://sites.google.com/a/chromium.org/chromedriver/capabilities#TOC-Using-a-Chrome-executable-in-a-non-standard-location
-        var chromeBinary = System.getProperty("chromeBinary");
-        if (StringUtils.isNotBlank(chromeBinary)) {
-            options.setBinary(chromeBinary);
-        }
+        // requirement:
+        // docker run --name=chrome --rm --network=host -p 4444:4444 -p 7900:7900 --shm-size="2g" -e SE_NODE_MAX_SESSIONS=8 -e SE_NODE_OVERRIDE_MAX_SESSIONS=true -e SE_NODE_SESSION_TIMEOUT=90 -e SE_SCREEN_WIDTH=1920 -e SE_SCREEN_HEIGHT=1080 -e SE_SCREEN_DEPTH=24 -e SE_SCREEN_DPI=74 selenium/standalone-chrome
+        RemoteWebDriver remoteWebDriver = new RemoteWebDriver(new URL("http://localhost:4444"), options);
+        remoteWebDriver.setFileDetector(new LocalFileDetector());
 
-        if (HEADLESS) {
-            options.addArguments("--no-sandbox"); //have to be a very first option to not face DevToolsActivePort issue
-            options.addArguments("--headless");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--window-size=1920x1080");
-        }
-
-        options.addArguments("--ignore-certificate-errors");
-
-        driver = new ChromeDriver(options);
+        driver = remoteWebDriver;
         driver.manage().window().setSize(dimension);
 
     }
