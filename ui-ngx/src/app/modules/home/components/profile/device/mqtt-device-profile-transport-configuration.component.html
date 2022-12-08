@@ -16,14 +16,14 @@
 
 -->
 <form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
-  <div>
-    <mat-checkbox formControlName="sparkPlugIs">
+  <div style="padding-top: 16px;">
+    <mat-checkbox formControlName="sparkPlug" mat-bo>
       {{ 'device-profile.mqtt-device-topic-filters-spark-plug' | translate }}
     </mat-checkbox>
-    <div  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugIs').value"
+    <div  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value"
       class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
   </div>
-  <div *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugIs').value">
+  <div *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
       <div fxLayoutGap="8px" fxLayout="column">

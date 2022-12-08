@@ -92,7 +92,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        sparkPlugIs: [false, Validators.required],
+        sparkPlug: [false, Validators.required],
         sendAckOnValidationException: [false, Validators.required],
         transportPayloadTypeConfiguration: this.fb.group({
           transportPayloadType: [TransportPayloadType.JSON, Validators.required],
@@ -161,6 +161,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.value;
       configuration.type = DeviceTransportType.MQTT;
     }
+    console.log(configuration);
     this.propagateChange(configuration);
   }
 
