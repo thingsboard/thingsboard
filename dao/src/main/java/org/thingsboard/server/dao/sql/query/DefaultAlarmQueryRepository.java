@@ -68,6 +68,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("originatorId", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originatorType", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
         alarmFieldColumnMap.put("originator", "originator_name");
+        alarmFieldColumnMap.put("originatorLabel", ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
     }
 
     private static final String SELECT_ORIGINATOR_NAME = " COALESCE(CASE" +
@@ -86,6 +87,13 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " WHEN a.originator_type = " + EntityType.ENTITY_VIEW.ordinal() +
             " THEN (select name from entity_view where id = a.originator_id)" +
             " END, 'Deleted') as originator_name";
+
+    private static final String SELECT_ORIGINATOR_LABEL = " COALESCE(CASE" +
+            " WHEN a.originator_type = " + EntityType.ASSET.ordinal() +
+            " THEN (select label from asset where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.DEVICE.ordinal() +
+            " THEN (select name from device where id = a.originator_id)" +
+            " END, '') as originator_label";
 
     private static final String FIELDS_SELECTION = "select a.id as id," +
             " a.created_time as created_time," +

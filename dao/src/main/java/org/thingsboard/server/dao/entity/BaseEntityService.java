@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -129,7 +130,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityNameAsync [{}]", entityId);
-        ListenableFuture<String> entityName;
+        return Futures.transform(fetchEntityHasNameAsync(tenantId, entityId), (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchEntityHasNameAsync(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchEntityHasNamelAsync [{}]", entityId);
         ListenableFuture<? extends HasName> hasName;
         switch (entityId.getEntityType()) {
             case ASSET:
@@ -171,8 +177,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             default:
                 throw new IllegalStateException("Not Implemented!");
         }
-        entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
-        return entityName;
+        //entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
+        return (ListenableFuture<? extends HasLabel>) hasName;
     }
 
     @Override

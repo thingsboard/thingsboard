@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.HasLabel;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -283,10 +285,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 a -> {
                     AlarmInfo alarmInfo = new AlarmInfo(a);
                     return Futures.transform(
-                            entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                                alarmInfo.setOriginatorName(originatorName);
-                                return alarmInfo;
-                            }, MoreExecutors.directExecutor());
+                            entityService.fetchEntityHasNameAsync(tenantId, alarmInfo.getOriginator()), originatorHasName ->
+                                updateAlarmInfo(alarmInfo, originatorHasName),
+                            MoreExecutors.directExecutor());
                 }, MoreExecutors.directExecutor());
     }
 
@@ -312,18 +313,26 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
         for (AlarmInfo alarmInfo : alarms.getData()) {
             alarmFutures.add(Futures.transform(
-                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                        if (originatorName == null) {
-                            originatorName = "Deleted";
-                        }
-                        alarmInfo.setOriginatorName(originatorName);
-                        return alarmInfo;
-                    }, MoreExecutors.directExecutor()
+                    entityService.fetchEntityHasNameAsync(tenantId, alarmInfo.getOriginator()), originatorHasName ->
+                            updateAlarmInfo(alarmInfo, originatorHasName),
+                    MoreExecutors.directExecutor()
             ));
         }
         return Futures.transform(Futures.successfulAsList(alarmFutures),
                 alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
                         alarms.hasNext()), MoreExecutors.directExecutor());
+    }
+
+    private AlarmInfo updateAlarmInfo(AlarmInfo alarmInfo, HasName hasName) {
+        if (hasName != null) {
+            String originatorName = hasName.getName();
+            alarmInfo.setOriginatorName((originatorName != null ? originatorName : "Deleted"));
+
+            if (hasName instanceof HasLabel) {
+                alarmInfo.setOriginatorLabel(((HasLabel) hasName).getLabel());
+            }
+        }
+        return alarmInfo;
     }
 
     @Override

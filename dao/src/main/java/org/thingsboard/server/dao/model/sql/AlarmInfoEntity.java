@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
 
     private String originatorName;
+    private String originatorLabel;
 
     public AlarmInfoEntity() {
         super();
@@ -35,6 +36,6 @@ public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
 
     @Override
     public AlarmInfo toData() {
-        return new AlarmInfo(super.toAlarm(), this.originatorName);
+        return new AlarmInfo(super.toAlarm(), this.originatorName, this.originatorLabel);
     }
 }

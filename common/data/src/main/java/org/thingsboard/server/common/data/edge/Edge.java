@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
@@ -35,7 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @Setter
-public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements HasName, HasTenantId, HasCustomerId {
+public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements HasName, HasLabel, HasTenantId, HasCustomerId {
 
     private static final long serialVersionUID = 4934987555236873728L;
 

@@ -25,6 +25,8 @@ public class AlarmInfo extends Alarm {
 
     @ApiModelProperty(position = 19, value = "Alarm originator name", example = "Thermostat")
     private String originatorName;
+    @ApiModelProperty(position = 20, value = "Alarm originator label", example = "Label")
+    private String originatorLabel;
 
     public AlarmInfo() {
         super();
@@ -34,9 +36,10 @@ public class AlarmInfo extends Alarm {
         super(alarm);
     }
 
-    public AlarmInfo(Alarm alarm, String originatorName) {
+    public AlarmInfo(Alarm alarm, String originatorName, String originatorLabel) {
         super(alarm);
         this.originatorName = originatorName;
+        this.originatorLabel = originatorLabel;
     }
 
     public String getOriginatorName() {
@@ -45,6 +48,14 @@ public class AlarmInfo extends Alarm {
 
     public void setOriginatorName(String originatorName) {
         this.originatorName = originatorName;
+    }
+
+    public String getOriginatorLabel() {
+        return originatorLabel;
+    }
+
+    public void setOriginatorLabel(String originatorLabel) {
+        this.originatorLabel = originatorLabel;
     }
 
     @Override
