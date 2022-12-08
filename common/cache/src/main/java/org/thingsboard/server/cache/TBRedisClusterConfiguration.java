@@ -45,15 +45,11 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.password:}")
     private String password;
 
-    @Value("${redis.username:}")
-    private String username;
-
     public JedisConnectionFactory loadFactory() {
         RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration();
         clusterConfiguration.setClusterNodes(getNodes(clusterNodes));
         clusterConfiguration.setMaxRedirects(maxRedirects);
         clusterConfiguration.setPassword(password);
-        clusterConfiguration.setUsername(username);
         if (useDefaultPoolConfig) {
             return new JedisConnectionFactory(clusterConfiguration);
         } else {

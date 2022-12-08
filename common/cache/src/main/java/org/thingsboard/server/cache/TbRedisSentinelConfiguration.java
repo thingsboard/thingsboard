@@ -13,34 +13,26 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "sentinel")
 public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
 
-    @Value("${redis.username:}")
-    private String username;
-
     @Value("${redis.password:}")
     private String password;
 
-    @Value("${redis.sentinel.master:}")
+    @Value("${redis.cluster.sentinel.master:}")
     private String master;
 
-    @Value("${redis.sentinel.sentinels:}")
+    @Value("${redis.cluster.sentinel.sentinels:}")
     private String sentinels;
 
     @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
 
-    @Value("${redis.database:0}")
+    @Value("${redis.db:}")
     private Integer database;
-
-    @Value("${redis.password:}")
-    private String sentinelPassword;
 
     public JedisConnectionFactory loadFactory() {
         RedisSentinelConfiguration redisSentinelConfiguration = new RedisSentinelConfiguration();
         redisSentinelConfiguration.setSentinels(getNodes(sentinels));
         redisSentinelConfiguration.setMaster(this.master);
         redisSentinelConfiguration.setDatabase(this.database);
-        redisSentinelConfiguration.setSentinelPassword(sentinelPassword);
-        redisSentinelConfiguration.setUsername(username);
         redisSentinelConfiguration.setPassword(password);
 
         if (useDefaultPoolConfig) {
