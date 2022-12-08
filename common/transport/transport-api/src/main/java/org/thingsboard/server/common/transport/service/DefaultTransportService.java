@@ -1018,8 +1018,8 @@ public class DefaultTransportService implements TransportService {
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
                         .setDeviceType(device.getType()).build();
-                if (device.getAdditionalInfo().has("gateway")
-                        && device.getAdditionalInfo().get("gateway").asBoolean()
+                if (device.getAdditionalInfo().has(DataConstants.GATEWAY_OPTION)
+                        && device.getAdditionalInfo().get(DataConstants.GATEWAY_OPTION).asBoolean()
                         && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
                         && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
                     md.setOverwriteActivityTime(device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean());

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 @AllArgsConstructor
 public class ProvisionRequest {
     private String deviceName;
+    private boolean gateway;
     private DeviceCredentialsType credentialsType;
     private ProvisionDeviceCredentialsData credentialsData;
     private ProvisionDeviceProfileCredentials credentials;

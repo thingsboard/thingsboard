@@ -425,6 +425,7 @@ message ProvisionDeviceRequestMsg {
   CredentialsType credentialsType = 2;
   ProvisionDeviceCredentialsMsg provisionDeviceCredentialsMsg = 3;
   CredentialsDataProto credentialsDataProto = 4;
+  optional bool gateway = 5;
 }
 
 message ProvisionDeviceCredentialsMsg {

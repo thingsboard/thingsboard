@@ -351,6 +351,7 @@ public class DefaultTransportApiService implements TransportApiService {
             provisionResponseFuture = Futures.immediateFuture(deviceProvisionService.provisionDevice(
                     new ProvisionRequest(
                             requestMsg.getDeviceName(),
+                            requestMsg.getGateway(),
                             requestMsg.getCredentialsType() != null ? DeviceCredentialsType.valueOf(requestMsg.getCredentialsType().name()) : null,
                             new ProvisionDeviceCredentialsData(requestMsg.getCredentialsDataProto().getValidateDeviceTokenRequestMsg().getToken(),
                                     requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getClientId(),

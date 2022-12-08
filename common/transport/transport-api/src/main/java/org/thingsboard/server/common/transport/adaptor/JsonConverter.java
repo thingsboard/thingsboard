@@ -615,6 +615,7 @@ public class JsonConverter {
     private static TransportProtos.ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return TransportProtos.ProvisionDeviceRequestMsg.newBuilder()
                 .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, false))
+                .setGateway(getBooleanValue(jo, DataConstants.GATEWAY_OPTION, false, false))
                 .setCredentialsType(jo.get(DataConstants.CREDENTIALS_TYPE) != null ? TransportProtos.CredentialsType.valueOf(getStrValue(jo, DataConstants.CREDENTIALS_TYPE, false)) : CredentialsType.ACCESS_TOKEN)
                 .setCredentialsDataProto(TransportProtos.CredentialsDataProto.newBuilder()
                         .setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken(getStrValue(jo, DataConstants.TOKEN, false)).build())
@@ -648,6 +649,17 @@ public class JsonConverter {
                 throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
             }
             return "";
+        }
+    }
+
+    private static boolean getBooleanValue(JsonObject jo, String field, boolean requiredField, boolean defaultValue) {
+        if (jo.has(field)) {
+            return jo.get(field).getAsBoolean();
+        } else {
+            if (requiredField) {
+                throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
+            }
+            return defaultValue;
         }
     }
 }
