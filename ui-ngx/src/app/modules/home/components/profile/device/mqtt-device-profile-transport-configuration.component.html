@@ -66,7 +66,7 @@
       <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
     </div>
   </fieldset>
-  <section formGroupName="transportPayloadTypeConfiguration" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
+  <section formGroupName="transportPayloadTypeConfiguration">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-payload-type</legend>
       <div fxLayoutGap="8px" fxLayout="column">
@@ -141,7 +141,7 @@
       </div>
     </fieldset>
   </section>
-  <div style="padding-bottom: 20px" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
+  <div style="padding-bottom: 20px">
     <mat-checkbox formControlName="sendAckOnValidationException">
       {{ 'device-profile.mqtt-send-ack-on-validation-exception' | translate }}
     </mat-checkbox>
