@@ -234,7 +234,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             } else {
                 endTs = query.getEndTs();
             }
-            return new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation(), query.getOrder());
+            return new BaseReadTsKvQuery(query, startTs, endTs);
         }).collect(Collectors.toList());
     }
 
