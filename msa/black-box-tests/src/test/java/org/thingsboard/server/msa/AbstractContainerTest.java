@@ -63,7 +63,7 @@ public abstract class AbstractContainerTest {
         }
     }
 
-    @AfterSuite(alwaysRun = true)
+    @AfterSuite()
     public void afterSuite() {
         if (containerTestSuite.isActive()) {
             containerTestSuite.stop();

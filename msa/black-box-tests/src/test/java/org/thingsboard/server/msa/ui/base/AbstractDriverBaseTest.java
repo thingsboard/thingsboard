@@ -80,7 +80,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         driver.manage().window().setSize(dimension);
     }
 
-    @AfterMethod(alwaysRun = true)
+    @AfterMethod()
     public void closeBrowser() {
         log.info("*----------------------* Teardown *----------------------*");
         driver.quit();
