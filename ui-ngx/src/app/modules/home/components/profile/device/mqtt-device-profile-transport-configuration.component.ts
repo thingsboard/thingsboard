@@ -122,10 +122,11 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       if (value) {
-        this.mqttDeviceProfileTransportConfigurationFormGroup.disable({emitEvent: false});
-        this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').enable({emitEvent: false});
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').disable({emitEvent: false});
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').disable({emitEvent: false});
       } else {
-        this.mqttDeviceProfileTransportConfigurationFormGroup.enable({emitEvent: false});
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').enable({emitEvent: false});
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('deviceTelemetryTopic').enable({emitEvent: false});
       }
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
@@ -162,6 +163,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').updateValueAndValidity({onlySelf: true});
       this.updateTransportPayloadBasedControls(value.transportPayloadTypeConfiguration?.transportPayloadType);
     }
   }
