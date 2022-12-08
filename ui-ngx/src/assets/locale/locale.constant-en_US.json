@@ -1352,6 +1352,8 @@
         "create-new-device-profile": "Create a new one!",
         "mqtt-device-topic-filters": "MQTT device topic filters",
         "mqtt-device-topic-filters-unique": "MQTT device topic filters need to be unique.",
+        "mqtt-device-topic-filters-spark-plug": "MQTT device topic filters SparkPlug.",
+        "mqtt-device-topic-filters-spark-plug-hint": "Default - telemetry. Example: namespace/group_id/message_type/edge_node_id/[device_id].",
         "mqtt-device-payload-type": "MQTT device payload",
         "mqtt-device-payload-type-json": "JSON",
         "mqtt-device-payload-type-proto": "Protobuf",

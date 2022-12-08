@@ -16,7 +16,14 @@
 
 -->
 <form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
-  <fieldset class="fields-group">
+  <div style="padding-top: 8px;">
+    <mat-checkbox formControlName="sparkPlug">
+      {{ 'device-profile.mqtt-device-topic-filters-spark-plug' | translate }}
+    </mat-checkbox>
+    <div  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value"
+          class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
+  </div>
+  <fieldset class="fields-group" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
     <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
     <div fxLayoutGap="8px" fxLayout="column">
       <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
@@ -59,7 +66,7 @@
       <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
     </div>
   </fieldset>
-  <section formGroupName="transportPayloadTypeConfiguration">
+  <section formGroupName="transportPayloadTypeConfiguration" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-payload-type</legend>
       <div fxLayoutGap="8px" fxLayout="column">
@@ -134,7 +141,7 @@
       </div>
     </fieldset>
   </section>
-  <div style="padding-bottom: 20px">
+  <div style="padding-bottom: 20px" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
     <mat-checkbox formControlName="sendAckOnValidationException">
       {{ 'device-profile.mqtt-send-ack-on-validation-exception' | translate }}
     </mat-checkbox>
