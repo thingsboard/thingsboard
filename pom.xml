@@ -80,6 +80,7 @@
         <tbel.version>1.0.3</tbel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
+        <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <netty.version>4.1.75.Final</netty.version>
         <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
@@ -1684,6 +1685,11 @@
                 <groupId>org.eclipse.paho</groupId>
                 <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
                 <version>${paho.client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.paho</groupId>
+                <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+                <version>${paho.mqttv5.client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.curator</groupId>
