@@ -36,7 +36,7 @@ As result, in REPOSITORY column, next images should be present:
 
 - To run ui smoke tests in the [msa/black-box-tests](../black-box-tests) directory specifying suite name: 
 
-        mvn clean install -DblackBoxTests.skip=false -Dsuite=uiTests 
+        mvn clean install -DblackBoxTests.skip=false -Dsuite=uiTests
 
 - To run all tests in the [msa/black-box-tests](../black-box-tests) directory specifying suite name:
 

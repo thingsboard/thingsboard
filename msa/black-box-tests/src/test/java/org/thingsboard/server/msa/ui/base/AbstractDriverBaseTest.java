@@ -34,6 +34,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -66,21 +67,19 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--ignore-certificate-errors");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
+        options.setAcceptInsecureCerts(true);
         if (instance.isActive()) {
             RemoteWebDriver remoteWebDriver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_HOST), options);
             remoteWebDriver.setFileDetector(new LocalFileDetector());
             driver = remoteWebDriver;
         } else {
             WebDriverManager.chromedriver().setup();
-            driver = new ChromeDriver();
+            driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
     }
 
-    @AfterMethod()
+    @AfterMethod
     public void closeBrowser() {
         log.info("*----------------------* Teardown *----------------------*");
         driver.quit();
