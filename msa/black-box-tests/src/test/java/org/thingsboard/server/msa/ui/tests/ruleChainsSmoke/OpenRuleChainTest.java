@@ -41,7 +41,7 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openUrl(URL);
+        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
         testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);

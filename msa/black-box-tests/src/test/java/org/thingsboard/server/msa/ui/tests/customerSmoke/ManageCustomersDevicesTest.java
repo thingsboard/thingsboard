@@ -24,8 +24,6 @@ import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
-import static org.thingsboard.server.msa.ui.utils.Const.URL;
-
 public class ManageCustomersDevicesTest extends AbstractDriverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
     private CustomerPageHelper customerPage;
@@ -33,7 +31,7 @@ public class ManageCustomersDevicesTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openUrl(URL);
+        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
         customerPage = new CustomerPageHelper(driver);

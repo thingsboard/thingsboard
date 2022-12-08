@@ -147,6 +147,7 @@
         <selenium.version>4.1.1</selenium.version>
         <webdrivermanager.version>5.2.0</webdrivermanager.version>
         <allure-testng.version>2.19.0</allure-testng.version>
+        <allure-maven.version>2.8</allure-maven.version>
     </properties>
 
     <modules>
@@ -1675,6 +1676,12 @@
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-testng</artifactId>
                 <version>${allure-testng.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>${allure-maven.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

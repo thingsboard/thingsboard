@@ -30,7 +30,6 @@ import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_CUSTOMER_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
-import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
 public class CreateCustomerTest extends AbstractDriverBaseTest {
 
@@ -40,7 +39,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openUrl(URL);
+        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
         testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
@@ -73,7 +72,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createCustomerWithFullInformation() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         String text = "Text";
         String email = "email@mail.com";
         String number = "12015550123";
@@ -91,6 +90,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
         customerPage.phoneNumberAddEntityView().sendKeys(number);
         customerPage.emailAddEntityView().sendKeys(email);
         customerPage.addBtnC().click();
+        this.customerName = customerName;
         customerPage.setCustomerEmail(customerName);
         customerPage.setCustomerCountry(customerName);
         customerPage.setCustomerCity(customerName);
@@ -157,12 +157,13 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createCustomerWithoutRefresh() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
         customerPage.titleFieldAddEntityView().sendKeys(customerName);
         customerPage.addBtnC().click();
+        this.customerName = customerName;
 
         Assert.assertNotNull(customerPage.customer(customerName));
         Assert.assertTrue(customerPage.customer(customerName).isDisplayed());

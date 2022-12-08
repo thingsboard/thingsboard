@@ -28,21 +28,26 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.LocalFileDetector;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
+import org.thingsboard.server.msa.ContainerTestSuite;
 import org.thingsboard.server.msa.ui.listeners.TestListener;
 
 import java.io.File;
+import java.net.URL;
 import java.time.Duration;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 
 @Slf4j
 @Listeners(TestListener.class)
@@ -52,41 +57,37 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private final Dimension dimension = new Dimension(WIDTH, HEIGHT);
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
-    private static final boolean HEADLESS = true;
+    private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
     protected static final PageLink pageLink = new PageLink(10);
+    private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
 
-    @BeforeSuite
-    public void beforeUISuite() {
-        WebDriverManager.chromedriver().setup();
-    }
-
+    @SneakyThrows
     @BeforeMethod
     public void openBrowser() {
         log.info("*----------------------* Setup driver *----------------------*");
-        if (HEADLESS == true) {
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--ignore-certificate-errors");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--headless");
-            driver = new ChromeDriver(options);
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--ignore-certificate-errors");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        if (instance.isActive()) {
+            RemoteWebDriver remoteWebDriver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_HOST), options);
+            remoteWebDriver.setFileDetector(new LocalFileDetector());
+            driver = remoteWebDriver;
         } else {
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--ignore-certificate-errors");
-            driver = new ChromeDriver(options);
+            WebDriverManager.chromedriver().setup();
+            driver = new ChromeDriver();
         }
         driver.manage().window().setSize(dimension);
-
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void closeBrowser() {
         log.info("*----------------------* Teardown *----------------------*");
         driver.quit();
     }
 
-    public void openUrl(String url) {
-        driver.get(url);
+    public void openLocalhost() {
+        driver.get(getBaseUiUrl());
     }
 
     public String getUrl() {
@@ -95,10 +96,6 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     public WebDriver getDriver() {
         return driver;
-    }
-
-    public boolean getHeadless() {
-        return HEADLESS;
     }
 
     protected boolean urlContains(String urlPath) {
