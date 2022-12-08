@@ -562,8 +562,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     if (queryResults != null) {
                         for (ReadTsKvQueryResult queryResult : queryResults) {
                             String queryKey = queriesKeys.get(queryResult.getQueryId());
-                            entityData.getTimeseries().put(queryKey, queryResult.toTsValues());
-                            lastTsMap.put(queryKey, queryResult.getLastEntryTs());
+                            if (queryKey != null) {
+                                entityData.getTimeseries().put(queryKey, queryResult.toTsValues());
+                                lastTsMap.put(queryKey, queryResult.getLastEntryTs());
+                            } else {
+                                log.warn("ReadTsKvQueryResult for {} {} has queryId not matching the initial query",
+                                        entityData.getEntityId().getEntityType(), entityData.getEntityId());
+                            }
                         }
                     }
                     // Populate with empty values if no data found.
