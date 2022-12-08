@@ -53,6 +53,8 @@ public class EntityIdFactory {
                 return new AssetId(uuid);
             case ALARM:
                 return new AlarmId(uuid);
+            case ALARM_COMMENT:
+                return new AlarmCommentId(uuid);
             case RULE_CHAIN:
                 return new RuleChainId(uuid);
             case RULE_NODE:

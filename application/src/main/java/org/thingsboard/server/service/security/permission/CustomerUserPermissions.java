@@ -32,6 +32,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
     public CustomerUserPermissions() {
         super();
         put(Resource.ALARM, customerAlarmPermissionChecker);
+        put(Resource.ALARM_COMMENT, customerAlarmCommentPermissionChecker);
         put(Resource.ASSET, customerEntityPermissionChecker);
         put(Resource.DEVICE, customerEntityPermissionChecker);
         put(Resource.CUSTOMER, customerPermissionChecker);
@@ -47,6 +48,19 @@ public class CustomerUserPermissions extends AbstractPermissions {
     }
 
     private static final PermissionChecker customerAlarmPermissionChecker = new PermissionChecker() {
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof HasCustomerId)) {
+                return false;
+            }
+            return user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
+        }
+    };
+
+    private static final PermissionChecker customerAlarmCommentPermissionChecker = new PermissionChecker() {
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
             if (!user.getTenantId().equals(entity.getTenantId())) {

@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -102,6 +103,9 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, User user, Object... additionalInfo);
 
+    void notifyCreateOrUpdateAlarmComment(AlarmComment alarmComment, ActionType actionType, User user, Object... additionalInfo);
+
+    void notifyDeleteAlarmComment(AlarmComment alarmComment, User user, Object... additionalInfo);
     <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
                                                                               I entityId, E entity, User user,
                                                                               ActionType actionType, boolean sendNotifyMsgToEdge,

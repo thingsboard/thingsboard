@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -227,6 +228,18 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     public void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, User user, Object... additionalInfo) {
         logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), actionType, user, additionalInfo);
         sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), edgeTypeByActionType(actionType));
+    }
+
+    @Override
+    public void notifyCreateOrUpdateAlarmComment(AlarmComment alarmComment, ActionType actionType, User user, Object... additionalInfo) {
+        logEntityAction(alarmComment.getTenantId(), alarmComment.getAlarmId(), alarmComment, alarmComment.getCustomerId(), actionType, user, additionalInfo);
+        // TODO: should we send notification to edge?
+    }
+
+    @Override
+    public void notifyDeleteAlarmComment(AlarmComment alarmComment, User user, Object... additionalInfo) {
+        logEntityAction(alarmComment.getTenantId(), alarmComment.getAlarmId(), alarmComment, alarmComment.getCustomerId(), ActionType.DELETED, user, additionalInfo);
+        // TODO: should we send notification to edge?
     }
 
     @Override
