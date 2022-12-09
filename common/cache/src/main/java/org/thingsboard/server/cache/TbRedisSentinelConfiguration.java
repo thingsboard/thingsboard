@@ -22,6 +22,9 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.cluster.sentinel.sentinels:}")
     private String sentinels;
 
+    @Value("${redis.cluster.sentinel.password:}") //is it null by default ? check on same ?
+    private String sentinelPassword;
+
     @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
 
@@ -33,6 +36,7 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
         redisSentinelConfiguration.setSentinels(getNodes(sentinels));
         redisSentinelConfiguration.setMaster(this.master);
         redisSentinelConfiguration.setDatabase(this.database);
+        redisSentinelConfiguration.setSentinelPassword(sentinelPassword);
         redisSentinelConfiguration.setPassword(password);
 
         if (useDefaultPoolConfig) {
