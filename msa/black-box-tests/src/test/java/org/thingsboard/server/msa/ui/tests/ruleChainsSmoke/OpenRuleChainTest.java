@@ -27,6 +27,7 @@ import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
@@ -98,6 +99,6 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
         String ruleChain = ruleChainsPage.getRuleChainName();
         ruleChainsPage.doubleClickOnRuleChain(ruleChain);
 
-        Assert.assertEquals(getUrl(), URL + "/ruleChains");
+        Assert.assertEquals(getUrl(), getBaseUiUrl() + "/ruleChains");
     }
 }
