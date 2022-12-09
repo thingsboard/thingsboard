@@ -105,11 +105,9 @@ public class AlarmDataAdapter {
         EntityId entityId = entityIdMap.get(entityUuid);
         Object originatorNameObj = row.get(ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
         String originatorName = originatorNameObj != null ? originatorNameObj.toString() : null;
-
-        //Object originatorLabelObj = row.get(ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
-        //String originatorLabel = originatorLabelObj != null ? originatorLabelObj.toString() : null;
-
-        return new AlarmData(alarm, originatorName, "", entityId);
+        Object originatorLabelObj = row.get(ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
+        String originatorLabel = originatorLabelObj != null ? originatorLabelObj.toString() : null;
+        return new AlarmData(alarm, originatorName, originatorLabel, entityId);
     }
 
 }

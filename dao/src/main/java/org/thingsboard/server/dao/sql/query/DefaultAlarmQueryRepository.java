@@ -92,7 +92,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " WHEN a.originator_type = " + EntityType.ASSET.ordinal() +
             " THEN (select label from asset where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.DEVICE.ordinal() +
-            " THEN (select name from device where id = a.originator_id)" +
+            " THEN (select label from device where id = a.originator_id)" +
             " END, '') as originator_label";
 
     private static final String FIELDS_SELECTION = "select a.id as id," +
@@ -112,7 +112,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.tenant_id as tenant_id, " +
             " a.customer_id as customer_id, " +
             " a.propagate_relation_types as propagate_relation_types, " +
-            " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
+            " a.type as type," + SELECT_ORIGINATOR_NAME + ", " + SELECT_ORIGINATOR_LABEL + ", ";
 
     private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id";
 
