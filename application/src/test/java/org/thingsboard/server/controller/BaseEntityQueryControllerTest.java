@@ -400,7 +400,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
 
         ResultActions result = doPost("/api/entitiesQuery/find", query).andExpect(status().isBadRequest());
-        assertThat(getErrorMessage(result)).contains("Invalid").contains("sort key");
+        assertThat(getErrorMessage(result)).contains("Invalid").contains("sort property");
     }
 
 }
