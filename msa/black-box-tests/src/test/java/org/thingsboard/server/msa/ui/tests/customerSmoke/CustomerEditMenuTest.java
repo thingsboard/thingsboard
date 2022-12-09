@@ -64,8 +64,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void changeTitle() {
-        customerName = "Changed" + getRandomNumber();
+        String customerName = "Changed" + getRandomNumber();
         testRestClient.postCustomer(defaultCustomerPrototype(ENTITY_NAME));
+        this.customerName = customerName;
 
         sideBarMenuView.customerBtn().click();
         customerPage.entityTitles().get(0).click();
@@ -112,8 +113,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void editDescription() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        this.customerName = customerName;
         String description = "Description";
 
         sideBarMenuView.customerBtn().click();
@@ -138,8 +140,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboardFromDashboard() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        this.customerName = customerName;
 
         sideBarMenuView.dashboardBtn().click();
         dashboardPage.setDashboardTitle();
@@ -164,8 +167,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboard() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        this.customerName = customerName;
 
         sideBarMenuView.customerBtn().click();
         customerPage.manageCustomersDashboardsBtn(customerName).click();
@@ -189,8 +193,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboardWithoutHide() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        this.customerName = customerName;
 
         sideBarMenuView.customerBtn().click();
         customerPage.manageCustomersDashboardsBtn(customerName).click();
@@ -221,8 +226,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void addPhoneNumber() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        this.customerName = customerName;
         String number = "2015550123";
 
         sideBarMenuView.customerBtn().click();
@@ -253,8 +259,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void addAllInformation() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
+        this.customerName = customerName;
         String text = "Text";
         String email = "email@mail.com";
         String number = "2015550123";

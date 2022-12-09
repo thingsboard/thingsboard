@@ -61,8 +61,9 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void openRuleChainByRightCornerBtn() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ENTITY_NAME));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openRuleChainBtn(ruleChainName).click();
@@ -77,8 +78,9 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void openRuleChainByViewBtn() {
-        ruleChainName = ENTITY_NAME;
-        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ENTITY_NAME));
+        String ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.entity(ruleChainName).click();

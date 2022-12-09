@@ -57,12 +57,13 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void createCustomer() {
-        customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME;
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
         customerPage.titleFieldAddEntityView().sendKeys(customerName);
         customerPage.addBtnC().click();
+        this.customerName = customerName;
         customerPage.refreshBtn().click();
 
         Assert.assertNotNull(customerPage.customer(customerName));

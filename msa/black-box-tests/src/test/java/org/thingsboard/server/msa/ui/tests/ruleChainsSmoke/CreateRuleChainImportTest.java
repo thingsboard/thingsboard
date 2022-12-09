@@ -100,13 +100,13 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void importRuleChainAndSave() {
-        ruleChainName = IMPORT_RULE_CHAIN_NAME;
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
         ruleChainsPage.importBrowseFileBtn().click();
         openRuleChainPage.doneBtn().click();
         openRuleChainPage.waitUntilDoneBtnDisable();
+        ruleChainName = IMPORT_RULE_CHAIN_NAME;
         sideBarMenuView.ruleChainsBtn().click();
 
         Assert.assertNotNull(ruleChainsPage.entity(IMPORT_RULE_CHAIN_NAME));
@@ -116,8 +116,9 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
     @Test(priority = 40, groups = "smoke")
     @Description
     public void importRuleChainAndSaveWithSameName() {
-        ruleChainName = IMPORT_RULE_CHAIN_NAME;
+        String ruleChainName = IMPORT_RULE_CHAIN_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();

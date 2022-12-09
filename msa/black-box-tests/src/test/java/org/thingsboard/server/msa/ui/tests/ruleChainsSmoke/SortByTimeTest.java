@@ -58,12 +58,12 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
     public void sortByTimeDown() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
+        ruleChainName = ruleChain;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setSort();
         String firstListElement = ruleChainsPage.getSort().get(ruleChainsPage.getSort().size() - 1);
         String lastCreated = ruleChainsPage.createdTime().get(0).getText();
-        ruleChainName = ruleChain;
 
         Assert.assertEquals(firstListElement, lastCreated);
         Assert.assertNotNull(ruleChainsPage.createdTimeEntity(ruleChain, lastCreated));
@@ -74,13 +74,13 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
     public void sortByTimeUp() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
+        ruleChainName = ruleChain;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByTimeBtn().click();
         ruleChainsPage.setSort();
         String firstListElement = ruleChainsPage.getSort().get(ruleChainsPage.getSort().size() - 1);
         String lastCreated = ruleChainsPage.createdTime().get(ruleChainsPage.createdTime().size() - 1).getText();
-        ruleChainName = ruleChain;
 
         Assert.assertEquals(firstListElement, lastCreated);
         Assert.assertNotNull(ruleChainsPage.createdTimeEntity(ruleChain, lastCreated));

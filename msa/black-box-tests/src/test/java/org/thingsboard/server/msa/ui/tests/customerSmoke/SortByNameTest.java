@@ -55,8 +55,8 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterUp(String title) {
-        customerName = title;
         testRestClient.postCustomer(defaultCustomerPrototype(title));
+        this.customerName = title;
 
         sideBarMenuView.customerBtn().click();
         customerPage.sortByTitleBtn().click();
@@ -81,24 +81,20 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         customerPage.setCustomerName(2);
         String thirdCustomer = customerPage.getCustomerName();
 
-        boolean firstEquals = firstCustomer.equals(customerSymbol);
-        boolean secondEquals = secondCustomer.equals(customerNumber);
-        boolean thirdEquals = thirdCustomer.equals(customer);
-
         testRestClient.deleteCustomer(getCustomerByName(customer).getId());
         testRestClient.deleteCustomer(getCustomerByName(customerNumber).getId());
         testRestClient.deleteCustomer(getCustomerByName(customerSymbol).getId());
 
-        Assert.assertTrue(firstEquals);
-        Assert.assertTrue(secondEquals);
-        Assert.assertTrue(thirdEquals);
+        Assert.assertEquals(firstCustomer, customerSymbol);
+        Assert.assertEquals(secondCustomer, customerNumber);
+        Assert.assertEquals(thirdCustomer, customer);
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterDown(String title) {
-        customerName = title;
         testRestClient.postCustomer(defaultCustomerPrototype(title));
+        customerName = title;
 
         sideBarMenuView.customerBtn().click();
         customerPage.sortByNameDown();
@@ -124,16 +120,12 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         customerPage.setCustomerName(lastIndex - 2);
         String thirdCustomer = customerPage.getCustomerName();
 
-        boolean firstEquals = firstCustomer.equals(customerSymbol);
-        boolean secondEquals = secondCustomer.equals(customerNumber);
-        boolean thirdEquals = thirdCustomer.equals(customer);
-
         testRestClient.deleteCustomer(getCustomerByName(customer).getId());
         testRestClient.deleteCustomer(getCustomerByName(customerNumber).getId());
         testRestClient.deleteCustomer(getCustomerByName(customerSymbol).getId());
 
-        Assert.assertTrue(firstEquals);
-        Assert.assertTrue(secondEquals);
-        Assert.assertTrue(thirdEquals);
+        Assert.assertEquals(firstCustomer, customerSymbol);
+        Assert.assertEquals(secondCustomer, customerNumber);
+        Assert.assertEquals(thirdCustomer, customer);
     }
 }

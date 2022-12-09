@@ -59,22 +59,23 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void createRuleChain() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
         ruleChainsPage.nameField().sendKeys(ruleChainName);
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
+        this.ruleChainName = ruleChainName;
 
         Assert.assertNotNull(ruleChainsPage.entity(ruleChainName));
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
     }
 
-    @Test(priority = 10, groups = "smoke", enabled = false)
+    @Test(priority = 10, groups = "smoke")
     @Description
     public void createRuleChainWithDescription() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -82,6 +83,7 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         ruleChainsPage.descriptionAddEntityView().sendKeys(ENTITY_NAME);
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
+        this.ruleChainName = ruleChainName;
         ruleChainsPage.entity(ENTITY_NAME).click();
         ruleChainsPage.setHeaderName();
 

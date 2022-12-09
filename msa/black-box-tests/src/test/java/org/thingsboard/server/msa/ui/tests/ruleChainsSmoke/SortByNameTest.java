@@ -57,11 +57,11 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Description
     public void specialCharacterUp(String ruleChainName) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByNameBtn().click();
         ruleChainsPage.setRuleChainName(0);
-        this.ruleChainName = ruleChainName;
 
         Assert.assertEquals(ruleChainsPage.getRuleChainName(), ruleChainName);
     }
@@ -82,28 +82,24 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        boolean firstEquals = firstRuleChain.equals(ruleChainSymbol);
-        boolean secondEquals = secondRuleChain.equals(ruleChainNumber);
-        boolean thirdEquals = thirdRuleChain.equals(ruleChain);
-
         testRestClient.deleteRuleChain(getRuleChainByName(ruleChain).getId());
         testRestClient.deleteRuleChain(getRuleChainByName(ruleChainNumber).getId());
         testRestClient.deleteRuleChain(getRuleChainByName(ruleChainSymbol).getId());
 
-        Assert.assertTrue(firstEquals);
-        Assert.assertTrue(secondEquals);
-        Assert.assertTrue(thirdEquals);
+        Assert.assertEquals(firstRuleChain, ruleChainSymbol);
+        Assert.assertEquals(secondRuleChain, ruleChainNumber);
+        Assert.assertEquals(thirdRuleChain, ruleChain);
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterDown(String ruleChainName) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByNameDown();
         ruleChainsPage.setRuleChainName(ruleChainsPage.allNames().size() - 1);
-        this.ruleChainName = ruleChainName;
 
         Assert.assertEquals(ruleChainsPage.getRuleChainName(), ruleChainName);
     }
@@ -125,16 +121,12 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(lastIndex - 2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        boolean firstEquals = firstRuleChain.equals(ruleChainSymbol);
-        boolean secondEquals = secondRuleChain.equals(ruleChainNumber);
-        boolean thirdEquals = thirdRuleChain.equals(ruleChain);
-
         testRestClient.deleteRuleChain(getRuleChainByName(ruleChain).getId());
         testRestClient.deleteRuleChain(getRuleChainByName(ruleChainNumber).getId());
         testRestClient.deleteRuleChain(getRuleChainByName(ruleChainSymbol).getId());
 
-        Assert.assertTrue(firstEquals);
-        Assert.assertTrue(secondEquals);
-        Assert.assertTrue(thirdEquals);
+        Assert.assertEquals(firstRuleChain, ruleChainSymbol);
+        Assert.assertEquals(secondRuleChain, ruleChainNumber);
+        Assert.assertEquals(thirdRuleChain, ruleChain);
     }
 }

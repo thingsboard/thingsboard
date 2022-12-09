@@ -57,8 +57,9 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void changeName() {
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ENTITY_NAME));
         String name = "Changed";
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ENTITY_NAME));
+        ruleChainName = name;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.notRootRuleChainsNames().get(0).click();
@@ -69,7 +70,6 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         ruleChainsPage.doneBtnEditView().click();
         ruleChainsPage.setHeaderName();
         String nameAfter = ruleChainsPage.getHeaderName();
-        ruleChainName = name;
 
         Assert.assertNotEquals(nameBefore, nameAfter);
         Assert.assertEquals(name, nameAfter);
