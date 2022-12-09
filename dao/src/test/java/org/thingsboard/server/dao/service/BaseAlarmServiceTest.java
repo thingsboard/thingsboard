@@ -694,4 +694,85 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, alarms.getData().size());
 
     }
+
+    @Test
+    public void testFindAlarmFetchOriginator() throws ExecutionException, InterruptedException {
+
+        Customer customer = new Customer();
+        customer.setTitle("TestCustomer");
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
+
+        Device tenantDevice = new Device();
+        tenantDevice.setName("TestTenantDevice");
+        tenantDevice.setLabel("TestLabelDevice");
+        tenantDevice.setType("default");
+        tenantDevice.setTenantId(tenantId);
+        tenantDevice = deviceService.saveDevice(tenantDevice);
+
+        long ts = System.currentTimeMillis();
+        Alarm deviceAlarm = Alarm.builder().tenantId(tenantId)
+                .originator(tenantDevice.getId())
+                .type(TEST_ALARM)
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        AlarmOperationResult result = alarmService.createOrUpdateAlarm(deviceAlarm);
+        deviceAlarm = result.getAlarm();
+
+        Alarm customerAlarm = Alarm.builder().tenantId(tenantId)
+                .originator(customer.getId())
+                .type(TEST_ALARM)
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        result = alarmService.createOrUpdateAlarm(customerAlarm);
+        customerAlarm = result.getAlarm();
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(10);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        PageData<AlarmData> deviceAlarmsByQuery = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Arrays.asList(tenantDevice.getId()));
+        Assert.assertEquals(1, deviceAlarmsByQuery.getData().size());
+        Assert.assertEquals(deviceAlarm, deviceAlarmsByQuery.getData().get(0));
+        Assert.assertEquals("TestLabelDevice", deviceAlarmsByQuery.getData().get(0).getOriginatorLabel());
+
+        PageData<AlarmData> customerAlarmsByQuery = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(customer.getId()));
+        Assert.assertEquals(1, customerAlarmsByQuery.getData().size());
+        Assert.assertEquals(customerAlarm, customerAlarmsByQuery.getData().get(0));
+        Assert.assertEquals("", customerAlarmsByQuery.getData().get(0).getOriginatorLabel());
+
+        PageData<AlarmInfo> deviceAlarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(tenantDevice.getId())
+                .fetchOriginator(true)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(10, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(deviceAlarms.getData());
+        Assert.assertEquals(1, deviceAlarms.getData().size());
+        Assert.assertEquals(deviceAlarm, deviceAlarms.getData().get(0));
+        Assert.assertEquals("TestLabelDevice", deviceAlarms.getData().get(0).getOriginatorLabel());
+
+        PageData<AlarmInfo> customerAlarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(customer.getId())
+                .fetchOriginator(true)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(10, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(customerAlarms.getData());
+        Assert.assertEquals(1, customerAlarms.getData().size());
+        Assert.assertEquals(customerAlarm, customerAlarms.getData().get(0));
+        Assert.assertEquals(null, customerAlarms.getData().get(0).getOriginatorLabel());
+
+    }
 }

@@ -66,14 +66,21 @@ public class AlarmInfo extends Alarm {
 
         AlarmInfo alarmInfo = (AlarmInfo) o;
 
-        return originatorName != null ? originatorName.equals(alarmInfo.originatorName) : alarmInfo.originatorName == null;
-
+        if ((originatorName != null) & (originatorLabel != null)) {
+            return originatorName.equals(alarmInfo.originatorName) & originatorLabel.equals(alarmInfo.originatorLabel);
+        } else if (originatorName != null) {
+            return originatorName.equals(alarmInfo.originatorName);
+        } else if (originatorLabel != null) {
+            return originatorLabel.equals(alarmInfo.originatorLabel);
+        } else {
+            return true;
+        }
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (originatorName != null ? originatorName.hashCode() : 0);
+        result = 31 * result + (originatorName != null ? originatorName.hashCode() : 0) + (originatorLabel != null ? originatorLabel.hashCode() : 0);
         return result;
     }
 }
