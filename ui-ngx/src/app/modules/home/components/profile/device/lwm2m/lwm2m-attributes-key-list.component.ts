@@ -26,7 +26,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import {
   AttributeName,
   AttributeNameTranslationMap,
@@ -70,7 +70,6 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   attributesValueFormGroup: FormGroup;
 
   private propagateChange = null;
-  private valueChange$: Subscription = null;
   private destroy$ = new Subject();
   private usedAttributesName: AttributeName[] = [];
 
@@ -80,6 +79,9 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
     this.attributesValueFormGroup = this.fb.group({
       attributesValue: this.fb.array([])
     });
+    this.attributesValueFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
   ngOnInit() {
@@ -92,9 +94,6 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   }
 
   ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -116,24 +115,18 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   }
 
   writeValue(keyValMap: AttributesNameValueMap): void {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
     const attributesValueControls: Array<AbstractControl> = [];
     if (keyValMap) {
       (Object.keys(keyValMap) as AttributeName[]).forEach(name => {
         attributesValueControls.push(this.createdFormGroup({name, value: keyValMap[name]}));
       });
     }
-    this.attributesValueFormGroup.setControl('attributesValue', this.fb.array(attributesValueControls));
+    this.attributesValueFormGroup.setControl('attributesValue', this.fb.array(attributesValueControls), {emitEvent: false});
     if (this.disabled) {
       this.attributesValueFormGroup.disable({emitEvent: false});
     } else {
       this.attributesValueFormGroup.enable({emitEvent: false});
     }
-    this.valueChange$ = this.attributesValueFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
     this.updateUsedAttributesName();
   }
 

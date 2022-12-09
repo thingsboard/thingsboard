@@ -17,7 +17,7 @@
 -->
 <div fxLayout="column">
   <div class="tb-device-profile-alarms">
-    <div *ngFor="let alarmControl of alarmsFormArray().controls; trackBy: trackByAlarm;
+    <div *ngFor="let alarmControl of alarmsFormArray.controls; trackBy: trackByAlarm;
                  let $index = index; last as isLast;"
          fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
       <tb-device-profile-alarm [formControl]="alarmControl"
@@ -27,7 +27,7 @@
       </tb-device-profile-alarm>
     </div>
   </div>
-  <div *ngIf="!alarmsFormArray().controls.length">
+  <div *ngIf="!alarmsFormArray.controls.length">
       <span translate fxLayoutAlign="center center"
             class="tb-prompt">device-profile.no-alarm-rules</span>
   </div>

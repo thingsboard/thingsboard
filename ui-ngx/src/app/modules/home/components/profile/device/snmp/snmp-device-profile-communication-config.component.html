@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="column">
-  <div *ngFor="let deviceProfileCommunication of communicationConfigFormArray().controls; let $index = index;
+  <div *ngFor="let deviceProfileCommunication of communicationConfigFormArray.controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
        fxLayoutGap="8px" class="scope-row" [formGroup]="deviceProfileCommunication">
     <div class="communication-config" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
@@ -58,7 +58,7 @@
       <mat-icon>remove_circle_outline</mat-icon>
     </button>
   </div>
-  <div *ngIf="!communicationConfigFormArray().controls.length && !disabled">
+  <div *ngIf="!communicationConfigFormArray.controls.length && !disabled">
       <span fxLayoutAlign="center center" class="tb-prompt required required-text" translate>device-profile.snmp.please-add-communication-config</span>
   </div>
   <div *ngIf="!disabled && isAddEnabled">

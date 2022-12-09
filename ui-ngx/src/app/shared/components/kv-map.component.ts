@@ -30,7 +30,8 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-key-val-map',
@@ -63,9 +64,8 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   kvListFormGroup: FormGroup;
 
+  private destroy$ = new Subject();
   private propagateChange = null;
-
-  private valueChangeSubscription: Subscription = null;
 
   constructor(protected store: Store<AppState>,
               private fb: FormBuilder) {
@@ -73,9 +73,18 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   }
 
   ngOnInit(): void {
-    this.kvListFormGroup = this.fb.group({});
-    this.kvListFormGroup.addControl('keyVals',
-      this.fb.array([]));
+    this.kvListFormGroup = this.fb.group({
+      keyVals: this.fb.array([])
+    });
+
+    this.kvListFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   keyValsFormArray(): FormArray {
@@ -99,9 +108,6 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   }
 
   writeValue(keyValMap: {[key: string]: string}): void {
-    if (this.valueChangeSubscription) {
-      this.valueChangeSubscription.unsubscribe();
-    }
     const keyValsControls: Array<AbstractControl> = [];
     if (keyValMap) {
       for (const property of Object.keys(keyValMap)) {
@@ -113,10 +119,7 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
         }
       }
     }
-    this.kvListFormGroup.setControl('keyVals', this.fb.array(keyValsControls));
-    this.valueChangeSubscription = this.kvListFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
+    this.kvListFormGroup.setControl('keyVals', this.fb.array(keyValsControls), {emitEvent: false});
     if (this.disabled) {
       this.kvListFormGroup.disable({emitEvent: false});
     } else {

@@ -80,6 +80,8 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     this.instancesFormGroup = this.fb.group({
       instances: this.fb.array([])
     });
+
+    this.valueChange$ = this.instancesFormGroup.valueChanges.subscribe(value => this.updateModel(value.instances));
   }
 
   ngOnDestroy() {
@@ -122,22 +124,16 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     if (instances.length === this.instancesFormArray.length) {
       this.instancesFormArray.patchValue(instances, {emitEvent: false});
     } else {
-      if (this.valueChange$) {
-        this.valueChange$.unsubscribe();
-      }
       const instancesControl: Array<AbstractControl> = [];
       if (instances) {
         instances.forEach((instance) => {
           instancesControl.push(this.createInstanceFormGroup(instance));
         });
       }
-      this.instancesFormGroup.setControl('instances', this.fb.array(instancesControl));
+      this.instancesFormGroup.setControl('instances', this.fb.array(instancesControl), {emitEvent: false});
       if (this.disabled) {
         this.instancesFormGroup.disable({emitEvent: false});
       }
-      this.valueChange$ = this.instancesFormGroup.valueChanges.subscribe(value => {
-        this.updateModel(value.instances);
-      });
     }
   }
 

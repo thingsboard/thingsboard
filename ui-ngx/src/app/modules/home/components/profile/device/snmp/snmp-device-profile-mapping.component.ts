@@ -69,6 +69,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
     this.mappingsConfigForm = this.fb.group({
       mappings: this.fb.array([])
     });
+    this.valueChange$ = this.mappingsConfigForm.valueChanges.subscribe(() => this.updateModel());
   }
 
   ngOnDestroy() {
@@ -100,38 +101,36 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
   }
 
   writeValue(mappings: SnmpMapping[]) {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
-    const mappingsControl: Array<AbstractControl> = [];
-    if (mappings) {
-      mappings.forEach((config) => {
-        mappingsControl.push(this.createdFormGroup(config));
-      });
-    }
-    this.mappingsConfigForm.setControl('mappings', this.fb.array(mappingsControl));
-    if (!mappings || !mappings.length) {
-      this.addMappingConfig();
-    }
-    if (this.disabled) {
-      this.mappingsConfigForm.disable({emitEvent: false});
+    if (mappings?.length === this.mappingsConfigFormArray.length) {
+      this.mappingsConfigFormArray.patchValue(mappings, {emitEvent: false});
     } else {
-      this.mappingsConfigForm.enable({emitEvent: false});
+      const mappingsControl: Array<AbstractControl> = [];
+      if (mappings) {
+        mappings.forEach((config) => {
+          mappingsControl.push(this.createdFormGroup(config));
+        });
+      }
+      this.mappingsConfigForm.setControl('mappings', this.fb.array(mappingsControl), {emitEvent: false});
+      if (!mappings || !mappings.length) {
+        this.addMappingConfig();
+      }
+      if (this.disabled) {
+        this.mappingsConfigForm.disable({emitEvent: false});
+      } else {
+        this.mappingsConfigForm.enable({emitEvent: false});
+      }
     }
-    this.valueChange$ = this.mappingsConfigForm.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
     if (!this.disabled && !this.mappingsConfigForm.valid) {
       this.updateModel();
     }
   }
 
-  mappingsConfigFormArray(): FormArray {
+  get mappingsConfigFormArray(): FormArray {
     return this.mappingsConfigForm.get('mappings') as FormArray;
   }
 
   public addMappingConfig() {
-    this.mappingsConfigFormArray().push(this.createdFormGroup());
+    this.mappingsConfigFormArray.push(this.createdFormGroup());
     this.mappingsConfigForm.updateValueAndValidity();
     if (!this.mappingsConfigForm.valid) {
       this.updateModel();
@@ -139,7 +138,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
   }
 
   public removeMappingConfig(index: number) {
-    this.mappingsConfigFormArray().removeAt(index);
+    this.mappingsConfigFormArray.removeAt(index);
   }
 
   private createdFormGroup(value?: SnmpMapping): FormGroup {

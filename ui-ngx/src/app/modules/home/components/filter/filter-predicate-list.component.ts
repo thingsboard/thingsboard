@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Inject, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -27,7 +27,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import {
   ComplexFilterPredicateInfo,
   ComplexOperation,
@@ -37,7 +37,7 @@ import {
   KeyFilterPredicateInfo
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
-import { map } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
 import { ComponentType } from '@angular/cdk/portal';
 import { COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN } from '@home/components/tokens';
 import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter-component.models';
@@ -59,7 +59,7 @@ import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter
     }
   ]
 })
-export class FilterPredicateListComponent implements ControlValueAccessor, Validator, OnInit {
+export class FilterPredicateListComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
   @Input() disabled: boolean;
 
@@ -81,9 +81,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
 
   complexOperationTranslations = complexOperationTranslationMap;
 
+  private destroy$ = new Subject();
   private propagateChange = null;
-
-  private valueChangeSubscription: Subscription = null;
 
   constructor(private fb: FormBuilder,
               @Inject(COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN) private complexFilterPredicateDialogComponent: ComponentType<any>,
@@ -91,12 +90,20 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
   }
 
   ngOnInit(): void {
-    this.filterListFormGroup = this.fb.group({});
-    this.filterListFormGroup.addControl('predicates',
-      this.fb.array([]));
+    this.filterListFormGroup = this.fb.group({
+      predicates: this.fb.array([])
+    });
+    this.filterListFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
-  predicatesFormArray(): FormArray {
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  get predicatesFormArray(): FormArray {
     return this.filterListFormGroup.get('predicates') as FormArray;
   }
 
@@ -123,23 +130,21 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(predicates: Array<KeyFilterPredicateInfo>): void {
-    if (this.valueChangeSubscription) {
-      this.valueChangeSubscription.unsubscribe();
-    }
-    const predicateControls: Array<AbstractControl> = [];
-    if (predicates) {
-      for (const predicate of predicates) {
-        predicateControls.push(this.fb.control(predicate, [Validators.required]));
-      }
-    }
-    this.filterListFormGroup.setControl('predicates', this.fb.array(predicateControls));
-    this.valueChangeSubscription = this.filterListFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
-    if (this.disabled) {
-      this.filterListFormGroup.disable({emitEvent: false});
+    if (predicates.length === this.predicatesFormArray.length) {
+      this.predicatesFormArray.patchValue(predicates, {emitEvent: false});
     } else {
-      this.filterListFormGroup.enable({emitEvent: false});
+      const predicateControls: Array<AbstractControl> = [];
+      if (predicates) {
+        for (const predicate of predicates) {
+          predicateControls.push(this.fb.control(predicate, [Validators.required]));
+        }
+      }
+      this.filterListFormGroup.setControl('predicates', this.fb.array(predicateControls), {emitEvent: false});
+      if (this.disabled) {
+        this.filterListFormGroup.disable({emitEvent: false});
+      } else {
+        this.filterListFormGroup.enable({emitEvent: false});
+      }
     }
   }
 
