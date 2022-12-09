@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -245,6 +246,11 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             throw new IncorrectParameterException("Incorrect entity data page link page size '" + pageLink.getPageSize() + "'. Page size must be greater than zero.");
         } else if (pageLink.getPage() < 0) {
             throw new IncorrectParameterException("Incorrect entity data page link page '" + pageLink.getPage() + "'. Page must be positive integer.");
+        } else if (pageLink.getSortOrder() != null && pageLink.getSortOrder().getKey() != null) {
+            String sortKey = pageLink.getSortOrder().getKey().getKey();
+            if (StringUtils.isNotEmpty(sortKey) && !StringUtils.isAlphanumeric(sortKey)) {
+                throw new IncorrectParameterException("Invalid entity data page link sort key");
+            }
         }
     }
 
