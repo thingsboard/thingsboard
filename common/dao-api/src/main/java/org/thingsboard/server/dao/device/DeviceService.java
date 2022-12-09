@@ -33,11 +33,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface DeviceService {
+public interface DeviceService extends SimpleEntityService {
 
     DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId);
 

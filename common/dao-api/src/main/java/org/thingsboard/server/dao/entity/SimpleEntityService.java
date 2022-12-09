@@ -15,25 +15,25 @@
  */
 package org.thingsboard.server.dao.entity;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.query.EntityCountQuery;
-import org.thingsboard.server.common.data.query.EntityData;
-import org.thingsboard.server.common.data.query.EntityDataQuery;
 
-import java.util.Optional;
+import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
 
-public interface EntityService {
+public interface SimpleEntityService {
 
-    ListenableFuture<Optional<String>> fetchEntityNameAsync(TenantId tenantId, EntityId entityId);
+    CustomerId NULL_CUSTOMER_ID = new CustomerId(NULL_UUID);
 
-    CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId);
+    default ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+       return Futures.immediateFuture(null);
+   }
 
-    long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);
-
-    PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
+    default CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
+        return NULL_CUSTOMER_ID;
+    }
 
 }

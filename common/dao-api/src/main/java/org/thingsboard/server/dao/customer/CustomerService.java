@@ -21,10 +21,11 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
 import java.util.Optional;
 
-public interface CustomerService {
+public interface CustomerService extends SimpleEntityService {
 
     Customer findCustomerById(TenantId tenantId, CustomerId customerId);
 

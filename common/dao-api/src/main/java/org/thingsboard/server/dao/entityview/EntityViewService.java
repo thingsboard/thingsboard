@@ -27,13 +27,14 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
 import java.util.List;
 
 /**
  * Created by Victor Basanets on 8/27/2017.
  */
-public interface EntityViewService {
+public interface EntityViewService extends SimpleEntityService {
 
     EntityView saveEntityView(EntityView entityView);
 

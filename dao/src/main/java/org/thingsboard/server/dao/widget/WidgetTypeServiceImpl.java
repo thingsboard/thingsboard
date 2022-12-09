@@ -28,7 +28,7 @@ import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 
-@Service
+@Service("WidgetTypeDaoService")
 @Slf4j
 public class WidgetTypeServiceImpl implements WidgetTypeService {
 

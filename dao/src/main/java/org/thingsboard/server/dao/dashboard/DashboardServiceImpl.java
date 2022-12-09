@@ -24,10 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -45,7 +47,7 @@ import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("DashboardDaoService")
 @Slf4j
 public class DashboardServiceImpl extends AbstractEntityService implements DashboardService {
 
@@ -306,6 +308,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
                 }
             };
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findDashboardByIdAsync(tenantId, new DashboardId(entityId.getId()));
+    }
 
     private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
 

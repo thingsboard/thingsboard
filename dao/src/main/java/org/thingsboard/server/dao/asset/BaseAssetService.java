@@ -27,6 +27,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -61,7 +63,7 @@ import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
-@Service
+@Service("AssetDaoService")
 @Slf4j
 public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey, Asset, AssetCacheEvictEvent> implements AssetService {
 
@@ -429,4 +431,16 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             unassignAssetFromCustomer(tenantId, new AssetId(entity.getId().getId()));
         }
     };
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findAssetByIdAsync(tenantId, new AssetId(entityId.getId()));
+    }
+
+    @Override
+    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
+        Asset asset = findAssetById(tenantId, new AssetId(entityId.getId()));
+        return asset != null ? asset.getCustomerId() : SimpleEntityService.NULL_CUSTOMER_ID;
+    }
+
 }

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import javax.annotation.Nullable;
@@ -67,7 +69,7 @@ import java.util.stream.Stream;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("AlarmDaoService")
 @Slf4j
 public class BaseAlarmService extends AbstractEntityService implements AlarmService {
 
@@ -283,8 +285,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 a -> {
                     AlarmInfo alarmInfo = new AlarmInfo(a);
                     return Futures.transform(
-                            entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                                alarmInfo.setOriginatorName(originatorName);
+                            entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorNameOpt -> {
+                                alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "N/A" : originatorNameOpt.get());
                                 return alarmInfo;
                             }, MoreExecutors.directExecutor());
                 }, MoreExecutors.directExecutor());
@@ -312,11 +314,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
         for (AlarmInfo alarmInfo : alarms.getData()) {
             alarmFutures.add(Futures.transform(
-                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                        if (originatorName == null) {
-                            originatorName = "Deleted";
-                        }
-                        alarmInfo.setOriginatorName(originatorName);
+                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorNameOpt -> {
+                        alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "Deleted" : originatorNameOpt.get());
                         return alarmInfo;
                     }, MoreExecutors.directExecutor()
             ));
@@ -408,5 +407,20 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         validateId(alarmId, "Alarm id should be specified!");
         Alarm entity = alarmDao.findAlarmById(tenantId, alarmId.getId());
         return function.apply(entity);
+    }
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findAlarmByIdAsync(tenantId, new AlarmId(entityId.getId()));
+    }
+
+    @Override
+    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
+        try {
+            Alarm alarm = findAlarmByIdAsync(tenantId, new AlarmId(entityId.getId())).get();
+            return alarm != null ? alarm.getCustomerId() : SimpleEntityService.NULL_CUSTOMER_ID;
+        } catch (Exception e) {
+            return SimpleEntityService.NULL_CUSTOMER_ID;
+        }
     }
 }

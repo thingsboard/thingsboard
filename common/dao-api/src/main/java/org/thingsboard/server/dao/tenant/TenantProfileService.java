@@ -21,8 +21,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
-public interface TenantProfileService {
+public interface TenantProfileService extends SimpleEntityService {
 
     TenantProfile findTenantProfileById(TenantId tenantId, TenantProfileId tenantProfileId);
 

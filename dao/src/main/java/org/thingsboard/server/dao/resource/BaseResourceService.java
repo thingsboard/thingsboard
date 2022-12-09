@@ -20,9 +20,11 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -38,7 +40,7 @@ import java.util.Optional;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("TbResourceDaoService")
 @Slf4j
 @AllArgsConstructor
 public class BaseResourceService implements ResourceService {
@@ -132,6 +134,11 @@ public class BaseResourceService implements ResourceService {
         log.trace("Executing deleteResourcesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantResourcesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId()));
     }
 
     @Override

@@ -41,7 +41,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Service
+@Service("EventDaoService")
 @Slf4j
 public class BaseEventService implements EventService {
 

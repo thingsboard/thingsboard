@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,7 +72,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 /**
  * Created by ashvayka on 28.04.17.
  */
-@Service
+@Service("RelationDaoService")
 @Slf4j
 public class BaseRelationService implements RelationService {
 
@@ -374,10 +375,10 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(TenantId tenantId, EntityRelation relation,
                                                                         Function<EntityRelation, EntityId> entityIdGetter,
                                                                         BiConsumer<EntityRelationInfo, String> entityNameSetter) {
-        ListenableFuture<String> entityName = entityService.fetchEntityNameAsync(tenantId, entityIdGetter.apply(relation));
-        return Futures.transform(entityName, entityName1 -> {
+        ListenableFuture<Optional<String>> entityNameFuture = entityService.fetchEntityNameAsync(tenantId, entityIdGetter.apply(relation));
+        return Futures.transform(entityNameFuture, nameOpt -> {
             EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
-            entityNameSetter.accept(entityRelationInfo1, entityName1);
+            entityNameSetter.accept(entityRelationInfo1, nameOpt.orElse("N/A"));
             return entityRelationInfo1;
         }, MoreExecutors.directExecutor());
     }

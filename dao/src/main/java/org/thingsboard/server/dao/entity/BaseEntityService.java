@@ -23,21 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -58,7 +47,8 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import java.util.Optional;
+
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 /**
@@ -72,40 +62,10 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
 
     @Autowired
-    private AssetService assetService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private CustomerService customerService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private DashboardService dashboardService;
-
-    @Autowired
-    private AlarmService alarmService;
-
-    @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
     private EntityQueryDao entityQueryDao;
 
     @Autowired
-    private ResourceService resourceService;
-
-    @Autowired
-    private OtaPackageService otaPackageService;
+    EntityServiceBeanFactory entityServiceBeanFactory;
 
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
@@ -125,100 +85,19 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
     }
 
-    //TODO: 3.1 Remove this from project.
     @Override
-    public ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId) {
+    public ListenableFuture<Optional<String>> fetchEntityNameAsync(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityNameAsync [{}]", entityId);
-        ListenableFuture<String> entityName;
-        ListenableFuture<? extends HasName> hasName;
-        switch (entityId.getEntityType()) {
-            case ASSET:
-                hasName = assetService.findAssetByIdAsync(tenantId, new AssetId(entityId.getId()));
-                break;
-            case DEVICE:
-                hasName = deviceService.findDeviceByIdAsync(tenantId, new DeviceId(entityId.getId()));
-                break;
-            case ENTITY_VIEW:
-                hasName = entityViewService.findEntityViewByIdAsync(tenantId, new EntityViewId(entityId.getId()));
-                break;
-            case TENANT:
-                hasName = tenantService.findTenantByIdAsync(tenantId, TenantId.fromUUID(entityId.getId()));
-                break;
-            case CUSTOMER:
-                hasName = customerService.findCustomerByIdAsync(tenantId, new CustomerId(entityId.getId()));
-                break;
-            case USER:
-                hasName = userService.findUserByIdAsync(tenantId, new UserId(entityId.getId()));
-                break;
-            case DASHBOARD:
-                hasName = dashboardService.findDashboardInfoByIdAsync(tenantId, new DashboardId(entityId.getId()));
-                break;
-            case ALARM:
-                hasName = alarmService.findAlarmByIdAsync(tenantId, new AlarmId(entityId.getId()));
-                break;
-            case RULE_CHAIN:
-                hasName = ruleChainService.findRuleChainByIdAsync(tenantId, new RuleChainId(entityId.getId()));
-                break;
-            case EDGE:
-                hasName = edgeService.findEdgeByIdAsync(tenantId, new EdgeId(entityId.getId()));
-                break;
-            case TB_RESOURCE:
-                hasName = resourceService.findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId()));
-                break;
-            case OTA_PACKAGE:
-                hasName = otaPackageService.findOtaPackageInfoByIdAsync(tenantId, new OtaPackageId(entityId.getId()));
-                break;
-            default:
-                throw new IllegalStateException("Not Implemented!");
-        }
-        entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
-        return entityName;
+        SimpleEntityService fetchEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
+        return Futures.transform(fetchEntityService.fetchHasNameEntityAsync(tenantId, entityId),
+                hasName -> hasName != null ? Optional.of(hasName.getName()) : Optional.empty(), MoreExecutors.directExecutor());
     }
 
     @Override
     public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
-        HasCustomerId hasCustomerId = null;
-        switch (entityId.getEntityType()) {
-            case TENANT:
-            case RULE_CHAIN:
-            case RULE_NODE:
-            case DASHBOARD:
-            case WIDGETS_BUNDLE:
-            case WIDGET_TYPE:
-            case TENANT_PROFILE:
-            case DEVICE_PROFILE:
-            case ASSET_PROFILE:
-            case API_USAGE_STATE:
-            case TB_RESOURCE:
-            case OTA_PACKAGE:
-                break;
-            case CUSTOMER:
-                hasCustomerId = () -> new CustomerId(entityId.getId());
-                break;
-            case USER:
-                hasCustomerId = userService.findUserById(tenantId, new UserId(entityId.getId()));
-                break;
-            case ASSET:
-                hasCustomerId = assetService.findAssetById(tenantId, new AssetId(entityId.getId()));
-                break;
-            case DEVICE:
-                hasCustomerId = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
-                break;
-            case ALARM:
-                try {
-                    hasCustomerId = alarmService.findAlarmByIdAsync(tenantId, new AlarmId(entityId.getId())).get();
-                } catch (Exception e) {
-                }
-                break;
-            case ENTITY_VIEW:
-                hasCustomerId = entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
-                break;
-            case EDGE:
-                hasCustomerId = edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId()));
-                break;
-        }
-        return hasCustomerId != null ? hasCustomerId.getCustomerId() : new CustomerId(NULL_UUID);
+        SimpleEntityService fetchEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
+        return fetchEntityService.getCustomerId(tenantId, entityId);
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {

@@ -45,7 +45,7 @@ import java.util.Objects;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("ApiUsageStateDaoService")
 @Slf4j
 public class ApiUsageStateServiceImpl extends AbstractEntityService implements ApiUsageStateService {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";

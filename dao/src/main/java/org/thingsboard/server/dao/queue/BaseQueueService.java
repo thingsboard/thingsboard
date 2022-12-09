@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.dao.queue;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,7 +40,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.List;
 
-@Service
+@Service("QueueDaoService")
 @Slf4j
 @RequiredArgsConstructor
 public class BaseQueueService extends AbstractEntityService implements QueueService {
@@ -117,6 +121,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueuesByTenantId(TenantId tenantId) {
         Validator.validateId(tenantId, "Incorrect tenant id for delete queues request.");
         tenantQueuesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return Futures.immediateFuture(findQueueById(tenantId, new QueueId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, Queue> tenantQueuesRemover =

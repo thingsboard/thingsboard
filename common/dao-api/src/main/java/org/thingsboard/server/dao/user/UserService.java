@@ -24,8 +24,9 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
-public interface UserService {
+public interface UserService extends SimpleEntityService {
 	
 	User findUserById(TenantId tenantId, UserId userId);
 

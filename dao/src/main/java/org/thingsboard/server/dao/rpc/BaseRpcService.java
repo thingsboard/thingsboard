@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
-@Service
+@Service("RpcDaoService")
 @Slf4j
 @RequiredArgsConstructor
 public class BaseRpcService implements RpcService {

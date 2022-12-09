@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -39,7 +43,7 @@ import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("TenantProfileDaoService")
 @Slf4j
 public class TenantProfileServiceImpl extends AbstractCachedEntityService<TenantProfileCacheKey, TenantProfile, TenantProfileEvictEvent> implements TenantProfileService {
 
@@ -202,6 +206,11 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     public void deleteTenantProfiles(TenantId tenantId) {
         log.trace("Executing deleteTenantProfiles");
         tenantProfilesRemover.removeEntities(tenantId, null);
+    }
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return Futures.immediateFuture(findTenantProfileById(tenantId, new TenantProfileId(entityId.getId())));
     }
 
     private final PaginatedRemover<String, TenantProfile> tenantProfilesRemover =

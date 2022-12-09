@@ -26,11 +26,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface EdgeService {
+public interface EdgeService extends SimpleEntityService {
 
     Edge findEdgeById(TenantId tenantId, EdgeId edgeId);
 

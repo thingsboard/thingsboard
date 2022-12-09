@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -61,7 +63,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 /**
  * Created by Victor Basanets on 8/28/2017.
  */
-@Service
+@Service("EntityViewDaoService")
 @Slf4j
 public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityViewCacheKey, EntityViewCacheValue, EntityViewEvictEvent> implements EntityViewService {
 
@@ -408,4 +410,15 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             unassignEntityViewFromCustomer(tenantId, new EntityViewId(entity.getUuidId()));
         }
     };
+
+    @Override
+    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findEntityViewByIdAsync(tenantId, new EntityViewId(entityId.getId()));
+    }
+
+    @Override
+    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
+        EntityView entityView = findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
+        return entityView != null ? entityView.getCustomerId() : SimpleEntityService.NULL_CUSTOMER_ID;
+    }
 }

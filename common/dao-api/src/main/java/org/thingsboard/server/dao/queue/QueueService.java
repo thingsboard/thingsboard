@@ -20,10 +20,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
 import java.util.List;
 
-public interface QueueService {
+public interface QueueService extends SimpleEntityService {
 
     Queue saveQueue(Queue queue);
 

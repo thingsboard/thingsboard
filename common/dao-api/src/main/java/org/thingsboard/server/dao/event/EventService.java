@@ -24,10 +24,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.entity.SimpleEntityService;
 
 import java.util.List;
 
-public interface EventService {
+public interface EventService extends SimpleEntityService {
 
     ListenableFuture<Void> saveAsync(Event event);
 
