@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
 
-    Copyright Â© 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,8 +19,17 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="UI smoke tests">
-    <suite-files>
-        <suite-file path="smokesRuleChain.xml"/>
-        <suite-file path="smokesCustomer.xml"/>
-    </suite-files>
+    <listeners>
+        <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
+    </listeners>
+    <test name="Smoke rule chains tests">
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke"/>
+        </packages>
+    </test>
+    <test name="Smoke customers tests">
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.customerSmoke"/>
+        </packages>
+    </test>
 </suite>

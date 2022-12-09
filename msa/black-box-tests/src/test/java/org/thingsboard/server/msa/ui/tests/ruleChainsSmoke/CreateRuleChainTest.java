@@ -71,7 +71,7 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
     }
 
-    @Test(priority = 10, groups = "smoke")
+    @Test(priority = 10, groups = "smoke", enabled = false)
     @Description
     public void createRuleChainWithDescription() {
         ruleChainName = ENTITY_NAME;

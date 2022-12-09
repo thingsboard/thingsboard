@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
 
-    Copyright Â© 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,130 +19,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="Customer Smoke Tests">
-
     <listeners>
         <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
     </listeners>
-
-    <test name="Create customer smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.CreateCustomerTest"/>
-        </classes>
+    <test name="ui">
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.customerSmoke"/>
+        </packages>
     </test>
-
-    <test name="Delete customer smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.DeleteCustomerTest"/>
-        </classes>
-    </test>
-
-    <test name="Delete several customers smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.DeleteSeveralCustomerTest"/>
-        </classes>
-    </test>
-
-    <test name="Edit menu customer smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.CustomerEditMenuTest"/>
-        </classes>
-    </test>
-
-    <test name="Manage customer users smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.ManageCustomersUsersTest"/>
-        </classes>
-    </test>
-
-    <test name="Manage customer assets smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.ManageCustomersAssetsTest"/>
-        </classes>
-    </test>
-
-    <test name="Manage customer devices smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.ManageCustomersDevicesTest"/>
-        </classes>
-    </test>
-
-    <test name="Manage customer dashboards smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.ManageCustomersDashboardsTest"/>
-        </classes>
-    </test>
-
-    <test name="Manage customer edges smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.ManageCustomersEdgesTest"/>
-        </classes>
-    </test>
-
-    <test name="Sort by name">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.SortByNameTest"/>
-        </classes>
-    </test>
-
-    <test name="Search customer">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.customerSmoke.SearchCustomerTest"/>
-        </classes>
-    </test>
-
 </suite>

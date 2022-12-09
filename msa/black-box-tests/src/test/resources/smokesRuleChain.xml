@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
 
-    Copyright Â© 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,120 +19,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="Rule Chain Smoke Tests">
-
     <listeners>
         <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
     </listeners>
-
-    <test name="Create rule chains">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.CreateRuleChainTest"/>
-        </classes>
+    <test name="ui">
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke"/>
+        </packages>
     </test>
-
-    <test name="Create rule chains import">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.CreateRuleChainImportTest"/>
-        </classes>
-    </test>
-
-    <test name="Delete rule chains">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.DeleteRuleChainTest"/>
-        </classes>
-    </test>
-
-    <test name="Delete several rule chain smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.DeleteSeveralRuleChainsTest"/>
-        </classes>
-    </test>
-
-    <test name="Make root">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.MakeRuleChainRootTest"/>
-        </classes>
-    </test>
-
-    <test name="Open rule chain smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.OpenRuleChainTest"/>
-        </classes>
-    </test>
-
-    <test name="Edit menu rule chain smoke">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.RuleChainEditMenuTest"/>
-        </classes>
-    </test>
-
-    <test name="Search rule chain">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.SearchRuleChainTest"/>
-        </classes>
-    </test>
-
-    <test name="Sort rule chain by name">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.SortByNameTest"/>
-        </classes>
-    </test>
-
-    <test name="Sort rule chain by time">
-        <parameter name="browser" value="chrome"/>
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <classes>
-            <class name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke.SortByTimeTest"/>
-        </classes>
-    </test>
-
 </suite>
