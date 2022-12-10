@@ -19,17 +19,8 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="All tests">
-    <listeners>
-        <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
-    </listeners>
-    <test name="blackbox">
-        <packages>
-            <package name="org.thingsboard.server.msa.connectivity"/>
-        </packages>
-    </test>
-    <test name="ui">
-        <packages>
-            <package name="org.thingsboard.server.msa.ui.tests"/>
-        </packages>
-    </test>
+    <suite-files>
+        <suite-file path="connectivity.xml"/>
+        <suite-file path="uiTests.xml"/>
+    </suite-files>
 </suite>
