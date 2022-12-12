@@ -28,19 +28,25 @@ public class AlarmOperationResult {
     private final boolean successful;
     private final boolean created;
     private final List<EntityId> propagatedEntitiesList;
+    private final AlarmAdditionalInfo alarmAdditionalInfo;
 
     public AlarmOperationResult(Alarm alarm, boolean successful) {
-        this(alarm, successful, Collections.emptyList());
+        this(alarm, successful, Collections.emptyList(), new AlarmAdditionalInfo(null, null, null, null, null));
     }
 
-    public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList) {
-        this(alarm, successful, false, propagatedEntitiesList);
+    public AlarmOperationResult(Alarm alarm, boolean successful, AlarmAdditionalInfo alarmAdditionalInfo) {
+        this(alarm, successful, Collections.emptyList(), alarmAdditionalInfo);
     }
 
-    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
+    public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList, AlarmAdditionalInfo alarmAdditionalInfo) {
+        this(alarm, successful, false, propagatedEntitiesList, alarmAdditionalInfo);
+    }
+
+    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList, AlarmAdditionalInfo alarmAdditionalInfo) {
         this.alarm = alarm;
         this.successful = successful;
         this.created = created;
         this.propagatedEntitiesList = propagatedEntitiesList;
+        this.alarmAdditionalInfo = alarmAdditionalInfo;
     }
 }

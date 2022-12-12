@@ -284,10 +284,14 @@ public class ModelConstants {
     public static final String ALARM_DETAILS_PROPERTY = "details";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
     public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
+    public static final String ALARM_ORIGINATOR_LABEL_PROPERTY = "originator_label";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_STATUS_PROPERTY = "status";
     public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
+    public static final String ALARM_ASSIGNEE_FIRST_NAME_PROPERTY = "assignee_first_name";
+    public static final String ALARM_ASSIGNEE_LAST_NAME_PROPERTY = "assignee_last_name";
+    public static final String ALARM_ASSIGNEE_EMAIL_PROPERTY = "assignee_email";
     public static final String ALARM_START_TS_PROPERTY = "start_ts";
     public static final String ALARM_END_TS_PROPERTY = "end_ts";
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";

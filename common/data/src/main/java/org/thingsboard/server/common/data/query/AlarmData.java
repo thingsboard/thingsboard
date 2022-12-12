@@ -31,8 +31,14 @@ public class AlarmData extends AlarmInfo {
     @Getter
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
 
-    public AlarmData(Alarm alarm, String originatorName, EntityId entityId) {
-        super(alarm, originatorName);
+    public AlarmData(Alarm alarm, AlarmInfo alarmInfo, EntityId entityId) {
+        super(alarm, alarmInfo);
+        this.entityId = entityId;
+        this.latest = new HashMap<>();
+    }
+
+    public AlarmData(Alarm alarm, EntityId entityId) {
+        super(alarm);
         this.entityId = entityId;
         this.latest = new HashMap<>();
     }

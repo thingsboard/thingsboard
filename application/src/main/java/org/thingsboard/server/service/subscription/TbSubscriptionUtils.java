@@ -17,6 +17,7 @@ package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -190,7 +191,8 @@ public class TbSubscriptionUtils {
             return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
         } else {
             Alarm alarm = JacksonUtil.fromString(proto.getAlarm(), Alarm.class);
-            return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), alarm);
+            AlarmInfo alarmInfo = JacksonUtil.fromString(proto.getAlarmInfo(), AlarmInfo.class);
+            return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), alarm, alarmInfo);
         }
     }
 

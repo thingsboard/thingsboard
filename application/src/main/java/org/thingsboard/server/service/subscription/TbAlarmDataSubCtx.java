@@ -20,6 +20,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -219,7 +220,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             boolean matchesFilter = filter(alarm);
             if (onCurrentPage) {
                 if (matchesFilter) {
-                    AlarmData updated = new AlarmData(alarm, current.getOriginatorName(), current.getEntityId());
+                    AlarmData updated = new AlarmData(alarm, subscriptionUpdate.getAlarmInfo(), current.getEntityId());
                     updated.getLatest().putAll(current.getLatest());
                     alarmsMap.put(alarmId, updated);
                     sendWsMsg(new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), maxEntitiesPerAlarmSubscription, data.getTotalElements()));

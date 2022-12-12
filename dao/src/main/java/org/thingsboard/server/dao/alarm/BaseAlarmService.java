@@ -27,6 +27,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -34,10 +40,15 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -47,9 +58,16 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -80,6 +98,27 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private DashboardService dashboardService;
+
+    @Autowired
+    private AssetService assetService;
+
+    @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
+    private EntityViewService entityViewService;
 
     @Autowired
     private DataValidator<Alarm> alarmDataValidator;
@@ -151,7 +190,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null) {
             return new AlarmOperationResult(alarm, false);
         }
-        AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+        AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(tenantId, alarm);
+        AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)), alarmAdditionalInfo);
         deleteEntityRelations(tenantId, alarm.getId());
         alarmDao.removeById(tenantId, alarm.getUuidId());
         return result;
@@ -161,7 +201,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
-        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
+        AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(alarm.getTenantId(), alarm);
+        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList, alarmAdditionalInfo);
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -216,7 +257,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
         }
-        return new AlarmOperationResult(result, true, propagatedEntitiesList);
+        AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(newAlarm.getTenantId(), newAlarm);
+        return new AlarmOperationResult(result, true, propagatedEntitiesList, alarmAdditionalInfo);
     }
 
     @Override
@@ -233,7 +275,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setStatus(newStatus);
                     alarm.setAckTs(ackTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(tenantId, alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)), alarmAdditionalInfo);
                 }
             }
         });
@@ -256,7 +299,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                         alarm.setDetails(details);
                     }
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(tenantId, alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)), alarmAdditionalInfo);
                 }
             }
         });
@@ -274,7 +318,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(assigneeId);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(tenantId, alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)), alarmAdditionalInfo);
                 }
             }
         });
@@ -292,7 +337,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(null);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    AlarmAdditionalInfo alarmAdditionalInfo = getAlarmAdditionalInfo(tenantId, alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)), alarmAdditionalInfo);
                 }
             }
         });
@@ -396,10 +442,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm.getAckTs() > existing.getAckTs()) {
             existing.setAckTs(alarm.getAckTs());
         }
+        if (alarm.getAssignTs() > existing.getAssignTs()) {
+            existing.setAssignTs(alarm.getAssignTs());
+        }
         existing.setStatus(alarm.getStatus());
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
         existing.setCustomerId(alarm.getCustomerId());
+        existing.setAssigneeId(alarm.getAssigneeId());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
         existing.setPropagateToOwner(existing.isPropagateToOwner() || alarm.isPropagateToOwner());
         existing.setPropagateToTenant(existing.isPropagateToTenant() || alarm.isPropagateToTenant());
@@ -446,5 +496,64 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         validateId(alarmId, "Alarm id should be specified!");
         Alarm entity = alarmDao.findAlarmById(tenantId, alarmId.getId());
         return function.apply(entity);
+    }
+
+    private AlarmAdditionalInfo getAlarmAdditionalInfo(TenantId tenantId, Alarm alarm) {
+        AlarmAdditionalInfo.AlarmAdditionalInfoBuilder builder = AlarmAdditionalInfo.builder();
+
+        addAlarmOriginatorNameAndLabel(tenantId, alarm.getOriginator(), builder);
+
+        if (alarm.getAssigneeId() != null) {
+            User assignedUser = userService.findUserById(tenantId, alarm.getAssigneeId());
+            builder.firstName(assignedUser.getFirstName());
+            builder.lastName(assignedUser.getLastName());
+            builder.email(assignedUser.getEmail());
+        }
+        return builder.build();
+    }
+
+    private void addAlarmOriginatorNameAndLabel(TenantId tenantId, EntityId originatorId, AlarmAdditionalInfo.AlarmAdditionalInfoBuilder builder) {
+        String originatorName = "Unknown";
+        String originatorLabel = "Unknown";
+        switch(originatorId.getEntityType()) {
+            case TENANT:
+                Tenant tenantOriginator = tenantService.findTenantById((TenantId) originatorId);
+                originatorName = tenantOriginator.getTitle();
+                originatorLabel = tenantOriginator.getEmail();
+                break;
+            case CUSTOMER:
+                Customer customerOriginator = customerService.findCustomerById(tenantId, (CustomerId) originatorId);
+                originatorName = customerOriginator.getTitle();
+                originatorLabel = customerOriginator.getEmail();
+                break;
+            case USER:
+                User userOriginator = userService.findUserById(tenantId, (UserId) originatorId);
+                originatorName = userOriginator.getEmail();
+                originatorLabel = userOriginator.getName();
+                break;
+            case DASHBOARD:
+                Dashboard dashboardOriginator = dashboardService.findDashboardById(tenantId, (DashboardId) originatorId);
+                originatorName = dashboardOriginator.getTitle();
+                originatorLabel = dashboardOriginator.getName();
+                break;
+            case ASSET:
+                Asset assetOriginator = assetService.findAssetById(tenantId, (AssetId) originatorId);
+                originatorName = assetOriginator.getName();
+                originatorLabel = assetOriginator.getLabel();
+                break;
+            case DEVICE:
+                Device deviceOriginator = deviceService.findDeviceById(tenantId, (DeviceId) originatorId);
+                originatorName = deviceOriginator.getName();
+                originatorLabel = deviceOriginator.getLabel();
+                break;
+            case ENTITY_VIEW:
+                EntityView entityViewOriginator = entityViewService.findEntityViewById(tenantId, (EntityViewId) originatorId);
+                originatorName = entityViewOriginator.getName();
+                originatorLabel = entityViewOriginator.getType(); // TODO Should we use something else?
+                break;
+        }
+
+        builder.originatorName(originatorName);
+        builder.originatorLabel(originatorLabel);
     }
 }

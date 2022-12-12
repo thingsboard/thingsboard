@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
@@ -68,6 +69,7 @@ public class AlarmDataAdapter {
         alarm.setCreatedTime((long) row.get(ModelConstants.CREATED_TIME_PROPERTY));
         alarm.setAckTs((long) row.get(ModelConstants.ALARM_ACK_TS_PROPERTY));
         alarm.setClearTs((long) row.get(ModelConstants.ALARM_CLEAR_TS_PROPERTY));
+        alarm.setAssignTs((long) row.get(ModelConstants.ALARM_ASSIGN_TS_PROPERTY));
         alarm.setStartTs((long) row.get(ModelConstants.ALARM_START_TS_PROPERTY));
         alarm.setEndTs((long) row.get(ModelConstants.ALARM_END_TS_PROPERTY));
         Object additionalInfo = row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY);
@@ -81,6 +83,16 @@ public class AlarmDataAdapter {
         EntityType originatorType = EntityType.values()[(int) row.get(ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY)];
         UUID originatorId = (UUID) row.get(ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarm.setOriginator(EntityIdFactory.getByTypeAndUuid(originatorType, originatorId));
+        Object assigneeIdObj = row.get(ModelConstants.ASSIGNEE_ID_PROPERTY);
+        String assigneeFirstName = null;
+        String assigneeLastName = null;
+        String assigneeEmail = null;
+        if (assigneeIdObj != null) {
+            alarm.setAssigneeId(new UserId((UUID) row.get(ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY)));
+            assigneeFirstName = row.get(ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY).toString();
+            assigneeLastName = row.get(ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY).toString();
+            assigneeEmail = row.get(ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY).toString();
+        }
         alarm.setPropagate((boolean) row.get(ModelConstants.ALARM_PROPAGATE_PROPERTY));
         alarm.setPropagateToOwner((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_PROPERTY));
         alarm.setPropagateToTenant((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_TENANT_PROPERTY));
@@ -105,7 +117,17 @@ public class AlarmDataAdapter {
         EntityId entityId = entityIdMap.get(entityUuid);
         Object originatorNameObj = row.get(ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
         String originatorName = originatorNameObj != null ? originatorNameObj.toString() : null;
-        return new AlarmData(alarm, originatorName, entityId);
+        Object originatorLabelObj = row.get(ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
+        String originatorLabel = originatorLabelObj != null ? originatorLabelObj.toString() : null;
+
+        AlarmData alarmData = new AlarmData(alarm, entityId);
+        alarmData.setOriginatorName(originatorName);
+        alarmData.setOriginatorLabel(originatorLabel);
+        alarmData.setAssigneeFirstName(assigneeFirstName);
+        alarmData.setAssigneeLastName(assigneeLastName);
+        alarmData.setAssigneeEmail(assigneeEmail);
+
+        return alarmData;
     }
 
 }

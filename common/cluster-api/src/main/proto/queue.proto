@@ -562,6 +562,7 @@ message TbAlarmSubscriptionUpdateProto {
   string errorMsg = 4;
   string alarm = 5;
   bool deleted = 6;
+  string alarmInfo = 7;
 }
 
 message TbAttributeUpdateProto {
@@ -581,6 +582,7 @@ message TbAlarmUpdateProto {
   int64 tenantIdMSB = 4;
   int64 tenantIdLSB = 5;
   string alarm = 6;
+  string alarmInfo = 7;
 }
 
 message TbAlarmDeleteProto {
