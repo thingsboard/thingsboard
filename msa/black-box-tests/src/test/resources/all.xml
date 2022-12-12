@@ -19,8 +19,22 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="All tests">
-    <suite-files>
-        <suite-file path="connectivity.xml"/>
-        <suite-file path="uiTests.xml"/>
-    </suite-files>
+    <listeners>
+        <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
+    </listeners>
+    <test verbose="2" name="Connectivity tests" preserve-order="false">
+        <packages>
+            <package name="org.thingsboard.server.msa.connectivity" />
+        </packages>
+    </test>
+    <test name="Smoke rule chains tests">
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke"/>
+        </packages>
+    </test>
+    <test name="Smoke customers tests">
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.customerSmoke"/>
+        </packages>
+    </test>
 </suite>

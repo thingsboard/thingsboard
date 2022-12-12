@@ -34,14 +34,11 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ContainerTestSuite;
-import org.thingsboard.server.msa.ui.listeners.TestListener;
 
 import java.io.File;
 import java.net.URL;
@@ -51,7 +48,6 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 
 @Slf4j
-@Listeners(TestListener.class)
 abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     protected WebDriver driver;
@@ -65,7 +61,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     @SneakyThrows
     @BeforeMethod
     public void openBrowser() {
-        log.info("*----------------------* Setup driver *----------------------*");
+        log.info("===>>> Setup driver");
         ChromeOptions options = new ChromeOptions();
         options.setAcceptInsecureCerts(true);
         if (instance.isActive()) {
@@ -81,7 +77,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     @AfterMethod
     public void closeBrowser() {
-        log.info("*----------------------* Teardown *----------------------*");
+        log.info("<<<=== Teardown");
         driver.quit();
     }
 
