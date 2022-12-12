@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -562,8 +563,18 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     if (queryResults != null) {
                         for (ReadTsKvQueryResult queryResult : queryResults) {
                             String queryKey = queriesKeys.get(queryResult.getQueryId());
-                            entityData.getTimeseries().put(queryKey, queryResult.toTsValues());
-                            lastTsMap.put(queryKey, queryResult.getLastEntryTs());
+                            if (queryKey != null) {
+                                TsValue[] tsValues = entityData.getTimeseries().get(queryKey);
+                                if (tsValues == null) {
+                                    tsValues = queryResult.toTsValues();
+                                } else {
+                                    tsValues = ArrayUtils.addAll(tsValues, queryResult.toTsValues());
+                                }
+                                entityData.getTimeseries().put(queryKey, tsValues);
+                            } else {
+                                log.warn("ReadTsKvQueryResult for {} {} has queryId not matching the initial query",
+                                        entityData.getEntityId().getEntityType(), entityData.getEntityId());
+                            }
                         }
                     }
                     // Populate with empty values if no data found.
