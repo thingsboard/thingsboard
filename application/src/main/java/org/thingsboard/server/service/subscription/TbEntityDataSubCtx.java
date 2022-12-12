@@ -89,7 +89,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     @Override
     protected Aggregation getCurrentAggregation() {
-        return this.curTsCmd.getAgg() != null ? this.curTsCmd.getAgg() : Aggregation.NONE;
+        return (this.curTsCmd == null || this.curTsCmd.getAgg() == null) ? Aggregation.NONE : this.curTsCmd.getAgg();
     }
 
     private void sendLatestWsMsg(EntityId entityId, String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
