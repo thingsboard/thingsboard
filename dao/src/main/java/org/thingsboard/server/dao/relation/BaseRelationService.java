@@ -72,7 +72,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 /**
  * Created by ashvayka on 28.04.17.
  */
-@Service()
+@Service
 @Slf4j
 public class BaseRelationService implements RelationService {
 
