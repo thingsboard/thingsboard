@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,6 +62,7 @@ import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -580,6 +582,21 @@ public class RuleChainController extends BaseController {
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
         return tbRuleChainService.unassignRuleChainFromEdge(getTenantId(), ruleChain, edge, getCurrentUser());
+    }
+
+    @DeleteMapping("/ruleNode/{ruleNodeId}/stats")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    public void clearRuleNodeStats(@ApiParam(value = RULE_NODE_ID_PARAM_DESCRIPTION)
+                                   @PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
+        checkParameter(RULE_NODE_ID, strRuleNodeId);
+        try {
+            RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
+            RuleNode ruleNode = checkRuleNode(ruleNodeId, Operation.WRITE);
+
+            ruleChainService.clearRuleNodeStats(getTenantId(), ruleNode.getRuleChainId(), ruleNodeId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",

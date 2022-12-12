@@ -72,6 +72,15 @@ public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao, Exportabl
     PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
 
     /**
+     * RULE CHAIN ERRORS ATTRIBUTE KV
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of rule chain objects
+     */
+    Collection<RuleChain> findErrorsByTenantIdAndRuleChain(UUID tenantId, PageLink pageLink);
+
+    /**
      * Find auto assign to edge rule chains by tenantId.
      *
      * @param tenantId the tenantId

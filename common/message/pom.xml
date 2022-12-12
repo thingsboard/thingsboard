@@ -84,6 +84,10 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>util</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -94,7 +98,7 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
+                <artifactId>maven-source-plugin</artifactId>`
                 <executions>
                     <execution>
                         <id>attach-sources</id>

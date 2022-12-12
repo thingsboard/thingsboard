@@ -107,9 +107,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         int maxRuleNodeExecutionsPerMessage = getTenantProfileConfiguration().getMaxRuleNodeExecsPerMessage();
         if (maxRuleNodeExecutionsPerMessage == 0 || ruleNodeCount < maxRuleNodeExecutionsPerMessage) {
             apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
-            if (ruleNode.isDebugMode()) {
-                systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
-            }
+            try {
+                if (ruleNode.isDebugMode()) {
+                    systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
+                }
+            } catch (Exception ignored) {}
             try {
                 tbNode.onMsg(defaultCtx, msg.getMsg());
             } catch (Exception e) {
@@ -128,9 +130,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         int maxRuleNodeExecutionsPerMessage = getTenantProfileConfiguration().getMaxRuleNodeExecsPerMessage();
         if (maxRuleNodeExecutionsPerMessage == 0 || ruleNodeCount < maxRuleNodeExecutionsPerMessage) {
             apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
-            if (ruleNode.isDebugMode()) {
-                systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
-            }
+            try {
+                if (ruleNode.isDebugMode()) {
+                    systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
+                }
+            } catch (Exception ignored) {}
             try {
                 tbNode.onMsg(msg.getCtx(), msg.getMsg());
             } catch (Exception e) {

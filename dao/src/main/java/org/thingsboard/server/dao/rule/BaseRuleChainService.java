@@ -18,7 +18,9 @@ package org.thingsboard.server.dao.rule;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -26,8 +28,10 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -35,6 +39,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -48,7 +54,9 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.rule.RuleNodeStats;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -67,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
@@ -90,6 +99,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private RuleNodeDao ruleNodeDao;
+
+    @Autowired
+    private AttributesService attributesService;
 
     @Autowired
     private DataValidator<RuleChain> ruleChainValidator;
@@ -288,6 +300,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
         for (RuleNode node : ruleNodes) {
             ruleNodeIndexMap.put(node.getId(), ruleNodes.indexOf(node));
+            try {
+                node.setStats(getRuleNodeStats(tenantId, node.getId()).get());
+            } catch (Exception ignored) {}
         }
         ruleChainMetaData.setNodes(ruleNodes);
         if (ruleChain.getFirstRuleNodeId() != null) {
@@ -405,7 +420,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public PageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, PageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink);
-        return ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
+        PageData<RuleChain> pageData = ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
+        Collection<RuleChain> errorsInRuleChain = ruleChainDao.findErrorsByTenantIdAndRuleChain(tenantId.getId(), pageLink);
+        pageData.getData().forEach(pageDates -> {
+            if(errorsInRuleChain.contains(pageDates)) {
+                pageDates.setErrorPresent(true);
+            }
+        });
+        return pageData;
     }
 
     @Override
@@ -756,6 +778,35 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             deleteRuleNode(tenantId, relation.getTo());
         }
         deleteEntityRelations(tenantId, ruleChainId);
+    }
+
+    @Override
+    public ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId) {
+        return Futures.transform(attributesService.find(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, "ruleNodeStats"), input ->
+                input.map(attributeKvEntry -> JacksonUtil.fromString(attributeKvEntry.getJsonValue().get(), RuleNodeStats.class))
+                        .orElseGet(RuleNodeStats::new), MoreExecutors.directExecutor());
+    }
+
+    private void updateRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId, Consumer<RuleNodeStats> statsUpdater) {
+        DonAsynchron.withCallback(getRuleNodeStats(tenantId, ruleNodeId), ruleNodeStats -> {
+            statsUpdater.accept(ruleNodeStats);
+            attributesService.save(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList(
+                    new BaseAttributeKvEntry(System.currentTimeMillis(), new JsonDataEntry("ruleNodeStats", JacksonUtil.toString(ruleNodeStats)))
+            ));
+        }, e -> {});
+    }
+
+    @Override
+    public void clearRuleNodeStats(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        attributesService.removeAll(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
+    }
+
+    @Override
+    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String lastErrorMsg, int errorsCount) {
+        updateRuleNodeStats(tenantId, ruleNodeId, ruleNodeStats -> {
+            ruleNodeStats.setLastErrorMsg(lastErrorMsg);
+            ruleNodeStats.setErrorsCount(ruleNodeStats.getErrorsCount() + errorsCount);
+        });
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {

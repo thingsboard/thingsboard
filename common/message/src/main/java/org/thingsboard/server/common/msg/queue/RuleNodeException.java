@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 
+import static org.thingsboard.common.util.JacksonUtil.OBJECT_MAPPER;
+
 @Slf4j
 public class RuleNodeException extends RuleEngineException {
 
@@ -54,7 +56,7 @@ public class RuleNodeException extends RuleEngineException {
 
     public String toJsonString() {
         try {
-            return mapper.writeValueAsString(mapper.createObjectNode()
+            return OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.createObjectNode()
                     .put("ruleNodeId", ruleNodeId.toString())
                     .put("ruleChainId", ruleChainId.toString())
                     .put("ruleNodeName", ruleNodeName)

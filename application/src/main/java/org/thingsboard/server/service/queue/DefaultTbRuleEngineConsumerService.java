@@ -482,6 +482,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     @Scheduled(fixedDelayString = "${queue.rule-engine.stats.print-interval-ms}")
     public void printStats() {
+        System.out.println("Here we go baby!");
         if (statsEnabled) {
             long ts = System.currentTimeMillis();
             consumerStats.forEach((queue, stats) -> {

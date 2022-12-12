@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,8 +26,11 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
@@ -63,13 +65,15 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TelemetrySubscriptionService tsService;
+    private final RuleChainService ruleChainService;
     private final Lock lock = new ReentrantLock();
     private final AssetService assetService;
     private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets;
 
-    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, AssetService assetService) {
+    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, RuleChainService ruleChainService, AssetService assetService) {
         this.tsService = tsService;
         this.serviceInfoProvider = serviceInfoProvider;
+        this.ruleChainService = ruleChainService;
         this.assetService = assetService;
         this.tenantQueueAssets = new ConcurrentHashMap<>();
     }
@@ -95,8 +99,9 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                 }
             }
         });
-        ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
-            TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry("ruleEngineException", e.toJsonString()));
+        ruleEngineStats.getTenantExceptions().forEach((tenantId, exceptions) -> {
+            RuleEngineException lastException = exceptions.get(exceptions.size() - 1);
+            TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", lastException.toJsonString()));
             try {
                 tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
             } catch (DataValidationException e2) {
@@ -104,6 +109,16 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                     throw e2;
                 }
             }
+            exceptions.stream()
+                    .filter(e -> e instanceof RuleNodeException)
+                    .map(e -> (RuleNodeException) e)
+                    .collect(Collectors.groupingBy(RuleNodeException::getRuleChainId, Collectors.groupingBy(RuleNodeException::getRuleNodeId)))
+                    .forEach((ruleChainId, ruleNodesErrors) -> {
+                        ruleNodesErrors.forEach((ruleNodeId, ruleNodeExceptions) -> {
+                            ruleChainService.reportRuleNodeErrors(tenantId, ruleChainId, ruleNodeId,
+                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMessage(), ruleNodeExceptions.size());
+                        });
+                    });
         });
     }
 

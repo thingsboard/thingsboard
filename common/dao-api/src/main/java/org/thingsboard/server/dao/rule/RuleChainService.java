@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.rule.RuleNodeStats;
 
 import java.util.Collection;
 import java.util.List;
@@ -101,5 +102,11 @@ public interface RuleChainService {
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
+
+    ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
+
+    void clearRuleNodeStats(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId);
+
+    void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String lastErrorMsg, int errorsCount);
 
 }

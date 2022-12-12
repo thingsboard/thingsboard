@@ -26,6 +26,7 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -48,6 +49,14 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     @Override
     protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
         return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx.getParentRef(), ctx);
+    }
+
+    @Override
+    protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
+        super.logLifecycleEvent(event, e);
+        if (e != null) {
+            systemContext.getRuleChainService().reportRuleNodeErrors(tenantId, ruleChainId, ruleNodeId, e.getMessage(), 1);
+        }
     }
 
     @Override
