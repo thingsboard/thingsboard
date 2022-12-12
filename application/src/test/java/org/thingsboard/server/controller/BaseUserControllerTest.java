@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -727,6 +728,17 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     public void testDeleteUserExceptionWithRelationsTransactional() throws Exception {
         UserId userId = createUser().getId();
         testEntityDaoWithRelationsTransactionalException(userDao, tenantId, userId, "/api/user/" + userId);
+    }
+
+    @Test
+    public void givenInvalidPageLink_thenReturnError() throws Exception {
+        loginTenantAdmin();
+
+        String invalidSortProperty = "abc(abc)";
+
+        ResultActions result = doGet("/api/users?page={page}&pageSize={pageSize}&sortProperty={sortProperty}", 0, 100, invalidSortProperty)
+                .andExpect(status().isBadRequest());
+        assertThat(getErrorMessage(result)).containsIgnoringCase("invalid sort property");
     }
 
     private User createUser() throws Exception {
