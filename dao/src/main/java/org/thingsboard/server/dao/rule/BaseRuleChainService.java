@@ -29,10 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -761,11 +761,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
 
     @Override
-    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
-        if (EntityType.RULE_NODE.equals(entityId.getEntityType())) {
-            return findRuleNodeByIdAsync(tenantId, new RuleNodeId(entityId.getId()));
-        }
-        return findRuleChainByIdAsync(tenantId, new RuleChainId(entityId.getId()));
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return EntityType.RULE_NODE.equals(entityId.getEntityType()) ?
+                Optional.of(findRuleNodeById(tenantId, new RuleNodeId(entityId.getId()))) :
+                Optional.of(findRuleChainById(tenantId, new RuleChainId(entityId.getId())));
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {

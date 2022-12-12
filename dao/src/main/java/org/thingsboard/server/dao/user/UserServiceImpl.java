@@ -28,11 +28,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -41,13 +41,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entity.SimpleEntityService;
+import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -401,14 +402,14 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     };
 
     @Override
-    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
-        return findUserByIdAsync(tenantId, new UserId(entityId.getId()));
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.of(findUserById(tenantId, new UserId(entityId.getId())));
     }
 
     @Override
     public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
         User user = findUserById(tenantId, new UserId(entityId.getId()));
-        return user != null ? user.getCustomerId() : SimpleEntityService.NULL_CUSTOMER_ID;
+        return user != null ? user.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
     }
 
 }

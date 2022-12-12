@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -127,7 +128,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 entityName = entity.getName();
             } else {
                 try {
-                    Optional<String> entityNameOpt = entityService.fetchEntityNameAsync(tenantId, entityId).get();
+                    Optional<String> entityNameOpt = entityService.fetchEntityName(tenantId, entityId);
                     entityName = entityNameOpt.orElse(entityName);
                 } catch (Exception ignored) {
                 }
@@ -403,6 +404,11 @@ public class AuditLogServiceImpl implements AuditLogService {
         auditLogSink.logAction(auditLogEntry);
 
         return Futures.allAsList(futures);
+    }
+
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.empty();
     }
 
 }

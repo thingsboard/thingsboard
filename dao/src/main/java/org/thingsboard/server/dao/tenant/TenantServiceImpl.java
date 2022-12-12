@@ -23,11 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.TbTransactionalCache;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -53,6 +53,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -260,7 +261,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     };
 
     @Override
-    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
-        return findTenantByIdAsync(tenantId, new TenantId(entityId.getId()));
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.of(findTenantById(new TenantId(entityId.getId())));
     }
 }

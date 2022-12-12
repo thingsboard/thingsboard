@@ -328,8 +328,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                     if (printTenantNames) {
                         String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
                             try {
-                                ListenableFuture<Optional<String>> nameOpt = entityService.fetchEntityNameAsync(TenantId.SYS_TENANT_ID, tenantId);
-                                return nameOpt.get().orElse("N/A");
+                                Optional<String> entityNameOpt = entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId);
+                                return entityNameOpt.orElse("N/A");
                             } catch (Exception e) {
                                 log.error("[{}] Failed to get tenant name", tenantId, e);
                                 return "N/A";

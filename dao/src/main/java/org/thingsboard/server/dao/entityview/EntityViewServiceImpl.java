@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
@@ -36,6 +35,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -43,7 +43,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.entity.SimpleEntityService;
+import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -412,13 +413,13 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     };
 
     @Override
-    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
-        return findEntityViewByIdAsync(tenantId, new EntityViewId(entityId.getId()));
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.of(findEntityViewById(tenantId, new EntityViewId(entityId.getId())));
     }
 
     @Override
     public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
         EntityView entityView = findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
-        return entityView != null ? entityView.getCustomerId() : SimpleEntityService.NULL_CUSTOMER_ID;
+        return entityView != null ? entityView.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
     }
 }

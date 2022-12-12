@@ -24,11 +24,11 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.SimpleEntityService;
+import org.thingsboard.server.dao.entity.TbEntityService;
 
 import java.util.List;
 
-public interface DashboardService extends SimpleEntityService {
+public interface DashboardService extends TbEntityService {
     
     Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId);
 

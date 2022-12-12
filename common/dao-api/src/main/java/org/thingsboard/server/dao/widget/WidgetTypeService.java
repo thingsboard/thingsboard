@@ -20,11 +20,11 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
-import org.thingsboard.server.dao.entity.SimpleEntityService;
+import org.thingsboard.server.dao.entity.TbEntityService;
 
 import java.util.List;
 
-public interface WidgetTypeService extends SimpleEntityService {
+public interface WidgetTypeService extends TbEntityService {
 
     WidgetType findWidgetTypeById(TenantId tenantId, WidgetTypeId widgetTypeId);
 

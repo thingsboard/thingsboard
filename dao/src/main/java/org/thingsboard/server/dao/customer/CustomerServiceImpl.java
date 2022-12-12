@@ -24,9 +24,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -182,13 +182,12 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             };
 
     @Override
-    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
-        return findCustomerByIdAsync(tenantId, new CustomerId(entityId.getId()));
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.of(findCustomerById(tenantId, new CustomerId(entityId.getId())));
     }
 
     @Override
     public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        // todo ask Andrew why we are not checking for parent customer.
         return new CustomerId(entityId.getId());
     }
 }

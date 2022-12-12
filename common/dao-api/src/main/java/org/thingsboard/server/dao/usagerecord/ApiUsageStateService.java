@@ -19,9 +19,9 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.entity.SimpleEntityService;
+import org.thingsboard.server.dao.entity.TbEntityService;
 
-public interface ApiUsageStateService extends SimpleEntityService {
+public interface ApiUsageStateService extends TbEntityService {
 
     ApiUsageState createDefaultApiUsageState(TenantId id, EntityId entityId);
 

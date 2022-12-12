@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.dao.widget;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -35,6 +33,7 @@ import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service("WidgetsBundleDaoService")
 @Slf4j
@@ -156,8 +155,8 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
-    public ListenableFuture<? extends HasName> fetchHasNameEntityAsync(TenantId tenantId, EntityId entityId) {
-        return Futures.immediateFuture(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.of(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, WidgetsBundle> tenantWidgetsBundleRemover =

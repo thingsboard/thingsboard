@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -42,6 +43,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -161,4 +163,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         return apiUsageStateDao.findById(tenantId, id.getId());
     }
 
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.of(findApiUsageStateById(tenantId, new ApiUsageStateId(entityId.getId())));
+    }
 }

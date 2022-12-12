@@ -31,9 +31,9 @@ public class EntityServiceBeanFactory {
         this.beanFactory = beanFactory;
     }
 
-    public SimpleEntityService getServiceByEntityType(EntityType entityType) {
+    public TbEntityService getServiceByEntityType(EntityType entityType) {
         String beanName = EntityType.RULE_NODE.equals(entityType) ? getBeanName(EntityType.RULE_CHAIN) : getBeanName(entityType);
-        return beanFactory.getBean(beanName, SimpleEntityService.class);
+        return beanFactory.getBean(beanName, TbEntityService.class);
     }
 
     private String getBeanName(EntityType entityType) {

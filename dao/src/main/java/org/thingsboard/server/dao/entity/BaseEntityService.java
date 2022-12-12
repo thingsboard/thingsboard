@@ -15,10 +15,6 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -34,18 +31,7 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
-import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.ota.OtaPackageService;
-import org.thingsboard.server.dao.resource.ResourceService;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Optional;
 
@@ -86,18 +72,25 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
-    public ListenableFuture<Optional<String>> fetchEntityNameAsync(TenantId tenantId, EntityId entityId) {
-        log.trace("Executing fetchEntityNameAsync [{}]", entityId);
-        SimpleEntityService fetchEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
-        return Futures.transform(fetchEntityService.fetchHasNameEntityAsync(tenantId, entityId),
-                hasName -> hasName != null ? Optional.of(hasName.getName()) : Optional.empty(), MoreExecutors.directExecutor());
+    public Optional<String> fetchEntityName(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchEntityName [{}]", entityId);
+        TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
+        Optional<HasId<?>> hasIdOpt = tbEntityService.fetchEntity(tenantId, entityId);
+        if (hasIdOpt.isPresent()) {
+            HasId<?> hasId = hasIdOpt.get();
+            if (hasId instanceof HasName) {
+                HasName hasName = (HasName) hasId;
+                return Optional.of(hasName.getName());
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
     public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
-        SimpleEntityService fetchEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
-        return fetchEntityService.getCustomerId(tenantId, entityId);
+        TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
+        return tbEntityService.getCustomerId(tenantId, entityId);
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {
