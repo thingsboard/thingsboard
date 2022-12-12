@@ -44,6 +44,11 @@
           <mat-checkbox formControlName="readOnly">
             {{ 'admin.repository-read-only' | translate }}
           </mat-checkbox>
+          <div>
+            <mat-checkbox formControlName="showMergeCommits">
+              {{ 'admin.show-merge-commits' | translate }}
+            </mat-checkbox>
+          </div>
           <fieldset [disabled]="isLoading$ | async" class="fields-group">
             <legend class="group-title" translate>admin.authentication-settings</legend>
             <mat-form-field fxFlex class="mat-block">
