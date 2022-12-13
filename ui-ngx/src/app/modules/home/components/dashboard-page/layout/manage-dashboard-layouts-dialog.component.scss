@@ -178,8 +178,4 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
     width: 160px;
     text-align: center;
   }
-
-  .tb-layout-button-tooltip {
-    margin: 30px 40px -35px -50px;
-  }
 }

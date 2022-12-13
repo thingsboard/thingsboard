@@ -24,14 +24,14 @@ public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilter
 
     private ScriptLanguage scriptLang;
     private String jsScript;
-    private String mvelScript;
+    private String tbelScript;
 
     @Override
     public TbJsFilterNodeConfiguration defaultConfiguration() {
         TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setScriptLang(ScriptLanguage.MVEL);
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setJsScript("return msg.temperature > 20;");
-        configuration.setMvelScript("return msg.temperature > 20;");
+        configuration.setTbelScript("return msg.temperature > 20;");
         return configuration;
     }
 }

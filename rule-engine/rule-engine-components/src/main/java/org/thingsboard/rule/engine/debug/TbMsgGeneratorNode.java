@@ -78,6 +78,7 @@ public class TbMsgGeneratorNode implements TbNode {
         this.currentMsgCount = 0;
         if (!StringUtils.isEmpty(config.getOriginatorId())) {
             originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
+            ctx.checkTenantEntity(originatorId);
         } else {
             originatorId = ctx.getSelfId();
         }
@@ -95,7 +96,7 @@ public class TbMsgGeneratorNode implements TbNode {
         if (ctx.isLocalEntity(originatorId)) {
             if (initialized.compareAndSet(false, true)) {
                 this.scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
-                        ScriptLanguage.MVEL.equals(config.getScriptLang()) ? config.getMvelScript() : config.getJsScript(), "prevMsg", "prevMetadata", "prevMsgType");
+                        ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getTbelScript() : config.getJsScript(), "prevMsg", "prevMetadata", "prevMsgType");
                 scheduleTickMsg(ctx);
             }
         } else if (initialized.compareAndSet(true, false)) {

@@ -116,8 +116,12 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
   }
 
   get activeDashboardWidgets(): Array<DashboardWidget> {
-    if (this.dashboard.isMobileSize && !this.dashboard.isEdit) {
-      return this.dashboardWidgets.filter(w => !w.mobileHide);
+    if (!this.dashboard.isEdit) {
+      if (this.dashboard.isMobileSize) {
+        return this.dashboardWidgets.filter(w => !w.mobileHide);
+      } else {
+        return this.dashboardWidgets.filter(w => !w.desktopHide);
+      }
     }
     return this.dashboardWidgets;
   }
@@ -356,6 +360,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   get mobileHide(): boolean {
     return this.widgetLayout ? this.widgetLayout.mobileHide === true : false;
+  }
+
+  get desktopHide(): boolean {
+    return this.widgetLayout ? this.widgetLayout.desktopHide === true : false;
   }
 
   set gridsterItemComponent(item: GridsterItemComponentInterface) {

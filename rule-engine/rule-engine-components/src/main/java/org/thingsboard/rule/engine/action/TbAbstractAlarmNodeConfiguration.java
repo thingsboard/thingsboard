@@ -33,7 +33,7 @@ public abstract class TbAbstractAlarmNodeConfiguration {
             "\n" +
             "return details;";
 
-    static final String ALARM_DETAILS_BUILD_MVEL_TEMPLATE = "" +
+    static final String ALARM_DETAILS_BUILD_TBEL_TEMPLATE = "" +
             "var details = {};\n" +
             "if (metadata.prevAlarmDetails != null) {\n" +
             "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
@@ -49,6 +49,6 @@ public abstract class TbAbstractAlarmNodeConfiguration {
     private String alarmType;
     private ScriptLanguage scriptLang;
     private String alarmDetailsBuildJs;
-    private String alarmDetailsBuildMvel;
+    private String alarmDetailsBuildTbel;
 
 }

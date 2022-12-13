@@ -269,14 +269,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        deleteAndNotifyInternal(tenantId, entityId, scope, keys, callback);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, false, callback);
     }
 
     @Override
-    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addVoidCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice));
     }
 
     @Override
@@ -374,11 +380,11 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         });
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
         forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
+            subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
         }, () -> {
-            return TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
+            return TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
         });
     }
 

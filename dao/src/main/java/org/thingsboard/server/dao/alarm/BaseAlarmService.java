@@ -65,6 +65,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -139,6 +140,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateEntityDataPageLink(query.getPageLink());
         return alarmDao.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
     }
 
@@ -262,8 +264,15 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId) {
+    public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
+        validateId(alarmId, "Incorrect alarmId " + alarmId);
+        return alarmDao.findAlarmById(tenantId, alarmId.getId());
+    }
+
+    @Override
+    public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId) {
+        log.trace("Executing findAlarmByIdAsync [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
         return alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId());
     }

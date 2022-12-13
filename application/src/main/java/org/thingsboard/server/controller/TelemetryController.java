@@ -661,10 +661,8 @@ public class TelemetryController extends BaseController {
                         logAttributesDeleted(user, entityId, scope, keys, null);
                         if (entityIdSrc.getEntityType().equals(EntityType.DEVICE)) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
-                            Set<AttributeKey> keysToNotify = new HashSet<>();
-                            keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
                             tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                                    user.getTenantId(), deviceId, keysToNotify), null);
+                                    user.getTenantId(), deviceId, scope, keys), null);
                         }
                         result.setResult(new ResponseEntity<>(HttpStatus.OK));
                     }

@@ -374,7 +374,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     @Override
-    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, TbCallback callback) {
+    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, TbCallback callback) {
         onLocalTelemetrySubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.ATTRIBUTES.equals(s.getType())) {
@@ -397,7 +397,13 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     return subscriptionUpdate;
                 }, false);
         if (entityId.getEntityType() == EntityType.DEVICE) {
-            deleteDeviceInactivityTimeout(tenantId, entityId, keys);
+            if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)
+                    || TbAttributeSubscriptionScope.ANY_SCOPE.name().equalsIgnoreCase(scope)) {
+                deleteDeviceInactivityTimeout(tenantId, entityId, keys);
+            } else if (TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(scope) && notifyDevice) {
+                clusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(tenantId,
+                                new DeviceId(entityId.getId()), scope, keys), null);
+            }
         }
         callback.onSuccess();
     }

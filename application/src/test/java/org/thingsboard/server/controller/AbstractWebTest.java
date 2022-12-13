@@ -88,6 +88,7 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -234,7 +235,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         customerUser = createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
         customerUserId = customerUser.getId();
 
-        logout();
+        resetTokens();
 
         log.info("Executed web test setup");
     }
@@ -336,7 +337,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Assert.assertNotNull(savedDifferentCustomer);
         differentCustomerId = savedDifferentCustomer.getId();
 
-        logout();
+        resetTokens();
     }
 
     protected void deleteDifferentTenant() throws Exception {
@@ -350,7 +351,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected User createUserAndLogin(User user, String password) throws Exception {
         User savedUser = doPost("/api/user", user, User.class);
-        logout();
+        resetTokens();
         JsonNode activateRequest = getActivateRequest(password);
         JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, user.getEmail());
@@ -375,7 +376,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void login(String username, String password) throws Exception {
-        logout();
+        resetTokens();
         JsonNode tokenInfo = readResponse(doPost("/api/auth/login", new LoginRequest(username, password)).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, username);
     }
@@ -411,10 +412,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Assert.assertEquals(username, subject);
     }
 
-    protected void logout() throws Exception {
+    protected void resetTokens() throws Exception {
         this.token = null;
         this.refreshToken = null;
         this.username = null;
+    }
+
+    protected void logout() throws Exception {
+        doPost("/api/auth/logout").andExpect(status().isOk());
     }
 
     protected void setJwtToken(MockHttpServletRequestBuilder request) {
@@ -762,6 +767,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 return Collections.emptyList();
         }
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
+    }
+
+    protected <T> T getFieldValue(Object target, String fieldName) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (T) field.get(target);
     }
 
 }

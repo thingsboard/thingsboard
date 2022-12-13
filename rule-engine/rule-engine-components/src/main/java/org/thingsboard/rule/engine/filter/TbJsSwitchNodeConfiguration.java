@@ -15,12 +15,9 @@
  */
 package org.thingsboard.rule.engine.filter;
 
-import com.google.common.collect.Sets;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
-
-import java.util.Set;
 
 @Data
 public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitchNodeConfiguration> {
@@ -33,7 +30,7 @@ public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitch
             "}\n" +
             "return nextRelation(metadata, msg);";
 
-    private static final String DEFAULT_MVEL_SCRIPT = "function nextRelation(metadata, msg) {\n" +
+    private static final String DEFAULT_TBEL_SCRIPT = "function nextRelation(metadata, msg) {\n" +
             "    return ['one','nine'];\n" +
             "}\n" +
             "if(msgType == 'POST_TELEMETRY_REQUEST') {\n" +
@@ -43,14 +40,14 @@ public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitch
 
     private ScriptLanguage scriptLang;
     private String jsScript;
-    private String mvelScript;
+    private String tbelScript;
 
     @Override
     public TbJsSwitchNodeConfiguration defaultConfiguration() {
         TbJsSwitchNodeConfiguration configuration = new TbJsSwitchNodeConfiguration();
-        configuration.setScriptLang(ScriptLanguage.MVEL);
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setJsScript(DEFAULT_JS_SCRIPT);
-        configuration.setMvelScript(DEFAULT_MVEL_SCRIPT);
+        configuration.setTbelScript(DEFAULT_TBEL_SCRIPT);
         return configuration;
     }
 }
