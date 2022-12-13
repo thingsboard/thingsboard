@@ -155,6 +155,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
   hideDetailsTabsOnEdit = true;
+  rowPointer = false;
   actionsColumnTitle = null;
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource<T>;
@@ -217,6 +218,20 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
       this.table.updateData(closeDetails);
     } else if (this.entityDetailsPage) {
       this.entityDetailsPage.reload();
+    }
+  }
+
+  toggleEntityDetails($event: Event, entity: T) {
+    if (this.table) {
+      this.table.toggleEntityDetails($event, entity);
+    }
+  }
+
+  isDetailsOpen(): boolean {
+    if (this.table) {
+      return this.table.isDetailsOpen;
+    } else {
+      return false;
     }
   }
 

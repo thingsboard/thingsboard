@@ -77,7 +77,7 @@
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
-        <tbel.version>1.0.3</tbel.version>
+        <tbel.version>1.0.4</tbel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <netty.version>4.1.75.Final</netty.version>
