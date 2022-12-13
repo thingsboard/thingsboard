@@ -3764,6 +3764,7 @@
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
+            "enable-selection": "Enable selection",
             "line-shadow-size": "Line shadow size",
             "display-smooth-lines": "Display smooth (curved) lines",
             "default-bar-width": "Default bar width for non-aggregated data (milliseconds)",
