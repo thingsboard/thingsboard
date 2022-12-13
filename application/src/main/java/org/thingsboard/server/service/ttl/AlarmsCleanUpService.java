@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -83,8 +84,8 @@ public class AlarmsCleanUpService {
                     PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
                     toRemove.getData().forEach(alarmId -> {
                         relationService.deleteEntityRelations(tenantId, alarmId);
-                        Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
-                        entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
+                        AlarmInfo alarmInfo = alarmService.deleteAlarm(tenantId, alarmId).getAlarmInfo();
+                        entityActionService.pushEntityActionToRuleEngine(alarmInfo.getOriginator(), alarmInfo, tenantId, null, ActionType.ALARM_DELETE, null);
                     });
 
                     totalRemoved += toRemove.getTotalElements();

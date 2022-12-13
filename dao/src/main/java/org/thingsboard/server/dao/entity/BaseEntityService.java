@@ -24,7 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasEmail;
+import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -33,6 +36,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -57,6 +61,8 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -173,6 +179,26 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
         entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
         return entityName;
+    }
+
+    @Override
+    public Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId) {
+        return Optional.empty();
+        HasId<?> entity = fetchEntity(tenantId, entityId);
+        String entityLabel = null;
+        if (entity instanceof HasTitle) {
+            entityLabel = ((HasTitle) entity).getTitle();
+        }
+        if (entity instanceof HasLabel && entityLabel == null) {
+            entityLabel = ((HasLabel) entity).getLabel();
+        }
+        if (entity instanceof HasEmail && entityLabel == null) {
+            entityLabel = ((HasEmail) entity).getEmail();
+        }
+        if (entity instanceof HasName && entityLabel == null) {
+            entityLabel = ((HasName) entity).getName();
+        }
+        return Optional.ofNullable(entityLabel);
     }
 
     @Override

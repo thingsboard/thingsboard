@@ -69,7 +69,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("originatorId", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originatorType", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
         alarmFieldColumnMap.put("assigneeId", ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY);
-        alarmFieldColumnMap.put("originator", "originator_name");
+        alarmFieldColumnMap.put("originator", ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
         alarmFieldColumnMap.put("originatorLabel", ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
         alarmFieldColumnMap.put("assigneeFirstName", ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
         alarmFieldColumnMap.put("assigneeLastName", ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
@@ -91,7 +91,36 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " THEN (select name from device where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.ENTITY_VIEW.ordinal() +
             " THEN (select name from entity_view where id = a.originator_id)" +
-            " END, 'Deleted') as originator_name";
+            " WHEN a.originator_type = " + EntityType.DEVICE_PROFILE.ordinal() +
+            " THEN (select name from device_profile where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.ASSET_PROFILE.ordinal() +
+            " THEN (select name from asset_profile where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.EDGE.ordinal() +
+            " THEN (select name from edge where id = a.originator_id)" +
+            " END, 'Deleted') as " + ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY;
+
+    private static final String SELECT_ORIGINATOR_LABEL = " COALESCE(CASE" +
+            " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
+            " THEN (select title from tenant where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
+            " THEN (select COALESCE(title, email) from customer where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.USER.ordinal() +
+            " THEN (select email from tb_user where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.DASHBOARD.ordinal() +
+            " THEN (select title from dashboard where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.ASSET.ordinal() +
+            " THEN (select COALESCE(label, name) from asset where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.DEVICE.ordinal() +
+            " THEN (select COALESCE(label, name) from device where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.ENTITY_VIEW.ordinal() +
+            " THEN (select name from entity_view where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.DEVICE_PROFILE.ordinal() +
+            " THEN (select name from device_profile where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.ASSET_PROFILE.ordinal() +
+            " THEN (select name from asset_profile where id = a.originator_id)" +
+            " WHEN a.originator_type = " + EntityType.EDGE.ordinal() +
+            " THEN (select COALESCE(label, name) from edge where id = a.originator_id)" +
+            " END, 'Deleted') as " + ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY;
 
     private static final String SELECT_ASSIGNEE_INFO = " tbu.first_name as assignee_first_name," +
             " tbu.last_name as assignee_last_name," +
@@ -115,7 +144,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.tenant_id as tenant_id, " +
             " a.customer_id as customer_id, " +
             " a.propagate_relation_types as propagate_relation_types, " +
-            " a.type as type," + SELECT_ORIGINATOR_NAME + ", " +
+            " a.type as type," +
+            SELECT_ORIGINATOR_NAME + ", " +
+            SELECT_ORIGINATOR_LABEL + ", " +
             SELECT_ASSIGNEE_INFO + ", ";
 
     private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id";

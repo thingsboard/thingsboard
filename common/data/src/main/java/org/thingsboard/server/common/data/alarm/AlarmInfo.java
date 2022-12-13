@@ -61,6 +61,15 @@ public class AlarmInfo extends Alarm {
         super(alarm);
     }
 
+    public AlarmInfo(Alarm alarm, String originatorName, String originatorLabel, String assigneeFirstName, String assigneeLastName, String assigneeEmail) {
+        super(alarm);
+        this.originatorName = originatorName;
+        this.originatorLabel = originatorLabel;
+        this.assigneeFirstName = assigneeFirstName;
+        this.assigneeLastName = assigneeLastName;
+        this.assigneeEmail = assigneeEmail;
+    }
+
     public AlarmInfo(Alarm alarm, AlarmInfo alarmInfo) {
         super(alarm);
         originatorName = alarmInfo.originatorName;
@@ -88,7 +97,11 @@ public class AlarmInfo extends Alarm {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (originatorName != null ? originatorName.hashCode() : 0);
+        result = 31 * result + (originatorName != null ? originatorName.hashCode() : 0)
+                + (originatorLabel != null ? originatorLabel.hashCode() : 0)
+                + (assigneeFirstName != null ? assigneeFirstName.hashCode() : 0)
+                + (assigneeLastName != null ? assigneeLastName.hashCode() : 0)
+                + (assigneeEmail != null ? assigneeEmail.hashCode() : 0);
         return result;
     }
 }

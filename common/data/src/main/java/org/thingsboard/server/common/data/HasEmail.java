@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.alarm;
+package org.thingsboard.server.common.data;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+public interface HasEmail extends HasName {
 
-@Builder
-@Getter
-@AllArgsConstructor
-public class AlarmAdditionalInfo {
-    private final String originatorName;
-    private final String originatorLabel;
+    String getEmail();
 
-    private final String firstName;
-    private final String lastName;
-    private final String email;
 }

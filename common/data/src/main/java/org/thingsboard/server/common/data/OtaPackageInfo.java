@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId {
+public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId, HasTitle {
 
     private static final long serialVersionUID = 3168391583570815419L;
 

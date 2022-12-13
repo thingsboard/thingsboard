@@ -63,10 +63,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
     private final AlarmService alarmService;
     @Getter
-    @Setter
     private final LinkedHashMap<EntityId, EntityData> entitiesMap;
     @Getter
-    @Setter
     private final HashMap<AlarmId, AlarmData> alarmsMap;
 
     private final int maxEntitiesPerAlarmSubscription;
@@ -207,8 +205,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
-        Alarm alarm = subscriptionUpdate.getAlarm();
-        AlarmId alarmId = alarm.getId();
+        AlarmInfo alarmInfo = subscriptionUpdate.getAlarmInfo();
+        AlarmId alarmId = alarmInfo.getId();
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);
             if (deleted != null) {
@@ -217,10 +215,10 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         } else {
             AlarmData current = alarmsMap.get(alarmId);
             boolean onCurrentPage = current != null;
-            boolean matchesFilter = filter(alarm);
+            boolean matchesFilter = filter(alarmInfo);
             if (onCurrentPage) {
                 if (matchesFilter) {
-                    AlarmData updated = new AlarmData(alarm, subscriptionUpdate.getAlarmInfo(), current.getEntityId());
+                    AlarmData updated = new AlarmData(alarmInfo, current.getEntityId());
                     updated.getLatest().putAll(current.getLatest());
                     alarmsMap.put(alarmId, updated);
                     sendWsMsg(new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), maxEntitiesPerAlarmSubscription, data.getTotalElements()));

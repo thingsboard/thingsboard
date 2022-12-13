@@ -37,20 +37,17 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private String errorMsg;
     @Getter
-    private Alarm alarm;
-    @Getter
     private AlarmInfo alarmInfo;
     @Getter
     private boolean alarmDeleted;
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, AlarmInfo alarmInfo) {
-        this(subscriptionId, alarm, alarmInfo, false);
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarmInfo) {
+        this(subscriptionId, alarmInfo, false);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, AlarmInfo alarmInfo, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarmInfo, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
-        this.alarm = alarm;
         this.alarmInfo = alarmInfo;
         this.alarmDeleted = alarmDeleted;
     }
@@ -68,7 +65,7 @@ public class AlarmSubscriptionUpdate {
 
     @Override
     public String toString() {
-        return "AlarmUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", alarm="
-                + alarm + ", alarmInfo=" + alarmInfo + "]";
+        return "AlarmUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg +
+                ", alarmInfo=" + alarmInfo + "]";
     }
 }

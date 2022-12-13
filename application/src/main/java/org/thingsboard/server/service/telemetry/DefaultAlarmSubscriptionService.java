@@ -95,7 +95,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         if (result.isCreated()) {
             apiUsageClient.report(alarm.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
         }
-        return result.getAlarm();
+        return result.getAlarmInfo();
     }
 
     @Override
@@ -181,24 +181,18 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     private void onAlarmUpdated(AlarmOperationResult result) {
         wsCallBackExecutor.submit(() -> {
-            Alarm alarm = result.getAlarm();
-            TenantId tenantId = result.getAlarm().getTenantId();
+            AlarmInfo alarmInfo = result.getAlarmInfo();
+            TenantId tenantId = alarmInfo.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        AlarmInfo alarmInfo = new AlarmInfo(alarm);
-                        alarmInfo.setOriginatorName(result.getAlarmAdditionalInfo().getOriginatorName());
-                        alarmInfo.setOriginatorLabel(result.getAlarmAdditionalInfo().getOriginatorName());
-                        alarmInfo.setAssigneeFirstName(result.getAlarmAdditionalInfo().getFirstName());
-                        alarmInfo.setAssigneeLastName(result.getAlarmAdditionalInfo().getLastName());
-                        alarmInfo.setAssigneeEmail(result.getAlarmAdditionalInfo().getEmail());
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, alarmInfo, TbCallback.EMPTY);
+                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarmInfo, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarmInfo);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
                 }
             }
@@ -207,18 +201,18 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     private void onAlarmDeleted(AlarmOperationResult result) {
         wsCallBackExecutor.submit(() -> {
-            Alarm alarm = result.getAlarm();
-            TenantId tenantId = result.getAlarm().getTenantId();
+            AlarmInfo alarmInfo = result.getAlarmInfo();
+            TenantId tenantId = alarmInfo.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
+                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarmInfo, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarmInfo);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
                 }
             }

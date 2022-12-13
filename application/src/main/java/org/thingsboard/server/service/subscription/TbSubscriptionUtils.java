@@ -190,9 +190,8 @@ public class TbSubscriptionUtils {
         if (proto.getErrorCode() > 0) {
             return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
         } else {
-            Alarm alarm = JacksonUtil.fromString(proto.getAlarm(), Alarm.class);
             AlarmInfo alarmInfo = JacksonUtil.fromString(proto.getAlarmInfo(), AlarmInfo.class);
-            return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), alarm, alarmInfo);
+            return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), alarmInfo);
         }
     }
 
@@ -318,27 +317,27 @@ public class TbSubscriptionUtils {
         return entry;
     }
 
-    public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+    public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, AlarmInfo alarmInfo) {
         TbAlarmUpdateProto.Builder builder = TbAlarmUpdateProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
         builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        builder.setAlarm(JacksonUtil.toString(alarm));
+        builder.setAlarmInfo(JacksonUtil.toString(alarmInfo));
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setAlarmUpdate(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-    public static ToCoreMsg toAlarmDeletedProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+    public static ToCoreMsg toAlarmDeletedProto(TenantId tenantId, EntityId entityId, AlarmInfo alarmInfo) {
         TbAlarmDeleteProto.Builder builder = TbAlarmDeleteProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
         builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        builder.setAlarm(JacksonUtil.toString(alarm));
+        builder.setAlarmInfo(JacksonUtil.toString(alarmInfo));
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setAlarmDelete(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
