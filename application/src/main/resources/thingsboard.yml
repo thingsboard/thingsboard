@@ -486,8 +486,6 @@ redis:
       master: "${REDIS_MASTER:mymaster}"
       # comma-separated list of "host:port" pairs of sentinels
       sentinels: "${REDIS_SENTINELS:127.0.0.1:26379}"
-      # sentinels-password(it is same for all sentinels and the same as redis password)
-      password: "${REDIS_SENTINEL_PASSWORD:str0ng_passw0rd}"
   # db index
   db: "${REDIS_DB:0}"
   # db password

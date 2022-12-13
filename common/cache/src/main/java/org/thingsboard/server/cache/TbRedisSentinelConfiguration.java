@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 
-
 @Configuration
 @ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "sentinel")
@@ -22,9 +21,6 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.cluster.sentinel.sentinels:}")
     private String sentinels;
 
-    @Value("${redis.cluster.sentinel.password:}") //is it null by default ? check on same ?
-    private String sentinelPassword;
-
     @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
 
@@ -36,9 +32,7 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
         redisSentinelConfiguration.setSentinels(getNodes(sentinels));
         redisSentinelConfiguration.setMaster(this.master);
         redisSentinelConfiguration.setDatabase(this.database);
-        redisSentinelConfiguration.setSentinelPassword(sentinelPassword);
         redisSentinelConfiguration.setPassword(password);
-
         if (useDefaultPoolConfig) {
             return new JedisConnectionFactory(redisSentinelConfiguration);
         } else {
@@ -47,3 +41,4 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     }
 
 }
+
