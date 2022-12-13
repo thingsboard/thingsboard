@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -181,6 +182,58 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
+    }
+
+    @Test
+    public void testSaveDeviceWithCredentials() throws Exception {
+        String testToken = "TEST_TOKEN";
+
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(testToken);
+
+        SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, deviceCredentials);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        Device savedDevice = readResponse(doPost("/api/device-with-credentials", saveRequest).andExpect(status().isOk()), Device.class);
+
+        Device oldDevice = new Device(savedDevice);
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
+        testNotificationUpdateGatewayNever();
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertNotNull(savedDevice.getId());
+        Assert.assertTrue(savedDevice.getCreatedTime() > 0);
+        Assert.assertEquals(savedTenant.getId(), savedDevice.getTenantId());
+        Assert.assertNotNull(savedDevice.getCustomerId());
+        Assert.assertEquals(NULL_UUID, savedDevice.getCustomerId().getId());
+        Assert.assertEquals(device.getName(), savedDevice.getName());
+
+        DeviceCredentials foundDeviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        Assert.assertNotNull(foundDeviceCredentials);
+        Assert.assertNotNull(foundDeviceCredentials.getId());
+        Assert.assertEquals(savedDevice.getId(), foundDeviceCredentials.getDeviceId());
+        Assert.assertEquals(DeviceCredentialsType.ACCESS_TOKEN, foundDeviceCredentials.getCredentialsType());
+        Assert.assertEquals(testToken, foundDeviceCredentials.getCredentialsId());
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        savedDevice.setName("My new device");
+        doPost("/api/device", savedDevice, Device.class);
+
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
+        testNotificationUpdateGatewayOneTime(savedDevice, oldDevice);
     }
 
     @Test
