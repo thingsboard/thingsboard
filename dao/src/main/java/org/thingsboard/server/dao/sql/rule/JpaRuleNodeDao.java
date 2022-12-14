@@ -69,6 +69,10 @@ public class JpaRuleNodeDao extends JpaAbstractSearchTextDao<RuleNodeEntity, Rul
                         DaoUtil.toPageable(pageLink)));
     }
 
+    public List<RuleNode> findAllRuleNodesByRuleChainId(RuleChainId ruleChainId) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByRuleChainId(ruleChainId.getId()));
+    }
+
     @Override
     public List<RuleNode> findByExternalIds(RuleChainId ruleChainId, List<RuleNodeId> externalIds) {
         return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByRuleChainIdAndExternalIdIn(ruleChainId.getId(),

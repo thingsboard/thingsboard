@@ -584,8 +584,8 @@ public class RuleChainController extends BaseController {
         return tbRuleChainService.unassignRuleChainFromEdge(getTenantId(), ruleChain, edge, getCurrentUser());
     }
 
-    @DeleteMapping("/ruleNode/{ruleNodeId}/stats")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @DeleteMapping(value = "/ruleNode/{ruleNodeId}/stats")
     public void clearRuleNodeStats(@ApiParam(value = RULE_NODE_ID_PARAM_DESCRIPTION)
                                    @PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
         checkParameter(RULE_NODE_ID, strRuleNodeId);
@@ -594,6 +594,22 @@ public class RuleChainController extends BaseController {
             RuleNode ruleNode = checkRuleNode(ruleNodeId, Operation.WRITE);
 
             ruleChainService.clearRuleNodeStats(getTenantId(), ruleNode.getRuleChainId(), ruleNodeId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @DeleteMapping(value = "/ruleChain/{ruleChainId}/clearRuleNodesStats")
+    @ResponseStatus(value = HttpStatus.OK)
+    public void clearRuleChainErrors(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
+                                              @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+        checkParameter(RULE_CHAIN_ID, strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
+
+            ruleChainService.clearRuleChainErrors(getTenantId(), ruleChain.getId());
         } catch (Exception e) {
             throw handleException(e);
         }

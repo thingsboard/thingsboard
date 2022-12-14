@@ -801,6 +801,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         attributesService.removeAll(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
     }
 
+    public void clearRuleChainErrors(TenantId tenantId, RuleChainId ruleChainId) {
+        List<RuleNode> ruleNodes = ruleNodeDao.findAllRuleNodesByRuleChainId(ruleChainId);
+        for (RuleNode ruleNode : ruleNodes) {
+            attributesService.removeAll(tenantId, ruleNode.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
+        }
+    }
+
     @Override
     public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String lastErrorMsg, int errorsCount) {
         updateRuleNodeStats(tenantId, ruleNodeId, ruleNodeStats -> {
