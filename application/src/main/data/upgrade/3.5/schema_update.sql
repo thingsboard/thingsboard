@@ -23,4 +23,4 @@ CREATE TABLE IF NOT EXISTS alarm_comment (
     comment varchar(1000000),
     CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 ) PARTITION BY RANGE (created_time);
-CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id ASC);
+CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
