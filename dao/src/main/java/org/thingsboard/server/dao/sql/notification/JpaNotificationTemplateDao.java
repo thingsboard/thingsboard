@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.notification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 import org.thingsboard.server.dao.notification.NotificationTemplateDao;
@@ -41,6 +42,11 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     protected JpaRepository<NotificationTemplateEntity, UUID> getRepository() {
         return notificationTemplateRepository;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_TEMPLATE;
     }
 
 }

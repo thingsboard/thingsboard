@@ -28,4 +28,6 @@ public interface NotificationTemplateService {
 
     NotificationTemplate saveNotificationTemplate(TenantId tenantId, NotificationTemplate notificationTemplate);
 
+    void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id);
+
 }

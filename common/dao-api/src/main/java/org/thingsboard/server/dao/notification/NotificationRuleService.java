@@ -29,4 +29,6 @@ public interface NotificationRuleService {
 
     PageData<NotificationRule> findNotificationRulesByTenantId(TenantId tenantId, PageLink pageLink);
 
+    void deleteNotificationRule(TenantId tenantId, NotificationRuleId notificationRuleId);
+
 }

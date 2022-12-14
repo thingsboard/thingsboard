@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
@@ -41,32 +43,28 @@ import java.util.UUID;
 
 @RestController
 @TbCoreComponent
-@RequestMapping("/api")
+@RequestMapping("/api/notification")
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationRuleController extends BaseController {
-    // todo: logEntityAction
+
     private final NotificationRuleService notificationRuleService;
 
-    @PostMapping("/notification/rule")
+    @PostMapping("/rule")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    public NotificationRule saveNotificationRule(@RequestBody NotificationRule notificationRule,
-                                                 @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-//        accessControlService.checkPermission(user, Resource.NOTIFICATION_RULE, notificationRule.getId() == null ? Operation.CREATE : Operation.WRITE, notificationRule.getId(), );
-        return notificationRuleService.saveNotificationRule(user.getTenantId(), notificationRule);
+    public NotificationRule saveNotificationRule(@RequestBody NotificationRule notificationRule) throws Exception {
+        checkEntity(notificationRule.getId(), notificationRule, Resource.NOTIFICATION_RULE);
+        return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
     }
 
-    @GetMapping("/notification/rule/{id}")
+    @GetMapping("/rule/{id}")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    public NotificationRule getNotificationRuleById(@PathVariable UUID id,
-                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+    public NotificationRule getNotificationRuleById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);
-        NotificationRule notificationRule = notificationRuleService.findNotificationRuleById(user.getTenantId(), notificationRuleId);
-        accessControlService.checkPermission(user, Resource.NOTIFICATION_RULE, Operation.READ, notificationRuleId, notificationRule);
-        return notificationRule;
+        return checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleById, Operation.READ);
     }
 
-    @GetMapping("/notification/rules")
+    @GetMapping("/rules")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public PageData<NotificationRule> getNotificationRules(@RequestParam int pageSize,
                                                            @RequestParam int page,
@@ -76,6 +74,14 @@ public class NotificationRuleController extends BaseController {
                                                            @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationRuleService.findNotificationRulesByTenantId(user.getTenantId(), pageLink);
+    }
+
+    @DeleteMapping("/rule/{id}")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    public void deleteNotificationRule(@PathVariable UUID id) throws Exception {
+        NotificationRuleId notificationRuleId = new NotificationRuleId(id);
+        NotificationRule notificationRule = checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleById, Operation.DELETE);
+        doDeleteAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::deleteNotificationRule);
     }
 
 }

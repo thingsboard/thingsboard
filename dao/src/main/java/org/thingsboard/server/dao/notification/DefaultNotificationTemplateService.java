@@ -37,4 +37,9 @@ public class DefaultNotificationTemplateService implements NotificationTemplateS
         return notificationTemplateDao.save(tenantId, notificationTemplate);
     }
 
+    @Override
+    public void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
+        notificationTemplateDao.removeById(tenantId, id.getId());
+    }
+
 }

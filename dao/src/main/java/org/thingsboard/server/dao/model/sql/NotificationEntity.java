@@ -60,7 +60,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     private String text;
 
     @Type(type = "json")
-    @Formula("(SELECT r.notification_info FROM notification_request r WHERE r.id = request_id)")
+    @Formula("(SELECT r.info FROM notification_request r WHERE r.id = request_id)")
     private JsonNode info;
 
     @Enumerated(EnumType.STRING)

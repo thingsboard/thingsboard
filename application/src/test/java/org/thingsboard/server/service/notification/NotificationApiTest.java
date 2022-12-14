@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
@@ -34,6 +35,9 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
+import org.thingsboard.server.common.data.notification.template.NotificationTextTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -52,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.not;
 import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
@@ -332,6 +337,7 @@ public class NotificationApiTest extends AbstractControllerTest {
     }
 
     private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, int delayInSec) {
+        NotificationTemplate notificationTemplate = createNotificationTemplate(text);
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(delayInSec);
         NotificationInfo notificationInfo = new NotificationInfo();
@@ -346,6 +352,18 @@ public class NotificationApiTest extends AbstractControllerTest {
                 .additionalConfig(config)
                 .build();
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);
+    }
+
+    private NotificationTemplate createNotificationTemplate(String text) {
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setTenantId(tenantId);
+        notificationTemplate.setName("Notification template for testing");
+        NotificationTemplateConfig config = new NotificationTemplateConfig();
+        NotificationTextTemplate textTemplate = new NotificationTextTemplate();
+        textTemplate.setBody(text);
+        config.setDefaultTextTemplate(textTemplate);
+        notificationTemplate.setConfiguration(config);
+        return doPost("/api/notification/template", notificationTemplate, NotificationTemplate.class);
     }
 
     private NotificationRequest findNotificationRequest(NotificationRequestId id) throws Exception {

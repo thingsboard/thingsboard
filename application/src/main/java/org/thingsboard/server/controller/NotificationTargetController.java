@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
@@ -57,8 +56,8 @@ public class NotificationTargetController extends BaseController {
     @PostMapping("/target")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget saveNotificationTarget(@RequestBody NotificationTarget notificationTarget,
-                                                     @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.NOTIFICATION_TARGET, Operation.CREATE, null, notificationTarget);
+                                                     @AuthenticationPrincipal SecurityUser user) throws Exception {
+        checkEntity(notificationTarget.getId(), notificationTarget, Resource.NOTIFICATION_TARGET);
         if (!user.isSystemAdmin()) {
             NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
             if (targetConfig.getType() == NotificationTargetConfigType.SINGLE_USER ||
@@ -70,26 +69,14 @@ public class NotificationTargetController extends BaseController {
             }
         }
 
-        try {
-            NotificationTarget savedNotificationTarget = notificationTargetService.saveNotificationTarget(user.getTenantId(), notificationTarget);
-            logEntityAction(user, EntityType.NOTIFICATION_TARGET, savedNotificationTarget,
-                    notificationTarget.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
-            return savedNotificationTarget;
-        } catch (Exception e) {
-            logEntityAction(user, EntityType.NOTIFICATION_TARGET, notificationTarget, null,
-                    notificationTarget.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
-            throw e;
-        }
+        return doSaveAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::saveNotificationTarget);
     }
 
     @GetMapping("/target/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationTarget getNotificationTargetById(@PathVariable UUID id,
-                                                        @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+    public NotificationTarget getNotificationTargetById(@PathVariable UUID id) throws ThingsboardException {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        NotificationTarget notificationTarget = notificationTargetService.findNotificationTargetById(user.getTenantId(), notificationTargetId);
-        accessControlService.checkPermission(user, Resource.NOTIFICATION_TARGET, Operation.READ, notificationTargetId, notificationTarget);
-        return notificationTarget;
+        return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.READ);
     }
 
     @PostMapping("/target/recipients")
@@ -122,18 +109,10 @@ public class NotificationTargetController extends BaseController {
 
     @DeleteMapping("/target/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public void deleteNotificationTarget(@PathVariable UUID id,
-                                         @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+    public void deleteNotificationTarget(@PathVariable UUID id) throws Exception {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        NotificationTarget notificationTarget = checkNotNull(notificationTargetService.findNotificationTargetById(user.getTenantId(), notificationTargetId));
-        accessControlService.checkPermission(user, Resource.NOTIFICATION_TARGET, Operation.DELETE, notificationTargetId, notificationTarget);
-
-        try {
-            notificationTargetService.deleteNotificationTarget(user.getTenantId(), notificationTargetId);
-            logEntityAction(user, EntityType.NOTIFICATION_TARGET, notificationTarget, ActionType.DELETED);
-        } catch (Exception e) {
-            logEntityAction(user, EntityType.NOTIFICATION_TARGET, null, notificationTarget, ActionType.DELETED, e);
-        }
+        NotificationTarget notificationTarget = checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.DELETE);
+        doDeleteAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::deleteNotificationTarget);
     }
 
 }

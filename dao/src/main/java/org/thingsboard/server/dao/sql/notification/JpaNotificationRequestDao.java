@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -85,6 +86,11 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     protected JpaRepository<NotificationRequestEntity, UUID> getRepository() {
         return notificationRequestRepository;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_REQUEST;
     }
 
 }

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS notification_target (
     created_time BIGINT NOT NULL,
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
-    configuration VARCHAR(1000) NOT NULL
+    configuration VARCHAR(10000) NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON notification_target(tenant_id, created_time DESC);
 

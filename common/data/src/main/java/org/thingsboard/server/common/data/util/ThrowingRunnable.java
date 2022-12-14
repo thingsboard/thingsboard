@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync;
+package org.thingsboard.server.common.data.util;
 
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 

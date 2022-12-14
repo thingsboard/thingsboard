@@ -48,6 +48,11 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
         return notificationRuleDao.findByTenantIdAndPageLink(tenantId, pageLink);
     }
 
+    @Override
+    public void deleteNotificationRule(TenantId tenantId, NotificationRuleId notificationRuleId) {
+        notificationRuleDao.removeById(tenantId, notificationRuleId.getId());
+    }
+
     private static class NotificationRuleValidator extends DataValidator<NotificationRule> {
     }
 
