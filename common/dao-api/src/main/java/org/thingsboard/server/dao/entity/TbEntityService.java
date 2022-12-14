@@ -15,23 +15,14 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Optional;
 
-import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
-
 public interface TbEntityService {
 
-    CustomerId NULL_CUSTOMER_ID = new CustomerId(NULL_UUID);
-
     Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId);
-
-    default CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        return NULL_CUSTOMER_ID;
-    }
 
 }

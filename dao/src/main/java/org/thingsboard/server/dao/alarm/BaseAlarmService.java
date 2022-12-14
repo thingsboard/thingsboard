@@ -49,7 +49,6 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import javax.annotation.Nullable;
@@ -115,7 +114,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getEndTs() == 0L) {
                 alarm.setEndTs(alarm.getStartTs());
             }
-            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
+            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()).get());
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
                 if (existing == null || existing.getStatus().isCleared()) {
@@ -407,16 +406,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findAlarmById(tenantId, new AlarmId(entityId.getId())));
+        return Optional.ofNullable(findAlarmById(tenantId, new AlarmId(entityId.getId())));
     }
 
-    @Override
-    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        try {
-            Alarm alarm = findAlarmByIdAsync(tenantId, new AlarmId(entityId.getId())).get();
-            return alarm != null ? alarm.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
-        } catch (Exception e) {
-            return TbEntityService.NULL_CUSTOMER_ID;
-        }
-    }
 }

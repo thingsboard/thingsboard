@@ -99,7 +99,7 @@ public class BaseRpcService implements RpcService {
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findById(tenantId, new RpcId(entityId.getId())));
+        return Optional.ofNullable(findById(tenantId, new RpcId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, Rpc> tenantRpcRemover =

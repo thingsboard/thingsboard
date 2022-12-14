@@ -291,7 +291,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId())));
+        return Optional.ofNullable(findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

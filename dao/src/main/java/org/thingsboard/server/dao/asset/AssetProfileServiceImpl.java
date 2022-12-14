@@ -269,7 +269,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findAssetProfileById(tenantId, new AssetProfileId(entityId.getId())));
+        return Optional.ofNullable(findAssetProfileById(tenantId, new AssetProfileId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =

@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -35,6 +36,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.Optional;
 
+import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 /**
@@ -46,6 +48,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
+    public static final CustomerId NULL_CUSTOMER_ID = new CustomerId(NULL_UUID);
 
     @Autowired
     private EntityQueryDao entityQueryDao;
@@ -80,17 +83,25 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             HasId<?> hasId = hasIdOpt.get();
             if (hasId instanceof HasName) {
                 HasName hasName = (HasName) hasId;
-                return Optional.of(hasName.getName());
+                return Optional.ofNullable(hasName.getName());
             }
         }
         return Optional.empty();
     }
 
     @Override
-    public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
+    public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
         TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
-        return tbEntityService.getCustomerId(tenantId, entityId);
+        Optional<HasId<?>> hasIdOpt = tbEntityService.fetchEntity(tenantId, entityId);
+        if (hasIdOpt.isPresent()) {
+            HasId<?> hasId = hasIdOpt.get();
+            if (hasId instanceof HasCustomerId) {
+                HasCustomerId hasCustomerId = (HasCustomerId) hasId;
+                return Optional.ofNullable(hasCustomerId.getCustomerId());
+            }
+        }
+        return Optional.of(NULL_CUSTOMER_ID);
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {

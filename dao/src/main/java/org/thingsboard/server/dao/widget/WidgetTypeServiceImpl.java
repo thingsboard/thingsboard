@@ -117,7 +117,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        findWidgetTypeById(tenantId, new WidgetTypeId(entityId.getId()));
-        return Optional.of(findWidgetTypeById(tenantId, new WidgetTypeId(entityId.getId())));
+        return Optional.ofNullable(findWidgetTypeById(tenantId, new WidgetTypeId(entityId.getId())));
     }
+
 }

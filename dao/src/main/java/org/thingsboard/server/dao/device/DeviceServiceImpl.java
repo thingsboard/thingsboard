@@ -67,7 +67,6 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -711,12 +710,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findDeviceById(tenantId, new DeviceId(entityId.getId())));
+        return Optional.ofNullable(findDeviceById(tenantId, new DeviceId(entityId.getId())));
     }
 
-    @Override
-    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        Device device = findDeviceById(tenantId, new DeviceId(entityId.getId()));
-        return device != null ? device.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
-    }
 }

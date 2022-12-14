@@ -156,7 +156,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
+        return Optional.ofNullable(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, WidgetsBundle> tenantWidgetsBundleRemover =

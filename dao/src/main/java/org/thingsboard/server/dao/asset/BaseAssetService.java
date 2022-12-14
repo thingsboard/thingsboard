@@ -46,7 +46,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -435,13 +434,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findAssetById(tenantId, new AssetId(entityId.getId())));
-    }
-
-    @Override
-    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        Asset asset = findAssetById(tenantId, new AssetId(entityId.getId()));
-        return asset != null ? asset.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
+        return Optional.ofNullable(findAssetById(tenantId, new AssetId(entityId.getId())));
     }
 
 }

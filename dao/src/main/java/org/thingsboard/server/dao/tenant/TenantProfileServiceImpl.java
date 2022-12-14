@@ -209,7 +209,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findTenantProfileById(tenantId, new TenantProfileId(entityId.getId())));
+        return Optional.ofNullable(findTenantProfileById(tenantId, new TenantProfileId(entityId.getId())));
     }
 
     private final PaginatedRemover<String, TenantProfile> tenantProfilesRemover =

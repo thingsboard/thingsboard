@@ -312,7 +312,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findDashboardById(tenantId, new DashboardId(entityId.getId())));
+        return Optional.ofNullable(findDashboardById(tenantId, new DashboardId(entityId.getId())));
     }
 
     private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {

@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -414,12 +413,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findEntityViewById(tenantId, new EntityViewId(entityId.getId())));
+        return Optional.ofNullable(findEntityViewById(tenantId, new EntityViewId(entityId.getId())));
     }
 
-    @Override
-    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        EntityView entityView = findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
-        return entityView != null ? entityView.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
-    }
 }

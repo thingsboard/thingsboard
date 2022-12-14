@@ -183,11 +183,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findCustomerById(tenantId, new CustomerId(entityId.getId())));
+        return Optional.ofNullable(findCustomerById(tenantId, new CustomerId(entityId.getId())));
     }
 
-    @Override
-    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        return new CustomerId(entityId.getId());
-    }
 }

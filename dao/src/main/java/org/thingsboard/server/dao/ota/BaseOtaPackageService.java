@@ -238,7 +238,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findOtaPackageInfoById(tenantId, new OtaPackageId(entityId.getId())));
+        return Optional.ofNullable(findOtaPackageInfoById(tenantId, new OtaPackageId(entityId.getId())));
     }
 
 }

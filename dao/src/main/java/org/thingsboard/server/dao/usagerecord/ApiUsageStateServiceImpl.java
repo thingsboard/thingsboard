@@ -165,6 +165,6 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findApiUsageStateById(tenantId, new ApiUsageStateId(entityId.getId())));
+        return Optional.ofNullable(findApiUsageStateById(tenantId, new ApiUsageStateId(entityId.getId())));
     }
 }

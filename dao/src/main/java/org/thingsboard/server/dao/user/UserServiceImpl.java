@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entity.TbEntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -403,13 +402,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findUserById(tenantId, new UserId(entityId.getId())));
-    }
-
-    @Override
-    public CustomerId getCustomerId(TenantId tenantId, EntityId entityId) {
-        User user = findUserById(tenantId, new UserId(entityId.getId()));
-        return user != null ? user.getCustomerId() : TbEntityService.NULL_CUSTOMER_ID;
+        return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
     }
 
 }

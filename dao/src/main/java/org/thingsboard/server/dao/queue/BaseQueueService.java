@@ -124,7 +124,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.of(findQueueById(tenantId, new QueueId(entityId.getId())));
+        return Optional.ofNullable(findQueueById(tenantId, new QueueId(entityId.getId())));
     }
 
     private PaginatedRemover<TenantId, Queue> tenantQueuesRemover =
