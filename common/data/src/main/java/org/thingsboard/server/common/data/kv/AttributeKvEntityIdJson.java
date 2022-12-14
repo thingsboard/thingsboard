@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.rule;
+package org.thingsboard.server.common.data.kv;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.UUID;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class RuleNodeStats {
-    private String lastErrorMsg;
-    private long errorsCount;
+public class AttributeKvEntityIdJson implements Serializable {
+    private final UUID id;
+    private final String jsonValue;
 }

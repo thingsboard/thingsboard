@@ -602,14 +602,14 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping(value = "/ruleChain/{ruleChainId}/clearRuleNodesStats")
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearRuleChainErrors(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
-                                              @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+    public void clearRuleChainStats(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+                                    @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
 
-            ruleChainService.clearRuleChainErrors(getTenantId(), ruleChain.getId());
+            ruleChainService.clearRuleChainStats(getTenantId(), ruleChain.getId());
         } catch (Exception e) {
             throw handleException(e);
         }

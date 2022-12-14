@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.Collection;
@@ -36,6 +37,8 @@ public interface AttributesDao {
     List<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String attributeType, Collection<String> attributeKey);
 
     List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, String attributeType);
+
+    List<AttributeKvEntityIdJson> findAllByEntityIds(TenantId tenantId, List<EntityId> entityIds);
 
     ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute);
 

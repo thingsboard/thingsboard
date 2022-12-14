@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbRuleNodeUpdateException;

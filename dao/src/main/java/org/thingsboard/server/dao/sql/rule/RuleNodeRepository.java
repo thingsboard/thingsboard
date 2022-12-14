@@ -22,8 +22,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
 
 import java.util.List;

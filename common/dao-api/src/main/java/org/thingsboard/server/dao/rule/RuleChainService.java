@@ -107,7 +107,7 @@ public interface RuleChainService {
 
     void clearRuleNodeStats(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId);
 
-    void clearRuleChainErrors(TenantId tenantId, RuleChainId ruleChainId);
+    void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId);
 
     void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String lastErrorMsg, int errorsCount);
 

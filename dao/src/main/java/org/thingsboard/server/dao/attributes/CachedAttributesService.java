@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -225,6 +226,12 @@ public class CachedAttributesService implements AttributesService {
         }
 
         return Futures.allAsList(futures);
+    }
+
+    @Override
+    public ListenableFuture<List<AttributeKvEntityIdJson>> findRuleNodesErrorsByRuleChainId(TenantId tenantId, List<EntityId> entityIds) {
+        log.debug("Try to find errors in rule chain by tenantId [{}] and List<entityId> [{}]", tenantId, entityIds);
+        return Futures.immediateFuture(attributesDao.findAllByEntityIds(tenantId, entityIds));
     }
 
     private String evict(EntityId entityId, String scope, AttributeKvEntry attribute, String key) {

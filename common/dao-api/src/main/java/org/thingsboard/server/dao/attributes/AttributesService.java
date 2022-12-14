@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.Collection;
@@ -38,6 +39,8 @@ public interface AttributesService {
     ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope);
 
     ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes);
+
+    ListenableFuture<List<AttributeKvEntityIdJson>> findRuleNodesErrorsByRuleChainId(TenantId tenantId, List<EntityId> entityIds);
 
     ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute);
 

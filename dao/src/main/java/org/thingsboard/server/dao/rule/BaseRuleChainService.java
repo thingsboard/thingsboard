@@ -16,7 +16,9 @@
 package org.thingsboard.server.dao.rule;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -39,6 +41,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
@@ -75,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -298,11 +302,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNode> ruleNodes = getRuleChainNodes(tenantId, ruleChainId);
         Collections.sort(ruleNodes, Comparator.comparingLong(RuleNode::getCreatedTime).thenComparing(RuleNode::getId, Comparator.comparing(RuleNodeId::getId)));
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
+        Map<RuleNodeId, RuleNodeStats> ruleNodesWithErrors = getRuleChainNodesStats(tenantId, ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList()));
         for (RuleNode node : ruleNodes) {
             ruleNodeIndexMap.put(node.getId(), ruleNodes.indexOf(node));
-            try {
-                node.setStats(getRuleNodeStats(tenantId, node.getId()).get());
-            } catch (Exception ignored) {}
+            if(ruleNodesWithErrors.containsKey(node.getId())) {
+                node.setStats(ruleNodesWithErrors.get(node.getId()));
+            }
         }
         ruleChainMetaData.setNodes(ruleNodes);
         if (ruleChain.getFirstRuleNodeId() != null) {
@@ -387,6 +392,21 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         return ruleNodes;
+    }
+
+    public Map<RuleNodeId, RuleNodeStats> getRuleChainNodesStats(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
+        Validator.validateIds(ruleNodeIds, "Incorrect entity ids for search request");
+        List<AttributeKvEntityIdJson> attributeKvEntries;
+        Map<RuleNodeId, RuleNodeStats> map = new HashMap<>();
+        try {
+            attributeKvEntries = attributesService.findRuleNodesErrorsByRuleChainId(tenantId, new ArrayList<>(ruleNodeIds)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        for(AttributeKvEntityIdJson akv: attributeKvEntries) {
+            map.put(new RuleNodeId(akv.getId()), stringToRuleNodeStats(akv.getJsonValue()));
+        }
+        return map;
     }
 
     @Override
@@ -801,7 +821,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         attributesService.removeAll(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
     }
 
-    public void clearRuleChainErrors(TenantId tenantId, RuleChainId ruleChainId) {
+    public void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId) {
         List<RuleNode> ruleNodes = ruleNodeDao.findAllRuleNodesByRuleChainId(ruleChainId);
         for (RuleNode ruleNode : ruleNodes) {
             attributesService.removeAll(tenantId, ruleNode.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
@@ -827,6 +847,16 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void deleteRuleNode(TenantId tenantId, EntityId entityId) {
         deleteEntityRelations(tenantId, entityId);
         ruleNodeDao.removeById(tenantId, entityId.getId());
+    }
+
+    private RuleNodeStats stringToRuleNodeStats(String jsonValue) {
+        RuleNodeStats ruleNodeStats;
+        try {
+            ruleNodeStats = new ObjectMapper().readValue(jsonValue, RuleNodeStats.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return ruleNodeStats;
     }
 
     private final PaginatedRemover<TenantId, RuleChain> tenantRuleChainsRemover =
