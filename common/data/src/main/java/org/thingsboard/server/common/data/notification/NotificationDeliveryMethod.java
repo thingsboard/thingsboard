@@ -15,13 +15,6 @@
  */
 package org.thingsboard.server.common.data.notification;
 
-import lombok.Data;
-
-import java.util.Map;
-
-@Data
-public class NotificationRequestConfig {
-
-    private int sendingDelayInSec;
-
+public enum NotificationDeliveryMethod {
+    WEBSOCKET, SMS, EMAIL, SLACK
 }

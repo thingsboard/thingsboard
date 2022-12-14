@@ -91,33 +91,23 @@ public class NotificationController extends BaseController {
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // todo: check permission for notification target
 
-        if (notificationRequest.getId() == null) {
-            accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
-            notificationRequest.setOriginatorType(NotificationOriginatorType.USER);
-            notificationRequest.setOriginatorEntityId(user.getId());
-            if (StringUtils.isBlank(notificationRequest.getNotificationReason())) {
-                notificationRequest.setNotificationReason("General");
-            }
-            if (notificationRequest.getNotificationSeverity() == null) {
-                notificationRequest.setNotificationSeverity(NotificationSeverity.NORMAL);
-            }
-            if (notificationRequest.getNotificationInfo() != null && notificationRequest.getNotificationInfo().getOriginatorType() != null) {
-                throw new IllegalArgumentException("Unsupported notification info type");
-            }
-            notificationRequest.setRuleId(null);
-            notificationRequest.setStatus(null);
-            return notificationManager.processNotificationRequest(user.getTenantId(), notificationRequest);
-        } else {
-            NotificationRequest existingNotificationRequest = notificationRequestService.findNotificationRequestById(user.getTenantId(), notificationRequest.getId());
-            checkNotNull(existingNotificationRequest);
-            accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.WRITE, notificationRequest.getId(), notificationRequest);
-
-            existingNotificationRequest.setNotificationReason(notificationRequest.getNotificationReason());
-            existingNotificationRequest.setTextTemplate(notificationRequest.getTextTemplate());
-            existingNotificationRequest.setNotificationSeverity(notificationRequest.getNotificationSeverity());
-            return notificationManager.updateNotificationRequest(user.getTenantId(), existingNotificationRequest);
+        if (notificationRequest.getId() != null) {
+            throw new IllegalArgumentException("Notification request cannot be updated. You may only cancel/delete it");
         }
-//
+
+        accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
+        notificationRequest.setOriginatorType(NotificationOriginatorType.ADMIN);
+        notificationRequest.setOriginatorEntityId(user.getId());
+        if (StringUtils.isBlank(notificationRequest.getType())) {
+            notificationRequest.setType("General");
+        }
+        if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != null) {
+            throw new IllegalArgumentException("Unsupported notification info type");
+        }
+        notificationRequest.setRuleId(null);
+        notificationRequest.setStatus(null);
+        return notificationManager.processNotificationRequest(user.getTenantId(), notificationRequest);
+        //
 //        try {
 //            NotificationRequest savedNotificationRequest = ;
 //            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, savedNotificationRequest, ActionType.ADDED);

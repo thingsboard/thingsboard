@@ -22,11 +22,15 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -36,8 +40,10 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     private TenantId tenantId;
     @NotBlank
     private String name;
-    @NotBlank
-    private String notificationTextTemplate;
+    @NotNull
+    private NotificationTemplateId templateId;
+    @NotEmpty
+    private List<NotificationDeliveryMethod> deliveryMethods;
     @NotNull
     private NotificationTargetId initialNotificationTargetId;
     @Valid

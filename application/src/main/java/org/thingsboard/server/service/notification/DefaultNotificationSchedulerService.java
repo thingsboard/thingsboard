@@ -89,9 +89,8 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
                 .orElse(0);
         if (delayInSec <= 0) return;
         long delayInMs = TimeUnit.SECONDS.toMillis(delayInSec) - (System.currentTimeMillis() - requestTs);
-        if (delayInMs < 0) { // in case the scheduled request processing time was during the downtime
+        if (delayInMs < 0) {
             delayInMs = 0;
-            // or maybe no need to process outdated notification requests ?
         }
 
         ListenableScheduledFuture<?> scheduledTask = scheduledExecutor.schedule(() -> {

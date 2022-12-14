@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.dao.notification;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.dao.Dao;
 
-import java.util.Map;
-
-@Data
-public class NotificationRequestConfig {
-
-    private int sendingDelayInSec;
-
+public interface NotificationTemplateDao extends Dao<NotificationTemplate> {
 }

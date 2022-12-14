@@ -232,12 +232,12 @@ public class NotificationApiTest extends AbstractControllerTest {
         getWsClient().waitForUpdate(true);
         Notification initialNotification = getWsClient().getLastDataUpdate().getUpdate();
         assertThat(getMyNotifications(false, 10)).singleElement().isEqualTo(initialNotification);
-        assertThat(initialNotification.getInfo()).isNotNull().isEqualTo(notificationRequest.getNotificationInfo());
+        assertThat(initialNotification.getInfo()).isNotNull().isEqualTo(notificationRequest.getInfo());
 
         getWsClient().registerWaitForUpdate();
         NotificationInfo newNotificationInfo = new NotificationInfo();
         newNotificationInfo.setDescription("New description");
-        notificationRequest.setNotificationInfo(newNotificationInfo);
+        notificationRequest.setInfo(newNotificationInfo);
         notificationManager.updateNotificationRequest(tenantId, notificationRequest);
         getWsClient().waitForUpdate(true);
         Notification updatedNotification = getWsClient().getLastDataUpdate().getUpdate();
@@ -264,7 +264,7 @@ public class NotificationApiTest extends AbstractControllerTest {
         notificationTarget = saveNotificationTarget(notificationTarget);
 
         wsSessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
-        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Hello, ${recipientEmail}");
+        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Hello, ${email}");
         await().atMost(5, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> wsSessions.values().stream()
@@ -339,9 +339,10 @@ public class NotificationApiTest extends AbstractControllerTest {
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .targetId(targetId)
-                .notificationReason("Test")
-                .textTemplate(text)
-                .notificationInfo(notificationInfo)
+                .type("Test")
+                .templateId(notificationTemplate.getId())
+                .info(notificationInfo)
+                .deliveryMethods(List.of(NotificationDeliveryMethod.WEBSOCKET))
                 .additionalConfig(config)
                 .build();
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);

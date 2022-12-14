@@ -64,7 +64,7 @@ public class NotificationsClient extends NotificationApiWsClient {
             }
             SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
             String time = format.format(new Date(notification.getCreatedTime()));
-            System.out.printf("[%s] %-19s | %-30s | (%s)\n", time, notification.getReason(), notification.getText(), notificationInfoStr);
+//            System.out.printf("[%s] %-19s | %-30s | (%s)\n", time, notification.getReason(), notification.getText(), notificationInfoStr);
         });
         System.out.println(StringUtils.repeat(System.lineSeparator(), 5));
     }

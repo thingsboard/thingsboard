@@ -20,10 +20,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
@@ -37,8 +37,8 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.NOTIFICATION_TARGET_TABLE_NAME)
-public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> {
+@Table(name = ModelConstants.NOTIFICATION_TEMPLATE_TABLE_NAME)
+public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTemplate> {
 
     @Column(name = ModelConstants.TENANT_ID_PROPERTY, nullable = false)
     private UUID tenantId;
@@ -47,28 +47,28 @@ public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> 
     private String name;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.NOTIFICATION_TARGET_CONFIGURATION_PROPERTY, nullable = false)
+    @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_CONFIGURATION, nullable = false)
     private JsonNode configuration;
 
-    public NotificationTargetEntity() {}
+    public NotificationTemplateEntity() {}
 
-    public NotificationTargetEntity(NotificationTarget notificationTarget) {
-        setId(notificationTarget.getUuidId());
-        setCreatedTime(notificationTarget.getCreatedTime());
-        setTenantId(getUuid(notificationTarget.getTenantId()));
-        setName(notificationTarget.getName());
-        setConfiguration(toJson(notificationTarget.getConfiguration()));
+    public NotificationTemplateEntity(NotificationTemplate notificationTemplate) {
+        setId(notificationTemplate.getUuidId());
+        setCreatedTime(notificationTemplate.getCreatedTime());
+        setTenantId(getUuid(notificationTemplate.getTenantId()));
+        setName(notificationTemplate.getName());
+        setConfiguration(toJson(notificationTemplate.getConfiguration()));
     }
 
     @Override
-    public NotificationTarget toData() {
-        NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setId(new NotificationTargetId(id));
-        notificationTarget.setCreatedTime(createdTime);
-        notificationTarget.setTenantId(createId(tenantId, TenantId::fromUUID));
-        notificationTarget.setName(name);
-        notificationTarget.setConfiguration(fromJson(configuration, NotificationTargetConfig.class));
-        return notificationTarget;
+    public NotificationTemplate toData() {
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setId(new NotificationTemplateId(id));
+        notificationTemplate.setCreatedTime(createdTime);
+        notificationTemplate.setTenantId(createId(tenantId, TenantId::fromUUID));
+        notificationTemplate.setName(name);
+        notificationTemplate.setConfiguration(fromJson(configuration, NotificationTemplateConfig.class));
+        return notificationTemplate;
     }
 
 }

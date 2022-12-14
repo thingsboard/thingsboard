@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.service.notification.channels;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.template.NotificationText;
 
-import java.util.Map;
+import java.util.concurrent.Future;
 
-@Data
-public class NotificationRequestConfig {
+public interface NotificationChannel {
 
-    private int sendingDelayInSec;
+    Future<Void> sendNotification(User recipient, NotificationRequest request, NotificationText text);
+
+    NotificationDeliveryMethod getDeliveryMethod();
 
 }

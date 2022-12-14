@@ -431,6 +431,7 @@ CREATE TABLE IF NOT EXISTS tb_user (
     email varchar(255) UNIQUE,
     first_name varchar(255),
     last_name varchar(255),
+    phone varchar(255),
     search_text varchar(255),
     tenant_id uuid
 );

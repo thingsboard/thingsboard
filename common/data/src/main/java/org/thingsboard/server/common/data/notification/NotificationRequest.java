@@ -28,12 +28,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -47,39 +50,46 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationTargetId targetId;
 
     @NoXss
-    private String notificationReason;
-    @NotBlank(message = "Notification text template is missing")
-    private String textTemplate; // fixme: xss
+    private String type;
+    @NotNull
+    private NotificationTemplateId templateId;
     @Valid
-    private NotificationInfo notificationInfo;
-    private NotificationSeverity notificationSeverity;
+    private NotificationInfo info;
+    @NotEmpty
+    private List<NotificationDeliveryMethod> deliveryMethods;
+    @NotNull
+    @Valid
+    private NotificationRequestConfig additionalConfig;
 
     private NotificationOriginatorType originatorType;
-    private EntityId originatorEntityId; // userId, alarmId or tenantId
+    private EntityId originatorEntityId;
     private NotificationRuleId ruleId;
 
-    private NotificationRequestConfig additionalConfig;
     private NotificationRequestStatus status;
+
+    @JsonIgnore
+    private transient Map<String, String> templateContext;
 
     public NotificationRequest(NotificationRequest other) {
         super(other);
         this.tenantId = other.tenantId;
         this.targetId = other.targetId;
-        this.notificationReason = other.notificationReason;
-        this.textTemplate = other.textTemplate;
-        this.notificationInfo = other.notificationInfo;
-        this.notificationSeverity = other.notificationSeverity;
+        this.type = other.type;
+        this.templateId = other.templateId;
+        this.info = other.info;
+        this.deliveryMethods = other.deliveryMethods;
+        this.additionalConfig = other.additionalConfig;
         this.originatorType = other.originatorType;
         this.originatorEntityId = other.originatorEntityId;
         this.ruleId = other.ruleId;
-        this.additionalConfig = other.additionalConfig;
         this.status = other.status;
+        this.templateContext = other.templateContext;
     }
 
     @JsonIgnore
     @Override
     public String getName() {
-        return notificationReason;
+        return type;
     }
 
 }

@@ -25,10 +25,11 @@ public interface NotificationManager {
 
     NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
-    void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
-
     void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 
     NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
+
+
+    void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
 }

@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.dao.sql.notification;
 
-import lombok.Data;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 
-import java.util.Map;
+import java.util.UUID;
 
-@Data
-public class NotificationRequestConfig {
-
-    private int sendingDelayInSec;
-
+@Repository
+public interface NotificationTemplateRepository extends JpaRepository<NotificationTemplateEntity, UUID> {
 }

@@ -53,25 +53,25 @@ public class TbNotificationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .tenantId(ctx.getTenantId())
-                .targetId(new NotificationTargetId(config.getTargetId()))
-                .notificationReason(config.getNotificationReason())
-                .textTemplate(TbNodeUtils.processPattern(config.getNotificationTextTemplate(), msg))
-                .notificationSeverity(config.getNotificationSeverity())
-                .originatorType(NotificationOriginatorType.RULE_NODE)
-                .originatorEntityId(ctx.getTenantId())
-                .build();
-        withCallback(ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    return ctx.getNotificationManager().processNotificationRequest(ctx.getTenantId(), notificationRequest);
-                }),
-                r -> {
-                    TbMsgMetaData msgMetaData = msg.getMetaData().copy();
-                    msgMetaData.putValue("notificationRequestId", r.getUuidId().toString());
-                    msgMetaData.putValue("notificationTextTemplate", r.getTextTemplate());
-                    ctx.tellSuccess(TbMsg.transformMsg(msg, msgMetaData));
-                },
-                e -> ctx.tellFailure(msg, e));
+//        NotificationRequest notificationRequest = NotificationRequest.builder()
+//                .tenantId(ctx.getTenantId())
+//                .targetId(new NotificationTargetId(config.getTargetId()))
+//                .type(config.getNotificationReason())
+//                .textTemplate(TbNodeUtils.processPattern(config.getNotificationTextTemplate(), msg))
+//                .notificationSeverity(config.getNotificationSeverity())
+//                .originatorType(NotificationOriginatorType.RULE_NODE)
+//                .originatorEntityId(ctx.getTenantId())
+//                .build();
+//        withCallback(ctx.getDbCallbackExecutor().executeAsync(() -> {
+//                    return ctx.getNotificationManager().processNotificationRequest(ctx.getTenantId(), notificationRequest);
+//                }),
+//                r -> {
+//                    TbMsgMetaData msgMetaData = msg.getMetaData().copy();
+//                    msgMetaData.putValue("notificationRequestId", r.getUuidId().toString());
+//                    msgMetaData.putValue("notificationTextTemplate", r.getTextTemplate());
+//                    ctx.tellSuccess(TbMsg.transformMsg(msg, msgMetaData));
+//                },
+//                e -> ctx.tellFailure(msg, e));
     }
 
     private void validateConfig(TbNotificationNodeConfiguration config) throws TbNodeException {

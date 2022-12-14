@@ -13,33 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.template;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.id.NotificationId;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @EqualsAndHashCode(callSuper = true)
-public class Notification extends BaseData<NotificationId> {
+public class NotificationTemplate extends BaseData<NotificationTemplateId> implements HasTenantId, HasName {
 
-    private NotificationRequestId requestId;
-    private UserId recipientId;
-
-    private String type; // todo: maybe to enum
-    private String text;
-    private NotificationInfo info;
-
-    private NotificationOriginatorType originatorType;
-    private NotificationStatus status;
+    private TenantId tenantId;
+    private String name;
+    private NotificationTemplateConfig configuration;
+    // add notification type (notification reason)
 
 }

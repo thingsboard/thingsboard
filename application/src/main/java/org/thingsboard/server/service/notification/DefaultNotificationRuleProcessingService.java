@@ -19,9 +19,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationManager;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -50,7 +51,8 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
     private final NotificationRuleService notificationRuleService;
     private final NotificationRequestService notificationRequestService;
-    private final NotificationManager notificationManager;
+    @Autowired @Lazy
+    private NotificationManager notificationManager;
     private final DbCallbackExecutorService dbCallbackExecutorService;
 
     @Override
@@ -108,9 +110,9 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         } else {
             NotificationInfo newNotificationInfo = constructNotificationInfo(alarm);
             for (NotificationRequest notificationRequest : notificationRequests) {
-                NotificationInfo previousNotificationInfo = notificationRequest.getNotificationInfo();
+                NotificationInfo previousNotificationInfo = notificationRequest.getInfo();
                 if (!previousNotificationInfo.equals(newNotificationInfo)) {
-                    notificationRequest.setNotificationInfo(newNotificationInfo);
+                    notificationRequest.setInfo(newNotificationInfo);
                     notificationManager.updateNotificationRequest(tenantId, notificationRequest);
                 }
             }
@@ -127,32 +129,26 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             config.setSendingDelayInSec(delayInSec);
         }
         NotificationInfo notificationInfo = constructNotificationInfo(alarm);
-
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .tenantId(tenantId)
-                .targetId(targetId)
-                .notificationReason("Alarm")
-                .textTemplate(formatNotificationTextTemplate(notificationRule.getNotificationTextTemplate(), alarm))
-                .notificationInfo(notificationInfo)
-                .notificationSeverity(NotificationSeverity.NORMAL) // todo: from alarm severity
-                .originatorType(NotificationOriginatorType.ALARM)
-                .originatorEntityId(alarm.getId())
-                .ruleId(notificationRule.getId())
-                .additionalConfig(config)
-                .build();
-        notificationManager.processNotificationRequest(tenantId, notificationRequest);
-    }
-
-    private String formatNotificationTextTemplate(String textTemplate, Alarm alarm) {
-        Map<String, String> context = Map.of( // fixme: notification text is not updatable
+        Map<String, String> templateContext = Map.of(
                 "alarmType", alarm.getType(),
                 "alarmId", alarm.getId().toString(),
                 "alarmOriginatorEntityType", alarm.getOriginator().getEntityType().toString(),
-                "alarmOriginatorId", alarm.getOriginator().getId().toString(),
-                "alarmSeverity", alarm.getSeverity().toString(),
-                "alarmStatus", alarm.getStatus().toString()
+                "alarmOriginatorId", alarm.getOriginator().getId().toString()
         );
-        return TbNodeUtils.processTemplate(textTemplate, context);
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .targetId(targetId)
+                .type("Alarm")
+                .templateId(notificationRule.getTemplateId())
+                .deliveryMethods(notificationRule.getDeliveryMethods())
+                .additionalConfig(config)
+                .info(notificationInfo)
+                .originatorType(NotificationOriginatorType.ALARM)
+                .originatorEntityId(alarm.getId())
+                .ruleId(notificationRule.getId())
+                .templateContext(templateContext)
+                .build();
+        notificationManager.processNotificationRequest(tenantId, notificationRequest);
     }
 
     private NotificationInfo constructNotificationInfo(Alarm alarm) {

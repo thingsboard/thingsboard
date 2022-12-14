@@ -32,8 +32,7 @@ import java.util.UUID;
 public interface NotificationRequestRepository extends JpaRepository<NotificationRequestEntity, UUID> {
 
     @Query("SELECT r FROM NotificationRequestEntity r WHERE r.tenantId = :tenantId AND " +
-            "(lower(r.notificationReason) LIKE lower(concat('%', :searchText, '%')) OR " +
-            "lower(r.textTemplate) LIKE lower(concat('%', :searchText, '%')))")
+            "(lower(r.type) LIKE lower(concat('%', :searchText, '%')))")
     Page<NotificationRequestEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                                 @Param("searchText") String searchText, Pageable pageable);
 

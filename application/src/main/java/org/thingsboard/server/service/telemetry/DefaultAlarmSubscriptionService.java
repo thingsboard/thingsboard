@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,27 +56,12 @@ import java.util.Optional;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService implements AlarmSubscriptionService {
 
     private final AlarmService alarmService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
-
-    public DefaultAlarmSubscriptionService(TbClusterService clusterService,
-                                           PartitionService partitionService,
-                                           AlarmService alarmService,
-                                           TbApiUsageReportClient apiUsageClient,
-                                           TbApiUsageStateService apiUsageStateService) {
-        super(clusterService, partitionService);
-        this.alarmService = alarmService;
-        this.apiUsageClient = apiUsageClient;
-        this.apiUsageStateService = apiUsageStateService;
-    }
-
-    @Autowired(required = false)
-    public void setSubscriptionManagerService(Optional<SubscriptionManagerService> subscriptionManagerService) {
-        this.subscriptionManagerService = subscriptionManagerService;
-    }
 
     @Override
     protected String getExecutorPrefix() {

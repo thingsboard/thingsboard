@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.id;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Map;
+import java.util.UUID;
 
-@Data
-public class NotificationRequestConfig {
+public class NotificationTemplateId extends UUIDBased {
 
-    private int sendingDelayInSec;
+    @JsonCreator
+    public NotificationTemplateId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
 
 }

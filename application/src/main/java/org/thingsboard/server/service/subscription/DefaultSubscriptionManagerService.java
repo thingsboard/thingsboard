@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -86,37 +88,19 @@ import java.util.function.Predicate;
 @Slf4j
 @TbCoreComponent
 @Service
+@RequiredArgsConstructor
 public class DefaultSubscriptionManagerService extends TbApplicationEventListener<PartitionChangeEvent> implements SubscriptionManagerService {
 
-    @Autowired
-    private AttributesService attrService;
-
-    @Autowired
-    private TimeseriesService tsService;
-
-    @Autowired
-    private NotificationsTopicService notificationsTopicService;
-
-    @Autowired
-    private PartitionService partitionService;
-
-    @Autowired
-    private TbServiceInfoProvider serviceInfoProvider;
-
-    @Autowired
-    private TbQueueProducerProvider producerProvider;
-
-    @Autowired
-    private TbLocalSubscriptionService localSubscriptionService;
-
-    @Autowired
-    private DeviceStateService deviceStateService;
-
-    @Autowired
-    private TbClusterService clusterService;
-
-    @Autowired
-    private NotificationRuleProcessingService notificationRuleProcessingService;
+    private final AttributesService attrService;
+    private final TimeseriesService tsService;
+    private final NotificationsTopicService notificationsTopicService;
+    private final PartitionService partitionService;
+    private final TbServiceInfoProvider serviceInfoProvider;
+    private final TbQueueProducerProvider producerProvider;
+    private final TbLocalSubscriptionService localSubscriptionService;
+    private final DeviceStateService deviceStateService;
+    private final TbClusterService clusterService;
+    private final NotificationRuleProcessingService notificationRuleProcessingService;
 
     private final Map<EntityId, Set<TbSubscription>> subscriptionsByEntityId = new ConcurrentHashMap<>();
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsByWsSessionId = new ConcurrentHashMap<>();
