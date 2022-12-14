@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -374,12 +375,10 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(TenantId tenantId, EntityRelation relation,
                                                                         Function<EntityRelation, EntityId> entityIdGetter,
                                                                         BiConsumer<EntityRelationInfo, String> entityNameSetter) {
-        ListenableFuture<String> entityName = entityService.fetchEntityNameAsync(tenantId, entityIdGetter.apply(relation));
-        return Futures.transform(entityName, entityName1 -> {
-            EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
-            entityNameSetter.accept(entityRelationInfo1, entityName1);
-            return entityRelationInfo1;
-        }, MoreExecutors.directExecutor());
+        Optional<String> entityNameOpt = entityService.fetchEntityName(tenantId, entityIdGetter.apply(relation));
+        EntityRelationInfo relationInfo = new EntityRelationInfo(relation);
+        entityNameSetter.accept(relationInfo, entityNameOpt.orElse("N/A"));
+        return Futures.immediateFuture(relationInfo);
     }
 
     @Override

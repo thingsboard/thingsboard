@@ -26,6 +26,8 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -51,10 +53,11 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("TenantDaoService")
 @Slf4j
 public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Tenant, TenantEvictEvent> implements TenantService {
 
@@ -256,4 +259,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
             deleteTenant(TenantId.fromUUID(entity.getUuidId()));
         }
     };
+
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findTenantById(new TenantId(entityId.getId())));
+    }
 }

@@ -61,6 +61,7 @@
         <commons-io.version>2.11.0</commons-io.version>
         <commons-logging.version>1.2</commons-logging.version>
         <commons-csv.version>1.4</commons-csv.version>
+        <commons-text.version>1.9</commons-text.version>
         <apache-httpclient.version>4.5.13</apache-httpclient.version>
         <apache-httpcore.version>4.4.14</apache-httpcore.version>
         <joda-time.version>2.8.1</joda-time.version>
@@ -1363,6 +1364,11 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-csv</artifactId>
                 <version>${commons-csv.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${commons-text.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>

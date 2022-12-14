@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededExcept
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -58,6 +59,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -67,7 +69,7 @@ import java.util.stream.Stream;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("AlarmDaoService")
 @Slf4j
 public class BaseAlarmService extends AbstractEntityService implements AlarmService {
 
@@ -279,14 +281,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmInfoByIdAsync [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
-        return Futures.transformAsync(alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()),
+        return Futures.transform(alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()),
                 a -> {
                     AlarmInfo alarmInfo = new AlarmInfo(a);
-                    return Futures.transform(
-                            entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                                alarmInfo.setOriginatorName(originatorName);
-                                return alarmInfo;
-                            }, MoreExecutors.directExecutor());
+                    Optional<String> originatorNameOpt = entityService.fetchEntityName(tenantId, alarmInfo.getOriginator());
+                    alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "N/A" : originatorNameOpt.get());
+                    return alarmInfo;
                 }, MoreExecutors.directExecutor());
     }
 
@@ -311,15 +311,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
         List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
         for (AlarmInfo alarmInfo : alarms.getData()) {
-            alarmFutures.add(Futures.transform(
-                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                        if (originatorName == null) {
-                            originatorName = "Deleted";
-                        }
-                        alarmInfo.setOriginatorName(originatorName);
-                        return alarmInfo;
-                    }, MoreExecutors.directExecutor()
-            ));
+            Optional<String> originatorNameOpt = entityService.fetchEntityName(tenantId, alarmInfo.getOriginator());
+            alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "Deleted" : originatorNameOpt.get());
+            alarmFutures.add(Futures.immediateFuture(alarmInfo));
         }
         return Futures.transform(Futures.successfulAsList(alarmFutures),
                 alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
@@ -409,4 +403,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         Alarm entity = alarmDao.findAlarmById(tenantId, alarmId.getId());
         return function.apply(entity);
     }
+
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findAlarmById(tenantId, new AlarmId(entityId.getId())));
+    }
+
 }

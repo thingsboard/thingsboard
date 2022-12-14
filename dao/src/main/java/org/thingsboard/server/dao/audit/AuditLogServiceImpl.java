@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -53,6 +54,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,7 +62,7 @@ import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
-@Service
+@Service("AuditLogDaoService")
 @ConditionalOnProperty(prefix = "audit-log", value = "enabled", havingValue = "true")
 public class AuditLogServiceImpl implements AuditLogService {
 
@@ -121,13 +123,14 @@ public class AuditLogServiceImpl implements AuditLogService {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
-            String entityName = "";
+            String entityName = "N/A";
             if (entity != null) {
                 entityName = entity.getName();
             } else {
                 try {
-                    entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
-                } catch (Exception ex) {
+                    Optional<String> entityNameOpt = entityService.fetchEntityName(tenantId, entityId);
+                    entityName = entityNameOpt.orElse(entityName);
+                } catch (Exception ignored) {
                 }
             }
             if (e != null) {
@@ -401,6 +404,11 @@ public class AuditLogServiceImpl implements AuditLogService {
         auditLogSink.logAction(auditLogEntry);
 
         return Futures.allAsList(futures);
+    }
+
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.empty();
     }
 
 }
