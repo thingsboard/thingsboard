@@ -22,8 +22,11 @@ import io.swagger.annotations.ApiModelProperty;
 public class AlarmCommentInfo extends AlarmComment{
     private static final long serialVersionUID = 2807343093519543377L;
 
-    @ApiModelProperty(position = 19, value = "Alarm originator name", example = "Thermostat")
-    private String userName;
+    @ApiModelProperty(position = 19, value = "User name", example = "John")
+    private String firstName;
+
+    @ApiModelProperty(position = 19, value = "User name", example = "Brown")
+    private String lastName;
 
     public AlarmCommentInfo() {
         super();
@@ -33,17 +36,26 @@ public class AlarmCommentInfo extends AlarmComment{
         super(alarmComment);
     }
 
-    public AlarmCommentInfo(AlarmComment alarmComment, String userName) {
+    public AlarmCommentInfo(AlarmComment alarmComment, String firstName, String lastName) {
         super(alarmComment);
-        this.userName = userName;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setOriginatorName(String originatorName) {
-        this.userName = originatorName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     @Override
@@ -54,14 +66,27 @@ public class AlarmCommentInfo extends AlarmComment{
 
         AlarmCommentInfo alarmCommentInfo = (AlarmCommentInfo) o;
 
-        return userName != null ? userName.equals(alarmCommentInfo.userName) : alarmCommentInfo.userName == null;
+        if (firstName == null) {
+            if (alarmCommentInfo.firstName != null)
+                return false;
+        } else if (!firstName.equals(alarmCommentInfo.firstName))
+            return false;
+
+        if (lastName == null) {
+            if (alarmCommentInfo.lastName != null)
+                return false;
+        } else if (!lastName.equals(alarmCommentInfo.lastName))
+            return false;
+
+        return true;
 
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (userName != null ? userName.hashCode() : 0);
+        result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
+        result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
         return result;
     }
 }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,34 +54,29 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     private AlarmCommentRepository alarmCommentRepository;
 
     @Override
-    public AlarmComment createAlarmComment(AlarmComment alarmComment){
+    public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
         log.debug("Saving entity {}", alarmComment);
-        if (alarmComment.getId() == null) {
-            UUID uuid = Uuids.timeBased();
-            alarmComment.setId(new AlarmCommentId(uuid));
-            alarmComment.setCreatedTime(Uuids.unixTimestamp(uuid));
-        }
         partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_COLUMN_FAMILY_NAME, alarmComment.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
         AlarmCommentEntity saved = alarmCommentRepository.save(new AlarmCommentEntity(alarmComment));
         return DaoUtil.getData(saved);
     }
 
     @Override
-    public void deleteAlarmComment(AlarmCommentId alarmCommentId){
+    public void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId){
         log.trace("Try to delete entity alarm comment by id using [{}]", alarmCommentId);
         alarmCommentRepository.deleteById(alarmCommentId.getId());
     }
 
     @Override
-    public PageData<AlarmComment> findAlarmComments(AlarmId id, PageLink pageLink){
+    public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId id, PageLink pageLink){
         log.trace("Try to find alarm comments by alard id using [{}]", id);
         return DaoUtil.toPageData(
                 alarmCommentRepository.findAllByAlarmId(id.getId(), DaoUtil.toPageable(pageLink)));
     }
 
-    @Override
+
     public AlarmComment findAlarmCommentById(TenantId tenantId, UUID key) {
-        return findById(tenantId, key);
+        return DaoUtil.getData(alarmCommentRepository.findById(key));
     }
 
     @Override

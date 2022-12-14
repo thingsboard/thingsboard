@@ -18,9 +18,10 @@ package org.thingsboard.server.service.entitiy.alarm;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbAlarmCommentService {
-    AlarmComment saveAlarmComment(AlarmComment alarmComment, User user) throws ThingsboardException;
+    AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user) throws ThingsboardException;
 
-    Boolean deleteAlarmComment(AlarmComment alarmComment, User user);
+    Boolean deleteAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user);
 }

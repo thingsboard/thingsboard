@@ -16,8 +16,6 @@
 
 CREATE TABLE IF NOT EXISTS alarm_comment (
     id uuid NOT NULL,
-    tenant_id uuid NOT NULL,
-    customer_id uuid NOT NULL,
     created_time bigint NOT NULL,
     alarm_id uuid NOT NULL,
     user_id uuid,

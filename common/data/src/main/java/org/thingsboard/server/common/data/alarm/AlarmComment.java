@@ -22,25 +22,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
 @ApiModel
 @Data
 @Builder
 @AllArgsConstructor
-public class AlarmComment extends BaseData<AlarmCommentId> implements HasName, HasTenantId, HasCustomerId {
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private TenantId tenantId;
-
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private CustomerId customerId;
+public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     @ApiModelProperty(position = 2, value = "JSON object with Alarm id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private EntityId alarmId;
     @ApiModelProperty(position = 3, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
@@ -81,11 +72,9 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName, H
     public AlarmComment(AlarmComment alarmComment) {
         super(alarmComment.getId());
         this.createdTime = alarmComment.getCreatedTime();
-        this.tenantId = alarmComment.getTenantId();
-        this.customerId = alarmComment.getCustomerId();
+        this.alarmId = alarmComment.getAlarmId();
         this.type = alarmComment.getType();
         this.comment = alarmComment.getComment();
         this.userId = alarmComment.getUserId();
-
     }
 }

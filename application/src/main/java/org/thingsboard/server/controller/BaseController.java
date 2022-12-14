@@ -536,9 +536,6 @@ public abstract class BaseController {
                 case ALARM:
                     checkAlarmId(new AlarmId(entityId.getId()), operation);
                     return;
-                case ALARM_COMMENT:
-                    checkAlarmCommentId(new AlarmCommentId(entityId.getId()), operation);
-                    return;
                 case DEVICE:
                     checkDeviceId(new DeviceId(entityId.getId()), operation);
                     return;
@@ -721,12 +718,11 @@ public abstract class BaseController {
         }
     }
 
-    AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, Operation operation) throws ThingsboardException {
+    AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId) throws ThingsboardException {
         try {
             validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
             AlarmComment alarmComment = alarmCommentService.findAlarmCommentByIdAsync(getCurrentUser().getTenantId(), alarmCommentId).get();
             checkNotNull(alarmComment, "Alarm comment with id [" + alarmCommentId + "] is not found");
-            accessControlService.checkPermission(getCurrentUser(), Resource.ALARM_COMMENT, operation, alarmCommentId, alarmComment);
             return alarmComment;
         } catch (Exception e) {
             throw handleException(e, false);

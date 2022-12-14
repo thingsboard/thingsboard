@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -29,22 +30,22 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 @AllArgsConstructor
 public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService{
     @Override
-    public AlarmComment saveAlarmComment(AlarmComment alarmComment, User user) throws ThingsboardException {
+    public AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user) throws ThingsboardException {
         ActionType actionType = alarmComment.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         UserId userId = user.getId();
         alarmComment.setUserId(userId);
         try {
-            AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(alarmComment).getAlarmComment());
-            notificationEntityService.notifyCreateOrUpdateAlarmComment(savedAlarmComment, actionType, user);
+            AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment).getAlarmComment());
+            notificationEntityService.notifyCreateOrUpdateAlarmComment(tenantId, savedAlarmComment, actionType, user);
             return savedAlarmComment;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(alarmComment.getTenantId(), emptyId(EntityType.ALARM_COMMENT), alarmComment, actionType, user, e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM_COMMENT), alarmComment, actionType, user, e);
             throw e;
         }
     }
     @Override
-    public Boolean deleteAlarmComment(AlarmComment alarmComment, User user) {
-        notificationEntityService.notifyDeleteAlarmComment(alarmComment, user);
-        return alarmCommentService.deleteAlarmComment(alarmComment.getId()).isSuccessful();
+    public Boolean deleteAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user) {
+        notificationEntityService.notifyDeleteAlarmComment(tenantId, alarmComment, user);
+        return alarmCommentService.deleteAlarmComment(tenantId, alarmComment.getId()).isSuccessful();
     }
 }

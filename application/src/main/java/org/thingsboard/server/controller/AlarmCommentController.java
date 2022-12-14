@@ -27,7 +27,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -36,12 +38,15 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ALARM_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
@@ -69,10 +74,10 @@ public class AlarmCommentController extends BaseController {
     public AlarmComment saveAlarmComment(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
                                          @PathVariable(ALARM_ID) String strAlarmId, @ApiParam(value = "A JSON value representing the comment.") @RequestBody AlarmComment alarmComment) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        alarmComment.setTenantId(getTenantId());
-        alarmComment.setAlarmId(new AlarmId(toUUID(strAlarmId)));
-        checkEntity(alarmComment.getId(), alarmComment, Resource.ALARM_COMMENT);
-        return tbAlarmCommentService.saveAlarmComment(alarmComment, getCurrentUser());
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        alarmComment.setAlarmId(alarmId);
+        return tbAlarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Alarm comment(deleteAlarmComment)",
@@ -82,9 +87,12 @@ public class AlarmCommentController extends BaseController {
     @ResponseBody
     public Boolean deleteAlarmComment(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId, @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_COMMENT_ID) String strCommentId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strAlarmId));
-        AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, Operation.DELETE);
-        return tbAlarmCommentService.deleteAlarmComment(alarmComment, getCurrentUser());
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+
+        AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
+        AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId);
+        return tbAlarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Alarm comments (getAlarmComments)",
@@ -93,16 +101,23 @@ public class AlarmCommentController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/comment", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<AlarmComment> getAlarmComments(
+    public PageData<AlarmCommentInfo> getAlarmComments(
             @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
-            @PathVariable(ALARM_ID) String strAlarmCommentId,
+            @PathVariable(ALARM_ID) String strAlarmId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
-            @RequestParam int page
+            @RequestParam int page,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ALARM_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder
     ) throws Exception {
-        AlarmId alarmId = new AlarmId(toUUID(strAlarmCommentId));
-        PageLink pageLink = createPageLink(pageSize, page, null, null, null);
-        return checkNotNull(alarmCommentService.findAlarmComments(alarmId, pageLink).get());
+        checkParameter(ALARM_ID, strAlarmId);
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+
+        PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+        return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink).get());
     }
 }
