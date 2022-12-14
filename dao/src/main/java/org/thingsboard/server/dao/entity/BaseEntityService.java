@@ -90,7 +90,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
-    public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
+    public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
         TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
         Optional<HasId<?>> hasIdOpt = tbEntityService.fetchEntity(tenantId, entityId);
@@ -98,10 +98,10 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             HasId<?> hasId = hasIdOpt.get();
             if (hasId instanceof HasCustomerId) {
                 HasCustomerId hasCustomerId = (HasCustomerId) hasId;
-                return Optional.ofNullable(hasCustomerId.getCustomerId());
+                return hasCustomerId.getCustomerId();
             }
         }
-        return Optional.of(NULL_CUSTOMER_ID);
+        return NULL_CUSTOMER_ID;
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {
