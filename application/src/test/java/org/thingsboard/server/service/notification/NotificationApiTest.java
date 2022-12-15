@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.notification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.java_websocket.client.WebSocketClient;
 import org.junit.Before;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
@@ -49,17 +51,16 @@ import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpd
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.not;
 import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
+@Slf4j
 public class NotificationApiTest extends AbstractControllerTest {
 
     @Autowired
@@ -251,9 +252,10 @@ public class NotificationApiTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testNotificationUpdatesForUsersInTarget() throws Exception {
-        Map<User, NotificationApiWsClient> wsSessions = createUsersAndSetUpWsSessions(100);
-        wsSessions.forEach((user, wsClient) -> {
+    public void testNotificationUpdatesForALotOfUsers() throws Exception {
+        int usersCount = 100;
+        Map<User, NotificationApiWsClient> wsSessions = createUsersAndSetUpWsSessions(usersCount);
+        wsSessions.values().forEach(wsClient -> {
             wsClient.subscribeForUnreadNotifications(10);
             wsClient.waitForReply(true);
             wsClient.subscribeForUnreadNotificationsCount();
@@ -263,14 +265,15 @@ public class NotificationApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         UserListNotificationTargetConfig config = new UserListNotificationTargetConfig();
         config.setUsersIds(wsSessions.keySet().stream().map(User::getUuidId).collect(Collectors.toList()));
-        notificationTarget.setName("100 users");
+        notificationTarget.setName("Test users");
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setConfiguration(config);
         notificationTarget = saveNotificationTarget(notificationTarget);
 
         wsSessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
-        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Hello, ${email}");
-        await().atMost(5, TimeUnit.SECONDS)
+        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Hello, ${email}",
+                NotificationDeliveryMethod.WEBSOCKET);
+        await().atMost(20, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> wsSessions.values().stream()
                         .allMatch(wsClient -> wsClient.getLastDataUpdate() != null
@@ -285,26 +288,49 @@ public class NotificationApiTest extends AbstractControllerTest {
             assertThat(notification.getRequestId()).isEqualTo(notificationRequest.getId());
             assertThat(notification.getText()).isEqualTo("Hello, " + user.getEmail());
         });
+
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
+        NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEBSOCKET)).hasValue(usersCount);
+
         wsSessions.values().forEach(WebSocketClient::close);
     }
 
     private Map<User, NotificationApiWsClient> createUsersAndSetUpWsSessions(int count) throws Exception {
-        List<User> users = new LinkedList<>();
+        Map<User, NotificationApiWsClient> wsSessions = new HashMap<>();
         for (int i = 1; i <= count; i++) {
             User user = new User();
             user.setTenantId(tenantId);
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setEmail("test-user-" + i + "@thingsboard.org");
-            users.add(createUser(user, "12345678"));
-        }
-        Map<User, NotificationApiWsClient> wsSessions = new HashMap<>();
-        for (User user : users) {
-            login(user.getEmail(), "12345678");
+            user = createUserAndLogin(user, "12345678");
             NotificationApiWsClient wsClient = (NotificationApiWsClient) buildAndConnectWebSocketClient();
             wsSessions.put(user, wsClient);
         }
         loginTenantAdmin();
         return wsSessions;
+    }
+
+    @Test
+    public void testNotificationRequestStats() throws Exception {
+        getWsClient().subscribeForUnreadNotifications(10);
+        getWsClient().waitForReply(true);
+
+        getWsClient().registerWaitForUpdate();
+        NotificationTarget notificationTarget = createNotificationTarget(tenantAdminUserId);
+        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)",
+                NotificationDeliveryMethod.WEBSOCKET, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS);
+        getWsClient().waitForUpdate();
+
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
+        NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
+
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEBSOCKET)).hasValue(1);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(1);
+        assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
+        System.err.println(stats);
     }
 
 
@@ -332,11 +358,11 @@ public class NotificationApiTest extends AbstractControllerTest {
         return doPost("/api/notification/target", notificationTarget, NotificationTarget.class);
     }
 
-    private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text) {
-        return submitNotificationRequest(targetId, text, 0);
+    private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, NotificationDeliveryMethod... deliveryMethods) {
+        return submitNotificationRequest(targetId, text, 0, deliveryMethods);
     }
 
-    private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, int delayInSec) {
+    private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = createNotificationTemplate(text);
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(delayInSec);
@@ -348,7 +374,7 @@ public class NotificationApiTest extends AbstractControllerTest {
                 .type("Test")
                 .templateId(notificationTemplate.getId())
                 .info(notificationInfo)
-                .deliveryMethods(List.of(NotificationDeliveryMethod.WEBSOCKET))
+                .deliveryMethods(deliveryMethods.length > 0 ? List.of(deliveryMethods) : List.of(NotificationDeliveryMethod.WEBSOCKET))
                 .additionalConfig(config)
                 .build();
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);

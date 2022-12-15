@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.dao.model.sql.NotificationRequestEntity;
@@ -39,5 +42,10 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityTypeAndOriginatorEntityId(UUID ruleId, EntityType originatorEntityType, UUID originatorEntityId);
 
     Page<NotificationRequestEntity> findAllByStatus(NotificationRequestStatus status, Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE NotificationRequestEntity r SET r.stats = :stats WHERE r.id = :id")
+    void updateStatsById(@Param("id") UUID id, @Param("stats") JsonNode stats);
 
 }

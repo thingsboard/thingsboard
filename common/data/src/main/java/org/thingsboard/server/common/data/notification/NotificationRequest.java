@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.notification;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,6 +38,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -67,24 +70,9 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
 
     private NotificationRequestStatus status;
 
+    private NotificationRequestStats stats;
     @JsonIgnore
     private transient Map<String, String> templateContext;
-
-    public NotificationRequest(NotificationRequest other) {
-        super(other);
-        this.tenantId = other.tenantId;
-        this.targetId = other.targetId;
-        this.type = other.type;
-        this.templateId = other.templateId;
-        this.info = other.info;
-        this.deliveryMethods = other.deliveryMethods;
-        this.additionalConfig = other.additionalConfig;
-        this.originatorType = other.originatorType;
-        this.originatorEntityId = other.originatorEntityId;
-        this.ruleId = other.ruleId;
-        this.status = other.status;
-        this.templateContext = other.templateContext;
-    }
 
     @JsonIgnore
     @Override

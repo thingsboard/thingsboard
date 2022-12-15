@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -102,6 +101,7 @@ public class NotificationController extends BaseController {
         }
         notificationRequest.setRuleId(null);
         notificationRequest.setStatus(null);
+        notificationRequest.setStats(null);
 
         return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationManager::processNotificationRequest);
     }
@@ -111,13 +111,6 @@ public class NotificationController extends BaseController {
     public NotificationRequest getNotificationRequestById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
         return checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestById, Operation.READ);
-    }
-
-    @GetMapping("/notification/request/info/{id}")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationRequestInfo getNotificationRequestInfoById(@PathVariable UUID id) throws ThingsboardException {
-        NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        return checkEntityId(notificationRequestId, notificationRequestService::getNotificationRequestInfoById, Operation.READ);
     }
 
     @GetMapping("/notification/requests")
@@ -133,8 +126,8 @@ public class NotificationController extends BaseController {
     }
 
     @DeleteMapping("/notification/request/{id}")
-    public void deleteNotificationRequest(@PathVariable UUID id,
-                                          @AuthenticationPrincipal SecurityUser user) throws Exception {
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public void deleteNotificationRequest(@PathVariable UUID id) throws Exception {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
         NotificationRequest notificationRequest = checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestById, Operation.DELETE);
         doDeleteAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationManager::deleteNotificationRequest);

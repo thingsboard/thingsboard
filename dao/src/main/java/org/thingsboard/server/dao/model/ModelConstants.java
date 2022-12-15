@@ -673,6 +673,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
     public static final String NOTIFICATION_REQUEST_STATUS_PROPERTY = "status";
     public static final String NOTIFICATION_REQUEST_RULE_ID_PROPERTY = "rule_id";
+    public static final String NOTIFICATION_REQUEST_STATS_PROPERTY = "stats";
 
     public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
     public static final String NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY = "template_id";

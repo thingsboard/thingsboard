@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
@@ -40,6 +40,6 @@ public interface NotificationRequestService {
 
     PageData<NotificationRequest> findScheduledNotificationRequests(PageLink pageLink);
 
-    NotificationRequestInfo getNotificationRequestInfoById(TenantId tenantId, NotificationRequestId id);
+    void updateNotificationRequestStats(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats);
 
 }

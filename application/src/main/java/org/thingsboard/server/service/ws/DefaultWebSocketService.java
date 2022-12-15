@@ -952,7 +952,7 @@ public class DefaultWebSocketService implements WebSocketService {
         return limit == 0 ? DEFAULT_LIMIT : limit;
     }
 
-    private DefaultTenantProfileConfiguration getTenantProfileConfiguration(TelemetryWebSocketSessionRef sessionRef) {
+    private DefaultTenantProfileConfiguration getTenantProfileConfiguration(WebSocketSessionRef sessionRef) {
         return Optional.ofNullable(tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()))
                 .map(TenantProfile::getDefaultProfileConfiguration).orElse(null);
     }

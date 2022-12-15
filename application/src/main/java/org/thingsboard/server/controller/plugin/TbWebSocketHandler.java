@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidParameterException;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -472,7 +471,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
     }
 
-    private DefaultTenantProfileConfiguration getTenantProfileConfiguration(TelemetryWebSocketSessionRef sessionRef) {
+    private DefaultTenantProfileConfiguration getTenantProfileConfiguration(WebSocketSessionRef sessionRef) {
         return Optional.ofNullable(tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()))
                 .map(TenantProfile::getDefaultProfileConfiguration).orElse(null);
     }

@@ -19,16 +19,15 @@ import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -38,9 +37,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @SqlDao
@@ -48,7 +45,6 @@ import java.util.stream.Collectors;
 public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationRequestEntity, NotificationRequest> implements NotificationRequestDao {
 
     private final NotificationRequestRepository notificationRequestRepository;
-    private final NotificationRepository notificationRepository;
 
     @Override
     public PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
@@ -66,16 +62,9 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
         return DaoUtil.toPageData(notificationRequestRepository.findAllByStatus(status, DaoUtil.toPageable(pageLink)));
     }
 
-    @Transactional(readOnly = true)
     @Override
-    public NotificationRequestInfo getNotificationRequestInfoById(TenantId tenantId, NotificationRequestId id) {
-        NotificationRequestInfo notificationRequestInfo = new NotificationRequestInfo(findById(tenantId, id.getId()));
-        notificationRequestInfo.setSent(notificationRepository.countByRequestId(id.getId()));
-        notificationRequestInfo.setRead(notificationRepository.countByRequestIdAndStatus(id.getId(), NotificationStatus.READ));
-        Map<String, NotificationStatus> statusesByRecipient = notificationRepository.getStatusesByRecipientForRequestId(id.getId()).stream()
-                .collect(Collectors.toMap(r -> (String) r[0], r -> (NotificationStatus) r[1]));
-        notificationRequestInfo.setStatusesByRecipient(statusesByRecipient);
-        return notificationRequestInfo;
+    public void updateStatsById(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats) {
+        notificationRequestRepository.updateStatsById(notificationRequestId.getId(), JacksonUtil.valueToTree(stats));
     }
 
     @Override

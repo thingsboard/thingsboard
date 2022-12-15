@@ -48,12 +48,4 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     Page<NotificationEntity> findByRequestId(UUID requestId, Pageable pageable);
 
-    int countByRequestId(UUID requestId);
-
-    int countByRequestIdAndStatus(UUID requestId, NotificationStatus status);
-
-    @Query("SELECT u.email, n.status FROM NotificationEntity n INNER JOIN UserEntity u ON n.recipientId = u.id " +
-            "WHERE n.requestId = :requestId")
-    List<Object[]> getStatusesByRecipientForRequestId(@Param("requestId") UUID requestId);
-
 }

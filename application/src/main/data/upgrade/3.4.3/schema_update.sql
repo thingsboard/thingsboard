@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS notification_request (
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),
     rule_id UUID NULL CONSTRAINT fk_notification_request_rule_id REFERENCES notification_rule(id),
-    status VARCHAR(32)
+    status VARCHAR(32),
+    stats VARCHAR(1000)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_type, created_time DESC);
 
@@ -78,3 +79,16 @@ CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notificat
 ALTER TABLE alarm ADD COLUMN IF NOT EXISTS notification_rule_id UUID;
 
 ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS phone VARCHAR(255);
+
+CREATE OR REPLACE FUNCTION on_notification_deleted() RETURNS TRIGGER as $notification_deleted$
+BEGIN
+    RAISE NOTICE 'ABAAAAAAAAAAAAAAAAAAA';
+    INSERT INTO id_and_time values ('13814000-1dd2-11b2-8080-808080808080', 0);
+    RETURN NULL;
+END;
+$notification_deleted$ LANGUAGE plpgsql;
+
+CREATE TRIGGER notification_deleted_trigger
+    AFTER DELETE ON id_and_time
+    REFERENCING OLD TABLE AS deleted
+    FOR EACH STATEMENT EXECUTE FUNCTION on_notification_deleted();

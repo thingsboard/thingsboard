@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -36,6 +36,6 @@ public interface NotificationRequestDao extends Dao<NotificationRequest> {
 
     PageData<NotificationRequest> findAllByStatus(NotificationRequestStatus status, PageLink pageLink);
 
-    NotificationRequestInfo getNotificationRequestInfoById(TenantId tenantId, NotificationRequestId id);
+    void updateStatsById(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats);
 
 }

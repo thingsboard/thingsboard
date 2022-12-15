@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -95,6 +96,10 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_STATUS_PROPERTY)
     private NotificationRequestStatus status;
 
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_STATS_PROPERTY)
+    private JsonNode stats;
+
     public NotificationRequestEntity() {}
 
     public NotificationRequestEntity(NotificationRequest notificationRequest) {
@@ -114,6 +119,7 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         }
         setRuleId(getUuid(notificationRequest.getRuleId()));
         setStatus(notificationRequest.getStatus());
+        setStats(toJson(notificationRequest.getStats()));
     }
 
     @Override
@@ -137,6 +143,7 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         }
         notificationRequest.setRuleId(createId(ruleId, NotificationRuleId::new));
         notificationRequest.setStatus(status);
+        notificationRequest.setStats(fromJson(stats, NotificationRequestStats.class));
         return notificationRequest;
     }
 

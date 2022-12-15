@@ -821,7 +821,8 @@ CREATE TABLE IF NOT EXISTS notification_request (
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),
     rule_id UUID NULL CONSTRAINT fk_notification_request_rule_id REFERENCES notification_rule(id),
-    status VARCHAR(32)
+    status VARCHAR(32),
+    stats VARCHAR(1000)
 );
 
 CREATE TABLE IF NOT EXISTS notification (

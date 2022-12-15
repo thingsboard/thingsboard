@@ -20,13 +20,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -58,7 +56,6 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
             UUID uuid = Uuids.timeBased();
             notification.setId(new NotificationId(uuid));
             notification.setCreatedTime(Uuids.unixTimestamp(uuid));
-            // todo: regarding ttl, it might be better to remove notifications on NotificationRequest level
             partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
                     notification.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
         }

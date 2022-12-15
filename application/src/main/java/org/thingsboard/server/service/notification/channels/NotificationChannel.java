@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.template.NotificationText;
 
-import java.util.concurrent.Future;
-
 public interface NotificationChannel {
 
-    Future<Void> sendNotification(User recipient, NotificationRequest request, NotificationText text);
+    ListenableFuture<Void> sendNotification(User recipient, NotificationRequest request, NotificationText text);
 
     NotificationDeliveryMethod getDeliveryMethod();
 

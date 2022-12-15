@@ -95,6 +95,13 @@ public class SqlPartitioningRepository {
         }
     }
 
+    public long getLastPartitionEnd(String table, long before, long partitionDurationMs) {
+        return fetchPartitions(table).stream()
+                .mapToLong(partitionStartTime -> partitionStartTime + partitionDurationMs)
+                .filter(partitionEndTime -> partitionEndTime < before)
+                .max().orElse(0);
+    }
+
     public void cleanupPartitionsCache(String table, long expTime, long partitionDurationMs) {
         Map<Long, SqlPartition> partitions = tablesPartitions.get(table);
         if (partitions == null) return;
