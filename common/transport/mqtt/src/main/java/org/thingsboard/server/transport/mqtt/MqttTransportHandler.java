@@ -41,12 +41,13 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -72,6 +73,8 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
+import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.message.SparkplugTopic;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
@@ -103,6 +106,7 @@ import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.FAILURE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopic;
 
 /**
  * @author Andrew Shvayka
@@ -128,6 +132,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     final DeviceSessionCtx deviceSessionCtx;
     volatile InetSocketAddress address;
     volatile GatewaySessionHandler gatewaySessionHandler;
+    volatile SparkplugNodeSessionHandler sparkPlugSessionHandler;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
@@ -325,6 +330,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 handleGatewayPublishMsg(ctx, topicName, msgId, mqttMsg);
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
             }
+        } else if (sparkPlugSessionHandler != null) {
+            try {
+                SparkplugTopic sparkplugTopic = parseTopic(topicName);
+                log.error("Publish [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device", sparkplugTopic.getType());
+                handleSparkplugPublishMsg(ctx, sparkplugTopic, msgId, mqttMsg);
+                transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             processDevicePublish(ctx, mqttMsg, topicName, msgId);
         }
@@ -357,6 +371,30 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 default:
                     ack(ctx, msgId);
             }
+        } catch (RuntimeException e) {
+            log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            ctx.close();
+        } catch (AdaptorException e) {
+            log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            sendAckOrCloseSession(ctx, topicName, msgId);
+        }
+    }
+
+    private void handleSparkplugPublishMsg(ChannelHandlerContext ctx, SparkplugTopic sparkplugTopic, int msgId, MqttPublishMessage mqttMsg) {
+        String topicName = sparkplugTopic.toString();
+        try {
+            switch(sparkplugTopic.getType()) {
+                case NBIRTH:
+                    // TODO regular publish
+//                    sparkPlugSessionHandler.onNodeConnectProto(mqttMsg);
+                    break;
+                case DBIRTH:
+                    sparkPlugSessionHandler.onDeviceConnectProto(mqttMsg);
+                    break;
+                default:
+
+            }
+
         } catch (RuntimeException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             ctx.close();
@@ -617,6 +655,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             return;
         }
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
+        try {
+            SparkplugTopic sparkplugTopic = parseTopic(mqttMsg.payload().topicSubscriptions().get(0).topicName());
+            log.error("Subscribe [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device", sparkplugTopic.getType());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         List<Integer> grantedQoSList = new ArrayList<>();
         boolean activityReported = false;
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
@@ -953,6 +998,30 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
+    private void checkSparkPlugConnected(SessionMetaData sessionMetaData, MqttConnectMessage connectMessage) {
+        if (((MqttDeviceProfileTransportConfiguration) deviceSessionCtx.getDeviceProfile().getProfileData().getTransportConfiguration())
+                .isSparkPlug()) {
+            TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
+            try {
+                JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
+                if (infoNode != null) {
+                    SparkplugTopic sparkplugTopic = parseTopic(connectMessage.payload().willTopic());
+                    if (sparkPlugSessionHandler == null) {
+                        log.error("Connected [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device", sparkplugTopic.getType());
+                        sparkPlugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopic.toString());
+                    } else {
+                        log.error("ReConnected [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device", sparkplugTopic.getType());
+                     }
+                    if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+                        sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
+                    }
+                }
+            } catch (Exception e) {
+                log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, device.getDeviceName(), e);
+            }
+        }
+    }
+
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
         log.trace("[{}] Channel closed!", sessionId);
@@ -988,6 +1057,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     checkGatewaySession(sessionMetaData);
+                    checkSparkPlugConnected(sessionMetaData, connectMessage);
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.debug("[{}] Client connected!", sessionId);

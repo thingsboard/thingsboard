@@ -118,4 +118,5 @@ public class DataConstants {
     public static final String MSG_SOURCE_KEY = "source";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
+    public static final String LAST_CONNECTED_SPARKPLUG = "lastConnectedSparkplug";
 }

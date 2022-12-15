@@ -65,7 +65,6 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -95,6 +94,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -161,6 +161,8 @@ public class DefaultTransportApiService implements TransportApiService {
             result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
+        } else if (transportApiRequestMsg.hasGetOrCreateDeviceSparlplugRequestMsg()) {
+            result = handle(transportApiRequestMsg.getGetOrCreateDeviceSparlplugRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
             result = handle(transportApiRequestMsg.getEntityProfileRequestMsg());
         } else if (transportApiRequestMsg.hasLwM2MRequestMsg()) {
@@ -338,6 +340,78 @@ public class DefaultTransportApiService implements TransportApiService {
                         .build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by gateway id and name: [{}]", gatewayId, requestMsg.getDeviceName(), e);
+                throw new RuntimeException(e);
+            } finally {
+                deviceCreationLock.unlock();
+            }
+        }, dbCallbackExecutorService);
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetOrCreateDeviceFromSparkplugRequestMsg requestMsg) {
+        DeviceId sparkplugNodeId = new DeviceId(new UUID(requestMsg.getSparkplugIdMSB(), requestMsg.getSparkplugIdLSB()));
+        ListenableFuture<Device> sparkplugNodeFuture = deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, sparkplugNodeId);
+        return Futures.transform(sparkplugNodeFuture, sparkplugNode -> {
+            Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
+            deviceCreationLock.lock();
+            try {
+                Device device = deviceService.findDeviceByTenantIdAndName(sparkplugNode.getTenantId(), requestMsg.getDeviceName());
+                if (device == null) {
+                    TenantId tenantId = sparkplugNode.getTenantId();
+                    device = new Device();
+                    device.setTenantId(tenantId);
+                    device.setName(requestMsg.getDeviceName());
+                    device.setType(requestMsg.getDeviceType());
+                    device.setCustomerId(sparkplugNode.getCustomerId());
+                    DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(sparkplugNode.getTenantId(), requestMsg.getDeviceType());
+                    device.setDeviceProfileId(deviceProfile.getId());
+                    ObjectNode additionalInfo = JacksonUtil.newObjectNode();
+                    additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, sparkplugNodeId.toString());
+                    device.setAdditionalInfo(additionalInfo);
+                    Device savedDevice = deviceService.saveDevice(device);
+                    tbClusterService.onDeviceUpdated(savedDevice, null);
+                    device = savedDevice;
+
+                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(sparkplugNode.getId(), device.getId(), "Created"));
+
+                    TbMsgMetaData metaData = new TbMsgMetaData();
+                    CustomerId customerId = sparkplugNode.getCustomerId();
+                    if (customerId != null && !customerId.isNullUid()) {
+                        metaData.putValue("customerId", customerId.toString());
+                    }
+                    metaData.putValue("sparkplugNodeId", sparkplugNodeId.toString());
+
+                    DeviceId deviceId = device.getId();
+                    ObjectNode entityNode = mapper.valueToTree(device);
+                    TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
+                    tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
+                } else {
+                    JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+                    if (deviceAdditionalInfo == null) {
+                        deviceAdditionalInfo = JacksonUtil.newObjectNode();
+                    }
+                    if (deviceAdditionalInfo.isObject() &&
+                            (!deviceAdditionalInfo.has(DataConstants.LAST_CONNECTED_SPARKPLUG)
+                                    || !sparkplugNodeId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_SPARKPLUG).asText()))) {
+                        ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
+                        newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_SPARKPLUG, sparkplugNodeId.toString());
+                        Device savedDevice = deviceService.saveDevice(device);
+                        tbClusterService.onDeviceUpdated(savedDevice, device);
+                    }
+                }
+                TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg.Builder builder =
+                        TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg.newBuilder()
+                        .setDeviceInfo(getDeviceInfoProto(device));
+                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+                if (deviceProfile != null) {
+                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+                } else {
+                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
+                }
+                return TransportApiResponseMsg.newBuilder()
+                        .setGetOrCreateDeviceSparkResponseMsg(builder.build())
+                        .build();
+            } catch (JsonProcessingException e) {
+                log.warn("[{}] Failed to lookup device by sparkplug Node id and name: [{}]", sparkplugNodeId, requestMsg.getDeviceName(), e);
                 throw new RuntimeException(e);
             } finally {
                 deviceCreationLock.unlock();
