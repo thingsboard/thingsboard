@@ -31,6 +31,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -325,7 +326,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void processSessionClose(WebSocketSessionRef sessionRef) {
-        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
+        var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration != null) {
             String sessionId = "[" + sessionRef.getSessionId() + "]";
 
@@ -359,7 +360,8 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private boolean processSubscription(WebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
-        var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
+        var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
+        if (tenantProfileConfiguration == null) return true;
 
         String subId = "[" + sessionRef.getSessionId() + "]:[" + cmd.getCmdId() + "]";
         try {
@@ -949,6 +951,12 @@ public class DefaultWebSocketService implements WebSocketService {
     private int getLimit(int limit) {
         return limit == 0 ? DEFAULT_LIMIT : limit;
     }
+
+    private DefaultTenantProfileConfiguration getTenantProfileConfiguration(TelemetryWebSocketSessionRef sessionRef) {
+        return Optional.ofNullable(tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()))
+                .map(TenantProfile::getDefaultProfileConfiguration).orElse(null);
+    }
+
 
     public static <W, C> WsCmdHandler<W, C> newCmdHandler(java.util.function.Function<W, C> cmdExtractor,
                                                    BiConsumer<WebSocketSessionRef, C> handler) {
