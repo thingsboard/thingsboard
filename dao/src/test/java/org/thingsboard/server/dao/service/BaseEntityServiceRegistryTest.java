@@ -20,15 +20,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.entity.DefaultEntityServiceRegistry;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 @Slf4j
 public abstract class BaseEntityServiceRegistryTest extends AbstractServiceTest {
 
     @Autowired
-    private DefaultEntityServiceRegistry entityServiceRegistry;
+    private EntityServiceRegistry entityServiceRegistry;
 
     @Test
     public void givenAllEntityTypes_whenGetServiceByEntityTypeCalled_thenAllBeansExists() {
