@@ -54,7 +54,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private EntityQueryDao entityQueryDao;
 
     @Autowired
-    DefaultEntityServiceRegistry entityServiceRegistry;
+    EntityServiceRegistry entityServiceRegistry;
 
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
