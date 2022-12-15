@@ -365,13 +365,13 @@ public class DefaultTransportApiService implements TransportApiService {
                     DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(sparkplugNode.getTenantId(), requestMsg.getDeviceType());
                     device.setDeviceProfileId(deviceProfile.getId());
                     ObjectNode additionalInfo = JacksonUtil.newObjectNode();
-                    additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, sparkplugNodeId.toString());
+                    additionalInfo.put(DataConstants.LAST_CONNECTED_SPARKPLUG, sparkplugNodeId.toString());
                     device.setAdditionalInfo(additionalInfo);
                     Device savedDevice = deviceService.saveDevice(device);
                     tbClusterService.onDeviceUpdated(savedDevice, null);
                     device = savedDevice;
 
-                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(sparkplugNode.getId(), device.getId(), "Created"));
+                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(device.getId(), sparkplugNode.getId(), "Created"));
 
                     TbMsgMetaData metaData = new TbMsgMetaData();
                     CustomerId customerId = sparkplugNode.getCustomerId();
@@ -395,8 +395,12 @@ public class DefaultTransportApiService implements TransportApiService {
                         ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
                         newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_SPARKPLUG, sparkplugNodeId.toString());
                         Device savedDevice = deviceService.saveDevice(device);
+                        relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(device.getId(), sparkplugNode.getId(), "Created"));
+
                         tbClusterService.onDeviceUpdated(savedDevice, device);
                     }
+
+
                 }
                 TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg.Builder builder =
                         TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg.newBuilder()
