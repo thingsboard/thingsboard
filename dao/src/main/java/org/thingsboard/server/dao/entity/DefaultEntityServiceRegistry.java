@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.CaseUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
 
-@Slf4j
 @Service
 public class DefaultEntityServiceRegistry implements EntityServiceRegistry {
 
