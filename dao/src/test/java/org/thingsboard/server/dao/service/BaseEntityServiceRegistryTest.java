@@ -34,7 +34,7 @@ public abstract class BaseEntityServiceRegistryTest extends AbstractServiceTest 
     public void givenAllEntityTypes_whenGetServiceByEntityTypeCalled_thenAllBeansExists() {
         for (EntityType entityType : EntityType.values()) {
             EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityType);
-            Assert.assertNotNull(entityDaoService);
+            Assert.assertNotNull("entityDaoService bean is missed for type: " + entityType.name(), entityDaoService);
         }
     }
 
