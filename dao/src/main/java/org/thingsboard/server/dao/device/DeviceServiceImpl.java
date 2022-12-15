@@ -709,7 +709,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     };
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDeviceById(tenantId, new DeviceId(entityId.getId())));
     }
 

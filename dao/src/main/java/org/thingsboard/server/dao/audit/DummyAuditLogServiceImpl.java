@@ -62,7 +62,7 @@ public class DummyAuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.empty();
     }
 

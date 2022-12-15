@@ -433,7 +433,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     };
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findAssetById(tenantId, new AssetId(entityId.getId())));
     }
 

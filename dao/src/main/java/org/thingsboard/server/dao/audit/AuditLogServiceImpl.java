@@ -128,8 +128,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 entityName = entity.getName();
             } else {
                 try {
-                    Optional<String> entityNameOpt = entityService.fetchEntityName(tenantId, entityId);
-                    entityName = entityNameOpt.orElse(entityName);
+                    entityName = entityService.fetchEntityName(tenantId, entityId).orElse(entityName);
                 } catch (Exception ignored) {
                 }
             }
@@ -407,7 +406,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.empty();
     }
 

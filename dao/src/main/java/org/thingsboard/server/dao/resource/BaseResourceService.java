@@ -137,7 +137,7 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findResourceInfoById(tenantId, new TbResourceId(entityId.getId())));
     }
 
