@@ -21,3 +21,11 @@
     border-width: 2px;
   }
 }
+
+:host ::ng-deep {
+  .tb-widget-library {
+    .tb-widget-container {
+      cursor: pointer;
+    }
+  }
+}

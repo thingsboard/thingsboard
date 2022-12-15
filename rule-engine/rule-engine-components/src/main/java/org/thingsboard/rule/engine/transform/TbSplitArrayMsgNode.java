@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutionException;
         name = "split array msg",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
-        nodeDetails = "Split the array fetched from the msg body. If the msg data is not a JSON object returns the "
+        nodeDetails = "Split the array fetched from the msg body. If the msg data is not a JSON array returns the "
                 + "incoming message as outbound message with <code>Failure</code> chain, otherwise returns "
                 + "inner objects of the extracted array as separate messages via <code>Success</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -61,7 +61,9 @@ public class TbSplitArrayMsgNode implements TbNode {
         JsonNode jsonNode = JacksonUtil.toJsonNode(msg.getData());
         if (jsonNode.isArray()) {
             ArrayNode data = (ArrayNode) jsonNode;
-            if (data.size() == 1) {
+            if (data.isEmpty()) {
+                ctx.ack(msg);
+            } else if (data.size() == 1) {
                 ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(data.get(0))));
             } else {
                 TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(data.size(), new TbMsgCallback() {

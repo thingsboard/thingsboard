@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
-import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
@@ -37,6 +36,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
+import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 /**
@@ -119,16 +119,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private static void validateEntityDataQuery(EntityDataQuery query) {
         validateEntityCountQuery(query);
         validateEntityDataPageLink(query.getPageLink());
-    }
-
-    private static void validateEntityDataPageLink(EntityDataPageLink pageLink) {
-        if (pageLink == null) {
-            throw new IncorrectParameterException("Entity Data Page link must be specified.");
-        } else if (pageLink.getPageSize() < 1) {
-            throw new IncorrectParameterException("Incorrect entity data page link page size '" + pageLink.getPageSize() + "'. Page size must be greater than zero.");
-        } else if (pageLink.getPage() < 0) {
-            throw new IncorrectParameterException("Incorrect entity data page link page '" + pageLink.getPage() + "'. Page must be positive integer.");
-        }
     }
 
     private static void validateRelationQuery(RelationsQueryFilter queryFilter) {
