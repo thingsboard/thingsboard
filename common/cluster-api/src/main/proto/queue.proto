@@ -193,18 +193,6 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   bytes profileBody = 2;
 }
 
-message GetOrCreateDeviceFromSparkplugRequestMsg {
-  string deviceName = 1;
-  string deviceType = 2;
-  int64 sparkplugIdMSB = 3;
-  int64 sparkplugIdLSB = 4;
-}
-
-message GetOrCreateDeviceFromSparkplugResponseMsg {
-  DeviceInfoProto deviceInfo = 1;
-  bytes profileBody = 2;
-}
-
 message GetEntityProfileRequestMsg {
   string entityType = 1;
   int64 entityIdMSB = 2;
@@ -909,7 +897,6 @@ message TransportApiRequestMsg {
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
-  GetOrCreateDeviceFromSparkplugRequestMsg getOrCreateDeviceSparlplugRequestMsg = 15;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -925,7 +912,6 @@ message TransportApiResponseMsg {
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
   repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
-  GetOrCreateDeviceFromSparkplugResponseMsg getOrCreateDeviceSparkResponseMsg = 12;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

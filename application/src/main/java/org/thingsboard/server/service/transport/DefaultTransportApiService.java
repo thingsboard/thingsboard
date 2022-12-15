@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -161,8 +162,6 @@ public class DefaultTransportApiService implements TransportApiService {
             result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
-        } else if (transportApiRequestMsg.hasGetOrCreateDeviceSparlplugRequestMsg()) {
-            result = handle(transportApiRequestMsg.getGetOrCreateDeviceSparlplugRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
             result = handle(transportApiRequestMsg.getEntityProfileRequestMsg());
         } else if (transportApiRequestMsg.hasLwM2MRequestMsg()) {
@@ -283,6 +282,8 @@ public class DefaultTransportApiService implements TransportApiService {
             Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
             deviceCreationLock.lock();
             try {
+                DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
+                boolean isSparkplug = ((MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).isSparkPlug();
                 Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
                 if (device == null) {
                     TenantId tenantId = gateway.getTenantId();
@@ -291,7 +292,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     device.setName(requestMsg.getDeviceName());
                     device.setType(requestMsg.getDeviceType());
                     device.setCustomerId(gateway.getCustomerId());
-                    DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
+
                     device.setDeviceProfileId(deviceProfile.getId());
                     ObjectNode additionalInfo = JacksonUtil.newObjectNode();
                     additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
@@ -307,7 +308,8 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (customerId != null && !customerId.isNullUid()) {
                         metaData.putValue("customerId", customerId.toString());
                     }
-                    metaData.putValue("gatewayId", gatewayId.toString());
+                    String deviceIdStr = isSparkplug ? "sparkplugId" : "gatewayId";
+                    metaData.putValue(deviceIdStr, gatewayId.toString());
 
                     DeviceId deviceId = device.getId();
                     ObjectNode entityNode = mapper.valueToTree(device);
@@ -318,104 +320,24 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (deviceAdditionalInfo == null) {
                         deviceAdditionalInfo = JacksonUtil.newObjectNode();
                     }
+                    String lastConnectedStr = isSparkplug ? DataConstants.LAST_CONNECTED_SPARKPLUG : DataConstants.LAST_CONNECTED_GATEWAY;
                     if (deviceAdditionalInfo.isObject() &&
-                            (!deviceAdditionalInfo.has(DataConstants.LAST_CONNECTED_GATEWAY)
-                                    || !gatewayId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_GATEWAY).asText()))) {
+                            (!deviceAdditionalInfo.has(lastConnectedStr)
+                                    || !gatewayId.toString().equals(deviceAdditionalInfo.get(lastConnectedStr).asText()))) {
                         ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
-                        newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
+                        newDeviceAdditionalInfo.put(lastConnectedStr, gatewayId.toString());
                         Device savedDevice = deviceService.saveDevice(device);
                         tbClusterService.onDeviceUpdated(savedDevice, device);
                     }
                 }
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
                         .setDeviceInfo(getDeviceInfoProto(device));
-                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
-                if (deviceProfile != null) {
-                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
-                } else {
-                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
-                }
+                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
                 return TransportApiResponseMsg.newBuilder()
                         .setGetOrCreateDeviceResponseMsg(builder.build())
                         .build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by gateway id and name: [{}]", gatewayId, requestMsg.getDeviceName(), e);
-                throw new RuntimeException(e);
-            } finally {
-                deviceCreationLock.unlock();
-            }
-        }, dbCallbackExecutorService);
-    }
-
-    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetOrCreateDeviceFromSparkplugRequestMsg requestMsg) {
-        DeviceId sparkplugNodeId = new DeviceId(new UUID(requestMsg.getSparkplugIdMSB(), requestMsg.getSparkplugIdLSB()));
-        ListenableFuture<Device> sparkplugNodeFuture = deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, sparkplugNodeId);
-        return Futures.transform(sparkplugNodeFuture, sparkplugNode -> {
-            Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
-            deviceCreationLock.lock();
-            try {
-                Device device = deviceService.findDeviceByTenantIdAndName(sparkplugNode.getTenantId(), requestMsg.getDeviceName());
-                if (device == null) {
-                    TenantId tenantId = sparkplugNode.getTenantId();
-                    device = new Device();
-                    device.setTenantId(tenantId);
-                    device.setName(requestMsg.getDeviceName());
-                    device.setType(requestMsg.getDeviceType());
-                    device.setCustomerId(sparkplugNode.getCustomerId());
-                    DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(sparkplugNode.getTenantId(), requestMsg.getDeviceType());
-                    device.setDeviceProfileId(deviceProfile.getId());
-                    ObjectNode additionalInfo = JacksonUtil.newObjectNode();
-                    additionalInfo.put(DataConstants.LAST_CONNECTED_SPARKPLUG, sparkplugNodeId.toString());
-                    device.setAdditionalInfo(additionalInfo);
-                    Device savedDevice = deviceService.saveDevice(device);
-                    tbClusterService.onDeviceUpdated(savedDevice, null);
-                    device = savedDevice;
-
-                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(device.getId(), sparkplugNode.getId(), "Created"));
-
-                    TbMsgMetaData metaData = new TbMsgMetaData();
-                    CustomerId customerId = sparkplugNode.getCustomerId();
-                    if (customerId != null && !customerId.isNullUid()) {
-                        metaData.putValue("customerId", customerId.toString());
-                    }
-                    metaData.putValue("sparkplugNodeId", sparkplugNodeId.toString());
-
-                    DeviceId deviceId = device.getId();
-                    ObjectNode entityNode = mapper.valueToTree(device);
-                    TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
-                    tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
-                } else {
-                    JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-                    if (deviceAdditionalInfo == null) {
-                        deviceAdditionalInfo = JacksonUtil.newObjectNode();
-                    }
-                    if (deviceAdditionalInfo.isObject() &&
-                            (!deviceAdditionalInfo.has(DataConstants.LAST_CONNECTED_SPARKPLUG)
-                                    || !sparkplugNodeId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_SPARKPLUG).asText()))) {
-                        ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
-                        newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_SPARKPLUG, sparkplugNodeId.toString());
-                        Device savedDevice = deviceService.saveDevice(device);
-                        relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(device.getId(), sparkplugNode.getId(), "Created"));
-
-                        tbClusterService.onDeviceUpdated(savedDevice, device);
-                    }
-
-
-                }
-                TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg.Builder builder =
-                        TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg.newBuilder()
-                        .setDeviceInfo(getDeviceInfoProto(device));
-                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
-                if (deviceProfile != null) {
-                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
-                } else {
-                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
-                }
-                return TransportApiResponseMsg.newBuilder()
-                        .setGetOrCreateDeviceSparkResponseMsg(builder.build())
-                        .build();
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by sparkplug Node id and name: [{}]", sparkplugNodeId, requestMsg.getDeviceName(), e);
                 throw new RuntimeException(e);
             } finally {
                 deviceCreationLock.unlock();

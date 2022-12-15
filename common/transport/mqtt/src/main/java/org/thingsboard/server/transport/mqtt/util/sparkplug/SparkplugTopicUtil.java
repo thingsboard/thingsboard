@@ -17,7 +17,8 @@ package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.message.SparkplugTopic;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,9 +57,9 @@ public class SparkplugTopicUtil {
 	 *
 	 * @param topic a topic string
 	 * @return a {@link SparkplugTopic} instance
-	 * @throws Exception if an error occurs while parsing
+	 * @throws ThingsboardException if an error occurs while parsing
 	 */
-	public static SparkplugTopic parseTopic(String topic) throws Exception {
+	public static SparkplugTopic parseTopic(String topic) throws ThingsboardException {
 		topic = topic.indexOf("#") > 0 ? topic.substring(0, topic.indexOf("#")) : topic;
 		return parseTopic(SparkplugTopicUtil.getSplitTopic(topic));
 	}
@@ -71,13 +72,13 @@ public class SparkplugTopicUtil {
 	 * @throws Exception if an error occurs while parsing
 	 */
 	@SuppressWarnings("incomplete-switch")
-	public static SparkplugTopic parseTopic(String[] splitTopic) throws Exception {
+	public static SparkplugTopic parseTopic(String[] splitTopic) throws ThingsboardException {
 		SparkplugMessageType type;
 		String namespace, edgeNodeId, groupId;
 		int length = splitTopic.length;
 
 		if (length < 4 || length > 5) {
-			throw new Exception("Invalid number of topic elements: " + length);
+			throw new ThingsboardException("Invalid number of topic elements: " + length, ThingsboardErrorCode.INVALID_ARGUMENTS);
 		}
 
 		namespace = splitTopic[0];
@@ -108,6 +109,6 @@ public class SparkplugTopicUtil {
 					return new SparkplugTopic(namespace, groupId, edgeNodeId, splitTopic[4], type);
 			}
 		}
-		throw new Exception("Invalid number of topic elements " + length + " for topic type " + type);
+		throw new ThingsboardException("Invalid number of topic elements " + length + " for topic type " + type, ThingsboardErrorCode.INVALID_ARGUMENTS);
 	}
 }

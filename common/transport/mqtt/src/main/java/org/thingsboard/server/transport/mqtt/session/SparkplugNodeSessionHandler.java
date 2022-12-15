@@ -27,23 +27,25 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromSparkplugResponse;
+import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
-import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -102,7 +104,7 @@ public class SparkplugNodeSessionHandler {
         return sessionId;
     }
 
-    public String  getNodeTopic() {
+    public String getNodeTopic() {
         return nodeTopic;
     }
 
@@ -138,7 +140,69 @@ public class SparkplugNodeSessionHandler {
             String deviceName = parseTopic(mqttMsg.variableHeader().topicName()).getDeviceId();
             String deviceType = StringUtils.isEmpty(nodeSparkplugInfo.getDeviceType()) ? DEFAULT_DEVICE_TYPE : nodeSparkplugInfo.getDeviceType();
             processOnConnect(mqttMsg, deviceName, deviceType);
-        } catch (Exception  e) {
+        } catch (Exception e) {
+            throw new AdaptorException(e);
+        }
+    }
+
+    public void onPublishMsg(ChannelHandlerContext ctx, String  topicName, int msgId, MqttPublishMessage mqttMsg) throws Exception {
+        SparkplugTopic sparkplugTopic =  parseTopic(topicName);
+        log.error("SparkplugPublishMsg [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device: " + sparkplugTopic.getDeviceId(), sparkplugTopic.getType());
+        if (sparkplugTopic.isNode()) {
+            // A node topic
+            switch (sparkplugTopic.getType()) {
+                case STATE:
+                    // TODO
+                    break;
+                case NBIRTH:
+                    // TODO
+                    break;
+                case NCMD:
+                    // TODO
+                    break;
+                case NDATA:
+                    // TODO
+                    break;
+                case NDEATH:
+                    onNodeDisconnectProto(mqttMsg);
+                    break;
+                case NRECORD:
+                    // TODO
+                    break;
+                default:
+            }
+        } else {
+            // A device topic
+            switch (sparkplugTopic.getType()) {
+                case STATE:
+                    // TODO
+                    break;
+                case DBIRTH:
+                    onDeviceConnectProto(mqttMsg);
+                    break;
+                case DCMD:
+                    // TODO
+                    break;
+                case DDATA:
+                    // TODO
+                    break;
+                case DDEATH:
+                    onDeviceDisconnectProto(mqttMsg);
+                    break;
+                case DRECORD:
+                    // TODO
+                    break;
+                default:
+            }
+        }
+    }
+
+    private void onNodeDisconnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        try {
+            TransportApiProtos.DisconnectMsg connectProto = TransportApiProtos.DisconnectMsg.parseFrom(getBytes(mqttMsg.payload()));
+            String deviceName = checkDeviceName(connectProto.getDeviceName());
+            processOnDisconnect(mqttMsg, deviceName);
+        } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
     }
@@ -147,7 +211,7 @@ public class SparkplugNodeSessionHandler {
         try {
             TransportApiProtos.DisconnectMsg connectProto = TransportApiProtos.DisconnectMsg.parseFrom(getBytes(mqttMsg.payload()));
             String deviceName = checkDeviceName(connectProto.getDeviceName());
-            processOnDisconnect(mqttMsg, deviceName);
+            // TODO disconnect device without disconnect Node
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
@@ -158,10 +222,59 @@ public class SparkplugNodeSessionHandler {
         ack(msg);
     }
 
+    public void handleSparkplugSubscribeMsg(List<Integer> grantedQoSList, SparkplugTopic sparkplugTopic, MqttQoS reqQoS) {
+        String topicName = sparkplugTopic.toString();
+        log.error("SparkplugSubscribeMsg [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device: " + sparkplugTopic.getDeviceId(), sparkplugTopic.getType());
 
-    private JsonElement getJson(MqttPublishMessage mqttMsg) throws AdaptorException {
-        return JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+        if (sparkplugTopic.isNode()) {
+            // A node topic
+            switch (sparkplugTopic.getType()) {
+                case STATE:
+                    // TODO
+                    break;
+                case NBIRTH:
+                    // TODO
+                    break;
+                case NCMD:
+                    // TODO
+                    break;
+                case NDATA:
+                    // TODO
+                    break;
+                case NDEATH:
+                    // TODO
+                    break;
+                case NRECORD:
+                    // TODO
+                    break;
+                default:
+            }
+        } else {
+            // A device topic
+            switch (sparkplugTopic.getType()) {
+                case STATE:
+                    // TODO
+                    break;
+                case DBIRTH:
+                    // TODO
+                    break;
+                case DCMD:
+                    // TODO
+                    break;
+                case DDATA:
+                    // TODO
+                    break;
+                case DDEATH:
+                    // TODO
+                    break;
+                case DRECORD:
+                    // TODO
+                    break;
+                default:
+            }
+        }
     }
+
 
     private byte[] getBytes(ByteBuf payload) {
         return ProtoMqttAdaptor.toBytes(payload);
@@ -242,15 +355,15 @@ public class SparkplugNodeSessionHandler {
             return future;
         }
         try {
-            transportService.process(TransportProtos.GetOrCreateDeviceFromSparkplugRequestMsg.newBuilder()
+            transportService.process(TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
                             .setDeviceName(deviceName)
                             .setDeviceType(deviceType)
-                            .setSparkplugIdMSB(nodeSparkplugInfo.getDeviceId().getId().getMostSignificantBits())
-                            .setSparkplugIdLSB(nodeSparkplugInfo.getDeviceId().getId().getLeastSignificantBits())
+                            .setGatewayIdMSB(nodeSparkplugInfo.getDeviceId().getId().getMostSignificantBits())
+                            .setGatewayIdLSB(nodeSparkplugInfo.getDeviceId().getId().getLeastSignificantBits())
                             .build(),
                     new TransportServiceCallback<>() {
                         @Override
-                        public void onSuccess(GetOrCreateDeviceFromSparkplugResponse msg) {
+                        public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
                             if (msg.getDeviceInfo() == null) {
                                 System.out.println("DeviceInfo == null");
                             }

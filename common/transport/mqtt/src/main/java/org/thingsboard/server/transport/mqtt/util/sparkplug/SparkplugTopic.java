@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.util.sparkplug.message;
+package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
 /**
  * Created by nickAS21 on 12.12.22

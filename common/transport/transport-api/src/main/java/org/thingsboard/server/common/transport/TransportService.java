@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
-import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromSparkplugResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -32,7 +31,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromSparkplugRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
@@ -94,9 +92,6 @@ public interface TransportService {
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);
-
-    void process(GetOrCreateDeviceFromSparkplugRequestMsg msg,
-                 TransportServiceCallback<GetOrCreateDeviceFromSparkplugResponse> callback);
 
     void process(ProvisionDeviceRequestMsg msg,
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);

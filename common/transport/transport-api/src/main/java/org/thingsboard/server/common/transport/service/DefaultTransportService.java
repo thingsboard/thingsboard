@@ -69,7 +69,6 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
-import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromSparkplugResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
@@ -467,27 +466,6 @@ public class DefaultTransportService implements TransportService {
         ListenableFuture<GetOrCreateDeviceFromGatewayResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
             TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg msg = tmp.getValue().getGetOrCreateDeviceResponseMsg();
             GetOrCreateDeviceFromGatewayResponse.GetOrCreateDeviceFromGatewayResponseBuilder result = GetOrCreateDeviceFromGatewayResponse.builder();
-            if (msg.hasDeviceInfo()) {
-                TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
-                result.deviceInfo(tdi);
-                ByteString profileBody = msg.getProfileBody();
-                if (profileBody != null && !profileBody.isEmpty()) {
-                    result.deviceProfile(deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody));
-                }
-            }
-            return result.build();
-        }, MoreExecutors.directExecutor());
-        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
-    }
-
-
-    @Override
-    public void process(TransportProtos.GetOrCreateDeviceFromSparkplugRequestMsg requestMsg, TransportServiceCallback<GetOrCreateDeviceFromSparkplugResponse> callback) {
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceSparlplugRequestMsg(requestMsg).build());
-        log.trace("Processing msg: {}", requestMsg);
-        ListenableFuture<GetOrCreateDeviceFromSparkplugResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
-            TransportProtos.GetOrCreateDeviceFromSparkplugResponseMsg msg = tmp.getValue().getGetOrCreateDeviceSparkResponseMsg();
-            GetOrCreateDeviceFromSparkplugResponse.GetOrCreateDeviceFromSparkplugResponseBuilder result = GetOrCreateDeviceFromSparkplugResponse.builder();
             if (msg.hasDeviceInfo()) {
                 TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
                 result.deviceInfo(tdi);

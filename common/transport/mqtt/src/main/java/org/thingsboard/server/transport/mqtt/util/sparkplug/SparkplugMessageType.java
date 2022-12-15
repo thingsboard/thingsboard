@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+
 /**
  * An enumeration of Sparkplug MQTT message types.  The type provides an indication as to what the MQTT Payload of 
  * message will contain.
@@ -76,13 +79,13 @@ public enum SparkplugMessageType {
 	 */
 	NRECORD;
 	
-	public static SparkplugMessageType parseMessageType(String type) throws Exception {
+	public static SparkplugMessageType parseMessageType(String type) throws ThingsboardException {
 		for (SparkplugMessageType messageType : SparkplugMessageType.values()) {
 			if (messageType.name().equals(type)) {
 				return messageType;
 			}
 		}
-		throw new Exception("Invalid message type: " + type);
+		throw new ThingsboardException("Invalid message type: " + type, ThingsboardErrorCode.INVALID_ARGUMENTS);
 	}
 	
 	public boolean isDeath() {
