@@ -87,7 +87,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     @Autowired
     private EntityActionService entityActionService;
 
-    private static ThreadPoolExecutor executor;
+    private ThreadPoolExecutor executor;
 
     @PostConstruct
     private void initExecutor() {
