@@ -25,11 +25,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 
-public interface AuditLogService extends EntityDaoService {
+public interface AuditLogService {
 
     PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink);
 
