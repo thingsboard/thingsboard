@@ -50,66 +50,66 @@ services:
   # ThingsBoard setup to use redis-standalone
   tb-core1:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
       - redis
   tb-core2:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-rule-engine1:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-rule-engine2:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-mqtt-transport1:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-mqtt-transport2:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-http-transport1:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-http-transport2:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-coap-transport:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-lwm2m-transport:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-snmp-transport:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-vc-executor1:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-vc-executor2:
     env_file:
-      - cache-redis.env
+      - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
