@@ -34,12 +34,15 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
-import org.thingsboard.server.common.data.notification.template.NotificationTextTemplate;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -363,7 +366,7 @@ public class NotificationApiTest extends AbstractControllerTest {
     }
 
     private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
-        NotificationTemplate notificationTemplate = createNotificationTemplate(text);
+        NotificationTemplate notificationTemplate = createNotificationTemplate(text, deliveryMethods);
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(delayInSec);
         NotificationInfo notificationInfo = new NotificationInfo();
@@ -380,16 +383,34 @@ public class NotificationApiTest extends AbstractControllerTest {
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);
     }
 
-    private NotificationTemplate createNotificationTemplate(String text) {
+    private NotificationTemplate createNotificationTemplate(String text, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setTenantId(tenantId);
         notificationTemplate.setName("Notification template for testing");
         NotificationTemplateConfig config = new NotificationTemplateConfig();
-        NotificationTextTemplate textTemplate = new NotificationTextTemplate();
-        textTemplate.setBody(text);
-        config.setDefaultTextTemplate(textTemplate);
+        DeliveryMethodNotificationTemplate defaultTemplate = new DeliveryMethodNotificationTemplate();
+        defaultTemplate.setBody(text);
+        config.setDefaultTemplate(defaultTemplate);
+        for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+            if (deliveryMethod == NotificationDeliveryMethod.EMAIL) {
+                EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
+                emailNotificationTemplate.setSubject("Hello from test");
+                emailNotificationTemplate.setBody(text);
+                config.setTemplates(Map.of(
+                        deliveryMethod, emailNotificationTemplate
+                ));
+            }
+        }
         notificationTemplate.setConfiguration(config);
         return doPost("/api/notification/template", notificationTemplate, NotificationTemplate.class);
+    }
+
+    private void configureNotificationDeliveryMethods(NotificationDeliveryMethod... deliveryMethods) {
+        NotificationSettings notificationSettings = new NotificationSettings();
+        notificationSettings.setDeliveryMethodsConfigs(new HashMap<>());
+        for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+            notificationSettings.getDeliveryMethodsConfigs().put(deliveryMethod, new NotificationDeliveryMethodConfig());
+        }
     }
 
     private NotificationRequest findNotificationRequest(NotificationRequestId id) throws Exception {

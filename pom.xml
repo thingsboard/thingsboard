@@ -144,6 +144,7 @@
         <jgit.version>6.1.0.202203080745-r</jgit.version>
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
+        <slack-api.version>1.12.1</slack-api.version>
     </properties>
 
     <modules>
@@ -1944,6 +1945,11 @@
                 <groupId>org.jboss.aerogear</groupId>
                 <artifactId>aerogear-otp-java</artifactId>
                 <version>${aerogear-otp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.slack.api</groupId>
+                <artifactId>slack-api-client</artifactId>
+                <version>${slack-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>

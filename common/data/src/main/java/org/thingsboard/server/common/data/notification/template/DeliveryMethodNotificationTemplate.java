@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.settings;
+package org.thingsboard.server.common.data.notification.template;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method", include = JsonTypeInfo.As.EXISTING_PROPERTY,
-        visible = true, defaultImpl = NotificationDeliveryMethodConfig.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DeliveryMethodNotificationTemplate.class)
 @JsonSubTypes({
-        @Type(name = "SLACK", value = SlackNotificationDeliveryMethodConfig.class),
+        @JsonSubTypes.Type(name = "EMAIL", value = EmailDeliveryMethodNotificationTemplate.class),
+        @JsonSubTypes.Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class)
 })
 @Data
-public class NotificationDeliveryMethodConfig {
+public class DeliveryMethodNotificationTemplate {
 
-    private boolean enabled;
+    private String body;
     private NotificationDeliveryMethod method;
 
 }

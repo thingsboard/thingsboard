@@ -51,4 +51,8 @@ public class NotificationRequestStats {
         errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getEmail(), errorMessage);
     }
 
+    public boolean contains(NotificationDeliveryMethod deliveryMethod) {
+        return sent.containsKey(deliveryMethod) || errors.containsKey(deliveryMethod);
+    }
+
 }

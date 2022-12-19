@@ -35,17 +35,24 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.notification.NotificationManagerHelper;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.slack.SlackConversation;
+import org.thingsboard.server.service.slack.SlackService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -58,6 +65,8 @@ public class NotificationController extends BaseController {
     private final NotificationService notificationService;
     private final NotificationRequestService notificationRequestService;
     private final NotificationManager notificationManager;
+    private final NotificationManagerHelper notificationManagerHelper;
+    private final SlackService slackService;
 
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -131,6 +140,35 @@ public class NotificationController extends BaseController {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
         NotificationRequest notificationRequest = checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestById, Operation.DELETE);
         doDeleteAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationManager::deleteNotificationRequest);
+    }
+
+
+    @PostMapping("/notification/settings")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public NotificationSettings saveNotificationSettings(@RequestBody NotificationSettings notificationSettings,
+                                                         @AuthenticationPrincipal SecurityUser user) {
+        notificationManagerHelper.saveNotificationSettings(user.getTenantId(), notificationSettings);
+        return notificationSettings;
+    }
+
+    @GetMapping("/notification/settings")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public NotificationSettings getNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
+        return notificationManagerHelper.getNotificationSettings(user.getTenantId());
+    }
+
+    @GetMapping("/notification/slack/conversations")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public List<SlackConversation> listSlackConversations(@RequestParam SlackConversation.Type type,
+                                                          @AuthenticationPrincipal SecurityUser user) throws Exception {
+        NotificationSettings settings = getNotificationSettings(user);
+        SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
+                settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
+        if (slackConfig == null) {
+            throw new IllegalArgumentException("Slack is not configured");
+        }
+
+        return slackService.listConversations(user.getTenantId(), slackConfig.getBotToken(), type);
     }
 
 }

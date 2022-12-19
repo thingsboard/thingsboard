@@ -23,7 +23,7 @@ import java.util.Map;
 @Data
 public class NotificationTemplateConfig {
 
-    private NotificationTextTemplate defaultTextTemplate;
-    private Map<NotificationDeliveryMethod, NotificationTextTemplate> textTemplates;
+    private DeliveryMethodNotificationTemplate defaultTemplate;
+    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
 
 }

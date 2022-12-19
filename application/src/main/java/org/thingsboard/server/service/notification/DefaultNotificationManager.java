@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.notification;
 
-import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -33,11 +32,10 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
-import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
-import org.thingsboard.server.common.data.notification.template.NotificationText;
-import org.thingsboard.server.common.data.notification.template.NotificationTextTemplate;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -57,7 +55,6 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +71,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     private final NotificationTargetService notificationTargetService;
     private final NotificationRequestService notificationRequestService;
     private final NotificationService notificationService;
-    private final NotificationTemplateUtil notificationTemplateUtil;
+    private final NotificationManagerHelper notificationManagerHelper;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
@@ -85,6 +82,13 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         log.debug("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
         notificationRequest.setTenantId(tenantId);
+        NotificationSettings settings = notificationManagerHelper.getNotificationSettings(tenantId);
+        notificationRequest.getDeliveryMethods().forEach(deliveryMethod -> {
+            if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) || !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
+                throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is not enabled or configured");
+            }
+        });
+
         if (notificationRequest.getAdditionalConfig() != null) {
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
             if (config.getSendingDelayInSec() > 0 && notificationRequest.getId() == null) {
@@ -98,9 +102,13 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
-        NotificationRequestStats stats = new NotificationRequestStats();
-        Map<NotificationDeliveryMethod, NotificationTextTemplate> textTemplates = notificationTemplateUtil.getTemplates(tenantId, notificationRequest.getTemplateId(), savedNotificationRequest.getDeliveryMethods());
-        savedNotificationRequest.setTemplateContext(notificationRequest.getTemplateContext());
+        NotificationProcessingContext ctx = NotificationProcessingContext.builder()
+                .tenantId(tenantId)
+                .settings(settings)
+                .request(savedNotificationRequest)
+                .additionalTemplateContext(notificationRequest.getTemplateContext())
+                .build();
+        ctx.init(notificationManagerHelper);
 
         DaoUtil.processBatches(pageLink -> {
             return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
@@ -111,20 +119,19 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                 log.debug("Sending {} notifications for request {} to recipients batch", deliveryMethod, savedNotificationRequest.getId());
 
                 List<User> recipients = recipientsBatch.getData();
-                NotificationTextTemplate textTemplate = textTemplates.get(deliveryMethod);
                 for (User recipient : recipients) {
-                    ListenableFuture<Void> resultFuture = processForRecipient(recipient, savedNotificationRequest, notificationChannel, textTemplate, stats);
+                    ListenableFuture<Void> resultFuture = processForRecipient(notificationChannel, recipient, ctx);
                     DonAsynchron.withCallback(resultFuture, result -> {
-                        stats.reportSent(deliveryMethod);
+                        ctx.getStats().reportSent(deliveryMethod);
                     }, error -> {
-                        stats.reportError(deliveryMethod, recipient, error);
+                        ctx.getStats().reportError(deliveryMethod, recipient, error);
                     }, dbCallbackExecutorService);
                     results.add(resultFuture);
                 }
             }
             Futures.whenAllComplete(results).run(() -> {
                 try {
-                    notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), stats);
+                    notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), ctx.getStats());
                 } catch (Exception e) {
                     log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
                 }
@@ -134,22 +141,15 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         return savedNotificationRequest;
     }
 
-    private ListenableFuture<Void> processForRecipient(User recipient, NotificationRequest notificationRequest, NotificationChannel notificationChannel,
-                                                       NotificationTextTemplate textTemplate, NotificationRequestStats stats) {
-        NotificationText text;
+    private ListenableFuture<Void> processForRecipient(NotificationChannel notificationChannel, User recipient, NotificationProcessingContext ctx) {
+        String text;
         try {
-            Map<String, String> templateContext = new HashMap<>();
-            templateContext.put("email", recipient.getEmail());
-            templateContext.put("firstName", Strings.nullToEmpty(recipient.getFirstName()));
-            templateContext.put("lastName", Strings.nullToEmpty(recipient.getLastName()));
-            if (notificationRequest.getTemplateContext() != null) {
-                templateContext.putAll(notificationRequest.getTemplateContext());
-            }
-            text = notificationTemplateUtil.processTemplate(textTemplate, templateContext);
+            DeliveryMethodNotificationTemplate template = ctx.getTemplate(notificationChannel.getDeliveryMethod());
+            text = notificationManagerHelper.processTemplate(template.getBody(), ctx.createTemplateContext(recipient));
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
-        return notificationChannel.sendNotification(recipient, notificationRequest, text);
+        return notificationChannel.sendNotification(recipient, text, ctx);
     }
 
     private void forwardToNotificationSchedulerService(TenantId tenantId, NotificationRequestId notificationRequestId, boolean deleted) {
@@ -167,13 +167,14 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     }
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, NotificationRequest request, NotificationText text) {
+    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
+        NotificationRequest request = ctx.getRequest();
         log.trace("Creating notification for recipient {} (notification request id: {})", recipient.getId(), request.getId());
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
                 .type(request.getType())
-                .text(text.getBody())
+                .text(text)
                 .info(request.getInfo())
                 .originatorType(request.getOriginatorType())
                 .status(NotificationStatus.SENT)

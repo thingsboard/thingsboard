@@ -21,9 +21,9 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.template.NotificationText;
+import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
 @Component
 @RequiredArgsConstructor
@@ -33,9 +33,10 @@ public class EmailNotificationChannel implements NotificationChannel {
     private final MailExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, NotificationRequest request, NotificationText text) {
+    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
+        EmailDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.EMAIL);
         return executor.submit(() -> {
-            mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), text.getSubject(), text.getBody());
+            mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), text, template.getSubject());
             return null;
         });
     }

@@ -23,8 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.template.NotificationText;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 
 @Component
@@ -35,11 +34,11 @@ public class SmsNotificationChannel implements NotificationChannel {
     private final SmsExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, NotificationRequest request, NotificationText text) {
+    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
         String phone = recipient.getPhone();
         if (StringUtils.isBlank(phone)) return Futures.immediateFailedFuture(new RuntimeException("User does not have phone number"));
         return executor.submit(() -> {
-            smsService.sendSms(recipient.getTenantId(), recipient.getCustomerId(), new String[]{phone}, text.getBody());
+            smsService.sendSms(recipient.getTenantId(), recipient.getCustomerId(), new String[]{phone}, text);
             return null;
         });
     }

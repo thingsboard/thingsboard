@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification.channels;
+package org.thingsboard.server.service.slack;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.service.notification.NotificationProcessingContext;
+import lombok.Data;
 
-public interface NotificationChannel {
+@Data
+public class SlackConversation {
 
-    ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx);
+    private String id;
+    private String name;
 
-    NotificationDeliveryMethod getDeliveryMethod();
+    public enum Type {
+        USER,
+        PUBLIC_CHANNEL,
+        PRIVATE_CHANNEL
+    }
 
 }
