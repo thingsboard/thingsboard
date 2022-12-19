@@ -128,7 +128,7 @@ export interface TbFlotYAxisSettings {
 
 export interface TbFlotBaseSettings {
   stack: boolean;
-  enableSelection: boolean;
+  enableSelection: FlotSelection;
   shadowSize: number;
   fontColor: string;
   fontSize: number;
@@ -169,6 +169,8 @@ export interface TbFlotGraphSettings extends TbFlotBaseSettings,
 }
 
 export declare type BarAlignment = 'left' | 'right' | 'center';
+
+export declare type FlotSelection = 'enable' | 'disable' | 'mobile' | 'desktop';
 
 export interface TbFlotBarSettings extends TbFlotBaseSettings,
                                            TbFlotThresholdsSettings, TbFlotComparisonSettings, TbFlotCustomLegendSettings {

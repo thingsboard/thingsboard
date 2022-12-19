@@ -22,9 +22,23 @@
       <mat-checkbox fxFlex formControlName="stack" >
         {{ 'widgets.chart.enable-stacking-mode' | translate }}
       </mat-checkbox>
-      <mat-checkbox fxFlex formControlName="enableSelection">
-        {{ 'widgets.chart.enable-selection' | translate }}
-      </mat-checkbox>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.chart.selection</mat-label>
+        <mat-select formControlName="enableSelection">
+          <mat-option [value]="'enable'">
+            {{ 'widgets.chart.selection-enable' | translate }}
+          </mat-option>
+          <mat-option [value]="'disable'">
+            {{ 'widgets.chart.selection-disable' | translate }}
+          </mat-option>
+          <mat-option [value]="'mobile'">
+            {{ 'widgets.chart.selection-mobile' | translate }}
+          </mat-option>
+          <mat-option [value]="'desktop'">
+            {{ 'widgets.chart.selection-desktop' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </section>
     <section *ngIf="chartType === 'graph'" fxLayout="column" fxLayout.gt-xs="row"
              fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
