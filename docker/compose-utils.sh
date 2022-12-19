@@ -84,8 +84,11 @@ function additionalComposeCacheArgs() {
         redis-cluster)
         CACHE_COMPOSE_ARGS="-f docker-compose.redis-cluster.yml"
         ;;
+        redis-sentinel)
+        CACHE_COMPOSE_ARGS="-f docker-compose.redis-sentinel.yml"
+        ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
         exit 1
     esac
     echo $CACHE_COMPOSE_ARGS
@@ -114,8 +117,11 @@ function additionalStartupServices() {
         redis-cluster)
         ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5"
         ;;
+        redis-sentinel)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis redis-slave redis-sentinel"
+        ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
         exit 1
     esac
 
@@ -160,8 +166,15 @@ function permissionList() {
           1001 1001 tb-node/redis-cluster-data-5
           "
         ;;
+        redis-sentinel)
+          PERMISSION_LIST="$PERMISSION_LIST
+                    1001 1001 tb-node/redis-sentinel/redis
+                    1001 1001 tb-node/redis-sentinel/slave
+                    1001 1001 tb-node/redis-sentinel/sentinel
+                    "
+        ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
         exit 1
     esac
 
