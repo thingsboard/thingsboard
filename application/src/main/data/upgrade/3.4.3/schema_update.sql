@@ -17,7 +17,7 @@
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NOT NULL,
+    tenant_id UUID NOT NULL CONSTRAINT fk_notification_target_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     configuration VARCHAR(10000) NOT NULL
 );
@@ -26,7 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON not
 CREATE TABLE IF NOT EXISTS notification_template (
     id UUID NOT NULL CONSTRAINT notification_template_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NOT NULL,
+    tenant_id UUID NOT NULL CONSTRAINT fk_notification_template_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     configuration VARCHAR(10000) NOT NULL
 );
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS notification_template (
 CREATE TABLE IF NOT EXISTS notification_rule (
     id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NOT NULL,
+    tenant_id UUID NOT NULL CONSTRAINT fk_notification_rule_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
     delivery_methods VARCHAR(255),
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS notification_rule (
 CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NOT NULL,
+    tenant_id UUID NOT NULL CONSTRAINT fk_notification_request_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     target_id UUID NOT NULL CONSTRAINT fk_notification_request_target_id REFERENCES notification_target(id),
     type VARCHAR(255) NOT NULL,
     template_id UUID NOT NULL CONSTRAINT fk_notification_request_template_id REFERENCES notification_template(id),
