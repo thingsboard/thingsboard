@@ -48,7 +48,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKey;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -71,9 +71,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Component
 @Slf4j
@@ -324,6 +322,9 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case CUSTOMER:
                 entityId = new CustomerId(edgeEvent.getEntityId());
+                break;
+            case USER:
+                entityId = new UserId(edgeEvent.getEntityId());
                 break;
             case EDGE:
                 entityId = new EdgeId(edgeEvent.getEntityId());
