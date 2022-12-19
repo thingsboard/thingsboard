@@ -41,4 +41,6 @@ public interface TsKvLatestRepository extends JpaRepository<TsKvLatestEntity, Ts
             "WHERE ts_kv_latest.entity_id IN :entityIds ORDER BY ts_kv_dictionary.key", nativeQuery = true)
     List<String> findAllKeysByEntityIds(@Param("entityIds") List<UUID> entityIds);
 
+    @Query(value = "SELECT kvLatest FROM TsKvLatestEntity kvLatest, TsKvEntity kvTs WHERE kvLatest.entityId in :entityIds")
+    List<TsKvLatestEntity> findAllValuesByEntityIds(@Param("entityIds") List<UUID> entityIds);
 }

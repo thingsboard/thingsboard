@@ -16,12 +16,13 @@
 package org.thingsboard.server.common.data.kv;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.UUID;
 
 @Data
-public class AttributeKvEntityIdJson {
+public class TsKvLatestEntityId {
 
-    private final UUID id;
-    private final String jsonValue;
+    private final UUID entityId;
+    private final TsKvEntry entry;
 }

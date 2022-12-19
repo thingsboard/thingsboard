@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvLatestEntityId;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.TbResultSet;
@@ -96,6 +97,11 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
 
     @Override
     public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<TsKvLatestEntityId> findAllValuesByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         return Collections.emptyList();
     }
 

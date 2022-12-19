@@ -154,21 +154,18 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .findAllKeysByEntityIds(entityType.name(), entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
     }
 
-    public List<AttributeKvEntityIdJson> findAllByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
-        List<AttributeKvEntity> attributeKvEntities = attributeKvRepository.findAttributeKvByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
-        List<AttributeKvEntityIdJson> attributeKvEntityIdJsons = new ArrayList<>();
-        for(AttributeKvEntity akv: attributeKvEntities) {
-            attributeKvEntityIdJsons.add(new AttributeKvEntityIdJson(akv.getId().getEntityId(), akv.getJsonValue()));
-        }
-        return attributeKvEntityIdJsons;
-    }
-
-//        public List<AttributeTestKvEntry> findAllByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
-//        return attributeKvRepository
-//                .findAttributeKvByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+//    public List<AttributeKvEntityIdJson> findAllByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+//        List<AttributeKvEntity> attributeKvEntities = attributeKvRepository.findAttributeKvByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+//        List<AttributeKvEntityIdJson> attributeKvEntityIdJsons = new ArrayList<>();
+//        for(AttributeKvEntity akv: attributeKvEntities) {
+//            attributeKvEntityIdJsons.add(new AttributeKvEntityIdJson(akv.getId().getEntityId(), akv.getJsonValue()));
+//        }
+//        return attributeKvEntityIdJsons;
 //    }
 
-
+    public List<AttributeKvEntityIdJson> findAllByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return attributeKvRepository.findAttributeKvByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+    }
 
     @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute) {

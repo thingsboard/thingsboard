@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvLatestEntityId;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
@@ -180,6 +181,16 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Override
     public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         return tsKvLatestRepository.findAllKeysByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+        public List<TsKvLatestEntityId> findAllValuesByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        List<TsKvLatestEntity> latestEntities = tsKvLatestRepository.findAllValuesByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+        List<TsKvLatestEntityId> kvLatestEntityId = new ArrayList<>();
+        for (int i = 0; i < latestEntities.size(); i++) {
+            kvLatestEntityId.add(new TsKvLatestEntityId(latestEntities.get(i).getEntityId(), DaoUtil.convertDataList(Lists.newArrayList(latestEntities)).get(i)));
+        }
+        return kvLatestEntityId;
     }
 
     private ListenableFuture<TsKvLatestRemovingResult> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {

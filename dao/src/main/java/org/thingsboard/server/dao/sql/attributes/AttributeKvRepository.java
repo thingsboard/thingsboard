@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 
@@ -60,7 +61,7 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
             "AND entity_id in :entityIds ORDER BY attribute_key", nativeQuery = true)
     List<String> findAllKeysByEntityIds(@Param("entityType") String entityType, @Param("entityIds") List<UUID> entityIds);
 
-    @Query(value = "SELECT akv FROM AttributeKvEntity akv WHERE akv.id.entityId in :entityIds")
-    List<AttributeKvEntity> findAttributeKvByEntityIds(@Param("entityIds") List<UUID> entityIds);
+    @Query(value = "SELECT new org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson(akv.id.entityId, akv.jsonValue) FROM AttributeKvEntity akv WHERE akv.id.entityId in :entityIds")
+    List<AttributeKvEntityIdJson> findAttributeKvByEntityIds(@Param("entityIds") List<UUID> entityIds);
 }
 
