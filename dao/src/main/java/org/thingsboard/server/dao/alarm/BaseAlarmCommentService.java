@@ -76,24 +76,6 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         return alarmCommentDao.findAlarmComments(tenantId, alarmId, pageLink);
     }
 
-    private ListenableFuture<PageData<AlarmCommentInfo>> fetchAlarmCommentUserNames(TenantId tenantId, PageData<AlarmCommentInfo> alarmComments) {
-        List<ListenableFuture<AlarmCommentInfo>> alarmCommentFutures = new ArrayList<>(alarmComments.getData().size());
-        for (AlarmCommentInfo alarmCommentInfo : alarmComments.getData()) {
-            alarmCommentFutures.add(Futures.transform(
-                    userService.findUserByIdAsync(tenantId, alarmCommentInfo.getUserId()), user -> {
-                        if (user != null) {
-                            alarmCommentInfo.setFirstName(user.getFirstName());
-                            alarmCommentInfo.setLastName(user.getLastName());
-                        }
-                        return alarmCommentInfo;
-                    }, MoreExecutors.directExecutor()
-            ));
-        }
-        return Futures.transform(Futures.successfulAsList(alarmCommentFutures),
-                alarmCommentInfos -> new PageData<>(alarmCommentInfos, alarmComments.getTotalPages(), alarmComments.getTotalElements(),
-                        alarmComments.hasNext()), MoreExecutors.directExecutor());
-    }
-
     @Override
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.trace("Executing findAlarmCommentByIdAsync [{}]", alarmCommentId);
