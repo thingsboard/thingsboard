@@ -55,7 +55,7 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
 
     @Override
     public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
-        log.debug("Saving entity {}", alarmComment);
+        log.trace("Saving entity {}", alarmComment);
         partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_COLUMN_FAMILY_NAME, alarmComment.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
         AlarmCommentEntity saved = alarmCommentRepository.save(new AlarmCommentEntity(alarmComment));
         return DaoUtil.getData(saved);
@@ -74,7 +74,7 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
                 alarmCommentRepository.findAllByAlarmId(id.getId(), DaoUtil.toPageable(pageLink)));
     }
 
-
+    @Override
     public AlarmComment findAlarmCommentById(TenantId tenantId, UUID key) {
         return DaoUtil.getData(alarmCommentRepository.findById(key));
     }

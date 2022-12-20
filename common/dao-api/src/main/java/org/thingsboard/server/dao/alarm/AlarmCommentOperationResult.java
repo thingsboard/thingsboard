@@ -24,7 +24,6 @@ public class AlarmCommentOperationResult {
     private final boolean successful;
     private final boolean created;
 
-
     public AlarmCommentOperationResult(AlarmComment alarmComment, boolean successful) {
         this(alarmComment, successful, false);
     }

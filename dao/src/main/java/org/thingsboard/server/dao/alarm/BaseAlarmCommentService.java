@@ -72,9 +72,8 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmCommentInfo>> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink) {
-        PageData<AlarmCommentInfo> alarmComments = alarmCommentDao.findAlarmComments(tenantId, alarmId, pageLink);
-        return fetchAlarmCommentUserNames(tenantId, alarmComments);
+    public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink) {
+        return alarmCommentDao.findAlarmComments(tenantId, alarmId, pageLink);
     }
 
     private ListenableFuture<PageData<AlarmCommentInfo>> fetchAlarmCommentUserNames(TenantId tenantId, PageData<AlarmCommentInfo> alarmComments) {

@@ -43,6 +43,7 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
             throw e;
         }
     }
+
     @Override
     public Boolean deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
         notificationEntityService.notifyDeleteAlarmComment(alarm, alarmComment, user);

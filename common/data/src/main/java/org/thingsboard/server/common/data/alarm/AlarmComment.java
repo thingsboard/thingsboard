@@ -33,13 +33,13 @@ import org.thingsboard.server.common.data.id.UserId;
 @Builder
 @AllArgsConstructor
 public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
-    @ApiModelProperty(position = 2, value = "JSON object with Alarm id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 3, value = "JSON object with Alarm id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private EntityId alarmId;
-    @ApiModelProperty(position = 3, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 4, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private UserId userId;
-    @ApiModelProperty(position = 4, value = "Defines origination of comment", example = "System/Other", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 5, value = "Defines origination of comment", example = "System/Other", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String type;
-    @ApiModelProperty(position = 5, value = "JSON object with text of comment.", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 6, value = "JSON object with text of comment.", dataType = "com.fasterxml.jackson.databind.JsonNode")
     private transient JsonNode comment;
 
     @ApiModelProperty(position = 1, value = "JSON object with the alarm comment Id. " +

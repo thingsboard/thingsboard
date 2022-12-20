@@ -118,6 +118,6 @@ public class AlarmCommentController extends BaseController {
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
 
         PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
-        return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink).get());
+        return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
     }
 }

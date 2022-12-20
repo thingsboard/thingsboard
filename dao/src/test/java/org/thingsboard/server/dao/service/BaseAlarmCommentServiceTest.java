@@ -95,7 +95,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
         Assert.assertEquals(createdComment, fetched);
 
-        PageData<AlarmCommentInfo> alarmComments = alarmCommentService.findAlarmComments(tenantId, alarm.getId(), new PageLink(10, 0)).get();
+        PageData<AlarmCommentInfo> alarmComments = alarmCommentService.findAlarmComments(tenantId, alarm.getId(), new PageLink(10, 0));
         Assert.assertNotNull(alarmComments.getData());
         Assert.assertEquals(1, alarmComments.getData().size());
         Assert.assertEquals(createdComment, alarmComments.getData().get(0));
@@ -131,7 +131,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
         Assert.assertEquals(updatedComment, fetched);
 
-        PageData<AlarmCommentInfo> alarmComments = alarmCommentService.findAlarmComments(tenantId, alarm.getId(), new PageLink(10, 0)).get();
+        PageData<AlarmCommentInfo> alarmComments = alarmCommentService.findAlarmComments(tenantId, alarm.getId(), new PageLink(10, 0));
         Assert.assertNotNull(alarmComments.getData());
         Assert.assertEquals(1, alarmComments.getData().size());
         Assert.assertEquals(new AlarmCommentInfo(updatedComment), alarmComments.getData().get(0));

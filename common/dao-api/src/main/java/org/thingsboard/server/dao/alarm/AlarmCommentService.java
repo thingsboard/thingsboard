@@ -29,7 +29,7 @@ public interface AlarmCommentService {
 
     AlarmCommentOperationResult deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId);
 
-    ListenableFuture<PageData<AlarmCommentInfo>> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink);
+    PageData<AlarmCommentInfo>findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink);
 
     ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, AlarmCommentId alarmCommentId);
 

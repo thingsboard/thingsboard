@@ -19,6 +19,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AlarmCommentInfoEntity extends AbstractAlarmCommentEntity<AlarmCommentInfo> {
@@ -32,6 +35,12 @@ public class AlarmCommentInfoEntity extends AbstractAlarmCommentEntity<AlarmComm
 
     public AlarmCommentInfoEntity(AlarmCommentEntity alarmCommentEntity) {
         super(alarmCommentEntity);
+    }
+
+    public AlarmCommentInfoEntity(AlarmCommentEntity alarmCommentEntity, String firstName, String lastName) {
+        super(alarmCommentEntity);
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
     @Override
