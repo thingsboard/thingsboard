@@ -70,9 +70,6 @@ export enum ImportEntityColumnType {
   secret = 'SECRET'
 }
 
-export const importEntityObjectColumns =
-  [ImportEntityColumnType.name, ImportEntityColumnType.type, ImportEntityColumnType.accessToken];
-
 export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType, string>(
   [
     [ImportEntityColumnType.name, 'import.column-type.name'],

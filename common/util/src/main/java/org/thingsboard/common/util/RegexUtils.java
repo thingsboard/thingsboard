@@ -33,4 +33,8 @@ public class RegexUtils {
         });
     }
 
+    public static boolean matches(String input, Pattern pattern) {
+        return pattern.matcher(input).matches();
+    }
+
 }
