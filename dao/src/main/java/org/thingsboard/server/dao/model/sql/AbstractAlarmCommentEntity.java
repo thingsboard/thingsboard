@@ -89,7 +89,9 @@ public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends
         AlarmComment alarmComment = new AlarmComment(new AlarmCommentId(id));
         alarmComment.setCreatedTime(createdTime);
         alarmComment.setAlarmId(new AlarmId(alarmId));
-        alarmComment.setUserId(new UserId(userId));
+        if (userId != null) {
+            alarmComment.setUserId(new UserId(userId));
+        }
         alarmComment.setType(type);
         alarmComment.setComment(comment);
         return alarmComment;
