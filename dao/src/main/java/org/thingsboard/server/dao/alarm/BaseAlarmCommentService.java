@@ -63,7 +63,6 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     }
 
     @Override
-    @Transactional
     public AlarmCommentOperationResult deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.debug("Deleting Alarm Comment with id: {}", alarmCommentId);
         AlarmCommentOperationResult result = new AlarmCommentOperationResult(new AlarmComment(), true);
@@ -73,13 +72,14 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
 
     @Override
     public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink) {
+        log.trace("Executing findAlarmComments by alarmId [{}]", alarmId);
         return alarmCommentDao.findAlarmComments(tenantId, alarmId, pageLink);
     }
 
     @Override
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, AlarmCommentId alarmCommentId) {
-        log.trace("Executing findAlarmCommentByIdAsync [{}]", alarmCommentId);
-        validateId(alarmCommentId, "Incorrect alarmId " + alarmCommentId);
+        log.trace("Executing findAlarmCommentByIdAsync by alarmCommentId [{}]", alarmCommentId);
+        validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
         return alarmCommentDao.findAlarmCommentByIdAsync(tenantId, alarmCommentId.getId());
     }
 

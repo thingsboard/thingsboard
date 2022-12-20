@@ -69,18 +69,20 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
 
     @Override
     public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId id, PageLink pageLink){
-        log.trace("Try to find alarm comments by alard id using [{}]", id);
+        log.trace("Try to find alarm comments by alarm id using [{}]", id);
         return DaoUtil.toPageData(
                 alarmCommentRepository.findAllByAlarmId(id.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public AlarmComment findAlarmCommentById(TenantId tenantId, UUID key) {
+        log.trace("Try to find alarm comment by id using [{}]", key);
         return DaoUtil.getData(alarmCommentRepository.findById(key));
     }
 
     @Override
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key) {
+        log.trace("Try to find alarm comment by id using [{}]", key);
         return findByIdAsync(tenantId, key);
     }
 

@@ -26,7 +26,7 @@ import java.util.UUID;
 @ApiModel
 public class AlarmCommentId extends UUIDBased implements EntityId{
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
 
     @JsonCreator
     public AlarmCommentId(@JsonProperty("id") UUID id) {

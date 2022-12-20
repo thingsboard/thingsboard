@@ -17,15 +17,19 @@ package org.thingsboard.server.common.data.alarm;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @ApiModel
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class AlarmCommentInfo extends AlarmComment {
     private static final long serialVersionUID = 2807343093519543377L;
 
-    @ApiModelProperty(position = 19, value = "User name", example = "John")
+    @ApiModelProperty(position = 19, value = "User first name", example = "John")
     private String firstName;
 
-    @ApiModelProperty(position = 19, value = "User name", example = "Brown")
+    @ApiModelProperty(position = 19, value = "User last name", example = "Brown")
     private String lastName;
 
     public AlarmCommentInfo() {
@@ -40,53 +44,5 @@ public class AlarmCommentInfo extends AlarmComment {
         super(alarmComment);
         this.firstName = firstName;
         this.lastName = lastName;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        AlarmCommentInfo alarmCommentInfo = (AlarmCommentInfo) o;
-
-        if (firstName == null) {
-            if (alarmCommentInfo.firstName != null)
-                return false;
-        } else if (!firstName.equals(alarmCommentInfo.firstName))
-            return false;
-
-        if (lastName == null) {
-            if (alarmCommentInfo.lastName != null)
-                return false;
-        } else if (!lastName.equals(alarmCommentInfo.lastName))
-            return false;
-
-        return true;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
-        result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-        return result;
     }
 }
