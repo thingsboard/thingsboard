@@ -596,13 +596,11 @@ export class TbFlot {
   }
 
   private checkSelectionMode() {
-    if (this.enableSelection === 'enable') {
+    if (this.enableSelection === 'enable' ||
+      this.enableSelection === 'mobile' && this.ctx.isMobile ||
+      this.enableSelection === 'desktop' && !this.ctx.isMobile) {
       this.selectionMode = 'x';
-    }  else if (this.enableSelection === 'mobile' && this.ctx.isMobile) {
-      this.selectionMode = 'x';
-    } else if (this.enableSelection === 'desktop' && !this.ctx.isMobile) {
-      this.selectionMode = 'x';
-    } else {
+    }  else {
       this.selectionMode = null;
     }
   }
