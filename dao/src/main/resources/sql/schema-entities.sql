@@ -777,7 +777,7 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     two_fa_settings varchar
 );
 
-REATE TABLE IF NOT EXISTS alarm_comment (
+CREATE TABLE IF NOT EXISTS alarm_comment (
     id uuid NOT NULL,
     created_time bigint NOT NULL,
     alarm_id uuid NOT NULL,

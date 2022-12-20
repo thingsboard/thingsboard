@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.alarm;
+package org.thingsboard.server.controller.sql;
 
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.controller.BaseAlarmCommentControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-public interface TbAlarmCommentService {
-    AlarmComment saveAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException;
-
-    Boolean deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user);
+@DaoSqlTest
+public class AlarmCommentControllerSqlTest extends BaseAlarmCommentControllerTest {
 }

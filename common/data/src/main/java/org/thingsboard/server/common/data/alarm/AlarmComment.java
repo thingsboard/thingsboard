@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -65,6 +66,8 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     }
 
     @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @ApiModelProperty(position = 5, required = true, value = "representing comment text", example = "Please take a look")
     public String getName() {
         return comment.toString();
     }

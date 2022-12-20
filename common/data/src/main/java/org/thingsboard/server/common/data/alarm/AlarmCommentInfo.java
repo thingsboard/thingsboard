@@ -19,7 +19,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel
-public class AlarmCommentInfo extends AlarmComment{
+public class AlarmCommentInfo extends AlarmComment {
     private static final long serialVersionUID = 2807343093519543377L;
 
     @ApiModelProperty(position = 19, value = "User name", example = "John")

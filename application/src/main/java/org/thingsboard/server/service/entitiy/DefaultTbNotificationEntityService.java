@@ -231,15 +231,13 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment, ActionType actionType, User user, Object... additionalInfo) {
-        logEntityAction(tenantId, alarmComment.getAlarmId(), alarmComment, null, actionType, user, additionalInfo);
-        // TODO: should we send notification to edge?
+    public void notifyCreateOrUpdateAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user) {
+        logEntityAction(alarm.getTenantId(), alarmComment.getId(), alarmComment, alarm.getCustomerId(), actionType, user);
     }
 
     @Override
-    public void notifyDeleteAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user, Object... additionalInfo) {
-        logEntityAction(tenantId, alarmComment.getAlarmId(), alarmComment, null, ActionType.DELETED, user, additionalInfo);
-        // TODO: should we send notification to edge?
+    public void notifyDeleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
+        logEntityAction(alarm.getTenantId(), alarmComment.getId(), alarmComment, alarm.getCustomerId(), ActionType.DELETED, user);
     }
 
     @Override

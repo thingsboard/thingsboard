@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -51,8 +50,6 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     private AlarmCommentDao alarmCommentDao;
     @Autowired
     private UserService userService;
-    @Autowired
-    private EntityService entityService;
     @Autowired
     private DataValidator<AlarmComment> alarmCommentDataValidator;
     @Override
@@ -77,7 +74,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     @Override
     public ListenableFuture<PageData<AlarmCommentInfo>> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink) {
         PageData<AlarmCommentInfo> alarmComments = alarmCommentDao.findAlarmComments(tenantId, alarmId, pageLink);
-        return fetchAlarmCommentUserNames(tenantId,alarmComments);
+        return fetchAlarmCommentUserNames(tenantId, alarmComments);
     }
 
     private ListenableFuture<PageData<AlarmCommentInfo>> fetchAlarmCommentUserNames(TenantId tenantId, PageData<AlarmCommentInfo> alarmComments) {
@@ -85,8 +82,10 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         for (AlarmCommentInfo alarmCommentInfo : alarmComments.getData()) {
             alarmCommentFutures.add(Futures.transform(
                     userService.findUserByIdAsync(tenantId, alarmCommentInfo.getUserId()), user -> {
-                        alarmCommentInfo.setFirstName(user.getFirstName());
-                        alarmCommentInfo.setLastName(user.getLastName());
+                        if (user != null) {
+                            alarmCommentInfo.setFirstName(user.getFirstName());
+                            alarmCommentInfo.setLastName(user.getLastName());
+                        }
                         return alarmCommentInfo;
                     }, MoreExecutors.directExecutor()
             ));

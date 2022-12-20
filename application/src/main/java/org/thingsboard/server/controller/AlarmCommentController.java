@@ -77,7 +77,7 @@ public class AlarmCommentController extends BaseController {
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
         alarmComment.setAlarmId(alarmId);
-        return tbAlarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment, getCurrentUser());
+        return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Alarm comment(deleteAlarmComment)",
@@ -92,7 +92,7 @@ public class AlarmCommentController extends BaseController {
 
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId);
-        return tbAlarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment, getCurrentUser());
+        return tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Alarm comments (getAlarmComments)",

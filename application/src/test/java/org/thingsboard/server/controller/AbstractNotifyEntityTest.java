@@ -340,6 +340,12 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 Mockito.argThat(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
     }
 
+    protected void testPushMsgToRuleEngineTime(EntityId matcherOriginatorId, TenantId tenantId, HasName entity, int cntTime) {
+        tenantId = tenantId.isNullUid() && ((HasTenantId) entity).getTenantId() != null ? ((HasTenantId) entity).getTenantId() : tenantId;
+        Mockito.verify(tbClusterService, times(cntTime)).pushMsgToRuleEngine(Mockito.eq(tenantId),
+                Mockito.eq(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
+    }
+
     private void testNotificationMsgToEdgeServiceTime(EntityId entityId, TenantId tenantId, ActionType actionType, int cntTime) {
         EdgeEventActionType edgeEventActionType = ActionType.CREDENTIALS_UPDATED.equals(actionType) ?
                 EdgeEventActionType.CREDENTIALS_UPDATED : edgeTypeByActionType(actionType);
@@ -367,7 +373,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.verify(tbClusterService, times(cntTime)).pushMsgToCore(Mockito.any(ToDeviceActorNotificationMsg.class), Mockito.isNull());
     }
 
-    private void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
+    protected void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
                                      CustomerId customerId, UserId userId, String userName,
                                      ActionType actionType, int cntTime, Object... additionalInfo) {
         ArgumentMatcher<HasName> matcherEntityEquals = entity == null ? Objects::isNull : argument -> argument.toString().equals(entity.toString());
