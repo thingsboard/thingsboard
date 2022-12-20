@@ -251,7 +251,8 @@
             <mat-row [fxShow]="!dataSource.dataLoading"
                      [ngClass]="{'mat-row-select': selectionEnabled,
                                  'mat-selected': dataSource.selection.isSelected(entity),
-                                 'tb-current-entity': dataSource.isCurrentEntity(entity)}"
+                                 'tb-current-entity': dataSource.isCurrentEntity(entity),
+                                 'tb-pointer': entitiesTableConfig.rowPointer}"
                      *matRowDef="let entity; columns: displayedColumns;" (click)="onRowClick($event, entity)"></mat-row>
           </table>
           <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async) && !dataSource.dataLoading"
