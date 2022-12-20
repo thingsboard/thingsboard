@@ -255,8 +255,4 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         return Collections.unmodifiableCollection(msgQueue);
     }
 
-    public boolean isSparkplug () {
-        return ((MqttDeviceProfileTransportConfiguration) this.getDeviceProfile().getProfileData().getTransportConfiguration()).isSparkPlug();
-    }
-
 }

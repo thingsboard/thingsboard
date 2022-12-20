@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -979,7 +980,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void checkSparkPlugSession(SessionMetaData sessionMetaData, MqttConnectMessage connectMessage) {
-        if (deviceSessionCtx.isSparkplug()) {
+        if  (((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
+                .getDeviceProfile()
+                .getProfileData()
+                .getTransportConfiguration())
+                .isSparkPlug()) {
             TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
             try {
                 JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());

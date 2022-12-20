@@ -15,12 +15,6 @@
  */
 syntax = "proto3";
 
-//
-// To compile:
-// cd client_libraries/java
-// protoc --proto_path=../../ --java_out=src/main/java ../../sparkplug_b.proto
-//
-//package com.cirruslink.sparkplug.protobuf;
 import "google/protobuf/any.proto";
 
 
