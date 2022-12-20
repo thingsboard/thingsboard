@@ -820,6 +820,7 @@
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
+                            <exclude>.github/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
