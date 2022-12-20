@@ -28,7 +28,9 @@ import org.thingsboard.server.dao.Dao;
 import java.util.UUID;
 
 public interface AlarmCommentDao extends Dao<AlarmComment> {
+
     AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment);
+
     void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId);
 
     AlarmComment findAlarmCommentById(TenantId tenantId, UUID key);

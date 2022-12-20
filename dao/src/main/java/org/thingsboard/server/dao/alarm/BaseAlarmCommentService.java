@@ -48,10 +48,13 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
 
     @Autowired
     private AlarmCommentDao alarmCommentDao;
+
     @Autowired
     private UserService userService;
+
     @Autowired
     private DataValidator<AlarmComment> alarmCommentDataValidator;
+
     @Override
     public AlarmCommentOperationResult createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
         alarmCommentDataValidator.validate(alarmComment, tenantId);

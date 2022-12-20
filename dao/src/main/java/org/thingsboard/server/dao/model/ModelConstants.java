@@ -305,7 +305,6 @@ public class ModelConstants {
     public static final String ALARM_COMMENT_TYPE = "type";
     public static final String ALARM_COMMENT_COMMENT = "comment";
 
-
     /**
      * Cassandra entity relation constants.
      */
