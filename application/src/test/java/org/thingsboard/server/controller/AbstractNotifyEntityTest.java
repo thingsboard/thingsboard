@@ -603,7 +603,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     protected String msgErrorFieldLength(String fieldName) {
-        return "length of " + fieldName + " must be equal or less than 255";
+        return fieldName + " length must be equal or less than 255";
     }
 
     protected String msgErrorNoFound(String entityClassName, String assetIdStr) {

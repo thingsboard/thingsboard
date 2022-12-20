@@ -165,7 +165,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     Map<String, Object> entityData = new HashMap<>();
                     ObjectNode attributes = JacksonUtil.OBJECT_MAPPER.createObjectNode();
                     for (AttributeKvEntry attr : ssAttributes) {
-                        if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())) {
+                        if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())
+                                && !DefaultDeviceStateService.INACTIVITY_TIMEOUT.equals(attr.getKey())) {
                             continue;
                         }
                         if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
