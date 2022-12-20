@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -55,6 +56,9 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
@@ -178,6 +182,58 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
+    }
+
+    @Test
+    public void testSaveDeviceWithCredentials() throws Exception {
+        String testToken = "TEST_TOKEN";
+
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(testToken);
+
+        SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, deviceCredentials);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        Device savedDevice = readResponse(doPost("/api/device-with-credentials", saveRequest).andExpect(status().isOk()), Device.class);
+
+        Device oldDevice = new Device(savedDevice);
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
+        testNotificationUpdateGatewayNever();
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertNotNull(savedDevice.getId());
+        Assert.assertTrue(savedDevice.getCreatedTime() > 0);
+        Assert.assertEquals(savedTenant.getId(), savedDevice.getTenantId());
+        Assert.assertNotNull(savedDevice.getCustomerId());
+        Assert.assertEquals(NULL_UUID, savedDevice.getCustomerId().getId());
+        Assert.assertEquals(device.getName(), savedDevice.getName());
+
+        DeviceCredentials foundDeviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        Assert.assertNotNull(foundDeviceCredentials);
+        Assert.assertNotNull(foundDeviceCredentials.getId());
+        Assert.assertEquals(savedDevice.getId(), foundDeviceCredentials.getDeviceId());
+        Assert.assertEquals(DeviceCredentialsType.ACCESS_TOKEN, foundDeviceCredentials.getCredentialsType());
+        Assert.assertEquals(testToken, foundDeviceCredentials.getCredentialsId());
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        savedDevice.setName("My new device");
+        doPost("/api/device", savedDevice, Device.class);
+
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
+        testNotificationUpdateGatewayOneTime(savedDevice, oldDevice);
     }
 
     @Test
@@ -1233,6 +1289,66 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     public void testDeleteDeviceExceptionWithRelationsTransactional() throws Exception {
         DeviceId deviceId = createDevice("Device for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(deviceDao, savedTenant.getId(), deviceId, "/api/device/" + deviceId);
+    }
+
+    @Test
+    public void testBulkImportDeviceWithoutCredentials() throws Exception {
+        String deviceName = "some_device";
+        String deviceType = "some_type";
+        BulkImportRequest request = new BulkImportRequest();
+        request.setFile(String.format("NAME,TYPE\n%s,%s", deviceName, deviceType));
+        BulkImportRequest.Mapping mapping = new BulkImportRequest.Mapping();
+        BulkImportRequest.ColumnMapping name = new BulkImportRequest.ColumnMapping();
+        name.setType(BulkImportColumnType.NAME);
+        BulkImportRequest.ColumnMapping type = new BulkImportRequest.ColumnMapping();
+        type.setType(BulkImportColumnType.TYPE);
+        List<BulkImportRequest.ColumnMapping> columns = new ArrayList<>();
+        columns.add(name);
+        columns.add(type);
+
+        mapping.setColumns(columns);
+        mapping.setDelimiter(',');
+        mapping.setUpdate(true);
+        mapping.setHeader(true);
+        request.setMapping(mapping);
+
+        BulkImportResult<Device> deviceBulkImportResult = doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
+
+        Assert.assertEquals(1, deviceBulkImportResult.getCreated().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getErrors().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getUpdated().get());
+        Assert.assertTrue(deviceBulkImportResult.getErrorsList().isEmpty());
+
+        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertEquals(deviceName, savedDevice.getName());
+        Assert.assertEquals(deviceType, savedDevice.getType());
+
+        DeviceCredentials savedCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        Assert.assertNotNull(savedCredentials);
+        Assert.assertNotNull(savedCredentials.getId());
+        Assert.assertEquals(savedDevice.getId(), savedCredentials.getDeviceId());
+        Assert.assertEquals(DeviceCredentialsType.ACCESS_TOKEN, savedCredentials.getCredentialsType());
+        Assert.assertNotNull(savedCredentials.getCredentialsId());
+        Assert.assertEquals(20, savedCredentials.getCredentialsId().length());
+
+        deviceBulkImportResult = doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
+
+        Assert.assertEquals(0, deviceBulkImportResult.getCreated().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getErrors().get());
+        Assert.assertEquals(1, deviceBulkImportResult.getUpdated().get());
+        Assert.assertTrue(deviceBulkImportResult.getErrorsList().isEmpty());
+
+        Device updatedDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
+        Assert.assertEquals(savedDevice, updatedDevice);
+
+        DeviceCredentials updatedCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        Assert.assertEquals(savedCredentials, updatedCredentials);
     }
 
     private Device createDevice(String name) {

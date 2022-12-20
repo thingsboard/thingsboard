@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  button.tb-add-new-widget {
-    padding-right: 12px;
-    font-size: 24px;
-    border-style: dashed;
-    border-width: 2px;
-  }
-}
+package org.thingsboard.server.common.data.util;
 
-:host ::ng-deep {
-  .tb-widget-library {
-    .tb-widget-container {
-      cursor: pointer;
+import java.lang.annotation.Annotation;
+
+@SuppressWarnings("unchecked")
+public class ReflectionUtils {
+
+    private ReflectionUtils() {}
+
+    public static <T> T getAnnotationProperty(String targetType, String annotationType, String property) throws Exception {
+        Class<Annotation> annotationClass = (Class<Annotation>) Class.forName(annotationType);
+        Annotation annotation = Class.forName(targetType).getAnnotation(annotationClass);
+        return (T) annotationClass.getDeclaredMethod(property).invoke(annotation);
     }
-  }
+
 }

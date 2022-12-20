@@ -94,6 +94,8 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DASHBOARD);
     this.config.entityResources = entityTypeResources.get(EntityType.DASHBOARD);
 
+    this.config.rowPointer = true;
+
     this.config.deleteEntityTitle = dashboard =>
       this.translate.instant('dashboard.delete-dashboard-title', {dashboardTitle: dashboard.title});
     this.config.deleteEntityContent = () => this.translate.instant('dashboard.delete-dashboard-text');
@@ -107,6 +109,15 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.onEntityAction = action => this.onDashboardAction(action);
     this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' ||
       this.config.componentsData.dashboardScope === 'edge_customer_user');
+
+    this.config.handleRowClick = ($event, dashboard) => {
+      if (this.config.isDetailsOpen()) {
+        this.config.toggleEntityDetails($event, dashboard);
+      } else {
+        this.openDashboard($event, dashboard);
+      }
+      return true;
+    };
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -197,14 +208,6 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
 
   configureCellActions(dashboardScope: string): Array<CellActionDescriptor<DashboardInfo>> {
     const actions: Array<CellActionDescriptor<DashboardInfo>> = [];
-    actions.push(
-      {
-        name: this.translate.instant('dashboard.open-dashboard'),
-        icon: 'dashboard',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.openDashboard($event, entity)
-      }
-    );
     if (dashboardScope === 'tenant') {
       actions.push(
         {
@@ -271,6 +274,14 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         }
       );
     }
+    actions.push(
+      {
+        name: this.translate.instant('dashboard.dashboard-details'),
+        icon: 'edit',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.config.toggleEntityDetails($event, entity)
+      }
+    );
     return actions;
   }
 
