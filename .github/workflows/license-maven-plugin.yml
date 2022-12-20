@@ -30,4 +30,4 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Maven license header check
-      run: mvn license:check --offline
+      run: mvn license:check
