@@ -29,5 +29,7 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: maven
-    - name: Maven license header check
+    - name: Maven license header check (root project)
       run: mvn license:check
+    - name: Maven license header check (msa/black-box-tests)
+      run: mvn license:check -f msa/black-box-tests/pom.xml
