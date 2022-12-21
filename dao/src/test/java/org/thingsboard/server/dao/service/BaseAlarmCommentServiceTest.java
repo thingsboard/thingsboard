@@ -64,6 +64,8 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(tenantId);
         user.setEmail("tenant@thingsboard.org");
+        user.setFirstName("John");
+        user.setLastName("Brown");
         user = userService.saveUser(user);
     }
 
@@ -98,7 +100,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         PageData<AlarmCommentInfo> alarmComments = alarmCommentService.findAlarmComments(tenantId, alarm.getId(), new PageLink(10, 0));
         Assert.assertNotNull(alarmComments.getData());
         Assert.assertEquals(1, alarmComments.getData().size());
-        Assert.assertEquals(createdComment, alarmComments.getData().get(0));
+        Assert.assertEquals(createdComment, new AlarmComment(alarmComments.getData().get(0)));
     }
 
     @Test
@@ -134,7 +136,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         PageData<AlarmCommentInfo> alarmComments = alarmCommentService.findAlarmComments(tenantId, alarm.getId(), new PageLink(10, 0));
         Assert.assertNotNull(alarmComments.getData());
         Assert.assertEquals(1, alarmComments.getData().size());
-        Assert.assertEquals(new AlarmCommentInfo(updatedComment), alarmComments.getData().get(0));
+        Assert.assertEquals(updatedComment, new AlarmComment(alarmComments.getData().get(0)));
     }
 
     @Test
