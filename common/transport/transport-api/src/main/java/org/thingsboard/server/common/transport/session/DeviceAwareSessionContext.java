@@ -87,11 +87,10 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     public boolean isSparkplug() {
         DeviceProfileTransportConfiguration transportConfiguration = this.deviceProfile.getProfileData().getTransportConfiguration();
         if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
-            if (((MqttDeviceProfileTransportConfiguration) transportConfiguration).isSparkPlug()) {
-                return true;
-            }
+            return ((MqttDeviceProfileTransportConfiguration) transportConfiguration).isSparkPlug();
+        } else {
+            return false;
         }
-        return false;
     }
 
 }

@@ -360,6 +360,7 @@ public class SparkplugNodeSessionHandler {
                             .setDeviceType(deviceType)
                             .setGatewayIdMSB(nodeSparkplugInfo.getDeviceId().getId().getMostSignificantBits())
                             .setGatewayIdLSB(nodeSparkplugInfo.getDeviceId().getId().getLeastSignificantBits())
+                            .setSparkplug(true)
                             .build(),
                     new TransportServiceCallback<>() {
                         @Override

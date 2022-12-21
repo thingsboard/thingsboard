@@ -283,13 +283,6 @@ public class DefaultTransportApiService implements TransportApiService {
             Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
             deviceCreationLock.lock();
             try {
-                DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
-                DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-                boolean isSparkplug = false;
-                if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration &&
-                        ((MqttDeviceProfileTransportConfiguration) transportConfiguration).isSparkPlug()) {
-                    isSparkplug = true;
-                }
                 Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
                 if (device == null) {
                     TenantId tenantId = gateway.getTenantId();
@@ -298,6 +291,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     device.setName(requestMsg.getDeviceName());
                     device.setType(requestMsg.getDeviceType());
                     device.setCustomerId(gateway.getCustomerId());
+                    DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
 
                     device.setDeviceProfileId(deviceProfile.getId());
                     ObjectNode additionalInfo = JacksonUtil.newObjectNode();
@@ -314,7 +308,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (customerId != null && !customerId.isNullUid()) {
                         metaData.putValue("customerId", customerId.toString());
                     }
-                    String deviceIdStr = isSparkplug ? "sparkplugId" : "gatewayId";
+                    String deviceIdStr = requestMsg.getSparkplug() ? "sparkplugId" : "gatewayId";
                     metaData.putValue(deviceIdStr, gatewayId.toString());
 
                     DeviceId deviceId = device.getId();
@@ -326,7 +320,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (deviceAdditionalInfo == null) {
                         deviceAdditionalInfo = JacksonUtil.newObjectNode();
                     }
-                    String lastConnectedStr = isSparkplug ? DataConstants.LAST_CONNECTED_SPARKPLUG : DataConstants.LAST_CONNECTED_GATEWAY;
+                    String lastConnectedStr = requestMsg.getSparkplug() ? DataConstants.LAST_CONNECTED_SPARKPLUG : DataConstants.LAST_CONNECTED_GATEWAY;
                     if (deviceAdditionalInfo.isObject() &&
                             (!deviceAdditionalInfo.has(lastConnectedStr)
                                     || !gatewayId.toString().equals(deviceAdditionalInfo.get(lastConnectedStr).asText()))) {
@@ -338,7 +332,12 @@ public class DefaultTransportApiService implements TransportApiService {
                 }
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
                         .setDeviceInfo(getDeviceInfoProto(device));
-                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+                if (deviceProfile != null) {
+                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+                } else {
+                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
+                }
                 return TransportApiResponseMsg.newBuilder()
                         .setGetOrCreateDeviceResponseMsg(builder.build())
                         .build();
