@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
@@ -150,6 +149,12 @@ public final class TbMsg implements Serializable {
     public static TbMsg transformMsg(TbMsg tbMsg, RuleChainId ruleChainId, String queueName) {
         return new TbMsg(queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData, tbMsg.dataType,
                 tbMsg.data, ruleChainId, null, tbMsg.ctx.copy(), tbMsg.getCallback());
+    }
+
+    // used for SplitPoint with callback
+    public static TbMsg newMsg(TbMsg tbMsg, TbMsgCallback callback) {
+        return new TbMsg(tbMsg.queueName, UUID.randomUUID(), tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData.copy(), tbMsg.dataType,
+                tbMsg.data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), callback);
     }
 
     //used for enqueueForTellNext
