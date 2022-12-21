@@ -86,6 +86,13 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         return alarmCommentDao.findAlarmCommentByIdAsync(tenantId, alarmCommentId.getId());
     }
 
+    @Override
+    public AlarmComment findAlarmCommentById(TenantId tenantId, AlarmCommentId alarmCommentId) {
+        log.trace("Executing findAlarmCommentByIdAsync by alarmCommentId [{}]", alarmCommentId);
+        validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+        return alarmCommentDao.findById(tenantId, alarmCommentId.getId());
+    }
+
     private AlarmCommentOperationResult createAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
         log.debug("New Alarm comment : {}", alarmComment);
         if (alarmComment.getType() == null) {

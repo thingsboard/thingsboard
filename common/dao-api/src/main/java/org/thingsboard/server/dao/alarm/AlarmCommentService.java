@@ -33,4 +33,6 @@ public interface AlarmCommentService {
 
     ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, AlarmCommentId alarmCommentId);
 
+    AlarmComment findAlarmCommentById(TenantId tenantId, AlarmCommentId alarmCommentId);
+
 }

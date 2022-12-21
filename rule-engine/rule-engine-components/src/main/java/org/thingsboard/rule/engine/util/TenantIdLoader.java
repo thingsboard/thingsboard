@@ -18,6 +18,8 @@ package org.thingsboard.rule.engine.util;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -68,6 +70,10 @@ public class TenantIdLoader {
                 break;
             case ALARM:
                 tenantEntity = ctx.getAlarmService().findAlarmById(ctxTenantId, new AlarmId(id));
+                break;
+            case ALARM_COMMENT:
+                AlarmComment alarmComment = ctx.getAlarmCommentService().findAlarmCommentById(ctxTenantId, new AlarmCommentId(id));
+                tenantEntity = ctx.getAlarmService().findAlarmById(ctxTenantId, new AlarmId(alarmComment.getAlarmId().getId()));
                 break;
             case RULE_CHAIN:
                 tenantEntity = ctx.getRuleChainService().findRuleChainById(ctxTenantId, new RuleChainId(id));
