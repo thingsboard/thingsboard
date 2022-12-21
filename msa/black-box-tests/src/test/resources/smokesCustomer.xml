@@ -22,7 +22,12 @@
     <listeners>
         <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
     </listeners>
-    <test name="ui">
+    <test name="Customer ui smoke tests">
+        <groups>
+            <run>
+                <exclude name="broken"/>
+            </run>
+        </groups>
         <packages>
             <package name="org.thingsboard.server.msa.ui.tests.customerSmoke"/>
         </packages>

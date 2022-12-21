@@ -28,6 +28,7 @@ public class OtherPageElements extends AbstractBasePage {
 
     protected static final String ENTITY = "//mat-row//span[contains(text(),'%s')]";
     protected static final String DELETE_BTN = ENTITY + "/../..//mat-icon[contains(text(),' delete')]/../..";
+    protected static final String DETAILS_BTN = ENTITY + "/../..//mat-icon[contains(text(),'edit')]/../..";
     private static final String ENTITY_COUNT = "//div[@class='mat-paginator-range-label']";
     private static final String WARNING_DELETE_POPUP_YES = "//tb-confirm-dialog//button[2]";
     private static final String WARNING_DELETE_POPUP_TITLE = "//tb-confirm-dialog/h2";
@@ -212,6 +213,10 @@ public class OtherPageElements extends AbstractBasePage {
 
     public WebElement deleteBtn(String entityName) {
         return waitUntilVisibilityOfElementLocated(String.format(DELETE_BTN, entityName));
+    }
+
+    public WebElement detailsBtn(String entityName) {
+        return waitUntilVisibilityOfElementLocated(String.format(DETAILS_BTN, entityName));
     }
 
     public WebElement entity(String entityName) {

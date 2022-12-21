@@ -27,11 +27,9 @@ import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
-import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
 public class OpenRuleChainTest extends AbstractDriverBaseTest {
 
@@ -66,7 +64,7 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
         this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.openRuleChainBtn(ruleChainName).click();
+        ruleChainsPage.entity(ruleChainName).click();
         openRuleChainPage.setHeadName();
 
         Assert.assertTrue(urlContains(String.valueOf(getRuleChainByName(ruleChainName).getId())));
@@ -83,7 +81,7 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
         this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.entity(ruleChainName).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.openRuleChainFromViewBtn().click();
         openRuleChainPage.setHeadName();
 
@@ -91,16 +89,5 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertTrue(openRuleChainPage.headRuleChainName().isDisplayed());
         Assert.assertTrue(openRuleChainPage.inputNode().isDisplayed());
         Assert.assertEquals(ruleChainName, openRuleChainPage.getHeadName());
-    }
-
-    @Test(priority = 20, groups = "smoke")
-    @Description
-    public void openRuleChainDoubleClick() {
-        sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.setRuleChainNameWithoutRoot(0);
-        String ruleChain = ruleChainsPage.getRuleChainName();
-        ruleChainsPage.doubleClickOnRuleChain(ruleChain);
-
-        Assert.assertEquals(getUrl(), getBaseUiUrl() + "/ruleChains");
     }
 }

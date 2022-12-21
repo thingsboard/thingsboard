@@ -57,29 +57,35 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void changeName() {
-        String name = "Changed";
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ENTITY_NAME));
-        ruleChainName = name;
+        String newRuleChainName = "Changed";
+        String ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.notRootRuleChainsNames().get(0).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.setHeaderName();
         String nameBefore = ruleChainsPage.getHeaderName();
         ruleChainsPage.editPencilBtn().click();
-        ruleChainsPage.changeNameEditMenu(name);
+        ruleChainsPage.changeNameEditMenu(newRuleChainName);
         ruleChainsPage.doneBtnEditView().click();
+        this.ruleChainName = newRuleChainName;
         ruleChainsPage.setHeaderName();
         String nameAfter = ruleChainsPage.getHeaderName();
 
         Assert.assertNotEquals(nameBefore, nameAfter);
-        Assert.assertEquals(name, nameAfter);
+        Assert.assertEquals(newRuleChainName, nameAfter);
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
     public void deleteName() {
+        String ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
+
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.notRootRuleChainsNames().get(0).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.changeNameEditMenu("");
 
@@ -89,8 +95,12 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void saveOnlyWithSpace() {
+        String ruleChainName = ENTITY_NAME;
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
+
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.notRootRuleChainsNames().get(0).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.changeNameEditMenu(" ");
         ruleChainsPage.doneBtnEditView().click();
@@ -103,12 +113,13 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void editDescription() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
         String description = "Description";
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.notRootRuleChainsNames().get(0).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.descriptionEntityView().sendKeys(description);
         ruleChainsPage.doneBtnEditView().click();
@@ -129,11 +140,12 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void debugMode() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.notRootRuleChainsNames().get(0).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.debugCheckboxEdit().click();
         ruleChainsPage.doneBtnEditView().click();

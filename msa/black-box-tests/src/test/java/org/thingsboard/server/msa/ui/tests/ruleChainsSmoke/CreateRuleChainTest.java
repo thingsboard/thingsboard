@@ -63,6 +63,7 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
+        ruleChainsPage.nameField().click();
         ruleChainsPage.nameField().sendKeys(ruleChainName);
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
@@ -84,7 +85,7 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
         this.ruleChainName = ruleChainName;
-        ruleChainsPage.entity(ENTITY_NAME).click();
+        ruleChainsPage.detailsBtn(ENTITY_NAME).click();
         ruleChainsPage.setHeaderName();
 
         Assert.assertEquals(ruleChainsPage.getHeaderName(), ruleChainName);
@@ -118,8 +119,9 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createRuleChainWithSameName() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -142,12 +144,13 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void createRuleChainWithoutRefresh() {
-        ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
         ruleChainsPage.nameField().sendKeys(ruleChainName);
         ruleChainsPage.addBtnC().click();
+        this.ruleChainName = ruleChainName;
 
         Assert.assertNotNull(ruleChainsPage.entity(ruleChainName));
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
@@ -160,7 +163,7 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot();
-        ruleChainsPage.entity(ruleChainsPage.getRuleChainName()).click();
+        ruleChainsPage.detailsBtn(ruleChainsPage.getRuleChainName()).click();
         ruleChainsPage.goToHelpPage();
 
         Assert.assertTrue(urlContains(urlPath));
