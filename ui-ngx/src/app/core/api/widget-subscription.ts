@@ -204,6 +204,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.timeWindow = {};
       this.useDashboardTimewindow = options.useDashboardTimewindow;
       this.useTimewindow = true;
+      this.onTimewindowChangeFunction = options.onTimewindowChangeFunction || ((timewindow) => timewindow);
       if (this.useDashboardTimewindow) {
         this.timeWindowConfig = deepClone(options.dashboardTimewindow);
       } else {
