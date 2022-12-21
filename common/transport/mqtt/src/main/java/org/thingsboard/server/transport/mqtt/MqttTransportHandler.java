@@ -47,7 +47,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -979,28 +978,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void checkSparkPlugSession(SessionMetaData sessionMetaData, MqttConnectMessage connectMessage) {
-        if  (((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
-                .getDeviceProfile()
-                .getProfileData()
-                .getTransportConfiguration())
-                .isSparkPlug()) {
-            TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
-            try {
-                JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
-                if (infoNode != null) {
-                    SparkplugTopic sparkplugTopic = parseTopic(connectMessage.payload().willTopic());
-                    SparkplugBProto.Payload payloadBProto = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
-                    if (sparkPlugSessionHandler == null) {
-                        log.error("SparkPlugConnected [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device: " + sparkplugTopic.getDeviceId(), sparkplugTopic.getType());
-                        sparkPlugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopic.toString());
-                    } else {
-                        log.error("SparkPlugReConnected [{}] [{}]", sparkplugTopic.isNode() ? "node" : "device: " + sparkplugTopic.getDeviceId(), sparkplugTopic.getType());
-                    }
-                }
-            } catch (Exception e) {
-                log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, device.getDeviceName(), e);
+    private void checkSparkPlugSession(MqttConnectMessage connectMessage) {
+        try {
+            SparkplugTopic sparkplugTopic = parseTopic(connectMessage.payload().willTopic());
+            // Test proto
+            SparkplugBProto.Payload payloadBProto = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
+            //
+            if (sparkPlugSessionHandler == null) {
+                sparkPlugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopic.toString());
+            } else {
+                log.warn("SparkPlugNodeReConnected [{}] [{}]", sparkplugTopic.getDeviceId(), sparkplugTopic.getType());
             }
+        } catch (Exception e) {
+            log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);
         }
     }
 
@@ -1038,8 +1028,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 @Override
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
-                    checkGatewaySession(sessionMetaData);
-                    checkSparkPlugSession(sessionMetaData, connectMessage);
+                    if (deviceSessionCtx.isSparkplug()) {
+                        checkSparkPlugSession(connectMessage);
+                    } else {
+                        checkGatewaySession(sessionMetaData);
+                    }
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.debug("[{}] Client connected!", sessionId);

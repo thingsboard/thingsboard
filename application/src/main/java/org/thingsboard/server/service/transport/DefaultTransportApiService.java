@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -283,7 +284,12 @@ public class DefaultTransportApiService implements TransportApiService {
             deviceCreationLock.lock();
             try {
                 DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
-                boolean isSparkplug = ((MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).isSparkPlug();
+                DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+                boolean isSparkplug = false;
+                if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration &&
+                        ((MqttDeviceProfileTransportConfiguration) transportConfiguration).isSparkPlug()) {
+                    isSparkplug = true;
+                }
                 Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
                 if (device == null) {
                     TenantId tenantId = gateway.getTenantId();
