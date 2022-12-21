@@ -417,9 +417,6 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-table .mat-header-cell {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-table .mat-header-cell .mat-sort-header-arrow {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
     '.mat-table .mat-cell, .mat-table .mat-header-cell {\n' +
     'border-bottom-color: ' + mdDarkDivider + ';\n' +
     '}\n' +
