@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,10 +29,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
@@ -44,13 +46,11 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.notification.NotificationManagerHelper;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-import org.thingsboard.server.service.slack.SlackConversation;
-import org.thingsboard.server.service.slack.SlackService;
 
 import java.util.List;
 import java.util.UUID;
@@ -65,7 +65,7 @@ public class NotificationController extends BaseController {
     private final NotificationService notificationService;
     private final NotificationRequestService notificationRequestService;
     private final NotificationManager notificationManager;
-    private final NotificationManagerHelper notificationManagerHelper;
+    private final NotificationSettingsService notificationSettingsService;
     private final SlackService slackService;
 
     @GetMapping("/notifications")
@@ -102,9 +102,6 @@ public class NotificationController extends BaseController {
 
         notificationRequest.setOriginatorType(NotificationOriginatorType.ADMIN);
         notificationRequest.setOriginatorEntityId(user.getId());
-        if (StringUtils.isBlank(notificationRequest.getType())) {
-            notificationRequest.setType("General");
-        }
         if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != null) {
             throw new IllegalArgumentException("Unsupported notification info type");
         }
@@ -147,20 +144,22 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationSettings saveNotificationSettings(@RequestBody NotificationSettings notificationSettings,
                                                          @AuthenticationPrincipal SecurityUser user) {
-        notificationManagerHelper.saveNotificationSettings(user.getTenantId(), notificationSettings);
+        TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
+        notificationSettingsService.saveNotificationSettings(tenantId, notificationSettings);
         return notificationSettings;
     }
 
     @GetMapping("/notification/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationSettings getNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
-        return notificationManagerHelper.getNotificationSettings(user.getTenantId());
+        TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
+        return notificationSettingsService.findNotificationSettings(tenantId);
     }
 
     @GetMapping("/notification/slack/conversations")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public List<SlackConversation> listSlackConversations(@RequestParam SlackConversation.Type type,
-                                                          @AuthenticationPrincipal SecurityUser user) throws Exception {
+                                                          @AuthenticationPrincipal SecurityUser user) {
         NotificationSettings settings = getNotificationSettings(user);
         SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
                 settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);

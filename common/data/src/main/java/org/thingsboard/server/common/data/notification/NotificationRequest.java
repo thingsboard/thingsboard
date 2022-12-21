@@ -16,12 +16,12 @@
 package org.thingsboard.server.common.data.notification;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -31,15 +31,12 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
-
-import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -49,11 +46,9 @@ import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
-    @NotNull(message = "Target is not specified")
+    @NotNull
     private NotificationTargetId targetId;
 
-    @NoXss
-    private String type;
     @NotNull
     private NotificationTemplateId templateId;
     @Valid
@@ -77,7 +72,7 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     @JsonIgnore
     @Override
     public String getName() {
-        return type;
+        return "To target " + targetId + " via " + StringUtils.join(deliveryMethods, ", ");
     }
 
 }

@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -278,6 +279,8 @@ public interface TbContext {
     SmsSenderFactory getSmsSenderFactory();
 
     NotificationManager getNotificationManager();
+
+    SlackService getSlackService();
 
     /**
      * Creates JS Script Engine

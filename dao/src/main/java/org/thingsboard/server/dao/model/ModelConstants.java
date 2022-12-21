@@ -665,7 +665,6 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_TARGET_ID_PROPERTY = "target_id";
     public static final String NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY = "template_id";
     public static final String NOTIFICATION_REQUEST_DELIVERY_METHODS_PROPERTY = "delivery_methods";
-    public static final String NOTIFICATION_REQUEST_TYPE_PROPERTY = "type";
     public static final String NOTIFICATION_REQUEST_INFO_PROPERTY = "info";
     public static final String NOTIFICATION_REQUEST_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY = "originator_entity_id";
@@ -678,11 +677,11 @@ public class ModelConstants {
     public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
     public static final String NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY = "template_id";
     public static final String NOTIFICATION_RULE_DELIVERY_METHODS_PROPERTY = "delivery_methods";
-    public static final String NOTIFICATION_RULE_INITIAL_NOTIFICATION_TARGET_ID_PROPERTY = "initial_notification_target_id";
-    public static final String NOTIFICATION_RULE_ESCALATION_CONFIG_PROPERTY = "escalation_config";
+    public static final String NOTIFICATION_RULE_CONFIGURATION_PROPERTY = "configuration";
 
     public static final String NOTIFICATION_TEMPLATE_TABLE_NAME = "notification_template";
-    public static final String NOTIFICATION_TEMPLATE_CONFIGURATION = "configuration";
+    public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
+    public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

@@ -46,8 +46,11 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
     @Column(name = ModelConstants.NAME_PROPERTY, nullable = false)
     private String name;
 
+    @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY, nullable = false)
+    private String notificationType;
+
     @Type(type = "json")
-    @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_CONFIGURATION, nullable = false)
+    @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY, nullable = false)
     private JsonNode configuration;
 
     public NotificationTemplateEntity() {}
@@ -57,6 +60,7 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         setCreatedTime(notificationTemplate.getCreatedTime());
         setTenantId(getUuid(notificationTemplate.getTenantId()));
         setName(notificationTemplate.getName());
+        setNotificationType(notificationTemplate.getNotificationType());
         setConfiguration(toJson(notificationTemplate.getConfiguration()));
     }
 
@@ -67,6 +71,7 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         notificationTemplate.setCreatedTime(createdTime);
         notificationTemplate.setTenantId(createId(tenantId, TenantId::fromUUID));
         notificationTemplate.setName(name);
+        notificationTemplate.setNotificationType(notificationType);
         notificationTemplate.setConfiguration(fromJson(configuration, NotificationTemplateConfig.class));
         return notificationTemplate;
     }

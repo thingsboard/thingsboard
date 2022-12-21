@@ -15,87 +15,139 @@
  */
 package org.thingsboard.server.service.slack;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.slack.api.Slack;
 import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.SlackApiRequest;
 import com.slack.api.methods.SlackApiTextResponse;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.request.conversations.ConversationsListRequest;
 import com.slack.api.methods.request.users.UsersListRequest;
-import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import com.slack.api.methods.response.conversations.ConversationsListResponse;
 import com.slack.api.methods.response.users.UsersListResponse;
 import com.slack.api.model.ConversationType;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.util.ThrowingBiFunction;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class DefaultSlackService implements SlackService {
 
+    private final NotificationSettingsService notificationSettingsService;
+
     private final Slack slack = Slack.getInstance();
+    private final Cache<String, List<SlackConversation>> cache = Caffeine.newBuilder()
+            .expireAfterWrite(20, TimeUnit.SECONDS)
+            .maximumSize(100)
+            .build();
+    private static final int CONVERSATIONS_LIMIT = 1000;
 
     @Override
-    public void sendMessage(TenantId tenantId, String token, String conversationId, String message) throws Exception {
+    public void sendMessage(TenantId tenantId, String token, String conversationId, String message) {
         ChatPostMessageRequest request = ChatPostMessageRequest.builder()
                 .channel(conversationId)
                 .text(message)
                 .build();
-        ChatPostMessageResponse response = slack.methods(token).chatPostMessage(request);
-        check(response);
+        sendRequest(token, request, MethodsClient::chatPostMessage);
     }
 
     @Override
-    public List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversation.Type conversationType) throws Exception {
-        MethodsClient methods = slack.methods(token);
-        if (conversationType == SlackConversation.Type.USER) {
-            UsersListResponse usersListResponse = methods.usersList(UsersListRequest.builder()
-                    .limit(1000)
-                    .build());
-            check(usersListResponse);
-            return usersListResponse.getMembers().stream()
-                    .filter(user -> !user.isDeleted() && !user.isStranger() && !user.isBot())
-                    .map(user -> {
-                        SlackConversation conversation = new SlackConversation();
-                        conversation.setId(user.getId());
-                        conversation.setName(String.format("@%s (%s)", user.getName(), user.getRealName()));
-                        return conversation;
-                    })
-                    .collect(Collectors.toList());
+    public List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversation.Type conversationType) {
+        return cache.get(conversationType + ":" + token, k -> {
+            if (conversationType == SlackConversation.Type.USER) {
+                UsersListRequest request = UsersListRequest.builder()
+                        .limit(CONVERSATIONS_LIMIT)
+                        .build();
+
+                UsersListResponse response = sendRequest(token, request, MethodsClient::usersList);
+                return response.getMembers().stream()
+                        .filter(user -> !user.isDeleted() && !user.isStranger() && !user.isBot())
+                        .map(user -> {
+                            SlackConversation conversation = new SlackConversation();
+                            conversation.setId(user.getId());
+                            conversation.setName(String.format("@%s (%s)", user.getName(), user.getRealName()));
+                            return conversation;
+                        })
+                        .collect(Collectors.toList());
+            } else {
+                ConversationsListRequest request = ConversationsListRequest.builder()
+                        .types(List.of(conversationType == SlackConversation.Type.PUBLIC_CHANNEL ?
+                                ConversationType.PUBLIC_CHANNEL :
+                                ConversationType.PRIVATE_CHANNEL))
+                        .limit(CONVERSATIONS_LIMIT)
+                        .excludeArchived(true)
+                        .build();
+
+                ConversationsListResponse response = sendRequest(token, request, MethodsClient::conversationsList);
+                return response.getChannels().stream()
+                        .filter(channel -> !channel.isArchived())
+                        .map(channel -> {
+                            SlackConversation conversation = new SlackConversation();
+                            conversation.setId(channel.getId());
+                            conversation.setName("#" + channel.getName());
+                            return conversation;
+                        })
+                        .collect(Collectors.toList());
+            }
+        });
+    }
+
+    @Override
+    public SlackConversation findConversation(TenantId tenantId, String token, SlackConversation.Type conversationType, String namePattern) {
+        List<SlackConversation> conversations = listConversations(tenantId, token, conversationType);
+        return conversations.stream()
+                .filter(conversation -> StringUtils.containsIgnoreCase(conversation.getName(), namePattern))
+                .findFirst().orElse(null);
+    }
+
+    @Override
+    public String getToken(TenantId tenantId) {
+        NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
+                settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
+        if (slackConfig != null) {
+            return slackConfig.getBotToken();
         } else {
-            ConversationsListResponse conversationsListResponse = methods.conversationsList(ConversationsListRequest.builder()
-                    .types(List.of(conversationType == SlackConversation.Type.PUBLIC_CHANNEL ?
-                            ConversationType.PUBLIC_CHANNEL :
-                            ConversationType.PRIVATE_CHANNEL))
-                    .limit(1000)
-                    .excludeArchived(true)
-                    .build());
-            check(conversationsListResponse);
-            return conversationsListResponse.getChannels().stream()
-                    .filter(channel -> !channel.isArchived())
-                    .map(channel -> {
-                        SlackConversation conversation = new SlackConversation();
-                        conversation.setId(channel.getId());
-                        conversation.setName("#" + channel.getName());
-                        return conversation;
-                    })
-                    .collect(Collectors.toList());
+            return null;
         }
     }
 
-    private void check(SlackApiTextResponse slackResponse) {
-        if (!slackResponse.isOk()) {
-            String error = slackResponse.getError();
+    private <T extends SlackApiRequest, R extends SlackApiTextResponse> R sendRequest(String token, T request, ThrowingBiFunction<MethodsClient, T, R> method) {
+        MethodsClient client = slack.methods(token);
+        R response;
+        try {
+            response = method.apply(client, request);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        if (!response.isOk()) {
+            String error = response.getError();
             if (error == null) {
                 error = "unknown error";
             }
             if (error.contains("missing_scope")) {
-                String neededScope = slackResponse.getNeeded();
+                String neededScope = response.getNeeded();
                 throw new RuntimeException("Bot token scope '" + neededScope + "' is needed");
             }
             throw new RuntimeException("Failed to send message via Slack: " + error);
         }
+
+        return response;
     }
 
 }

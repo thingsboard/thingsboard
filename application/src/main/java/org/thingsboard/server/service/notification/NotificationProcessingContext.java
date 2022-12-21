@@ -26,9 +26,14 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class NotificationProcessingContext {
@@ -40,6 +45,8 @@ public class NotificationProcessingContext {
     private final NotificationRequest request;
     private final Map<String, String> additionalTemplateContext;
 
+    @Getter
+    private NotificationTemplate notificationTemplate;
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
     @Getter
     private NotificationRequestStats stats;
@@ -52,8 +59,15 @@ public class NotificationProcessingContext {
         this.additionalTemplateContext = additionalTemplateContext;
     }
 
-    public void init(NotificationManagerHelper notificationManagerHelper) {
-        templates = notificationManagerHelper.getTemplates(tenantId, request.getTemplateId(), request.getDeliveryMethods());
+    public void init(NotificationTemplateService templateService) {
+        notificationTemplate = templateService.findNotificationTemplateById(tenantId, request.getTemplateId());
+        NotificationTemplateConfig config = notificationTemplate.getConfiguration();
+        templates = request.getDeliveryMethods().stream()
+                .collect(Collectors.toMap(k -> k, deliveryMethod -> {
+                    return Optional.ofNullable(config.getTemplates())
+                            .map(templates -> templates.get(deliveryMethod))
+                            .orElse(config.getDefaultTemplate());
+                }));
         stats = new NotificationRequestStats();
     }
 

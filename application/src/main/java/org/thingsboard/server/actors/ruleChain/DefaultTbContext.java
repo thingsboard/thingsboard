@@ -36,6 +36,7 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -683,6 +684,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public NotificationManager getNotificationManager() {
         return mainCtx.getNotificationManager();
+    }
+
+    @Override
+    public SlackService getSlackService() {
+        return mainCtx.getSlackService();
     }
 
     @Override

@@ -34,10 +34,7 @@ import java.util.UUID;
 @Repository
 public interface NotificationRequestRepository extends JpaRepository<NotificationRequestEntity, UUID> {
 
-    @Query("SELECT r FROM NotificationRequestEntity r WHERE r.tenantId = :tenantId AND " +
-            "(lower(r.type) LIKE lower(concat('%', :searchText, '%')))")
-    Page<NotificationRequestEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
-                                                                @Param("searchText") String searchText, Pageable pageable);
+    Page<NotificationRequestEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
     List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityTypeAndOriginatorEntityId(UUID ruleId, EntityType originatorEntityType, UUID originatorEntityId);
 

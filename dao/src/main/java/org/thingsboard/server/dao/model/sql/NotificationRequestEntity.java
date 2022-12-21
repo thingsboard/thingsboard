@@ -61,9 +61,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGET_ID_PROPERTY, nullable = false)
     private UUID targetId;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TYPE_PROPERTY, nullable = false)
-    private String type;
-
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY, nullable = false)
     private UUID templateId;
 
@@ -107,7 +104,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setCreatedTime(notificationRequest.getCreatedTime());
         setTenantId(getUuid(notificationRequest.getTenantId()));
         setTargetId(getUuid(notificationRequest.getTargetId()));
-        setType(notificationRequest.getType());
         setTemplateId(getUuid(notificationRequest.getTemplateId()));
         setInfo(toJson(notificationRequest.getInfo()));
         setDeliveryMethods(StringUtils.join(notificationRequest.getDeliveryMethods(), ','));
@@ -129,7 +125,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setCreatedTime(createdTime);
         notificationRequest.setTenantId(createId(tenantId, TenantId::new));
         notificationRequest.setTargetId(createId(targetId, NotificationTargetId::new));
-        notificationRequest.setType(type);
         notificationRequest.setTemplateId(createId(templateId, NotificationTemplateId::new));
         notificationRequest.setInfo(fromJson(info, NotificationInfo.class));
         if (deliveryMethods != null) {

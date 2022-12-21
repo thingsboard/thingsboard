@@ -47,6 +47,9 @@ public class NotificationRequestStats {
     }
 
     public void reportError(NotificationDeliveryMethod deliveryMethod, User recipient, Throwable error) {
+        if (error instanceof AlreadySentException) {
+            return;
+        }
         String errorMessage = error.getMessage();
         errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getEmail(), errorMessage);
     }

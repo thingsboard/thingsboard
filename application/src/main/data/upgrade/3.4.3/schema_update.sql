@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS notification_template (
     created_time BIGINT NOT NULL,
     tenant_id UUID NOT NULL CONSTRAINT fk_notification_template_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
+    notification_type VARCHAR(255) NOT NULL,
     configuration VARCHAR(10000) NOT NULL
 );
 
@@ -37,9 +38,8 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     tenant_id UUID NOT NULL CONSTRAINT fk_notification_rule_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
-    delivery_methods VARCHAR(255),
-    initial_notification_target_id UUID NULL CONSTRAINT fk_notification_rule_target_id REFERENCES notification_target(id),
-    escalation_config VARCHAR(500)
+    delivery_methods VARCHAR(255) NOT NULL,
+    configuration VARCHAR(2000) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS notification_request (
@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS notification_request (
     created_time BIGINT NOT NULL,
     tenant_id UUID NOT NULL CONSTRAINT fk_notification_request_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     target_id UUID NOT NULL CONSTRAINT fk_notification_request_target_id REFERENCES notification_target(id),
-    type VARCHAR(255) NOT NULL,
     template_id UUID NOT NULL CONSTRAINT fk_notification_request_template_id REFERENCES notification_template(id),
     info VARCHAR(1000),
     delivery_methods VARCHAR(255),

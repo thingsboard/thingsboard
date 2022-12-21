@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.rule.engine.api.slack;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import javax.validation.constraints.Max;
+import java.util.List;
 
-@Data
-public class NotificationRequestConfig {
+public interface SlackService {
 
-    @Max(value = 604800, message = "cannot be longer than 1 week")
-    private int sendingDelayInSec;
+    void sendMessage(TenantId tenantId, String token, String conversationId, String message);
+
+    List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversation.Type conversationType);
+
+    SlackConversation findConversation(TenantId tenantId, String token, SlackConversation.Type conversationType, String namePattern);
+
+    String getToken(TenantId tenantId);
 
 }

@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
@@ -322,6 +323,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private NotificationManager notificationManager;
+
+    @Autowired
+    @Getter
+    private SlackService slackService;
 
     @Lazy
     @Autowired(required = false)

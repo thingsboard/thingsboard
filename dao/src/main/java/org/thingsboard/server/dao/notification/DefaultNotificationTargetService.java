@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,6 +65,7 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     @Override
     public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId, PageLink pageLink) {
         NotificationTarget notificationTarget = findNotificationTargetById(tenantId, notificationTargetId);
+        Objects.requireNonNull(notificationTarget, "Notification target [" + notificationTargetId + "] not found");
         NotificationTargetConfig configuration = notificationTarget.getConfiguration();
         return findRecipientsForNotificationTargetConfig(tenantId, configuration, pageLink);
     }
@@ -103,7 +105,6 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     @Override
     public void deleteNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId) {
         notificationTargetDao.removeById(tenantId, notificationTargetId.getId());
-        // todo: delete related notification requests (?)
     }
 
     private static class NotificationTargetValidator extends DataValidator<NotificationTarget> {

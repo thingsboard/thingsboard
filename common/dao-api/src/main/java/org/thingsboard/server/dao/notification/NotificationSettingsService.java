@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.slack;
+package org.thingsboard.server.dao.notification;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 
-@Data
-public class SlackConversation {
+public interface NotificationSettingsService {
 
-    private String id;
-    private String name;
+    void saveNotificationSettings(TenantId tenantId, NotificationSettings settings);
 
-    public enum Type {
-        USER,
-        PUBLIC_CHANNEL,
-        PRIVATE_CHANNEL
-    }
+    NotificationSettings findNotificationSettings(TenantId tenantId);
 
 }

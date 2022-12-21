@@ -13,10 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.rule.engine.api.slack;
 
-public enum NotificationSeverity {
-    NORMAL,
-    CRITICAL,
-    URGENT // send pop-up error
+import lombok.Data;
+
+@Data
+public class SlackConversation {
+
+    private String id;
+    private String name;
+
+    public enum Type {
+        USER,
+        PUBLIC_CHANNEL,
+        PRIVATE_CHANNEL
+    }
+
 }

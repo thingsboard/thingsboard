@@ -32,9 +32,9 @@ import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
-import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.notification.rule.NonConfirmedNotificationEscalation;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -76,6 +76,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     @Override
     public ListenableFuture<Void> onNotificationRuleDeleted(TenantId tenantId, NotificationRuleId ruleId) {
         return dbCallbackExecutorService.submit(() -> {
+            // FIXME [viacheslav]
             // need to remove fk constraint in notificationRequest to rule
             // todo: do we need to remove all notifications when notification request is deleted?
             return null;
@@ -98,12 +99,13 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         }
 
         if (notificationRequests.isEmpty()) {
-            NotificationTargetId initialNotificationTargetId = notificationRule.getInitialNotificationTargetId();
+            NotificationRuleConfig config = notificationRule.getConfiguration();
+            NotificationTargetId initialNotificationTargetId = config.getInitialNotificationTargetId();
             if (initialNotificationTargetId != null) {
                 submitNotificationRequest(tenantId, initialNotificationTargetId, notificationRule, alarm, 0);
             }
-            if (notificationRule.getEscalationConfig() != null) {
-                for (NonConfirmedNotificationEscalation escalation : notificationRule.getEscalationConfig().getEscalations()) {
+            if (config.getEscalationConfig() != null) {
+                for (NonConfirmedNotificationEscalation escalation : config.getEscalationConfig().getEscalations()) {
                     submitNotificationRequest(tenantId, escalation.getNotificationTargetId(), notificationRule, alarm, escalation.getDelayInSec());
                 }
             }
@@ -119,7 +121,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         }
     }
 
-    private boolean alarmAcknowledged(Alarm alarm) { // todo: decide when to consider the alarm processed by notification target (not to escalate then)
+    private boolean alarmAcknowledged(Alarm alarm) {
         return alarm.getStatus().isAck() && alarm.getStatus().isCleared();
     }
 
@@ -138,7 +140,6 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .targetId(targetId)
-                .type("Alarm")
                 .templateId(notificationRule.getTemplateId())
                 .deliveryMethods(notificationRule.getDeliveryMethods())
                 .additionalConfig(config)

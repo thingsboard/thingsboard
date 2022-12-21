@@ -22,12 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.rule.NotificationEscalationConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
@@ -57,12 +56,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NOTIFICATION_RULE_DELIVERY_METHODS_PROPERTY, nullable = false)
     private String deliveryMethods;
 
-    @Column(name = ModelConstants.NOTIFICATION_RULE_INITIAL_NOTIFICATION_TARGET_ID_PROPERTY)
-    private UUID initialNotificationTargetId;
-
     @Type(type = "json")
-    @Column(name = ModelConstants.NOTIFICATION_RULE_ESCALATION_CONFIG_PROPERTY)
-    private JsonNode escalationConfig;
+    @Column(name = ModelConstants.NOTIFICATION_RULE_CONFIGURATION_PROPERTY, nullable = false)
+    private JsonNode configuration;
 
     public NotificationRuleEntity() {}
 
@@ -73,8 +69,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setName(notificationRule.getName());
         setTemplateId(getUuid(notificationRule.getTemplateId()));
         setDeliveryMethods(StringUtils.join(notificationRule.getDeliveryMethods(), ','));
-        setInitialNotificationTargetId(getUuid(notificationRule.getInitialNotificationTargetId()));
-        setEscalationConfig(toJson(notificationRule.getEscalationConfig()));
+        setConfiguration(toJson(notificationRule.getConfiguration()));
     }
 
     @Override
@@ -89,8 +84,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
             notificationRule.setDeliveryMethods(Arrays.stream(StringUtils.split(deliveryMethods, ','))
                     .filter(StringUtils::isNotBlank).map(NotificationDeliveryMethod::valueOf).collect(Collectors.toList()));
         }
-        notificationRule.setInitialNotificationTargetId(createId(initialNotificationTargetId, NotificationTargetId::new));
-        notificationRule.setEscalationConfig(fromJson(escalationConfig, NotificationEscalationConfig.class));
+        notificationRule.setConfiguration(fromJson(configuration, NotificationRuleConfig.class));
         return notificationRule;
     }
 

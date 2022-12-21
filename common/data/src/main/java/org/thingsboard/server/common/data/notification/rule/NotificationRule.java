@@ -45,8 +45,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     @NotEmpty
     private List<NotificationDeliveryMethod> deliveryMethods;
     @NotNull
-    private NotificationTargetId initialNotificationTargetId;
     @Valid
-    private NotificationEscalationConfig escalationConfig;
+    private NotificationRuleConfig configuration;
 
 }

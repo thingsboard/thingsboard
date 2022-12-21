@@ -17,24 +17,35 @@ package org.thingsboard.rule.engine.notification;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.notification.NotificationSeverity;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNotificationNodeConfiguration> {
 
-    private UUID targetId;
-    private String notificationReason;
-    private String notificationTextTemplate;
-    private NotificationSeverity notificationSeverity;
+    @NotNull
+    private NotificationTargetId targetId;
+    @NotNull
+    private NotificationTemplateId templateId;
+    @NotEmpty
+    private List<NotificationDeliveryMethod> deliveryMethods;
+    private NotificationRequestConfig additionalConfig;
 
     @Override
     public TbNotificationNodeConfiguration defaultConfiguration() {
-        TbNotificationNodeConfiguration configuration = new TbNotificationNodeConfiguration();
-        configuration.setNotificationReason("General");
-        configuration.setNotificationSeverity(NotificationSeverity.NORMAL);
-        return configuration;
+        TbNotificationNodeConfiguration config = new TbNotificationNodeConfiguration();
+        config.setTargetId(new NotificationTargetId(UUID.randomUUID()));
+        config.setTemplateId(new NotificationTemplateId(UUID.randomUUID()));
+        config.setDeliveryMethods(List.of(NotificationDeliveryMethod.WEBSOCKET));
+        config.setAdditionalConfig(new NotificationRequestConfig());
+        return config;
     }
 
 }

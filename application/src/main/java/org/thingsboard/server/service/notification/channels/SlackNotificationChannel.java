@@ -20,57 +20,53 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.service.slack.SlackService;
+import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
-
-import javax.annotation.PostConstruct;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("UnstableApiUsage")
 public class SlackNotificationChannel implements NotificationChannel {
 
     private final SlackService slackService;
-    private ExecutorService executor;
-
-    @PostConstruct
-    private void init() {
-        executor = Executors.newSingleThreadExecutor();
-    }
+    private final ExternalCallExecutorService executor;
 
     @Override
     public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
         SlackDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.SLACK);
         SlackNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.SLACK);
 
-        String conversationId = template.getConversationId();
-        if (StringUtils.isNotEmpty(conversationId)) {
+        if (StringUtils.isNotEmpty(template.getConversationId())) { // if conversationId is set, we only need to send message once
             if (ctx.getStats().contains(NotificationDeliveryMethod.SLACK)) {
-                // FIXME stats.sent will be reported anyway
-                return Futures.immediateFuture(null); // if conversationId is set, we only need to send message once
+                return Futures.immediateFailedFuture(new AlreadySentException());
+            } else {
+                return executor.submit(() -> {
+                    slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), template.getConversationId(), text);
+                    return null;
+                });
             }
         } else {
-            String username = StringUtils.join(new String[]{recipient.getFirstName(), recipient.getLastName()}, ' ');
-            if (StringUtils.isNotEmpty(username)) {
-                conversationId = username;
+            if (StringUtils.isNoneEmpty(recipient.getFirstName(), recipient.getLastName())) {
+                String username = StringUtils.join(new String[]{recipient.getFirstName(), recipient.getLastName()}, ' ');
+                return executor.submit(() -> {
+                    SlackConversation conversation = slackService.findConversation(recipient.getTenantId(), config.getBotToken(), SlackConversation.Type.USER, username);
+                    if (conversation == null) {
+                        throw new IllegalArgumentException("Slack user not found for given name '" + username + "'");
+                    }
+                    slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), conversation.getId(), text);
+                    return null;
+                });
             } else {
                 return Futures.immediateFailedFuture(new IllegalArgumentException("Couldn't determine Slack username for the user"));
             }
         }
-        return send(ctx.getTenantId(), config.getBotToken(), conversationId, text);
-    }
-
-    private ListenableFuture<Void> send(TenantId tenantId, String botToken, String conversationId, String text) {
-        return Futures.submit(() -> {
-            slackService.sendMessage(tenantId, botToken, conversationId, text);
-            return null;
-        }, executor);
     }
 
     @Override

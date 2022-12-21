@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -36,13 +37,16 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
@@ -71,7 +75,8 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     private final NotificationTargetService notificationTargetService;
     private final NotificationRequestService notificationRequestService;
     private final NotificationService notificationService;
-    private final NotificationManagerHelper notificationManagerHelper;
+    private final NotificationTemplateService notificationTemplateService;
+    private final NotificationSettingsService notificationSettingsService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
@@ -82,7 +87,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         log.debug("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
         notificationRequest.setTenantId(tenantId);
-        NotificationSettings settings = notificationManagerHelper.getNotificationSettings(tenantId);
+        NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         notificationRequest.getDeliveryMethods().forEach(deliveryMethod -> {
             if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) || !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
                 throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is not enabled or configured");
@@ -98,6 +103,10 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                 return savedNotificationRequest;
             }
         }
+        if (notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), new PageLink(1))
+                .getTotalElements() == 0) {
+            throw new IllegalArgumentException("No target recipients");
+        }
 
         notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
@@ -108,7 +117,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                 .request(savedNotificationRequest)
                 .additionalTemplateContext(notificationRequest.getTemplateContext())
                 .build();
-        ctx.init(notificationManagerHelper);
+        ctx.init(notificationTemplateService);
 
         DaoUtil.processBatches(pageLink -> {
             return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
@@ -129,7 +138,8 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                     results.add(resultFuture);
                 }
             }
-            Futures.whenAllComplete(results).run(() -> {
+
+            Futures.allAsList(results).addListener(() -> {
                 try {
                     notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), ctx.getStats());
                 } catch (Exception e) {
@@ -145,7 +155,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         String text;
         try {
             DeliveryMethodNotificationTemplate template = ctx.getTemplate(notificationChannel.getDeliveryMethod());
-            text = notificationManagerHelper.processTemplate(template.getBody(), ctx.createTemplateContext(recipient));
+            text = TbNodeUtils.processTemplate(template.getBody(), ctx.createTemplateContext(recipient));
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
@@ -173,7 +183,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
-                .type(request.getType())
+                .type(ctx.getNotificationTemplate().getNotificationType())
                 .text(text)
                 .info(request.getInfo())
                 .originatorType(request.getOriginatorType())

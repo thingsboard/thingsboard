@@ -374,7 +374,6 @@ public class NotificationApiTest extends AbstractControllerTest {
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .targetId(targetId)
-                .type("Test")
                 .templateId(notificationTemplate.getId())
                 .info(notificationInfo)
                 .deliveryMethods(deliveryMethods.length > 0 ? List.of(deliveryMethods) : List.of(NotificationDeliveryMethod.WEBSOCKET))
@@ -387,6 +386,7 @@ public class NotificationApiTest extends AbstractControllerTest {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setTenantId(tenantId);
         notificationTemplate.setName("Notification template for testing");
+        notificationTemplate.setNotificationType("Just a test");
         NotificationTemplateConfig config = new NotificationTemplateConfig();
         DeliveryMethodNotificationTemplate defaultTemplate = new DeliveryMethodNotificationTemplate();
         defaultTemplate.setBody(text);
@@ -396,6 +396,7 @@ public class NotificationApiTest extends AbstractControllerTest {
                 EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
                 emailNotificationTemplate.setSubject("Hello from test");
                 emailNotificationTemplate.setBody(text);
+                emailNotificationTemplate.setMethod(deliveryMethod);
                 config.setTemplates(Map.of(
                         deliveryMethod, emailNotificationTemplate
                 ));
@@ -403,14 +404,6 @@ public class NotificationApiTest extends AbstractControllerTest {
         }
         notificationTemplate.setConfiguration(config);
         return doPost("/api/notification/template", notificationTemplate, NotificationTemplate.class);
-    }
-
-    private void configureNotificationDeliveryMethods(NotificationDeliveryMethod... deliveryMethods) {
-        NotificationSettings notificationSettings = new NotificationSettings();
-        notificationSettings.setDeliveryMethodsConfigs(new HashMap<>());
-        for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-            notificationSettings.getDeliveryMethodsConfigs().put(deliveryMethod, new NotificationDeliveryMethodConfig());
-        }
     }
 
     private NotificationRequest findNotificationRequest(NotificationRequestId id) throws Exception {

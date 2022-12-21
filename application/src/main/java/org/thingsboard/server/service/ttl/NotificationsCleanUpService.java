@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.notification.NotificationDao;
-import org.thingsboard.server.dao.notification.NotificationRequestDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
@@ -34,8 +32,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.NOTIFICATION_TABLE
 @Slf4j
 public class NotificationsCleanUpService extends AbstractCleanUpService {
 
-    private final NotificationDao notificationDao;
-    private final NotificationRequestDao notificationRequestDao;
     private final SqlPartitioningRepository partitioningRepository;
 
     @Value("${sql.ttl.notifications.ttl:2592000}")
@@ -43,13 +39,8 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
     @Value("${sql.notifications.partition_size:168}")
     private int partitionSizeInHours;
 
-    public NotificationsCleanUpService(PartitionService partitionService,
-                                       NotificationDao notificationDao,
-                                       NotificationRequestDao notificationRequestDao,
-                                       SqlPartitioningRepository partitioningRepository) {
+    public NotificationsCleanUpService(PartitionService partitionService, SqlPartitioningRepository partitioningRepository) {
         super(partitionService);
-        this.notificationDao = notificationDao;
-        this.notificationRequestDao = notificationRequestDao;
         this.partitioningRepository = partitioningRepository;
     }
 
@@ -59,11 +50,7 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
         long expTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec);
         long partitionDurationMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);
         if (isSystemTenantPartitionMine()) {
-            long actualExpTime = partitioningRepository.getLastPartitionEnd(NOTIFICATION_TABLE_NAME, expTime, partitionDurationMs);
-            
             partitioningRepository.dropPartitionsBefore(NOTIFICATION_TABLE_NAME, expTime, partitionDurationMs);
-            // select distinct request_id for period and manually delete them ?
-            // sql trigger ? ----
         } else {
             partitioningRepository.cleanupPartitionsCache(NOTIFICATION_TABLE_NAME, expTime, partitionDurationMs);
         }

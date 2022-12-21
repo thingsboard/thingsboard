@@ -22,14 +22,23 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class NotificationTemplate extends BaseData<NotificationTemplateId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
+    @NoXss
+    @NotNull
     private String name;
+    @NoXss
+    @NotNull
+    private String notificationType;
+    @Valid
     private NotificationTemplateConfig configuration;
-    // add notification type (notification reason)
 
 }
