@@ -768,6 +768,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return Optional.ofNullable(hasId);
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
+    }
+
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {
         return relationService.findByFrom(tenantId, ruleChainId, RelationTypeGroup.RULE_CHAIN);
     }

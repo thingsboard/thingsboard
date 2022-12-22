@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 public interface RpcService extends EntityDaoService {
+
     Rpc save(Rpc rpc);
 
     void deleteRpc(TenantId tenantId, RpcId id);

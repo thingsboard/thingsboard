@@ -526,4 +526,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return Optional.ofNullable(findEdgeById(tenantId, new EdgeId(entityId.getId())));
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.EDGE;
+    }
+
 }

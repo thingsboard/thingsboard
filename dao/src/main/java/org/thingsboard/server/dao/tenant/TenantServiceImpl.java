@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -264,4 +265,10 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findTenantById(new TenantId(entityId.getId())));
     }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.TENANT;
+    }
+
 }

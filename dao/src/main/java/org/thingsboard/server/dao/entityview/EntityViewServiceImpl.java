@@ -416,4 +416,9 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return Optional.ofNullable(findEntityViewById(tenantId, new EntityViewId(entityId.getId())));
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ENTITY_VIEW;
+    }
+
 }

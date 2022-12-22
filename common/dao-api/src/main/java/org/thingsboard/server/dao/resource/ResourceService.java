@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 import java.util.List;
 
 public interface ResourceService extends EntityDaoService {
+
     TbResource saveResource(TbResource resource);
 
     TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
