@@ -41,11 +41,11 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -67,11 +67,14 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
+import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
@@ -103,6 +106,7 @@ import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.FAILURE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopic;
 
 /**
  * @author Andrew Shvayka
@@ -128,6 +132,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     final DeviceSessionCtx deviceSessionCtx;
     volatile InetSocketAddress address;
     volatile GatewaySessionHandler gatewaySessionHandler;
+    volatile SparkplugNodeSessionHandler sparkplugSessionHandler;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
@@ -320,7 +325,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         int msgId = mqttMsg.variableHeader().packetId();
         log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
 
-        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
+        if (sparkplugSessionHandler != null) {
+            handleSparkplugPublishMsg(ctx, topicName, msgId, mqttMsg);
+            transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+        } else if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(ctx, topicName, msgId, mqttMsg);
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
@@ -361,6 +369,18 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             ctx.close();
         } catch (AdaptorException e) {
+            log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            sendAckOrCloseSession(ctx, topicName, msgId);
+        }
+    }
+
+    private void handleSparkplugPublishMsg(ChannelHandlerContext ctx, String topicName, int msgId, MqttPublishMessage mqttMsg) {
+        try {
+            sparkplugSessionHandler.onPublishMsg(ctx, topicName, msgId, mqttMsg);
+        } catch (RuntimeException e) {
+            log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            ctx.close();
+        } catch (Exception e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendAckOrCloseSession(ctx, topicName, msgId);
         }
@@ -623,69 +643,74 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             String topic = subscription.topicName();
             MqttQoS reqQoS = subscription.qualityOfService();
             try {
-                switch (topic) {
-                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC: {
-                        processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
-                        activityReported = true;
-                        break;
+                if (sparkplugSessionHandler != null) {
+                    SparkplugTopic sparkplugTopic = parseTopic(mqttMsg.payload().topicSubscriptions().get(0).topicName());
+                    sparkplugSessionHandler.handleSparkplugSubscribeMsg(grantedQoSList, sparkplugTopic, reqQoS);
+                } else {
+                    switch (topic) {
+                        case MqttTopics.DEVICE_ATTRIBUTES_TOPIC: {
+                            processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC: {
+                            processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC: {
+                            processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_JSON);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC: {
+                            processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_PROTO);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC: {
+                            processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC: {
+                            processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC: {
+                            processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_JSON);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC: {
+                            processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_PROTO);
+                            activityReported = true;
+                            break;
+                        }
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_TOPIC:
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_JSON_TOPIC:
+                        case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_PROTO_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC:
+                        case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC:
+                        case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
+                        case MqttTopics.GATEWAY_RPC_TOPIC:
+                        case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
+                        case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
+                        case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
+                        case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
+                        case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
+                        case MqttTopics.DEVICE_SOFTWARE_ERROR_TOPIC:
+                            registerSubQoS(topic, grantedQoSList, reqQoS);
+                            break;
+                        default:
+                            log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                            grantedQoSList.add(FAILURE.value());
+                            break;
                     }
-                    case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC: {
-                        processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC: {
-                        processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_JSON);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC: {
-                        processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_PROTO);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC: {
-                        processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC: {
-                        processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC: {
-                        processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_JSON);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC: {
-                        processRpcSubscribe(grantedQoSList, topic, reqQoS, TopicType.V2_PROTO);
-                        activityReported = true;
-                        break;
-                    }
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_TOPIC:
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_JSON_TOPIC:
-                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_SHORT_PROTO_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC:
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC:
-                    case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
-                    case MqttTopics.GATEWAY_RPC_TOPIC:
-                    case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-                    case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
-                    case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
-                    case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
-                    case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
-                    case MqttTopics.DEVICE_SOFTWARE_ERROR_TOPIC:
-                        registerSubQoS(topic, grantedQoSList, reqQoS);
-                        break;
-                    default:
-                        log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
-                        grantedQoSList.add(FAILURE.value());
-                        break;
                 }
             } catch (Exception e) {
                 log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
@@ -953,6 +978,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
+    private void checkSparkplugSession(MqttConnectMessage connectMessage) {
+        try {
+            SparkplugTopic sparkplugTopic = parseTopic(connectMessage.payload().willTopic());
+            // Test proto
+            SparkplugBProto.Payload payloadBProto = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
+            //
+            if (sparkplugSessionHandler == null) {
+                sparkplugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopic.toString());
+            } else {
+                log.warn("SparkPlugNodeReConnected [{}] [{}]", sparkplugTopic.getDeviceId(), sparkplugTopic.getType());
+            }
+        } catch (Exception e) {
+            log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);
+        }
+    }
+
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
         log.trace("[{}] Channel closed!", sessionId);
@@ -987,7 +1028,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 @Override
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
-                    checkGatewaySession(sessionMetaData);
+                    if (deviceSessionCtx.isSparkplug()) {
+                        checkSparkplugSession(connectMessage);
+                    } else {
+                        checkGatewaySession(sessionMetaData);
+                    }
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.debug("[{}] Client connected!", sessionId);
