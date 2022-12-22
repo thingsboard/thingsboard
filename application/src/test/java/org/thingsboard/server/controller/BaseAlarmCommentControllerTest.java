@@ -137,8 +137,8 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
         Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testNotifyEntityAllOneTime(updatedAlarmComment, updatedAlarmComment.getId(), updatedAlarmComment.getId(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED);
+        testLogEntityAction(updatedAlarmComment, updatedAlarmComment.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED, 1);
+        testPushMsgToRuleEngineTime(updatedAlarmComment.getId(), tenantId, updatedAlarmComment, 1);
     }
 
     @Test
@@ -157,8 +157,8 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
         Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testNotifyEntityAllOneTime(updatedAlarmComment, updatedAlarmComment.getId(), updatedAlarmComment.getId(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED);
+        testLogEntityAction(updatedAlarmComment, updatedAlarmComment.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED, 1);
+        testPushMsgToRuleEngineTime(updatedAlarmComment.getId(), tenantId, updatedAlarmComment, 1);
     }
 
     @Test
@@ -255,21 +255,6 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
                 .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
-    }
-
-    @Test
-    public void testClearAlarmViaCustomer() throws Exception {
-        loginCustomerUser();
-        AlarmComment alarmComment = createAlarmComment(alarm.getId());
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isOk());
-
-        Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
-
     }
 
     @Test

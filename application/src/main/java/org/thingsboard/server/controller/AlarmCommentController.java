@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -88,7 +89,7 @@ public class AlarmCommentController extends BaseController {
     public Boolean deleteAlarmComment(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId, @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_COMMENT_ID) String strCommentId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        Alarm alarm = checkAlarmId(alarmId, Operation.DELETE);
 
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId);
@@ -115,7 +116,9 @@ public class AlarmCommentController extends BaseController {
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        Alarm alarm = alarmService.findAlarmByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
+        checkNotNull(alarm, "Alarm with id [" + alarmId + "] is not found");
+        checkEntityId(alarm.getOriginator(), Operation.READ);
 
         PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
         return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
