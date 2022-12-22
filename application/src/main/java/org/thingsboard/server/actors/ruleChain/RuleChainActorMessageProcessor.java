@@ -327,17 +327,18 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             } else {
                 // Will try to process many relations without shadow checkpoints.
                 // Failed rule node callback will do the checkpoint on the nearest split point.
-                log.trace("[{}][{}][{}] Pushing message to multiple targets: [{}]", tenantId, entityId, msg.getId(), relationsByTypes);
+                log.info("Pushing message to multiple targets: [{}][{}][{}] [{}]", tenantId, entityId, msg.getId(), relationsByTypes);
                 final RuleChainSplitPoint splitPoint = new RuleChainSplitPoint(msg.getCallback(), relationsCount);
                 for (RuleNodeRelation relation : relationsByTypes) {
                     //prepare callback in case of failure scenario
                     EntityId target = relation.getOut();
                     TbMsgCallback childTbMsgCallback = splitPoint.addChild(queueCallback -> {
                         //on failure msg callback will put to queue and consumed queueCallback will handle the result
+                        log.warn("Put to queue (shadow): [{}][{}][{}] [{}][{}]", tenantId, entityId, msg.getId(), target, msg);
                         putToQueue(tpi, msg, queueCallback, target);
                     });
 
-                    log.trace("[{}][{}][{}] Pushing message to target with split callback: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
+                    log.info("Pushing to target with split callback: [{}][{}][{}] [{}]", tenantId, entityId, msg.getId(), relation.getOut());
                     TbMsg clonedMsg = TbMsg.newMsg(msg, childTbMsgCallback);
                     pushToTarget(tpi, clonedMsg, relation.getOut(), relation.getType());
                 }
