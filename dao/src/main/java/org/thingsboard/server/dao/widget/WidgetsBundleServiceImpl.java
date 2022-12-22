@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.widget;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -155,8 +156,13 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.WIDGETS_BUNDLE;
     }
 
     private PaginatedRemover<TenantId, WidgetsBundle> tenantWidgetsBundleRemover =

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -115,7 +116,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getEndTs() == 0L) {
                 alarm.setEndTs(alarm.getStartTs());
             }
-            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
+            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()).get());
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
                 if (existing == null || existing.getStatus().isCleared()) {
@@ -286,8 +287,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         return Futures.transform(alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()),
                 a -> {
                     AlarmInfo alarmInfo = new AlarmInfo(a);
-                    Optional<String> originatorNameOpt = entityService.fetchEntityName(tenantId, alarmInfo.getOriginator());
-                    alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "N/A" : originatorNameOpt.get());
+                    alarmInfo.setOriginatorName(
+                            entityService.fetchEntityName(tenantId, alarmInfo.getOriginator()).orElse("N/A"));
                     return alarmInfo;
                 }, MoreExecutors.directExecutor());
     }
@@ -313,8 +314,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
         List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
         for (AlarmInfo alarmInfo : alarms.getData()) {
-            Optional<String> originatorNameOpt = entityService.fetchEntityName(tenantId, alarmInfo.getOriginator());
-            alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "Deleted" : originatorNameOpt.get());
+            alarmInfo.setOriginatorName(
+                    entityService.fetchEntityName(tenantId, alarmInfo.getOriginator()).orElse("Deleted"));
             alarmFutures.add(Futures.immediateFuture(alarmInfo));
         }
         return Futures.transform(Futures.successfulAsList(alarmFutures),
@@ -407,8 +408,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findAlarmById(tenantId, new AlarmId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ALARM;
     }
 
 }

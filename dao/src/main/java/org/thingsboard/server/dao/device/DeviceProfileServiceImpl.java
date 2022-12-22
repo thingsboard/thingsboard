@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
@@ -290,8 +291,13 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DEVICE_PROFILE;
     }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

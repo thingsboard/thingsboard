@@ -21,6 +21,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -123,8 +124,13 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findQueueById(tenantId, new QueueId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.QUEUE;
     }
 
     private PaginatedRemover<TenantId, Queue> tenantQueuesRemover =

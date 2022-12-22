@@ -28,6 +28,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -401,8 +402,13 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     };
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.USER;
     }
 
 }

@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.service.sql;
 
-import org.thingsboard.server.dao.service.BaseEntityServiceBeanFactoryTest;
+import org.thingsboard.server.dao.service.BaseEntityServiceRegistryTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 @DaoSqlTest
-public class EntityServiceBeanFactorySqlTest extends BaseEntityServiceBeanFactoryTest {
+public class EntityServiceRegistrySqlTest extends BaseEntityServiceRegistryTest {
 
 }

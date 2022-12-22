@@ -16,31 +16,31 @@
 package org.thingsboard.server.dao.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.entity.EntityServiceBeanFactory;
-import org.thingsboard.server.dao.rule.BaseRuleChainService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.dao.rule.RuleChainService;
 
 @Slf4j
-public abstract class BaseEntityServiceBeanFactoryTest extends AbstractServiceTest {
+public abstract class BaseEntityServiceRegistryTest extends AbstractServiceTest {
 
     @Autowired
-    private EntityServiceBeanFactory entityServiceBeanFactory;
+    private EntityServiceRegistry entityServiceRegistry;
 
     @Test
-    public void givenAllEntityTypes_whenGetServiceByEntityTypeCalled_thenNoExceptionsThrows() {
+    public void givenAllEntityTypes_whenGetServiceByEntityTypeCalled_thenAllBeansExists() {
         for (EntityType entityType : EntityType.values()) {
-            Assertions.assertThatCode(() -> entityServiceBeanFactory.getServiceByEntityType(entityType))
-                    .doesNotThrowAnyException();
+            EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityType);
+            Assert.assertNotNull("entityDaoService bean is missed for type: " + entityType.name(), entityDaoService);
         }
     }
 
     @Test
-    public void givenRuleNodeEntityType_whenGetServiceByEntityTypeCalled_thenReturnedRuleChainDaoService() {
-        Assert.assertTrue(entityServiceBeanFactory.getServiceByEntityType(EntityType.RULE_NODE) instanceof BaseRuleChainService);
+    public void givenRuleNodeEntityType_whenGetServiceByEntityTypeCalled_thenReturnedRuleChainService() {
+        Assert.assertTrue(entityServiceRegistry.getServiceByEntityType(EntityType.RULE_NODE) instanceof RuleChainService);
     }
 
 }

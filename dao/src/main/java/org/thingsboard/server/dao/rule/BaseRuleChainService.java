@@ -761,11 +761,16 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         HasId<?> hasId = EntityType.RULE_NODE.equals(entityId.getEntityType()) ?
                 findRuleNodeById(tenantId, new RuleNodeId(entityId.getId())) :
                 findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
         return Optional.ofNullable(hasId);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {
