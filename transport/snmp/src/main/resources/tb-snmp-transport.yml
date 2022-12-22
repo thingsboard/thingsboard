@@ -67,6 +67,12 @@ redis:
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+    # sentinel mode
+    sentinel:
+      # name of master node
+      master: "${REDIS_MASTER:mymaster}"
+      # comma-separated list of "host:port" pairs of sentinels
+      sentinels: "${REDIS_SENTINELS:127.0.0.1:26379}"
   # db index
   db: "${REDIS_DB:0}"
   # db password
