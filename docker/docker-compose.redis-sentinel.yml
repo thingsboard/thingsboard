@@ -18,7 +18,7 @@ version: '3.0'
 
 services:
   # Redis sentinel
-  redis:
+  redis-master:
     image: 'bitnami/redis:latest'
     environment:
       - REDIS_REPLICATION_MODE=master
@@ -32,7 +32,7 @@ services:
     environment:
       - REDIS_PORT=7000
       - REDIS_REPLICATION_MODE=slave
-      - REDIS_MASTER_HOST=redis
+      - REDIS_MASTER_HOST=redis-master
       - REDIS_MASTER_PASSWORD=str0ng_passw0rd
       - REDIS_PASSWORD=str0ng_passw0rd
     ports:
@@ -40,13 +40,14 @@ services:
     volumes:
       - ./tb-node/redis-sentinel/slave:/bitnami/redis/data
     depends_on:
-      - redis
+      - redis-master
   redis-sentinel:
     image: 'bitnami/redis-sentinel:latest'
     environment:
+      - REDIS_MASTER_HOST=redis-master
       - REDIS_MASTER_PASSWORD=str0ng_passw0rd
     depends_on:
-      - redis
+      - redis-master
       - redis-slave
     volumes:
       - ./tb-node/redis-sentinel/sentinel:/bitnami/redis/data
@@ -58,7 +59,7 @@ services:
     env_file:
       - cache-redis-sentinel.env
     depends_on:
-      - redis
+      - redis-sentinel
   tb-core2:
     env_file:
       - cache-redis-sentinel.env

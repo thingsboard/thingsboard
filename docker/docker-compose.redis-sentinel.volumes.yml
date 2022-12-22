@@ -18,7 +18,7 @@ version: '3.0'
 
 services:
   # Redis sentinel
-  redis:
+  redis-master:
     volumes:
       - redis-cluster-data-0:/bitnami/redis/data
   redis-slave:

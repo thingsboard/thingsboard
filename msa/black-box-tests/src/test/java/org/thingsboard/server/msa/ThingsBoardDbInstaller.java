@@ -120,9 +120,11 @@ public class ThingsBoardDbInstaller {
             }
         }
         else if (IS_REDIS_SENTINEL) {
+
             for (int i = 0; i < 6; i++) {
                 env.put("REDIS_CLUSTER_DATA_VOLUME_" + i, redisClusterDataVolume + '-' + i);
             }
+
             /**
             env.put("REDIS_SENTINEL_DATA_VOLUME_MASTER", redisSentinelDataVolume + "-" + "MASTER");
             env.put("REDIS_SENTINEL_DATA_VOLUME_SLAVE", redisSentinelDataVolume + "-" + "SLAVE");
@@ -204,7 +206,7 @@ public class ThingsBoardDbInstaller {
             }
             else if (IS_REDIS_SENTINEL) {
 
-                additionalServices += " redis";
+                additionalServices += " redis-master";
                 additionalServices += " redis-slave";
                 additionalServices += " redis-sentinel";
 
