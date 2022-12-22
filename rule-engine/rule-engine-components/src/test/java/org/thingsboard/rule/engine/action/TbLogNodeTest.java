@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -61,6 +62,7 @@ public class TbLogNodeTest {
                 "Incoming metadata:\n" +
                 "{}");
     }
+
     @Test
     void givenNullDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
@@ -75,6 +77,16 @@ public class TbLogNodeTest {
                 "null\n" +
                 "Incoming metadata:\n" +
                 "{}");
+    }
+
+    @Test
+    void givenDefaultConfig_whenIsStandardForEachScriptLanguage_thenTrue() {
+        TbLogNode node = new TbLogNode();
+        for (ScriptLanguage scriptLanguage : ScriptLanguage.values()) {
+            TbLogNodeConfiguration config = new TbLogNodeConfiguration().defaultConfiguration();
+            config.setScriptLang(scriptLanguage);
+            assertThat(node.isStandard(config)).as("Script is standard for language " + scriptLanguage).isTrue();
+        }
     }
 
 }
