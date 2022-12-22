@@ -327,12 +327,12 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                     counter.clear();
                     if (printTenantNames) {
                         String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
+                            String defaultName = "N/A";
                             try {
-                                Optional<String> entityNameOpt = entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId);
-                                return entityNameOpt.orElse("N/A");
+                                return entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId).orElse(defaultName);
                             } catch (Exception e) {
                                 log.error("[{}] Failed to get tenant name", tenantId, e);
-                                return "N/A";
+                                return defaultName;
                             }
                         });
                         log.info("[{}][{}] Rate limited requests: {}", tenantId, name, rateLimitedRequests);

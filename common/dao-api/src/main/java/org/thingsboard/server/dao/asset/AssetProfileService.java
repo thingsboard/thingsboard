@@ -21,9 +21,9 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.TbEntityService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface AssetProfileService extends TbEntityService {
+public interface AssetProfileService extends EntityDaoService {
 
     AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId);
 

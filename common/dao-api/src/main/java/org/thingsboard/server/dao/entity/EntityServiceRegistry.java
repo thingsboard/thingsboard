@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.EntityType;
 
-import java.util.Optional;
+public interface EntityServiceRegistry {
 
-public interface TbEntityService {
-
-    Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId);
+    EntityDaoService getServiceByEntityType(EntityType entityType);
 
 }

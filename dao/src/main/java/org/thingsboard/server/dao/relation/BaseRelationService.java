@@ -375,9 +375,9 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(TenantId tenantId, EntityRelation relation,
                                                                         Function<EntityRelation, EntityId> entityIdGetter,
                                                                         BiConsumer<EntityRelationInfo, String> entityNameSetter) {
-        Optional<String> entityNameOpt = entityService.fetchEntityName(tenantId, entityIdGetter.apply(relation));
         EntityRelationInfo relationInfo = new EntityRelationInfo(relation);
-        entityNameSetter.accept(relationInfo, entityNameOpt.orElse("N/A"));
+        entityNameSetter.accept(relationInfo,
+                entityService.fetchEntityName(tenantId, entityIdGetter.apply(relation)).orElse("N/A"));
         return Futures.immediateFuture(relationInfo);
     }
 

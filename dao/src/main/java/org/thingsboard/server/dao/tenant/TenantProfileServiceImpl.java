@@ -208,7 +208,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findTenantProfileById(tenantId, new TenantProfileId(entityId.getId())));
     }
 

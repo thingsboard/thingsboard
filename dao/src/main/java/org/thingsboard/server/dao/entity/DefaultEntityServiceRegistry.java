@@ -16,24 +16,43 @@
 package org.thingsboard.server.dao.entity;
 
 import org.apache.commons.text.CaseUtils;
-import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.Map;
+
 @Service
-public class EntityServiceBeanFactory {
+public class DefaultEntityServiceRegistry implements EntityServiceRegistry {
 
     private static final String SERVICE_SUFFIX = "DaoService";
 
-    private final BeanFactory beanFactory;
+    private Map<String, EntityDaoService> entityDaoServicesMap;
 
-    public EntityServiceBeanFactory(BeanFactory beanFactory) {
-        this.beanFactory = beanFactory;
+    private final ApplicationContext applicationContext;
+
+    public DefaultEntityServiceRegistry(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
-    public TbEntityService getServiceByEntityType(EntityType entityType) {
+    @PostConstruct
+    public void init() {
+        entityDaoServicesMap = applicationContext.getBeansOfType(EntityDaoService.class);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (entityDaoServicesMap != null) {
+            entityDaoServicesMap.clear();
+        }
+    }
+
+    @Override
+    public EntityDaoService getServiceByEntityType(EntityType entityType) {
         String beanName = EntityType.RULE_NODE.equals(entityType) ? getBeanName(EntityType.RULE_CHAIN) : getBeanName(entityType);
-        return beanFactory.getBean(beanName, TbEntityService.class);
+        return entityDaoServicesMap.get(beanName);
     }
 
     private String getBeanName(EntityType entityType) {

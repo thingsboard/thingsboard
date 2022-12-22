@@ -98,7 +98,7 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findById(tenantId, new RpcId(entityId.getId())));
     }
 
