@@ -20,10 +20,11 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.entity.TbEntityService;
 
 import java.util.List;
 
-public interface WidgetsBundleService {
+public interface WidgetsBundleService extends TbEntityService {
 
     WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId);
 

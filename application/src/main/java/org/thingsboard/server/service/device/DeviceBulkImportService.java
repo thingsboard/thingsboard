@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -104,7 +105,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     protected Device saveEntity(SecurityUser user, Device entity, Map<BulkImportColumnType, String> fields) {
         DeviceCredentials deviceCredentials;
         try {
-            deviceCredentials = createDeviceCredentials(fields);
+            deviceCredentials = createDeviceCredentials(entity.getTenantId(), entity.getId(), fields);
             deviceCredentialsService.formatCredentials(deviceCredentials);
         } catch (Exception e) {
             throw new DeviceCredentialsValidationException("Invalid device credentials: " + e.getMessage());
@@ -136,7 +137,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     @SneakyThrows
-    private DeviceCredentials createDeviceCredentials(Map<BulkImportColumnType, String> fields) {
+    private DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceId deviceId, Map<BulkImportColumnType, String> fields) {
         DeviceCredentials credentials = new DeviceCredentials();
         if (fields.containsKey(BulkImportColumnType.LWM2M_CLIENT_ENDPOINT)) {
             credentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
@@ -147,7 +148,9 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         } else if (CollectionUtils.containsAny(fields.keySet(), EnumSet.of(BulkImportColumnType.MQTT_CLIENT_ID, BulkImportColumnType.MQTT_USER_NAME, BulkImportColumnType.MQTT_PASSWORD))) {
             credentials.setCredentialsType(DeviceCredentialsType.MQTT_BASIC);
             setUpBasicMqttCredentials(fields, credentials);
-        } else {
+        } else if (deviceId != null && !fields.containsKey(BulkImportColumnType.ACCESS_TOKEN)) {
+            credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
+        } else  {
             credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
             setUpAccessTokenCredentials(fields, credentials);
         }

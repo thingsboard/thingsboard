@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededExcept
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -61,6 +62,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -68,9 +70,10 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("AlarmDaoService")
 @Slf4j
 public class BaseAlarmService extends AbstractEntityService implements AlarmService {
 
@@ -145,6 +148,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateEntityDataPageLink(query.getPageLink());
         return alarmDao.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
     }
 
@@ -353,15 +357,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
         List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
         for (AlarmInfo alarmInfo : alarms.getData()) {
-            alarmFutures.add(Futures.transform(
-                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                        if (originatorName == null) {
-                            originatorName = "Deleted";
-                        }
-                        alarmInfo.setOriginatorName(originatorName);
-                        return alarmInfo;
-                    }, MoreExecutors.directExecutor()
-            ));
+            Optional<String> originatorNameOpt = entityService.fetchEntityName(tenantId, alarmInfo.getOriginator());
+            alarmInfo.setOriginatorName(originatorNameOpt.isEmpty() ? "Deleted" : originatorNameOpt.get());
+            alarmFutures.add(Futures.immediateFuture(alarmInfo));
         }
         return Futures.transform(Futures.successfulAsList(alarmFutures),
                 alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
@@ -458,14 +456,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private AlarmInfo getAlarmInfo(TenantId tenantId, Alarm alarm) {
-        String originatorName = null;
-        String originatorLabel = null;
+        String originatorName;
+        String originatorLabel;
         String assigneeFirstName = null;
         String assigneeLastName = null;
         String assigneeEmail = null;
 
-        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator());
-        originatorLabel = entityService.fetchEntityLabel(tenantId, alarm.getOriginator());
+        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse("Deleted");
+        originatorLabel = entityService.fetchEntityLabel(tenantId, alarm.getOriginator()).orElse(null);
 
         if (alarm.getAssigneeId() != null) {
             User assignedUser = userService.findUserById(tenantId, alarm.getAssigneeId());
@@ -475,4 +473,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         }
         return new AlarmInfo(alarm, originatorName, originatorLabel, assigneeFirstName, assigneeLastName, assigneeEmail);
     }
+
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findAlarmById(tenantId, new AlarmId(entityId.getId())));
+    }
+
 }

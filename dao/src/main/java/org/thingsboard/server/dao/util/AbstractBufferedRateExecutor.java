@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -327,7 +328,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                     if (printTenantNames) {
                         String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
                             try {
-                                return entityService.fetchEntityNameAsync(TenantId.SYS_TENANT_ID, tenantId).get();
+                                Optional<String> entityNameOpt = entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId);
+                                return entityNameOpt.orElse("N/A");
                             } catch (Exception e) {
                                 log.error("[{}] Failed to get tenant name", tenantId, e);
                                 return "N/A";

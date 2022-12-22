@@ -23,8 +23,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.dao.entity.TbEntityService;
 
-public interface RpcService {
+public interface RpcService extends TbEntityService {
     Rpc save(Rpc rpc);
 
     void deleteRpc(TenantId tenantId, RpcId id);

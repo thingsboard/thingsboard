@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,7 +27,7 @@ import java.util.Optional;
 
 public interface EntityService {
 
-    ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId);
+    Optional<String> fetchEntityName(TenantId tenantId, EntityId entityId);
 
     Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId);
 
