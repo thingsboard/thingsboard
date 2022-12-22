@@ -39,4 +39,5 @@ public interface AlarmCommentDao extends Dao<AlarmComment> {
 
     ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key);
 
+    void cleanUpAlarmComments(long auditLogsExpTime);
 }

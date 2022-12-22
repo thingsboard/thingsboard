@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -61,6 +62,8 @@ public class DefaultTbAlarmServiceTest {
     protected EdgeService edgeService;
     @MockBean
     protected AlarmService alarmService;
+    @MockBean
+    protected AlarmCommentService alarmCommentService;
     @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
