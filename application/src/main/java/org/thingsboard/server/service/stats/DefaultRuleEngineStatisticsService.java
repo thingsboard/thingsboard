@@ -116,6 +116,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                     .forEach((ruleChainId, ruleNodesErrors) -> {
                         ruleNodesErrors.forEach((ruleNodeId, ruleNodeExceptions) -> {
                             ruleChainService.reportRuleNodeErrors(tenantId, ruleChainId, ruleNodeId,
+                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getData(), ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMsgMetaData().getData(),
                                     ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMessage(), ruleNodeExceptions.size());
                         });
                     });

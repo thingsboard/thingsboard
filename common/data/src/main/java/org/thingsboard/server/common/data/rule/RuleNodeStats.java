@@ -19,10 +19,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class RuleNodeStats {
+    private String dataMsg;
+    private Map<String, String> metadataMsg;
     private String lastErrorMsg;
     private long errorsCount;
 }

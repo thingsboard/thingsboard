@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeStats;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by igor on 3/12/18.
@@ -105,10 +106,10 @@ public interface RuleChainService {
 
     ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
 
-    void clearRuleNodeStats(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId);
+    void clearRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
 
     void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId);
 
-    void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String lastErrorMsg, int errorsCount);
+    void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount);
 
 }

@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.kv;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.UUID;
 

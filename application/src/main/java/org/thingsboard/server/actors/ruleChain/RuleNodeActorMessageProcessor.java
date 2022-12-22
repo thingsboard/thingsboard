@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
@@ -118,7 +119,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 defaultCtx.tellFailure(msg.getMsg(), e);
             }
         } else {
-            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode, msg.getMsg().getData(), msg.getMsg().getMetaData()));
         }
     }
 
@@ -141,7 +142,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 msg.getCtx().tellFailure(msg.getMsg(), e);
             }
         } else {
-            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode, msg.getMsg().getData(), msg.getMsg().getMetaData()));
         }
     }
 
@@ -161,7 +162,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    protected RuleNodeException getInactiveException() {
-        return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, ruleNode);
+    protected RuleNodeException getInactiveException(String data, TbMsgMetaData metaData) {
+        return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, ruleNode, data, metaData);
     }
 }

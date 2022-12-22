@@ -817,20 +817,22 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public void clearRuleNodeStats(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+    public void clearRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId) {
         attributesService.removeAll(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
     }
 
     public void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId) {
         List<RuleNode> ruleNodes = ruleNodeDao.findAllRuleNodesByRuleChainId(ruleChainId);
         for (RuleNode ruleNode : ruleNodes) {
-            attributesService.removeAll(tenantId, ruleNode.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
+            clearRuleNodeStats(tenantId, ruleNode.getId());
         }
     }
 
     @Override
-    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String lastErrorMsg, int errorsCount) {
+    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount) {
         updateRuleNodeStats(tenantId, ruleNodeId, ruleNodeStats -> {
+            ruleNodeStats.setDataMsg(data);
+            ruleNodeStats.setMetadataMsg(metadata);
             ruleNodeStats.setLastErrorMsg(lastErrorMsg);
             ruleNodeStats.setErrorsCount(ruleNodeStats.getErrorsCount() + errorsCount);
         });

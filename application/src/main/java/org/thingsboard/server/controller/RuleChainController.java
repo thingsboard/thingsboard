@@ -584,8 +584,12 @@ public class RuleChainController extends BaseController {
         return tbRuleChainService.unassignRuleChainFromEdge(getTenantId(), ruleChain, edge, getCurrentUser());
     }
 
+
+    @ApiOperation(value = "Clear error stats for Rule Node (clearRuleNodeStats)",
+            notes = "Clear the error statistics on certain Rule Node . " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @DeleteMapping(value = "/ruleNode/{ruleNodeId}/stats")
+    @DeleteMapping(value = "/ruleNode/{ruleNodeId}/clearRuleNodeStats")
+    @ResponseStatus(value = HttpStatus.OK)
     public void clearRuleNodeStats(@ApiParam(value = RULE_NODE_ID_PARAM_DESCRIPTION)
                                    @PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
         checkParameter(RULE_NODE_ID, strRuleNodeId);
@@ -593,14 +597,16 @@ public class RuleChainController extends BaseController {
             RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
             RuleNode ruleNode = checkRuleNode(ruleNodeId, Operation.WRITE);
 
-            ruleChainService.clearRuleNodeStats(getTenantId(), ruleNode.getRuleChainId(), ruleNodeId);
+            ruleChainService.clearRuleNodeStats(getTenantId(), ruleNode.getId());
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
+    @ApiOperation(value = "Clear error stats for all Rule Nodes in Rule Chain (clearRuleChainStats)",
+            notes = "Clears error statistics for each Rule Node that has one in certain Rule Chain. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @DeleteMapping(value = "/ruleChain/{ruleChainId}/clearRuleNodesStats")
+    @DeleteMapping(value = "/ruleChain/{ruleChainId}/clearRuleChainStats")
     @ResponseStatus(value = HttpStatus.OK)
     public void clearRuleChainStats(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
                                     @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
