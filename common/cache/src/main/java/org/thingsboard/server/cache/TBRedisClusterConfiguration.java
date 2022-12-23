@@ -50,5 +50,5 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
             return new JedisConnectionFactory(clusterConfiguration, buildPoolConfig());
         }
     }
-
 }
+

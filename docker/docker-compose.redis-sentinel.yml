@@ -24,7 +24,7 @@ services:
       - REDIS_REPLICATION_MODE=master
       - REDIS_PASSWORD=str0ng_passw0rd
     volumes:
-      - ./tb-node/redis-sentinel/redis:/bitnami/redis/data
+      - ./tb-node/redis-sentinel/master:/bitnami/redis/data
     ports:
       - '127.0.0.1:6379:6379'
   redis-slave:

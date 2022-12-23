@@ -194,8 +194,7 @@ public class ThingsBoardDbInstaller {
                     dockerCompose.withCommand("volume create " + redisClusterDataVolume + '-' + i);
                     dockerCompose.invokeDocker();
                 }
-            }
-            else if (IS_REDIS_SENTINEL) {
+            } else if (IS_REDIS_SENTINEL) {
                 additionalServices += " redis-master";
                 additionalServices += " redis-slave";
                 additionalServices += " redis-sentinel";
@@ -206,8 +205,7 @@ public class ThingsBoardDbInstaller {
                 dockerCompose.invokeDocker();
                 dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "sentinel");
                 dockerCompose.invokeDocker();
-            }
-            else {
+            } else {
                 additionalServices += " redis";
                 dockerCompose.withCommand("volume create " + redisDataVolume);
                 dockerCompose.invokeDocker();
