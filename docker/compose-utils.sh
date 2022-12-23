@@ -168,7 +168,7 @@ function permissionList() {
         ;;
         redis-sentinel)
           PERMISSION_LIST="$PERMISSION_LIST
-                    1001 1001 tb-node/redis-sentinel/redis
+                    1001 1001 tb-node/redis-sentinel/master
                     1001 1001 tb-node/redis-sentinel/slave
                     1001 1001 tb-node/redis-sentinel/sentinel
                     "
