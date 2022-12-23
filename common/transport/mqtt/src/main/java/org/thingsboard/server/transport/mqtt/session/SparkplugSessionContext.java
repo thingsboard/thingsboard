@@ -23,12 +23,12 @@ import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Created by ashvayka on 19.01.17.
+ * Created by nickAS21 on 08.12.22
  */
 @Slf4j
-public class GatewayDeviceSessionCtx extends AbstractGatewaySessionContext {
+public class SparkplugSessionContext extends AbstractGatewaySessionContext {
 
-    public GatewayDeviceSessionCtx(AbstractGatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
+    public SparkplugSessionContext(AbstractGatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
                                    DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap,
                                    TransportService transportService) {
         super(parent, deviceInfo, deviceProfile, mqttQoSMap, transportService);

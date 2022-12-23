@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
@@ -29,17 +32,18 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Created by nickAS21 on 08.12.22
+ * Created by nickAS21 on 23.12.22
  */
 @Slf4j
-public class SparkplugSessionCtx extends MqttDeviceAwareSessionContext implements SessionMsgListener {
+public abstract class AbstractGatewaySessionContext extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
-    private final SparkplugNodeSessionHandler parent;
+
+    private final AbstractGatewaySessionHandler parent;
     private final TransportService transportService;
 
-    public SparkplugSessionCtx(SparkplugNodeSessionHandler parent, TransportDeviceInfo deviceInfo,
-                               DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap,
-                               TransportService transportService) {
+    public AbstractGatewaySessionContext(AbstractGatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
+                                   DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap,
+                                   TransportService transportService) {
         super(UUID.randomUUID(), mqttQoSMap);
         this.parent = parent;
         setSessionInfo(SessionInfoProto.newBuilder()
@@ -77,50 +81,50 @@ public class SparkplugSessionCtx extends MqttDeviceAwareSessionContext implement
 
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
-//        try {
-//            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
-//        } catch (Exception e) {
-//            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
-//        }
+        try {
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
     }
 
     @Override
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
-//        log.trace("[{}] Received attributes update notification to device", sessionId);
-//        try {
-//            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), notification).ifPresent(parent::writeAndFlush);
-//        } catch (Exception e) {
-//            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
-//        }
+        log.trace("[{}] Received attributes update notification to device", sessionId);
+        try {
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), notification).ifPresent(parent::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
     }
 
     @Override
     public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg request) {
-//        log.trace("[{}] Received RPC command to device", sessionId);
-//        try {
-//            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(
-//                    payload -> {
-//                        ChannelFuture channelFuture = parent.writeAndFlush(payload);
-//                        if (request.getPersisted()) {
-//                            channelFuture.addListener(result -> {
-//                                if (result.cause() == null) {
-//                                    if (!isAckExpected(payload)) {
-//                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
-//                                    } else if (request.getPersisted()) {
-//                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
-//
-//                                    }
-//                                }
-//                            });
-//                        }
-//                    }
-//            );
-//        } catch (Exception e) {
-//            transportService.process(getSessionInfo(),
-//                    TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
-//                            .setRequestId(request.getRequestId()).setError("Failed to convert device RPC command to MQTT msg").build(), TransportServiceCallback.EMPTY);
-//            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
-//        }
+        log.trace("[{}] Received RPC command to device", sessionId);
+        try {
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(
+                    payload -> {
+                        ChannelFuture channelFuture = parent.writeAndFlush(payload);
+                        if (request.getPersisted()) {
+                            channelFuture.addListener(result -> {
+                                if (result.cause() == null) {
+                                    if (!isAckExpected(payload)) {
+                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                    } else if (request.getPersisted()) {
+                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+
+                                    }
+                                }
+                            });
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            transportService.process(getSessionInfo(),
+                    TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
+                            .setRequestId(request.getRequestId()).setError("Failed to convert device RPC command to MQTT msg").build(), TransportServiceCallback.EMPTY);
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
     }
 
     @Override
