@@ -23,6 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -46,8 +47,8 @@ import java.util.Map;
 public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
-    @NotNull
-    private NotificationTargetId targetId;
+    @NotEmpty
+    private List<NotificationTargetId> targets;
 
     @NotNull
     private NotificationTemplateId templateId;
@@ -68,11 +69,18 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationRequestStats stats;
     @JsonIgnore
     private transient Map<String, String> templateContext;
+    @JsonIgnore
+    private transient HasCustomerId originatorEntity;
+
+    public void copyContext(NotificationRequest other) {
+        this.templateContext = other.getTemplateContext();
+        this.originatorEntity = other.getOriginatorEntity();
+    }
 
     @JsonIgnore
     @Override
     public String getName() {
-        return "To target " + targetId + " via " + StringUtils.join(deliveryMethods, ", ");
+        return "To targets " + targets + " via " + StringUtils.join(deliveryMethods, ", ");
     }
 
 }

@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.slack;
+package org.thingsboard.server.service.executors;
 
-import lombok.Data;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 
-@Data
-public class SlackConversation {
+@Component
+public class NotificationExecutorService extends AbstractListeningExecutor {
 
-    private String id;
-    private String name;
-
-    public enum Type {
-        USER,
-        PUBLIC_CHANNEL,
-        PRIVATE_CHANNEL
+    @Override
+    protected int getThreadPollSize() {
+        return 10; // FIXME [viacheslav]
     }
 
 }

@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api.slack;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
 
 import java.util.List;
 

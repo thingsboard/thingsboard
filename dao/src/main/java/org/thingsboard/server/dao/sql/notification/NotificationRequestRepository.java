@@ -36,6 +36,10 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
 
     Page<NotificationRequestEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
+    @Query("SELECT r.id FROM NotificationRequestEntity r WHERE r.status = :status AND r.ruleId = :ruleId")
+    List<UUID> findAllIdsByStatusAndRuleId(@Param("status") NotificationRequestStatus status,
+                                           @Param("ruleId") UUID ruleId);
+
     List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityTypeAndOriginatorEntityId(UUID ruleId, EntityType originatorEntityType, UUID originatorEntityId);
 
     Page<NotificationRequestEntity> findAllByStatus(NotificationRequestStatus status, Pageable pageable);
@@ -44,5 +48,11 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     @Transactional
     @Query("UPDATE NotificationRequestEntity r SET r.stats = :stats WHERE r.id = :id")
     void updateStatsById(@Param("id") UUID id, @Param("stats") JsonNode stats);
+
+    boolean existsByStatusAndTargetsContaining(NotificationRequestStatus status, String targetIdStr);
+
+    boolean existsByStatusAndTemplateId(NotificationRequestStatus status, UUID templateId);
+
+    int deleteAllByCreatedTimeBefore(long ts);
 
 }

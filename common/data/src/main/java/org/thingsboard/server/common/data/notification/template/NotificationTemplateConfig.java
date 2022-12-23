@@ -15,15 +15,32 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
+import javax.validation.Valid;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotEmpty;
 import java.util.Map;
 
 @Data
 public class NotificationTemplateConfig {
 
-    private DeliveryMethodNotificationTemplate defaultTemplate;
+    private String defaultTextTemplate;
+    @Valid
+    @NotEmpty
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
+
+    @JsonIgnore
+    @AssertTrue(message = "defaultTextTemplate must be specified if one absent for delivery method")
+    public boolean isValid() {
+        if (templates.values().stream().anyMatch(template -> StringUtils.isEmpty(template.getBody()))) {
+            return StringUtils.isNotEmpty(defaultTextTemplate);
+        } else {
+            return true;
+        }
+    }
 
 }

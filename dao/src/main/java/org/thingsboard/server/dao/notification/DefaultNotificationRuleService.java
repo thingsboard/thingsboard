@@ -39,8 +39,8 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
     }
 
     @Override
-    public NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId notificationRuleId) {
-        return notificationRuleDao.findById(tenantId, notificationRuleId.getId());
+    public NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
+        return notificationRuleDao.findById(tenantId, id.getId());
     }
 
     @Override
@@ -49,8 +49,8 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
     }
 
     @Override
-    public void deleteNotificationRule(TenantId tenantId, NotificationRuleId notificationRuleId) {
-        notificationRuleDao.removeById(tenantId, notificationRuleId.getId());
+    public void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
+        notificationRuleDao.removeById(tenantId, id.getId());
     }
 
     private static class NotificationRuleValidator extends DataValidator<NotificationRule> {

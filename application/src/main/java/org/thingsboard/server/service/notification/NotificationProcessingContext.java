@@ -18,7 +18,10 @@ package org.thingsboard.server.service.notification;
 import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -32,14 +35,13 @@ import org.thingsboard.server.dao.notification.NotificationTemplateService;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class NotificationProcessingContext {
 
     @Getter
     private final TenantId tenantId;
+    private final HasCustomerId originatorEntity;
     private final NotificationSettings settings;
     @Getter
     private final NotificationRequest request;
@@ -49,26 +51,28 @@ public class NotificationProcessingContext {
     private NotificationTemplate notificationTemplate;
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
     @Getter
-    private NotificationRequestStats stats;
+    private final NotificationRequestStats stats;
 
     @Builder
-    public NotificationProcessingContext(TenantId tenantId, NotificationSettings settings, NotificationRequest request, Map<String, String> additionalTemplateContext) {
+    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationSettings settings) {
         this.tenantId = tenantId;
-        this.settings = settings;
+        this.originatorEntity = request.getOriginatorEntity();
         this.request = request;
-        this.additionalTemplateContext = additionalTemplateContext;
+        this.settings = settings;
+        this.additionalTemplateContext = request.getTemplateContext();
+        this.stats = new NotificationRequestStats();
     }
 
     public void init(NotificationTemplateService templateService) {
         notificationTemplate = templateService.findNotificationTemplateById(tenantId, request.getTemplateId());
         NotificationTemplateConfig config = notificationTemplate.getConfiguration();
-        templates = request.getDeliveryMethods().stream()
-                .collect(Collectors.toMap(k -> k, deliveryMethod -> {
-                    return Optional.ofNullable(config.getTemplates())
-                            .map(templates -> templates.get(deliveryMethod))
-                            .orElse(config.getDefaultTemplate());
-                }));
-        stats = new NotificationRequestStats();
+        for (NotificationDeliveryMethod deliveryMethod : request.getDeliveryMethods()) {
+            DeliveryMethodNotificationTemplate template = config.getTemplates().get(deliveryMethod);
+            if (StringUtils.isEmpty(template.getBody())) {
+                template.setBody(config.getDefaultTextTemplate());
+            }
+        }
+        templates = config.getTemplates();
     }
 
     public <T extends DeliveryMethodNotificationTemplate> T getTemplate(NotificationDeliveryMethod deliveryMethod) {
@@ -88,6 +92,10 @@ public class NotificationProcessingContext {
             templateContext.putAll(additionalTemplateContext);
         }
         return templateContext;
+    }
+
+    public CustomerId getOriginatorCustomerId() {
+        return originatorEntity != null ? originatorEntity.getCustomerId() : null;
     }
 
 }

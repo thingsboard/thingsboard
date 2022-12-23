@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -78,10 +79,12 @@ public class NotificationRuleController extends BaseController {
 
     @DeleteMapping("/rule/{id}")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    public void deleteNotificationRule(@PathVariable UUID id) throws Exception {
+    public void deleteNotificationRule(@PathVariable UUID id,
+                                       @AuthenticationPrincipal SecurityUser user) throws Exception {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);
         NotificationRule notificationRule = checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleById, Operation.DELETE);
-        doDeleteAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::deleteNotificationRule);
+        doDeleteAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::deleteNotificationRuleById);
+        tbClusterService.broadcastEntityStateChangeEvent(user.getTenantId(), notificationRuleId, ComponentLifecycleEvent.DELETED);
     }
 
 }

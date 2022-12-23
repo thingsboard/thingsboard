@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.notification;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;

@@ -25,10 +25,10 @@ public interface NotificationRuleService {
 
     NotificationRule saveNotificationRule(TenantId tenantId, NotificationRule notificationRule);
 
-    NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId notificationRuleId);
+    NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId id);
 
     PageData<NotificationRule> findNotificationRulesByTenantId(TenantId tenantId, PageLink pageLink);
 
-    void deleteNotificationRule(TenantId tenantId, NotificationRuleId notificationRuleId);
+    void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id);
 
 }

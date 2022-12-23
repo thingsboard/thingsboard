@@ -51,15 +51,15 @@ public class TbNotificationNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(ctx.getTenantId())
-                .targetId(config.getTargetId())
+                .targets(config.getTargets())
                 .templateId(config.getTemplateId())
                 .deliveryMethods(config.getDeliveryMethods())
                 .originatorType(NotificationOriginatorType.RULE_NODE)
-                .originatorEntityId(ctx.getSelfId())
+                .originatorEntityId(ctx.getSelfId()) // todo: duplicate originator from msg originator, set originator's customerId
                 .build();
         notificationRequest.setTemplateContext(msg.getMetaData().getData());
 
-        DonAsynchron.withCallback(ctx.getDbCallbackExecutor().executeAsync(() -> {
+        DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() -> {
                     return ctx.getNotificationManager().processNotificationRequest(ctx.getTenantId(), notificationRequest);
                 }),
                 r -> {

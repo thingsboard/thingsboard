@@ -17,14 +17,15 @@ package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 
-import javax.validation.constraints.Min;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 
 @Data
 public class NonConfirmedNotificationEscalation {
 
-    @Min(1)
+    @Max(NotificationRequestConfig.MAX_SENDING_DELAY)
     private int delayInSec;
     @NotNull
     private NotificationTargetId notificationTargetId;

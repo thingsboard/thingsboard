@@ -33,8 +33,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
-import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfigType;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -42,6 +42,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
@@ -55,17 +56,16 @@ public class NotificationTargetController extends BaseController {
 
     @PostMapping("/target")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationTarget saveNotificationTarget(@RequestBody NotificationTarget notificationTarget,
+    public NotificationTarget saveNotificationTarget(@RequestBody @Valid NotificationTarget notificationTarget,
                                                      @AuthenticationPrincipal SecurityUser user) throws Exception {
         checkEntity(notificationTarget.getId(), notificationTarget, Resource.NOTIFICATION_TARGET);
         if (!user.isSystemAdmin()) {
             NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
-            if (targetConfig.getType() == NotificationTargetConfigType.SINGLE_USER ||
-                    targetConfig.getType() == NotificationTargetConfigType.USER_LIST) {
-                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration(), null);
-                for (User recipient : recipients.getData()) {
-                    accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
-                }
+            PageDataIterable<User> recipients = new PageDataIterable<>(pageLink -> {
+                return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, targetConfig, pageLink);
+            }, 200);
+            for (User recipient : recipients) {
+                accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
             }
         }
 
@@ -86,7 +86,7 @@ public class NotificationTargetController extends BaseController {
                                                                    @RequestParam int page,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, null, null, null);
-        PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration(), pageLink);
+        PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, notificationTarget.getConfiguration(), pageLink);
         if (!user.isSystemAdmin()) {
             for (User recipient : recipients.getData()) {
                 accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
@@ -112,7 +112,7 @@ public class NotificationTargetController extends BaseController {
     public void deleteNotificationTarget(@PathVariable UUID id) throws Exception {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
         NotificationTarget notificationTarget = checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.DELETE);
-        doDeleteAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::deleteNotificationTarget);
+        doDeleteAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::deleteNotificationTargetById);
     }
 
 }

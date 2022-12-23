@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification;
+package org.thingsboard.server.common.data.notification.template;
 
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Data;
 
-public interface NotificationSchedulerService {
+@Data
+public class SlackConversation {
 
-    void scheduleNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId, long requestTs);
+    private String id;
+    private String name;
+
+    public enum Type {
+        USER,
+        PUBLIC_CHANNEL,
+        PRIVATE_CHANNEL
+    }
 
 }

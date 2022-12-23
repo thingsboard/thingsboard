@@ -1042,5 +1042,4 @@ message NotificationSchedulerServiceMsg {
   int64 requestIdMSB = 3;
   int64 requestIdLSB = 4;
   int64 ts = 5;
-  bool deleted = 6;
 }

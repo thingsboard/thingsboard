@@ -377,11 +377,17 @@ public abstract class BaseController {
      * */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public void handleValidationError(MethodArgumentNotValidException e, HttpServletResponse response) {
-        String errorMessage = "Validation error: " + e.getBindingResult().getAllErrors().stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+        String errorMessage = "Validation error: " + e.getFieldErrors().stream()
+                .map(fieldError -> {
+                    String property = fieldError.getField();
+                    if (property.equals("valid") || StringUtils.endsWith(property, ".valid")) { // when custom @AssertTrue is used
+                        property = "";
+                    }
+                    return (!property.isEmpty() ? (property + " ") : "") + fieldError.getDefaultMessage();
+                })
                 .collect(Collectors.joining(", "));
         ThingsboardException thingsboardException = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        handleThingsboardException(thingsboardException, response);
+        handleControllerException(thingsboardException, response);
     }
 
     <T> T checkNotNull(T reference) throws ThingsboardException {

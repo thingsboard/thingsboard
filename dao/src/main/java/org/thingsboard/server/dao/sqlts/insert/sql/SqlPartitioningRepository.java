@@ -79,8 +79,9 @@ public class SqlPartitioningRepository {
         }
     }
 
-    public void dropPartitionsBefore(String table, long ts, long partitionDurationMs) {
+    public long dropPartitionsBefore(String table, long ts, long partitionDurationMs) {
         List<Long> partitions = fetchPartitions(table);
+        long lastDroppedPartitionEndTime = -1;
         for (Long partitionStartTime : partitions) {
             long partitionEndTime = getPartitionEndTime(partitionStartTime, partitionDurationMs);
             if (partitionEndTime < ts) {
@@ -88,11 +89,13 @@ public class SqlPartitioningRepository {
                 boolean success = detachAndDropPartition(table, partitionStartTime);
                 if (success) {
                     log.info("[{}] Detached expired partition: {}", table, partitionStartTime);
+                    lastDroppedPartitionEndTime = Math.max(partitionEndTime, lastDroppedPartitionEndTime);
                 }
             } else {
                 log.debug("[{}] Skipping valid partition: {}", table, partitionStartTime);
             }
         }
+        return lastDroppedPartitionEndTime;
     }
 
     public void cleanupPartitionsCache(String table, long expTime, long partitionDurationMs) {

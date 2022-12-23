@@ -207,7 +207,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         } else {
             alarm.setPropagateRelationTypes(Collections.emptyList());
         }
-        alarm.setNotificationRuleId(createId(notificationRuleId, NotificationRuleId::new));
+        alarm.setNotificationRuleId(getEntityId(notificationRuleId, NotificationRuleId::new));
         return alarm;
     }
 }

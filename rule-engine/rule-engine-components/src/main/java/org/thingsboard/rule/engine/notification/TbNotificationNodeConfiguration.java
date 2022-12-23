@@ -25,13 +25,12 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNotificationNodeConfiguration> {
 
-    @NotNull
-    private NotificationTargetId targetId;
+    @NotEmpty
+    private List<NotificationTargetId> targets;
     @NotNull
     private NotificationTemplateId templateId;
     @NotEmpty
@@ -41,8 +40,6 @@ public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNoti
     @Override
     public TbNotificationNodeConfiguration defaultConfiguration() {
         TbNotificationNodeConfiguration config = new TbNotificationNodeConfiguration();
-        config.setTargetId(new NotificationTargetId(UUID.randomUUID()));
-        config.setTemplateId(new NotificationTemplateId(UUID.randomUUID()));
         config.setDeliveryMethods(List.of(NotificationDeliveryMethod.WEBSOCKET));
         config.setAdditionalConfig(new NotificationRequestConfig());
         return config;

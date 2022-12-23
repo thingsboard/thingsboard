@@ -15,18 +15,32 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
+import javax.validation.constraints.AssertTrue;
 import java.util.UUID;
 
 @Data
 public class CustomerUsersNotificationTargetConfig implements NotificationTargetConfig {
 
-    private UUID customerId;
+    private UUID customerId; // might not be set if using with notification rule
+    private boolean getCustomerIdFromOriginatorEntity; // e.g. from alarm
 
     @Override
     public NotificationTargetConfigType getType() {
         return NotificationTargetConfigType.CUSTOMER_USERS;
+    }
+
+    @AssertTrue(message = "customerId is required")
+    @JsonIgnore
+    public boolean isValid() {
+        if (!getCustomerIdFromOriginatorEntity) {
+            return customerId != null && !customerId.equals(EntityId.NULL_UUID);
+        } else {
+            return true;
+        }
     }
 
 }

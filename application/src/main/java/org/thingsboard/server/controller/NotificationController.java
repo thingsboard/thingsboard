@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.NotificationManager;
-import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -102,6 +102,7 @@ public class NotificationController extends BaseController {
 
         notificationRequest.setOriginatorType(NotificationOriginatorType.ADMIN);
         notificationRequest.setOriginatorEntityId(user.getId());
+        notificationRequest.setOriginatorEntity(user);
         if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != null) {
             throw new IllegalArgumentException("Unsupported notification info type");
         }

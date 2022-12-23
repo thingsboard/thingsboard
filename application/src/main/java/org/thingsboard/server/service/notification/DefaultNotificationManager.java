@@ -27,8 +27,10 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -37,7 +39,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -85,7 +87,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        log.debug("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
+        log.debug("Processing notification request (tenant id: {}, notification targets: {})", tenantId, notificationRequest.getTargets());
         notificationRequest.setTenantId(tenantId);
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         notificationRequest.getDeliveryMethods().forEach(deliveryMethod -> {
@@ -99,13 +101,9 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
             if (config.getSendingDelayInSec() > 0 && notificationRequest.getId() == null) {
                 notificationRequest.setStatus(NotificationRequestStatus.SCHEDULED);
                 NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
-                forwardToNotificationSchedulerService(tenantId, savedNotificationRequest.getId(), false);
+                forwardToNotificationSchedulerService(tenantId, savedNotificationRequest.getId());
                 return savedNotificationRequest;
             }
-        }
-        if (notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), new PageLink(1))
-                .getTotalElements() == 0) {
-            throw new IllegalArgumentException("No target recipients");
         }
 
         notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
@@ -113,48 +111,53 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
 
         NotificationProcessingContext ctx = NotificationProcessingContext.builder()
                 .tenantId(tenantId)
-                .settings(settings)
                 .request(savedNotificationRequest)
-                .additionalTemplateContext(notificationRequest.getTemplateContext())
+                .settings(settings)
                 .build();
         ctx.init(notificationTemplateService);
 
-        DaoUtil.processBatches(pageLink -> {
-            return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
-        }, 200, recipientsBatch -> {
-            List<ListenableFuture<Void>> results = new ArrayList<>();
-            for (NotificationDeliveryMethod deliveryMethod : savedNotificationRequest.getDeliveryMethods()) {
-                NotificationChannel notificationChannel = channels.get(deliveryMethod);
-                log.debug("Sending {} notifications for request {} to recipients batch", deliveryMethod, savedNotificationRequest.getId());
+        for (NotificationTargetId targetId : notificationRequest.getTargets()) {
+            DaoUtil.processBatches(pageLink -> {
+                return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getOriginatorCustomerId(), targetId, pageLink);
+            }, 200, recipientsBatch -> {
+                List<ListenableFuture<Void>> results = new ArrayList<>();
+                for (NotificationDeliveryMethod deliveryMethod : savedNotificationRequest.getDeliveryMethods()) {
+                    NotificationChannel notificationChannel = channels.get(deliveryMethod);
+                    log.debug("Sending {} notifications for request {} to recipients batch", deliveryMethod, savedNotificationRequest.getId());
 
-                List<User> recipients = recipientsBatch.getData();
-                for (User recipient : recipients) {
-                    ListenableFuture<Void> resultFuture = processForRecipient(notificationChannel, recipient, ctx);
-                    DonAsynchron.withCallback(resultFuture, result -> {
-                        ctx.getStats().reportSent(deliveryMethod);
-                    }, error -> {
-                        ctx.getStats().reportError(deliveryMethod, recipient, error);
-                    }, dbCallbackExecutorService);
-                    results.add(resultFuture);
+                    List<User> recipients = recipientsBatch.getData();
+                    for (User recipient : recipients) {
+                        ListenableFuture<Void> resultFuture = processForRecipient(notificationChannel, recipient, ctx);
+                        DonAsynchron.withCallback(resultFuture, result -> {
+                            ctx.getStats().reportSent(deliveryMethod, recipient);
+                        }, error -> {
+                            ctx.getStats().reportError(deliveryMethod, recipient, error);
+                        });
+                        results.add(resultFuture);
+                    }
                 }
-            }
 
-            Futures.allAsList(results).addListener(() -> {
-                try {
-                    notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), ctx.getStats());
-                } catch (Exception e) {
-                    log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
-                }
-            }, dbCallbackExecutorService);
-        });
+                Futures.allAsList(results).addListener(() -> {
+                    try {
+                        notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), ctx.getStats());
+                    } catch (Exception e) {
+                        log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
+                    }
+                }, dbCallbackExecutorService);
+            });
+        }
 
         return savedNotificationRequest;
     }
 
     private ListenableFuture<Void> processForRecipient(NotificationChannel notificationChannel, User recipient, NotificationProcessingContext ctx) {
+        NotificationDeliveryMethod deliveryMethod = notificationChannel.getDeliveryMethod();
+        if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
+            return Futures.immediateFailedFuture(new AlreadySentException());
+        }
         String text;
         try {
-            DeliveryMethodNotificationTemplate template = ctx.getTemplate(notificationChannel.getDeliveryMethod());
+            DeliveryMethodNotificationTemplate template = ctx.getTemplate(deliveryMethod);
             text = TbNodeUtils.processTemplate(template.getBody(), ctx.createTemplateContext(recipient));
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
@@ -162,14 +165,13 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         return notificationChannel.sendNotification(recipient, text, ctx);
     }
 
-    private void forwardToNotificationSchedulerService(TenantId tenantId, NotificationRequestId notificationRequestId, boolean deleted) {
+    private void forwardToNotificationSchedulerService(TenantId tenantId, NotificationRequestId notificationRequestId) {
         TransportProtos.NotificationSchedulerServiceMsg.Builder msg = TransportProtos.NotificationSchedulerServiceMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRequestIdMSB(notificationRequestId.getId().getMostSignificantBits())
                 .setRequestIdLSB(notificationRequestId.getId().getLeastSignificantBits())
-                .setTs(System.currentTimeMillis())
-                .setDeleted(deleted);
+                .setTs(System.currentTimeMillis());
         TransportProtos.ToCoreMsg toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                 .setNotificationSchedulerServiceMsg(msg)
                 .build();
@@ -216,7 +218,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                 .notificationRequestId(notificationRequestId)
                 .deleted(true)
                 .build());
-        forwardToNotificationSchedulerService(tenantId, notificationRequestId, true);
+        clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
     }
 
     @Override

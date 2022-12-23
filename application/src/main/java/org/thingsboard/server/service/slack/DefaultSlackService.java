@@ -30,7 +30,7 @@ import com.slack.api.model.ConversationType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;

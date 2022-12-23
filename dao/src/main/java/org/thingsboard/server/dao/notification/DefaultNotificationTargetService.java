@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
@@ -30,7 +31,6 @@ import org.thingsboard.server.common.data.notification.targets.SingleUserNotific
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.List;
@@ -43,12 +43,12 @@ import java.util.stream.Collectors;
 public class DefaultNotificationTargetService implements NotificationTargetService {
 
     private final NotificationTargetDao notificationTargetDao;
+    private final NotificationRequestDao notificationRequestDao;
+    private final NotificationRuleDao notificationRuleDao;
     private final UserService userService;
-    private final NotificationTargetValidator validator = new NotificationTargetValidator();
 
     @Override
     public NotificationTarget saveNotificationTarget(TenantId tenantId, NotificationTarget notificationTarget) {
-        validator.validate(notificationTarget, NotificationTarget::getTenantId);
         return notificationTargetDao.save(tenantId, notificationTarget);
     }
 
@@ -63,15 +63,15 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     @Override
-    public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId, PageLink pageLink) {
+    public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId notificationTargetId, PageLink pageLink) {
         NotificationTarget notificationTarget = findNotificationTargetById(tenantId, notificationTargetId);
         Objects.requireNonNull(notificationTarget, "Notification target [" + notificationTargetId + "] not found");
         NotificationTargetConfig configuration = notificationTarget.getConfiguration();
-        return findRecipientsForNotificationTargetConfig(tenantId, configuration, pageLink);
+        return findRecipientsForNotificationTargetConfig(tenantId, customerId, configuration, pageLink);
     }
 
     @Override
-    public PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, NotificationTargetConfig targetConfig, PageLink pageLink) {
+    public PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, CustomerId customerId, NotificationTargetConfig targetConfig, PageLink pageLink) {
         switch (targetConfig.getType()) {
             case SINGLE_USER: {
                 UserId userId = new UserId(((SingleUserNotificationTargetConfig) targetConfig).getUserId());
@@ -88,8 +88,14 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
                 if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
                     throw new IllegalArgumentException("Customer users target is not supported for system administrator");
                 }
-                CustomerId customerId = new CustomerId(((CustomerUsersNotificationTargetConfig) targetConfig).getCustomerId());
-                return userService.findCustomerUsers(tenantId, customerId, pageLink);
+                CustomerUsersNotificationTargetConfig customerUsersConfig = (CustomerUsersNotificationTargetConfig) targetConfig;
+                if (!customerUsersConfig.isGetCustomerIdFromOriginatorEntity()) {
+                    customerId = new CustomerId(customerUsersConfig.getCustomerId());
+                }
+                if (customerId != null && !customerId.isNullUid()) {
+                    return userService.findCustomerUsers(tenantId, customerId, pageLink);
+                }
+                break;
             }
             case ALL_USERS: {
                 if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
@@ -103,16 +109,14 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     @Override
-    public void deleteNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId) {
-        notificationTargetDao.removeById(tenantId, notificationTargetId.getId());
-    }
-
-    private static class NotificationTargetValidator extends DataValidator<NotificationTarget> {
-
-        @Override
-        protected void validateDataImpl(TenantId tenantId, NotificationTarget notificationTarget) {
-            super.validateDataImpl(tenantId, notificationTarget);
+    public void deleteNotificationTargetById(TenantId tenantId, NotificationTargetId id) {
+        if (notificationRequestDao.existsByStatusAndTargetId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
+            throw new IllegalArgumentException("Notification target is referenced by scheduled notification request");
         }
+        if (notificationRuleDao.existsByTargetId(tenantId, id)) {
+            throw new IllegalArgumentException("Notification target is being used in notification rule");
+        }
+        notificationTargetDao.removeById(tenantId, id.getId());
     }
 
 }

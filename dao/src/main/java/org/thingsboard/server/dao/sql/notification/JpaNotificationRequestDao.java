@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
@@ -37,6 +39,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @SqlDao
@@ -48,6 +51,12 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationRequestRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public List<NotificationRequestId> findIdsByRuleId(TenantId tenantId, NotificationRequestStatus requestStatus, NotificationRuleId ruleId) {
+        return notificationRequestRepository.findAllIdsByStatusAndRuleId(requestStatus, ruleId.getId()).stream()
+                .map(NotificationRequestId::new).collect(Collectors.toList());
     }
 
     @Override
@@ -63,6 +72,21 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public void updateStatsById(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats) {
         notificationRequestRepository.updateStatsById(notificationRequestId.getId(), JacksonUtil.valueToTree(stats));
+    }
+
+    @Override
+    public boolean existsByStatusAndTargetId(TenantId tenantId, NotificationRequestStatus status, NotificationTargetId targetId) {
+        return notificationRequestRepository.existsByStatusAndTargetsContaining(status, targetId.getId().toString());
+    }
+
+    @Override
+    public boolean existsByStatusAndTemplateId(TenantId tenantId, NotificationRequestStatus status, NotificationTemplateId templateId) {
+        return notificationRequestRepository.existsByStatusAndTemplateId(status, templateId.getId());
+    }
+
+    @Override
+    public int removeAllByCreatedTimeBefore(long ts) {
+        return notificationRequestRepository.deleteAllByCreatedTimeBefore(ts);
     }
 
     @Override

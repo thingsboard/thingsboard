@@ -16,24 +16,31 @@
 package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableScheduledFuture;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
 import javax.annotation.PostConstruct;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,8 +58,10 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
     private final NotificationManager notificationManager;
     private final NotificationRequestService notificationRequestService;
+    private final SchedulerComponent scheduler;
+    private final NotificationExecutorService notificationExecutor;
 
-    private final Map<NotificationRequestId, ScheduledFuture<?>> scheduledNotificationRequests = new ConcurrentHashMap<>();
+    private final Map<NotificationRequestId, ScheduledRequestMetadata> scheduledNotificationRequests = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -93,30 +102,48 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
             delayInMs = 0;
         }
 
-        ListenableScheduledFuture<?> scheduledTask = scheduledExecutor.schedule(() -> {
+        ScheduledFuture<?> scheduledTask = scheduler.schedule(() -> {
             NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, request.getId());
             if (notificationRequest == null) return;
 
-            notificationManager.processNotificationRequest(tenantId, notificationRequest);
+            notificationExecutor.executeAsync(() -> {
+                notificationManager.processNotificationRequest(tenantId, notificationRequest);
+            });
             scheduledNotificationRequests.remove(notificationRequest.getId());
         }, delayInMs, TimeUnit.MILLISECONDS);
-        scheduledNotificationRequests.put(request.getId(), scheduledTask);
+        scheduledNotificationRequests.put(request.getId(), new ScheduledRequestMetadata(tenantId, scheduledTask));
     }
 
-    @Override
-    public void onNotificationRequestDeleted(TenantId tenantId, NotificationRequestId notificationRequestId) {
-        removeAndCancel(notificationRequestId);
+    @EventListener(ComponentLifecycleMsg.class)
+    public void handleComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+            EntityId entityId = event.getEntityId();
+            switch (entityId.getEntityType()) {
+                case NOTIFICATION_REQUEST:
+                    cancelAndRemove((NotificationRequestId) entityId);
+                    break;
+                case TENANT:
+                    Set<NotificationRequestId> toCancel = new HashSet<>();
+                    scheduledNotificationRequests.forEach((notificationRequestId, scheduledRequestMetadata) -> {
+                        if (scheduledRequestMetadata.getTenantId().equals(entityId)) {
+                            toCancel.add(notificationRequestId);
+                        }
+                    });
+                    toCancel.forEach(this::cancelAndRemove);
+                    break;
+            }
+        }
     }
 
     @Override
     protected void cleanupEntityOnPartitionRemoval(NotificationRequestId notificationRequestId) {
-        removeAndCancel(notificationRequestId);
+        cancelAndRemove(notificationRequestId);
     }
 
-    private void removeAndCancel(NotificationRequestId notificationRequestId) {
-        ScheduledFuture<?> scheduledTask = scheduledNotificationRequests.remove(notificationRequestId);
-        if (scheduledTask != null) {
-            scheduledTask.cancel(false);
+    private void cancelAndRemove(NotificationRequestId notificationRequestId) {
+        ScheduledRequestMetadata md = scheduledNotificationRequests.remove(notificationRequestId);
+        if (md != null) {
+            md.getFuture().cancel(false);
         }
     }
 
@@ -128,6 +155,12 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
     @Override
     protected String getSchedulerExecutorName() {
         return "notifications-scheduler";
+    }
+
+    @Data
+    private static class ScheduledRequestMetadata {
+        private final TenantId tenantId;
+        private final ScheduledFuture<?> future;
     }
 
 }

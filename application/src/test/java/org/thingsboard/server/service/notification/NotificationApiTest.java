@@ -34,8 +34,6 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
-import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
@@ -366,6 +364,9 @@ public class NotificationApiTest extends AbstractControllerTest {
     }
 
     private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
+        if (deliveryMethods.length == 0) {
+            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEBSOCKET};
+        }
         NotificationTemplate notificationTemplate = createNotificationTemplate(text, deliveryMethods);
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(delayInSec);
@@ -373,10 +374,10 @@ public class NotificationApiTest extends AbstractControllerTest {
         notificationInfo.setDescription("The text: " + text);
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
-                .targetId(targetId)
+                .targets(List.of(targetId))
                 .templateId(notificationTemplate.getId())
                 .info(notificationInfo)
-                .deliveryMethods(deliveryMethods.length > 0 ? List.of(deliveryMethods) : List.of(NotificationDeliveryMethod.WEBSOCKET))
+                .deliveryMethods(List.of(deliveryMethods))
                 .additionalConfig(config)
                 .build();
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);
@@ -388,18 +389,18 @@ public class NotificationApiTest extends AbstractControllerTest {
         notificationTemplate.setName("Notification template for testing");
         notificationTemplate.setNotificationType("Just a test");
         NotificationTemplateConfig config = new NotificationTemplateConfig();
-        DeliveryMethodNotificationTemplate defaultTemplate = new DeliveryMethodNotificationTemplate();
-        defaultTemplate.setBody(text);
-        config.setDefaultTemplate(defaultTemplate);
+        config.setDefaultTextTemplate(text);
+        config.setTemplates(new HashMap<>());
         for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
             if (deliveryMethod == NotificationDeliveryMethod.EMAIL) {
                 EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
                 emailNotificationTemplate.setSubject("Hello from test");
-                emailNotificationTemplate.setBody(text);
                 emailNotificationTemplate.setMethod(deliveryMethod);
-                config.setTemplates(Map.of(
-                        deliveryMethod, emailNotificationTemplate
-                ));
+                config.getTemplates().put(deliveryMethod, emailNotificationTemplate);
+            } else {
+                DeliveryMethodNotificationTemplate defaultTemplate = new DeliveryMethodNotificationTemplate();
+                defaultTemplate.setMethod(deliveryMethod);
+                config.getTemplates().put(deliveryMethod, defaultTemplate);
             }
         }
         notificationTemplate.setConfiguration(config);

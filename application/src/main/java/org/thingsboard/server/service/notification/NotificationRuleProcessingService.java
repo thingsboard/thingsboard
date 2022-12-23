@@ -17,7 +17,6 @@ package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface NotificationRuleProcessingService {
@@ -25,7 +24,5 @@ public interface NotificationRuleProcessingService {
     ListenableFuture<Void> onAlarmCreatedOrUpdated(TenantId tenantId, Alarm alarm);
 
     ListenableFuture<Void> onAlarmDeleted(TenantId tenantId, Alarm alarm);
-
-    ListenableFuture<Void> onNotificationRuleDeleted(TenantId tenantId, NotificationRuleId ruleId);
 
 }

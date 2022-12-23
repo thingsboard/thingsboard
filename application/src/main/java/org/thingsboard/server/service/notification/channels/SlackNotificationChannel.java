@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.thingsboard.rule.engine.api.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.AlreadySentException;

@@ -296,19 +296,22 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         if (savedDifferentTenant != null) {
             login(DIFFERENT_TENANT_ADMIN_EMAIL, DIFFERENT_TENANT_ADMIN_PASSWORD);
         } else {
-            loginSysAdmin();
-
-            Tenant tenant = new Tenant();
-            tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
-            savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
-            differentTenantId = savedDifferentTenant.getId();
-            Assert.assertNotNull(savedDifferentTenant);
-            User differentTenantAdmin = new User();
-            differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-            differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
-            differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
-            savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+            createDifferentTenant();
         }
+    }
+
+    protected void createDifferentTenant() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
+        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        differentTenantId = savedDifferentTenant.getId();
+        Assert.assertNotNull(savedDifferentTenant);
+        User differentTenantAdmin = new User();
+        differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
+        differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
+        savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
     }
 
     protected void loginDifferentCustomer() throws Exception {

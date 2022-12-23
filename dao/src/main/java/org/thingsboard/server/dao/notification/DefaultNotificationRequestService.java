@@ -43,7 +43,9 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         notificationRequestValidator.validate(notificationRequest, NotificationRequest::getTenantId);
-        return notificationRequestDao.save(tenantId, notificationRequest);
+        NotificationRequest savedNotificationRequest = notificationRequestDao.save(tenantId, notificationRequest);
+        savedNotificationRequest.copyContext(notificationRequest);
+        return savedNotificationRequest;
     }
 
     @Override
@@ -54,6 +56,11 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public PageData<NotificationRequest> findNotificationRequestsByTenantId(TenantId tenantId, PageLink pageLink) {
         return notificationRequestDao.findByTenantIdAndPageLink(tenantId, pageLink);
+    }
+
+    @Override
+    public List<NotificationRequestId> findNotificationRequestsIdsByStatusAndRuleId(TenantId tenantId, NotificationRequestStatus requestStatus, NotificationRuleId ruleId) {
+        return notificationRequestDao.findIdsByRuleId(tenantId, requestStatus, ruleId);
     }
 
     @Override

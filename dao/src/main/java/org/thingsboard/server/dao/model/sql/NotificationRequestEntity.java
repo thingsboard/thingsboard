@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
@@ -27,7 +26,6 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
@@ -44,9 +42,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
-import java.util.Arrays;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -58,8 +54,8 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.TENANT_ID_PROPERTY, nullable = false)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGET_ID_PROPERTY, nullable = false)
-    private UUID targetId;
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGETS_PROPERTY, nullable = false)
+    private String targets;
 
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY, nullable = false)
     private UUID templateId;
@@ -102,11 +98,11 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     public NotificationRequestEntity(NotificationRequest notificationRequest) {
         setId(notificationRequest.getUuidId());
         setCreatedTime(notificationRequest.getCreatedTime());
-        setTenantId(getUuid(notificationRequest.getTenantId()));
-        setTargetId(getUuid(notificationRequest.getTargetId()));
+        setTenantId(getTenantUuid(notificationRequest.getTenantId()));
+        setTargets(listToString(notificationRequest.getTargets()));
         setTemplateId(getUuid(notificationRequest.getTemplateId()));
         setInfo(toJson(notificationRequest.getInfo()));
-        setDeliveryMethods(StringUtils.join(notificationRequest.getDeliveryMethods(), ','));
+        setDeliveryMethods(listToString(notificationRequest.getDeliveryMethods()));
         setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
         setOriginatorType(notificationRequest.getOriginatorType());
         if (notificationRequest.getOriginatorEntityId() != null) {
@@ -123,20 +119,17 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         NotificationRequest notificationRequest = new NotificationRequest();
         notificationRequest.setId(new NotificationRequestId(id));
         notificationRequest.setCreatedTime(createdTime);
-        notificationRequest.setTenantId(createId(tenantId, TenantId::new));
-        notificationRequest.setTargetId(createId(targetId, NotificationTargetId::new));
-        notificationRequest.setTemplateId(createId(templateId, NotificationTemplateId::new));
+        notificationRequest.setTenantId(getTenantId(tenantId));
+        notificationRequest.setTargets(listFromString(targets, uuid -> new NotificationTargetId(UUID.fromString(uuid))));
+        notificationRequest.setTemplateId(getEntityId(templateId, NotificationTemplateId::new));
         notificationRequest.setInfo(fromJson(info, NotificationInfo.class));
-        if (deliveryMethods != null) {
-            notificationRequest.setDeliveryMethods(Arrays.stream(StringUtils.split(deliveryMethods, ','))
-                    .filter(StringUtils::isNotBlank).map(NotificationDeliveryMethod::valueOf).collect(Collectors.toList()));
-        }
+        notificationRequest.setDeliveryMethods(listFromString(deliveryMethods, NotificationDeliveryMethod::valueOf));
         notificationRequest.setAdditionalConfig(fromJson(additionalConfig, NotificationRequestConfig.class));
         notificationRequest.setOriginatorType(originatorType);
         if (originatorEntityId != null) {
             notificationRequest.setOriginatorEntityId(EntityIdFactory.getByTypeAndUuid(originatorEntityType, originatorEntityId));
         }
-        notificationRequest.setRuleId(createId(ruleId, NotificationRuleId::new));
+        notificationRequest.setRuleId(getEntityId(ruleId, NotificationRuleId::new));
         notificationRequest.setStatus(status);
         notificationRequest.setStats(fromJson(stats, NotificationRequestStats.class));
         return notificationRequest;

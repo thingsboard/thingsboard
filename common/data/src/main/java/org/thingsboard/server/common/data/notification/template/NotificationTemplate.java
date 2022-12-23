@@ -39,6 +39,7 @@ public class NotificationTemplate extends BaseData<NotificationTemplateId> imple
     @NotNull
     private String notificationType;
     @Valid
+    @NotNull
     private NotificationTemplateConfig configuration;
 
 }

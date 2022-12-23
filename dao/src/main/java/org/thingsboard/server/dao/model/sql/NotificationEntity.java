@@ -21,7 +21,6 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -90,8 +89,8 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         Notification notification = new Notification();
         notification.setId(new NotificationId(id));
         notification.setCreatedTime(createdTime);
-        notification.setRequestId(createId(requestId, NotificationRequestId::new));
-        notification.setRecipientId(createId(recipientId, UserId::new));
+        notification.setRequestId(getEntityId(requestId, NotificationRequestId::new));
+        notification.setRecipientId(getEntityId(recipientId, UserId::new));
         notification.setText(type);
         notification.setText(text);
         notification.setInfo(fromJson(info, NotificationInfo.class));

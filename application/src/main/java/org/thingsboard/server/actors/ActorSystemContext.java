@@ -91,6 +91,7 @@ import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
+import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -303,6 +304,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private ExternalCallExecutorService externalCallExecutorService;
+
+    @Autowired
+    @Getter
+    private NotificationExecutorService notificationExecutor;
 
     @Autowired
     @Getter

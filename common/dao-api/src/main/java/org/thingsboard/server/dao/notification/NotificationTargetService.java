@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
@@ -31,10 +32,10 @@ public interface NotificationTargetService {
 
     PageData<NotificationTarget> findNotificationTargetsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId, PageLink pageLink);
+    PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId notificationTargetId, PageLink pageLink);
 
-    PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, NotificationTargetConfig targetConfig, PageLink pageLink);
+    PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, CustomerId customerId, NotificationTargetConfig targetConfig, PageLink pageLink);
 
-    void deleteNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId);
+    void deleteNotificationTargetById(TenantId tenantId, NotificationTargetId id);
 
 }

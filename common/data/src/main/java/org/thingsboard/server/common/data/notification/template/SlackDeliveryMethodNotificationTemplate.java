@@ -22,6 +22,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
 
+    private SlackConversation.Type conversationType;
+    // add Conversation type!
     private String conversationId; // not required, set from user's name if not set
 
 }

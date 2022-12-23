@@ -33,6 +33,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
@@ -45,7 +46,7 @@ public class NotificationTemplateController extends BaseController {
 
     @PostMapping("/template")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationTemplate saveNotificationTemplate(@RequestBody NotificationTemplate notificationTemplate) throws Exception {
+    public NotificationTemplate saveNotificationTemplate(@RequestBody @Valid NotificationTemplate notificationTemplate) throws Exception {
         checkEntity(notificationTemplate.getId(), notificationTemplate, Resource.NOTIFICATION_TEMPLATE);
         return doSaveAndLog(EntityType.NOTIFICATION_TEMPLATE, notificationTemplate, notificationTemplateService::saveNotificationTemplate);
     }

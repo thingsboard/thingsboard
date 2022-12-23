@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -31,9 +32,9 @@ import javax.validation.constraints.NotNull;
 @EqualsAndHashCode(callSuper = true)
 public class NotificationTarget extends BaseData<NotificationTargetId> implements HasTenantId, HasName {
 
-    @NotNull
     private TenantId tenantId;
     @NotBlank
+    @NoXss
     private String name;
     @NotNull
     @Valid

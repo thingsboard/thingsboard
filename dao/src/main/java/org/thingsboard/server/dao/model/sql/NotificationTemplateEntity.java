@@ -58,7 +58,7 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
     public NotificationTemplateEntity(NotificationTemplate notificationTemplate) {
         setId(notificationTemplate.getUuidId());
         setCreatedTime(notificationTemplate.getCreatedTime());
-        setTenantId(getUuid(notificationTemplate.getTenantId()));
+        setTenantId(getTenantUuid(notificationTemplate.getTenantId()));
         setName(notificationTemplate.getName());
         setNotificationType(notificationTemplate.getNotificationType());
         setConfiguration(toJson(notificationTemplate.getConfiguration()));
@@ -69,7 +69,7 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setId(new NotificationTemplateId(id));
         notificationTemplate.setCreatedTime(createdTime);
-        notificationTemplate.setTenantId(createId(tenantId, TenantId::fromUUID));
+        notificationTemplate.setTenantId(getTenantId(tenantId));
         notificationTemplate.setName(name);
         notificationTemplate.setNotificationType(notificationType);
         notificationTemplate.setConfiguration(fromJson(configuration, NotificationTemplateConfig.class));

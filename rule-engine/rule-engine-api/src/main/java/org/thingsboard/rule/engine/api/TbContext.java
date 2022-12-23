@@ -272,6 +272,8 @@ public interface TbContext {
 
     ListeningExecutor getExternalCallExecutor();
 
+    ListeningExecutor getNotificationExecutor();
+
     MailService getMailService(boolean isSystem);
 
     SmsService getSmsService();

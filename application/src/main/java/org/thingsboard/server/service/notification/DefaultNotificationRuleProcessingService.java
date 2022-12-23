@@ -21,9 +21,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,13 +35,16 @@ import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.rule.NonConfirmedNotificationEscalation;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.executors.NotificationExecutorService;
 
 import java.util.List;
 import java.util.Map;
@@ -53,7 +59,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     private final NotificationRequestService notificationRequestService;
     @Autowired @Lazy
     private NotificationManager notificationManager;
-    private final DbCallbackExecutorService dbCallbackExecutorService;
+    private final NotificationExecutorService notificationExecutor;
 
     @Override
     public ListenableFuture<Void> onAlarmCreatedOrUpdated(TenantId tenantId, Alarm alarm) {
@@ -67,23 +73,12 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
     private ListenableFuture<Void> processAlarmUpdate(TenantId tenantId, Alarm alarm, boolean deleted) {
         if (alarm.getNotificationRuleId() == null) return Futures.immediateFuture(null);
-        return dbCallbackExecutorService.submit(() -> {
+        return notificationExecutor.submit(() -> {
             onAlarmUpdate(tenantId, alarm.getNotificationRuleId(), alarm, deleted);
             return null;
         });
     }
 
-    @Override
-    public ListenableFuture<Void> onNotificationRuleDeleted(TenantId tenantId, NotificationRuleId ruleId) {
-        return dbCallbackExecutorService.submit(() -> {
-            // FIXME [viacheslav]
-            // need to remove fk constraint in notificationRequest to rule
-            // todo: do we need to remove all notifications when notification request is deleted?
-            return null;
-        });
-    }
-
-    // todo: think about: what if notification rule was updated?
     private void onAlarmUpdate(TenantId tenantId, NotificationRuleId notificationRuleId, Alarm alarm, boolean deleted) {
         log.debug("Processing alarm update ({}) with notification rule {}", alarm.getId(), notificationRuleId);
         List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(tenantId, notificationRuleId, alarm.getId());
@@ -91,11 +86,14 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         if (notificationRule == null) return;
 
         if (alarmAcknowledged(alarm) || deleted) {
-            for (NotificationRequest notificationRequest : notificationRequests) {
-                notificationManager.deleteNotificationRequest(tenantId, notificationRequest.getId());
-                // todo: or should we mark already sent notifications as read and delete only scheduled?
+            if (notificationRequests.isEmpty()) {
+                return;
             }
-            return;
+            for (NotificationRequest notificationRequest : notificationRequests) {
+                if (notificationRequest.getStatus() == NotificationRequestStatus.SCHEDULED) {
+                    notificationManager.deleteNotificationRequest(tenantId, notificationRequest.getId());
+                }
+            }
         }
 
         if (notificationRequests.isEmpty()) {
@@ -139,20 +137,22 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         );
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
-                .targetId(targetId)
+                .targets(List.of(targetId))
                 .templateId(notificationRule.getTemplateId())
                 .deliveryMethods(notificationRule.getDeliveryMethods())
                 .additionalConfig(config)
                 .info(notificationInfo)
+                .ruleId(notificationRule.getId())
                 .originatorType(NotificationOriginatorType.ALARM)
                 .originatorEntityId(alarm.getId())
-                .ruleId(notificationRule.getId())
+                .originatorEntity(alarm)
                 .templateContext(templateContext)
                 .build();
         notificationManager.processNotificationRequest(tenantId, notificationRequest);
     }
 
     private NotificationInfo constructNotificationInfo(Alarm alarm) {
+        // TODO: add info about assignee
         return AlarmOriginatedNotificationInfo.builder()
                 .alarmId(alarm.getId())
                 .alarmType(alarm.getType())
@@ -160,6 +160,21 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .alarmSeverity(alarm.getSeverity())
                 .alarmStatus(alarm.getStatus())
                 .build();
+    }
+
+    @EventListener(ComponentLifecycleMsg.class)
+    public void onNotificationRuleDeleted(ComponentLifecycleMsg componentLifecycleMsg) {
+        if (componentLifecycleMsg.getEvent() != ComponentLifecycleEvent.DELETED ||
+                componentLifecycleMsg.getEntityId().getEntityType() != EntityType.NOTIFICATION_RULE) {
+            return;
+        }
+
+        TenantId tenantId = componentLifecycleMsg.getTenantId();
+        NotificationRuleId notificationRuleId = (NotificationRuleId) componentLifecycleMsg.getEntityId();
+        List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
+        for (NotificationRequestId notificationRequestId : scheduledForRule) {
+            notificationManager.deleteNotificationRequest(tenantId, notificationRequestId);
+        }
     }
 
 }

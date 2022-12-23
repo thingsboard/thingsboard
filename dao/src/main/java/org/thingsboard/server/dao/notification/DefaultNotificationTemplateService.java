@@ -19,13 +19,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultNotificationTemplateService implements NotificationTemplateService {
+public class DefaultNotificationTemplateService extends AbstractEntityService implements NotificationTemplateService {
 
     private final NotificationTemplateDao notificationTemplateDao;
+    private final NotificationRequestDao notificationRequestDao;
 
     @Override
     public NotificationTemplate findNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
@@ -39,7 +44,17 @@ public class DefaultNotificationTemplateService implements NotificationTemplateS
 
     @Override
     public void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
-        notificationTemplateDao.removeById(tenantId, id.getId());
+        if (notificationRequestDao.existsByStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
+            throw new IllegalArgumentException("Notification template is referenced by scheduled notification request");
+        }
+        try {
+            notificationTemplateDao.removeById(tenantId, id.getId());
+        } catch (Exception e) {
+            checkConstraintViolation(e, Map.of(
+                    "fk_notification_rule_template_id", "Notification template is referenced by notification rule"
+            ));
+            throw e;
+        }
     }
 
 }

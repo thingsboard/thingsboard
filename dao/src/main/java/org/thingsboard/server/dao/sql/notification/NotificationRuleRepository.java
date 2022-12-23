@@ -28,4 +28,6 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
 
     Page<NotificationRuleEntity> findByTenantIdAndNameContainingIgnoreCase(UUID tenantId, String searchText, Pageable pageable);
 
+    boolean existsByConfigurationContaining(String string);
+
 }

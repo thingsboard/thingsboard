@@ -55,7 +55,7 @@ public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> 
     public NotificationTargetEntity(NotificationTarget notificationTarget) {
         setId(notificationTarget.getUuidId());
         setCreatedTime(notificationTarget.getCreatedTime());
-        setTenantId(getUuid(notificationTarget.getTenantId()));
+        setTenantId(getTenantUuid(notificationTarget.getTenantId()));
         setName(notificationTarget.getName());
         setConfiguration(toJson(notificationTarget.getConfiguration()));
     }
@@ -65,7 +65,7 @@ public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> 
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setId(new NotificationTargetId(id));
         notificationTarget.setCreatedTime(createdTime);
-        notificationTarget.setTenantId(createId(tenantId, TenantId::fromUUID));
+        notificationTarget.setTenantId(getTenantId(tenantId));
         notificationTarget.setName(name);
         notificationTarget.setConfiguration(fromJson(configuration, NotificationTargetConfig.class));
         return notificationTarget;
