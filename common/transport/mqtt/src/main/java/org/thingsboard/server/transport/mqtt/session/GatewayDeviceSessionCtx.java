@@ -37,10 +37,10 @@ import java.util.concurrent.ConcurrentMap;
 @Slf4j
 public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
-    private final GatewaySessionHandler parent;
+    private final AbstractGatewaySessionHandler parent;
     private final TransportService transportService;
 
-    public GatewayDeviceSessionCtx(GatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
+    public GatewayDeviceSessionCtx(AbstractGatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
                                    DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap,
                                    TransportService transportService) {
         super(UUID.randomUUID(), mqttQoSMap);
