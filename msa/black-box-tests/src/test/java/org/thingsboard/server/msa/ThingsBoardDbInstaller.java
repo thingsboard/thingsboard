@@ -118,20 +118,11 @@ public class ThingsBoardDbInstaller {
             for (int i = 0; i < 6; i++) {
                 env.put("REDIS_CLUSTER_DATA_VOLUME_" + i, redisClusterDataVolume + '-' + i);
             }
-        }
-        else if (IS_REDIS_SENTINEL) {
-            /**
-            for (int i = 0; i < 6; i++) {
-                env.put("REDIS_CLUSTER_DATA_VOLUME_" + i, redisClusterDataVolume + '-' + i);
-            }
-             */
-
+        } else if (IS_REDIS_SENTINEL) {
             env.put("REDIS_SENTINEL_DATA_VOLUME_MASTER", redisSentinelDataVolume + "-" + "master");
             env.put("REDIS_SENTINEL_DATA_VOLUME_SLAVE", redisSentinelDataVolume + "-" + "slave");
             env.put("REDIS_SENTINEL_DATA_VOLUME_SENTINEL", redisSentinelDataVolume + "-" + "sentinel");
-
-        }
-        else {
+        } else {
             env.put("REDIS_DATA_VOLUME", redisDataVolume);
         }
         dockerCompose.withEnv(env);
@@ -205,7 +196,6 @@ public class ThingsBoardDbInstaller {
                 }
             }
             else if (IS_REDIS_SENTINEL) {
-
                 additionalServices += " redis-master";
                 additionalServices += " redis-slave";
                 additionalServices += " redis-sentinel";
