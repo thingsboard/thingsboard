@@ -48,14 +48,14 @@ public class AlarmCommentsCleanUpService extends AbstractCleanUpService {
         this.partitioningRepository = partitioningRepository;
     }
 
-    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.audit_logs.checking_interval_ms})}",
-            fixedDelayString = "${sql.ttl.audit_logs.checking_interval_ms}")
+    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.alarm_comments.checking_interval_ms})}",
+            fixedDelayString = "${sql.ttl.alarm_comments.checking_interval_ms}")
     public void cleanUp() {
-        long auditLogsExpTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec);
+        long commentsExpTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec);
         if (isSystemTenantPartitionMine()) {
-            alarmCommentDao.cleanUpAlarmComments(auditLogsExpTime);
+            alarmCommentDao.cleanUpAlarmComments(commentsExpTime);
         } else {
-            partitioningRepository.cleanupPartitionsCache(ALARM_COMMENT_COLUMN_FAMILY_NAME, auditLogsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
+            partitioningRepository.cleanupPartitionsCache(ALARM_COMMENT_COLUMN_FAMILY_NAME, commentsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
         }
     }
 
