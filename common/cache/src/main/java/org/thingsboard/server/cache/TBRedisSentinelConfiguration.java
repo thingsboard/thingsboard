@@ -25,7 +25,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 @Configuration
 @ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "sentinel")
-public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
+public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
 
     @Value("${redis.password:}")
     private String password;
@@ -56,4 +56,5 @@ public class TbRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     }
 
 }
+
 
