@@ -20,21 +20,21 @@ services:
   # Redis sentinel
   redis-master:
     volumes:
-      - redis-cluster-data-0:/bitnami/redis/data
+      - redis-cluster-data-master:/bitnami/redis/data
   redis-slave:
     volumes:
-      - redis-cluster-data-1:/bitnami/redis/data
+      - redis-cluster-data-slave:/bitnami/redis/data
   redis-sentinel:
     volumes:
-      - redis-cluster-data-2:/bitnami/redis/data
+      - redis-cluster-data-sentinel:/bitnami/redis/data
 
 volumes:
-  redis-cluster-data-0:
+  redis-cluster-data-master:
     external:
-      name: ${REDIS_CLUSTER_DATA_VOLUME_0}
-  redis-cluster-data-1:
+      name: ${REDIS_SENTINEL_DATA_VOLUME_MASTER}
+  redis-cluster-data-slave:
     external:
-      name: ${REDIS_CLUSTER_DATA_VOLUME_1}
-  redis-cluster-data-2:
+      name: ${REDIS_SENTINEL_DATA_VOLUME_SLAVE}
+  redis-cluster-data-sentinel:
     external:
-      name: ${REDIS_CLUSTER_DATA_VOLUME_2}
+      name: ${REDIS_SENTINEL_DATA_VOLUME_SENTINEL}

@@ -120,16 +120,16 @@ public class ThingsBoardDbInstaller {
             }
         }
         else if (IS_REDIS_SENTINEL) {
-
+            /**
             for (int i = 0; i < 6; i++) {
                 env.put("REDIS_CLUSTER_DATA_VOLUME_" + i, redisClusterDataVolume + '-' + i);
             }
-
-            /**
-            env.put("REDIS_SENTINEL_DATA_VOLUME_MASTER", redisSentinelDataVolume + "-" + "MASTER");
-            env.put("REDIS_SENTINEL_DATA_VOLUME_SLAVE", redisSentinelDataVolume + "-" + "SLAVE");
-            env.put("REDIS_SENTINEL_DATA_VOLUME_SENTINEL", redisSentinelDataVolume + "-" + "SENTINEL");
              */
+
+            env.put("REDIS_SENTINEL_DATA_VOLUME_MASTER", redisSentinelDataVolume + "-" + "master");
+            env.put("REDIS_SENTINEL_DATA_VOLUME_SLAVE", redisSentinelDataVolume + "-" + "slave");
+            env.put("REDIS_SENTINEL_DATA_VOLUME_SENTINEL", redisSentinelDataVolume + "-" + "sentinel");
+
         }
         else {
             env.put("REDIS_DATA_VOLUME", redisDataVolume);
@@ -210,20 +210,12 @@ public class ThingsBoardDbInstaller {
                 additionalServices += " redis-slave";
                 additionalServices += " redis-sentinel";
 
-                for (int i = 0; i < 6; i++) {
-                    dockerCompose.withCommand("volume create " + redisClusterDataVolume + '-' + i);
-                    dockerCompose.invokeDocker();
-                }
-
-                /**
-                additionalServices += " redis";
-                additionalServices += " redis-slave";
-                additionalServices += " redis-sentinel";
-                dockerCompose.withCommand("volume create " + redisSentinelDataVolume +"-" + "MASTER");
-                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "SLAVE");
-                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "SENTINEL");
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume +"-" + "master");
                 dockerCompose.invokeDocker();
-                 */
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "slave");
+                dockerCompose.invokeDocker();
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "sentinel");
+                dockerCompose.invokeDocker();
             }
             else {
                 additionalServices += " redis";
