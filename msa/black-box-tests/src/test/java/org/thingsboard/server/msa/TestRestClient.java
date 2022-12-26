@@ -278,6 +278,18 @@ public class TestRestClient {
                 .as(JsonNode.class);
     }
 
+    public PageData<DeviceProfile> getDeviceProfiles(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/deviceProfiles")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<PageData<DeviceProfile>>() {
+                });
+    }
+
     public DeviceProfile getDeviceProfileById(DeviceProfileId deviceProfileId) {
         return  given().spec(requestSpec).get("/api/deviceProfile/{deviceProfileId}", deviceProfileId.getId())
                 .then()
@@ -294,6 +306,13 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(DeviceProfile.class);
+    }
+
+    public void deleteDeviseProfile(DeviceProfileId deviceProfileId) {
+        given().spec(requestSpec)
+                .delete("/api/deviceProfile/{deviceProfileId}", deviceProfileId.getId())
+                .then()
+                .statusCode(HTTP_OK);
     }
 
     public Customer postCustomer(Customer customer) {

@@ -35,6 +35,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -110,6 +111,11 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     public static Customer getCustomerByName(String name) {
         return testRestClient.getCustomers(pageLink).getData().stream()
+                .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+    }
+
+    public static DeviceProfile getDeviceProfileByName(String name) {
+        return testRestClient.getDeviceProfiles(pageLink).getData().stream()
                 .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
     }
 

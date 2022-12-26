@@ -16,6 +16,12 @@
 package org.thingsboard.server.msa.ui.utils;
 
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 
 public class EntityPrototypes {
@@ -30,5 +36,17 @@ public class EntityPrototypes {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
         return ruleChain;
+    }
+
+    public static DeviceProfile defaultDeviceProfile(String entityName){
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName(entityName);
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setProvisionConfiguration( new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(""));
+        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        deviceProfile.setProfileData(deviceProfileData);
+        return deviceProfile;
     }
 }

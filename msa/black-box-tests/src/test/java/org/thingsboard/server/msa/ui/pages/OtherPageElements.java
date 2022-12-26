@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.ui.pages;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.thingsboard.server.msa.ui.base.AbstractBasePage;
@@ -62,9 +63,14 @@ public class OtherPageElements extends AbstractBasePage {
     private static final String ERROR_MESSAGE = "//mat-error";
     private static final String ENTITY_VIEW_TITLE = "//div[@class='tb-details-title']//span";
     private static final String LIST_OF_ENTITY = "//div[@role='listbox']/mat-option";
+    private static final String ENTITY_FROM_LIST = "//div[@role='listbox']/mat-option//span[contains(text(),'%s')]";
     protected static final String ADD_ENTITY_VIEW = "//tb-add-entity-dialog";
     protected static final String STATE_CONTROLLER = "//tb-entity-state-controller";
     private static final String SEARCH_FIELD = "//input[contains (@data-placeholder,'Search')]";
+    private static final String BROWSE_FILE = "//input[@class='file-input']";
+    private static final String IMPORT_BROWSE_FILE = "//mat-dialog-container//span[contains(text(),'Import')]/..";
+    private static final String IMPORTING_FILE = "//div[contains(text(),'%s')]";
+    private static final String CLEAR_IMPORT_FILE_BTN = "//div[@class='tb-file-clear-container']//button";
 
     public String getEntity(String entityName) {
         return String.format(ENTITY, entityName);
@@ -235,6 +241,10 @@ public class OtherPageElements extends AbstractBasePage {
         return waitUntilElementsToBeClickable(LIST_OF_ENTITY);
     }
 
+    public WebElement entityFromList(String entityName) {
+        return waitUntilVisibilityOfElementLocated(String.format(ENTITY_FROM_LIST, entityName));
+    }
+
     public WebElement addEntityView() {
         return waitUntilVisibilityOfElementLocated(ADD_ENTITY_VIEW);
     }
@@ -245,5 +255,22 @@ public class OtherPageElements extends AbstractBasePage {
 
     public WebElement searchField() {
         return waitUntilElementToBeClickable(SEARCH_FIELD);
+    }
+
+    public WebElement browseFile() {
+        waitUntilElementToBeClickable(BROWSE_FILE + "/preceding-sibling::button");
+        return driver.findElement(By.xpath(BROWSE_FILE));
+    }
+
+    public WebElement importBrowseFileBtn() {
+        return waitUntilElementToBeClickable(IMPORT_BROWSE_FILE);
+    }
+
+    public WebElement importingFile(String fileName) {
+        return waitUntilVisibilityOfElementLocated(String.format(IMPORTING_FILE, fileName));
+    }
+
+    public WebElement clearImportFileBtn() {
+        return waitUntilElementToBeClickable(CLEAR_IMPORT_FILE_BTN);
     }
 }

@@ -83,7 +83,7 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE));
         Assert.assertTrue(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(IMPORT_TXT_FILE_NAME));
+        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(IMPORT_RULE_CHAIN_FILE_NAME));
     }
 
     @Test(priority = 20, groups = "smoke")
