@@ -9,12 +9,13 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_IMPORT_MESSAGE;
-import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_DEVICE_PROFILE_FILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_DEVICE_PROFILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_TXT_FILE_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 
@@ -82,15 +83,28 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
 
     @Test
     public void importDeviceProfileWithSameName() {
-        String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile()
+        String name = IMPORT_DEVICE_PROFILE_NAME;
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        this.name = name;
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openImportDeviceProfileView();
         profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
         profilesPage.importBrowseFileBtn().click();
-        this.name = IMPORT_DEVICE_PROFILE_NAME;
         profilesPage.refreshBtn().click();
+
+        Assert.assertNotNull(profilesPage.warningMessage());
+        Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
+        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE);
+    }
+
+    @Test
+    public void importDeviceProfileWithoutRefresh() {
+        sideBarMenuView.openDeviceProfiles();
+        profilesPage.openImportDeviceProfileView();
+        profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
+        profilesPage.importBrowseFileBtn().click();
+        name = IMPORT_DEVICE_PROFILE_NAME;
 
         Assert.assertNotNull(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME));
         Assert.assertTrue(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME).isDisplayed());
