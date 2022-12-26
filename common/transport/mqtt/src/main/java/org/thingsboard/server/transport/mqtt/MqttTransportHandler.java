@@ -71,7 +71,7 @@ import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
-import org.thingsboard.server.transport.mqtt.session.AbstractGatewaySessionHandler;
+import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
@@ -131,7 +131,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     final DeviceSessionCtx deviceSessionCtx;
     volatile InetSocketAddress address;
-    volatile AbstractGatewaySessionHandler gatewaySessionHandler;
+    volatile GatewaySessionHandler gatewaySessionHandler;
     volatile SparkplugNodeSessionHandler sparkplugSessionHandler;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
@@ -967,7 +967,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (infoNode != null) {
                 JsonNode gatewayNode = infoNode.get("gateway");
                 if (gatewayNode != null && gatewayNode.asBoolean()) {
-                    gatewaySessionHandler = new AbstractGatewaySessionHandler(deviceSessionCtx, sessionId);
+                    gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
                     if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
                         sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
                     }
