@@ -647,6 +647,11 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, RpcStatus rpcStatus, TransportServiceCallback<Void> callback) {
+        process(sessionInfo, msg, rpcStatus, true, callback);
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, RpcStatus rpcStatus, boolean reportActivity, TransportServiceCallback<Void> callback) {
         TransportProtos.ToDeviceRpcResponseStatusMsg responseMsg = TransportProtos.ToDeviceRpcResponseStatusMsg.newBuilder()
                 .setRequestId(msg.getRequestId())
                 .setRequestIdLSB(msg.getRequestIdLSB())
@@ -655,7 +660,9 @@ public class DefaultTransportService implements TransportService {
                 .build();
 
         if (checkLimits(sessionInfo, responseMsg, callback)) {
-            reportActivityInternal(sessionInfo);
+            if (reportActivity) {
+                reportActivityInternal(sessionInfo);
+            }
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setRpcResponseStatusMsg(responseMsg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, TransportServiceCallback.EMPTY));
         }

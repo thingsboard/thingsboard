@@ -108,9 +108,9 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                             channelFuture.addListener(result -> {
                                 if (result.cause() == null) {
                                     if (!isAckExpected(payload)) {
-                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, request.getOneway(), TransportServiceCallback.EMPTY);
                                     } else if (request.getPersisted()) {
-                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, false, TransportServiceCallback.EMPTY);
 
                                     }
                                 }

@@ -21,7 +21,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
-import io.netty.handler.codec.mqtt.MqttConnAckVariableHeader;
 import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
@@ -95,11 +94,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.amazonaws.util.StringUtils.UTF8;
-import static io.netty.handler.codec.mqtt.MqttMessageType.CONNACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
-import static io.netty.handler.codec.mqtt.MqttMessageType.UNSUBACK;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
@@ -295,6 +292,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case PINGREQ:
                 if (checkConnected(ctx, msg)) {
                     ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
+                    log.info("PINGREQ: {}", deviceSessionCtx.getSessionInfo());
                     transportService.reportActivity(deviceSessionCtx.getSessionInfo());
                 }
                 break;
@@ -448,6 +446,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
                 attrReqTopicType = TopicType.V2;
             } else {
+                log.info("[processDevicePublish]: {}", deviceSessionCtx.getSessionInfo());
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
                 ack(ctx, msgId, ReturnCode.TOPIC_NAME_INVALID);
             }
@@ -698,6 +697,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         }
         if (!activityReported) {
+            log.info("[processSubscribe]: {}", deviceSessionCtx.getSessionInfo());
             transportService.reportActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), grantedQoSList));
@@ -787,6 +787,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         }
         if (!activityReported) {
+            log.info("[processUnsubscribe]: {}", deviceSessionCtx.getSessionInfo());
             transportService.reportActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));
@@ -1096,7 +1097,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     context.getScheduler().schedule(() -> {
                         TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
                         if (msg != null) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, false, TransportServiceCallback.EMPTY);
                         }
                     }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
                 }
@@ -1104,9 +1105,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 cf.addListener(result -> {
                     if (result.cause() == null) {
                         if (!isAckExpected(payload)) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, rpcRequest.getOneway(), TransportServiceCallback.EMPTY);
                         } else if (rpcRequest.getPersisted()) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.SENT, false, TransportServiceCallback.EMPTY);
                         }
                     } else {
                         // TODO: send error

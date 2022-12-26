@@ -59,7 +59,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
         } finally {
             client.unlock();
         }
-        transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+        transportService.process(client.getSession(), this.request, RpcStatus.SENT, false, TransportServiceCallback.EMPTY);
         return true;
     }
 
@@ -84,7 +84,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     public void onError(String params, Exception e) {
         if (e instanceof TimeoutException || e instanceof org.eclipse.leshan.core.request.exception.TimeoutException) {
             client.setLastSentRpcId(null);
-            transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+            transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, false, TransportServiceCallback.EMPTY);
         } else if (!(e instanceof ClientSleepingException)) {
             sendRpcReplyOnError(e);
         }

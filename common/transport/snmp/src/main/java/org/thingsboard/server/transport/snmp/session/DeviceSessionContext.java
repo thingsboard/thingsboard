@@ -143,7 +143,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
         log.trace("[{}] Received RPC command to device", sessionId);
         snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
-        snmpTransportContext.getTransportService().process(getSessionInfo(), toDeviceRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+        snmpTransportContext.getTransportService().process(getSessionInfo(), toDeviceRequest, RpcStatus.DELIVERED, toDeviceRequest.getOneway(), TransportServiceCallback.EMPTY);
     }
 
     @Override
