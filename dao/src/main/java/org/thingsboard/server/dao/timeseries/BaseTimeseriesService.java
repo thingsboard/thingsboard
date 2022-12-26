@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvLatestEntityId;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -147,11 +146,6 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         return timeseriesLatestDao.findAllKeysByEntityIds(tenantId, entityIds);
-    }
-
-    @Override
-    public List<TsKvLatestEntityId> findAllValuesByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
-        return timeseriesLatestDao.findAllValuesByEntityIds(tenantId, entityIds);
     }
 
     @Override

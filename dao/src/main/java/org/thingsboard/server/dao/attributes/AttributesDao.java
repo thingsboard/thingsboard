@@ -20,8 +20,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntryEntityId;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,8 +38,6 @@ public interface AttributesDao {
 
     List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, String attributeType);
 
-    List<AttributeKvEntityIdJson> findAllByEntityIds(TenantId tenantId, List<EntityId> entityIds);
-
     ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute);
 
     List<ListenableFuture<String>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys);
@@ -47,4 +45,6 @@ public interface AttributesDao {
     List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds);
+
+    List<AttributeKvEntryEntityId> findAllValuesByEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds);
 }

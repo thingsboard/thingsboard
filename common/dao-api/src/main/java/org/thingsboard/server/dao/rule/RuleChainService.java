@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
+import org.thingsboard.server.common.data.rule.RuleChainInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
@@ -105,6 +106,8 @@ public interface RuleChainService {
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
 
     ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
+
+    PageData<RuleChainInfo> findRuleChainsWithErrorStatistics(TenantId tenantId, RuleChainType type, PageLink pageLink);
 
     void clearRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
 

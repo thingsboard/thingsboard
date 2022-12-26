@@ -60,11 +60,6 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
                                                    @Param("searchText") String searchText,
                                                    Pageable pageable);
 
-    @Query("SELECT rc FROM RuleChainEntity rc, RuleNodeEntity rn, AttributeKvEntity akv WHERE rc.tenantId = :tenantId " +
-            "AND rc.id = rn.ruleChainId AND akv.id.entityId = rn.id")
-    List<RuleChainEntity> findErrorsByTenantIdAndRuleChain(@Param("tenantId") UUID tenantId,
-                                                           Pageable pageable);
-
     RuleChainEntity findByTenantIdAndTypeAndRootIsTrue(UUID tenantId, RuleChainType ruleChainType);
 
     Long countByTenantId(UUID tenantId);

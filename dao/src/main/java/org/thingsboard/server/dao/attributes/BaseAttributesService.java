@@ -25,8 +25,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntryEntityId;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.Collection;
@@ -81,9 +81,8 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntityIdJson>> findRuleNodesErrorsByRuleChainId(TenantId tenantId, List<EntityId> entityIds) {
-        log.debug("Try to find errors in rule chain by tenantId [{}] and List<entityId> [{}]", tenantId, entityIds);
-        return Futures.immediateFuture(attributesDao.findAllByEntityIds(tenantId, entityIds));
+    public List<AttributeKvEntryEntityId> findAllValuesByEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds) {
+        return attributesDao.findAllValuesByEntityIds(tenantId, attributeKey, entityIds);
     }
 
     @Override

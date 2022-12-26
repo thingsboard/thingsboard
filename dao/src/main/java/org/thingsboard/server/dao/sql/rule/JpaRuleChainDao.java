@@ -103,14 +103,6 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
                         DaoUtil.toPageable(pageLink)));
     }
 
-    public Collection<RuleChain> findErrorsByTenantIdAndRuleChain(UUID tenantId, PageLink pageLink) {
-        log.debug("Try to find errors in rule chain by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        return DaoUtil.convertDataList(ruleChainRepository
-                .findErrorsByTenantIdAndRuleChain(
-                        tenantId,
-                        DaoUtil.toPageable(pageLink)));
-    }
-
     @Override
     public Collection<RuleChain> findByTenantIdAndTypeAndName(TenantId tenantId, RuleChainType type, String name) {
         return DaoUtil.convertDataList(ruleChainRepository.findByTenantIdAndTypeAndName(tenantId.getId(), type, name));

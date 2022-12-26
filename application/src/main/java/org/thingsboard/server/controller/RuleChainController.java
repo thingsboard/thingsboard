@@ -59,6 +59,7 @@ import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
+import org.thingsboard.server.common.data.rule.RuleChainInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -308,7 +309,7 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<RuleChain> getRuleChains(
+    public PageData<RuleChainInfo> getRuleChains(
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -328,7 +329,7 @@ public class RuleChainController extends BaseController {
             if (typeStr != null && typeStr.trim().length() > 0) {
                 type = RuleChainType.valueOf(typeStr);
             }
-            return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
+            return checkNotNull(ruleChainService.findRuleChainsWithErrorStatistics(tenantId, type, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -586,7 +587,7 @@ public class RuleChainController extends BaseController {
 
 
     @ApiOperation(value = "Clear error stats for Rule Node (clearRuleNodeStats)",
-            notes = "Clear the error statistics on certain Rule Node . " + TENANT_AUTHORITY_PARAGRAPH)
+            notes = "Clears the error statistics on certain Rule Node . " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping(value = "/ruleNode/{ruleNodeId}/clearRuleNodeStats")
     @ResponseStatus(value = HttpStatus.OK)

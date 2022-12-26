@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
+import org.thingsboard.server.common.data.kv.AttributeKvEntryEntityId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
+import org.thingsboard.server.common.data.rule.RuleChainInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
@@ -78,7 +79,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -100,6 +100,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public static final String TB_RULE_CHAIN_INPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainInputNode";
     @Autowired
     private RuleChainDao ruleChainDao;
+
+    @Autowired
+    private RuleChainInfoDao ruleChainInfoDao;
 
     @Autowired
     private RuleNodeDao ruleNodeDao;
@@ -396,15 +399,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     public Map<RuleNodeId, RuleNodeStats> getRuleChainNodesStats(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
         Validator.validateIds(ruleNodeIds, "Incorrect entity ids for search request");
-        List<AttributeKvEntityIdJson> attributeKvEntries;
+        List<AttributeKvEntryEntityId> attributeKvEntries = attributesService.findAllValuesByEntityIds(tenantId, "ruleNodeStats", new ArrayList<>(ruleNodeIds));
         Map<RuleNodeId, RuleNodeStats> map = new HashMap<>();
-        try {
-            attributeKvEntries = attributesService.findRuleNodesErrorsByRuleChainId(tenantId, new ArrayList<>(ruleNodeIds)).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-        for(AttributeKvEntityIdJson akv: attributeKvEntries) {
-            map.put(new RuleNodeId(akv.getId()), stringToRuleNodeStats(akv.getJsonValue()));
+        for (AttributeKvEntryEntityId akv : attributeKvEntries) {
+            map.put(new RuleNodeId(akv.getId()), stringToRuleNodeStats(akv.getEntry().getJsonValue().orElse("")));
         }
         return map;
     }
@@ -440,14 +438,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public PageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, PageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink);
-        PageData<RuleChain> pageData = ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
-        Collection<RuleChain> errorsInRuleChain = ruleChainDao.findErrorsByTenantIdAndRuleChain(tenantId.getId(), pageLink);
-        pageData.getData().forEach(pageDates -> {
-            if(errorsInRuleChain.contains(pageDates)) {
-                pageDates.setErrorPresent(true);
-            }
-        });
-        return pageData;
+        return ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    public PageData<RuleChainInfo> findRuleChainsWithErrorStatistics(TenantId tenantId, RuleChainType type, PageLink pageLink) {
+        Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
+        Validator.validatePageLink(pageLink);
+        return ruleChainInfoDao.findErrorStatisticsByTenantIdAndRuleChain(tenantId.getId(), type, pageLink);
     }
 
     @Override

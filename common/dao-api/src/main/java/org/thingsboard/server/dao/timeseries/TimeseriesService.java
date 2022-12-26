@@ -22,9 +22,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
-import org.thingsboard.server.common.data.kv.TsKvLatestEntityId;
-import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 
 import java.util.Collection;
 import java.util.List;
@@ -62,8 +61,6 @@ public interface TimeseriesService {
     List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds);
-
-    List<TsKvLatestEntityId> findAllValuesByEntityIds(TenantId tenantId, List<EntityId> entityIds);
 
     void cleanup(long systemTtl);
 }

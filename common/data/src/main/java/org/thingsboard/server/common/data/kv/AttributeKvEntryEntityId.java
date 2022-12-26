@@ -20,8 +20,8 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class TsKvLatestEntityId {
+public class AttributeKvEntryEntityId {
 
-    private final UUID entityId;
-    private final TsKvEntry entry;
+    private final UUID id;
+    private final AttributeKvEntry entry;
 }

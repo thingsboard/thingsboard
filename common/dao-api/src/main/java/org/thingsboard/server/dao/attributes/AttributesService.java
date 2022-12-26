@@ -20,8 +20,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntityIdJson;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntryEntityId;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,8 +40,6 @@ public interface AttributesService {
 
     ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes);
 
-    ListenableFuture<List<AttributeKvEntityIdJson>> findRuleNodesErrorsByRuleChainId(TenantId tenantId, List<EntityId> entityIds);
-
     ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute);
 
     ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
@@ -49,5 +47,7 @@ public interface AttributesService {
     List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds);
+
+    List<AttributeKvEntryEntityId> findAllValuesByEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds);
 
 }
