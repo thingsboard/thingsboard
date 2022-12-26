@@ -29,10 +29,11 @@ import java.util.UUID;
 
 public interface RuleChainInfoRepository extends JpaRepository<RuleChainInfoEntity, UUID>, ExportableEntityRepository<RuleChainInfoEntity> {
 
-        @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.RuleChainInfoEntity(rc, CASE WHEN rc.id IN (SELECT rc_inner.id FROM RuleChainEntity AS rc_inner " +
-                "INNER JOIN RuleNodeEntity AS rn ON rc_inner.id = rn.ruleChainId INNER JOIN AttributeKvEntity AS akv ON rn.id = akv.id.entityId WHERE akv.id.attributeKey = 'ruleNodeStats') THEN true ELSE false END) " +
-                "FROM RuleChainEntity AS rc WHERE rc.tenantId = :tenantId AND rc.type = :type AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) ",
-                countQuery = "SELECT count(rc) FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId AND rc.type = :type AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+        @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.RuleChainInfoEntity(rc, cast(max(case when akv.jsonValue IS NOT NULL then 1 else 0 END) as boolean )) " +
+                "FROM RuleChainEntity rc LEFT JOIN RuleNodeEntity rn ON rc.id = rn.ruleChainId LEFT JOIN AttributeKvEntity akv ON rn.id = akv.id.entityId AND akv.id.attributeKey = 'ruleNodeStats' " +
+                "WHERE rc.tenantId = :tenantId AND rc.type = :type AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+                "GROUP BY rc ",
+                countQuery = "SELECT count(rc) FROM RuleChainEntity AS rc WHERE rc.tenantId = :tenantId AND rc.type = :type AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) ")
         Page<RuleChainInfoEntity> findErrorStatisticsByTenantIdAndRuleChain(@Param("tenantId") UUID tenantId,
                                                                             @Param("type") RuleChainType type,
                                                                             @Param("searchText") String searchText,

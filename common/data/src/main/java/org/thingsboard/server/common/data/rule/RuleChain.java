@@ -59,8 +59,6 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
 
     private RuleChainId externalId;
 
-    private boolean errorPresent;
-
     @JsonIgnore
     private byte[] configurationBytes;
 
@@ -116,11 +114,4 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
     }
 
-    public boolean isErrorPresent() {
-        return errorPresent;
-    }
-
-    public void setErrorPresent(boolean errorPresent) {
-        this.errorPresent = errorPresent;
-    }
 }

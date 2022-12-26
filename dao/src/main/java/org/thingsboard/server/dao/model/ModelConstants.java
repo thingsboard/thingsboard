@@ -427,6 +427,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
     public static final String RULE_CHAIN_ERROR_PRESENT_PROPERTY = "error_present";
     public static final String RULE_CHAIN_INFO_VIEW_NAME = "rule_chain_info";
+
     public static final String RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_and_search_text";
     public static final String RULE_CHAIN_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_by_type_and_search_text";
 
