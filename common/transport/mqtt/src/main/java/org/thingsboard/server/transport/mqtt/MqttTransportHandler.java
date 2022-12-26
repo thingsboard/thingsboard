@@ -292,7 +292,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case PINGREQ:
                 if (checkConnected(ctx, msg)) {
                     ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
-                    log.info("PINGREQ: {}", deviceSessionCtx.getSessionInfo());
                     transportService.reportActivity(deviceSessionCtx.getSessionInfo());
                 }
                 break;
@@ -446,7 +445,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
                 attrReqTopicType = TopicType.V2;
             } else {
-                log.info("[processDevicePublish]: {}", deviceSessionCtx.getSessionInfo());
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
                 ack(ctx, msgId, ReturnCode.TOPIC_NAME_INVALID);
             }
@@ -697,7 +695,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         }
         if (!activityReported) {
-            log.info("[processSubscribe]: {}", deviceSessionCtx.getSessionInfo());
             transportService.reportActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), grantedQoSList));
@@ -787,7 +784,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         }
         if (!activityReported) {
-            log.info("[processUnsubscribe]: {}", deviceSessionCtx.getSessionInfo());
             transportService.reportActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));
