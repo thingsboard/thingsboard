@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.validation;
+package org.thingsboard.server.common.data.util;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.Annotation;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Constraint(validatedBy = {})
-public @interface NoXss {
-    String message() default "is malformed";
+@SuppressWarnings("unchecked")
+public class ReflectionUtils {
 
-    Class<?>[] groups() default {};
+    private ReflectionUtils() {}
 
-    Class<? extends Payload>[] payload() default {};
+    public static <T> T getAnnotationProperty(String targetType, String annotationType, String property) throws Exception {
+        Class<Annotation> annotationClass = (Class<Annotation>) Class.forName(annotationType);
+        Annotation annotation = Class.forName(targetType).getAnnotation(annotationClass);
+        return (T) annotationClass.getDeclaredMethod(property).invoke(annotation);
+    }
+
 }

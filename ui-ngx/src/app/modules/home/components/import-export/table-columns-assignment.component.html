@@ -49,7 +49,7 @@
       <mat-form-field floatLabel="always" hideRequiredMarker
                       *ngIf="isColumnTypeDiffers(column.type)">
         <mat-label></mat-label>
-        <input matInput required
+        <input matInput [required]="isColumnTypeDiffers(column.type)"
                [(ngModel)]="column.key" (ngModelChange)="columnsUpdated()"
                placeholder="{{ 'import.column-value' | translate }}"/>
       </mat-form-field>
