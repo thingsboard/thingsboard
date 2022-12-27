@@ -35,7 +35,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
@@ -49,6 +48,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -192,7 +192,11 @@ public class TbHttpClient {
             config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
-            entity = new HttpEntity<>(msg.getData(), headers);
+            String data = msg.getData();
+            if (config.isTrimDoubleQuotes()) {
+                data = trimDoubleQuotes(data);
+            }
+            entity = new HttpEntity<>(data, headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
@@ -332,6 +336,13 @@ public class TbHttpClient {
         if (proxyPort < 0 || proxyPort > 65535) {
             throw new TbNodeException("Proxy port out of range:" + proxyPort);
         }
+    }
+
+    private static String trimDoubleQuotes(String s) {
+        if (s.startsWith("\"") && s.endsWith("\"")) {
+            return s.substring(1, s.length() - 1);
+        }
+        return s;
     }
 
 }
