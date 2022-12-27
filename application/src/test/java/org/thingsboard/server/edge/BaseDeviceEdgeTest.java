@@ -323,6 +323,9 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
                 "inactivityTimeout", "3600000");
         sendAttributesRequestAndVerify(device, DataConstants.SHARED_SCOPE, "{\"key2\":\"value2\"}",
                 "key2", "value2");
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/" + DataConstants.SERVER_SCOPE, "keys","key1, inactivityTimeout");
+        doDelete("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/" + DataConstants.SHARED_SCOPE, "keys", "key2");
     }
 
     @Test
@@ -639,5 +642,54 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
                 JacksonUtil.fromBytes(onUpdateCallback.getPayloadBytes()));
 
         client.disconnect();
+    }
+
+    @Test
+    public void testVerifyDeliveryOfLatestTimeseriesOnAttributesRequest() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+
+        JsonNode timeseriesData = mapper.readTree("{\"temperature\":25}");
+
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE,
+                timeseriesData);
+
+        // Wait before device timeseries saved to database before requesting them from edge
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/timeseries";
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
+                    return actualKeys != null && !actualKeys.isEmpty() && actualKeys.contains("temperature");
+                });
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        AttributesRequestMsg.Builder attributesRequestMsgBuilder = AttributesRequestMsg.newBuilder();
+        attributesRequestMsgBuilder.setEntityIdMSB(device.getUuidId().getMostSignificantBits());
+        attributesRequestMsgBuilder.setEntityIdLSB(device.getUuidId().getLeastSignificantBits());
+        attributesRequestMsgBuilder.setEntityType(EntityType.DEVICE.name());
+        attributesRequestMsgBuilder.setScope(DataConstants.SERVER_SCOPE);
+        uplinkMsgBuilder.addAttributesRequestMsg(attributesRequestMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof EntityDataProto);
+        EntityDataProto latestEntityDataMsg = (EntityDataProto) latestMessage;
+        Assert.assertEquals(device.getUuidId().getMostSignificantBits(), latestEntityDataMsg.getEntityIdMSB());
+        Assert.assertEquals(device.getUuidId().getLeastSignificantBits(), latestEntityDataMsg.getEntityIdLSB());
+        Assert.assertEquals(device.getId().getEntityType().name(), latestEntityDataMsg.getEntityType());
+        Assert.assertTrue(latestEntityDataMsg.hasPostTelemetryMsg());
+
+        TransportProtos.PostTelemetryMsg timeseriesUpdatedMsg = latestEntityDataMsg.getPostTelemetryMsg();
+        Assert.assertEquals(1, timeseriesUpdatedMsg.getTsKvListList().size());
+        TransportProtos.TsKvListProto tsKvListProto = timeseriesUpdatedMsg.getTsKvListList().get(0);
+        Assert.assertEquals(1, tsKvListProto.getKvList().size());
+        TransportProtos.KeyValueProto keyValueProto = tsKvListProto.getKvList().get(0);
+        Assert.assertEquals(25, keyValueProto.getLongV());
+        Assert.assertEquals("temperature", keyValueProto.getKey());
     }
 }
