@@ -302,7 +302,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 int msgId = ((MqttPubAckMessage) msg).variableHeader().messageId();
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
                 }
                 break;
             default:
@@ -1093,7 +1093,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     context.getScheduler().schedule(() -> {
                         TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
                         if (msg != null) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, false, TransportServiceCallback.EMPTY);
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
                         }
                     }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
                 }
@@ -1101,9 +1101,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 cf.addListener(result -> {
                     if (result.cause() == null) {
                         if (!isAckExpected(payload)) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, rpcRequest.getOneway(), TransportServiceCallback.EMPTY);
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
                         } else if (rpcRequest.getPersisted()) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.SENT, false, TransportServiceCallback.EMPTY);
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
                         }
                     } else {
                         // TODO: send error

@@ -647,7 +647,7 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, RpcStatus rpcStatus, TransportServiceCallback<Void> callback) {
-        process(sessionInfo, msg, rpcStatus, true, callback);
+        process(sessionInfo, msg, rpcStatus, false, callback);
     }
 
     @Override

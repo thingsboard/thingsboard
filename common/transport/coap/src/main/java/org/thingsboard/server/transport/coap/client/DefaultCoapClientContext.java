@@ -591,19 +591,19 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     transportContext.getScheduler().schedule(() -> {
                         TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(requestId);
                         if (rpcRequestMsg != null) {
-                            transportService.process(state.getSession(), msg, RpcStatus.TIMEOUT, false, TransportServiceCallback.EMPTY);
+                            transportService.process(state.getSession(), msg, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
                         }
                     }, Math.min(getTimeout(state, powerMode, profileSettings), msg.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
 
                     response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
                         TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
                         if (rpcRequestMsg != null) {
-                            transportService.process(state.getSession(), rpcRequestMsg, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                            transportService.process(state.getSession(), rpcRequestMsg, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
                         }
                     }, id -> {
                         TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
                         if (rpcRequestMsg != null) {
-                            transportService.process(state.getSession(), msg, RpcStatus.TIMEOUT, false, TransportServiceCallback.EMPTY);
+                            transportService.process(state.getSession(), msg, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
                         }
                     }));
                 }
@@ -626,9 +626,9 @@ public class DefaultCoapClientContext implements CoapClientContext {
                                     .setRequestId(msg.getRequestId()).setError(error).build(), TransportServiceCallback.EMPTY);
                 } else if (sent) {
                     if (!conRequest) {
-                        transportService.process(state.getSession(), msg, RpcStatus.DELIVERED, msg.getOneway(), TransportServiceCallback.EMPTY);
+                        transportService.process(state.getSession(), msg, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
                     } else if (msg.getPersisted()) {
-                        transportService.process(state.getSession(), msg, RpcStatus.SENT, false, TransportServiceCallback.EMPTY);
+                        transportService.process(state.getSession(), msg, RpcStatus.SENT, TransportServiceCallback.EMPTY);
                     }
                 }
             }
