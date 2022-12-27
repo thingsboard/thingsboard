@@ -24,7 +24,7 @@ import java.util.UUID;
 
 public interface RuleChainInfoDao {
     /**
-     * Find rule chains with info error statistics by tenantId, type and page link.
+     * Find rule chains info error statistics by tenantId, type and page link.
      *
      * @param tenantId the tenantId
      * @param type     the type

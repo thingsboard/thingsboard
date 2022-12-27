@@ -828,7 +828,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount, ExecutorService executorService) {
+    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data,
+                                     Map<String, String> metadata, String lastErrorMsg, int errorsCount, ExecutorService executorService) {
         updateRuleNodeStats(tenantId, ruleNodeId, ruleNodeStats -> {
             ruleNodeStats.setMsgData(data);
             ruleNodeStats.setMsgMetadata(metadata);

@@ -18,13 +18,16 @@ package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChainInfo;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.sql.RuleChainInfoEntity;
 import org.thingsboard.server.dao.rule.RuleChainInfoDao;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
@@ -33,20 +36,20 @@ import java.util.UUID;
 @Slf4j
 @Component
 @SqlDao
-public class JpaRuleChainInfoDao implements RuleChainInfoDao {
+public class JpaRuleChainInfoDao extends JpaAbstractSearchTextDao<RuleChainInfoEntity, RuleChainInfo> implements RuleChainInfoDao {
 
     @Autowired
     private RuleChainInfoRepository ruleChainInfoRepository;
 
-//    @Override
-//    protected Class<RuleChainInfoEntity> getEntityClass() {
-//        return RuleChainInfoEntity.class;
-//    }
-//
-//    @Override
-//    protected JpaRepository<RuleChainInfoEntity, UUID> getRepository() {
-//        return ruleChainInfoRepository;
-//    }
+    @Override
+    protected Class<RuleChainInfoEntity> getEntityClass() {
+        return RuleChainInfoEntity.class;
+    }
+
+    @Override
+    protected JpaRepository<RuleChainInfoEntity, UUID> getRepository() {
+        return ruleChainInfoRepository;
+    }
 
     public PageData<RuleChainInfo> findRuleChainInfosByTenantIdAndType(UUID tenantId, RuleChainType type, PageLink pageLink) {
         log.debug("Try to find root rule chain by tenantId [{}] and type [{}]", tenantId, type);
