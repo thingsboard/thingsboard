@@ -43,7 +43,11 @@ public enum Resource {
     EDGE(EntityType.EDGE),
     RPC(EntityType.RPC),
     QUEUE(EntityType.QUEUE),
-    VERSION_CONTROL;
+    VERSION_CONTROL,
+    NOTIFICATION_TARGET(EntityType.NOTIFICATION_TARGET),
+    NOTIFICATION_TEMPLATE(EntityType.NOTIFICATION_TEMPLATE),
+    NOTIFICATION_REQUEST(EntityType.NOTIFICATION_REQUEST),
+    NOTIFICATION_RULE(EntityType.NOTIFICATION_RULE);
 
     private final EntityType entityType;
 

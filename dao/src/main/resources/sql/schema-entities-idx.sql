@@ -79,3 +79,13 @@ CREATE INDEX IF NOT EXISTS idx_rule_node_external_id ON rule_node(rule_chain_id,
 CREATE INDEX IF NOT EXISTS idx_rule_node_type ON rule_node(type);
 
 CREATE INDEX IF NOT EXISTS idx_api_usage_state_entity_id ON api_usage_state(entity_id);
+
+CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON notification_target(tenant_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_type, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
+
+CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);

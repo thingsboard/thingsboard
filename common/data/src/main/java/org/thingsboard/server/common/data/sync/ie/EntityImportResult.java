@@ -19,7 +19,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.sync.ThrowingRunnable;
+import org.thingsboard.server.common.data.util.ThrowingRunnable;
 
 @Data
 public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> {

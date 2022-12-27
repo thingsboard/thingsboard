@@ -53,6 +53,7 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     protected int wsPort;
 
     private TbTestWebSocketClient wsClient; // lazy
+    private TbTestWebSocketClient anotherWsClient; // lazy
 
     public TbTestWebSocketClient getWsClient() {
         if (wsClient == null) {
@@ -69,6 +70,21 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         return wsClient;
     }
 
+    public TbTestWebSocketClient getAnotherWsClient() {
+        if (anotherWsClient == null) {
+            synchronized (this) {
+                try {
+                    if (anotherWsClient == null) {
+                        anotherWsClient = buildAndConnectWebSocketClient();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return anotherWsClient;
+    }
+
     @Before
     public void beforeWsTest() throws Exception {
         // placeholder
@@ -79,9 +95,12 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         if (wsClient != null) {
             wsClient.close();
         }
+        if (anotherWsClient != null) {
+            anotherWsClient.close();
+        }
     }
 
-    private TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
+    protected TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
         TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws/plugins/telemetry?token=" + token));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         return wsClient;

@@ -57,7 +57,7 @@ public class SqlPartitioningRepository {
         long partitionStartTs = calculatePartitionStartTime(entityTs, partitionDurationMs);
         Map<Long, SqlPartition> partitions = tablesPartitions.computeIfAbsent(table, t -> new ConcurrentHashMap<>());
         if (!partitions.containsKey(partitionStartTs)) {
-            SqlPartition partition = new SqlPartition(table, partitionStartTs, partitionStartTs + partitionDurationMs, Long.toString(partitionStartTs));
+            SqlPartition partition = new SqlPartition(table, partitionStartTs, getPartitionEndTime(partitionStartTs, partitionDurationMs), Long.toString(partitionStartTs));
             partitionCreationLock.lock();
             try {
                 if (partitions.containsKey(partitionStartTs)) return;
@@ -79,26 +79,29 @@ public class SqlPartitioningRepository {
         }
     }
 
-    public void dropPartitionsBefore(String table, long ts, long partitionDurationMs) {
+    public long dropPartitionsBefore(String table, long ts, long partitionDurationMs) {
         List<Long> partitions = fetchPartitions(table);
+        long lastDroppedPartitionEndTime = -1;
         for (Long partitionStartTime : partitions) {
-            long partitionEndTime = partitionStartTime + partitionDurationMs;
+            long partitionEndTime = getPartitionEndTime(partitionStartTime, partitionDurationMs);
             if (partitionEndTime < ts) {
                 log.info("[{}] Detaching expired partition: [{}-{}]", table, partitionStartTime, partitionEndTime);
                 boolean success = detachAndDropPartition(table, partitionStartTime);
                 if (success) {
                     log.info("[{}] Detached expired partition: {}", table, partitionStartTime);
+                    lastDroppedPartitionEndTime = Math.max(partitionEndTime, lastDroppedPartitionEndTime);
                 }
             } else {
                 log.debug("[{}] Skipping valid partition: {}", table, partitionStartTime);
             }
         }
+        return lastDroppedPartitionEndTime;
     }
 
     public void cleanupPartitionsCache(String table, long expTime, long partitionDurationMs) {
         Map<Long, SqlPartition> partitions = tablesPartitions.get(table);
         if (partitions == null) return;
-        partitions.keySet().removeIf(startTime -> (startTime + partitionDurationMs) < expTime);
+        partitions.keySet().removeIf(startTime -> getPartitionEndTime(startTime, partitionDurationMs) < expTime);
     }
 
     private boolean detachAndDropPartition(String table, long partitionTs) {
@@ -120,6 +123,10 @@ public class SqlPartitioningRepository {
             log.error("[{}] Error occurred trying to detach and drop the partition {} ", table, partitionTs, e);
         }
         return false;
+    }
+
+    private static long getPartitionEndTime(long startTime, long partitionDurationMs) {
+        return startTime + partitionDurationMs;
     }
 
     public List<Long> fetchPartitions(String table) {
