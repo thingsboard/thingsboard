@@ -21,7 +21,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
-import io.netty.handler.codec.mqtt.MqttConnAckVariableHeader;
 import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
@@ -95,11 +94,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.amazonaws.util.StringUtils.UTF8;
-import static io.netty.handler.codec.mqtt.MqttMessageType.CONNACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
-import static io.netty.handler.codec.mqtt.MqttMessageType.UNSUBACK;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
@@ -305,7 +302,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 int msgId = ((MqttPubAckMessage) msg).variableHeader().messageId();
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
                 }
                 break;
             default:
