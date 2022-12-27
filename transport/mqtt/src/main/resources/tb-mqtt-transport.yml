@@ -68,11 +68,13 @@ redis:
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
     # sentinel mode
-    sentinel:
-      # name of master node
-      master: "${REDIS_MASTER:mymaster}"
-      # comma-separated list of "host:port" pairs of sentinels
-      sentinels: "${REDIS_SENTINELS:127.0.0.1:26379}"
+  sentinel:
+    # name of master node
+    master: "${REDIS_MASTER:mymaster}"
+    # comma-separated list of "host:port" pairs of sentinels
+    sentinels: "${REDIS_SENTINELS:127.0.0.1:26379}"
+    # this value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
   # db index
   db: "${REDIS_DB:0}"
   # db password

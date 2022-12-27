@@ -19,30 +19,28 @@ version: '3.0'
 services:
   # Redis sentinel
   redis-master:
-    image: 'bitnami/redis:latest'
+    image: 'bitnami/redis:7.0'
     environment:
       - REDIS_REPLICATION_MODE=master
       - REDIS_PASSWORD=str0ng_passw0rd
     volumes:
       - ./tb-node/redis-sentinel/master:/bitnami/redis/data
-    ports:
-      - '127.0.0.1:6379:6379'
+
   redis-slave:
-    image: 'bitnami/redis:latest'
+    image: 'bitnami/redis:7.0'
     environment:
       - REDIS_PORT=7000
       - REDIS_REPLICATION_MODE=slave
       - REDIS_MASTER_HOST=redis-master
       - REDIS_MASTER_PASSWORD=str0ng_passw0rd
       - REDIS_PASSWORD=str0ng_passw0rd
-    ports:
-      - '127.0.0.1:7000:7000'
     volumes:
       - ./tb-node/redis-sentinel/slave:/bitnami/redis/data
     depends_on:
       - redis-master
+
   redis-sentinel:
-    image: 'bitnami/redis-sentinel:latest'
+    image: 'bitnami/redis-sentinel:7.0'
     environment:
       - REDIS_MASTER_HOST=redis-master
       - REDIS_MASTER_PASSWORD=str0ng_passw0rd
@@ -51,8 +49,6 @@ services:
       - redis-slave
     volumes:
       - ./tb-node/redis-sentinel/sentinel:/bitnami/redis/data
-    ports:
-      - '127.0.0.1:26379:26379'
 
   # ThingsBoard setup to use redis-standalone
   tb-core1:
