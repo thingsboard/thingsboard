@@ -25,8 +25,8 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RuleNodeStats {
-    private String dataMsg;
-    private Map<String, String> metadataMsg;
+    private String msgData;
+    private Map<String, String> msgMetadata;
     private String lastErrorMsg;
     private long errorsCount;
 }

@@ -329,7 +329,7 @@ public class RuleChainController extends BaseController {
             if (typeStr != null && typeStr.trim().length() > 0) {
                 type = RuleChainType.valueOf(typeStr);
             }
-            return checkNotNull(ruleChainService.findRuleChainsWithErrorStatistics(tenantId, type, pageLink));
+            return checkNotNull(ruleChainService.findRuleChainInfosByTenantIdAndType(tenantId, type, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

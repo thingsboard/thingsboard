@@ -34,8 +34,8 @@ public interface RuleChainInfoRepository extends JpaRepository<RuleChainInfoEnti
                 "WHERE rc.tenantId = :tenantId AND rc.type = :type AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                 "GROUP BY rc ",
                 countQuery = "SELECT count(rc) FROM RuleChainEntity AS rc WHERE rc.tenantId = :tenantId AND rc.type = :type AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) ")
-        Page<RuleChainInfoEntity> findErrorStatisticsByTenantIdAndRuleChain(@Param("tenantId") UUID tenantId,
-                                                                            @Param("type") RuleChainType type,
-                                                                            @Param("searchText") String searchText,
-                                                                            Pageable pageable);
+        Page<RuleChainInfoEntity> findRuleChainInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
+                                                                      @Param("type") RuleChainType type,
+                                                                      @Param("searchText") String searchText,
+                                                                      Pageable pageable);
 }

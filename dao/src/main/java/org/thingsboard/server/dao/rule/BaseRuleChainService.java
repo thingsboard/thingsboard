@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.rule;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -82,6 +81,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.common.util.JacksonUtil.OBJECT_MAPPER;
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -305,10 +305,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNode> ruleNodes = getRuleChainNodes(tenantId, ruleChainId);
         Collections.sort(ruleNodes, Comparator.comparingLong(RuleNode::getCreatedTime).thenComparing(RuleNode::getId, Comparator.comparing(RuleNodeId::getId)));
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
-        Map<RuleNodeId, RuleNodeStats> ruleNodesWithErrors = getRuleChainNodesStats(tenantId, ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList()));
+        Map<RuleNodeId, RuleNodeStats> ruleNodesWithErrors = getRuleNodesStats(tenantId, ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList()));
         for (RuleNode node : ruleNodes) {
             ruleNodeIndexMap.put(node.getId(), ruleNodes.indexOf(node));
-            if(ruleNodesWithErrors.containsKey(node.getId())) {
+            if (ruleNodesWithErrors.containsKey(node.getId())) {
                 node.setStats(ruleNodesWithErrors.get(node.getId()));
             }
         }
@@ -397,12 +397,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return ruleNodes;
     }
 
-    public Map<RuleNodeId, RuleNodeStats> getRuleChainNodesStats(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
+    private Map<RuleNodeId, RuleNodeStats> getRuleNodesStats(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
         Validator.validateIds(ruleNodeIds, "Incorrect entity ids for search request");
-        List<AttributeKvEntryEntityId> attributeKvEntries = attributesService.findAllValuesByEntityIds(tenantId, "ruleNodeStats", new ArrayList<>(ruleNodeIds));
+        List<AttributeKvEntryEntityId> attributeKvEntries = attributesService.findValuesByKeyAndEntityIds(tenantId, "ruleNodeStats", new ArrayList<>(ruleNodeIds));
         Map<RuleNodeId, RuleNodeStats> map = new HashMap<>();
         for (AttributeKvEntryEntityId akv : attributeKvEntries) {
-            map.put(new RuleNodeId(akv.getId()), stringToRuleNodeStats(akv.getEntry().getJsonValue().orElse("")));
+            map.put(new RuleNodeId(akv.getId()), convertToRuleNodeStats(akv.getEntry().getJsonValue().orElse("")));
         }
         return map;
     }
@@ -441,10 +441,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
     }
 
-    public PageData<RuleChainInfo> findRuleChainsWithErrorStatistics(TenantId tenantId, RuleChainType type, PageLink pageLink) {
+    @Override
+    public PageData<RuleChainInfo> findRuleChainInfosByTenantIdAndType(TenantId tenantId, RuleChainType type, PageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink);
-        return ruleChainInfoDao.findErrorStatisticsByTenantIdAndRuleChain(tenantId.getId(), type, pageLink);
+        return ruleChainInfoDao.findRuleChainInfosByTenantIdAndType(tenantId.getId(), type, pageLink);
     }
 
     @Override
@@ -818,6 +819,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         attributesService.removeAll(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList("ruleNodeStats"));
     }
 
+    @Override
     public void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId) {
         List<RuleNode> ruleNodes = ruleNodeDao.findAllRuleNodesByRuleChainId(ruleChainId);
         for (RuleNode ruleNode : ruleNodes) {
@@ -828,8 +830,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount, ExecutorService executorService) {
         updateRuleNodeStats(tenantId, ruleNodeId, ruleNodeStats -> {
-            ruleNodeStats.setDataMsg(data);
-            ruleNodeStats.setMetadataMsg(metadata);
+            ruleNodeStats.setMsgData(data);
+            ruleNodeStats.setMsgMetadata(metadata);
             ruleNodeStats.setLastErrorMsg(lastErrorMsg);
             ruleNodeStats.setErrorsCount(ruleNodeStats.getErrorsCount() + errorsCount);
         }, executorService);
@@ -848,10 +850,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         ruleNodeDao.removeById(tenantId, entityId.getId());
     }
 
-    private RuleNodeStats stringToRuleNodeStats(String jsonValue) {
+    private RuleNodeStats convertToRuleNodeStats(String jsonValue) {
         RuleNodeStats ruleNodeStats;
         try {
-            ruleNodeStats = new ObjectMapper().readValue(jsonValue, RuleNodeStats.class);
+            ruleNodeStats = OBJECT_MAPPER.readValue(jsonValue, RuleNodeStats.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

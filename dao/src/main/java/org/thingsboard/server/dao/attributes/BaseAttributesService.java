@@ -81,8 +81,8 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public List<AttributeKvEntryEntityId> findAllValuesByEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds) {
-        return attributesDao.findAllValuesByEntityIds(tenantId, attributeKey, entityIds);
+    public List<AttributeKvEntryEntityId> findValuesByKeyAndEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds) {
+        return attributesDao.findValuesByKeyAndEntityIds(tenantId, attributeKey, entityIds);
     }
 
     @Override

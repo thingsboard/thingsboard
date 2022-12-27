@@ -105,7 +105,7 @@ public interface RuleChainService {
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
 
-    PageData<RuleChainInfo> findRuleChainsWithErrorStatistics(TenantId tenantId, RuleChainType type, PageLink pageLink);
+    PageData<RuleChainInfo> findRuleChainInfosByTenantIdAndType(TenantId tenantId, RuleChainType type, PageLink pageLink);
 
     void clearRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
 
