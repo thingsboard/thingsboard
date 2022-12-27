@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.msa.ui.pages;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class ProfilesPageHelper extends ProfilesPageElements {
     public ProfilesPageHelper(WebDriver driver) {
@@ -101,5 +104,9 @@ public class ProfilesPageHelper extends ProfilesPageElements {
         plusBtn().click();
         importDeviceProfileBtn().click();
     }
-}
+
+    public boolean deleteDeviceProfileFromViewBtnIsNotDisplayed() {
+        return wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(getDeviseProfileViewDeleteBtn())));
+    }
+ }
 

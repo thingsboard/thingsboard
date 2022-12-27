@@ -116,6 +116,10 @@ public class OtherPageElements extends AbstractBasePage {
         return waitUntilElementToBeClickable(String.format(CHECKBOX, entityName));
     }
 
+    public WebElement presentCheckBox(String name) {
+        return waitUntilPresenceOfElementLocated(getCheckbox(name));
+    }
+
     public WebElement deleteSelectedBtn() {
         return waitUntilElementToBeClickable(DELETE_SELECTED_BTN);
     }

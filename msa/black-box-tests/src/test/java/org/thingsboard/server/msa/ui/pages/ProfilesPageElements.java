@@ -34,6 +34,11 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
     private static final String QUEUE_FIELD = "//input[@formcontrolname='queueName']";
     private static final String DESCRIPTION_FIELD = "//textarea[@formcontrolname='description']";
     private static final String ADD_DEVICE_PROFILE_ADD_BTN = ADD_DEVICE_PROFILE_VIEW + "//span[text() = 'Add']/..";
+    private static final String DEVISE_PROFILE_VIEW_DELETE_BTN = "//tb-device-profile//span[contains(text(),'Delete')]";
+
+    protected String getDeviseProfileViewDeleteBtn() {
+        return DEVISE_PROFILE_VIEW_DELETE_BTN;
+    }
 
     public WebElement createNewDeviceProfileBtn() {
         return waitUntilElementToBeClickable(CREATE_DEVICE_PROFILE_BTN);
@@ -89,5 +94,9 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
 
     public WebElement addDeviceProfileAddBtn() {
         return waitUntilElementToBeClickable(ADD_DEVICE_PROFILE_ADD_BTN);
+    }
+
+    public WebElement deviceProfileViewDeleteBtn() {
+        return waitUntilElementToBeClickable(DEVISE_PROFILE_VIEW_DELETE_BTN);
     }
 }
