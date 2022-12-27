@@ -36,8 +36,8 @@ public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.sentinel.sentinels:}")
     private String sentinels;
 
-    @Value("${redis.sentinel.usePoolConfig:true}")
-    private boolean usePoolConfig;
+    @Value("${redis.sentinel.useDefaultPoolConfig:true}")
+    private boolean useDefaultPoolConfig;
 
     @Value("${redis.db:}")
     private Integer database;
@@ -48,7 +48,7 @@ public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
         redisSentinelConfiguration.setMaster(this.master);
         redisSentinelConfiguration.setDatabase(this.database);
         redisSentinelConfiguration.setPassword(password);
-        if (usePoolConfig) {
+        if (useDefaultPoolConfig) {
             return new JedisConnectionFactory(redisSentinelConfiguration);
         } else {
             return new JedisConnectionFactory(redisSentinelConfiguration, buildPoolConfig());

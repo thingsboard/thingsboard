@@ -46,7 +46,7 @@ cache:
   type: "${CACHE_TYPE:redis}"
 
 redis:
-  # standalone or cluster
+  # standalone or cluster or sentinel
   connection:
     type: "${REDIS_CONNECTION_TYPE:standalone}"
   standalone:
@@ -66,15 +66,15 @@ redis:
     nodes: "${REDIS_NODES:}"
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-    # sentinel mode
   sentinel:
     # name of master node
     master: "${REDIS_MASTER:mymaster}"
     # comma-separated list of "host:port" pairs of sentinels
     sentinels: "${REDIS_SENTINELS:127.0.0.1:26379}"
-    # this value may be used only if you used not default ClientConfig
-    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+    # if set false will be used pool config build from values of the pool config section
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   # db index
   db: "${REDIS_DB:0}"
   # db password
