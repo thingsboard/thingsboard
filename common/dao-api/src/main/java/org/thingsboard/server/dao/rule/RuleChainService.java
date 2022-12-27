@@ -32,11 +32,11 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.rule.RuleNodeStats;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created by igor on 3/12/18.
@@ -105,14 +105,19 @@ public interface RuleChainService {
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
 
-    ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
-
     PageData<RuleChainInfo> findRuleChainsWithErrorStatistics(TenantId tenantId, RuleChainType type, PageLink pageLink);
 
     void clearRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
 
     void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId);
 
-    void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount);
+    void reportRuleNodeErrors(TenantId tenantId,
+                              RuleChainId ruleChainId,
+                              RuleNodeId ruleNodeId,
+                              String data,
+                              Map<String, String> metadata,
+                              String lastErrorMsg,
+                              int errorsCount,
+                              ExecutorService executorService);
 
 }

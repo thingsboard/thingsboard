@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.stats;
 
 import com.google.common.util.concurrent.FutureCallback;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
 @TbRuleEngineComponent
 @Service
 @Slf4j
+@AllArgsConstructor
 public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsService {
 
     public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
@@ -68,15 +71,9 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
     private final RuleChainService ruleChainService;
     private final Lock lock = new ReentrantLock();
     private final AssetService assetService;
-    private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets;
+    private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets = new ConcurrentHashMap<>();
+    private final DbCallbackExecutorService dbCallbackExecutor;
 
-    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, RuleChainService ruleChainService, AssetService assetService) {
-        this.tsService = tsService;
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.ruleChainService = ruleChainService;
-        this.assetService = assetService;
-        this.tenantQueueAssets = new ConcurrentHashMap<>();
-    }
 
     @Override
     public void reportQueueStats(long ts, TbRuleEngineConsumerStats ruleEngineStats) {
@@ -116,8 +113,11 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                     .forEach((ruleChainId, ruleNodesErrors) -> {
                         ruleNodesErrors.forEach((ruleNodeId, ruleNodeExceptions) -> {
                             ruleChainService.reportRuleNodeErrors(tenantId, ruleChainId, ruleNodeId,
-                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getData(), ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMsgMetaData().getData(),
-                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMessage(), ruleNodeExceptions.size());
+                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getData(),
+                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMsgMetaData().getData(),
+                                    ruleNodeExceptions.get(ruleNodeExceptions.size() - 1).getMessage(),
+                                    ruleNodeExceptions.size(),
+                                    dbCallbackExecutor.executor());
                         });
                     });
         });

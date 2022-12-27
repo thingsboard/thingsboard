@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -79,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -797,20 +797,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         deleteEntityRelations(tenantId, ruleChainId);
     }
 
-    @Override
-    public ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId) {
+    private ListenableFuture<RuleNodeStats> getRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId, ExecutorService executorService) {
         return Futures.transform(attributesService.find(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, "ruleNodeStats"), input ->
                 input.map(attributeKvEntry -> JacksonUtil.fromString(attributeKvEntry.getJsonValue().get(), RuleNodeStats.class))
-                        .orElseGet(RuleNodeStats::new), MoreExecutors.directExecutor());
+                        .orElseGet(RuleNodeStats::new), executorService);
     }
 
-    private void updateRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId, Consumer<RuleNodeStats> statsUpdater) {
-        DonAsynchron.withCallback(getRuleNodeStats(tenantId, ruleNodeId), ruleNodeStats -> {
+    private void updateRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId, Consumer<RuleNodeStats> statsUpdater, ExecutorService executorService) {
+        DonAsynchron.withCallback(getRuleNodeStats(tenantId, ruleNodeId, executorService), ruleNodeStats -> {
             statsUpdater.accept(ruleNodeStats);
             attributesService.save(tenantId, ruleNodeId, DataConstants.SERVER_SCOPE, Collections.singletonList(
                     new BaseAttributeKvEntry(System.currentTimeMillis(), new JsonDataEntry("ruleNodeStats", JacksonUtil.toString(ruleNodeStats)))
             ));
-        }, e -> {});
+        }, e -> {
+        }, executorService);
     }
 
     @Override
@@ -826,13 +826,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount) {
+    public void reportRuleNodeErrors(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, String data, Map<String, String> metadata, String lastErrorMsg, int errorsCount, ExecutorService executorService) {
         updateRuleNodeStats(tenantId, ruleNodeId, ruleNodeStats -> {
             ruleNodeStats.setDataMsg(data);
             ruleNodeStats.setMetadataMsg(metadata);
             ruleNodeStats.setLastErrorMsg(lastErrorMsg);
             ruleNodeStats.setErrorsCount(ruleNodeStats.getErrorsCount() + errorsCount);
-        });
+        }, executorService);
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {

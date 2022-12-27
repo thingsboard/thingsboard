@@ -55,7 +55,7 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         super.logLifecycleEvent(event, e);
         if (e != null) {
-            systemContext.getRuleChainService().reportRuleNodeErrors(tenantId, ruleChainId, ruleNodeId, "", null, e.getMessage(), 1);
+            systemContext.getRuleChainService().reportRuleNodeErrors(tenantId, ruleChainId, ruleNodeId, "", null, e.getMessage(), 1, systemContext.getDbCallbackExecutor().executor());
         }
     }
 
