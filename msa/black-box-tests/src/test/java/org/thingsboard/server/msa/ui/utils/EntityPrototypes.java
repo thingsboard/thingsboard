@@ -26,6 +26,13 @@ public class EntityPrototypes {
         return customer;
     }
 
+    public static Customer defaultCustomerPrototype(String entityName, String phoneNumber){
+        Customer customer = new Customer();
+        customer.setTitle(entityName);
+        customer.setPhone(phoneNumber);
+        return customer;
+    }
+
     public static RuleChain defaultRuleChainPrototype(String entityName){
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
