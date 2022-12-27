@@ -713,4 +713,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return Optional.ofNullable(findDeviceById(tenantId, new DeviceId(entityId.getId())));
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DEVICE;
+    }
+
 }

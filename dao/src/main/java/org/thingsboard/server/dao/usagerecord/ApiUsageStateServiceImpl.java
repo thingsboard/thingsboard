@@ -167,4 +167,10 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findApiUsageStateById(tenantId, new ApiUsageStateId(entityId.getId())));
     }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.API_USAGE_STATE;
+    }
+
 }

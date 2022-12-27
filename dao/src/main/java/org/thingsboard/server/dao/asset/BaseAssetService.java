@@ -437,4 +437,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return Optional.ofNullable(findAssetById(tenantId, new AssetId(entityId.getId())));
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ASSET;
+    }
+
 }

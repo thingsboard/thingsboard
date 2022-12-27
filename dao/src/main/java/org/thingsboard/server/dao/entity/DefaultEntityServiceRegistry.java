@@ -15,48 +15,39 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import org.apache.commons.text.CaseUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
 public class DefaultEntityServiceRegistry implements EntityServiceRegistry {
 
-    private static final String SERVICE_SUFFIX = "DaoService";
-
-    private Map<String, EntityDaoService> entityDaoServicesMap;
-
     private final ApplicationContext applicationContext;
+    private final Map<EntityType, EntityDaoService> entityDaoServicesMap;
 
     public DefaultEntityServiceRegistry(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+        this.entityDaoServicesMap = new HashMap<>();
     }
 
     @PostConstruct
     public void init() {
-        entityDaoServicesMap = applicationContext.getBeansOfType(EntityDaoService.class);
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (entityDaoServicesMap != null) {
-            entityDaoServicesMap.clear();
-        }
+        applicationContext.getBeansOfType(EntityDaoService.class).values().forEach(entityDaoService -> {
+            EntityType entityType = entityDaoService.getEntityType();
+            entityDaoServicesMap.put(entityType, entityDaoService);
+            if (EntityType.RULE_CHAIN.equals(entityType)) {
+                entityDaoServicesMap.put(EntityType.RULE_NODE, entityDaoService);
+            }
+        });
     }
 
     @Override
     public EntityDaoService getServiceByEntityType(EntityType entityType) {
-        String beanName = EntityType.RULE_NODE.equals(entityType) ? getBeanName(EntityType.RULE_CHAIN) : getBeanName(entityType);
-        return entityDaoServicesMap.get(beanName);
-    }
-
-    private String getBeanName(EntityType entityType) {
-        return CaseUtils.toCamelCase(entityType.name(), true, '_') + SERVICE_SUFFIX;
+        return entityDaoServicesMap.get(entityType);
     }
 
 }
