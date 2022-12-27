@@ -46,7 +46,7 @@ public class GatewaySessionHandlerTest {
 
     @Test
     public void givenConcurrentReferenceHashMap_WhenGC_thenMapIsEmpty() {
-        AbstractGatewaySessionHandler gsh = mock(AbstractGatewaySessionHandler.class);
+        GatewaySessionHandler gsh = mock(GatewaySessionHandler.class);
         willCallRealMethod().given(gsh).createWeakMap();
 
         ConcurrentMap<String, Lock> map = gsh.createWeakMap();
