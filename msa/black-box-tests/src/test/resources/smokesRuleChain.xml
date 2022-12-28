@@ -16,12 +16,20 @@
     limitations under the License.
 
 -->
-<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Black-box tests">
-    <test verbose="2" name="Connectivity tests" preserve-order="false">
+<suite name="Rule Chain Smoke Tests">
+    <listeners>
+        <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
+    </listeners>
+    <test name="Rule Chain ui smoke tests">
+        <groups>
+            <run>
+                <exclude name="broken"/>
+            </run>
+        </groups>
         <packages>
-            <package name="org.thingsboard.server.msa.connectivity" />
+            <package name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke"/>
         </packages>
     </test>
 </suite>
