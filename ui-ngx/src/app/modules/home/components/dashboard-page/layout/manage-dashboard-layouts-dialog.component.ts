@@ -297,6 +297,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   setFixedLayout(layout: string): void {
     if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED && this.layoutsFormGroup.get('right').value) {
       this.layoutsFormGroup.get('fixedLayout').setValue(layout);
+      this.layoutsFormGroup.markAsDirty();
     }
   }
 
