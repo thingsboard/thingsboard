@@ -691,23 +691,28 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   public toggleLayouts() {
     this.isRightLayoutOpened = !this.isRightLayoutOpened;
     this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
-    this.updateLayoutSizes();
   }
 
   public openRightLayout() {
     this.isRightLayoutOpened = true;
     this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
-    this.updateLayoutSizes();
   }
 
   private updateLayoutSizes() {
+    let changeMainLayoutSize = false;
+    let changeRightLayoutSize = false;
     if (this.dashboardCtx.state) {
-      this.updateMainLayoutSize();
-      this.updateRightLayoutSize();
+      changeMainLayoutSize = this.updateMainLayoutSize();
+      changeRightLayoutSize = this.updateRightLayoutSize();
+    }
+    if (changeMainLayoutSize || changeRightLayoutSize) {
+      this.cd.markForCheck();
     }
   }
 
-  private updateMainLayoutSize() {
+  private updateMainLayoutSize(): boolean {
+    const prevMainLayoutWidth = this.mainLayoutSize.width;
+    const prevMainLayoutHeight = this.mainLayoutSize.height;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
       this.mainLayoutSize.width = '100%';
     } else {
@@ -718,9 +723,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       this.mainLayoutSize.height = '0px';
     }
+    return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height;
   }
 
-  private updateRightLayoutSize() {
+  private updateRightLayoutSize(): boolean {
+    const prevRightLayoutWidth = this.rightLayoutSize.width;
+    const prevRightLayoutHeight = this.rightLayoutSize.height;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
       this.rightLayoutSize.width = '100%';
     } else {
@@ -731,6 +739,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       this.rightLayoutSize.height = '0px';
     }
+    return prevRightLayoutWidth !== this.rightLayoutSize.width || prevRightLayoutHeight !== this.rightLayoutSize.height;
   }
 
   private calculateWidth(layout: DashboardLayoutId): string {
