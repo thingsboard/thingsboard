@@ -16,7 +16,6 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
-import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -239,24 +238,6 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         customerPage.doneBtnEditView().click();
 
         Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").contains(number));
-    }
-
-    @Test(priority = 20, groups = "smoke")
-    @Description
-    public void deletePhoneNumber() {
-        String customerName = ENTITY_NAME;
-        String number = "+12015550123";
-        testRestClient.postCustomer(defaultCustomerPrototype(customerName, number));
-        this.customerName = customerName;
-
-        sideBarMenuView.customerBtn().click();
-        customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
-        customerPage.phoneNumberEntityView().click();
-        customerPage.phoneNumberEntityView().sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
-        customerPage.doneBtnEditView().click();
-
-        Assert.assertEquals(customerPage.phoneNumberEntityView().getAttribute("value"), "");
     }
 
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "incorrectPhoneNumber")
