@@ -82,7 +82,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
     public void testDevices() throws Exception {
         // create device and assign to edge; update device
         Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
-        verifyUpdateFirmwareIdAndDeviceData(savedDevice);
 
         // unassign device from edge
         edgeImitator.expectMessageAmount(1);
@@ -170,6 +169,47 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
 
     }
 
+    @Test
+    public void testUpdateDeviceCredentials() throws Exception {
+        // create device and assign to edge; update device
+        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        verifyUpdateFirmwareIdAndDeviceData(savedDevice);
+
+        // update device credentials - ACCESS_TOKEN
+        edgeImitator.expectMessageAmount(1);
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+        Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId("access_token");
+        doPost("/api/device/credentials", deviceCredentials)
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);
+        DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = (DeviceCredentialsUpdateMsg) latestMessage;
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), deviceCredentialsUpdateMsg.getCredentialsType());
+        Assert.assertEquals(deviceCredentials.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsId());
+        Assert.assertFalse(deviceCredentialsUpdateMsg.hasCredentialsValue());
+
+        // update device credentials - X509_CERTIFICATE
+        edgeImitator.expectMessageAmount(1);
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
+        deviceCredentials.setCredentialsId(null);
+        deviceCredentials.setCredentialsValue("-----BEGIN RSA PRIVATE KEY-----");
+        doPost("/api/device/credentials", deviceCredentials)
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);
+        deviceCredentialsUpdateMsg = (DeviceCredentialsUpdateMsg) latestMessage;
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), deviceCredentialsUpdateMsg.getCredentialsType());
+        Assert.assertFalse(deviceCredentialsUpdateMsg.getCredentialsId().isEmpty());
+        Assert.assertTrue(deviceCredentialsUpdateMsg.hasCredentialsValue());
+        Assert.assertEquals(deviceCredentials.getCredentialsValue(), deviceCredentialsUpdateMsg.getCredentialsValue());
+    }
+
     private void verifyUpdateFirmwareIdAndDeviceData(Device savedDevice) throws InterruptedException {
         // create ota package
         edgeImitator.expectMessageAmount(1);
@@ -207,45 +247,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         MqttDeviceTransportConfiguration mqttDeviceTransportConfiguration =
                 (MqttDeviceTransportConfiguration) deviceData.getTransportConfiguration();
         Assert.assertEquals("tb_rule_engine.thermostat", mqttDeviceTransportConfiguration.getProperties().get("topic"));
-    }
-
-    @Test
-    public void testUpdateDeviceCredentials() throws Exception {
-        // create device and assign to edge; update device
-        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
-
-        // update device credentials - ACCESS_TOKEN
-        edgeImitator.expectMessageAmount(1);
-        DeviceCredentials deviceCredentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-        Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-        deviceCredentials.setCredentialsId("access_token");
-        doPost("/api/device/credentials", deviceCredentials)
-                .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);
-        DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = (DeviceCredentialsUpdateMsg) latestMessage;
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), deviceCredentialsUpdateMsg.getCredentialsType());
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsId());
-        Assert.assertFalse(deviceCredentialsUpdateMsg.hasCredentialsValue());
-
-        // update device credentials - X509_CERTIFICATE
-        edgeImitator.expectMessageAmount(1);
-        deviceCredentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-        deviceCredentials.setCredentialsId(null);
-        deviceCredentials.setCredentialsValue("-----BEGIN RSA PRIVATE KEY-----");
-        doPost("/api/device/credentials", deviceCredentials)
-                .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);
-        deviceCredentialsUpdateMsg = (DeviceCredentialsUpdateMsg) latestMessage;
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), deviceCredentialsUpdateMsg.getCredentialsType());
-        Assert.assertFalse(deviceCredentialsUpdateMsg.getCredentialsId().isEmpty());
-        Assert.assertTrue(deviceCredentialsUpdateMsg.hasCredentialsValue());
-        Assert.assertEquals(deviceCredentials.getCredentialsValue(), deviceCredentialsUpdateMsg.getCredentialsValue());
     }
 
     @Test
