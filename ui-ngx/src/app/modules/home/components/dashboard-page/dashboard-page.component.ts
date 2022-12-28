@@ -150,6 +150,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 // @dynamic
 @Component({
