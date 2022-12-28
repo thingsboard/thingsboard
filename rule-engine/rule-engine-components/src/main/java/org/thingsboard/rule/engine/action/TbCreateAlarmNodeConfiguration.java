@@ -19,6 +19,7 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
 @Data
 public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfiguration implements NodeConfiguration<TbCreateAlarmNodeConfiguration> {
 
+    @NoXss
     private String severity;
     private boolean propagate;
     private boolean propagateToOwner;

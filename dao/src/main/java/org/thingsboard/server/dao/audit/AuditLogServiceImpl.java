@@ -121,13 +121,13 @@ public class AuditLogServiceImpl implements AuditLogService {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
-            String entityName = "";
+            String entityName = "N/A";
             if (entity != null) {
                 entityName = entity.getName();
             } else {
                 try {
-                    entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
-                } catch (Exception ex) {
+                    entityName = entityService.fetchEntityName(tenantId, entityId).orElse(entityName);
+                } catch (Exception ignored) {
                 }
             }
             if (e != null) {
@@ -389,7 +389,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         try {
             auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         } catch (Exception e) {
-            if (StringUtils.contains(e.getMessage(), "value is malformed")) {
+            if (StringUtils.contains(e.getMessage(), "is malformed")) {
                 auditLogEntry.setEntityName("MALFORMED");
             } else {
                 return Futures.immediateFailedFuture(e);

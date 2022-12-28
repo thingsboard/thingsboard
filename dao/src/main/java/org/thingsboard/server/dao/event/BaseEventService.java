@@ -148,4 +148,5 @@ public class BaseEventService implements EventService {
     private List<EventInfo> convert(EntityType entityType, List<? extends Event> list) {
         return list == null ? null : list.stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList());
     }
+
 }
