@@ -31,6 +31,7 @@ import {
   OnInit,
   Renderer2,
   SimpleChanges,
+  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -114,7 +115,7 @@ import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
+import { DASHBOARD_PAGE_COMPONENT_TOKEN, HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 
 @Component({
   selector: 'tb-widget',
@@ -190,6 +191,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private popoverService: TbPopoverService,
               @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
               @Inject(DASHBOARD_PAGE_COMPONENT_TOKEN) private dashboardPageComponent: ComponentType<any>,
+              @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -354,7 +356,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 
-    this.widgetComponentService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType).subscribe(
+    this.widgetComponentService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType,
+      [this.homeComponentsModule]).subscribe(
       (widgetInfo) => {
         this.widgetInfo = widgetInfo;
         this.loadFromWidgetInfo();
