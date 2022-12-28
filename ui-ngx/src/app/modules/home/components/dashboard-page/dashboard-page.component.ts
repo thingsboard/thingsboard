@@ -15,6 +15,7 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -56,7 +57,8 @@ import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { deepClone, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
 import {
-  DashboardContext, DashboardPageInitData,
+  DashboardContext,
+  DashboardPageInitData,
   DashboardPageLayout,
   DashboardPageLayoutContext,
   DashboardPageLayouts,
@@ -157,7 +159,7 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, AfterViewInit, OnDestroy {
 
   authState: AuthState = getCurrentAuthState(this.store);
 
@@ -244,8 +246,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
+  mainLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
+  rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
+
   private dashboardLogoCache: SafeUrl;
   private defaultDashboardLogo = 'assets/logo_title_white.svg';
+
+  private dashboardResize$: ResizeObserver;
 
   dashboardCtx: DashboardContext = {
     instanceId: this.utils.guid(),
@@ -402,6 +409,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
           this.isMobile = !state.matches;
+          this.updateLayoutSizes();
         }
     ));
     if (this.isMobileApp && this.syncStateWithQueryParam) {
@@ -412,6 +420,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         });
       });
     }
+  }
+
+  ngAfterViewInit() {
+    this.dashboardResize$ = new ResizeObserver(() => {
+      this.updateLayoutSizes();
+    });
+    this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
   }
 
   private init(data: DashboardPageInitData) {
@@ -537,6 +552,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       subscription.unsubscribe();
     });
     this.rxSubscriptions.length = 0;
+    if (this.dashboardResize$) {
+      this.dashboardResize$.disconnect();
+    }
   }
 
   public runChangeDetection() {
@@ -672,34 +690,45 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   public toggleLayouts() {
     this.isRightLayoutOpened = !this.isRightLayoutOpened;
     this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
+    this.updateLayoutSizes();
   }
 
   public openRightLayout() {
     this.isRightLayoutOpened = true;
     this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
+    this.updateLayoutSizes();
   }
 
-  public mainLayoutWidth(): string {
+  private updateLayoutSizes() {
+    if (this.dashboardCtx.state) {
+      this.updateMainLayoutSize();
+      this.updateRightLayoutSize();
+    }
+  }
+
+  private updateMainLayoutSize() {
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
-      return '100%';
+      this.mainLayoutSize.width = '100%';
     } else {
-      return this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
+      this.mainLayoutSize.width = this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
     }
-  }
-
-  public mainLayoutHeight(): string {
     if (!this.isEditingWidget || this.editingLayoutCtx.id === 'main') {
-      return '100%';
+      this.mainLayoutSize.height = '100%';
     } else {
-      return '0px';
+      this.mainLayoutSize.height = '0px';
     }
   }
 
-  public rightLayoutWidth(): string {
+  private updateRightLayoutSize() {
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
-      return '100%';
+      this.rightLayoutSize.width = '100%';
     } else {
-      return this.isMobile ? '100%' : this.calculateWidth('right');
+      this.rightLayoutSize.width = this.isMobile ? '100%' : this.calculateWidth('right');
+    }
+    if (!this.isEditingWidget || this.editingLayoutCtx.id === 'right') {
+      this.rightLayoutSize.height = '100%';
+    } else {
+      this.rightLayoutSize.height = '0px';
     }
   }
 
@@ -740,14 +769,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       }
     } else {
       return '50%';
-    }
-  }
-
-  public rightLayoutHeight(): string {
-    if (!this.isEditingWidget || this.editingLayoutCtx.id === 'right') {
-      return '100%';
-    } else {
-      return '0px';
     }
   }
 
@@ -977,6 +998,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       layout.layoutCtx.ctrl.reload();
     }
     layout.layoutCtx.ignoreLoading = true;
+    this.updateLayoutSizes();
   }
 
   private setEditMode(isEdit: boolean, revert: boolean) {
@@ -1191,6 +1213,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.editingLayoutCtx = null;
     this.editingWidgetSubtitle = null;
     this.isEditingWidget = false;
+    this.updateLayoutSizes();
     this.resetHighlight();
     this.forceDashboardMobileMode = false;
   }
@@ -1216,6 +1239,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.editingWidgetSubtitle = this.widgetComponentService.getInstantWidgetInfo(this.editingWidget).widgetName;
       this.forceDashboardMobileMode = true;
       this.isEditingWidget = true;
+      this.updateLayoutSizes();
       if (layoutCtx) {
         const delayOffset = transition ? 350 : 0;
         const delay = transition ? 400 : 300;
