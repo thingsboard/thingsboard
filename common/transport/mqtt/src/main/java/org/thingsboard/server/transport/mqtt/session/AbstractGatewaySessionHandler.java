@@ -114,7 +114,7 @@ public abstract class AbstractGatewaySessionHandler {
         if (isJsonPayloadType()) {
             onDeviceDisconnectJson(mqttMsg);
         } else {
-            onGatewayNodeDisconnectProto(mqttMsg);
+            onGatewayDeviceDisconnectProto(mqttMsg);
         }
     }
 
@@ -308,7 +308,7 @@ public abstract class AbstractGatewaySessionHandler {
         processOnDisconnect(msg, deviceName);
     }
 
-    protected void onGatewayNodeDisconnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+    protected void onGatewayDeviceDisconnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
         try {
             TransportApiProtos.DisconnectMsg connectProto = TransportApiProtos.DisconnectMsg.parseFrom(getBytes(mqttMsg.payload()));
             String deviceName = checkDeviceName(connectProto.getDeviceName());

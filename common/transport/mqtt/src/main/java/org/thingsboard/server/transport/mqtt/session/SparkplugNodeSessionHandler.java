@@ -59,7 +59,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler{
                     // TODO
                     break;
                 case NDEATH:
-                    onGatewayNodeDisconnectProto(mqttMsg);
+                    onGatewayDeviceDisconnectProto(mqttMsg);
                     break;
                 case NRECORD:
                     // TODO
@@ -82,7 +82,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler{
                     // TODO
                     break;
                 case DDEATH:
-                    onGatewayNodeDisconnectProto(mqttMsg);
+                    onGatewayDeviceDisconnectProto(mqttMsg);
                     break;
                 case DRECORD:
                     // TODO
