@@ -24,7 +24,7 @@ import { Observable, Subject } from 'rxjs';
     providedIn: 'root'
   }
 )
-export class NotificationService {
+export class ToastNotificationService {
 
   private notificationSubject: Subject<NotificationMessage> = new Subject();
 
