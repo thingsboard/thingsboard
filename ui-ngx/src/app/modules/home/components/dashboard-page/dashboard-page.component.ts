@@ -31,7 +31,6 @@ import {
   Optional,
   Renderer2,
   StaticProvider,
-  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -152,7 +151,6 @@ import { tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 
 // @dynamic
 @Component({
@@ -341,7 +339,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               @Inject(DOCUMENT) private document: Document,
-              @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
               private breakpointObserver: BreakpointObserver,
               private route: ActivatedRoute,
               private router: Router,
@@ -1147,8 +1144,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
     this.searchBundle = '';
-    this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType,
-      [this.homeComponentsModule]).subscribe(
+    this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = JSON.parse(widgetTypeInfo.defaultConfig);
         config.title = 'New ' + widgetTypeInfo.widgetName;
