@@ -389,7 +389,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         try {
             auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         } catch (Exception e) {
-            if (StringUtils.contains(e.getMessage(), "value is malformed")) {
+            if (StringUtils.contains(e.getMessage(), "is malformed")) {
                 auditLogEntry.setEntityName("MALFORMED");
             } else {
                 return Futures.immediateFailedFuture(e);

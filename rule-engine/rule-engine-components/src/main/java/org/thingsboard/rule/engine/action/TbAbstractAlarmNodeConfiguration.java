@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 public abstract class TbAbstractAlarmNodeConfiguration {
@@ -46,6 +47,7 @@ public abstract class TbAbstractAlarmNodeConfiguration {
             "return details;";
 
 
+    @NoXss
     private String alarmType;
     private ScriptLanguage scriptLang;
     private String alarmDetailsBuildJs;
