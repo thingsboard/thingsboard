@@ -45,13 +45,13 @@ import { MODULES_MAP } from '@shared/public-api';
 import * as tinycolor_ from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
-import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 
 const tinycolor = tinycolor_;
 
-// @dynamic
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class WidgetComponentService {
 
   private cssParser = new cssjs();
@@ -68,7 +68,6 @@ export class WidgetComponentService {
 
   constructor(@Inject(WINDOW) private window: Window,
               @Optional() @Inject(MODULES_MAP) private modulesMap: IModulesMap,
-              @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private widgetService: WidgetService,
               private utils: UtilsService,
@@ -185,9 +184,9 @@ export class WidgetComponentService {
         () => {
           const loadDefaultWidgetInfoTasks = [
             this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type',
-              [SharedModule, WidgetComponentsModule, this.homeComponentsModule]),
+              [SharedModule, WidgetComponentsModule]),
             this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type',
-              [SharedModule, WidgetComponentsModule, this.homeComponentsModule]),
+              [SharedModule, WidgetComponentsModule]),
           ];
           forkJoin(loadDefaultWidgetInfoTasks).subscribe(
             () => {
@@ -231,13 +230,14 @@ export class WidgetComponentService {
     }
   }
 
-  public getWidgetInfo(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): Observable<WidgetInfo> {
+  public getWidgetInfo(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean, modules?: Type<any>[]): Observable<WidgetInfo> {
     return this.init().pipe(
-      mergeMap(() => this.getWidgetInfoInternal(bundleAlias, widgetTypeAlias, isSystem))
+      mergeMap(() => this.getWidgetInfoInternal(bundleAlias, widgetTypeAlias, isSystem, modules))
     );
   }
 
-  private getWidgetInfoInternal(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): Observable<WidgetInfo> {
+  private getWidgetInfoInternal(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean,
+                                modules?: Type<any>[]): Observable<WidgetInfo> {
     const widgetInfoSubject = new ReplaySubject<WidgetInfo>();
     const widgetInfo = this.getWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
     if (widgetInfo) {
@@ -245,7 +245,7 @@ export class WidgetComponentService {
       widgetInfoSubject.complete();
     } else {
       if (this.utils.widgetEditMode) {
-        this.loadWidget(this.editingWidgetType, bundleAlias, isSystem, widgetInfoSubject);
+        this.loadWidget(this.editingWidgetType, bundleAlias, isSystem, widgetInfoSubject, modules);
       } else {
         const key = this.createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
         let fetchQueue = this.widgetsInfoFetchQueue.get(key);
@@ -256,7 +256,7 @@ export class WidgetComponentService {
           this.widgetsInfoFetchQueue.set(key, fetchQueue);
           this.widgetService.getWidgetType(bundleAlias, widgetTypeAlias, isSystem, {ignoreErrors: true}).subscribe(
             (widgetType) => {
-              this.loadWidget(widgetType, bundleAlias, isSystem, widgetInfoSubject);
+              this.loadWidget(widgetType, bundleAlias, isSystem, widgetInfoSubject, modules);
             },
             () => {
               widgetInfoSubject.next(this.missingWidgetType);
@@ -270,7 +270,8 @@ export class WidgetComponentService {
     return widgetInfoSubject.asObservable();
   }
 
-  private loadWidget(widgetType: WidgetType, bundleAlias: string, isSystem: boolean, widgetInfoSubject: Subject<WidgetInfo>) {
+  private loadWidget(widgetType: WidgetType, bundleAlias: string, isSystem: boolean, widgetInfoSubject: Subject<WidgetInfo>,
+                     modules?: Type<any>[]) {
     const widgetInfo = toWidgetInfo(widgetType);
     const key = this.createWidgetInfoCacheKey(bundleAlias, widgetInfo.alias, isSystem);
     let widgetControllerDescriptor: WidgetControllerDescriptor = null;
@@ -283,7 +284,11 @@ export class WidgetComponentService {
     }
     if (widgetControllerDescriptor) {
       const widgetNamespace = `widget-type-${(isSystem ? 'sys-' : '')}${bundleAlias}-${widgetInfo.alias}`;
-      this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
+      const widgetModules = [SharedModule, WidgetComponentsModule];
+      if (modules) {
+        widgetModules.push(...modules);
+      }
+      this.loadWidgetResources(widgetInfo, widgetNamespace, widgetModules).subscribe(
         () => {
           if (widgetControllerDescriptor.settingsSchema) {
             widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;

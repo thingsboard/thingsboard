@@ -116,24 +116,6 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void createCustomerAddAndRemovePhoneNumber() {
-        String customerName = ENTITY_NAME;
-        String number = "12015550123";
-
-        sideBarMenuView.customerBtn().click();
-        customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(customerName);
-        customerPage.phoneNumberAddEntityView().sendKeys(number);
-        customerPage.phoneNumberAddEntityView().clear();
-        customerPage.addBtnC().click();
-        this.customerName = customerName;
-        customerPage.entity(customerName).click();
-
-        Assert.assertEquals(customerPage.phoneNumberEntityView().getAttribute("value"), "");
-    }
-
-    @Test(priority = 20, groups = "smoke")
-    @Description
     public void createCustomerWithoutName() {
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();

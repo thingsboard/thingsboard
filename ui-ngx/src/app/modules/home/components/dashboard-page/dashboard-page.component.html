@@ -135,7 +135,7 @@
                   (click)="openDashboardSettings($event)">
             <mat-icon>settings</mat-icon>
           </button>
-          <tb-dashboard-select [fxShow]="!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()"
+          <tb-dashboard-select *ngIf="!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()"
                                [(ngModel)]="currentDashboardId"
                                (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
                                [customerId]="currentCustomerId"
