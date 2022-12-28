@@ -869,37 +869,25 @@ export class EntityService {
         };
         aliasInfo.currentEntity = null;
         if (!aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
-          let entityInfoObservable: Observable<EntityInfo>;
+          let currentEntity: EntityInfo = null;
           if (result.stateEntity && aliasInfo.entityFilter.type === AliasFilterType.singleEntity) {
-            let currentEntity: EntityInfo = null;
             if (stateParams) {
+              let targetParams = stateParams;
               if (result.entityParamName && result.entityParamName.length) {
-                const stateEntity = stateParams[result.entityParamName];
-                if (stateEntity) {
-                  currentEntity = {
-                    id: stateEntity.entityId.id,
-                    entityType: stateEntity.entityId.entityType,
-                    name: stateEntity.entityName,
-                    label: stateEntity.entityLabel
-                  };
-                }
-              } else {
-                if (stateParams.entityId) {
-                  currentEntity = {
-                    id: stateParams.entityId.id,
-                    entityType: stateParams.entityId.entityType as EntityType,
-                    name: stateParams.entityName,
-                    label: stateParams.entityLabel
-                  };
-                }
+                targetParams = stateParams[result.entityParamName];
+              }
+              if (targetParams && targetParams.entityId) {
+                currentEntity = {
+                  id: targetParams.entityId.id,
+                  entityType: targetParams.entityId.entityType as EntityType,
+                  name: targetParams.entityName,
+                  label: targetParams.entityLabel
+                };
               }
             }
-            entityInfoObservable = currentEntity ? of(currentEntity) : this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
-              {ignoreLoading: true, ignoreErrors: true});
-          } else {
-            entityInfoObservable = this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
-              {ignoreLoading: true, ignoreErrors: true});
           }
+          const entityInfoObservable = currentEntity ? of(currentEntity) : this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true});
           return entityInfoObservable.pipe(
             map((entity) => {
               aliasInfo.currentEntity = entity;
