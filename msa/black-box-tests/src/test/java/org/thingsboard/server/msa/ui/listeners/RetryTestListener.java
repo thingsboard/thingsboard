@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.msa.ui.listeners;
 
-import org.thingsboard.server.dao.service.BaseEntityServiceBeanFactoryTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.testng.IAnnotationTransformer;
+import org.testng.annotations.ITestAnnotation;
 
-@DaoSqlTest
-public class EntityServiceBeanFactorySqlTest extends BaseEntityServiceBeanFactoryTest {
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
+public class RetryTestListener implements IAnnotationTransformer {
+
+    @Override
+    public void transform(ITestAnnotation annotation,
+                          Class testClass,
+                          Constructor testConstructor,
+                          Method testMethod) {
+        annotation.setRetryAnalyzer(RetryAnalyzer.class);
+    }
 }

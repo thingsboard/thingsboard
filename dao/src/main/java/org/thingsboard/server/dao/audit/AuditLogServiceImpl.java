@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -54,7 +53,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -62,7 +60,7 @@ import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
-@Service("AuditLogDaoService")
+@Service
 @ConditionalOnProperty(prefix = "audit-log", value = "enabled", havingValue = "true")
 public class AuditLogServiceImpl implements AuditLogService {
 
@@ -128,8 +126,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 entityName = entity.getName();
             } else {
                 try {
-                    Optional<String> entityNameOpt = entityService.fetchEntityName(tenantId, entityId);
-                    entityName = entityNameOpt.orElse(entityName);
+                    entityName = entityService.fetchEntityName(tenantId, entityId).orElse(entityName);
                 } catch (Exception ignored) {
                 }
             }
@@ -394,7 +391,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         try {
             auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         } catch (Exception e) {
-            if (StringUtils.contains(e.getMessage(), "value is malformed")) {
+            if (StringUtils.contains(e.getMessage(), "is malformed")) {
                 auditLogEntry.setEntityName("MALFORMED");
             } else {
                 return Futures.immediateFailedFuture(e);
@@ -406,11 +403,6 @@ public class AuditLogServiceImpl implements AuditLogService {
         auditLogSink.logAction(auditLogEntry);
 
         return Futures.allAsList(futures);
-    }
-
-    @Override
-    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.empty();
     }
 
 }

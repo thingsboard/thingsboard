@@ -31,14 +31,14 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.dao.entity.TbEntityService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
 
 /**
  * Created by ashvayka on 11.05.17.
  */
-public interface AlarmService extends TbEntityService {
+public interface AlarmService extends EntityDaoService {
 
     AlarmOperationResult createOrUpdateAlarm(Alarm alarm);
 

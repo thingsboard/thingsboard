@@ -57,7 +57,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private EntityQueryDao entityQueryDao;
 
     @Autowired
-    EntityServiceBeanFactory entityServiceBeanFactory;
+    EntityServiceRegistry entityServiceRegistry;
 
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
@@ -80,8 +80,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public Optional<String> fetchEntityName(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityName [{}]", entityId);
-        TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> hasIdOpt = tbEntityService.fetchEntity(tenantId, entityId);
+        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
+        Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
         if (hasIdOpt.isPresent()) {
             HasId<?> hasId = hasIdOpt.get();
             if (hasId instanceof HasName) {
@@ -95,8 +95,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityLabel [{}]", entityId);
-        TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> entityOpt = tbEntityService.fetchEntity(tenantId, entityId);
+        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
+        Optional<HasId<?>> entityOpt = entityDaoService.fetchEntity(tenantId, entityId);
         String entityLabel = null;
         if (entityOpt.isPresent()) {
             HasId<?> entity = entityOpt.get();
@@ -117,18 +117,22 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
-    public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
+    public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
-        TbEntityService tbEntityService = entityServiceBeanFactory.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> hasIdOpt = tbEntityService.fetchEntity(tenantId, entityId);
+        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
+        Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
         if (hasIdOpt.isPresent()) {
             HasId<?> hasId = hasIdOpt.get();
             if (hasId instanceof HasCustomerId) {
                 HasCustomerId hasCustomerId = (HasCustomerId) hasId;
-                return hasCustomerId.getCustomerId();
+                CustomerId customerId = hasCustomerId.getCustomerId();
+                if (customerId == null) {
+                    customerId = NULL_CUSTOMER_ID;
+                }
+                return Optional.of(customerId);
             }
         }
-        return NULL_CUSTOMER_ID;
+        return Optional.of(NULL_CUSTOMER_ID);
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {

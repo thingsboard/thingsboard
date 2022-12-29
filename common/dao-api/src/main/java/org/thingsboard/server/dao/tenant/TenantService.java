@@ -22,11 +22,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.TbEntityService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 
-public interface TenantService extends TbEntityService {
+public interface TenantService extends EntityDaoService {
 
     Tenant findTenantById(TenantId tenantId);
 

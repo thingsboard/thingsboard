@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entity;
+package org.thingsboard.server.msa.ui.pages;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.openqa.selenium.WebDriver;
 
-import java.util.Optional;
+public class OpenRuleChainPageHelper extends OpenRuleChainPageElements {
+    public OpenRuleChainPageHelper(WebDriver driver) {
+        super(driver);
+    }
 
-public interface TbEntityService {
+    private String headName;
 
-    Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId);
+    public void setHeadName() {
+        this.headName = headRuleChainName().getText().split(" ")[1];
+    }
 
+    public String getHeadName() {
+        return headName;
+    }
+
+    public void waitUntilDoneBtnDisable() {
+        waitUntilVisibilityOfElementLocated(getDoneBtnDisable());
+    }
 }

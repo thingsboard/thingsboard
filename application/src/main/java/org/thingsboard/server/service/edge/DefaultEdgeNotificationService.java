@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -66,6 +68,8 @@ import java.util.concurrent.Executors;
 @TbCoreComponent
 @Slf4j
 public class DefaultEdgeNotificationService implements EdgeNotificationService {
+
+    public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     @Autowired
     private EdgeService edgeService;
@@ -142,7 +146,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);
-        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, null).get();
+        ObjectNode isRootBody = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
+        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, isRootBody).get();
         return savedEdge;
     }
 
