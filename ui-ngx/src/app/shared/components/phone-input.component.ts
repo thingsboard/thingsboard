@@ -274,6 +274,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     if (phoneNumber.value === '+' || phoneNumber.value === this.countryCallingCode) {
       this.propagateChange(null);
     } else if (phoneNumber.valid) {
+      this.modelValue = phoneNumber.value;
       if (parsedPhoneNumber) {
         this.updateModelValueInFormat(parsedPhoneNumber);
       }
