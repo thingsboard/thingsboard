@@ -163,7 +163,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         if (!CollectionUtils.isEmpty(alarm.getPropagateRelationTypes())) {
             this.propagateRelationTypes = String.join(",", alarm.getPropagateRelationTypes());
         } else {
-            this.propagateRelationTypes = null;
+            this.propagateRelationTypes = "";
         }
     }
 

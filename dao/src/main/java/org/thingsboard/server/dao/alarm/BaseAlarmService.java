@@ -122,7 +122,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getEndTs() == 0L) {
                 alarm.setEndTs(alarm.getStartTs());
             }
-            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()).get());
+            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
                 if (existing == null || existing.getStatus().isCleared()) {
@@ -172,7 +172,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
-        AlarmInfo alarmInfo = getAlarmInfo(alarm.getTenantId(), alarm);
+        AlarmInfo alarmInfo = getAlarmInfo(alarm.getTenantId(), saved);
         return new AlarmOperationResult(alarmInfo, true, true, propagatedEntitiesList);
     }
 
@@ -463,7 +463,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         String assigneeLastName = null;
         String assigneeEmail = null;
 
-        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse("Deleted");
+        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse(null);
         originatorLabel = entityService.fetchEntityLabel(tenantId, alarm.getOriginator()).orElse(null);
 
         if (alarm.getAssigneeId() != null) {

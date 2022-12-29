@@ -96,7 +96,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     public Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityLabel [{}]", entityId);
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> entityOpt = entityDaoService.fetchEntity(tenantId, entityId);
+        Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
         String entityLabel = null;
         if (entityOpt.isPresent()) {
             HasId<?> entity = entityOpt.get();
@@ -117,7 +117,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
-    public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
+    public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
         Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
@@ -125,14 +125,10 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             HasId<?> hasId = hasIdOpt.get();
             if (hasId instanceof HasCustomerId) {
                 HasCustomerId hasCustomerId = (HasCustomerId) hasId;
-                CustomerId customerId = hasCustomerId.getCustomerId();
-                if (customerId == null) {
-                    customerId = NULL_CUSTOMER_ID;
-                }
-                return Optional.of(customerId);
+                return hasCustomerId.getCustomerId();
             }
         }
-        return Optional.of(NULL_CUSTOMER_ID);
+        return null;
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {
