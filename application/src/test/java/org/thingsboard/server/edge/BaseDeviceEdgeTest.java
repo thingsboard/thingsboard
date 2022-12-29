@@ -319,6 +319,8 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Device device = findDeviceByName("Edge Device 1");
         sendAttributesRequestAndVerify(device, DataConstants.SERVER_SCOPE, "{\"key1\":\"value1\"}",
                 "key1", "value1");
+        sendAttributesRequestAndVerify(device, DataConstants.SERVER_SCOPE, "{\"inactivityTimeout\":3600000}",
+                "inactivityTimeout", "3600000");
         sendAttributesRequestAndVerify(device, DataConstants.SHARED_SCOPE, "{\"key2\":\"value2\"}",
                 "key2", "value2");
     }
@@ -439,9 +441,9 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        AbstractMessage latestMessage = edgeImitator.getMessageFromTail(2);
-        Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
-        DeviceUpdateMsg latestDeviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
+        Optional<DeviceUpdateMsg> deviceUpdateMsgOpt = edgeImitator.findMessageByType(DeviceUpdateMsg.class);
+        Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
+        DeviceUpdateMsg latestDeviceUpdateMsg = deviceUpdateMsgOpt.get();
         Assert.assertNotEquals(deviceOnCloudName, latestDeviceUpdateMsg.getName());
         Assert.assertEquals(deviceOnCloudName, latestDeviceUpdateMsg.getConflictName());
 
@@ -453,9 +455,9 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(device);
         Assert.assertNotEquals(deviceOnCloudName, device.getName());
 
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceCredentialsRequestMsg);
-        DeviceCredentialsRequestMsg latestDeviceCredentialsRequestMsg = (DeviceCredentialsRequestMsg) latestMessage;
+        Optional<DeviceCredentialsRequestMsg> deviceCredentialsUpdateMsgOpt = edgeImitator.findMessageByType(DeviceCredentialsRequestMsg.class);
+        Assert.assertTrue(deviceCredentialsUpdateMsgOpt.isPresent());
+        DeviceCredentialsRequestMsg latestDeviceCredentialsRequestMsg = deviceCredentialsUpdateMsgOpt.get();
         Assert.assertEquals(uuid.getMostSignificantBits(), latestDeviceCredentialsRequestMsg.getDeviceIdMSB());
         Assert.assertEquals(uuid.getLeastSignificantBits(), latestDeviceCredentialsRequestMsg.getDeviceIdLSB());
 
@@ -576,7 +578,16 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         for (TransportProtos.KeyValueProto keyValueProto : attributesUpdatedMsg.getKvList()) {
             if (keyValueProto.getKey().equals(expectedKey)) {
                 Assert.assertEquals(expectedKey, keyValueProto.getKey());
-                Assert.assertEquals(expectedValue, keyValueProto.getStringV());
+                switch (keyValueProto.getType()) {
+                    case STRING_V:
+                        Assert.assertEquals(expectedValue, keyValueProto.getStringV());
+                        break;
+                    case LONG_V:
+                        Assert.assertEquals(Long.parseLong(expectedValue), keyValueProto.getLongV());
+                        break;
+                    default:
+                        Assert.fail("Unexpected data type: " + keyValueProto.getType());
+                }
                 found = true;
             }
         }

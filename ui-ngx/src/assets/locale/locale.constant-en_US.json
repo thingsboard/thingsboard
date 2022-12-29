@@ -329,6 +329,7 @@
         "repository-url-required": "Repository URL is required.",
         "default-branch": "Default branch name",
         "repository-read-only": "Read-only",
+        "show-merge-commits": "Show merge commits",
         "authentication-settings": "Authentication settings",
         "auth-method": "Authentication method",
         "auth-method-username-password": "Password / access token",
@@ -381,6 +382,28 @@
             "within-time": "Within time (sec)",
             "within-time-pattern": "Time must be a positive integer.",
             "within-time-required": "Time is required."
+        },
+        "jwt": {
+            "security-settings": "JWT security settings",
+            "issuer-name": "Issuer name",
+            "issuer-name-required": "Issuer name is required.",
+            "signings-key": "Signing key",
+            "signings-key-hint": "Base64 encoded string representing at least 256 bits of data.",
+            "signings-key-required": "Signing key is required.",
+            "signings-key-min-length": "Signing key must be at least 256 bits of data.",
+            "signings-key-base64": "Signing key must be base64 format.",
+            "expiration-time": "Token expiration time (sec)",
+            "expiration-time-required": "Token expiration time is required.",
+            "expiration-time-pattern": "Token expiration time be a positive integer.",
+            "expiration-time-min": "Minimum time is 60 seconds (1 minute).",
+            "refresh-expiration-time": "Refresh token expiration time (sec)",
+            "refresh-expiration-time-required": "Refresh token expiration time is required.",
+            "refresh-expiration-time-pattern": "Refresh token expiration time be a positive integer.",
+            "refresh-expiration-time-min": "Minimum time is 900 seconds (15 minute).",
+            "refresh-expiration-time-less-token": "Refresh token time must be greater token time.",
+            "generate-key": "Generate key",
+            "info-header": "All users will be to re-logined",
+            "info-message": "Change of the JWT Signing Key will cause all issued tokens to be invalid. All users will need to re-login. This will also affect scripts that use Rest API/Websockets."
         }
       },
     "alarm": {
@@ -2991,7 +3014,7 @@
         "invalid-target-rulechain": "Unable to resolve target rule chain!",
         "test-script-function": "Test script function",
         "script-lang-java-script": "Java Script",
-        "script-lang-mvel": "MVEL",
+        "script-lang-tbel": "TBEL",
         "message": "Message",
         "message-type": "Message type",
         "select-message-type": "Select message type",
@@ -3685,6 +3708,7 @@
         "order": "Order",
         "height": "Height",
         "mobile-hide": "Hide widget in mobile mode",
+        "desktop-hide": "Hide widget in desktop mode",
         "units": "Special symbol to show next to value",
         "decimals": "Number of digits after floating point",
         "timewindow": "Timewindow",
@@ -4769,7 +4793,7 @@
             "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
-            "es_CA": "Catalan",
+            "ca_ES": "Catalan",
             "ja_JP": "日本語",
             "tr_TR": "Türkçe",
             "fa_IR": "فارسي",
@@ -4780,7 +4804,8 @@
             "lv_LV": "Latviešu",
             "ka_GE": "ქართული",
             "pt_BR": "Português do Brasil",
-            "sl_SI": "Slovenščina"
+            "sl_SI": "Slovenščina",
+            "da_DK": "Dansk"
         }
     }
 }

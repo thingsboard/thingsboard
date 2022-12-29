@@ -52,7 +52,7 @@ public class DefaultDeviceSessionCacheService implements DeviceSessionCacheServi
     @Override
     public DeviceSessionsCacheEntry put(DeviceId deviceId, DeviceSessionsCacheEntry sessions) {
         log.debug("[{}] Pushing session data to cache: {}", deviceId, sessions);
-        cache.putIfAbsent(deviceId, sessions);
+        cache.put(deviceId, sessions);
         return sessions;
     }
 }

@@ -16,6 +16,8 @@
     <logger name="org.cassandraunit" level="INFO"/>
     <logger name="org.eclipse.leshan" level="INFO"/>
 
+    <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
+    <logger name="org.thingsboard.server.service.edge.rpc.EdgeGrpcSession" level="OFF"/>
 
     <root level="WARN">
         <appender-ref ref="console"/>
