@@ -887,8 +887,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
         String installInstructions = doGet("/api/edge/instructions/" + savedEdge.getId().getId().toString(), String.class);
         URL resource = this.getClass().getClassLoader().getResource("edge/install_instructions/docker/expected-install-instructions.md");
+        Assert.assertNotNull(resource);
         File file = new File(resource.toURI());
-        Assert.assertEquals(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8), installInstructions);
+        Assert.assertEquals(Files.readString(file.toPath()), installInstructions);
     }
-
 }
