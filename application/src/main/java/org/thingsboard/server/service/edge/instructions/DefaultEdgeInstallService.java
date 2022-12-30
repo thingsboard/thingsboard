@@ -40,7 +40,7 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
 
     private static final String EDGE_DIR = "edge";
 
-    private static final String EDGE_VERSION = "3.4.2EDGE";
+    private static final String EDGE_VERSION = "3.4.3EDGE";
 
     private static final String EDGE_INSTALL_INSTRUCTIONS_DIR = "install_instructions";
 
