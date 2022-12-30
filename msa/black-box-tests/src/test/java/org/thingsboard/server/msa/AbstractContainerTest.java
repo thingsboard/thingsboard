@@ -26,7 +26,14 @@ import org.apache.http.ssl.SSLContexts;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 import java.net.URI;
@@ -37,6 +44,9 @@ import java.util.Random;
 @Slf4j
 @Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
+
+    protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
+    protected final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
     protected static long timeoutMultiplier = 1;
     protected ObjectMapper mapper = new ObjectMapper();
     private static final ContainerTestSuite containerTestSuite = ContainerTestSuite.getInstance();
@@ -53,7 +63,7 @@ public abstract class AbstractContainerTest {
         }
     }
 
-    @AfterSuite
+    @AfterSuite()
     public void afterSuite() {
         if (containerTestSuite.isActive()) {
             containerTestSuite.stop();
@@ -148,6 +158,30 @@ public abstract class AbstractContainerTest {
         public String toString() {
             return text;
         }
+    }
+
+    protected DeviceProfile updateDeviceProfileWithProvisioningStrategy(DeviceProfile deviceProfile, DeviceProfileProvisionType provisionType) {
+        DeviceProfileProvisionConfiguration provisionConfiguration;
+        String testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
+        deviceProfile.setProvisionType(provisionType);
+        switch(provisionType) {
+            case ALLOW_CREATE_NEW_DEVICES:
+                provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
+                break;
+            case CHECK_PRE_PROVISIONED_DEVICES:
+                provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
+                break;
+            default:
+            case DISABLED:
+                testProvisionDeviceKey = null;
+                provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
+                break;
+        }
+        DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
+        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setProvisionDeviceKey(testProvisionDeviceKey);
+        return testRestClient.postDeviceProfile(deviceProfile);
     }
 
 }

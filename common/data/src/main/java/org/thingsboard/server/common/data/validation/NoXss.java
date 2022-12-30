@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Constraint(validatedBy = {})
 public @interface NoXss {
-    String message() default "field value is malformed";
+    String message() default "is malformed";
 
     Class<?>[] groups() default {};
 

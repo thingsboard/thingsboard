@@ -330,7 +330,7 @@ export interface FcRuleEdge extends FcEdge {
 
 export enum ScriptLanguage {
   JS = 'JS',
-  MVEL = 'MVEL'
+  TBEL = 'TBEL'
 }
 
 export interface TestScriptInputParams {

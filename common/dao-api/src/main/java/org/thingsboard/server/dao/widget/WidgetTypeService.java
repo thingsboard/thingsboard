@@ -20,10 +20,11 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 
-public interface WidgetTypeService {
+public interface WidgetTypeService extends EntityDaoService {
 
     WidgetType findWidgetTypeById(TenantId tenantId, WidgetTypeId widgetTypeId);
 

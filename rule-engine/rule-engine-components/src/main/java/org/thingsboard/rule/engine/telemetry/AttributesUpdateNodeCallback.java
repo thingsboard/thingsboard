@@ -24,8 +24,8 @@ import java.util.List;
 
 public class AttributesUpdateNodeCallback extends TelemetryNodeCallback {
 
-    private String scope;
-    private List<AttributeKvEntry> attributes;
+    private final String scope;
+    private final List<AttributeKvEntry> attributes;
 
     public AttributesUpdateNodeCallback(TbContext ctx, TbMsg msg, String scope, List<AttributeKvEntry> attributes) {
         super(ctx, msg);

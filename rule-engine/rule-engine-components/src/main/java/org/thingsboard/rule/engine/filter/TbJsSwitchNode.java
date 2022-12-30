@@ -56,7 +56,7 @@ public class TbJsSwitchNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsSwitchNodeConfiguration.class);
         this.scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
-                ScriptLanguage.MVEL.equals(config.getScriptLang()) ? config.getMvelScript() : config.getJsScript());
+                ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getTbelScript() : config.getJsScript());
     }
 
     @Override

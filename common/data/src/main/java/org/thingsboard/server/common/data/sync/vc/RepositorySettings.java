@@ -32,6 +32,7 @@ public class RepositorySettings implements Serializable {
     private String privateKeyPassword;
     private String defaultBranch;
     private boolean readOnly;
+    private boolean showMergeCommits;
 
     public RepositorySettings() {
     }
@@ -46,5 +47,6 @@ public class RepositorySettings implements Serializable {
         this.privateKeyPassword = settings.getPrivateKeyPassword();
         this.defaultBranch = settings.getDefaultBranch();
         this.readOnly = settings.isReadOnly();
+        this.showMergeCommits = settings.isShowMergeCommits();
     }
 }

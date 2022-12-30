@@ -492,6 +492,9 @@
                 <mat-slide-toggle formControlName="mobileHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
                   {{ 'widget-config.mobile-hide' | translate }}
                 </mat-slide-toggle>
+                <mat-slide-toggle formControlName="desktopHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
+                  {{ 'widget-config.desktop-hide' | translate }}
+                </mat-slide-toggle>
               </mat-panel-title>
               <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
                 widget-config.advanced-settings

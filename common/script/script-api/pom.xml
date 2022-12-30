@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard.common</groupId>
-        <version>3.4.2-SNAPSHOT</version>
+        <version>3.4.3-SNAPSHOT</version>
         <artifactId>script</artifactId>
     </parent>
     <groupId>org.thingsboard.common.script</groupId>
@@ -90,7 +90,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
-            <artifactId>mvel2</artifactId>
+            <artifactId>tbel</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

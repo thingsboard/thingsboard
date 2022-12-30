@@ -16,12 +16,17 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonObject;
+import io.restassured.path.json.JsonPath;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
+import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
@@ -33,6 +38,7 @@ import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
+@DisableUIListeners
 public class HttpClientTest extends AbstractContainerTest {
     private Device device;
     @BeforeMethod
@@ -69,8 +75,8 @@ public class HttpClientTest extends AbstractContainerTest {
         String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
         assertThat(accessToken).isNotNull();
 
-        JsonNode sharedAattribute = mapper.readTree(createPayload().toString());
-        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAattribute);
+        JsonNode sharedAttribute = mapper.readTree(createPayload().toString());
+        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
 
         JsonNode clientAttribute = mapper.readTree(createPayload().toString());
         testRestClient.postAttribute(accessToken, clientAttribute);
@@ -78,11 +84,11 @@ public class HttpClientTest extends AbstractContainerTest {
         TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
         JsonNode attributes = testRestClient.getAttributes(accessToken, null, null);
-        assertThat(attributes.get("shared")).isEqualTo(sharedAattribute);
+        assertThat(attributes.get("shared")).isEqualTo(sharedAttribute);
         assertThat(attributes.get("client")).isEqualTo(clientAttribute);
 
         JsonNode attributes2 = testRestClient.getAttributes(accessToken, null, "stringKey");
-        assertThat(attributes2.get("shared").get("stringKey")).isEqualTo(sharedAattribute.get("stringKey"));
+        assertThat(attributes2.get("shared").get("stringKey")).isEqualTo(sharedAttribute.get("stringKey"));
         assertThat(attributes2.has("client")).isFalse();
 
         JsonNode attributes3 =  testRestClient.getAttributes(accessToken, "longKey,stringKey", null);
@@ -91,4 +97,77 @@ public class HttpClientTest extends AbstractContainerTest {
         assertThat(attributes3.get("client").get("longKey")).isEqualTo(clientAttribute.get("longKey"));
         assertThat(attributes3.get("client").get("stringKey")).isEqualTo(clientAttribute.get("stringKey"));
     }
+
+    @Test
+    public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+        provisionRequest.addProperty("deviceName", device.getName());
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String credentialsType = provisionResponse.get("credentialsType");
+        String credentialsValue = provisionResponse.get("credentialsValue");
+        String status = provisionResponse.get("status");
+
+        assertThat(credentialsType).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(credentialsValue).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(status).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
+
+    @Test
+    public void provisionRequestForDeviceWithAllowToCreateNewDevicesStrategy() throws Exception {
+
+        String testDeviceName = "test_provision_device";
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+        provisionRequest.addProperty("deviceName", testDeviceName);
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String credentialsType = provisionResponse.get("credentialsType");
+        String credentialsValue = provisionResponse.get("credentialsValue");
+        String status = provisionResponse.get("status");
+
+        testRestClient.deleteDeviceIfExists(device.getId());
+        device = testRestClient.getDeviceByName(testDeviceName);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        assertThat(credentialsType).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(credentialsValue).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(status).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
+
+    @Test
+    public void provisionRequestForDeviceWithDisabledProvisioningStrategy() throws Exception {
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String status = provisionResponse.get("status");
+
+        assertThat(status).isEqualTo("NOT_FOUND");
+    }
+
 }

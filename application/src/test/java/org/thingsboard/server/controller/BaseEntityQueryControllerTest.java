@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseEntityQueryControllerTest extends AbstractControllerTest {
@@ -381,4 +383,24 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
             Assert.assertEquals("1" + i, alarmActiveTime);
         }
     }
+
+    @Test
+    public void givenInvalidEntityDataPageLink_thenReturnError() throws Exception {
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceType("default");
+        filter.setDeviceNameFilter("");
+
+        String invalidSortProperty = "created(Time)";
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, invalidSortProperty), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
+
+        ResultActions result = doPost("/api/entitiesQuery/find", query).andExpect(status().isBadRequest());
+        assertThat(getErrorMessage(result)).contains("Invalid").contains("sort property");
+    }
+
 }

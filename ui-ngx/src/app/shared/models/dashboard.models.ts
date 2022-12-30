@@ -36,6 +36,7 @@ export interface DashboardInfo extends BaseData<DashboardId>, ExportableEntity<D
 export interface WidgetLayout {
   sizeX?: number;
   sizeY?: number;
+  desktopHide?: boolean;
   mobileHide?: boolean;
   mobileHeight?: number;
   mobileOrder?: number;

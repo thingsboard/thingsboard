@@ -26,8 +26,12 @@ import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -76,7 +80,7 @@ public class TestRestClient {
         loginRequest.put("password", password);
 
         JsonPath jsonPath = given().spec(requestSpec).body(loginRequest)
-                .post( "/api/auth/login")
+                .post("/api/auth/login")
                 .getBody().jsonPath();
         token = jsonPath.get("token");
         refreshToken = jsonPath.get("refreshToken");
@@ -84,7 +88,7 @@ public class TestRestClient {
     }
 
     public Device postDevice(String accessToken, Device device) {
-        return  given().spec(requestSpec).body(device)
+        return given().spec(requestSpec).body(device)
                 .pathParams("accessToken", accessToken)
                 .post("/api/device?accessToken={accessToken}")
                 .then()
@@ -93,63 +97,75 @@ public class TestRestClient {
                 .as(Device.class);
     }
 
+    public Device getDeviceByName(String deviceName) {
+        return given().spec(requestSpec).pathParam("deviceName", deviceName)
+                .get("/api/tenant/devices?deviceName={deviceName}")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Device.class);
+    }
+
     public ValidatableResponse getDeviceById(DeviceId deviceId, int statusCode) {
-        return  given().spec(requestSpec)
+        return given().spec(requestSpec)
                 .pathParams("deviceId", deviceId.getId())
                 .get("/api/device/{deviceId}")
                 .then()
                 .statusCode(statusCode);
     }
+
     public Device getDeviceById(DeviceId deviceId) {
-        return  getDeviceById(deviceId, HTTP_OK)
+        return getDeviceById(deviceId, HTTP_OK)
                 .extract()
                 .as(Device.class);
     }
+
     public DeviceCredentials getDeviceCredentialsByDeviceId(DeviceId deviceId) {
         return given().spec(requestSpec).get("/api/device/{deviceId}/credentials", deviceId.getId())
-                    .then()
-                    .assertThat()
-                    .statusCode(HTTP_OK)
-                    .extract()
-                    .as(DeviceCredentials.class);
+                .then()
+                .assertThat()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(DeviceCredentials.class);
     }
 
     public ValidatableResponse postTelemetry(String credentialsId, JsonNode telemetry) {
-         return  given().spec(requestSpec).body(telemetry)
-                 .post("/api/v1/{credentialsId}/telemetry", credentialsId)
-                 .then()
-                 .statusCode(HTTP_OK);
+        return given().spec(requestSpec).body(telemetry)
+                .post("/api/v1/{credentialsId}/telemetry", credentialsId)
+                .then()
+                .statusCode(HTTP_OK);
     }
 
     public ValidatableResponse deleteDevice(DeviceId deviceId) {
-        return  given().spec(requestSpec)
+        return given().spec(requestSpec)
                 .delete("/api/device/{deviceId}", deviceId.getId())
                 .then()
                 .statusCode(HTTP_OK);
     }
+
     public ValidatableResponse deleteDeviceIfExists(DeviceId deviceId) {
-        return  given().spec(requestSpec)
+        return given().spec(requestSpec)
                 .delete("/api/device/{deviceId}", deviceId.getId())
                 .then()
-                .statusCode(anyOf(is(HTTP_OK),is(HTTP_NOT_FOUND)));
+                .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
     }
 
     public ValidatableResponse postTelemetryAttribute(String entityType, DeviceId deviceId, String scope, JsonNode attribute) {
-        return  given().spec(requestSpec).body(attribute)
+        return given().spec(requestSpec).body(attribute)
                 .post("/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}", entityType, deviceId.getId(), scope)
                 .then()
                 .statusCode(HTTP_OK);
     }
 
     public ValidatableResponse postAttribute(String accessToken, JsonNode attribute) {
-        return  given().spec(requestSpec).body(attribute)
+        return given().spec(requestSpec).body(attribute)
                 .post("/api/v1/{accessToken}/attributes/", accessToken)
                 .then()
                 .statusCode(HTTP_OK);
     }
 
     public JsonNode getAttributes(String accessToken, String clientKeys, String sharedKeys) {
-        return  given().spec(requestSpec)
+        return given().spec(requestSpec)
                 .queryParam("clientKeys", clientKeys)
                 .queryParam("sharedKeys", sharedKeys)
                 .get("/api/v1/{accessToken}/attributes", accessToken)
@@ -157,6 +173,14 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(JsonNode.class);
+    }
+
+    public JsonPath postProvisionRequest(String provisionRequest) {
+        return  given().spec(requestSpec)
+                .body(provisionRequest)
+                .post("/api/v1/provision")
+                .getBody()
+                .jsonPath();
     }
 
     public PageData<RuleChain> getRuleChains(PageLink pageLink) {
@@ -167,10 +191,11 @@ public class TestRestClient {
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()
-                .as(new TypeRef<PageData<RuleChain>>() {});
+                .as(new TypeRef<PageData<RuleChain>>() {
+                });
     }
 
-    public RuleChain postRootRuleChain(RuleChain ruleChain) {
+    public RuleChain postRuleChain(RuleChain ruleChain) {
         return given().spec(requestSpec)
                 .body(ruleChain)
                 .post("/api/ruleChain")
@@ -239,7 +264,8 @@ public class TestRestClient {
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()
-                .as(new TypeRef<List<EntityRelation>>() {});
+                .as(new TypeRef<List<EntityRelation>>() {
+                });
     }
 
     public JsonNode postServerSideRpc(DeviceId deviceId, JsonNode serverRpcPayload) {
@@ -250,6 +276,53 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(JsonNode.class);
+    }
+
+    public DeviceProfile getDeviceProfileById(DeviceProfileId deviceProfileId) {
+        return  given().spec(requestSpec).get("/api/deviceProfile/{deviceProfileId}", deviceProfileId.getId())
+                .then()
+                .assertThat()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(DeviceProfile.class);
+    }
+
+    public DeviceProfile postDeviceProfile(DeviceProfile deviceProfile) {
+        return given().spec(requestSpec).body(deviceProfile)
+                .post("/api/deviceProfile")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(DeviceProfile.class);
+    }
+
+    public Customer postCustomer(Customer customer) {
+        return given().spec(requestSpec)
+                .body(customer)
+                .post("/api/customer")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Customer.class);
+    }
+
+    public void deleteCustomer(CustomerId customerId) {
+        given().spec(requestSpec)
+                .delete("/api/customer/{customerId}", customerId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public PageData<Customer> getCustomers(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/customers")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<PageData<Customer>>() {
+                });
     }
 
     public String getToken() {

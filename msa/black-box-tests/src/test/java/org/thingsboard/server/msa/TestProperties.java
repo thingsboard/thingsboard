@@ -39,6 +39,13 @@ public class TestProperties {
         return getProperties().getProperty("tb.baseUrl");
     }
 
+    public static String getBaseUiUrl() {
+        if (instance.isActive()) {
+            return "https://host.docker.internal";
+        }
+        return getProperties().getProperty("tb.baseUrl");
+    }
+
     public static String getWebSocketUrl() {
         if (instance.isActive()) {
             return WSS_URL;

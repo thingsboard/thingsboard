@@ -71,12 +71,14 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -97,7 +99,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
-import org.thingsboard.server.service.script.RuleNodeMvelScriptEngine;
+import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
 import java.util.Collections;
 import java.util.List;
@@ -474,11 +476,11 @@ class DefaultTbContext implements TbContext {
         return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
     }
 
-    private ScriptEngine createMvelScriptEngine(String script, String... argNames) {
-        if (mainCtx.getMvelInvokeService() == null) {
-            throw new RuntimeException("MVEL execution is disabled!");
+    private ScriptEngine createTbelScriptEngine(String script, String... argNames) {
+        if (mainCtx.getTbelInvokeService() == null) {
+            throw new RuntimeException("TBEL execution is disabled!");
         }
-        return new RuleNodeMvelScriptEngine(getTenantId(), mainCtx.getMvelInvokeService(), script, argNames);
+        return new RuleNodeTbelScriptEngine(getTenantId(), mainCtx.getTbelInvokeService(), script, argNames);
     }
 
     @Override
@@ -492,11 +494,11 @@ class DefaultTbContext implements TbContext {
         switch (scriptLang) {
             case JS:
                 return createJsScriptEngine(script, argNames);
-            case MVEL:
+            case TBEL:
                 if (Arrays.isNullOrEmpty(argNames)) {
-                    return createMvelScriptEngine(script, "msg", "metadata", "msgType");
+                    return createTbelScriptEngine(script, "msg", "metadata", "msgType");
                 } else {
-                    return createMvelScriptEngine(script, argNames);
+                    return createTbelScriptEngine(script, argNames);
                 }
             default:
                 throw new RuntimeException("Unsupported script language: " + scriptLang.name());
@@ -557,6 +559,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public DeviceService getDeviceService() {
         return mainCtx.getDeviceService();
+    }
+
+    @Override
+    public DeviceProfileService getDeviceProfileService() {
+        return mainCtx.getDeviceProfileService();
+    }
+
+    @Override
+    public AssetProfileService getAssetProfileService() {
+        return mainCtx.getAssetProfileService();
     }
 
     @Override
