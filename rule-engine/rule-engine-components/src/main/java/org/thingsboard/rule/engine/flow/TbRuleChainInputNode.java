@@ -21,10 +21,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -51,16 +50,36 @@ public class TbRuleChainInputNode implements TbNode {
 
     private TbRuleChainInputNodeConfiguration config;
     private RuleChainId ruleChainId;
+    private boolean transferMsgToOriginatorRootRuleChain;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
         this.ruleChainId = new RuleChainId(UUID.fromString(config.getRuleChainId()));
+        this.transferMsgToOriginatorRootRuleChain = config.isTransferMsgToOriginatorRootRuleChain();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.input(msg, ruleChainId);
+        ctx.input(msg, getRuleChainId(ctx, msg));
     }
 
+    private RuleChainId getRuleChainId(TbContext ctx, TbMsg msg) {
+        if (!transferMsgToOriginatorRootRuleChain) {
+            return this.ruleChainId;
+        }
+        RuleChainId targetRuleChainId = null;
+        switch (msg.getOriginator().getEntityType()) {
+            case DEVICE:
+                targetRuleChainId = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
+                break;
+            case ASSET:
+                targetRuleChainId = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
+                break;
+        }
+        if (targetRuleChainId == null) {
+            targetRuleChainId = ctx.getRuleChainService().getRootTenantRuleChain(ctx.getTenantId()).getId();
+        }
+        return targetRuleChainId;
+    }
 }

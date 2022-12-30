@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 public class TbRuleChainInputNodeConfiguration implements NodeConfiguration<TbRuleChainInputNodeConfiguration> {
 
     private String ruleChainId;
+    private boolean transferMsgToOriginatorRootRuleChain;
 
     @Override
     public TbRuleChainInputNodeConfiguration defaultConfiguration() {
