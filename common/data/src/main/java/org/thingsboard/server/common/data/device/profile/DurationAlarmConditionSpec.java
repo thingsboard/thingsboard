@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DurationAlarmConditionSpec implements AlarmConditionSpec {
 
+    private static final long serialVersionUID = 1370936855678346003L;
+
     private TimeUnit unit;
     private FilterPredicateValue<Long> predicate;
 

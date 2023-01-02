@@ -20,6 +20,8 @@ import lombok.Data;
 @Data
 public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double>  {
 
+    private static final long serialVersionUID = 7963235082983741913L;
+
     private NumericOperation operation;
     private FilterPredicateValue<Double> value;
 

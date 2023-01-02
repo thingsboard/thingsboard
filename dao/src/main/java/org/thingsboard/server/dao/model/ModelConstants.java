@@ -643,6 +643,18 @@ public class ModelConstants {
     public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
+    /**
+     * Alarm rule constants.
+     */
+    public static final String ALARM_RULE_COLUMN_FAMILY_NAME = "alarm_rule";
+    public static final String ALARM_RULE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_RULE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ALARM_RULE_NAME_PROPERTY = "name";
+    public static final String ALARM_RULE_ALARM_TYPE_PROPERTY = "alarm_type";
+    public static final String ALARM_RULE_ENABLED_PROPERTY = "enabled";
+    public static final String ALARM_RULE_CONFIGURATION_PROPERTY = "configuration";
+    public static final String ALARM_RULE_DESCRIPTION_PROPERTY = "description";
+
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

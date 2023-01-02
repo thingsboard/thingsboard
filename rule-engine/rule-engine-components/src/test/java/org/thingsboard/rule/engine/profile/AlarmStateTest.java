@@ -20,8 +20,8 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -75,13 +75,13 @@ public class AlarmStateTest {
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(spec);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
 
         return new AlarmRuleState(null, alarmRule, null, null, null);
     }
 
     private AlarmState createMockAlarmState() {
-        return new AlarmState(null, null, mock(DeviceProfileAlarm.class), null, null);
+        return new AlarmState(null, null, mock(AlarmRuleConfiguration.class), null, null);
     }
 }

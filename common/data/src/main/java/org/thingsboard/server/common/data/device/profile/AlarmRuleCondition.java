@@ -27,8 +27,9 @@ import java.io.Serializable;
 
 @ApiModel
 @Data
-public class AlarmRule implements Serializable {
+public class AlarmRuleCondition implements Serializable {
 
+    private static final long serialVersionUID = -2205295678085379808L;
     @Valid
     @ApiModelProperty(position = 1, value = "JSON object representing the alarm rule condition")
     private AlarmCondition condition;

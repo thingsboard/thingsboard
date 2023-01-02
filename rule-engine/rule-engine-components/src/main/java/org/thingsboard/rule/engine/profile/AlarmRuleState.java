@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
@@ -55,14 +55,14 @@ import java.util.function.Function;
 class AlarmRuleState {
 
     private final AlarmSeverity severity;
-    private final AlarmRule alarmRule;
+    private final AlarmRuleCondition alarmRule;
     private final AlarmConditionSpec spec;
     private final Set<AlarmConditionFilterKey> entityKeys;
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<AlarmConditionFilterKey> entityKeys, PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
+    AlarmRuleState(AlarmSeverity severity, AlarmRuleCondition alarmRule, Set<AlarmConditionFilterKey> entityKeys, PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
         this.severity = severity;
         this.alarmRule = alarmRule;
         this.entityKeys = entityKeys;
@@ -99,7 +99,7 @@ class AlarmRuleState {
         return false;
     }
 
-    public AlarmConditionSpec getSpec(AlarmRule alarmRule) {
+    public AlarmConditionSpec getSpec(AlarmRuleCondition alarmRule) {
         AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
         if (spec == null) {
             spec = new SimpleAlarmConditionSpec();
@@ -149,7 +149,7 @@ class AlarmRuleState {
         }
     }
 
-    private AlarmSchedule getSchedule(DataSnapshot data, AlarmRule alarmRule) {
+    private AlarmSchedule getSchedule(DataSnapshot data, AlarmRuleCondition alarmRule) {
         AlarmSchedule schedule = alarmRule.getSchedule();
         EntityKeyValue dynamicValue = getDynamicPredicateValue(data, schedule.getDynamicValue());
 

@@ -39,10 +39,10 @@ import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
@@ -161,9 +161,9 @@ public class TbDeviceProfileNodeTest {
         highTempFilter.setPredicate(highTemperaturePredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -175,7 +175,7 @@ public class TbDeviceProfileNodeTest {
         lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
         lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
         lowTempFilter.setPredicate(lowTemperaturePredicate);
-        AlarmRule clearRule = new AlarmRule();
+        AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
         clearCondition.setCondition(Collections.singletonList(lowTempFilter));
         clearRule.setCondition(clearCondition);
@@ -261,9 +261,9 @@ public class TbDeviceProfileNodeTest {
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("alarmEnabledAlarmID");
         dpa.setAlarmType("alarmEnabledAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -343,9 +343,9 @@ public class TbDeviceProfileNodeTest {
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("alarmEnabledAlarmID");
         dpa.setAlarmType("alarmEnabledAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -417,9 +417,9 @@ public class TbDeviceProfileNodeTest {
         highTempFilter.setPredicate(highTemperaturePredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -511,9 +511,9 @@ public class TbDeviceProfileNodeTest {
         durationSpec.setPredicate(filterPredicateValue);
         alarmCondition.setSpec(durationSpec);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -629,9 +629,9 @@ public class TbDeviceProfileNodeTest {
         durationSpec.setPredicate(filterPredicateValue);
         alarmCondition.setSpec(durationSpec);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -744,9 +744,9 @@ public class TbDeviceProfileNodeTest {
         repeatingSpec.setPredicate(filterPredicateValue);
         alarmCondition.setSpec(repeatingSpec);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -854,9 +854,9 @@ public class TbDeviceProfileNodeTest {
         repeatingSpec.setPredicate(filterPredicateValue);
         alarmCondition.setSpec(repeatingSpec);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -956,9 +956,9 @@ public class TbDeviceProfileNodeTest {
         durationSpec.setPredicate(filterPredicateValue);
         alarmCondition.setSpec(durationSpec);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1054,9 +1054,9 @@ public class TbDeviceProfileNodeTest {
         ));
         alarmCondition.setSpec(repeating);
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1135,10 +1135,10 @@ public class TbDeviceProfileNodeTest {
         schedule.setItems(Collections.emptyList());
         schedule.setDynamicValue(new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "dynamicValueActiveSchedule", false));
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
         alarmRule.setSchedule(schedule);
-        DeviceProfileAlarm deviceProfileAlarmActiveSchedule = new DeviceProfileAlarm();
+        AlarmRuleConfiguration deviceProfileAlarmActiveSchedule = new AlarmRuleConfiguration();
         deviceProfileAlarmActiveSchedule.setId("highTemperatureAlarmID");
         deviceProfileAlarmActiveSchedule.setAlarmType("highTemperatureAlarm");
         deviceProfileAlarmActiveSchedule.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1232,10 +1232,10 @@ public class TbDeviceProfileNodeTest {
         schedule.setItems(items);
         schedule.setDynamicValue(new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "dynamicValueInactiveSchedule", false));
 
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
         alarmRule.setSchedule(schedule);
-        DeviceProfileAlarm deviceProfileAlarmNonactiveSchedule = new DeviceProfileAlarm();
+        AlarmRuleConfiguration deviceProfileAlarmNonactiveSchedule = new AlarmRuleConfiguration();
         deviceProfileAlarmNonactiveSchedule.setId("highTemperatureAlarmID");
         deviceProfileAlarmNonactiveSchedule.setAlarmType("highTemperatureAlarm");
         deviceProfileAlarmNonactiveSchedule.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1306,9 +1306,9 @@ public class TbDeviceProfileNodeTest {
         lowTempFilter.setPredicate(lowTempPredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("lesstempID");
         dpa.setAlarmType("lessTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1381,9 +1381,9 @@ public class TbDeviceProfileNodeTest {
         lowTempFilter.setPredicate(lowTempPredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("lesstempID");
         dpa.setAlarmType("lessTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1461,9 +1461,9 @@ public class TbDeviceProfileNodeTest {
         lowTempFilter.setPredicate(lowTempPredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("lesstempID");
         dpa.setAlarmType("lessTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
@@ -1547,9 +1547,9 @@ public class TbDeviceProfileNodeTest {
         lowTempFilter.setPredicate(lowTempPredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setCondition(alarmCondition);
-        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        AlarmRuleConfiguration dpa = new AlarmRuleConfiguration();
         dpa.setId("lesstempID");
         dpa.setAlarmType("greaterTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));

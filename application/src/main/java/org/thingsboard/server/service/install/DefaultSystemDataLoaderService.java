@@ -46,10 +46,10 @@ import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
@@ -342,10 +342,10 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         deviceProfileData.setProvisionConfiguration(provisionConfiguration);
         thermostatDeviceProfile.setProfileData(deviceProfileData);
 
-        DeviceProfileAlarm highTemperature = new DeviceProfileAlarm();
+        AlarmRuleConfiguration highTemperature = new AlarmRuleConfiguration();
         highTemperature.setId("highTemperatureAlarmID");
         highTemperature.setAlarmType("High Temperature");
-        AlarmRule temperatureRule = new AlarmRule();
+        AlarmRuleCondition temperatureRule = new AlarmRuleCondition();
         AlarmCondition temperatureCondition = new AlarmCondition();
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
@@ -372,7 +372,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureRule.setCondition(temperatureCondition);
         highTemperature.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
 
-        AlarmRule clearTemperatureRule = new AlarmRule();
+        AlarmRuleCondition clearTemperatureRule = new AlarmRuleCondition();
         AlarmCondition clearTemperatureCondition = new AlarmCondition();
         clearTemperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
@@ -392,10 +392,10 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearTemperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         highTemperature.setClearRule(clearTemperatureRule);
 
-        DeviceProfileAlarm lowHumidity = new DeviceProfileAlarm();
+        AlarmRuleConfiguration lowHumidity = new AlarmRuleConfiguration();
         lowHumidity.setId("lowHumidityAlarmID");
         lowHumidity.setAlarmType("Low Humidity");
-        AlarmRule humidityRule = new AlarmRule();
+        AlarmRuleCondition humidityRule = new AlarmRuleCondition();
         AlarmCondition humidityCondition = new AlarmCondition();
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
@@ -423,7 +423,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MINOR, humidityRule)));
 
-        AlarmRule clearHumidityRule = new AlarmRule();
+        AlarmRuleCondition clearHumidityRule = new AlarmRuleCondition();
         AlarmCondition clearHumidityCondition = new AlarmCondition();
         clearHumidityCondition.setSpec(new SimpleAlarmConditionSpec());
 

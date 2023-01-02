@@ -30,8 +30,8 @@ import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -95,7 +95,7 @@ public class DeviceStateTest {
     @Test
     public void whenAttributeIsDeleted_thenUnneededAlarmRulesAreNotReevaluated() throws Exception {
 
-        DeviceProfileAlarm alarmConfig = createAlarmConfigWithBoolAttrCondition("enabled", false);
+        AlarmRuleConfiguration alarmConfig = createAlarmConfigWithBoolAttrCondition("enabled", false);
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
@@ -118,7 +118,7 @@ public class DeviceStateTest {
 
     @Test
     public void whenDeletingClearedAlarm_thenNoError() throws Exception {
-        DeviceProfileAlarm alarmConfig = createAlarmConfigWithBoolAttrCondition("enabled", false);
+        AlarmRuleConfiguration alarmConfig = createAlarmConfigWithBoolAttrCondition("enabled", false);
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
@@ -139,7 +139,7 @@ public class DeviceStateTest {
     }
 
 
-    private DeviceState createDeviceState(DeviceId deviceId, DeviceProfileAlarm... alarmConfigs) {
+    private DeviceState createDeviceState(DeviceId deviceId, AlarmRuleConfiguration... alarmConfigs) {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData profileData = new DeviceProfileData();
         profileData.setAlarms(List.of(alarmConfigs));
@@ -150,7 +150,7 @@ public class DeviceStateTest {
                 deviceId, profileState, null);
     }
 
-    private DeviceProfileAlarm createAlarmConfigWithBoolAttrCondition(String key, boolean value) {
+    private AlarmRuleConfiguration createAlarmConfigWithBoolAttrCondition(String key, boolean value) {
 
         AlarmConditionFilter condition = new AlarmConditionFilter();
         condition.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, key));
@@ -160,10 +160,10 @@ public class DeviceStateTest {
         predicate.setValue(new FilterPredicateValue<>(value));
         condition.setPredicate(predicate);
 
-        DeviceProfileAlarm alarmConfig = new DeviceProfileAlarm();
+        AlarmRuleConfiguration alarmConfig = new AlarmRuleConfiguration();
         alarmConfig.setId("MyAlarmID");
         alarmConfig.setAlarmType("MyAlarm");
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
         alarmCondition.setCondition(List.of(condition));

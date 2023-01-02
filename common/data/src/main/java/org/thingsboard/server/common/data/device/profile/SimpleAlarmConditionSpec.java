@@ -21,6 +21,9 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
+
+    private static final long serialVersionUID = -5786432686880249296L;
+
     @Override
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.SIMPLE;

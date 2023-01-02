@@ -36,6 +36,6 @@ public class DeviceProfileData implements Serializable {
     private DeviceProfileProvisionConfiguration provisionConfiguration;
     @Valid
     @ApiModelProperty(position = 4, value = "JSON array of alarm rules configuration per device profile")
-    private List<DeviceProfileAlarm> alarms;
+    private List<AlarmRuleConfiguration> alarms;
 
 }

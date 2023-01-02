@@ -45,9 +45,9 @@ import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
@@ -208,10 +208,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     protected void extendDeviceProfileData(DeviceProfile deviceProfile) {
         DeviceProfileData profileData = deviceProfile.getProfileData();
-        List<DeviceProfileAlarm> alarms = new ArrayList<>();
-        DeviceProfileAlarm deviceProfileAlarm = new DeviceProfileAlarm();
+        List<AlarmRuleConfiguration> alarms = new ArrayList<>();
+        AlarmRuleConfiguration deviceProfileAlarm = new AlarmRuleConfiguration();
         deviceProfileAlarm.setAlarmType("High Temperature");
-        AlarmRule alarmRule = new AlarmRule();
+        AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setAlarmDetails("Alarm Details");
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
@@ -227,7 +227,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         alarmCondition.setCondition(condition);
         alarmRule.setCondition(alarmCondition);
         deviceProfileAlarm.setClearRule(alarmRule);
-        TreeMap<AlarmSeverity, AlarmRule> createRules = new TreeMap<>();
+        TreeMap<AlarmSeverity, AlarmRuleCondition> createRules = new TreeMap<>();
         createRules.put(AlarmSeverity.CRITICAL, alarmRule);
         deviceProfileAlarm.setCreateRules(createRules);
         alarms.add(deviceProfileAlarm);

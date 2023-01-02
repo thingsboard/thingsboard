@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.dao.alarm.rule;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.Dao;
 
-@Data
-public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean> {
+import java.util.UUID;
 
-    private static final long serialVersionUID = 8308177419956886468L;
+public interface AlarmRuleDao extends Dao<AlarmRule> {
 
-    private BooleanOperation operation;
-    private FilterPredicateValue<Boolean> value;
+    PageData<AlarmRuleInfo> findAlarmInfosByTenantId(UUID tenantId, PageLink pageLink);
 
-    @Override
-    public FilterPredicateType getType() {
-        return FilterPredicateType.BOOLEAN;
-    }
-
-    public enum BooleanOperation {
-        EQUAL,
-        NOT_EQUAL
-    }
 }

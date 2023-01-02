@@ -29,6 +29,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AlarmCondition implements Serializable {
 
+    private static final long serialVersionUID = -3520632174723456021L;
+
     @Valid
     @ApiModelProperty(position = 1, value = "JSON array of alarm condition filters")
     private List<AlarmConditionFilter> condition;

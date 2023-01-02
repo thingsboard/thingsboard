@@ -23,8 +23,8 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
@@ -49,7 +49,7 @@ class ProfileState {
 
     private DeviceProfile deviceProfile;
     @Getter(AccessLevel.PACKAGE)
-    private final List<DeviceProfileAlarm> alarmSettings = new CopyOnWriteArrayList<>();
+    private final List<AlarmRuleConfiguration> alarmSettings = new CopyOnWriteArrayList<>();
     @Getter(AccessLevel.PACKAGE)
     private final Set<AlarmConditionFilterKey> entityKeys = ConcurrentHashMap.newKeySet();
 
@@ -68,7 +68,7 @@ class ProfileState {
         entityKeys.clear();
         if (deviceProfile.getProfileData().getAlarms() != null) {
             alarmSettings.addAll(deviceProfile.getProfileData().getAlarms());
-            for (DeviceProfileAlarm alarm : deviceProfile.getProfileData().getAlarms()) {
+            for (AlarmRuleConfiguration alarm : deviceProfile.getProfileData().getAlarms()) {
                 Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarm.getId(), id -> new HashMap<>());
                 alarm.getCreateRules().forEach(((severity, alarmRule) -> {
                     var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
@@ -106,7 +106,7 @@ class ProfileState {
         }
     }
 
-    private void addEntityKeysFromAlarmConditionSpec(AlarmRule alarmRule) {
+    private void addEntityKeysFromAlarmConditionSpec(AlarmRuleCondition alarmRule) {
         AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
         if (spec == null) {
             return;

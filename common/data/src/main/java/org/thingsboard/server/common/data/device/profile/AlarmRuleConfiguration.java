@@ -29,7 +29,9 @@ import java.util.TreeMap;
 
 @ApiModel
 @Data
-public class DeviceProfileAlarm implements Serializable {
+public class AlarmRuleConfiguration implements Serializable {
+
+    private static final long serialVersionUID = 4050882336403853271L;
 
     @ApiModelProperty(position = 1, value = "String value representing the alarm rule id", example = "highTemperatureAlarmID")
     private String id;
@@ -41,10 +43,10 @@ public class DeviceProfileAlarm implements Serializable {
     @Valid
     @ApiModelProperty(position = 3, value = "Complex JSON object representing create alarm rules. The unique create alarm rule can be created for each alarm severity type. " +
             "There can be 5 create alarm rules configured per a single alarm type. See method implementation notes and AlarmRule model for more details")
-    private TreeMap<AlarmSeverity, AlarmRule> createRules;
+    private TreeMap<AlarmSeverity, AlarmRuleCondition> createRules;
     @Valid
     @ApiModelProperty(position = 4, value = "JSON object representing clear alarm rule")
-    private AlarmRule clearRule;
+    private AlarmRuleCondition clearRule;
 
     // Hidden in advanced settings
     @ApiModelProperty(position = 5, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")

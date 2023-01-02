@@ -73,6 +73,19 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
     CONSTRAINT fk_entity_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS alarm_rule (
+    id uuid NOT NULL CONSTRAINT alarm_rule_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    customer_id uuid,
+    alarm_type varchar(255),
+    name varchar(255),
+    enabled boolean,
+    configuration jsonb,
+    description varchar,
+    CONSTRAINT alarm_rule_name_unq_key UNIQUE (tenant_id, name)
+);
+
 CREATE TABLE IF NOT EXISTS audit_log (
     id uuid NOT NULL,
     created_time bigint NOT NULL,

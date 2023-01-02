@@ -30,6 +30,8 @@ import java.io.Serializable;
 @Data
 public class AlarmConditionFilter implements Serializable {
 
+    private static final long serialVersionUID = 186010644723236779L;
+
     @Valid
     @ApiModelProperty(position = 1, value = "JSON object for specifying alarm condition by specific key")
     private AlarmConditionFilterKey key;

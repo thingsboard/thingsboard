@@ -29,6 +29,8 @@ import java.io.Serializable;
 @Data
 public class FilterPredicateValue<T> implements Serializable {
 
+    private static final long serialVersionUID = 1524673834590244819L;
+
     @Getter
     @NoXss
     private final T defaultValue;

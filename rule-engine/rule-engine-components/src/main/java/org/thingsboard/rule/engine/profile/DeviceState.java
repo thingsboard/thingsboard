@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -91,7 +91,7 @@ class DeviceState {
             }
         }
         if (pds != null) {
-            for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+            for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
                 alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             }
@@ -108,9 +108,9 @@ class DeviceState {
                 addEntityKeysToSnapshot(ctx, deviceId, keysToFetch, latestValues);
             }
         }
-        Set<String> newAlarmStateIds = this.deviceProfile.getAlarmSettings().stream().map(DeviceProfileAlarm::getId).collect(Collectors.toSet());
+        Set<String> newAlarmStateIds = this.deviceProfile.getAlarmSettings().stream().map(AlarmRuleConfiguration::getId).collect(Collectors.toSet());
         alarmStates.keySet().removeIf(id -> !newAlarmStateIds.contains(id));
-        for (DeviceProfileAlarm alarm : this.deviceProfile.getAlarmSettings()) {
+        for (AlarmRuleConfiguration alarm : this.deviceProfile.getAlarmSettings()) {
             if (alarmStates.containsKey(alarm.getId())) {
                 alarmStates.get(alarm.getId()).updateState(alarm, getOrInitPersistedAlarmState(alarm));
             } else {
@@ -176,7 +176,7 @@ class DeviceState {
     private boolean processAlarmClearNotification(TbContext ctx, TbMsg msg) {
         boolean stateChanged = false;
         Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
-        for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+        for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
             AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                     a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             stateChanged |= alarmState.processAlarmClear(ctx, alarmNf);
@@ -187,7 +187,7 @@ class DeviceState {
 
     private void processAlarmAckNotification(TbContext ctx, TbMsg msg) {
         Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
-        for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+        for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
             AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                     a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             alarmState.processAckAlarm(alarmNf);
@@ -225,7 +225,7 @@ class DeviceState {
                     .map(DataSnapshot::toConditionKey).collect(Collectors.toSet());
             SnapshotUpdate update = new SnapshotUpdate(AlarmConditionKeyType.ATTRIBUTE, removedKeys);
 
-            for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+            for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                 stateChanged |= alarmState.process(ctx, msg, latestValues, update);
@@ -244,7 +244,7 @@ class DeviceState {
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
-            for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+            for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                 stateChanged |= alarmState.process(ctx, msg, latestValues, update);
@@ -263,7 +263,7 @@ class DeviceState {
             List<KvEntry> data = entry.getValue();
             SnapshotUpdate update = merge(latestValues, ts, data);
             if (update.hasUpdate()) {
-                for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+                for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
                     AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                             a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                     try {
@@ -407,7 +407,7 @@ class DeviceState {
         return deviceProfile.getProfileId();
     }
 
-    private PersistedAlarmState getOrInitPersistedAlarmState(DeviceProfileAlarm alarm) {
+    private PersistedAlarmState getOrInitPersistedAlarmState(AlarmRuleConfiguration alarm) {
         if (pds != null) {
             PersistedAlarmState alarmState = pds.getAlarmStates().get(alarm.getId());
             if (alarmState == null) {

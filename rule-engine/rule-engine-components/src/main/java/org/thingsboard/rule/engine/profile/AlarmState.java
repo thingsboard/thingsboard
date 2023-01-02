@@ -33,10 +33,9 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
@@ -54,7 +53,7 @@ class AlarmState {
     public static final String ERROR_MSG = "Failed to process alarm rule for Device [%s]: %s";
     private final ProfileState deviceProfile;
     private final EntityId originator;
-    private DeviceProfileAlarm alarmDefinition;
+    private AlarmRuleConfiguration alarmDefinition;
     private volatile List<AlarmRuleState> createRulesSortedBySeverityDesc;
     private volatile AlarmRuleState clearState;
     private volatile Alarm currentAlarm;
@@ -64,7 +63,7 @@ class AlarmState {
     private volatile DataSnapshot dataSnapshot;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmState(ProfileState deviceProfile, EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
+    AlarmState(ProfileState deviceProfile, EntityId originator, AlarmRuleConfiguration alarmDefinition, PersistedAlarmState alarmState, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
         this.deviceProfile = deviceProfile;
         this.originator = originator;
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
@@ -209,7 +208,7 @@ class AlarmState {
         }
     }
 
-    public void updateState(DeviceProfileAlarm alarm, PersistedAlarmState alarmState) {
+    public void updateState(AlarmRuleConfiguration alarm, PersistedAlarmState alarmState) {
         this.alarmDefinition = alarm;
         this.createRulesSortedBySeverityDesc = new ArrayList<>();
         alarmDefinition.getCreateRules().forEach((severity, rule) -> {

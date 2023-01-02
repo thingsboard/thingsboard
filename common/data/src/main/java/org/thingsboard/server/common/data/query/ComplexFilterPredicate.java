@@ -22,6 +22,8 @@ import java.util.List;
 @Data
 public class ComplexFilterPredicate implements KeyFilterPredicate {
 
+    private static final long serialVersionUID = -8881032418645867535L;
+
     private ComplexOperation operation;
     private List<KeyFilterPredicate> predicates;
 

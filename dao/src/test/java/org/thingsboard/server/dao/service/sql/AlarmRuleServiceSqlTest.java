@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.dao.service.sql;
 
-import lombok.Data;
+import org.thingsboard.server.dao.service.BaseAlarmRuleServiceTest;
+import org.thingsboard.server.dao.service.BaseDeviceProfileServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Data
-public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean> {
-
-    private static final long serialVersionUID = 8308177419956886468L;
-
-    private BooleanOperation operation;
-    private FilterPredicateValue<Boolean> value;
-
-    @Override
-    public FilterPredicateType getType() {
-        return FilterPredicateType.BOOLEAN;
-    }
-
-    public enum BooleanOperation {
-        EQUAL,
-        NOT_EQUAL
-    }
+@DaoSqlTest
+public class AlarmRuleServiceSqlTest extends BaseAlarmRuleServiceTest {
 }

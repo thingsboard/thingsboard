@@ -26,6 +26,8 @@ import java.io.Serializable;
 @Data
 public class AlarmConditionFilterKey implements Serializable {
 
+    private static final long serialVersionUID = -7104557431581283731L;
+
     @ApiModelProperty(position = 1, value = "The key type", example = "TIME_SERIES")
     private final AlarmConditionKeyType type;
     @NoXss

@@ -22,6 +22,8 @@ import javax.validation.Valid;
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 
+    private static final long serialVersionUID = 7135920799116250009L;
+
     private StringOperation operation;
     @Valid
     private FilterPredicateValue<String> value;

@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
 
+    private static final long serialVersionUID = -4074736854439604533L;
+
     private FilterPredicateValue<Integer> predicate;
 
     @Override
