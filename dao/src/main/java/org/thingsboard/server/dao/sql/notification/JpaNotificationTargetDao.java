@@ -32,6 +32,8 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.DaoUtil.getId;
+
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
 
     @Override
     public PageData<NotificationTarget> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndNameContainingIgnoreCase(tenantId.getId(),
+        return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndNameContainingIgnoreCase(getId(tenantId, true),
                 Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 

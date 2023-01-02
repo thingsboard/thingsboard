@@ -21,6 +21,8 @@ import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 
 import java.util.Map;
@@ -40,6 +42,11 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     @Override
     public NotificationTemplate saveNotificationTemplate(TenantId tenantId, NotificationTemplate notificationTemplate) {
         return notificationTemplateDao.save(tenantId, notificationTemplate);
+    }
+
+    @Override
+    public PageData<NotificationTemplate> findNotificationTemplatesByTenantId(TenantId tenantId, PageLink pageLink) {
+        return notificationTemplateDao.findByTenantIdAndPageLink(tenantId, pageLink);
     }
 
     @Override

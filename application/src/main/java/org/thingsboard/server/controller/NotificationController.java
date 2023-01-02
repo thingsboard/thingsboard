@@ -29,19 +29,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.NotificationManager;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
-import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
-import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -52,7 +48,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.List;
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
@@ -66,7 +62,6 @@ public class NotificationController extends BaseController {
     private final NotificationRequestService notificationRequestService;
     private final NotificationManager notificationManager;
     private final NotificationSettingsService notificationSettingsService;
-    private final SlackService slackService;
 
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -93,7 +88,7 @@ public class NotificationController extends BaseController {
 
     @PostMapping("/notification/request")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationRequest createNotificationRequest(@RequestBody NotificationRequest notificationRequest,
+    public NotificationRequest createNotificationRequest(@RequestBody @Valid NotificationRequest notificationRequest,
                                                          @AuthenticationPrincipal SecurityUser user) throws Exception {
         if (notificationRequest.getId() != null) {
             throw new IllegalArgumentException("Notification request cannot be updated. You may only cancel/delete it");
@@ -155,20 +150,6 @@ public class NotificationController extends BaseController {
     public NotificationSettings getNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
         TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
         return notificationSettingsService.findNotificationSettings(tenantId);
-    }
-
-    @GetMapping("/notification/slack/conversations")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public List<SlackConversation> listSlackConversations(@RequestParam SlackConversation.Type type,
-                                                          @AuthenticationPrincipal SecurityUser user) {
-        NotificationSettings settings = getNotificationSettings(user);
-        SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
-                settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
-        if (slackConfig == null) {
-            throw new IllegalArgumentException("Slack is not configured");
-        }
-
-        return slackService.listConversations(user.getTenantId(), slackConfig.getBotToken(), type);
     }
 
 }

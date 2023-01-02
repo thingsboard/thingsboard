@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.service.DataValidator;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +29,8 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
 
     private final NotificationRuleDao notificationRuleDao;
 
-    private final NotificationRuleValidator validator = new NotificationRuleValidator();
-
     @Override
     public NotificationRule saveNotificationRule(TenantId tenantId, NotificationRule notificationRule) {
-        validator.validate(notificationRule, NotificationRule::getTenantId);
         return notificationRuleDao.save(tenantId, notificationRule);
     }
 
@@ -51,9 +47,6 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
     @Override
     public void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
         notificationRuleDao.removeById(tenantId, id.getId());
-    }
-
-    private static class NotificationRuleValidator extends DataValidator<NotificationRule> {
     }
 
 }

@@ -15,7 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 
@@ -23,4 +27,12 @@ import java.util.UUID;
 
 @Repository
 public interface NotificationTemplateRepository extends JpaRepository<NotificationTemplateEntity, UUID> {
+
+    @Query("SELECT t FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId AND " +
+            "(lower(t.name) LIKE lower(concat('%', :searchText, '%')) OR " +
+            "lower(t.notificationType) LIKE lower(concat('%', :searchText, '%')))")
+    Page<NotificationTemplateEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
+                                                                 @Param("searchText") String searchText,
+                                                                 Pageable pageable);
+
 }

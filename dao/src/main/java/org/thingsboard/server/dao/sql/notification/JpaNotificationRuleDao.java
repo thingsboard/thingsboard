@@ -33,6 +33,8 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.DaoUtil.getId;
+
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -42,7 +44,7 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
 
     @Override
     public PageData<NotificationRule> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRuleRepository.findByTenantIdAndNameContainingIgnoreCase(tenantId.getId(),
+        return DaoUtil.toPageData(notificationRuleRepository.findByTenantIdAndNameContainingIgnoreCase(getId(tenantId, true),
                 Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 

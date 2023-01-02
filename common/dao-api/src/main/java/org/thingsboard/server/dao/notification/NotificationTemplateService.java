@@ -17,16 +17,17 @@ package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
-
-import java.util.List;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
 public interface NotificationTemplateService {
 
     NotificationTemplate findNotificationTemplateById(TenantId tenantId, NotificationTemplateId id);
 
     NotificationTemplate saveNotificationTemplate(TenantId tenantId, NotificationTemplate notificationTemplate);
+
+    PageData<NotificationTemplate> findNotificationTemplatesByTenantId(TenantId tenantId, PageLink pageLink);
 
     void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id);
 

@@ -40,6 +40,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
@@ -53,7 +54,7 @@ public class NotificationRuleController extends BaseController {
 
     @PostMapping("/rule")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    public NotificationRule saveNotificationRule(@RequestBody NotificationRule notificationRule) throws Exception {
+    public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule) throws Exception {
         checkEntity(notificationRule.getId(), notificationRule, Resource.NOTIFICATION_RULE);
         return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
     }

@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.dao.DaoUtil.getId;
+
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -50,7 +52,7 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
 
     @Override
     public PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRequestRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(notificationRequestRepository.findByTenantId(getId(tenantId, true), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

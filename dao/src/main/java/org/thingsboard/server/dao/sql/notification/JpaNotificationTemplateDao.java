@@ -15,17 +15,24 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 import org.thingsboard.server.dao.notification.NotificationTemplateDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.DaoUtil.getId;
 
 @Component
 @SqlDao
@@ -37,6 +44,12 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     protected Class<NotificationTemplateEntity> getEntityClass() {
         return NotificationTemplateEntity.class;
+    }
+
+    @Override
+    public PageData<NotificationTemplate> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTemplateRepository.findByTenantIdAndSearchText(getId(tenantId, true),
+                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
