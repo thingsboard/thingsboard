@@ -40,8 +40,6 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
 
     private static final String EDGE_DIR = "edge";
 
-    private static final String EDGE_VERSION = "3.4.3EDGE";
-
     private static final String EDGE_INSTALL_INSTRUCTIONS_DIR = "install_instructions";
 
     private final InstallScripts installScripts;
@@ -58,7 +56,6 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
             dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
-        dockerInstallInstructions = dockerInstallInstructions.replace("${EDGE_VERSION}", EDGE_VERSION);
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_ROUTING_KEY}", edge.getRoutingKey());
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_ROUTING_SECRET}", edge.getSecret());
         return new EdgeInstallInstructions(dockerInstallInstructions);
