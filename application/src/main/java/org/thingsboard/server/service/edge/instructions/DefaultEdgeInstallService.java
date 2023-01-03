@@ -52,7 +52,7 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
             String localhostWarning = readFile(resolveFile("docker", "localhost_warning.md"));
             dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", localhostWarning);
-            dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", "!!!PLEASE_REPLACE_ME!!!");
+            dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", "!!!REPLACE_ME_TO_HOST_IP_ADDRESS!!!");
         } else {
             dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
