@@ -27,8 +27,7 @@ export interface EdgeInstructionsData {
 
 @Component({
   selector: 'tb-edge-instructions',
-  templateUrl: './edge-instructions-dialog.component.html',
-  styleUrls: ['./edge-instructions-dialog.component.scss']
+  templateUrl: './edge-instructions-dialog.component.html'
 })
 export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstructionsDialogComponent, EdgeInstructionsData> {
 
