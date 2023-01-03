@@ -20,14 +20,14 @@ mkdir -p ~/.mytb-edge-logs && sudo chown -R 799:799 ~/.mytb-edge-logs
 
 ### Running ThingsBoard Edge as docker service
 
+${LOCALHOST_WARNING}
+
 Create docker compose file for ThingsBoard Edge service:
 
 ```bash
 nano docker-compose.yml
 {:copy-code}
 ```
-
-${LOCALHOST_WARNING}
 
 Add the following lines to the yml file:
 
