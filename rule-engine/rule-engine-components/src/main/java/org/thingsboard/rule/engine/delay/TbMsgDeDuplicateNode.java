@@ -51,12 +51,12 @@ import java.util.stream.Collectors;
                 "<b>FIRST</b> - return first message that arrived during de-duplication period.<br></br>" +
                 "<b>LAST</b> - return last message that arrived during de-duplication period.<br></br>" +
                 "<b>ALL</b> - return all messages as a single JSON array message. Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>" +
-                "By default rule node <b>de-duplicates messages by message originator</b>, however, there is an option to de-duplicate messages independently from the incoming message's originator. " +
-                "In case of the <b>de-duplication strategy</b> set to <b>ALL</b> and <b>de-duplicates messages by message originator</b> checkbox set to <b>false</b>, you must configure the <b>Queue Name</b> and <b>Message Type</b> for the output array message. " +
+                "By default rule node <b>De-duplicate messages by message originator</b>, however, there is an option to de-duplicate messages independently from the incoming message's originator. " +
+                "In case of the <b>De-duplicate strategy</b> set to <b>ALL</b> and <b>De-duplicate messages by message originator</b> checkbox set to <b>false</b>, you must configure the <b>Queue Name</b> and <b>Out Message Type</b> for the output array message. " +
                 "Also in this case the output message originator will be set to the current tenant id.<br></br>",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = ""
+        configDirective = "tbActionNodeMsgDeDuplicateConfig"
 )
 @Slf4j
 public class TbMsgDeDuplicateNode implements TbNode {

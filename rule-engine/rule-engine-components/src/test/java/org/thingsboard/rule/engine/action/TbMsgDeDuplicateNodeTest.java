@@ -70,10 +70,9 @@ public class TbMsgDeDuplicateNodeTest {
 
     private TbContext ctx;
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("de-duplication-node-test"));
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("de-duplication-node-test"));
 
     private TenantId tenantId;
-    private RuleNodeId ruleNodeId;
 
     private TbMsgDeDuplicateNode node;
     private TbMsgDeDuplicateNodeConfiguration config;
@@ -84,14 +83,13 @@ public class TbMsgDeDuplicateNodeTest {
     private int scheduleCount;
 
     @BeforeEach
-    @SuppressWarnings("unchecked")
     public void init() throws TbNodeException {
         ctx = mock(TbContext.class);
         awaitTellSelfLatch = new CountDownLatch(1);
         awaitAllMsgsProcessedLatch = new CountDownLatch(1);
 
         tenantId = TenantId.fromUUID(UUID.randomUUID());
-        ruleNodeId = new RuleNodeId(UUID.randomUUID());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUID.randomUUID());
 
         when(ctx.getSelfId()).thenReturn(ruleNodeId);
         when(ctx.getTenantId()).thenReturn(tenantId);
@@ -129,9 +127,7 @@ public class TbMsgDeDuplicateNodeTest {
 
     @AfterEach
     public void destroy() {
-        if (executorService != null) {
-            executorService.shutdown();
-        }
+        executorService.shutdown();
         node.destroy();
     }
 
@@ -275,6 +271,8 @@ public class TbMsgDeDuplicateNodeTest {
         TbMsg outMessage = newMsgCaptor.getAllValues().get(0);
         Assertions.assertEquals(getMergedData(inputMsgs), outMessage.getData());
         Assertions.assertEquals(tenantId, outMessage.getOriginator());
+        Assertions.assertEquals(config.getQueueName(), outMessage.getQueueName());
+        Assertions.assertEquals(config.getOutMsgType(), outMessage.getType());
     }
 
     private List<TbMsg> createTbMsgs(DeviceId deviceId) {
