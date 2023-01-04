@@ -301,7 +301,7 @@ public class TbMsgDeDuplicateNodeTest {
         msgs.forEach(msg -> {
             ObjectNode msgNode = JacksonUtil.newObjectNode();
             msgNode.set("msg", JacksonUtil.toJsonNode(msg.getData()));
-            msgNode.set("metadata", JacksonUtil.valueToTree(msg.getMetaData()));
+            msgNode.set("metadata", JacksonUtil.valueToTree(msg.getMetaData().getData()));
             mergedData.add(msgNode);
         });
         return JacksonUtil.toString(mergedData);
