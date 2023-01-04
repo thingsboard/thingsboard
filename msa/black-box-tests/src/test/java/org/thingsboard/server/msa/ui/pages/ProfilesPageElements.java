@@ -17,7 +17,8 @@ package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.w3c.dom.html.HTMLInputElement;
+
+import java.util.List;
 
 public class ProfilesPageElements extends OtherPageElementsHelper {
     public ProfilesPageElements(WebDriver driver) {
@@ -35,6 +36,7 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
     private static final String DESCRIPTION_FIELD = "//textarea[@formcontrolname='description']";
     private static final String ADD_DEVICE_PROFILE_ADD_BTN = ADD_DEVICE_PROFILE_VIEW + "//span[text() = 'Add']/..";
     private static final String DEVISE_PROFILE_VIEW_DELETE_BTN = "//tb-device-profile//span[contains(text(),'Delete')]";
+    private static final String PROFILE_NAMES = "//tbody/mat-row/mat-cell[contains(@class,'name')]";
 
     protected String getDeviseProfileViewDeleteBtn() {
         return DEVISE_PROFILE_VIEW_DELETE_BTN;
@@ -98,5 +100,9 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
 
     public WebElement deviceProfileViewDeleteBtn() {
         return waitUntilElementToBeClickable(DEVISE_PROFILE_VIEW_DELETE_BTN);
+    }
+
+    public List<WebElement> profileNames() {
+        return waitUntilElementsToBeClickable(PROFILE_NAMES);
     }
 }

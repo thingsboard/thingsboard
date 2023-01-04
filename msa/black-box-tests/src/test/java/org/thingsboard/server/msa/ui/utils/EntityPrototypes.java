@@ -17,11 +17,15 @@ package org.thingsboard.server.msa.ui.utils;
 
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.rule.RuleChain;
 
 public class EntityPrototypes {
@@ -43,8 +47,25 @@ public class EntityPrototypes {
         deviceProfile.setName(entityName);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setProvisionConfiguration( new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(""));
+        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
+        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        deviceProfile.setProfileData(deviceProfileData);
+        return deviceProfile;
+    }
+
+    public static DeviceProfile defaultDeviceProfile(String entityName, String description){
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName(entityName);
+        deviceProfile.setDescription(description);
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
         deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
         deviceProfile.setProfileData(deviceProfileData);
         return deviceProfile;

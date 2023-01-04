@@ -16,8 +16,8 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class ProfilesPageHelper extends ProfilesPageElements {
@@ -30,6 +30,7 @@ public class ProfilesPageHelper extends ProfilesPageElements {
     private String mobileDashboard;
     private String queue;
     private String description;
+    private String profile;
 
     public void setName() {
         this.name = profileViewNameField().getAttribute("value");
@@ -48,7 +49,16 @@ public class ProfilesPageHelper extends ProfilesPageElements {
     }
 
     public void setDescription() {
+        scrollToElement(profileViewDescriptionField());
         this.description = profileViewDescriptionField().getAttribute("value");
+    }
+
+    public void setProfileName() {
+        this.profile = profileNames().get(0).getText();
+    }
+
+    public void setProfileName(int number) {
+        this.profile = profileNames().get(number).getText();
     }
 
     public String getName() {
@@ -71,6 +81,10 @@ public class ProfilesPageHelper extends ProfilesPageElements {
         return this.description;
     }
 
+    public String getProfileName() {
+        return this.profile;
+    }
+
     public void enterName(String name) {
         addDeviceProfileNameField().click();
         addDeviceProfileNameField().sendKeys(name);
@@ -89,6 +103,7 @@ public class ProfilesPageHelper extends ProfilesPageElements {
     public void chooseQueue(String queue) {
         addDeviceProfileQueueField().click();
         entityFromList(queue).click();
+        waitUntilAttributeContains(addDeviceProfileQueueField(), "aria-expanded", "false");
     }
 
     public void enterDescription(String description) {
@@ -108,5 +123,14 @@ public class ProfilesPageHelper extends ProfilesPageElements {
     public boolean deleteDeviceProfileFromViewBtnIsNotDisplayed() {
         return wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(getDeviseProfileViewDeleteBtn())));
     }
- }
+
+    public void goToProfileHelpPage() {
+        jsClick(helpBtn());
+        goToNextTab(2);
+    }
+
+    public void sortByNameDown() {
+        doubleClick(sortByNameBtn());
+    }
+}
 

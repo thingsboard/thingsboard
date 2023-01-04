@@ -22,10 +22,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.LocalFileDetector;
@@ -58,6 +60,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
     protected static final PageLink pageLink = new PageLink(10);
     private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
+    private JavascriptExecutor js;
 
     @SneakyThrows
     @BeforeMethod
@@ -102,6 +105,11 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             log.error("This URL path is missing");
         }
         return driver.getCurrentUrl().contains(urlPath);
+    }
+
+    public void jsClick(WebElement element) {
+        js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].click();", element);
     }
 
     public static RuleChain getRuleChainByName(String name) {

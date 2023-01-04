@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -176,7 +177,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.allEntity().get(0).click();
-        profilesPage.goToHelpPage();
+        profilesPage.goToProfileHelpPage();
 
         Assert.assertTrue(urlContains(urlPath));
     }
