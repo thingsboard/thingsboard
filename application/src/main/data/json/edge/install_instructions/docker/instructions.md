@@ -36,7 +36,7 @@ version: '3.0'
 services:
   mytbedge:
     restart: always
-    image: "thingsboard/tb-edge:latest"
+    image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
     ports:
       - "8080:8080"
       - "1883:1883"
