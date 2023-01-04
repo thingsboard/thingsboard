@@ -95,7 +95,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         if (result.isCreated()) {
             apiUsageClient.report(alarm.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
         }
-        return result.getAlarmInfo();
+        return new Alarm(result.getAlarmInfo());
     }
 
     @Override
