@@ -463,7 +463,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         String assigneeLastName = null;
         String assigneeEmail = null;
 
-        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse(null);
+        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse("Deleted");
         originatorLabel = entityService.fetchEntityLabel(tenantId, alarm.getOriginator()).orElse(null);
 
         if (alarm.getAssigneeId() != null) {
