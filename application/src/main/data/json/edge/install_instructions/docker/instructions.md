@@ -46,6 +46,8 @@ services:
       CLOUD_ROUTING_KEY: ${CLOUD_ROUTING_KEY}
       CLOUD_ROUTING_SECRET: ${CLOUD_ROUTING_SECRET}
       CLOUD_RPC_HOST: ${BASE_URL}
+      CLOUD_RPC_PORT: ${CLOUD_RPC_PORT}
+      CLOUD_RPC_SSL_ENABLED: ${CLOUD_RPC_SSL_ENABLED}
     volumes:
       - ~/.mytb-edge-data:/data
       - ~/.mytb-edge-logs:/var/log/tb-edge

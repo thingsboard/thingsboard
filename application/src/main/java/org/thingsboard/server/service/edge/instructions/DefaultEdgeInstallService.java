@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.instructions;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -45,6 +46,12 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
 
     private final InstallScripts installScripts;
 
+    @Value("${edges.rpc.port}")
+    private int rpcPort;
+
+    @Value("${edges.rpc.ssl.enabled}")
+    private boolean sslEnabled;
+
     @Override
     public EdgeInstallInstructions getDockerInstallInstructions(TenantId tenantId, Edge edge, HttpServletRequest request) {
         String dockerInstallInstructions = readFile(resolveFile("docker", "instructions.md"));
@@ -59,6 +66,8 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         }
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_ROUTING_KEY}", edge.getRoutingKey());
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_ROUTING_SECRET}", edge.getSecret());
+        dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_RPC_PORT}", Integer.toString(rpcPort));
+        dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_RPC_SSL_ENABLED}", Boolean.toString(sslEnabled));
         return new EdgeInstallInstructions(dockerInstallInstructions);
     }
 
