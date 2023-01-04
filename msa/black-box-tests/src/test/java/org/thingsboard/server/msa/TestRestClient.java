@@ -315,6 +315,13 @@ public class TestRestClient {
                 .statusCode(HTTP_OK);
     }
 
+    public void setDefaultDeviceProfile(DeviceProfileId deviceProfileId) {
+        given().spec(requestSpec)
+                .post("/api/deviceProfile/{deviceProfileId}/default", deviceProfileId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
     public Customer postCustomer(Customer customer) {
         return given().spec(requestSpec)
                 .body(customer)

@@ -37,6 +37,9 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
     private static final String ADD_DEVICE_PROFILE_ADD_BTN = ADD_DEVICE_PROFILE_VIEW + "//span[text() = 'Add']/..";
     private static final String DEVISE_PROFILE_VIEW_DELETE_BTN = "//tb-device-profile//span[contains(text(),'Delete')]";
     private static final String PROFILE_NAMES = "//tbody/mat-row/mat-cell[contains(@class,'name')]";
+    private static final String MAKE_DEFAULT_BTN = ENTITY + "/../..//mat-icon[contains(text(),' flag')]/../..";
+    private static final String DEFAULT = ENTITY + "/../..//mat-icon[text() = 'check_box']";
+    private static final String PROFILE_VIEW_MAKE_DEFAULT_BTN = "//span[text() = ' Make device profile default ']/..";
 
     protected String getDeviseProfileViewDeleteBtn() {
         return DEVISE_PROFILE_VIEW_DELETE_BTN;
@@ -104,5 +107,17 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
 
     public List<WebElement> profileNames() {
         return waitUntilElementsToBeClickable(PROFILE_NAMES);
+    }
+
+    public WebElement makeProfileDefaultBtn(String profileName) {
+        return waitUntilElementToBeClickable(String.format(MAKE_DEFAULT_BTN, profileName));
+    }
+
+    public WebElement defaultCheckbox(String profileName) {
+        return waitUntilElementToBeClickable(String.format(DEFAULT, profileName));
+    }
+
+    public WebElement profileViewMakeDefaultBtn() {
+        return waitUntilElementToBeClickable(PROFILE_VIEW_MAKE_DEFAULT_BTN);
     }
 }
