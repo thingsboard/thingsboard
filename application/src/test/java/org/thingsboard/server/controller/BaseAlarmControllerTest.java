@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -365,6 +366,18 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAssignAlarmViaDifferentTenant() throws Exception {
+        loginTenantAdmin();
+        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + tenantAdminUserId.getId()).andExpect(status().isForbidden());
+    }
+
+    @Test
     public void testReassignAlarm() throws Exception {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
@@ -424,6 +437,38 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_UNASSIGN);
+    }
+
+    @Test
+    public void testUnassignTenantAlarmViaCustomer() throws Exception {
+        loginTenantAdmin();
+        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+        Mockito.reset(tbClusterService, auditLogService);
+        long beforeAssignmentTs = System.currentTimeMillis();
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + tenantAdminUserId.getId()).andExpect(status().isOk());
+        Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertEquals(tenantAdminUserId, foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs && foundAlarm.getAssignTs() < System.currentTimeMillis());
+
+        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ASSIGN);
+
+        logout();
+        loginCustomerUser();
+
+        Mockito.reset(tbClusterService, auditLogService);
+        beforeAssignmentTs = System.currentTimeMillis();
+
+        doDelete("/api/alarm/" + alarm.getId() + "/assign").andExpect(status().isOk());
+        foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertNull(foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs && foundAlarm.getAssignTs() < System.currentTimeMillis());
+
+        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ALARM_UNASSIGN);
     }
 
     @Test
