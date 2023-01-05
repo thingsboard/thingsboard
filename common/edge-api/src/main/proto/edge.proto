@@ -203,6 +203,8 @@ message DeviceUpdateMsg {
   optional int64 firmwareIdMSB = 13;
   optional int64 firmwareIdLSB = 14;
   optional bytes deviceDataBytes = 15;
+  optional int64 softwareIdMSB = 16;
+  optional int64 softwareIdLSB = 17;
 }
 
 message DeviceProfileUpdateMsg {
@@ -223,6 +225,10 @@ message DeviceProfileUpdateMsg {
   optional bytes image = 15;
   optional int64 firmwareIdMSB = 16;
   optional int64 firmwareIdLSB = 17;
+  optional int64 softwareIdMSB = 18;
+  optional int64 softwareIdLSB = 19;
+  int64 defaultDashboardIdMSB = 20;
+  int64 defaultDashboardIdLSB = 21;
 }
 
 message AssetProfileUpdateMsg {

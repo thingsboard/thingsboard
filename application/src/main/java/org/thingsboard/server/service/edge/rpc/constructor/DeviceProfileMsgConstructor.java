@@ -65,6 +65,14 @@ public class DeviceProfileMsgConstructor {
             builder.setFirmwareIdMSB(deviceProfile.getFirmwareId().getId().getMostSignificantBits())
                     .setFirmwareIdLSB(deviceProfile.getFirmwareId().getId().getLeastSignificantBits());
         }
+        if (deviceProfile.getSoftwareId() != null) {
+            builder.setSoftwareIdMSB(deviceProfile.getSoftwareId().getId().getMostSignificantBits())
+                    .setSoftwareIdLSB(deviceProfile.getSoftwareId().getId().getLeastSignificantBits());
+        }
+        if (deviceProfile.getDefaultEdgeRuleChainId() != null) {
+            builder.setDefaultRuleChainIdMSB(deviceProfile.getDefaultEdgeRuleChainId().getId().getMostSignificantBits())
+                    .setDefaultRuleChainIdLSB(deviceProfile.getDefaultEdgeRuleChainId().getId().getLeastSignificantBits());
+        }
         return builder.build();
     }
 
