@@ -41,7 +41,6 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     private ProfilesPageHelper profilesPage;
     private String name;
 
-
     @BeforeMethod
     public void login() {
         openLocalhost();

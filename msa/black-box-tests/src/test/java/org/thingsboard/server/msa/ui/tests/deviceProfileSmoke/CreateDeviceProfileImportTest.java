@@ -42,7 +42,6 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     private final String absolutePathToFileImportTxt = getClass().getClassLoader().getResource(IMPORT_TXT_FILE_NAME).getPath();
     private String name;
 
-
     @BeforeMethod
     public void login() {
         openLocalhost();
