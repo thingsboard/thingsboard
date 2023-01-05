@@ -58,7 +58,7 @@ import java.util.UUID;
 public class RelationEdgeProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processRelationFromEdge(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
-        log.trace("[{}] onRelationUpdate [{}]", tenantId, relationUpdateMsg);
+        log.trace("[{}] processRelationFromEdge [{}]", tenantId, relationUpdateMsg);
         try {
             EntityRelation entityRelation = new EntityRelation();
 
