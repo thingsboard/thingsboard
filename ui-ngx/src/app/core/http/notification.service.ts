@@ -129,4 +129,9 @@ export class NotificationService {
   public deleteNotificationTemplate(id: string, config?: RequestConfig): Observable<void> {
     return this.http.delete<void>(`/api/notification/template/${id}`, defaultHttpOptionsFromConfig(config));
   }
+
+  public getNotificationTemplates(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationTemplate>> {
+    return this.http.get<PageData<NotificationTemplate>>(`/api/notification/templates${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
 }
