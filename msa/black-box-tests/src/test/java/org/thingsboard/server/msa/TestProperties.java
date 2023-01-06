@@ -36,33 +36,20 @@ public class TestProperties {
         if (instance.isActive()) {
             return HTTPS_URL;
         }
-        return getProperties().getProperty("tb.baseUrl");
+        return System.getProperty("tb.baseUrl", "http://localhost:8080");
     }
 
     public static String getBaseUiUrl() {
         if (instance.isActive()) {
             return "https://host.docker.internal";
         }
-        return getProperties().getProperty("tb.baseUrl");
+        return System.getProperty("tb.baseUiUrl", "http://localhost:8080");
     }
 
     public static String getWebSocketUrl() {
         if (instance.isActive()) {
             return WSS_URL;
         }
-        return getProperties().getProperty("tb.wsUrl");
+        return System.getProperty("tb.wsUrl", "ws://localhost:8080");
     }
-
-    private static Properties getProperties() {
-        if (properties == null) {
-            try (InputStream input = TestProperties.class.getClassLoader().getResourceAsStream("config.properties")) {
-                properties = new Properties();
-                properties.load(input);
-            } catch (IOException ex) {
-                log.error("Exception while reading test properties " + ex.getMessage());
-            }
-        }
-        return properties;
-    }
-
 }
