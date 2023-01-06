@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @Type(value = SingleUserNotificationTargetConfig.class, name = "SINGLE_USER"),
         @Type(value = UserListNotificationTargetConfig.class, name = "USER_LIST"),
         @Type(value = CustomerUsersNotificationTargetConfig.class, name = "CUSTOMER_USERS"),
         @Type(value = AllUsersNotificationTargetConfig.class, name = "ALL_USERS")

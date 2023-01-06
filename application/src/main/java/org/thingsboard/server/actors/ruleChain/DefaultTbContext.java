@@ -25,7 +25,7 @@ import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
@@ -687,8 +687,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public NotificationManager getNotificationManager() {
-        return mainCtx.getNotificationManager();
+    public NotificationCenter getNotificationCenter() {
+        return mainCtx.getNotificationCenter();
     }
 
     @Override

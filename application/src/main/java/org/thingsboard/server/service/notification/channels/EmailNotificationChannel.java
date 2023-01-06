@@ -17,6 +17,7 @@ package org.thingsboard.server.service.notification.channels;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
@@ -35,8 +36,16 @@ public class EmailNotificationChannel implements NotificationChannel {
     @Override
     public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
         EmailDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.EMAIL);
+        String subject = template.getSubject();
+        if (StringUtils.isBlank(subject)) {
+            subject = ctx.getNotificationTemplate().getNotificationSubject();
+        }
+        if (StringUtils.isBlank(subject)) {
+            subject = ctx.getNotificationTemplate().getNotificationType().getName();
+        }
+        String mailSubject = subject;
         return executor.submit(() -> {
-            mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), text, template.getSubject());
+            mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), mailSubject, text);
             return null;
         });
     }

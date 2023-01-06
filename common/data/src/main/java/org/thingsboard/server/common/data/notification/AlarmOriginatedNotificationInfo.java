@@ -23,7 +23,10 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -37,10 +40,21 @@ public class AlarmOriginatedNotificationInfo extends NotificationInfo {
     private EntityId alarmOriginator;
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
+    private CustomerId customerId;
 
     @Override
     public NotificationOriginatorType getOriginatorType() {
         return NotificationOriginatorType.ALARM;
+    }
+
+    @Override
+    public Map<String, String> getTemplateData() {
+        return Map.of(
+                "alarmType", alarmType,
+                "alarmId", alarmId.toString(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
+                "alarmOriginatorId", alarmOriginator.getId().toString()
+        );
     }
 
 }

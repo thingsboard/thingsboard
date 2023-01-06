@@ -37,4 +37,6 @@ public interface NotificationDao extends Dao<Notification> {
 
     PageData<Notification> findByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, PageLink pageLink);
 
+    boolean deleteByIdAndUserId(TenantId tenantId, UserId userId, NotificationId notificationId);
+
 }

@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule;
+package org.thingsboard.server.common.data.notification;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
-import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.NotNull;
+import java.util.Map;
 
 @Data
-public class NonConfirmedNotificationEscalation {
+@EqualsAndHashCode(callSuper = true)
+public class RuleNodeOriginatedNotificationInfo extends NotificationInfo {
 
-    @Max(NotificationRequestConfig.MAX_SENDING_DELAY)
-    private int delayInSec;
-    @NotNull
-    private NotificationTargetId notificationTargetId;
+    private EntityId msgOriginator;
+    private Map<String, String> msgMetadata;
+
+    @Override
+    public NotificationOriginatorType getOriginatorType() {
+        return NotificationOriginatorType.RULE_NODE;
+    }
+
+    @Override
+    public Map<String, String> getTemplateData() {
+        return msgMetadata;
+    }
 
 }

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
@@ -52,8 +53,12 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     @Column(name = ModelConstants.NOTIFICATION_RECIPIENT_ID_PROPERTY, nullable = false)
     private UUID recipientId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.NOTIFICATION_TYPE_PROPERTY, nullable = false)
-    private String type;
+    private NotificationType type;
+
+    @Column(name = ModelConstants.NOTIFICATION_SUBJECT_PROPERTY)
+    private String subject;
 
     @Column(name = ModelConstants.NOTIFICATION_TEXT_PROPERTY, nullable = false)
     private String text;
@@ -78,6 +83,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         setRequestId(getUuid(notification.getRequestId()));
         setRecipientId(getUuid(notification.getRecipientId()));
         setType(notification.getType());
+        setSubject(notification.getSubject());
         setText(notification.getText());
         setInfo(toJson(notification.getInfo()));
         setOriginatorType(notification.getOriginatorType());
@@ -91,7 +97,8 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         notification.setCreatedTime(createdTime);
         notification.setRequestId(getEntityId(requestId, NotificationRequestId::new));
         notification.setRecipientId(getEntityId(recipientId, UserId::new));
-        notification.setText(type);
+        notification.setType(type);
+        notification.setSubject(subject);
         notification.setText(text);
         notification.setInfo(fromJson(info, NotificationInfo.class));
         notification.setOriginatorType(originatorType);

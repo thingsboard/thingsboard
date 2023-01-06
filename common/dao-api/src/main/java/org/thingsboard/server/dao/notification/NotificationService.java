@@ -36,4 +36,6 @@ public interface NotificationService {
 
     int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId);
 
+    boolean deleteNotification(TenantId tenantId, UserId userId, NotificationId notificationId);
+
 }

@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets;
+package org.thingsboard.server.common.data.notification;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-import javax.validation.constraints.NotNull;
-import java.util.UUID;
+@RequiredArgsConstructor
+@Getter
+public enum NotificationType {
+    GENERIC("Generic"),
+    ADMIN("Admin"),
+    ALARM("Alarm"),
+    SCHEDULED_EVENT("Scheduled event"),
+    COMPLETED("Completed"),
+    FAILURE("Failure");
 
-@Data
-public class SingleUserNotificationTargetConfig implements NotificationTargetConfig {
-
-    @NotNull
-    private UUID userId;
-
-    @Override
-    public NotificationTargetConfigType getType() {
-        return NotificationTargetConfigType.SINGLE_USER;
-    }
+    private final String name;
 
 }

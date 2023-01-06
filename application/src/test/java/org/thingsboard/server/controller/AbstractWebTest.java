@@ -53,9 +53,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -80,6 +82,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -111,6 +115,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @Slf4j
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
+
     public static final int TIMEOUT = 30;
 
     protected ObjectMapper mapper = new ObjectMapper();
@@ -483,6 +488,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return protoTransportPayloadConfiguration;
     }
 
+    protected Device createDevice(String deviceName, String type, String accessToken) throws Exception {
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType(type);
+
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        credentials.setCredentialsId(accessToken);
+
+        SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
+        return doPost("/api/device-with-credentials", request, Device.class);
+    }
 
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
@@ -584,7 +601,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T, R> R doPost(String urlTemplate, T content, Class<R> responseClass, String... params) {
         try {
             return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {
@@ -694,10 +711,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
+
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());
         }
+
     }
 
     protected static <T> ResultMatcher statusReason(Matcher<T> matcher) {

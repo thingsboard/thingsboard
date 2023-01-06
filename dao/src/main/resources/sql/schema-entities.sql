@@ -793,7 +793,8 @@ CREATE TABLE IF NOT EXISTS notification_template (
     created_time BIGINT NOT NULL,
     tenant_id UUID NULL CONSTRAINT fk_notification_template_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    notification_type VARCHAR(255) NOT NULL,
+    notification_type VARCHAR(32) NOT NULL,
+    notification_subject VARCHAR(255),
     configuration VARCHAR(10000) NOT NULL
 );
 
@@ -811,7 +812,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
     tenant_id UUID NULL CONSTRAINT fk_notification_request_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
-    targets VARCHAR(255) NOT NULL,
+    targets VARCHAR(5000) NOT NULL,
     template_id UUID NOT NULL,
     info VARCHAR(1000),
     delivery_methods VARCHAR(255),
@@ -821,15 +822,16 @@ CREATE TABLE IF NOT EXISTS notification_request (
     originator_entity_type VARCHAR(32),
     rule_id UUID NULL,
     status VARCHAR(32),
-    stats VARCHAR(1000)
+    stats VARCHAR(10000)
 );
 
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
     created_time BIGINT NOT NULL,
-    request_id UUID NOT NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
+    request_id UUID NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
     recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
-    type VARCHAR(255) NOT NULL,
+    type VARCHAR(32) NOT NULL,
+    subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
     info VARCHAR(1000),
     originator_type VARCHAR(32) NOT NULL,

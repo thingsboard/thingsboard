@@ -19,13 +19,24 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class NotificationUpdate {
+
+    private NotificationId notificationId;
+    private NotificationStatus updatedStatus;
     private Notification notification;
-    private boolean isNew;
+    private ComponentLifecycleEvent updateType;
+
+    public NotificationId getNotificationId() {
+        return notificationId != null ? notificationId : notification.getId();
+    }
+
 }

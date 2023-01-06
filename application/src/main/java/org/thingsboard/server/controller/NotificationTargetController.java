@@ -75,6 +75,7 @@ public class NotificationTargetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget saveNotificationTarget(@RequestBody @Valid NotificationTarget notificationTarget,
                                                      @AuthenticationPrincipal SecurityUser user) throws Exception {
+        notificationTarget.setTenantId(user.getTenantId());
         checkEntity(notificationTarget.getId(), notificationTarget, Resource.NOTIFICATION_TARGET);
         if (!user.isSystemAdmin()) {
             NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();

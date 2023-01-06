@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -62,14 +61,6 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
                 .contains("name must not be")
                 .contains("configuration must not be");
 
-        SingleUserNotificationTargetConfig singleUserConfig = new SingleUserNotificationTargetConfig();
-        singleUserConfig.setUserId(null);
-        notificationTarget.setConfiguration(singleUserConfig);
-
-        validationError = saveAndGetError(notificationTarget, status().isBadRequest());
-        assertThat(validationError)
-                .contains("userId must not be");
-
         UserListNotificationTargetConfig userListConfig = new UserListNotificationTargetConfig();
         userListConfig.setUsersIds(Collections.emptyList());
         notificationTarget.setConfiguration(userListConfig);
@@ -85,15 +76,10 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(differentTenantId);
         notificationTarget.setName("Target 1");
+
         UserListNotificationTargetConfig userListConfig = new UserListNotificationTargetConfig();
         userListConfig.setUsersIds(List.of(customerUserId.getId(), tenantAdminUserId.getId()));
         notificationTarget.setConfiguration(userListConfig);
-
-        saveAndGetError(notificationTarget, status().isForbidden());
-
-        SingleUserNotificationTargetConfig singleUserConfig = new SingleUserNotificationTargetConfig();
-        singleUserConfig.setUserId(customerUserId.getId());
-        notificationTarget.setConfiguration(singleUserConfig);
 
         saveAndGetError(notificationTarget, status().isForbidden());
 

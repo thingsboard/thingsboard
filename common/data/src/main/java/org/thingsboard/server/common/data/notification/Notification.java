@@ -35,7 +35,8 @@ public class Notification extends BaseData<NotificationId> {
     private NotificationRequestId requestId;
     private UserId recipientId;
 
-    private String type; // todo: maybe to enum
+    private NotificationType type;
+    private String subject;
     private String text;
     private NotificationInfo info;
 

@@ -48,4 +48,6 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     Page<NotificationEntity> findByRequestId(UUID requestId, Pageable pageable);
 
+    int deleteByIdAndRecipientId(UUID id, UUID recipientId);
+
 }

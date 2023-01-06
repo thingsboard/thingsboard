@@ -19,11 +19,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationId;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -71,6 +69,11 @@ public class DefaultNotificationService implements NotificationService {
     @Override
     public int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId) {
         return notificationDao.countUnreadByUserId(tenantId, userId);
+    }
+
+    @Override
+    public boolean deleteNotification(TenantId tenantId, UserId userId, NotificationId notificationId) {
+        return notificationDao.deleteByIdAndUserId(tenantId, userId, notificationId);
     }
 
 }

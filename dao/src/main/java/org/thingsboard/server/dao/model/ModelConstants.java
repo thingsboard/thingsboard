@@ -657,6 +657,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
     public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
     public static final String NOTIFICATION_TYPE_PROPERTY = "type";
+    public static final String NOTIFICATION_SUBJECT_PROPERTY = "subject";
     public static final String NOTIFICATION_TEXT_PROPERTY = "text";
     public static final String NOTIFICATION_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String NOTIFICATION_STATUS_PROPERTY = "status";
@@ -681,6 +682,7 @@ public class ModelConstants {
 
     public static final String NOTIFICATION_TEMPLATE_TABLE_NAME = "notification_template";
     public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
+    public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_SUBJECT_PROPERTY = "notification_subject";
     public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};

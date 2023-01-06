@@ -79,6 +79,7 @@ public class NotificationTemplateController extends BaseController {
     @PostMapping("/template")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTemplate saveNotificationTemplate(@RequestBody @Valid NotificationTemplate notificationTemplate) throws Exception {
+        notificationTemplate.setTenantId(getTenantId());
         checkEntity(notificationTemplate.getId(), notificationTemplate, Resource.NOTIFICATION_TEMPLATE);
         return doSaveAndLog(EntityType.NOTIFICATION_TEMPLATE, notificationTemplate, notificationTemplateService::saveNotificationTemplate);
     }

@@ -30,7 +30,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -327,7 +327,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private NotificationManager notificationManager;
+    private NotificationCenter notificationCenter;
 
     @Autowired
     @Getter

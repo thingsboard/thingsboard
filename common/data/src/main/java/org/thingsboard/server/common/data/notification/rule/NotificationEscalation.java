@@ -16,16 +16,20 @@
 package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 
-import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-public class NotificationEscalationConfig {
+public class NotificationEscalation {
 
-    @NotNull
-    @Valid
-    private List<NonConfirmedNotificationEscalation> escalations;
+    @Max(NotificationRequestConfig.MAX_SENDING_DELAY)
+    private int delayInSec;
+    @NotEmpty
+    private List<NotificationTargetId> notificationTargets;
 
 }

@@ -21,12 +21,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -56,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("UnstableApiUsage")
 public class DefaultNotificationSchedulerService extends AbstractPartitionBasedService<NotificationRequestId> implements NotificationSchedulerService {
 
-    private final NotificationManager notificationManager;
+    private final NotificationCenter notificationCenter;
     private final NotificationRequestService notificationRequestService;
     private final SchedulerComponent scheduler;
     private final NotificationExecutorService notificationExecutor;
@@ -107,7 +109,16 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
             if (notificationRequest == null) return;
 
             notificationExecutor.executeAsync(() -> {
-                notificationManager.processNotificationRequest(tenantId, notificationRequest);
+                try {
+                    notificationCenter.processNotificationRequest(tenantId, notificationRequest);
+                } catch (Exception e) {
+                    log.error("Failed to process scheduled notification request {}", notificationRequest.getId(), e);
+                    UserId senderId = notificationRequest.getSenderId();
+                    if (senderId != null) {
+                        notificationCenter.sendBasicNotification(tenantId, senderId, NotificationType.FAILURE, "Notification failure",
+                                "Failed to process scheduled notification (request " + notificationRequest.getId() + "): " + e.getMessage());
+                    }
+                }
             });
             scheduledNotificationRequests.remove(notificationRequest.getId());
         }, delayInMs, TimeUnit.MILLISECONDS);

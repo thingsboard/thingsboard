@@ -18,11 +18,13 @@ package org.thingsboard.server.common.data.notification.settings;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
+import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 @Data
 public class NotificationSettings {
 
+    @NotNull
     // location on the screen, shown notifications count, timings of displaying
     private Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> deliveryMethodsConfigs;
 

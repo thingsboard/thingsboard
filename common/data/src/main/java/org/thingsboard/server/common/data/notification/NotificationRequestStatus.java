@@ -16,6 +16,6 @@
 package org.thingsboard.server.common.data.notification;
 
 public enum NotificationRequestStatus {
-    PROCESSED,
+    SENT,
     SCHEDULED
 }

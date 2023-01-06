@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.notification.NotificationOriginatorTyp
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.rule.NonConfirmedNotificationEscalation;
+import org.thingsboard.server.common.data.notification.rule.NotificationEscalation;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -58,7 +58,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     private final NotificationRuleService notificationRuleService;
     private final NotificationRequestService notificationRequestService;
     @Autowired @Lazy
-    private NotificationManager notificationManager;
+    private NotificationCenter notificationCenter;
     private final NotificationExecutorService notificationExecutor;
 
     @Override
@@ -72,9 +72,15 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     }
 
     private ListenableFuture<Void> processAlarmUpdate(TenantId tenantId, Alarm alarm, boolean deleted) {
-        if (alarm.getNotificationRuleId() == null) return Futures.immediateFuture(null);
+        NotificationRuleId ruleId = alarm.getNotificationRuleId();
+        if (ruleId == null) return Futures.immediateFuture(null);
         return notificationExecutor.submit(() -> {
-            onAlarmUpdate(tenantId, alarm.getNotificationRuleId(), alarm, deleted);
+            try {
+                onAlarmUpdate(tenantId, ruleId, alarm, deleted);
+            } catch (Exception e) {
+                log.error("Failed to process notification rule {} for alarm {}", ruleId, alarm.getId(), e);
+                throw e;
+            }
             return null;
         });
     }
@@ -91,20 +97,16 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             }
             for (NotificationRequest notificationRequest : notificationRequests) {
                 if (notificationRequest.getStatus() == NotificationRequestStatus.SCHEDULED) {
-                    notificationManager.deleteNotificationRequest(tenantId, notificationRequest.getId());
+                    notificationCenter.deleteNotificationRequest(tenantId, notificationRequest.getId());
                 }
             }
         }
 
         if (notificationRequests.isEmpty()) {
             NotificationRuleConfig config = notificationRule.getConfiguration();
-            NotificationTargetId initialNotificationTargetId = config.getInitialNotificationTargetId();
-            if (initialNotificationTargetId != null) {
-                submitNotificationRequest(tenantId, initialNotificationTargetId, notificationRule, alarm, 0);
-            }
-            if (config.getEscalationConfig() != null) {
-                for (NonConfirmedNotificationEscalation escalation : config.getEscalationConfig().getEscalations()) {
-                    submitNotificationRequest(tenantId, escalation.getNotificationTargetId(), notificationRule, alarm, escalation.getDelayInSec());
+            for (NotificationEscalation escalation : config.getEscalations()) {
+                for (NotificationTargetId targetId : escalation.getNotificationTargets()) {
+                    submitNotificationRequest(tenantId, targetId, notificationRule, alarm, escalation.getDelayInSec());
                 }
             }
         } else {
@@ -113,7 +115,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 NotificationInfo previousNotificationInfo = notificationRequest.getInfo();
                 if (!previousNotificationInfo.equals(newNotificationInfo)) {
                     notificationRequest.setInfo(newNotificationInfo);
-                    notificationManager.updateNotificationRequest(tenantId, notificationRequest);
+                    notificationCenter.updateNotificationRequest(tenantId, notificationRequest);
                 }
             }
         }
@@ -129,12 +131,6 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             config.setSendingDelayInSec(delayInSec);
         }
         NotificationInfo notificationInfo = constructNotificationInfo(alarm);
-        Map<String, String> templateContext = Map.of(
-                "alarmType", alarm.getType(),
-                "alarmId", alarm.getId().toString(),
-                "alarmOriginatorEntityType", alarm.getOriginator().getEntityType().toString(),
-                "alarmOriginatorId", alarm.getOriginator().getId().toString()
-        );
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .targets(List.of(targetId))
@@ -145,10 +141,8 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .ruleId(notificationRule.getId())
                 .originatorType(NotificationOriginatorType.ALARM)
                 .originatorEntityId(alarm.getId())
-                .originatorEntity(alarm)
-                .templateContext(templateContext)
                 .build();
-        notificationManager.processNotificationRequest(tenantId, notificationRequest);
+        notificationCenter.processNotificationRequest(tenantId, notificationRequest);
     }
 
     private NotificationInfo constructNotificationInfo(Alarm alarm) {
@@ -159,6 +153,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .alarmOriginator(alarm.getOriginator())
                 .alarmSeverity(alarm.getSeverity())
                 .alarmStatus(alarm.getStatus())
+                .customerId(alarm.getCustomerId())
                 .build();
     }
 
@@ -173,7 +168,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         NotificationRuleId notificationRuleId = (NotificationRuleId) componentLifecycleMsg.getEntityId();
         List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
         for (NotificationRequestId notificationRequestId : scheduledForRule) {
-            notificationManager.deleteNotificationRequest(tenantId, notificationRequestId);
+            notificationCenter.deleteNotificationRequest(tenantId, notificationRequestId);
         }
     }
 

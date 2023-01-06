@@ -43,9 +43,7 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         notificationRequestValidator.validate(notificationRequest, NotificationRequest::getTenantId);
-        NotificationRequest savedNotificationRequest = notificationRequestDao.save(tenantId, notificationRequest);
-        savedNotificationRequest.copyContext(notificationRequest);
-        return savedNotificationRequest;
+        return notificationRequestDao.save(tenantId, notificationRequest);
     }
 
     @Override

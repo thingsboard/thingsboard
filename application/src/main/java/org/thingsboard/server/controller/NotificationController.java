@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
@@ -60,7 +60,7 @@ public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
     private final NotificationRequestService notificationRequestService;
-    private final NotificationManager notificationManager;
+    private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
 
     @GetMapping("/notifications")
@@ -76,15 +76,21 @@ public class NotificationController extends BaseController {
         return notificationService.findNotificationsByUserIdAndReadStatus(user.getTenantId(), user.getId(), unreadOnly, pageLink);
     }
 
-    @PutMapping("/notification/{id}/read") // or maybe to NotificationUpdateRequest for the future
+    @PutMapping("/notification/{id}/read")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public void markNotificationAsRead(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) {
         NotificationId notificationId = new NotificationId(id);
-        notificationManager.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
+        notificationCenter.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
     }
 
-    // delete notification?
+    @DeleteMapping("/notification/{id}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public void deleteNotification(@PathVariable UUID id,
+                                   @AuthenticationPrincipal SecurityUser user) {
+        NotificationId notificationId = new NotificationId(id);
+        notificationCenter.deleteNotification(user.getTenantId(), user.getId(), notificationId);
+    }
 
     @PostMapping("/notification/request")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -93,11 +99,11 @@ public class NotificationController extends BaseController {
         if (notificationRequest.getId() != null) {
             throw new IllegalArgumentException("Notification request cannot be updated. You may only cancel/delete it");
         }
+        notificationRequest.setTenantId(user.getTenantId());
         checkEntity(notificationRequest.getId(), notificationRequest, Resource.NOTIFICATION_REQUEST);
 
         notificationRequest.setOriginatorType(NotificationOriginatorType.ADMIN);
         notificationRequest.setOriginatorEntityId(user.getId());
-        notificationRequest.setOriginatorEntity(user);
         if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != null) {
             throw new IllegalArgumentException("Unsupported notification info type");
         }
@@ -105,7 +111,7 @@ public class NotificationController extends BaseController {
         notificationRequest.setStatus(null);
         notificationRequest.setStats(null);
 
-        return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationManager::processNotificationRequest);
+        return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationCenter::processNotificationRequest);
     }
 
     @GetMapping("/notification/request/{id}")
@@ -132,13 +138,13 @@ public class NotificationController extends BaseController {
     public void deleteNotificationRequest(@PathVariable UUID id) throws Exception {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
         NotificationRequest notificationRequest = checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestById, Operation.DELETE);
-        doDeleteAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationManager::deleteNotificationRequest);
+        doDeleteAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationCenter::deleteNotificationRequest);
     }
 
 
     @PostMapping("/notification/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationSettings saveNotificationSettings(@RequestBody NotificationSettings notificationSettings,
+    public NotificationSettings saveNotificationSettings(@RequestBody @Valid NotificationSettings notificationSettings,
                                                          @AuthenticationPrincipal SecurityUser user) {
         TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
         notificationSettingsService.saveNotificationSettings(tenantId, notificationSettings);

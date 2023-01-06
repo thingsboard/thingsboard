@@ -68,7 +68,7 @@ public class DefaultSlackService implements SlackService {
     @Override
     public List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversation.Type conversationType) {
         return cache.get(conversationType + ":" + token, k -> {
-            if (conversationType == SlackConversation.Type.USER) {
+            if (conversationType == SlackConversation.Type.DIRECT) {
                 UsersListRequest request = UsersListRequest.builder()
                         .limit(CONVERSATIONS_LIMIT)
                         .build();

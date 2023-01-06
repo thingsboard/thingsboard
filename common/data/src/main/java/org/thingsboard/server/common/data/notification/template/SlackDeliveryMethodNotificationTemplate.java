@@ -18,6 +18,8 @@ package org.thingsboard.server.common.data.notification.template;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.Map;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {

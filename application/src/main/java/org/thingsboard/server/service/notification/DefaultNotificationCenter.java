@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
-import org.thingsboard.rule.engine.api.NotificationManager;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
@@ -33,12 +33,16 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -66,13 +70,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @SuppressWarnings("UnstableApiUsage")
-public class DefaultNotificationManager extends AbstractSubscriptionService implements NotificationManager, NotificationChannel {
+public class DefaultNotificationCenter extends AbstractSubscriptionService implements NotificationCenter, NotificationChannel {
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationRequestService notificationRequestService;
@@ -90,9 +95,21 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         log.debug("Processing notification request (tenant id: {}, notification targets: {})", tenantId, notificationRequest.getTargets());
         notificationRequest.setTenantId(tenantId);
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
+
         notificationRequest.getDeliveryMethods().forEach(deliveryMethod -> {
-            if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) || !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
-                throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is not enabled or configured");
+            if (settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) &&
+                    !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
+                throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is disabled");
+            }
+            if (deliveryMethod == NotificationDeliveryMethod.SLACK) {
+                if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod)) {
+                    throw new IllegalArgumentException("Slack must be configured in the settings");
+                }
+                if (!notificationTemplate.getConfiguration().getTemplates().containsKey(deliveryMethod)) {
+                    throw new IllegalArgumentException("To send notification via Slack, " +
+                            "you need to configure corresponding template");
+                }
             }
         });
 
@@ -106,21 +123,22 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
             }
         }
 
-        notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
+        notificationRequest.setStatus(NotificationRequestStatus.SENT);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
         NotificationProcessingContext ctx = NotificationProcessingContext.builder()
                 .tenantId(tenantId)
                 .request(savedNotificationRequest)
                 .settings(settings)
+                .template(notificationTemplate)
                 .build();
-        ctx.init(notificationTemplateService);
+        ctx.init();
 
+        List<ListenableFuture<Void>> results = new ArrayList<>();
         for (NotificationTargetId targetId : notificationRequest.getTargets()) {
             DaoUtil.processBatches(pageLink -> {
-                return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getOriginatorCustomerId(), targetId, pageLink);
+                return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), targetId, pageLink);
             }, 200, recipientsBatch -> {
-                List<ListenableFuture<Void>> results = new ArrayList<>();
                 for (NotificationDeliveryMethod deliveryMethod : savedNotificationRequest.getDeliveryMethods()) {
                     NotificationChannel notificationChannel = channels.get(deliveryMethod);
                     log.debug("Sending {} notifications for request {} to recipients batch", deliveryMethod, savedNotificationRequest.getId());
@@ -136,16 +154,30 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                         results.add(resultFuture);
                     }
                 }
-
-                Futures.allAsList(results).addListener(() -> {
-                    try {
-                        notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), ctx.getStats());
-                    } catch (Exception e) {
-                        log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
-                    }
-                }, dbCallbackExecutorService);
             });
         }
+
+        Futures.whenAllComplete(results).run(() -> {
+            NotificationRequestStats stats = ctx.getStats();
+            try {
+                notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), stats);
+            } catch (Exception e) {
+                log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
+            }
+
+            UserId senderId = notificationRequest.getSenderId();
+            if (senderId != null) {
+                if (stats.getErrors().isEmpty()) {
+                    int sent = stats.getSent().values().stream().mapToInt(Set::size).sum();
+                    sendBasicNotification(tenantId, senderId, NotificationType.COMPLETED, "Notifications sent",
+                            "All notifications were successfully sent (" + sent + ")");
+                } else {
+                    int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
+                    sendBasicNotification(tenantId, senderId, NotificationType.FAILURE, "Notification failure",
+                            "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to request' button
+                }
+            }
+        }, dbCallbackExecutorService);
 
         return savedNotificationRequest;
     }
@@ -186,6 +218,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
                 .type(ctx.getNotificationTemplate().getNotificationType())
+                .subject(ctx.getNotificationTemplate().getNotificationSubject())
                 .text(text)
                 .info(request.getInfo())
                 .originatorType(request.getOriginatorType())
@@ -197,7 +230,31 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
             log.error("Failed to create notification for recipient {}", recipient.getId(), e);
             return Futures.immediateFailedFuture(e);
         }
-        return onNotificationUpdate(recipient.getTenantId(), recipient.getId(), notification, true);
+
+        NotificationUpdate update = NotificationUpdate.builder()
+                .notification(notification)
+                .updateType(ComponentLifecycleEvent.CREATED)
+                .build();
+        return onNotificationUpdate(recipient.getTenantId(), recipient.getId(), update);
+    }
+
+    @Override
+    public void sendBasicNotification(TenantId tenantId, UserId recipientId, NotificationType type, String subject, String text) {
+        Notification notification = Notification.builder()
+                .recipientId(recipientId)
+                .type(type)
+                .subject(subject)
+                .text(text)
+                .originatorType(NotificationOriginatorType.SYSTEM)
+                .status(NotificationStatus.SENT)
+                .build();
+        notification = notificationService.saveNotification(TenantId.SYS_TENANT_ID, notification);
+
+        NotificationUpdate update = NotificationUpdate.builder()
+                .notification(notification)
+                .updateType(ComponentLifecycleEvent.CREATED)
+                .build();
+        onNotificationUpdate(tenantId, recipientId, update);
     }
 
     @Override
@@ -205,8 +262,25 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         boolean updated = notificationService.markNotificationAsRead(tenantId, recipientId, notificationId);
         if (updated) {
             log.debug("Marking notification {} as read (recipient id: {}, tenant id: {})", notificationId, recipientId, tenantId);
-            Notification notification = notificationService.findNotificationById(tenantId, notificationId);
-            onNotificationUpdate(tenantId, recipientId, notification, false);
+            NotificationUpdate update = NotificationUpdate.builder()
+                    .notificationId(notificationId)
+                    .updatedStatus(NotificationStatus.READ)
+                    .updateType(ComponentLifecycleEvent.UPDATED)
+                    .build();
+            onNotificationUpdate(tenantId, recipientId, update);
+        }
+    }
+
+    @Override
+    public void deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
+        Notification notification = notificationService.findNotificationById(tenantId, notificationId);
+        boolean deleted = notificationService.deleteNotification(tenantId, recipientId, notificationId);
+        if (deleted) {
+            NotificationUpdate update = NotificationUpdate.builder()
+                    .notification(notification)
+                    .updateType(ComponentLifecycleEvent.DELETED)
+                    .build();
+            onNotificationUpdate(tenantId, recipientId, update);
         }
     }
 
@@ -233,11 +307,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
         return notificationRequest;
     }
 
-    private ListenableFuture<Void> onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew) {
-        NotificationUpdate update = NotificationUpdate.builder()
-                .notification(notification)
-                .isNew(isNew)
-                .build();
+    private ListenableFuture<Void> onNotificationUpdate(TenantId tenantId, UserId recipientId, NotificationUpdate update) {
         log.trace("Submitting notification update for recipient {}: {}", recipientId, update);
         return Futures.submit(() -> {
             forwardToSubscriptionManagerService(tenantId, recipientId, subscriptionManagerService -> {
@@ -270,7 +340,7 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     }
 
     @Autowired
-    public void setChannels(List<NotificationChannel> channels, NotificationManager websocketNotificationChannel) {
+    public void setChannels(List<NotificationChannel> channels, NotificationCenter websocketNotificationChannel) {
         this.channels = channels.stream().collect(Collectors.toMap(NotificationChannel::getDeliveryMethod, c -> c));
         this.channels.put(NotificationDeliveryMethod.WEBSOCKET, (NotificationChannel) websocketNotificationChannel);
     }

@@ -55,6 +55,7 @@ public class NotificationRuleController extends BaseController {
     @PostMapping("/rule")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule) throws Exception {
+        notificationRule.setTenantId(getTenantId());
         checkEntity(notificationRule.getId(), notificationRule, Resource.NOTIFICATION_RULE);
         return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
     }

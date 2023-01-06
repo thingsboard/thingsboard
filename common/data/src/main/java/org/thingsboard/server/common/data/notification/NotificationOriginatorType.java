@@ -18,5 +18,6 @@ package org.thingsboard.server.common.data.notification;
 public enum NotificationOriginatorType {
     ADMIN,
     ALARM,
-    RULE_NODE
+    RULE_NODE,
+    SYSTEM
 }

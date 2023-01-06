@@ -20,12 +20,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
-import java.util.Map;
+import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -55,13 +53,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), NotificationSettings.class))
                 .orElseGet(() -> {
                     NotificationSettings settings = new NotificationSettings();
-                    NotificationDeliveryMethodConfig defaultConfig = new NotificationDeliveryMethodConfig();
-                    defaultConfig.setEnabled(true);
-                    settings.setDeliveryMethodsConfigs(Map.of(
-                            NotificationDeliveryMethod.WEBSOCKET, defaultConfig,
-                            NotificationDeliveryMethod.EMAIL, defaultConfig,
-                            NotificationDeliveryMethod.SMS, defaultConfig
-                    ));
+                    settings.setDeliveryMethodsConfigs(Collections.emptyMap());
                     return settings;
                 });
     }

@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
-import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -73,11 +72,6 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     @Override
     public PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, CustomerId customerId, NotificationTargetConfig targetConfig, PageLink pageLink) {
         switch (targetConfig.getType()) {
-            case SINGLE_USER: {
-                UserId userId = new UserId(((SingleUserNotificationTargetConfig) targetConfig).getUserId());
-                User user = userService.findUserById(tenantId, userId);
-                return new PageData<>(List.of(user), 1, 1, false);
-            }
             case USER_LIST: {
                 List<User> users = ((UserListNotificationTargetConfig) targetConfig).getUsersIds().stream()
                         .map(UserId::new).map(userId -> userService.findUserById(tenantId, userId))

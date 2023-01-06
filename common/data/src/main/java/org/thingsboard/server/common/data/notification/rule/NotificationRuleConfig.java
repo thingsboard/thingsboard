@@ -16,17 +16,17 @@
 package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 public class NotificationRuleConfig {
 
-    @NotNull
-    private NotificationTargetId initialNotificationTargetId;
+    @NotEmpty
     @Valid
-    private NotificationEscalationConfig escalationConfig;
+    private List<NotificationEscalation> escalations;
 
 }

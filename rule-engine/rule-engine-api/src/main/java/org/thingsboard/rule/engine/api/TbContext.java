@@ -280,7 +280,7 @@ public interface TbContext {
 
     SmsSenderFactory getSmsSenderFactory();
 
-    NotificationManager getNotificationManager();
+    NotificationCenter getNotificationCenter();
 
     SlackService getSlackService();
 

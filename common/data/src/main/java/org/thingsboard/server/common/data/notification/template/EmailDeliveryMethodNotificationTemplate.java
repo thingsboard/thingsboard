@@ -24,7 +24,6 @@ import javax.validation.constraints.NotBlank;
 @EqualsAndHashCode(callSuper = true)
 public class EmailDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
 
-    @NotBlank
     private String subject;
 
 }

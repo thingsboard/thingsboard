@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
+import javax.validation.constraints.NotNull;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method", include = JsonTypeInfo.As.EXISTING_PROPERTY,
         visible = true, defaultImpl = NotificationDeliveryMethodConfig.class)
@@ -32,6 +34,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 public class NotificationDeliveryMethodConfig {
 
     private boolean enabled;
+    @NotNull
     private NotificationDeliveryMethod method;
 
 }

@@ -19,11 +19,12 @@ import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
@@ -31,7 +32,6 @@ import org.thingsboard.server.common.data.notification.settings.NotificationSett
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
-import org.thingsboard.server.dao.notification.NotificationTemplateService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,38 +41,35 @@ public class NotificationProcessingContext {
 
     @Getter
     private final TenantId tenantId;
-    private final HasCustomerId originatorEntity;
     private final NotificationSettings settings;
     @Getter
     private final NotificationRequest request;
-    private final Map<String, String> additionalTemplateContext;
 
     @Getter
-    private NotificationTemplate notificationTemplate;
+    private final NotificationTemplate notificationTemplate;
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
     @Getter
     private final NotificationRequestStats stats;
 
     @Builder
-    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationSettings settings) {
+    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationSettings settings,
+                                         NotificationTemplate template) {
         this.tenantId = tenantId;
-        this.originatorEntity = request.getOriginatorEntity();
         this.request = request;
         this.settings = settings;
-        this.additionalTemplateContext = request.getTemplateContext();
+        this.notificationTemplate = template;
         this.stats = new NotificationRequestStats();
     }
 
-    public void init(NotificationTemplateService templateService) {
-        notificationTemplate = templateService.findNotificationTemplateById(tenantId, request.getTemplateId());
-        NotificationTemplateConfig config = notificationTemplate.getConfiguration();
+    public void init() {
+        NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
+        templates = templateConfig.getTemplates();
         for (NotificationDeliveryMethod deliveryMethod : request.getDeliveryMethods()) {
-            DeliveryMethodNotificationTemplate template = config.getTemplates().get(deliveryMethod);
+            DeliveryMethodNotificationTemplate template = templates.get(deliveryMethod);
             if (StringUtils.isEmpty(template.getBody())) {
-                template.setBody(config.getDefaultTextTemplate());
+                template.setBody(templateConfig.getDefaultTextTemplate());
             }
         }
-        templates = config.getTemplates();
     }
 
     public <T extends DeliveryMethodNotificationTemplate> T getTemplate(NotificationDeliveryMethod deliveryMethod) {
@@ -88,14 +85,20 @@ public class NotificationProcessingContext {
         templateContext.put("email", recipient.getEmail());
         templateContext.put("firstName", Strings.nullToEmpty(recipient.getFirstName()));
         templateContext.put("lastName", Strings.nullToEmpty(recipient.getLastName()));
-        if (additionalTemplateContext != null) {
-            templateContext.putAll(additionalTemplateContext);
+        if (request.getInfo() != null) {
+            templateContext.putAll(request.getInfo().getTemplateData());
         }
         return templateContext;
     }
 
-    public CustomerId getOriginatorCustomerId() {
-        return originatorEntity != null ? originatorEntity.getCustomerId() : null;
+    public CustomerId getCustomerId() {
+        CustomerId customerId;
+        if (request.getOriginatorType() == NotificationOriginatorType.ALARM) {
+            customerId = ((AlarmOriginatedNotificationInfo) request.getInfo()).getCustomerId();
+        } else {
+            customerId = null;
+        }
+        return customerId;
     }
 
 }

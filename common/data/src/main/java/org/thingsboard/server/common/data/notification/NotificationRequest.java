@@ -23,7 +23,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,12 +31,12 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -67,20 +66,16 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationRequestStatus status;
 
     private NotificationRequestStats stats;
-    @JsonIgnore
-    private transient Map<String, String> templateContext;
-    @JsonIgnore
-    private transient HasCustomerId originatorEntity;
-
-    public void copyContext(NotificationRequest other) {
-        this.templateContext = other.getTemplateContext();
-        this.originatorEntity = other.getOriginatorEntity();
-    }
 
     @JsonIgnore
     @Override
     public String getName() {
         return "To targets " + targets + " via " + StringUtils.join(deliveryMethods, ", ");
+    }
+
+    @JsonIgnore
+    public UserId getSenderId() {
+        return originatorType == NotificationOriginatorType.ADMIN ? (UserId) originatorEntityId : null;
     }
 
 }

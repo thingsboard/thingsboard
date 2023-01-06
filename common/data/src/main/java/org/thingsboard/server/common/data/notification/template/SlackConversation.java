@@ -24,7 +24,7 @@ public class SlackConversation {
     private String name;
 
     public enum Type {
-        USER,
+        DIRECT,
         PUBLIC_CHANNEL,
         PRIVATE_CHANNEL
     }

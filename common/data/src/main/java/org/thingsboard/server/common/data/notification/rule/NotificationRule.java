@@ -36,7 +36,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName {
 
-    @NotNull
     private TenantId tenantId;
     @NotBlank
     private String name;
@@ -46,6 +45,6 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     private List<NotificationDeliveryMethod> deliveryMethods;
     @NotNull
     @Valid
-    private NotificationRuleConfig configuration;
+    private NotificationRuleConfig configuration; // todo: add pg_tgrm index (but index is 2.5x size of the column)
 
 }

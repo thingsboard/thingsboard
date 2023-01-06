@@ -20,12 +20,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
@@ -56,7 +56,7 @@ public class SlackNotificationChannel implements NotificationChannel {
             if (StringUtils.isNoneEmpty(recipient.getFirstName(), recipient.getLastName())) {
                 String username = StringUtils.join(new String[]{recipient.getFirstName(), recipient.getLastName()}, ' ');
                 return executor.submit(() -> {
-                    SlackConversation conversation = slackService.findConversation(recipient.getTenantId(), config.getBotToken(), SlackConversation.Type.USER, username);
+                    SlackConversation conversation = slackService.findConversation(recipient.getTenantId(), config.getBotToken(), SlackConversation.Type.DIRECT, username);
                     if (conversation == null) {
                         throw new IllegalArgumentException("Slack user not found for given name '" + username + "'");
                     }
