@@ -34,8 +34,12 @@ public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
         super();
     }
 
-    public AlarmInfoEntity(AlarmEntity alarmEntity) {
+    public AlarmInfoEntity(AlarmEntity alarmEntity, String assigneeFirstName,
+                           String assigneeLastName, String assigneeEmail) {
         super(alarmEntity);
+        this.assigneeFirstName = assigneeFirstName;
+        this.assigneeLastName = assigneeLastName;
+        this.assigneeEmail = assigneeEmail;
     }
 
     @Override

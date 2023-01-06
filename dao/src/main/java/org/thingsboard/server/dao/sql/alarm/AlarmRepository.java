@@ -39,8 +39,10 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
+            "FROM AlarmEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
+            "LEFT JOIN UserEntity tbu ON ea.assigneeId = tbu.id " +
             "WHERE a.tenantId = :tenantId " +
             "AND ea.tenantId = :tenantId " +
             "AND ea.entityId = :affectedEntityId " +
@@ -78,7 +80,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
+            "FROM AlarmEntity a " +
+            "LEFT JOIN UserEntity tbu ON a.assigneeId = tbu.id " +
             "WHERE a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
@@ -106,7 +110,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                         @Param("searchText") String searchText,
                                         Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
+            "FROM AlarmEntity a " +
+            "LEFT JOIN UserEntity tbu ON a.assigneeId = tbu.id " +
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +

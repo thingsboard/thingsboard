@@ -27,8 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -360,6 +360,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         for (AlarmInfo alarmInfo : alarms.getData()) {
             alarmInfo.setOriginatorName(
                     entityService.fetchEntityName(tenantId, alarmInfo.getOriginator()).orElse("Deleted"));
+            alarmInfo.setOriginatorLabel(
+                    entityService.fetchEntityLabel(tenantId, alarmInfo.getOriginator()).orElse(null));
             alarmFutures.add(Futures.immediateFuture(alarmInfo));
         }
         return Futures.transform(Futures.successfulAsList(alarmFutures),
@@ -435,7 +437,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private void createEntityAlarmRecord(TenantId tenantId, EntityId entityId, Alarm alarm) {
-        // TODO Add ability to automatically assign created alarm to some user
         EntityAlarm entityAlarm = new EntityAlarm(tenantId, entityId, alarm.getCreatedTime(), alarm.getType(), alarm.getCustomerId(), null, alarm.getId());
         try {
             alarmDao.createEntityAlarmRecord(entityAlarm);
