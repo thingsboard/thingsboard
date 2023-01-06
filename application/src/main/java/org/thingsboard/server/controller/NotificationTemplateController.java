@@ -69,7 +69,7 @@ public class NotificationTemplateController extends BaseController {
                     "  \"configuration\": {\n" +
                     "    \"defaultTextTemplate\": \"Hello everyone\",  # required if any of the templates' bodies is not set\n" +
                     "    \"templates\": {\n" +
-                    "      \"WEBSOCKET\": {\n        \"method\": \"WEBSOCKET\",\n        \"body\": null  # defaultTextTemplate will be used if body is not set\n      },\n" +
+                    "      \"PUSH\": {\n        \"method\": \"PUSH\",\n        \"body\": null  # defaultTextTemplate will be used if body is not set\n      },\n" +
                     "      \"SMS\": {\n        \"method\": \"SMS\",\n        \"body\": null\n      },\n" +
                     "      \"EMAIL\": {\n        \"method\": \"EMAIL\",\n        \"body\": \"Non-default value for email notification: <body>Hello everyone</body>\",\n        \"subject\": \"Message from administrator\"\n      },\n" +
                     "      \"SLACK\": {\n        \"method\": \"SLACK\",\n        \"body\": null,\n        \"conversationType\": \"PUBLIC_CHANNEL\",\n        \"conversationId\": \"U02LD7BJOU2\"  # received from listSlackConversations API method\n      }\n" +

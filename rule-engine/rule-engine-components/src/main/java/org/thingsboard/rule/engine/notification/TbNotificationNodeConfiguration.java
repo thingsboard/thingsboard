@@ -40,7 +40,7 @@ public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNoti
     @Override
     public TbNotificationNodeConfiguration defaultConfiguration() {
         TbNotificationNodeConfiguration config = new TbNotificationNodeConfiguration();
-        config.setDeliveryMethods(List.of(NotificationDeliveryMethod.WEBSOCKET));
+        config.setDeliveryMethods(List.of(NotificationDeliveryMethod.PUSH));
         config.setAdditionalConfig(new NotificationRequestConfig());
         return config;
     }

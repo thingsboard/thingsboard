@@ -80,7 +80,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationRuleProcessing() throws Exception {
-        NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.WEBSOCKET, NotificationDeliveryMethod.EMAIL};
+        NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL};
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, "New alarm", "NEW ALARM ${alarmType}", deliveryMethods);
 
         NotificationRule notificationRule = new NotificationRule();

@@ -32,7 +32,6 @@ import org.thingsboard.server.service.notification.NotificationProcessingContext
 
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("UnstableApiUsage")
 public class SlackNotificationChannel implements NotificationChannel {
 
     private final SlackService slackService;

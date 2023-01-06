@@ -70,7 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -331,7 +330,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     @Override
     public NotificationDeliveryMethod getDeliveryMethod() {
-        return NotificationDeliveryMethod.WEBSOCKET;
+        return NotificationDeliveryMethod.PUSH;
     }
 
     @Override
@@ -342,7 +341,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Autowired
     public void setChannels(List<NotificationChannel> channels, NotificationCenter websocketNotificationChannel) {
         this.channels = channels.stream().collect(Collectors.toMap(NotificationChannel::getDeliveryMethod, c -> c));
-        this.channels.put(NotificationDeliveryMethod.WEBSOCKET, (NotificationChannel) websocketNotificationChannel);
+        this.channels.put(NotificationDeliveryMethod.PUSH, (NotificationChannel) websocketNotificationChannel);
     }
 
 }

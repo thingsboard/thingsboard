@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
@@ -278,7 +277,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         sessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
         NotificationRequest notificationRequest = submitNotificationRequest(targets, "Hello, ${email}", 0,
-                NotificationDeliveryMethod.WEBSOCKET, NotificationDeliveryMethod.EMAIL);
+                NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL);
         await().atMost(20, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> {
@@ -304,7 +303,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
         NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEBSOCKET))
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH))
                 .containsAll(sessions.keySet().stream().map(User::getEmail).collect(Collectors.toSet()));
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL))
                 .containsAll(sessions.keySet().stream().map(User::getEmail).collect(Collectors.toSet()));
@@ -329,14 +328,14 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         wsClient.registerWaitForUpdate();
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
         NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)",
-                NotificationDeliveryMethod.WEBSOCKET, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS);
+                NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS);
         wsClient.waitForUpdate();
 
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
         NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
 
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEBSOCKET)).containsOnly(CUSTOMER_USER_EMAIL);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).containsOnly(CUSTOMER_USER_EMAIL);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).containsOnly(CUSTOMER_USER_EMAIL);
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
     }
