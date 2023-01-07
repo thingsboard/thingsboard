@@ -71,7 +71,7 @@ export class ResetPasswordComponent extends PageComponent implements OnInit, OnD
     } else {
       this.authService.resetPassword(
         this.resetToken,
-        this.resetPassword.get('newPassword').value).subscribe();
+        this.resetPassword.get('newPassword').value);
     }
   }
 }

@@ -156,12 +156,10 @@ export class AuthService {
       ));
   }
 
-  public resetPassword(resetToken: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/noauth/resetPassword', {resetToken, password}, defaultHttpOptions()).pipe(
-      tap((loginResponse: LoginResponse) => {
-          this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
-        }
-      ));
+  public resetPassword(resetToken: string, password: string) {
+    this.http.post('/api/noauth/resetPassword', {resetToken, password}, defaultHttpOptions()).subscribe(
+      () => { this.router.navigateByUrl('login'); }, () => {}
+      );
   }
 
   public changePassword(currentPassword: string, newPassword: string, config?: RequestConfig) {

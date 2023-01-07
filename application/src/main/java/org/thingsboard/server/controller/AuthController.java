@@ -278,7 +278,7 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/resetPassword", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
-    public JwtPair resetPassword(
+    public void resetPassword(
             @ApiParam(value = "Reset password request.")
             @RequestBody ResetPasswordRequest resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {
@@ -305,7 +305,6 @@ public class AuthController extends BaseController {
 
                 eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
 
-                return tokenFactory.createTokenPair(securityUser);
             } else {
                 throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
