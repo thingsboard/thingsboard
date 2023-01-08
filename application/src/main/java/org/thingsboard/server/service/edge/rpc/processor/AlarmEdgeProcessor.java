@@ -51,7 +51,7 @@ import java.util.UUID;
 public class AlarmEdgeProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processAlarmFromEdge(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
-        log.trace("[{}] onAlarmUpdate [{}]", tenantId, alarmUpdateMsg);
+        log.trace("[{}] processAlarmFromEdge [{}]", tenantId, alarmUpdateMsg);
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         if (originatorId == null) {
