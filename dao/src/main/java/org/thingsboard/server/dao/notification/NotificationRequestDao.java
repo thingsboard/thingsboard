@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -32,7 +33,7 @@ import java.util.List;
 
 public interface NotificationRequestDao extends Dao<NotificationRequest> {
 
-    PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<NotificationRequest> findByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, NotificationOriginatorType originatorType, PageLink pageLink);
 
     List<NotificationRequestId> findIdsByRuleId(TenantId tenantId, NotificationRequestStatus requestStatus, NotificationRuleId ruleId);
 

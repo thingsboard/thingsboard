@@ -25,6 +25,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.dao.model.sql.NotificationRequestEntity;
 
@@ -34,7 +35,7 @@ import java.util.UUID;
 @Repository
 public interface NotificationRequestRepository extends JpaRepository<NotificationRequestEntity, UUID> {
 
-    Page<NotificationRequestEntity> findByTenantId(UUID tenantId, Pageable pageable);
+    Page<NotificationRequestEntity> findByTenantIdAndOriginatorType(UUID tenantId, NotificationOriginatorType originatorType, Pageable pageable);
 
     @Query("SELECT r.id FROM NotificationRequestEntity r WHERE r.status = :status AND r.ruleId = :ruleId")
     List<UUID> findAllIdsByStatusAndRuleId(@Param("status") NotificationRequestStatus status,

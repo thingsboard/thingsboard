@@ -207,7 +207,6 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
         Notification notification = update.getNotification();
         switch (update.getUpdateType()) {
             case CREATED: {
-                System.err.println("NotificationsCountSubscription CREATED");
                 subscription.getUnreadCounter().incrementAndGet();
                 sendUpdate(subscription.getSessionId(), subscription.createUpdate());
                 break;

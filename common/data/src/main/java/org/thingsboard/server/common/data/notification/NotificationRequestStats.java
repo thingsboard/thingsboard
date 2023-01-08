@@ -26,11 +26,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 public class NotificationRequestStats {
 
-    private final Map<NotificationDeliveryMethod, Set<String>> sent;
+    private final Map<NotificationDeliveryMethod, AtomicInteger> sent;
     private final Map<NotificationDeliveryMethod, Map<String, String>> errors;
     @JsonIgnore
     private final Map<NotificationDeliveryMethod, Set<UserId>> processedRecipients;
@@ -42,7 +43,7 @@ public class NotificationRequestStats {
     }
 
     @JsonCreator
-    public NotificationRequestStats(@JsonProperty("sent") Map<NotificationDeliveryMethod, Set<String>> sent,
+    public NotificationRequestStats(@JsonProperty("sent") Map<NotificationDeliveryMethod, AtomicInteger> sent,
                                     @JsonProperty("errors") Map<NotificationDeliveryMethod, Map<String, String>> errors) {
         this.sent = sent;
         this.errors = errors;
@@ -50,7 +51,7 @@ public class NotificationRequestStats {
     }
 
     public void reportSent(NotificationDeliveryMethod deliveryMethod, User recipient) {
-        sent.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipient.getEmail());
+        sent.computeIfAbsent(deliveryMethod, k -> new AtomicInteger()).incrementAndGet();
         processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipient.getId());
     }
 

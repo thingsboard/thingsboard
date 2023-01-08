@@ -130,7 +130,7 @@ public class NotificationController extends BaseController {
                                                                  @RequestParam(required = false) String sortOrder,
                                                                  @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationRequestService.findNotificationRequestsByTenantId(user.getTenantId(), pageLink);
+        return notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(user.getTenantId(), NotificationOriginatorType.ADMIN, pageLink);
     }
 
     @DeleteMapping("/notification/request/{id}")

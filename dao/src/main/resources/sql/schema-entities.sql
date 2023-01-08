@@ -812,7 +812,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
     tenant_id UUID NULL CONSTRAINT fk_notification_request_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
-    targets VARCHAR(5000) NOT NULL,
+    targets VARCHAR(10000) NOT NULL,
     template_id UUID NOT NULL,
     info VARCHAR(1000),
     delivery_methods VARCHAR(255),

@@ -70,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -139,10 +140,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), targetId, pageLink);
             }, 200, recipientsBatch -> {
                 for (NotificationDeliveryMethod deliveryMethod : savedNotificationRequest.getDeliveryMethods()) {
-                    NotificationChannel notificationChannel = channels.get(deliveryMethod);
-                    log.debug("Sending {} notifications for request {} to recipients batch", deliveryMethod, savedNotificationRequest.getId());
-
                     List<User> recipients = recipientsBatch.getData();
+                    log.debug("Sending {} notifications for request {} to recipients batch ({})", deliveryMethod, savedNotificationRequest.getId(), recipients.size());
+                    NotificationChannel notificationChannel = channels.get(deliveryMethod);
                     for (User recipient : recipients) {
                         ListenableFuture<Void> resultFuture = processForRecipient(notificationChannel, recipient, ctx);
                         DonAsynchron.withCallback(resultFuture, result -> {
@@ -167,7 +167,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             UserId senderId = notificationRequest.getSenderId();
             if (senderId != null) {
                 if (stats.getErrors().isEmpty()) {
-                    int sent = stats.getSent().values().stream().mapToInt(Set::size).sum();
+                    int sent = stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum();
                     sendBasicNotification(tenantId, senderId, NotificationType.COMPLETED, "Notifications sent",
                             "All notifications were successfully sent (" + sent + ")");
                 } else {

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.java_websocket.client.WebSocketClient;
@@ -30,9 +31,15 @@ import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.notification.NotificationDao;
+import org.thingsboard.server.dao.notification.NotificationRequestDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
@@ -41,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +65,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Autowired
     private NotificationCenter notificationCenter;
+    @Autowired
+    private NotificationDao notificationDao;
+    @Autowired
+    private NotificationRequestDao notificationRequestDao;
+    @Autowired
+    private DbCallbackExecutorService executor;
 
     @Before
     public void beforeEach() throws Exception {
@@ -251,7 +265,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationUpdatesForALotOfUsers() throws Exception {
-        int usersCount = 100; // FIXME: sometimes if set e.g. to 150, up to 5 WS sessions don't receive update
+        int usersCount = 200; // FIXME: sometimes if set e.g. to 150, up to 5 WS sessions don't receive update
         Map<User, NotificationApiWsClient> sessions = new HashMap<>();
         List<NotificationTargetId> targets = new ArrayList<>();
 
@@ -278,7 +292,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         sessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
         NotificationRequest notificationRequest = submitNotificationRequest(targets, "Hello, ${email}", 0,
                 NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL);
-        await().atMost(20, TimeUnit.SECONDS)
+        await().atMost(10, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> {
                     long receivedUpdate = sessions.values().stream()
@@ -303,10 +317,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
         NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH))
-                .containsAll(sessions.keySet().stream().map(User::getEmail).collect(Collectors.toSet()));
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL))
-                .containsAll(sessions.keySet().stream().map(User::getEmail).collect(Collectors.toSet()));
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(usersCount);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(usersCount);
 
         sessions.values().forEach(wsClient -> wsClient.registerWaitForUpdate(2));
         deleteNotificationRequest(notificationRequest.getId());
@@ -335,11 +347,54 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
         NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
 
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).containsOnly(CUSTOMER_USER_EMAIL);
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).containsOnly(CUSTOMER_USER_EMAIL);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(1);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(1);
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
     }
 
+    @Test
+    public void testNotificationsForALotOfUsers() throws Exception {
+        int usersCount = 7000;
+
+        List<User> users = new ArrayList<>();
+        for (int i = 1; i <= usersCount; i++) {
+            User user = new User();
+            user.setTenantId(tenantId);
+            user.setAuthority(Authority.TENANT_ADMIN);
+            user.setEmail("test-user-" + i + "@thingsboard.org");
+            user = doPost("/api/user", user, User.class);
+            System.err.println(i);
+            users.add(user);
+        }
+
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setTenantId(tenantId);
+        notificationTarget.setName("All my users");
+        AllUsersNotificationTargetConfig config = new AllUsersNotificationTargetConfig();
+        notificationTarget.setConfiguration(config);
+        notificationTarget = saveNotificationTarget(notificationTarget);
+        NotificationTargetId notificationTargetId = notificationTarget.getId();
+
+        ListenableFuture<NotificationRequest> request = executor.submit(() -> {
+            return submitNotificationRequest(notificationTargetId, "Hello, ${email}", 0, NotificationDeliveryMethod.PUSH);
+        });
+        await().atMost(10, TimeUnit.SECONDS).until(request::isDone);
+        NotificationRequest notificationRequest = request.get();
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(200, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    PageData<Notification> sentNotifications = notificationDao.findByRequestId(tenantId, notificationRequest.getId(), new PageLink(1));
+                    return sentNotifications.getTotalElements() >= usersCount;
+                });
+
+        PageData<Notification> sentNotifications = notificationDao.findByRequestId(tenantId, notificationRequest.getId(), new PageLink(Integer.MAX_VALUE));
+        assertThat(sentNotifications.getData()).extracting(Notification::getRecipientId)
+                .containsAll(users.stream().map(User::getId).collect(Collectors.toSet()));
+
+        NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
+        assertThat(stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum()).isGreaterThanOrEqualTo(usersCount);
+    }
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {
         assertThat(notificationsUpdate.getNotifications()).extracting(Notification::getText).containsOnly(expectedNotifications);
