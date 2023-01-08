@@ -15,7 +15,9 @@
  */
 package org.thingsboard.monitoring.service.impl;
 
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -31,7 +33,7 @@ import org.thingsboard.monitoring.service.TransportMonitoringService;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MqttTransportMonitoringService extends TransportMonitoringService<MqttTransportMonitoringServiceConfig> {
 
-    private MqttAsyncClient mqttClient;
+    private MqttClient mqttClient;
 
     private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
 
@@ -44,11 +46,16 @@ public class MqttTransportMonitoringService extends TransportMonitoringService<M
         if (mqttClient == null || !mqttClient.isConnected()) {
             String clientId = MqttAsyncClient.generateClientId();
             String accessToken = target.getDevice().getCredentials().getCredentialsId();
-            mqttClient = new MqttAsyncClient(target.getBaseUrl(), clientId, new MemoryPersistence());
+            mqttClient = new MqttClient(target.getBaseUrl(), clientId, new MemoryPersistence());
+            mqttClient.setTimeToWait(config.getRequestTimeoutMs());
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setUserName(accessToken);
-            mqttClient.connect(options).waitForCompletion(config.getRequestTimeoutMs());
+            options.setConnectionTimeout(config.getRequestTimeoutMs() / 1000);
+            IMqttToken result = mqttClient.connectWithResult(options);
+            if (result.getException() != null) {
+                throw result.getException();
+            }
         }
     }
 
@@ -57,7 +64,7 @@ public class MqttTransportMonitoringService extends TransportMonitoringService<M
         MqttMessage message = new MqttMessage();
         message.setPayload(payload.getBytes());
         message.setQos(config.getQos());
-        mqttClient.publish(DEVICE_TELEMETRY_TOPIC, message).waitForCompletion(config.getRequestTimeoutMs());
+        mqttClient.publish(DEVICE_TELEMETRY_TOPIC, message);
     }
 
     @Override

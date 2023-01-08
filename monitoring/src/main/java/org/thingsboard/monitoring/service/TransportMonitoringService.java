@@ -143,7 +143,7 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
         wsClient.waitForUpdate(wsConfig.getResultCheckTimeoutMs());
         Object update = wsClient.getTelemetryKeyUpdate(TEST_TELEMETRY_KEY);
         if (update == null) {
-            throw new TransportFailureException("No WS update arrived");
+            throw new TransportFailureException("No WS update arrived within " + wsConfig.getResultCheckTimeoutMs() + " ms");
         } else if (!update.toString().equals(testValue)) {
             throw new TransportFailureException("Was expecting value " + testValue + " but got " + update);
         }

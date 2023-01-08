@@ -36,6 +36,10 @@ public class Latency {
         return latencySum.get() / counter.get();
     }
 
+    public boolean isNotEmpty() {
+        return counter.get() > 0;
+    }
+
     public synchronized void reset() {
         latencySum.set(0.0);
         counter.set(0);

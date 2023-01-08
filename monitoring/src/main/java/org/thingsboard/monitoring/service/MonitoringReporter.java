@@ -73,7 +73,9 @@ public class MonitoringReporter {
                 return;
             }
             log.info("Latencies:\n{}", latencies.values());
-            if (latencies.values().stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
+            if (latencies.values().stream()
+                    .filter(Latency::isNotEmpty)
+                    .anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
                 HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies.values(), latencyThresholdMs);
                 notificationService.sendNotification(highLatencyNotification);
             }
@@ -89,9 +91,11 @@ public class MonitoringReporter {
                     tbClient.logIn();
                     ObjectNode msg = JacksonUtil.newObjectNode();
                     latencies.forEach((key, latency) -> {
-                        msg.set(key, new DoubleNode(latency.getAvg()));
+                        if (latency.isNotEmpty()) {
+                            msg.set(key, new DoubleNode(latency.getAvg()));
+                            latency.reset();
+                        }
                     });
-                    latencies.clear();
                     tbClient.saveEntityTelemetry(entityId, "time", msg);
                 } catch (Exception e) {
                     log.error("Failed to report latencies: {}", e.getMessage());

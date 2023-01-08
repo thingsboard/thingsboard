@@ -63,12 +63,6 @@ monitoring:
           device:
             id: '${HTTP_TRANSPORT_TARGET_DEVICE_ID:}'
 
-  ui:
-    enabled: '${UI_MONITORING_ENABLED:false}'
-    url: '${UI_URL:http://localhost:4200}'
-    remote_webdriver_url: '${UI_MONITORING_REMOTE_WEBDRIVER_URL:http://localhost:4444}'
-    monitoring_rate_sec: '${UI_MONITORING_RATE_SEC:300}'
-
   notification_channels:
     slack:
       enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'

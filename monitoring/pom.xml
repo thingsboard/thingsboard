@@ -21,12 +21,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.4.2-SNAPSHOT</version>
+        <version>3.4.3-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
 
     <artifactId>monitoring</artifactId>
-    <version>3.4.2-SNAPSHOT</version>
     <name>ThingsBoard Monitoring Service</name>
     <packaging>jar</packaging>
 
@@ -97,19 +96,8 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>4.6.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-            <version>5.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
