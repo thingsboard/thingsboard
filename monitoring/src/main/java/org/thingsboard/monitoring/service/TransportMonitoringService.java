@@ -81,6 +81,7 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
         monitoringExecutor.scheduleWithFixedDelay(() -> {
             WsClient wsClient = null;
             try {
+                log.trace("[{}] Checking", transportInfo);
                 wsClient = establishWsClient();
                 wsClient.registerWaitForUpdate();
 
@@ -88,13 +89,16 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
                 String testPayload = JacksonUtil.newObjectNode().set(TEST_TELEMETRY_KEY, new TextNode(testValue)).toString();
                 try {
                     initClientAndSendPayload(testPayload);
+                    log.trace("[{}] Sent test payload ({})", transportInfo, testPayload);
                 } catch (Throwable e) {
                     throw new TransportFailureException(e);
                 }
 
+                log.trace("[{}] Waiting for WS update", transportInfo);
                 checkWsUpdate(wsClient, testValue);
 
                 monitoringReporter.serviceIsOk(transportInfo);
+                monitoringReporter.serviceIsOk(MonitoredServiceKey.GENERAL);
             } catch (TransportFailureException transportFailureException) {
                 monitoringReporter.serviceFailure(transportInfo, transportFailureException);
             } catch (Exception e) {
@@ -141,6 +145,7 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
     private void checkWsUpdate(WsClient wsClient, String testValue) {
         stopWatch.start();
         wsClient.waitForUpdate(wsConfig.getResultCheckTimeoutMs());
+        log.trace("[{}] Waited for WS update. Last WS msg: {}", transportInfo, wsClient.lastMsg);
         Object update = wsClient.getTelemetryKeyUpdate(TEST_TELEMETRY_KEY);
         if (update == null) {
             throw new TransportFailureException("No WS update arrived within " + wsConfig.getResultCheckTimeoutMs() + " ms");

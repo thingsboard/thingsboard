@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Scope;
@@ -29,6 +30,7 @@ import java.time.Duration;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@Slf4j
 public class HttpTransportMonitoringService extends TransportMonitoringService<HttpTransportMonitoringServiceConfig> {
 
     private RestTemplate restTemplate;
@@ -44,6 +46,7 @@ public class HttpTransportMonitoringService extends TransportMonitoringService<H
                     .setConnectTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
                     .setReadTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
                     .build();
+            log.debug("Initialized HTTP client");
         }
     }
 

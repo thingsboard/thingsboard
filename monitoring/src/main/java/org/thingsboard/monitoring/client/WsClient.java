@@ -33,13 +33,17 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class WsClient extends WebSocketClient {
 
-    private volatile String lastMsg;
+    public volatile String lastMsg;
     private CountDownLatch reply;
     private CountDownLatch update;
+
+    private final Lock updateLock = new ReentrantLock();
 
     public WsClient(URI serverUri) {
         super(serverUri);
@@ -52,12 +56,21 @@ public class WsClient extends WebSocketClient {
 
     @Override
     public void onMessage(String s) {
-        lastMsg = s;
-        if (reply != null) {
-            reply.countDown();
+        log.trace("Received new msg: {}", s);
+        if (s == null) {
+            return;
         }
-        if (update != null) {
-            update.countDown();
+        updateLock.lock();
+        try {
+            lastMsg = s;
+            if (update != null) {
+                update.countDown();
+            }
+            if (reply != null) {
+                reply.countDown();
+            }
+        } finally {
+            updateLock.unlock();
         }
     }
 
@@ -72,13 +85,24 @@ public class WsClient extends WebSocketClient {
     }
 
     public void registerWaitForUpdate() {
-        lastMsg = null;
-        update = new CountDownLatch(1);
+        updateLock.lock();
+        try {
+            lastMsg = null;
+            update = new CountDownLatch(1);
+        } finally {
+            updateLock.unlock();
+        }
+        log.trace("Registered wait for update");
     }
 
     @Override
     public void send(String text) throws NotYetConnectedException {
-        reply = new CountDownLatch(1);
+        updateLock.lock();
+        try {
+            reply = new CountDownLatch(1);
+        } finally {
+            updateLock.unlock();
+        }
         super.send(text);
     }
 
@@ -93,27 +117,33 @@ public class WsClient extends WebSocketClient {
         CmdsWrapper wrapper = new CmdsWrapper();
         wrapper.setTsSubCmds(List.of(subCmd));
         send(JacksonUtil.toString(wrapper));
+        log.trace("Subscribed for telemetry (key: {})", telemetryKey);
     }
 
     public JsonNode waitForUpdate(long ms) {
+        log.trace("update latch count: {}", update.getCount());
         try {
             if (update.await(ms, TimeUnit.MILLISECONDS)) {
+                log.trace("Waited for update");
                 return getLastMsg();
             }
         } catch (InterruptedException e) {
             log.debug("Failed to await reply", e);
         }
+        log.trace("No update arrived within {} ms", ms);
         return null;
     }
 
     public JsonNode waitForReply(int ms) {
         try {
             if (reply.await(ms, TimeUnit.MILLISECONDS)) {
+                log.trace("Waited for reply");
                 return getLastMsg();
             }
         } catch (InterruptedException e) {
             log.debug("Failed to await reply", e);
         }
+        log.trace("No reply arrived within {} ms", ms);
         return null;
     }
 

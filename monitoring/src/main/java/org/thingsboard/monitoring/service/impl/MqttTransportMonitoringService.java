@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -31,6 +32,7 @@ import org.thingsboard.monitoring.service.TransportMonitoringService;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@Slf4j
 public class MqttTransportMonitoringService extends TransportMonitoringService<MqttTransportMonitoringServiceConfig> {
 
     private MqttClient mqttClient;
@@ -56,6 +58,7 @@ public class MqttTransportMonitoringService extends TransportMonitoringService<M
             if (result.getException() != null) {
                 throw result.getException();
             }
+            log.debug("Initialized MQTT client for URI {}", mqttClient.getServerURI());
         }
     }
 
@@ -72,6 +75,7 @@ public class MqttTransportMonitoringService extends TransportMonitoringService<M
         if (mqttClient != null) {
             mqttClient.disconnect();
             mqttClient = null;
+            log.info("Disconnected MQTT client");
         }
     }
 

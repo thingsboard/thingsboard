@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
@@ -31,6 +32,7 @@ import java.io.IOException;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@Slf4j
 public class CoapTransportMonitoringService extends TransportMonitoringService<CoapTransportMonitoringServiceConfig> {
 
     private CoapClient coapClient;
@@ -46,6 +48,7 @@ public class CoapTransportMonitoringService extends TransportMonitoringService<C
             String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
             coapClient = new CoapClient(uri);
             coapClient.setTimeout((long) config.getRequestTimeoutMs());
+            log.debug("Initialized CoAP client for URI {}", uri);
         }
     }
 
@@ -63,6 +66,7 @@ public class CoapTransportMonitoringService extends TransportMonitoringService<C
         if (coapClient != null) {
             coapClient.shutdown();
             coapClient = null;
+            log.info("Disconnected CoAP client");
         }
     }
 
