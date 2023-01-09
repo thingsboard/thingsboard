@@ -16,7 +16,6 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;

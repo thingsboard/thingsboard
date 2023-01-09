@@ -113,18 +113,33 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     public static RuleChain getRuleChainByName(String name) {
-        return testRestClient.getRuleChains(pageLink).getData().stream()
-                .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
+        try {
+            return testRestClient.getRuleChains(pageLink).getData().stream()
+                    .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such rule chain with name: " + name);
+            return null;
+        }
     }
 
     public static Customer getCustomerByName(String name) {
-        return testRestClient.getCustomers(pageLink).getData().stream()
-                .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        try {
+            return testRestClient.getCustomers(pageLink).getData().stream()
+                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such customer with name: " + name);
+            return null;
+        }
     }
 
     public static DeviceProfile getDeviceProfileByName(String name) {
-        return testRestClient.getDeviceProfiles(pageLink).getData().stream()
-                .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        try {
+            return testRestClient.getDeviceProfiles(pageLink).getData().stream()
+                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such device profile with name: " + name);
+            return null;
+        }
     }
 
     @SneakyThrows

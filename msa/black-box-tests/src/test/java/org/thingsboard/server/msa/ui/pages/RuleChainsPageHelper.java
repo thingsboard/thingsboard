@@ -101,10 +101,6 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
         return elementsIsNotPresent(getEntity(ruleChainName));
     }
 
-    public void doubleClickOnRuleChain(String ruleChainName) {
-        doubleClick(entity(ruleChainName));
-    }
-
     public void sortByNameDown() {
         doubleClick(sortByNameBtn());
     }

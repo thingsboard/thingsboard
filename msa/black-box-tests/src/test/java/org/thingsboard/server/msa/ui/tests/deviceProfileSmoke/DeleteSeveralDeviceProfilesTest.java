@@ -24,7 +24,9 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 
-import static org.thingsboard.server.msa.ui.utils.Const.*;
+import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 
 public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {

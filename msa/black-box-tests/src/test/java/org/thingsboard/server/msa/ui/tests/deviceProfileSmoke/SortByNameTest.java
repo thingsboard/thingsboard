@@ -28,7 +28,6 @@ import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 
 public class SortByNameTest extends AbstractDriverBaseTest {

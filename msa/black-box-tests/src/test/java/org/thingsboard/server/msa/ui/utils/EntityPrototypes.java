@@ -30,19 +30,19 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 
 public class EntityPrototypes {
 
-    public static Customer defaultCustomerPrototype(String entityName){
+    public static Customer defaultCustomerPrototype(String entityName) {
         Customer customer = new Customer();
         customer.setTitle(entityName);
         return customer;
     }
 
-    public static RuleChain defaultRuleChainPrototype(String entityName){
+    public static RuleChain defaultRuleChainPrototype(String entityName) {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
         return ruleChain;
     }
 
-    public static DeviceProfile defaultDeviceProfile(String entityName){
+    public static DeviceProfile defaultDeviceProfile(String entityName) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(entityName);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -56,7 +56,7 @@ public class EntityPrototypes {
         return deviceProfile;
     }
 
-    public static DeviceProfile defaultDeviceProfile(String entityName, String description){
+    public static DeviceProfile defaultDeviceProfile(String entityName, String description) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(entityName);
         deviceProfile.setDescription(description);

@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
 
-public class SideBarMenuViewHelper extends SideBarMenuViewElements{
+public class SideBarMenuViewHelper extends SideBarMenuViewElements {
     public SideBarMenuViewHelper(WebDriver driver) {
         super(driver);
     }

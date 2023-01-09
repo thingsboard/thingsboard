@@ -42,7 +42,6 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     private DashboardPageHelper dashboardPage;
     private String customerName;
 
-
     @BeforeMethod
     public void login() {
         openLocalhost();
