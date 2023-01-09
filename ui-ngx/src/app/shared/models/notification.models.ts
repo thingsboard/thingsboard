@@ -106,12 +106,8 @@ export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>,
 }
 
 export interface NotificationTargetConfig extends
-  Partial<SingleUserNotificationTargetConfig & UserListNotificationTargetConfig & CustomerUsersNotificationTargetConfig>{
+  Partial<UserListNotificationTargetConfig & CustomerUsersNotificationTargetConfig>{
   type: NotificationTargetConfigType;
-}
-
-interface SingleUserNotificationTargetConfig {
-  userId: string;
 }
 
 interface UserListNotificationTargetConfig {
@@ -179,8 +175,13 @@ export enum SlackChanelType {
 }
 
 export enum NotificationTargetConfigType {
-  SINGLE_USER = 'SINGLE_USER',
   USER_LIST = 'USER_LIST',
   CUSTOMER_USERS = 'CUSTOMER_USERS',
   ALL_USERS = 'ALL_USERS'
 }
+
+export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTargetConfigType, string>([
+  [NotificationTargetConfigType.ALL_USERS, 'notification.target-type.all-users'],
+  [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
+  [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
+]);

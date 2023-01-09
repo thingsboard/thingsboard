@@ -105,6 +105,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification-center',
+        icon: 'notifications'
+      },
+      {
+        id: guid(),
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
@@ -201,6 +208,16 @@ export class MenuService {
             icon: 'now_widgets',
             path: '/widgets-bundles'
           }
+        ]
+      },
+      {
+        name: 'notification.management',
+        places: [
+          {
+            name: 'notification.notification-center',
+            path: '/notification-center',
+            icon: 'notifications'
+          },
         ]
       },
       {
@@ -398,6 +415,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification-center',
+        icon: 'notifications'
+      },
+      {
+        id: guid(),
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
@@ -555,6 +579,16 @@ export class MenuService {
         ]
       },
       {
+        name: 'notification.management',
+        places: [
+          {
+            name: 'notification.notification-center',
+            path: '/notification-center',
+            icon: 'notifications'
+          },
+        ]
+      },
+      {
         name: 'audit-log.audit',
         places: [
           {
@@ -648,7 +682,14 @@ export class MenuService {
         type: 'link',
         path: '/dashboards',
         icon: 'dashboard'
-      }
+      },
+      {
+        id: guid(),
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification-center',
+        icon: 'notifications'
+      },
     );
     return sections;
   }
@@ -710,6 +751,16 @@ export class MenuService {
             icon: 'dashboard',
             path: '/dashboards'
           }
+        ]
+      },
+      {
+        name: 'notification.management',
+        places: [
+          {
+            name: 'notification.notification-center',
+            path: '/notification-center',
+            icon: 'notifications'
+          },
         ]
       }
     );

@@ -40,6 +40,7 @@ import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
 import { VcModule } from '@home/pages/vc/vc.module';
 import { AssetProfileModule } from '@home/pages/asset-profile/asset-profile.module';
 import { ProfilesModule } from '@home/pages/profiles/profiles.module';
+import { NotificationCenterModule } from '@home/pages/notification-center/notification-center.module';
 
 @NgModule({
   exports: [
@@ -64,6 +65,7 @@ import { ProfilesModule } from '@home/pages/profiles/profiles.module';
     ApiUsageModule,
     OtaUpdateModule,
     UserModule,
+    NotificationCenterModule,
     VcModule
   ],
   providers: [

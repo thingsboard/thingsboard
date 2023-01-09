@@ -1,0 +1,76 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-notification-center">
+  <div class="tb-notification-center-content">
+    <section fxLayout="row" fxLayoutAlign="space-between center" class="title-container">
+      <h2 translate class="title">notification.notification-center</h2>
+      <section class="action-buttons" fxLayoutAlign="end center">
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="openSetting()"
+                matTooltip="{{ 'notification.settings' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>settings</mat-icon>
+        </button>
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
+                matTooltip="{{ 'action.refresh' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </section>
+    </section>
+    <div class="tabs-container">
+      <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()">
+        <mat-tab label="{{ 'notification.inbox' | translate }}" #inboxTab="matTab">
+          <tb-notification-table
+            [notificationType]="entityType.NOTIFICATION">
+          </tb-notification-table>
+        </mat-tab>
+        <mat-tab label="{{ 'notification.sent' | translate }}">
+          <tb-notification-table
+            [notificationType]="entityType.NOTIFICATION_REQUEST">
+          </tb-notification-table>
+        </mat-tab>
+        <mat-tab label="{{ 'notification.templates' | translate }}" #templateTab="matTab">
+          <tb-notification-table
+            [notificationType]="entityType.NOTIFICATION_TEMPLATE">
+          </tb-notification-table>
+        </mat-tab>
+        <mat-tab label="{{ 'notification.targets' | translate }}" #targetsTab="matTab">
+          <tb-notification-table
+            [notificationType]="entityType.NOTIFICATION_TARGET">
+          </tb-notification-table>
+        </mat-tab>
+        <mat-tab label="{{ 'notification.rules' | translate }}">
+          <ng-template matTabContent>
+            Content 1 - Loaded
+          </ng-template>
+        </mat-tab>
+        <mat-tab disabled>
+          <ng-template mat-tab-label>
+            <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
+              <button mat-flat-button color="primary" *ngIf="targetsTab.isActive" (click)="createTarget($event)">
+                <div fxLayout="row" fxLayoutAlign="start center">
+                  <mat-icon>add</mat-icon>{{ 'notification.create-target' | translate }}
+                </div>
+              </button>
+            </div>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
+</div>
