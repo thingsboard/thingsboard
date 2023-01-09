@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -174,7 +175,7 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         // create device and assign to edge; update device
         Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
-        verifyUpdateFirmwareIdAndDeviceData(savedDevice);
+        verifyUpdateFirmwareIdSoftwareIdAndDeviceData(savedDevice);
 
         // update device credentials - ACCESS_TOKEN
         edgeImitator.expectMessageAmount(1);
@@ -210,15 +211,20 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(deviceCredentials.getCredentialsValue(), deviceCredentialsUpdateMsg.getCredentialsValue());
     }
 
-    private void verifyUpdateFirmwareIdAndDeviceData(Device savedDevice) throws InterruptedException {
-        // create ota package
+    private void verifyUpdateFirmwareIdSoftwareIdAndDeviceData(Device savedDevice) throws InterruptedException {
+        // create ota packages
         edgeImitator.expectMessageAmount(1);
-        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId());
+        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId(), OtaPackageType.FIRMWARE);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        edgeImitator.expectMessageAmount(1);
+        OtaPackageInfo softwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId(), OtaPackageType.SOFTWARE);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         // update device
         edgeImitator.expectMessageAmount(1);
         savedDevice.setFirmwareId(firmwareOtaPackageInfo.getId());
+        savedDevice.setSoftwareId(softwareOtaPackageInfo.getId());
 
         DeviceData deviceData = new DeviceData();
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
@@ -239,6 +245,8 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDevice.getType(), deviceUpdateMsg.getType());
         Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getFirmwareIdMSB());
         Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getFirmwareIdLSB());
+        Assert.assertEquals(softwareOtaPackageInfo.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getSoftwareIdMSB());
+        Assert.assertEquals(softwareOtaPackageInfo.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getSoftwareIdLSB());
         Optional<DeviceData> deviceDataOpt =
                 dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
         Assert.assertTrue(deviceDataOpt.isPresent());
