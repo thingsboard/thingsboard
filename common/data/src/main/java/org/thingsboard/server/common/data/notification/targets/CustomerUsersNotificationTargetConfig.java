@@ -17,13 +17,15 @@ package org.thingsboard.server.common.data.notification.targets;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import javax.validation.constraints.AssertTrue;
 import java.util.UUID;
 
 @Data
-public class CustomerUsersNotificationTargetConfig implements NotificationTargetConfig {
+@EqualsAndHashCode(callSuper = true)
+public class CustomerUsersNotificationTargetConfig extends NotificationTargetConfig {
 
     private UUID customerId; // might not be set if using with notification rule
     private boolean getCustomerIdFromOriginatorEntity; // e.g. from alarm

@@ -16,14 +16,15 @@
 package org.thingsboard.server.common.data.notification.targets;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.UserId;
+import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.UUID;
 
 @Data
-public class UserListNotificationTargetConfig implements NotificationTargetConfig {
+@EqualsAndHashCode(callSuper = true)
+public class UserListNotificationTargetConfig extends NotificationTargetConfig {
 
     @NotEmpty
     private List<UUID> usersIds;

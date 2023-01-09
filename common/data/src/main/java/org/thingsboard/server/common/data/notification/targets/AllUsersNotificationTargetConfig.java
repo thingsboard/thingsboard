@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.notification.targets;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class AllUsersNotificationTargetConfig implements NotificationTargetConfig {
+@EqualsAndHashCode(callSuper = true)
+public class AllUsersNotificationTargetConfig extends NotificationTargetConfig {
 
     @Override
     public NotificationTargetConfigType getType() {

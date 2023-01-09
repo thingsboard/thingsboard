@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.Data;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -27,8 +28,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = CustomerUsersNotificationTargetConfig.class, name = "CUSTOMER_USERS"),
         @Type(value = AllUsersNotificationTargetConfig.class, name = "ALL_USERS")
 })
-public interface NotificationTargetConfig {
+@Data
+public abstract class NotificationTargetConfig {
 
-    NotificationTargetConfigType getType();
+    private String description;
+
+    public abstract NotificationTargetConfigType getType();
 
 }
