@@ -776,3 +776,13 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
     two_fa_settings varchar
 );
+
+CREATE TABLE IF NOT EXISTS alarm_comment (
+    id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    alarm_id uuid NOT NULL,
+    user_id uuid,
+    type varchar(255) NOT NULL,
+    comment varchar(1000000),
+    CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
+) PARTITION BY RANGE (created_time);

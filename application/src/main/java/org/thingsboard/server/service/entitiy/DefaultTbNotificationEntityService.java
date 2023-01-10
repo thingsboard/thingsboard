@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -227,6 +228,16 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     public void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, User user, Object... additionalInfo) {
         logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), actionType, user, additionalInfo);
         sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), edgeTypeByActionType(actionType));
+    }
+
+    @Override
+    public void notifyCreateOrUpdateAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user) {
+        logEntityAction(alarm.getTenantId(), alarmComment.getId(), alarmComment, alarm.getCustomerId(), actionType, user);
+    }
+
+    @Override
+    public void notifyDeleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
+        logEntityAction(alarm.getTenantId(), alarmComment.getId(), alarmComment, alarm.getCustomerId(), ActionType.DELETED, user);
     }
 
     @Override

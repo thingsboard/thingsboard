@@ -41,9 +41,11 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -56,6 +58,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -92,6 +95,8 @@ public class TenantIdLoaderTest {
     private DeviceService deviceService;
     @Mock
     private RuleEngineAlarmService alarmService;
+    @Mock
+    private AlarmCommentService alarmCommentService;
     @Mock
     private RuleChainService ruleChainService;
     @Mock
@@ -189,6 +194,14 @@ public class TenantIdLoaderTest {
 
                 when(ctx.getAlarmService()).thenReturn(alarmService);
                 doReturn(alarm).when(alarmService).findAlarmById(eq(tenantId), any());
+
+                break;
+            case ALARM_COMMENT:
+                AlarmComment alarmComment = new AlarmComment();
+                alarmComment.setAlarmId(new AlarmId(UUID.randomUUID()));
+
+                when(ctx.getAlarmCommentService()).thenReturn(alarmCommentService);
+                doReturn(alarmComment).when(alarmCommentService).findAlarmCommentById(eq(tenantId), any());
 
                 break;
             case RULE_CHAIN:
