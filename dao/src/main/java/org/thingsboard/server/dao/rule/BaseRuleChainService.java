@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -75,7 +76,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 /**
  * Created by igor on 3/12/18.
  */
-@Service
+@Service("RuleChainDaoService")
 @Slf4j
 public class BaseRuleChainService extends AbstractEntityService implements RuleChainService {
 
@@ -725,6 +726,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             deleteRuleNode(tenantId, relation.getTo());
         }
         deleteEntityRelations(tenantId, ruleChainId);
+    }
+
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        HasId<?> hasId = EntityType.RULE_NODE.equals(entityId.getEntityType()) ?
+                findRuleNodeById(tenantId, new RuleNodeId(entityId.getId())) :
+                findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
+        return Optional.ofNullable(hasId);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {
