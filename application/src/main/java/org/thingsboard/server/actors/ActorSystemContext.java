@@ -409,6 +409,10 @@ public class ActorSystemContext {
     @Getter
     private long syncSessionTimeout;
 
+    @Value("${actors.rule.chain.checkpoint_on_split:true}")
+    @Getter
+    private boolean ruleChainCheckpointOnSplit;
+
     @Value("${actors.rule.chain.error_persist_frequency:3000}")
     @Getter
     private long ruleChainErrorPersistFrequency;

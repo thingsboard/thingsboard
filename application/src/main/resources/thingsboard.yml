@@ -357,6 +357,7 @@ actors:
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
     chain:
+      checkpoint_on_split: "${ACTORS_RULE_CHAIN_CHECKPOINT_ON_SPLIT:true}"
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
       debug_mode_rate_limits_per_tenant:
