@@ -77,12 +77,12 @@ abstract public class BaseDeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(thermostatsRuleChainId.getId().getLeastSignificantBits(), deviceProfileUpdateMsg.getDefaultRuleChainIdLSB());
 
         // update device profile
-        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(deviceProfile.getId(), OtaPackageType.FIRMWARE);
         edgeImitator.expectMessageAmount(1);
+        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(deviceProfile.getId(), OtaPackageType.FIRMWARE);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        OtaPackageInfo softwareOtaPackageInfo = saveOtaPackageInfo(deviceProfile.getId(), OtaPackageType.SOFTWARE);
         edgeImitator.expectMessageAmount(1);
+        OtaPackageInfo softwareOtaPackageInfo = saveOtaPackageInfo(deviceProfile.getId(), OtaPackageType.SOFTWARE);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         DashboardId thermostatsDashboardId = createDashboardAndAssignToEdge("Thermostats Dashboard");
