@@ -49,7 +49,7 @@
     <!--    <logger name="org.thingsboard.server.service.queue.TbMsgPackProcessingContext" level="DEBUG" /> -->
 
     <!-- MQTT transport debug -->
-    <!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
+        <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="trace" />
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 

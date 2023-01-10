@@ -89,6 +89,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.gen.transport.TransportProtos.BroadcastNotificationMsg;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
@@ -403,6 +404,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasGetAttributes()) {
             handleGetAttributesRequest(context, sessionInfo, msg.getGetAttributes());
         }
+        if (msg.hasBroadcastNotificationMsg()) {
+            handleBroadcastNotification(sessionInfo, msg.getBroadcastNotificationMsg());
+        }
         if (msg.hasToDeviceRPCCallResponse()) {
             processRpcResponses(context, sessionInfo, msg.getToDeviceRPCCallResponse());
         }
@@ -495,6 +499,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 }
             }, MoreExecutors.directExecutor());
         }
+    }
+
+    private void handleBroadcastNotification(SessionInfoProto sessionInfo, BroadcastNotificationMsg request) {
+        sendToTransport(request, sessionInfo);
     }
 
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
@@ -789,6 +797,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionInfo.getSessionIdMSB())
                 .setSessionIdLSB(sessionInfo.getSessionIdLSB())
                 .setGetAttributesResponse(responseMsg).build();
+        systemContext.getTbCoreToTransportService().process(sessionInfo.getNodeId(), msg);
+    }
+
+    private void sendToTransport(BroadcastNotificationMsg notificationMsg, SessionInfoProto sessionInfo) {
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionInfo.getSessionIdMSB())
+                .setSessionIdLSB(sessionInfo.getSessionIdLSB())
+                .setBroadcastNotificationMsg(notificationMsg).build();
         systemContext.getTbCoreToTransportService().process(sessionInfo.getNodeId(), msg);
     }
 

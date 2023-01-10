@@ -43,6 +43,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.BroadcastNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
@@ -146,6 +147,17 @@ public class JsonConverter {
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
         if (jsonObject.isJsonObject()) {
             PostAttributeMsg.Builder result = PostAttributeMsg.newBuilder();
+            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
+            result.addAllKv(keyValueList);
+            return result.build();
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
+        }
+    }
+
+    public static BroadcastNotificationMsg convertToBroadcastNotificationProto(JsonElement jsonObject) throws JsonSyntaxException {
+        if (jsonObject.isJsonObject()) {
+            BroadcastNotificationMsg.Builder result = BroadcastNotificationMsg.newBuilder();
             List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
             result.addAllKv(keyValueList);
             return result.build();
@@ -296,6 +308,14 @@ public class JsonConverter {
             JsonObject attrObject = new JsonObject();
             payload.getSharedAttributeListList().forEach(addToObjectFromProto(attrObject));
             result.add("shared", attrObject);
+        }
+        return result;
+    }
+
+    public static JsonObject toJson(BroadcastNotificationMsg payload) {
+        JsonObject result = new JsonObject();
+        if (payload.getKvCount() > 0) {
+            payload.getKvList().forEach(value -> addValueToJson(result, value.getKey(), value));
         }
         return result;
     }

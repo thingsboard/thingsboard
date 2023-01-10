@@ -298,6 +298,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
                 break;
             case DISCONNECT:
+                context.removeBroadcastNotificationMap(deviceSessionCtx.getSessionId());
                 ctx.close();
                 break;
             case PUBACK:
@@ -445,6 +446,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 TransportProtos.GetAttributeRequestMsg getAttributeMsg = payloadAdaptor.convertToGetAttributes(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
                 transportService.process(deviceSessionCtx.getSessionInfo(), getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
                 attrReqTopicType = TopicType.V2;
+            } else if (topicName.equals(MqttTopics.DEVICE_BROADCAST_NOTIFICATION_TOPIC)) {
+                TransportProtos.BroadcastNotificationMsg broadcastNotificationMsg = payloadAdaptor.convertToBroadcastNotification(deviceSessionCtx, mqttMsg);
+                transportService.process(deviceSessionCtx.getSessionInfo(), broadcastNotificationMsg, getPubAckCallback(ctx, msgId, broadcastNotificationMsg));
+                attrReqTopicType = TopicType.V1;
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
                 ack(ctx, msgId);
@@ -682,6 +687,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case MqttTopics.DEVICE_SOFTWARE_ERROR_TOPIC:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
+                    case MqttTopics.DEVICE_BROADCAST_NOTIFICATION_TOPIC:
+                        processBroadcastNotification(grantedQoSList, topic, reqQoS);
+                        break;
                     default:
                         log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
                         grantedQoSList.add(FAILURE.value());
@@ -707,6 +715,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void processAttributesSubscribe(List<Integer> grantedQoSList, String topic, MqttQoS reqQoS, TopicType topicType) {
         transportService.process(deviceSessionCtx.getSessionInfo(), TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
         attrSubTopicType = topicType;
+        registerSubQoS(topic, grantedQoSList, reqQoS);
+    }
+
+    private void processBroadcastNotification(List<Integer> grantedQoSList, String topic, MqttQoS reqQoS) {
+        context.putBroadcastNotificationMap(deviceSessionCtx.getSessionId(), deviceSessionCtx.getChannel());
         registerSubQoS(topic, grantedQoSList, reqQoS);
     }
 
@@ -760,6 +773,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
                     case MqttTopics.DEVICE_SOFTWARE_ERROR_TOPIC: {
                         activityReported = true;
+                        break;
+                    }
+                    case MqttTopics.DEVICE_BROADCAST_NOTIFICATION_TOPIC: {
+                        activityReported = true;
+                        context.removeBroadcastNotificationMap(deviceSessionCtx.getSessionId());
                         break;
                     }
                 }
@@ -1002,6 +1020,24 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onBroadcastNotification(UUID sessionId, TransportProtos.BroadcastNotificationMsg response) {
+        log.trace("[{}] Received broadcast notification", sessionId);
+        String topicBase = attrReqTopicType.getAttributesResponseTopicBase();
+        MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrReqTopicType);
+        try {
+            // todo: 不广播给发送者
+            ConcurrentMap<UUID, ChannelHandlerContext> notificationMap = context.getBroadcastNotificationMap();
+            adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent((msg) -> notificationMap.forEach((k, v)-> {
+                if (v != null && v.channel() != null && v.channel().isActive()) {
+                    v.channel().writeAndFlush(msg);
+                }
+            }));
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert broadcast notification to MQTT msg", sessionId, e);
         }
     }
 

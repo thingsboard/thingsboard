@@ -96,8 +96,24 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public TransportProtos.BroadcastNotificationMsg convertToBroadcastNotification(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        try {
+            return protoAdaptor.convertToBroadcastNotification(ctx, inbound);
+        } catch (AdaptorException e) {
+            log.trace("[{}] failed to process broadcast notification request msg: {} due to: ", ctx.getSessionId(), inbound, e);
+            return jsonAdaptor.convertToBroadcastNotification(ctx, inbound);
+        }
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg, String topicBase) throws AdaptorException {
         log.warn("[{}] invoked not implemented adaptor method! GetAttributeResponseMsg: {} TopicBase: {}", ctx.getSessionId(), responseMsg, topicBase);
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.BroadcastNotificationMsg responseMsg, String topicBase) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! BroadcastNotificationMsg: {} TopicBase: {}", ctx.getSessionId(), responseMsg, topicBase);
         return Optional.empty();
     }
 

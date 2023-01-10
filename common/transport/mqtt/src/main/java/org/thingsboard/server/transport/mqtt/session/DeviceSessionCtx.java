@@ -79,6 +79,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
     private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
+    private volatile Descriptors.Descriptor broadcastNotificationDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor rpcResponseDynamicMessageDescriptor;
     private volatile DynamicMessage.Builder rpcRequestDynamicMessageBuilder;
     private volatile MqttTransportAdaptor adaptor;
@@ -126,6 +127,10 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public Descriptors.Descriptor getAttributesDynamicMessageDescriptor() {
         return attributesDynamicMessageDescriptor;
+    }
+
+    public Descriptors.Descriptor getBroadcastNotificationDynamicMessageDescriptor() {
+        return broadcastNotificationDynamicMessageDescriptor;
     }
 
     public Descriptors.Descriptor getRpcResponseDynamicMessageDescriptor() {

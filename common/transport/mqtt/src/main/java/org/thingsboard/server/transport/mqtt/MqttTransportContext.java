@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt;
 
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandler;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,9 @@ import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
 import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -77,10 +81,21 @@ public class MqttTransportContext extends TransportContext {
 
     private final AtomicInteger connectionsCounter = new AtomicInteger();
 
+    @Getter
+    private ConcurrentMap<UUID, ChannelHandlerContext> broadcastNotificationMap = new ConcurrentHashMap<>();
+
     @PostConstruct
     public void init() {
         super.init();
         transportService.createGaugeStats("openConnections", connectionsCounter);
+    }
+
+    public void putBroadcastNotificationMap (UUID sessionId, ChannelHandlerContext channel) {
+        broadcastNotificationMap.put(sessionId, channel);
+    }
+
+    public boolean removeBroadcastNotificationMap (UUID sessionId) {
+        return broadcastNotificationMap.remove(sessionId) != null;
     }
 
     public void channelRegistered() {
