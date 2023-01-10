@@ -701,7 +701,7 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
     public void testVerifyDeliveryOfLatestTimeseriesOnAttributesRequest() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
 
-        JsonNode timeseriesData = mapper.readTree("{\"temperature\":25}");
+        JsonNode timeseriesData = mapper.readTree("{\"temperature\":25, \"isEnabled\": true}");
 
         doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE,
                 timeseriesData);
@@ -740,9 +740,17 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         TransportProtos.PostTelemetryMsg timeseriesUpdatedMsg = latestEntityDataMsg.getPostTelemetryMsg();
         Assert.assertEquals(1, timeseriesUpdatedMsg.getTsKvListList().size());
         TransportProtos.TsKvListProto tsKvListProto = timeseriesUpdatedMsg.getTsKvListList().get(0);
-        Assert.assertEquals(1, tsKvListProto.getKvList().size());
-        TransportProtos.KeyValueProto keyValueProto = tsKvListProto.getKvList().get(0);
-        Assert.assertEquals(25, keyValueProto.getLongV());
-        Assert.assertEquals("temperature", keyValueProto.getKey());
+        Assert.assertEquals(2, tsKvListProto.getKvList().size());
+        for (TransportProtos.KeyValueProto keyValueProto : tsKvListProto.getKvList()) {
+            if ("temperature".equals(keyValueProto.getKey())) {
+                Assert.assertEquals(TransportProtos.KeyValueType.LONG_V, keyValueProto.getType());
+                Assert.assertEquals(25, keyValueProto.getLongV());
+            } else if ("isEnabled".equals(keyValueProto.getKey())) {
+                Assert.assertEquals(TransportProtos.KeyValueType.BOOLEAN_V, keyValueProto.getType());
+                Assert.assertTrue(keyValueProto.getBoolV());
+            } else {
+                Assert.fail("Unexpected key: " + keyValueProto.getKey());
+            }
+        }
     }
 }
