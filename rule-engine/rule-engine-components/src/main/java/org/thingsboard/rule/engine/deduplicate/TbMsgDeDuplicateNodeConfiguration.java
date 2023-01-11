@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.delay;
+package org.thingsboard.rule.engine.deduplicate;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
@@ -23,6 +23,7 @@ public class TbMsgDeDuplicateNodeConfiguration implements NodeConfiguration<TbMs
 
     private int delay;
     private int maxPendingMsgs;
+    private int maxRetries;
     private boolean deDuplicateByOriginator;
     private DeDuplicateStrategy strategy;
 
@@ -36,6 +37,7 @@ public class TbMsgDeDuplicateNodeConfiguration implements NodeConfiguration<TbMs
         TbMsgDeDuplicateNodeConfiguration configuration = new TbMsgDeDuplicateNodeConfiguration();
         configuration.setDelay(60);
         configuration.setMaxPendingMsgs(100);
+        configuration.setMaxRetries(3);
         configuration.setDeDuplicateByOriginator(true);
         configuration.setStrategy(DeDuplicateStrategy.FIRST);
         return configuration;
