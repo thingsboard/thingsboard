@@ -73,6 +73,7 @@ export class UserComponent extends EntityComponent<User> {
         email: [entity ? entity.email : '', [Validators.required, Validators.email]],
         firstName: [entity ? entity.firstName : ''],
         lastName: [entity ? entity.lastName : ''],
+        phone: [entity ? entity.phone : ''],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
@@ -91,6 +92,7 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({email: entity.email});
     this.entityForm.patchValue({firstName: entity.firstName});
     this.entityForm.patchValue({lastName: entity.lastName});
+    this.entityForm.patchValue({phone: entity.phone});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
     this.entityForm.patchValue({additionalInfo:
         {defaultDashboardId: entity.additionalInfo ? entity.additionalInfo.defaultDashboardId : null}});
@@ -112,7 +114,7 @@ export class UserComponent extends EntityComponent<User> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }
-    ))
+    ));
   }
 
 }
