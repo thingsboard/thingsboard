@@ -41,9 +41,9 @@ import java.util.NoSuchElementException;
 
 public class EdgeSyncCursor {
 
-    List<EdgeEventFetcher> fetchers = new LinkedList<>();
+    private final List<EdgeEventFetcher> fetchers = new LinkedList<>();
 
-    int currentIdx = 0;
+    private int currentIdx = 0;
 
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge, boolean fullSync) {
         if (fullSync) {
@@ -53,8 +53,10 @@ public class EdgeSyncCursor {
             fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
             fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
+            ctx.getCustomerService().findPublicCustomer(edge.getTenantId())
+                    .ifPresent(publicCustomer -> fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId())));
             if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
-                fetchers.add(new CustomerEdgeEventFetcher());
+                fetchers.add(new CustomerEdgeEventFetcher(edge.getCustomerId()));
                 fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
             }
         }
