@@ -50,13 +50,13 @@ public class TbRuleChainInputNode implements TbNode {
 
     private TbRuleChainInputNodeConfiguration config;
     private RuleChainId ruleChainId;
-    private boolean transferMsgToOriginatorRootRuleChain;
+    private boolean forwardMsgToRootRuleChain;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
         this.ruleChainId = new RuleChainId(UUID.fromString(config.getRuleChainId()));
-        this.transferMsgToOriginatorRootRuleChain = config.isTransferMsgToOriginatorRootRuleChain();
+        this.forwardMsgToRootRuleChain = config.isForwardMsgToRootRuleChain();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class TbRuleChainInputNode implements TbNode {
     }
 
     private RuleChainId getRuleChainId(TbContext ctx, TbMsg msg) {
-        if (!transferMsgToOriginatorRootRuleChain) {
+        if (!forwardMsgToRootRuleChain) {
             return this.ruleChainId;
         }
         RuleChainId targetRuleChainId = null;

@@ -102,7 +102,7 @@ class TbRuleChainInputNodeTest {
         //node
         config = new TbRuleChainInputNodeConfiguration().defaultConfiguration();
         config.setRuleChainId(nodeRuleChainId.toString());
-        config.setTransferMsgToOriginatorRootRuleChain(true);
+        config.setForwardMsgToRootRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbRuleChainInputNode());
         node.init(ctx, nodeConfiguration);
@@ -152,7 +152,7 @@ class TbRuleChainInputNodeTest {
 
     @Test
     void getRuleChainId_when_transferMsgToOriginatorRootRuleChain_false() throws TbNodeException {
-        config.setTransferMsgToOriginatorRootRuleChain(false);
+        config.setForwardMsgToRootRuleChain(false);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
