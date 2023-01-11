@@ -43,7 +43,8 @@ As result, in REPOSITORY column, next images should be present:
         mvn clean install -DblackBoxTests.skip=false -Dsuite=all 
 
 ### To run a separate test manually on a built UI:
-1. Add the black-box-tests module in the [pom.xml](../pom.xml)
+1. Add the black-box-tests module in the [pom.xml](../pom.xml) or add as a Maven project as in the picture
+![addAsMavenProject.png](../black-box-tests/src/test/resources/addAsMavenProject.png)
 2. Add Vm Option "-DrunLocal=true -Dtb.baseUiUrl=http://localhost:4200/" in Run -> Edit Configuration -> Edit Configuration Templates -> TestNG
 3. Go to the test class you need in the [UI tests directory](../black-box-tests/src/test/java/org/thingsboard/server/msa/ui/tests) and run the test in it 
 or go to the [resources](../black-box-tests/src/test/resources) and run test suite you need
