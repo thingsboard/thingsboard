@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -52,8 +51,8 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     private final NotificationRequestRepository notificationRequestRepository;
 
     @Override
-    public PageData<NotificationRequest> findByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, NotificationOriginatorType originatorType, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRequestRepository.findByTenantIdAndOriginatorType(getId(tenantId, true), originatorType, DaoUtil.toPageable(pageLink)));
+    public PageData<NotificationRequest> findByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRequestRepository.findByTenantIdAndOriginatorEntityType(getId(tenantId, true), originatorType, DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -52,14 +52,13 @@ CREATE TABLE IF NOT EXISTS notification_request (
     template_id UUID NOT NULL,
     info VARCHAR(1000),
     additional_config VARCHAR(1000),
-    originator_type VARCHAR(32) NOT NULL,
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),
     rule_id UUID NULL,
     status VARCHAR(32),
     stats VARCHAR(10000)
 );
-CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_type, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_entity_type, created_time DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id);
 CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_request(status);
 
@@ -72,7 +71,6 @@ CREATE TABLE IF NOT EXISTS notification (
     subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
     info VARCHAR(1000),
-    originator_type VARCHAR(32) NOT NULL,
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_notification_id_recipient_id ON notification(id, recipient_id);

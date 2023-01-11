@@ -26,8 +26,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
@@ -67,10 +66,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY)
     private JsonNode additionalConfig;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ORIGINATOR_TYPE_PROPERTY, nullable = false)
-    private NotificationOriginatorType originatorType;
-
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY)
     private UUID originatorEntityId;
 
@@ -99,7 +94,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setTemplateId(getUuid(notificationRequest.getTemplateId()));
         setInfo(toJson(notificationRequest.getInfo()));
         setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
-        setOriginatorType(notificationRequest.getOriginatorType());
         if (notificationRequest.getOriginatorEntityId() != null) {
             setOriginatorEntityId(notificationRequest.getOriginatorEntityId().getId());
             setOriginatorEntityType(notificationRequest.getOriginatorEntityId().getEntityType());
@@ -119,7 +113,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setTemplateId(getEntityId(templateId, NotificationTemplateId::new));
         notificationRequest.setInfo(fromJson(info, NotificationInfo.class));
         notificationRequest.setAdditionalConfig(fromJson(additionalConfig, NotificationRequestConfig.class));
-        notificationRequest.setOriginatorType(originatorType);
         if (originatorEntityId != null) {
             notificationRequest.setOriginatorEntityId(EntityIdFactory.getByTypeAndUuid(originatorEntityType, originatorEntityId));
         }

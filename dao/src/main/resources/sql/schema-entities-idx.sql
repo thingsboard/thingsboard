@@ -86,7 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_template_tenant_id_created_time ON n
 
 CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_created_time ON notification_rule(tenant_id, created_time DESC);
 
-CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_type, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_entity_type, created_time DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id);
 CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_request(status);
 

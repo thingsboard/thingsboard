@@ -30,9 +30,8 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.AlarmOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
+import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -137,7 +136,6 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .additionalConfig(config)
                 .info(notificationInfo)
                 .ruleId(notificationRule.getId())
-                .originatorType(NotificationOriginatorType.ALARM)
                 .originatorEntityId(alarm.getId())
                 .build();
         notificationCenter.processNotificationRequest(tenantId, notificationRequest);

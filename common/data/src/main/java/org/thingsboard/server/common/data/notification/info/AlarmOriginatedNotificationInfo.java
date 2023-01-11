@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.info;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -29,11 +29,10 @@ import org.thingsboard.server.common.data.id.EntityId;
 import java.util.Map;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AlarmOriginatedNotificationInfo extends NotificationInfo {
+public class AlarmOriginatedNotificationInfo implements NotificationInfo {
 
     private AlarmId alarmId;
     private String alarmType;
@@ -43,8 +42,8 @@ public class AlarmOriginatedNotificationInfo extends NotificationInfo {
     private CustomerId customerId;
 
     @Override
-    public NotificationOriginatorType getOriginatorType() {
-        return NotificationOriginatorType.ALARM;
+    public EntityType getOriginatorType() {
+        return EntityType.ALARM;
     }
 
     @Override

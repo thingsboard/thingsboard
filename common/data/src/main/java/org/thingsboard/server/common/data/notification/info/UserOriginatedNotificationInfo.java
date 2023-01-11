@@ -13,11 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.info;
 
-public enum NotificationOriginatorType {
-    ADMIN,
-    ALARM,
-    RULE_NODE,
-    SYSTEM
+import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DashboardId;
+
+import java.util.Collections;
+import java.util.Map;
+
+@Data
+public class UserOriginatedNotificationInfo implements NotificationInfo {
+
+    private String description;
+    private DashboardId dashboardId;
+
+    @Override
+    public EntityType getOriginatorType() {
+        return EntityType.USER;
+    }
+
+    @Override
+    public Map<String, String> getTemplateData() {
+        return Collections.emptyMap();
+    }
+
 }

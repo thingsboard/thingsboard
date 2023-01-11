@@ -27,10 +27,10 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.page.PageData;
@@ -250,7 +250,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(initialNotification.getInfo()).isNotNull().isEqualTo(notificationRequest.getInfo());
 
         wsClient.registerWaitForUpdate();
-        NotificationInfo newNotificationInfo = new NotificationInfo();
+        UserOriginatedNotificationInfo newNotificationInfo = new UserOriginatedNotificationInfo();
         newNotificationInfo.setDescription("New description");
         notificationRequest.setInfo(newNotificationInfo);
         notificationCenter.updateNotificationRequest(tenantId, notificationRequest);

@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
@@ -218,7 +217,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .subject(template.getSubject())
                 .text(text)
                 .info(request.getInfo())
-                .originatorType(request.getOriginatorType())
                 .status(NotificationStatus.SENT)
                 .build();
         try {
@@ -242,7 +240,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .type(NotificationType.GENERAL)
                 .subject(subject)
                 .text(text)
-                .originatorType(NotificationOriginatorType.SYSTEM)
                 .status(NotificationStatus.SENT)
                 .build();
         notification = notificationService.saveNotification(TenantId.SYS_TENANT_ID, notification);

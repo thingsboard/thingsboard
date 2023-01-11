@@ -13,39 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.EntityType;
 
-import java.util.Collections;
 import java.util.Map;
 
-
-@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "originatorType", defaultImpl = NotificationInfo.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "originatorType")
 @JsonSubTypes({
+        @Type(name = "USER", value = UserOriginatedNotificationInfo.class),
         @Type(name = "ALARM", value = AlarmOriginatedNotificationInfo.class),
         @Type(name = "RULE_NODE", value = RuleNodeOriginatedNotificationInfo.class)
 })
-public class NotificationInfo {
+public interface NotificationInfo {
 
-    private String description;
-    private DashboardId dashboardId;
-
-    public NotificationOriginatorType getOriginatorType() {
-        return null;
-    }
+    EntityType getOriginatorType();
 
     @JsonIgnore
-    public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
-    }
+    Map<String, String> getTemplateData();
 
 }

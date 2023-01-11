@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.info;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class RuleNodeOriginatedNotificationInfo extends NotificationInfo {
+public class RuleNodeOriginatedNotificationInfo implements NotificationInfo {
 
     private EntityId msgOriginator;
     private Map<String, String> msgMetadata;
 
     @Override
-    public NotificationOriginatorType getOriginatorType() {
-        return NotificationOriginatorType.RULE_NODE;
+    public EntityType getOriginatorType() {
+        return EntityType.RULE_NODE;
     }
 
     @Override

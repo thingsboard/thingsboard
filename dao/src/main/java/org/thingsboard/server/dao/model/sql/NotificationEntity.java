@@ -25,8 +25,7 @@ import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -68,10 +67,6 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     private JsonNode info;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = ModelConstants.NOTIFICATION_ORIGINATOR_TYPE_PROPERTY)
-    private NotificationOriginatorType originatorType;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.NOTIFICATION_STATUS_PROPERTY)
     private NotificationStatus status;
 
@@ -86,7 +81,6 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         setSubject(notification.getSubject());
         setText(notification.getText());
         setInfo(toJson(notification.getInfo()));
-        setOriginatorType(notification.getOriginatorType());
         setStatus(notification.getStatus());
     }
 
@@ -101,7 +95,6 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         notification.setSubject(subject);
         notification.setText(text);
         notification.setInfo(fromJson(info, NotificationInfo.class));
-        notification.setOriginatorType(originatorType);
         notification.setStatus(status);
         return notification;
     }

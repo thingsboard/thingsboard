@@ -815,7 +815,6 @@ CREATE TABLE IF NOT EXISTS notification_request (
     template_id UUID NOT NULL,
     info VARCHAR(1000),
     additional_config VARCHAR(1000),
-    originator_type VARCHAR(32) NOT NULL,
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),
     rule_id UUID NULL,
@@ -832,6 +831,5 @@ CREATE TABLE IF NOT EXISTS notification (
     subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
     info VARCHAR(1000),
-    originator_type VARCHAR(32) NOT NULL,
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);

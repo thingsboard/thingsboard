@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -56,7 +57,6 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     @Valid
     private NotificationRequestConfig additionalConfig;
 
-    private NotificationOriginatorType originatorType;
     private EntityId originatorEntityId;
     private NotificationRuleId ruleId;
 
@@ -72,7 +72,7 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
 
     @JsonIgnore
     public UserId getSenderId() {
-        return originatorType == NotificationOriginatorType.ADMIN ? (UserId) originatorEntityId : null;
+        return originatorEntityId instanceof UserId ? (UserId) originatorEntityId : null;
     }
 
 }

@@ -22,11 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.AlarmOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
+import org.thingsboard.server.common.data.notification.info.RuleNodeOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
@@ -96,10 +96,12 @@ public class NotificationProcessingContext {
 
     public CustomerId getCustomerId() {
         CustomerId customerId;
-        if (request.getOriginatorType() == NotificationOriginatorType.ALARM) {
-            customerId = ((AlarmOriginatedNotificationInfo) request.getInfo()).getCustomerId();
-        } else {
-            customerId = null;
+        switch (request.getOriginatorEntityId().getEntityType()) {
+            case ALARM:
+                customerId = ((AlarmOriginatedNotificationInfo) request.getInfo()).getCustomerId();
+                break;
+            default:
+                customerId = null;
         }
         return customerId;
     }

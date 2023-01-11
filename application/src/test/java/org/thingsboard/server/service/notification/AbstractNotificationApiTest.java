@@ -28,10 +28,11 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
@@ -96,7 +97,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         NotificationTemplate notificationTemplate = createNotificationTemplate(DEFAULT_NOTIFICATION_TYPE, DEFAULT_NOTIFICATION_SUBJECT, text, deliveryMethods);
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(delayInSec);
-        NotificationInfo notificationInfo = new NotificationInfo();
+        UserOriginatedNotificationInfo notificationInfo = new UserOriginatedNotificationInfo();
         notificationInfo.setDescription("The text: " + text);
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)

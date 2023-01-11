@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.page.PageData;
@@ -102,9 +101,8 @@ public class NotificationController extends BaseController {
         notificationRequest.setTenantId(user.getTenantId());
         checkEntity(notificationRequest.getId(), notificationRequest, Resource.NOTIFICATION_REQUEST);
 
-        notificationRequest.setOriginatorType(NotificationOriginatorType.ADMIN);
         notificationRequest.setOriginatorEntityId(user.getId());
-        if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != null) {
+        if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != EntityType.USER) {
             throw new IllegalArgumentException("Unsupported notification info type");
         }
         notificationRequest.setRuleId(null);
@@ -130,7 +128,7 @@ public class NotificationController extends BaseController {
                                                                  @RequestParam(required = false) String sortOrder,
                                                                  @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(user.getTenantId(), NotificationOriginatorType.ADMIN, pageLink);
+        return notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(user.getTenantId(), EntityType.USER, pageLink);
     }
 
     @DeleteMapping("/notification/request/{id}")

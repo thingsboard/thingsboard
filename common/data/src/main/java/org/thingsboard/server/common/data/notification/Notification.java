@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 
 @Data
 @AllArgsConstructor
@@ -40,7 +41,6 @@ public class Notification extends BaseData<NotificationId> {
     private String text;
     private NotificationInfo info;
 
-    private NotificationOriginatorType originatorType;
     private NotificationStatus status;
 
 }

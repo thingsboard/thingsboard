@@ -659,14 +659,12 @@ public class ModelConstants {
     public static final String NOTIFICATION_TYPE_PROPERTY = "type";
     public static final String NOTIFICATION_SUBJECT_PROPERTY = "subject";
     public static final String NOTIFICATION_TEXT_PROPERTY = "text";
-    public static final String NOTIFICATION_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String NOTIFICATION_STATUS_PROPERTY = "status";
 
     public static final String NOTIFICATION_REQUEST_TABLE_NAME = "notification_request";
     public static final String NOTIFICATION_REQUEST_TARGETS_PROPERTY = "targets";
     public static final String NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY = "template_id";
     public static final String NOTIFICATION_REQUEST_INFO_PROPERTY = "info";
-    public static final String NOTIFICATION_REQUEST_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY = "originator_entity_id";
     public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_TYPE_PROPERTY = "originator_entity_type";
     public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
