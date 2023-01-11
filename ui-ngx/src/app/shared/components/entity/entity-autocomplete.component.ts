@@ -342,12 +342,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       map((data) => {
         if (data) {
           if (this.excludeEntityIds && this.excludeEntityIds.length) {
+            const excludeEntityIdsSet = new Set(this.excludeEntityIds);
             const entities: Array<BaseData<EntityId>> = [];
-            data.forEach((entity) => {
-              if (this.excludeEntityIds.indexOf(entity.id.id) === -1) {
-                entities.push(entity);
-              }
-            });
+            data.forEach(entity => !excludeEntityIdsSet.has(entity.id.id) && entities.push(entity));
             return entities;
           } else {
             return data;
