@@ -794,7 +794,6 @@ CREATE TABLE IF NOT EXISTS notification_template (
     tenant_id UUID NULL CONSTRAINT fk_notification_template_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(32) NOT NULL,
-    notification_subject VARCHAR(255),
     configuration VARCHAR(10000) NOT NULL
 );
 
@@ -815,7 +814,6 @@ CREATE TABLE IF NOT EXISTS notification_request (
     targets VARCHAR(10000) NOT NULL,
     template_id UUID NOT NULL,
     info VARCHAR(1000),
-    delivery_methods VARCHAR(255),
     additional_config VARCHAR(1000),
     originator_type VARCHAR(32) NOT NULL,
     originator_entity_id UUID,

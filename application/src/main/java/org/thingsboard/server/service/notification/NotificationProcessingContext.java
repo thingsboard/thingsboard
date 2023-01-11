@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public class NotificationProcessingContext {
@@ -48,6 +49,8 @@ public class NotificationProcessingContext {
     @Getter
     private final NotificationTemplate notificationTemplate;
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
+    @Getter
+    private Set<NotificationDeliveryMethod> deliveryMethods;
     @Getter
     private final NotificationRequestStats stats;
 
@@ -63,13 +66,13 @@ public class NotificationProcessingContext {
 
     public void init() {
         NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
-        templates = templateConfig.getTemplates();
-        for (NotificationDeliveryMethod deliveryMethod : request.getDeliveryMethods()) {
-            DeliveryMethodNotificationTemplate template = templates.get(deliveryMethod);
+        templates = templateConfig.getDeliveryMethodsTemplates();
+        templates.forEach((deliveryMethod, template) -> {
             if (StringUtils.isEmpty(template.getBody())) {
                 template.setBody(templateConfig.getDefaultTextTemplate());
             }
-        }
+        });
+        deliveryMethods = templates.keySet();
     }
 
     public <T extends DeliveryMethodNotificationTemplate> T getTemplate(NotificationDeliveryMethod deliveryMethod) {

@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -97,7 +98,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
 
-        notificationRequest.getDeliveryMethods().forEach(deliveryMethod -> {
+        notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().keySet().forEach(deliveryMethod -> {
             if (settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) &&
                     !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
                 throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is disabled");
@@ -105,10 +106,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             if (deliveryMethod == NotificationDeliveryMethod.SLACK) {
                 if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod)) {
                     throw new IllegalArgumentException("Slack must be configured in the settings");
-                }
-                if (!notificationTemplate.getConfiguration().getTemplates().containsKey(deliveryMethod)) {
-                    throw new IllegalArgumentException("To send notification via Slack, " +
-                            "you need to configure corresponding template");
                 }
             }
         });
@@ -139,7 +136,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             DaoUtil.processBatches(pageLink -> {
                 return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), targetId, pageLink);
             }, 200, recipientsBatch -> {
-                for (NotificationDeliveryMethod deliveryMethod : savedNotificationRequest.getDeliveryMethods()) {
+                for (NotificationDeliveryMethod deliveryMethod : ctx.getDeliveryMethods()) {
                     List<User> recipients = recipientsBatch.getData();
                     log.debug("Sending {} notifications for request {} to recipients batch ({})", deliveryMethod, savedNotificationRequest.getId(), recipients.size());
                     NotificationChannel notificationChannel = channels.get(deliveryMethod);
@@ -168,11 +165,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             if (senderId != null) {
                 if (stats.getErrors().isEmpty()) {
                     int sent = stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum();
-                    sendBasicNotification(tenantId, senderId, NotificationType.COMPLETED, "Notifications sent",
+                    sendBasicNotification(tenantId, senderId, "Notifications sent",
                             "All notifications were successfully sent (" + sent + ")");
                 } else {
                     int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
-                    sendBasicNotification(tenantId, senderId, NotificationType.FAILURE, "Notification failure",
+                    sendBasicNotification(tenantId, senderId, "Notification failure",
                             "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to request' button
                 }
             }
@@ -211,13 +208,14 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     @Override
     public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
+        PushDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.PUSH);
         NotificationRequest request = ctx.getRequest();
         log.trace("Creating notification for recipient {} (notification request id: {})", recipient.getId(), request.getId());
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
                 .type(ctx.getNotificationTemplate().getNotificationType())
-                .subject(ctx.getNotificationTemplate().getNotificationSubject())
+                .subject(template.getSubject())
                 .text(text)
                 .info(request.getInfo())
                 .originatorType(request.getOriginatorType())
@@ -238,10 +236,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     @Override
-    public void sendBasicNotification(TenantId tenantId, UserId recipientId, NotificationType type, String subject, String text) {
+    public void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text) {
         Notification notification = Notification.builder()
                 .recipientId(recipientId)
-                .type(type)
+                .type(NotificationType.GENERAL)
                 .subject(subject)
                 .text(text)
                 .originatorType(NotificationOriginatorType.SYSTEM)

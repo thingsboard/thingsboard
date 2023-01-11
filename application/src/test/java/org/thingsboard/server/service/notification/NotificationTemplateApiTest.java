@@ -45,7 +45,6 @@ public class NotificationTemplateApiTest extends AbstractControllerTest {
         notificationTemplate.setTenantId(tenantId);
         notificationTemplate.setName(null);
         notificationTemplate.setNotificationType(null);
-        notificationTemplate.setNotificationSubject(null);
         notificationTemplate.setConfiguration(null);
 
         String validationError = saveAndGetError(notificationTemplate, status().isBadRequest());
@@ -58,10 +57,9 @@ public class NotificationTemplateApiTest extends AbstractControllerTest {
         notificationTemplate.setConfiguration(config);
         config.setDefaultTextTemplate("Default text");
         EmailDeliveryMethodNotificationTemplate emailTemplate = new EmailDeliveryMethodNotificationTemplate();
-        emailTemplate.setMethod(NotificationDeliveryMethod.EMAIL);
         emailTemplate.setBody(null);
         emailTemplate.setSubject(null);
-        config.setTemplates(Map.of(
+        config.setDeliveryMethodsTemplates(Map.of(
                 NotificationDeliveryMethod.EMAIL, emailTemplate
         ));
         notificationTemplate.setName("<script/>");
@@ -69,6 +67,7 @@ public class NotificationTemplateApiTest extends AbstractControllerTest {
         validationError = saveAndGetError(notificationTemplate, status().isBadRequest());
         assertThat(validationError)
                 .doesNotContain("defaultTextTemplate must be specified")
+                .contains("subject must not be")
                 .contains("name is malformed");
 
         config.setDefaultTextTemplate(null);

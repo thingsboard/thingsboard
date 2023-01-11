@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
-import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -115,7 +114,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
                     log.error("Failed to process scheduled notification request {}", notificationRequest.getId(), e);
                     UserId senderId = notificationRequest.getSenderId();
                     if (senderId != null) {
-                        notificationCenter.sendBasicNotification(tenantId, senderId, NotificationType.FAILURE, "Notification failure",
+                        notificationCenter.sendBasicNotification(tenantId, senderId, "Notification failure",
                                 "Failed to process scheduled notification (request " + notificationRequest.getId() + "): " + e.getMessage());
                     }
                 }

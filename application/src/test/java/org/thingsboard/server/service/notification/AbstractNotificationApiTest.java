@@ -38,6 +38,8 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
+import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -63,7 +65,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     protected MailService mailService;
 
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
-    public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.ADMIN;
+    public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
 
     protected NotificationTarget createNotificationTarget(UserId... usersIds) {
         NotificationTarget notificationTarget = new NotificationTarget();
@@ -101,7 +103,6 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
                 .targets(targets)
                 .templateId(notificationTemplate.getId())
                 .info(notificationInfo)
-                .deliveryMethods(List.of(deliveryMethods))
                 .additionalConfig(config)
                 .build();
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);
@@ -113,21 +114,32 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         notificationTemplate.setTenantId(tenantId);
         notificationTemplate.setName("Notification template for testing");
         notificationTemplate.setNotificationType(notificationType);
-        notificationTemplate.setNotificationSubject(subject);
         NotificationTemplateConfig config = new NotificationTemplateConfig();
         config.setDefaultTextTemplate(text);
-        config.setTemplates(new HashMap<>());
+        config.setDeliveryMethodsTemplates(new HashMap<>());
         for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-            if (deliveryMethod == NotificationDeliveryMethod.EMAIL) {
-                EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
-                emailNotificationTemplate.setSubject("Hello from test");
-                emailNotificationTemplate.setMethod(deliveryMethod);
-                config.getTemplates().put(deliveryMethod, emailNotificationTemplate);
-            } else {
-                DeliveryMethodNotificationTemplate defaultTemplate = new DeliveryMethodNotificationTemplate();
-                defaultTemplate.setMethod(deliveryMethod);
-                config.getTemplates().put(deliveryMethod, defaultTemplate);
+            DeliveryMethodNotificationTemplate deliveryMethodNotificationTemplate;
+            switch (deliveryMethod) {
+                case PUSH: {
+                    PushDeliveryMethodNotificationTemplate template = new PushDeliveryMethodNotificationTemplate();
+                    template.setSubject(subject);
+                    deliveryMethodNotificationTemplate = template;
+                    break;
+                }
+                case EMAIL: {
+                    EmailDeliveryMethodNotificationTemplate template = new EmailDeliveryMethodNotificationTemplate();
+                    template.setSubject(subject);
+                    deliveryMethodNotificationTemplate = template;
+                    break;
+                }
+                case SMS: {
+                    deliveryMethodNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
+                    break;
+                }
+                default:
+                    throw new IllegalArgumentException("Unsupported delivery method " + deliveryMethod);
             }
+            config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
         return doPost("/api/notification/template", notificationTemplate, NotificationTemplate.class);

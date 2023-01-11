@@ -47,7 +47,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @TbCoreComponent
@@ -135,7 +134,6 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .tenantId(tenantId)
                 .targets(List.of(targetId))
                 .templateId(notificationRule.getTemplateId())
-                .deliveryMethods(notificationRule.getDeliveryMethods())
                 .additionalConfig(config)
                 .info(notificationInfo)
                 .ruleId(notificationRule.getId())

@@ -17,11 +17,20 @@ package org.thingsboard.server.common.data.notification.template;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+
+import javax.validation.constraints.NotBlank;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class EmailDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
 
+    @NotBlank
     private String subject;
+
+    @Override
+    public NotificationDeliveryMethod getMethod() {
+        return NotificationDeliveryMethod.EMAIL;
+    }
 
 }

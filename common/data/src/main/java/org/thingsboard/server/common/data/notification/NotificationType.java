@@ -21,12 +21,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum NotificationType {
-    GENERIC("Generic"),
-    ADMIN("Admin"),
-    ALARM("Alarm"),
-    SCHEDULED_EVENT("Scheduled event"),
-    COMPLETED("Completed"),
-    FAILURE("Failure");
+
+    GENERAL("General"),
+    ALARM("Alarm");
 
     private final String name;
 

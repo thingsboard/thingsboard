@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationType;
 
 public interface NotificationCenter {
 
@@ -30,7 +29,7 @@ public interface NotificationCenter {
 
     NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
-    void sendBasicNotification(TenantId tenantId, UserId recipientId, NotificationType type, String subject, String text);
+    void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text);
 
 
     void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);

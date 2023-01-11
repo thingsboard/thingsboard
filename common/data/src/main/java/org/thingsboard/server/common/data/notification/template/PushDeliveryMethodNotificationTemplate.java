@@ -19,19 +19,17 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import javax.validation.constraints.NotEmpty;
-
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
+public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
 
-    private SlackConversation.Type conversationType;
-    @NotEmpty
-    private String conversationId;
+    private String subject;
+    private String icon;
+    private String actionButtonConfig;
 
     @Override
     public NotificationDeliveryMethod getMethod() {
-        return NotificationDeliveryMethod.SLACK;
+        return NotificationDeliveryMethod.PUSH;
     }
 
 }

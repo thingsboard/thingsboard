@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 
 import javax.validation.Valid;
 import javax.validation.constraints.AssertTrue;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.Map;
 
@@ -32,12 +31,12 @@ public class NotificationTemplateConfig {
     private String defaultTextTemplate;
     @Valid
     @NotEmpty
-    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
+    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> deliveryMethodsTemplates;
 
     @JsonIgnore
     @AssertTrue(message = "defaultTextTemplate must be specified if one absent for delivery method")
     public boolean isValid() {
-        if (templates.values().stream().anyMatch(template -> StringUtils.isEmpty(template.getBody()))) {
+        if (deliveryMethodsTemplates.values().stream().anyMatch(template -> StringUtils.isEmpty(template.getBody()))) {
             return StringUtils.isNotEmpty(defaultTextTemplate);
         } else {
             return true;

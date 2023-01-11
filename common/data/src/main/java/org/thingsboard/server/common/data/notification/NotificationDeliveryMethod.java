@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data.notification;
 
 public enum NotificationDeliveryMethod {
-    PUSH, SMS, EMAIL, SLACK
+    PUSH, EMAIL, SMS, SLACK
 }

@@ -19,7 +19,6 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 
 import javax.validation.constraints.NotEmpty;
@@ -33,14 +32,11 @@ public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNoti
     private List<NotificationTargetId> targets;
     @NotNull
     private NotificationTemplateId templateId;
-    @NotEmpty
-    private List<NotificationDeliveryMethod> deliveryMethods;
     private NotificationRequestConfig additionalConfig;
 
     @Override
     public TbNotificationNodeConfiguration defaultConfiguration() {
         TbNotificationNodeConfiguration config = new TbNotificationNodeConfiguration();
-        config.setDeliveryMethods(List.of(NotificationDeliveryMethod.PUSH));
         config.setAdditionalConfig(new NotificationRequestConfig());
         return config;
     }

@@ -21,7 +21,6 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
@@ -53,9 +52,6 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
     @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY, nullable = false)
     private NotificationType notificationType;
 
-    @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_NOTIFICATION_SUBJECT_PROPERTY)
-    private String notificationSubject;
-
     @Type(type = "json")
     @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY, nullable = false)
     private JsonNode configuration;
@@ -68,7 +64,6 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         setTenantId(getTenantUuid(notificationTemplate.getTenantId()));
         setName(notificationTemplate.getName());
         setNotificationType(notificationTemplate.getNotificationType());
-        setNotificationSubject(notificationTemplate.getNotificationSubject());
         setConfiguration(toJson(notificationTemplate.getConfiguration()));
     }
 
@@ -80,7 +75,6 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         notificationTemplate.setTenantId(getTenantId(tenantId));
         notificationTemplate.setName(name);
         notificationTemplate.setNotificationType(notificationType);
-        notificationTemplate.setNotificationSubject(notificationSubject);
         notificationTemplate.setConfiguration(fromJson(configuration, NotificationTemplateConfig.class));
         return notificationTemplate;
     }

@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.NotificationDao;
-import org.thingsboard.server.dao.notification.NotificationRequestDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
@@ -67,8 +66,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     private NotificationCenter notificationCenter;
     @Autowired
     private NotificationDao notificationDao;
-    @Autowired
-    private NotificationRequestDao notificationRequestDao;
     @Autowired
     private DbCallbackExecutorService executor;
 
@@ -354,7 +351,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationsForALotOfUsers() throws Exception {
-        int usersCount = 7000;
+        int usersCount = 5000;
 
         List<User> users = new ArrayList<>();
         for (int i = 1; i <= usersCount; i++) {

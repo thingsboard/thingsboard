@@ -21,7 +21,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -53,8 +52,6 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationTemplateId templateId;
     @Valid
     private NotificationInfo info;
-    @NotEmpty
-    private List<NotificationDeliveryMethod> deliveryMethods;
     @NotNull
     @Valid
     private NotificationRequestConfig additionalConfig;
@@ -70,7 +67,7 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     @JsonIgnore
     @Override
     public String getName() {
-        return "To targets " + targets + " via " + StringUtils.join(deliveryMethods, ", ");
+        return "To targets " + targets;
     }
 
     @JsonIgnore

@@ -60,7 +60,6 @@ public class TbNotificationNode implements TbNode {
                 .targets(config.getTargets())
                 .templateId(config.getTemplateId())
                 .info(notificationInfo)
-                .deliveryMethods(config.getDeliveryMethods())
                 .additionalConfig(new NotificationRequestConfig())
                 .originatorType(NotificationOriginatorType.RULE_NODE)
                 .originatorEntityId(ctx.getSelfId())
