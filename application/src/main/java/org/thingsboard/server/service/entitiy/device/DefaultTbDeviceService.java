@@ -155,7 +155,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, publicCustomer.getId()));
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, savedDevice.getCustomerId(), savedDevice,
-                    actionType, user, false, deviceId.toString(),
+                    actionType, user, true, deviceId.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
 
             return savedDevice;

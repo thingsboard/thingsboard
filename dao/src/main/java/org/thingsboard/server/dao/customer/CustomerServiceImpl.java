@@ -134,17 +134,10 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     }
 
     @Override
-    public Optional<Customer> findPublicCustomer(TenantId tenantId) {
-        log.trace("Executing findPublicCustomer, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
-        return customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), PUBLIC_CUSTOMER_TITLE);
-    }
-
-    @Override
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
-        Optional<Customer> publicCustomerOpt = findPublicCustomer(tenantId);
+        Optional<Customer> publicCustomerOpt = customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), PUBLIC_CUSTOMER_TITLE);
         if (publicCustomerOpt.isPresent()) {
             return publicCustomerOpt.get();
         } else {
