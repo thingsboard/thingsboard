@@ -718,6 +718,7 @@ export class EntityService {
         entityFieldKeys.push(entityFields.email.keyName);
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
+        entityFieldKeys.push(entityFields.phone.keyName);
         break;
       case EntityType.TENANT:
       case EntityType.CUSTOMER:

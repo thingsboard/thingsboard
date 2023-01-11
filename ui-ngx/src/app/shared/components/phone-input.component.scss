@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+:host {
+  display: block;
+  margin-bottom: 8px;
+}
+
 :host ::ng-deep {
 
   .flag-loader {
