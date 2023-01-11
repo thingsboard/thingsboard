@@ -24,6 +24,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -56,6 +58,12 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         long ackTs = System.currentTimeMillis();
         ListenableFuture<Boolean> future = alarmSubscriptionService.ackAlarm(alarm.getTenantId(), alarm.getId(), ackTs);
         return Futures.transform(future, result -> {
+            AlarmComment alarmComment = AlarmComment.builder()
+                    .alarmId(alarm.getId())
+                    .type(AlarmCommentType.SYSTEM)
+                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was acknowledged by user %s", user.getName())))
+                    .build();
+            alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             alarm.setAckTs(ackTs);
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_ACK, user);
@@ -68,6 +76,12 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         long clearTs = System.currentTimeMillis();
         ListenableFuture<Boolean> future = alarmSubscriptionService.clearAlarm(alarm.getTenantId(), alarm.getId(), null, clearTs);
         return Futures.transform(future, result -> {
+            AlarmComment alarmComment = AlarmComment.builder()
+                    .alarmId(alarm.getId())
+                    .type(AlarmCommentType.SYSTEM)
+                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was cleared by user %s", user.getName())))
+                    .build();
+            alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             alarm.setClearTs(clearTs);
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_CLEAR, user);

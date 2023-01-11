@@ -314,10 +314,6 @@ sql:
     alarms:
       checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
       removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
-    alarms_comments:
-      enabled: "${SQL_TTL_ALARM_COMMENTS_ENABLED:true}"
-      ttl: "${SQL_TTL_ALARM_COMMENTS_SECS:0}" # Disabled by default. Accuracy of the cleanup depends on the sql.alarm_comments.partition_size
-      checking_interval_ms: "${SQL_TTL_ALARM_COMMENTS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}"
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours

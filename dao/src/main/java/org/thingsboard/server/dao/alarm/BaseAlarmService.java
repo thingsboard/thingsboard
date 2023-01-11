@@ -165,7 +165,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
-        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
+        return new AlarmOperationResult(saved, true, true, null, propagatedEntitiesList);
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -208,6 +208,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         boolean propagationEnabled = !oldAlarm.isPropagate() && newAlarm.isPropagate();
         boolean propagationToOwnerEnabled = !oldAlarm.isPropagateToOwner() && newAlarm.isPropagateToOwner();
         boolean propagationToTenantEnabled = !oldAlarm.isPropagateToTenant() && newAlarm.isPropagateToTenant();
+        AlarmSeverity oldAlarmSeverity = oldAlarm.getSeverity();
         Alarm result = alarmDao.save(newAlarm.getTenantId(), merge(oldAlarm, newAlarm));
         List<EntityId> propagatedEntitiesList;
         if (propagationEnabled || propagationToOwnerEnabled || propagationToTenantEnabled) {
@@ -220,7 +221,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
         }
-        return new AlarmOperationResult(result, true, propagatedEntitiesList);
+        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
     }
 
     @Override

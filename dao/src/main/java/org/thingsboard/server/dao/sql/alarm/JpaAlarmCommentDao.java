@@ -54,8 +54,6 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     @Autowired
     private AlarmCommentRepository alarmCommentRepository;
 
-    private static final String TABLE_NAME = ALARM_COMMENT_COLUMN_FAMILY_NAME;
-
     @Override
     public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
         log.trace("Saving entity {}", alarmComment);
@@ -87,11 +85,6 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key) {
         log.trace("Try to find alarm comment by id using [{}]", key);
         return findByIdAsync(tenantId, key);
-    }
-
-    @Override
-    public void cleanUpAlarmComments(long expTime) {
-        partitioningRepository.dropPartitionsBefore(TABLE_NAME, expTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
 
     @Override

@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.security.Authority;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import static org.thingsboard.server.common.data.alarm.AlarmCommentType.OTHER;
+
 public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
 
     public static final String TEST_ALARM = "TEST_ALARM";
@@ -80,18 +82,18 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
     public void testSaveAndFetchAlarmComment() throws ExecutionException, InterruptedException {
         AlarmComment alarmComment = AlarmComment.builder().alarmId(alarm.getId())
                 .userId(user.getId())
-                .type("OTHER")
+                .type(OTHER)
                 .comment(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)))
                 .build();
 
-        AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment).getAlarmComment();
+        AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
 
         Assert.assertNotNull(createdComment);
         Assert.assertNotNull(createdComment.getId());
 
         Assert.assertEquals(alarm.getId(), createdComment.getAlarmId());
         Assert.assertEquals(user.getId(), createdComment.getUserId());
-        Assert.assertEquals("OTHER", createdComment.getType());
+        Assert.assertEquals(OTHER, createdComment.getType());
         Assert.assertTrue(createdComment.getCreatedTime() > 0);
 
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
@@ -108,11 +110,11 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         UserId userId = new UserId(UUID.randomUUID());
         AlarmComment alarmComment = AlarmComment.builder().alarmId(alarm.getId())
                 .userId(userId)
-                .type("OTHER")
+                .type(OTHER)
                 .comment(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)))
                 .build();
 
-        AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment).getAlarmComment();
+        AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
 
         Assert.assertNotNull(createdComment);
         Assert.assertNotNull(createdComment.getId());
@@ -120,11 +122,11 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         //update comment
         String newComment = "new comment";
         createdComment.setComment(JacksonUtil.newObjectNode().put("text", newComment));
-        AlarmComment updatedComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, createdComment).getAlarmComment();
+        AlarmComment updatedComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, createdComment);
 
         Assert.assertEquals(alarm.getId(), updatedComment.getAlarmId());
         Assert.assertEquals(userId, updatedComment.getUserId());
-        Assert.assertEquals("OTHER", updatedComment.getType());
+        Assert.assertEquals(OTHER, updatedComment.getType());
         Assert.assertTrue(updatedComment.getCreatedTime() > 0);
         Assert.assertEquals(newComment, updatedComment.getComment().get("text").asText());
         Assert.assertEquals("true", updatedComment.getComment().get("edited").asText());
@@ -144,16 +146,16 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         UserId userId = new UserId(UUID.randomUUID());
         AlarmComment alarmComment = AlarmComment.builder().alarmId(alarm.getId())
                 .userId(userId)
-                .type("OTHER")
+                .type(OTHER)
                 .comment(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)))
                 .build();
 
-        AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment).getAlarmComment();
+        AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
 
         Assert.assertNotNull(createdComment);
         Assert.assertNotNull(createdComment.getId());
 
-        Assert.assertTrue("Alarm comment was not deleted when expected", alarmCommentService.deleteAlarmComment(tenantId, createdComment.getId()).isSuccessful());
+        alarmCommentService.deleteAlarmComment(tenantId, createdComment.getId());
 
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
 

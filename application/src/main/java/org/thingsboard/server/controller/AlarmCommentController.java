@@ -89,14 +89,14 @@ public class AlarmCommentController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/comment/{commentId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Boolean deleteAlarmComment(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId, @ApiParam(value = ALARM_COMMENT_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_COMMENT_ID) String strCommentId) throws ThingsboardException {
+    public void deleteAlarmComment(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId, @ApiParam(value = ALARM_COMMENT_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_COMMENT_ID) String strCommentId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.DELETE);
 
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
-        AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId);
-        return tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, getCurrentUser());
+        AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, alarmId);
+        tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Alarm comments (getAlarmComments)",

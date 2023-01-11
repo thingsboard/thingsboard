@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.dao.alarm.AlarmCommentOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -44,6 +43,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,7 +77,7 @@ public class DefaultTbAlarmCommentServiceTest {
     public void testSave() throws ThingsboardException {
         var alarm = new Alarm();
         var alarmComment = new AlarmComment();
-        when(alarmCommentService.createOrUpdateAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(new AlarmCommentOperationResult(alarmComment, true));
+        when(alarmCommentService.createOrUpdateAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
         service.saveAlarmComment(alarm, alarmComment, new User());
 
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarmComment(any(), any(), any(), any());
@@ -88,7 +88,7 @@ public class DefaultTbAlarmCommentServiceTest {
         var alarmId = new AlarmId(UUID.randomUUID());
         var alarmCommentId = new AlarmCommentId(UUID.randomUUID());
 
-        when(alarmCommentService.deleteAlarmComment(Mockito.any(), eq(alarmCommentId))).thenReturn(new AlarmCommentOperationResult(new AlarmComment(), true));
+        doNothing().when(alarmCommentService).deleteAlarmComment(Mockito.any(), eq(alarmCommentId));
         service.deleteAlarmComment(new Alarm(alarmId), new AlarmComment(alarmCommentId), new User());
 
         verify(notificationEntityService, times(1)).notifyDeleteAlarmComment(any(), any(), any());
