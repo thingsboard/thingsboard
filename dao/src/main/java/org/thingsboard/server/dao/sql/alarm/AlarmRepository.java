@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
+import org.hibernate.type.UUIDCharType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,7 +43,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
             "FROM AlarmEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
-            "LEFT JOIN UserEntity tbu ON ea.assigneeId = tbu.id " +
+            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId " +
             "AND ea.tenantId = :tenantId " +
             "AND ea.entityId = :affectedEntityId " +
@@ -50,7 +51,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
             "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))" +
+            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
@@ -66,7 +67,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
                     "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))" +
+                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -82,12 +83,12 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
             "FROM AlarmEntity a " +
-            "LEFT JOIN UserEntity tbu ON a.assigneeId = tbu.id " +
+            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))" +
+            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ",
@@ -98,7 +99,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))" +
+                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -112,12 +113,12 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
             "FROM AlarmEntity a " +
-            "LEFT JOIN UserEntity tbu ON a.assigneeId = tbu.id " +
+            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))" +
+            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
@@ -129,7 +130,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))" +
+                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
