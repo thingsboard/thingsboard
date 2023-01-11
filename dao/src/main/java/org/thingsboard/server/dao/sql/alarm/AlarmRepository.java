@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import org.hibernate.type.UUIDCharType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,7 +50,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
             "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
@@ -67,7 +66,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
                     "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -77,7 +76,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                      @Param("startTime") Long startTime,
                                      @Param("endTime") Long endTime,
                                      @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
-                                     @Param("assigneeId") UUID assigneeId,
+                                     @Param("assigneeId") String assigneeId,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
@@ -88,7 +87,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ",
@@ -99,7 +98,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -107,7 +106,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                         @Param("startTime") Long startTime,
                                         @Param("endTime") Long endTime,
                                         @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
-                                        @Param("assigneeId") UUID assigneeId,
+                                        @Param("assigneeId") String assigneeId,
                                         @Param("searchText") String searchText,
                                         Pageable pageable);
 
@@ -118,7 +117,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
@@ -130,7 +129,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-                    "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId)) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -139,7 +138,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                              @Param("startTime") Long startTime,
                                              @Param("endTime") Long endTime,
                                              @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
-                                             @Param("assigneeId") UUID assigneeId,
+                                             @Param("assigneeId") String assigneeId,
                                              @Param("searchText") String searchText,
                                              Pageable pageable);
 
@@ -150,7 +149,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ea.entityId = :affectedEntityId " +
             "AND ea.entityType = :affectedEntityType " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
-            "AND (cast(:assigneeId as org.hibernate.type.UUIDCharType) IS NULL OR a.assigneeId = (:assigneeId))")
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId))")
     Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
                                            @Param("affectedEntityId") UUID affectedEntityId,
                                            @Param("affectedEntityType") String affectedEntityType,

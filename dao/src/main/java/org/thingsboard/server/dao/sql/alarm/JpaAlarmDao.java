@@ -115,9 +115,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         } else if (query.getStatus() != null) {
             statusSet = Collections.singleton(query.getStatus());
         }
-        UUID assigneeId = null;
+        String assigneeId = null;
         if (query.getAssigneeId() != null) {
-            assigneeId = query.getAssigneeId().getId();
+            assigneeId = query.getAssigneeId().toString();
         }
         if (affectedEntity != null) {
             return DaoUtil.toPageData(
@@ -157,9 +157,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         } else if (query.getStatus() != null) {
             statusSet = Collections.singleton(query.getStatus());
         }
-        UUID assigneeId = null;
+        String assigneeId = null;
         if (query.getAssigneeId() != null) {
-            assigneeId = query.getAssigneeId().getId();
+            assigneeId = query.getAssigneeId().toString();
         }
         return DaoUtil.toPageData(
                 alarmRepository.findCustomerAlarms(
