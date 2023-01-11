@@ -133,9 +133,11 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
     private WsClient establishWsClient() throws Exception {
         stopWatch.start();
         String accessToken = tbClient.logIn();
+        log.trace("[{}] Received new access token", transportInfo);
         monitoringReporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
 
         WsClient wsClient = wsClientFactory.createClient(accessToken);
+        log.trace("[{}] Created WS client", transportInfo);
         wsClient.subscribeForTelemetry(target.getDevice().getId(), TEST_TELEMETRY_KEY);
         Optional.ofNullable(wsClient.waitForReply(wsConfig.getRequestTimeoutMs()))
                 .orElseThrow(() -> new IllegalStateException("Failed to subscribe for telemetry"));

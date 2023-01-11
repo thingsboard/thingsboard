@@ -35,11 +35,13 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -69,14 +71,15 @@ public class MonitoringReporter {
     @EventListener(ApplicationReadyEvent.class)
     public void startLatenciesMonitoring() {
         monitoringExecutor.scheduleWithFixedDelay(() -> {
+            List<Latency> latencies = this.latencies.values().stream()
+                    .filter(Latency::isNotEmpty)
+                    .collect(Collectors.toList());
             if (latencies.isEmpty()) {
                 return;
             }
-            log.info("Latencies:\n{}", latencies.values());
-            if (latencies.values().stream()
-                    .filter(Latency::isNotEmpty)
-                    .anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
-                HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies.values(), latencyThresholdMs);
+            log.info("Latencies:\n{}", latencies);
+            if (latencies.stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
+                HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies, latencyThresholdMs);
                 notificationService.sendNotification(highLatencyNotification);
             }
 
@@ -90,11 +93,9 @@ public class MonitoringReporter {
                     }
                     tbClient.logIn();
                     ObjectNode msg = JacksonUtil.newObjectNode();
-                    latencies.forEach((key, latency) -> {
-                        if (latency.isNotEmpty()) {
-                            msg.set(key, new DoubleNode(latency.getAvg()));
-                            latency.reset();
-                        }
+                    latencies.forEach(latency -> {
+                        msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
+                        latency.reset();
                     });
                     tbClient.saveEntityTelemetry(entityId, "time", msg);
                 } catch (Exception e) {
@@ -107,7 +108,8 @@ public class MonitoringReporter {
     public void reportLatency(String key, long latencyInNanos) {
         String latencyKey = key + "Latency";
         double latencyInMs = (double) latencyInNanos / 1000_000;
-        latencies.computeIfAbsent(key, k -> new Latency(latencyKey)).report(latencyInMs);
+        log.trace("Reporting latency [{}]: {} ms", key, latencyInMs);
+        latencies.computeIfAbsent(latencyKey, k -> new Latency(latencyKey)).report(latencyInMs);
     }
 
     public void serviceFailure(Object serviceKey, Exception error) {
