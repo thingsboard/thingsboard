@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 abstract public class AbstractBasePage {
@@ -161,8 +162,12 @@ abstract public class AbstractBasePage {
         driver.switchTo().window(tabs.get(tabNumber - 1));
     }
 
-    public static long getRandomNumber() {
-        return System.currentTimeMillis();
+    public static String getRandomNumber() {
+        StringBuilder random = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            random.append(ThreadLocalRandom.current().nextInt(0, 100));
+        }
+        return random.toString();
     }
 
     public static char getRandomSymbol() {
