@@ -27,16 +27,15 @@ import org.thingsboard.server.service.notification.NotificationProcessingContext
 
 @Component
 @RequiredArgsConstructor
-public class EmailNotificationChannel implements NotificationChannel {
+public class EmailNotificationChannel implements NotificationChannel<EmailDeliveryMethodNotificationTemplate> {
 
     private final MailService mailService;
     private final MailExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
-        EmailDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.EMAIL);
+    public ListenableFuture<Void> sendNotification(User recipient, EmailDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         return executor.submit(() -> {
-            mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), template.getSubject(), text);
+            mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), processedTemplate.getSubject(), processedTemplate.getBody());
             return null;
         });
     }

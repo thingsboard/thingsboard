@@ -19,20 +19,22 @@ import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
-import org.thingsboard.server.common.data.notification.info.RuleNodeOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.HasSubject;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +50,7 @@ public class NotificationProcessingContext {
 
     @Getter
     private final NotificationTemplate notificationTemplate;
-    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
+    private final Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
     @Getter
     private Set<NotificationDeliveryMethod> deliveryMethods;
     @Getter
@@ -61,29 +63,50 @@ public class NotificationProcessingContext {
         this.request = request;
         this.settings = settings;
         this.notificationTemplate = template;
+        this.templates = new EnumMap<>(NotificationDeliveryMethod.class);
         this.stats = new NotificationRequestStats();
     }
 
     public void init() {
         NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
-        templates = templateConfig.getDeliveryMethodsTemplates();
-        templates.forEach((deliveryMethod, template) -> {
+        templateConfig.getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
+            if (!template.isEnabled()) return;
+
+            template = template.copy();
             if (StringUtils.isEmpty(template.getBody())) {
                 template.setBody(templateConfig.getDefaultTextTemplate());
             }
+            if (template instanceof HasSubject) {
+                if (StringUtils.isEmpty(((HasSubject) template).getSubject())) {
+                    ((HasSubject) template).setSubject(templateConfig.getNotificationSubject());
+                }
+            }
+            templates.put(deliveryMethod, template);
         });
         deliveryMethods = templates.keySet();
-    }
-
-    public <T extends DeliveryMethodNotificationTemplate> T getTemplate(NotificationDeliveryMethod deliveryMethod) {
-        return (T) templates.get(deliveryMethod);
     }
 
     public <C extends NotificationDeliveryMethodConfig> C getDeliveryMethodConfig(NotificationDeliveryMethod deliveryMethod) {
         return (C) settings.getDeliveryMethodsConfigs().get(deliveryMethod);
     }
 
-    public Map<String, String> createTemplateContext(User recipient) {
+    protected <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, User recipient) {
+        Map<String, String> templateContext = createTemplateContext(recipient);
+
+        T template = (T) templates.get(deliveryMethod).copy();
+        template.setBody(processTemplate(template.getBody(), templateContext));
+        if (template instanceof HasSubject) {
+            String subject = ((HasSubject) template).getSubject();
+            ((HasSubject) template).setSubject(processTemplate(subject, templateContext));
+        }
+        return template;
+    }
+
+    private <T extends DeliveryMethodNotificationTemplate> String processTemplate(String template, Map<String, String> context) {
+        return TbNodeUtils.processTemplate(template, context);
+    }
+
+    private Map<String, String> createTemplateContext(User recipient) {
         Map<String, String> templateContext = new HashMap<>();
         templateContext.put("email", recipient.getEmail());
         templateContext.put("firstName", Strings.nullToEmpty(recipient.getFirstName()));

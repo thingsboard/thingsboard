@@ -17,15 +17,26 @@ package org.thingsboard.server.common.data.notification.template;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class SmsDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
+
+    public SmsDeliveryMethodNotificationTemplate(SmsDeliveryMethodNotificationTemplate other) {
+        super(other);
+    }
 
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.SMS;
+    }
+
+    @Override
+    public DeliveryMethodNotificationTemplate copy() {
+        return new SmsDeliveryMethodNotificationTemplate(this);
     }
 
 }

@@ -17,11 +17,13 @@ package org.thingsboard.server.common.data.notification.template;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import javax.validation.constraints.NotEmpty;
 
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
 
@@ -29,9 +31,20 @@ public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotif
     @NotEmpty
     private String conversationId;
 
+    public SlackDeliveryMethodNotificationTemplate(SlackDeliveryMethodNotificationTemplate other) {
+        super(other);
+        this.conversationType = other.conversationType;
+        this.conversationId = other.conversationId;
+    }
+
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.SLACK;
+    }
+
+    @Override
+    public SlackDeliveryMethodNotificationTemplate copy() {
+        return new SlackDeliveryMethodNotificationTemplate(this);
     }
 
 }

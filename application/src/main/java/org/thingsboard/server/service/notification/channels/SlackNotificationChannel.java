@@ -30,22 +30,20 @@ import org.thingsboard.server.service.notification.NotificationProcessingContext
 
 @Component
 @RequiredArgsConstructor
-public class SlackNotificationChannel implements NotificationChannel {
+public class SlackNotificationChannel implements NotificationChannel<SlackDeliveryMethodNotificationTemplate> {
 
     private final SlackService slackService;
     private final ExternalCallExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
+    public ListenableFuture<Void> sendNotification(User recipient, SlackDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         if (ctx.getStats().contains(NotificationDeliveryMethod.SLACK)) {
             return Futures.immediateFailedFuture(new AlreadySentException());
         }
 
-        SlackDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.SLACK);
         SlackNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.SLACK);
-
         return executor.submit(() -> {
-            slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), template.getConversationId(), text);
+            slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), processedTemplate.getConversationId(), processedTemplate.getBody());
             return null;
         });
     }

@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,10 +33,20 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
         @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class)
 })
 @Data
+@NoArgsConstructor
 public abstract class DeliveryMethodNotificationTemplate {
 
+    private boolean enabled;
     private String body;
 
+    public DeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {
+        this.enabled = other.enabled;
+        this.body = other.body;
+    }
+
     public abstract NotificationDeliveryMethod getMethod();
+
+    @JsonIgnore
+    public abstract DeliveryMethodNotificationTemplate copy();
 
 }

@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -140,6 +139,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
                 default:
                     throw new IllegalArgumentException("Unsupported delivery method " + deliveryMethod);
             }
+            deliveryMethodNotificationTemplate.setEnabled(true);
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);

@@ -18,11 +18,12 @@ package org.thingsboard.server.service.notification.channels;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
-public interface NotificationChannel {
+public interface NotificationChannel<T extends DeliveryMethodNotificationTemplate> {
 
-    ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx);
+    ListenableFuture<Void> sendNotification(User recipient, T processedTemplate, NotificationProcessingContext ctx);
 
     NotificationDeliveryMethod getDeliveryMethod();
 

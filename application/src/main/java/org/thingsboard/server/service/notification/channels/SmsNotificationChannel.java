@@ -23,22 +23,25 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 
 @Component
 @RequiredArgsConstructor
-public class SmsNotificationChannel implements NotificationChannel {
+public class SmsNotificationChannel implements NotificationChannel<SmsDeliveryMethodNotificationTemplate> {
 
     private final SmsService smsService;
     private final SmsExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
+    public ListenableFuture<Void> sendNotification(User recipient, SmsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         String phone = recipient.getPhone();
-        if (StringUtils.isBlank(phone)) return Futures.immediateFailedFuture(new RuntimeException("User does not have phone number"));
+        if (StringUtils.isBlank(phone))
+            return Futures.immediateFailedFuture(new RuntimeException("User does not have phone number"));
+
         return executor.submit(() -> {
-            smsService.sendSms(recipient.getTenantId(), recipient.getCustomerId(), new String[]{phone}, text);
+            smsService.sendSms(recipient.getTenantId(), recipient.getCustomerId(), new String[]{phone}, processedTemplate.getBody());
             return null;
         });
     }

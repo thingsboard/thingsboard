@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.NotificationCenter;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -76,8 +75,8 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@SuppressWarnings("UnstableApiUsage")
-public class DefaultNotificationCenter extends AbstractSubscriptionService implements NotificationCenter, NotificationChannel {
+@SuppressWarnings({"UnstableApiUsage", "rawtypes"})
+public class DefaultNotificationCenter extends AbstractSubscriptionService implements NotificationCenter, NotificationChannel<PushDeliveryMethodNotificationTemplate> {
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationRequestService notificationRequestService;
@@ -97,7 +96,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
 
-        notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().keySet().forEach(deliveryMethod -> {
+        notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
+            if (!template.isEnabled()) return;
             if (settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) &&
                     !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
                 throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is disabled");
@@ -182,14 +182,13 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
             return Futures.immediateFailedFuture(new AlreadySentException());
         }
-        String text;
+        DeliveryMethodNotificationTemplate processedTemplate;
         try {
-            DeliveryMethodNotificationTemplate template = ctx.getTemplate(deliveryMethod);
-            text = TbNodeUtils.processTemplate(template.getBody(), ctx.createTemplateContext(recipient));
+            processedTemplate = ctx.getProcessedTemplate(deliveryMethod, recipient);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
-        return notificationChannel.sendNotification(recipient, text, ctx);
+        return notificationChannel.sendNotification(recipient, processedTemplate, ctx);
     }
 
     private void forwardToNotificationSchedulerService(TenantId tenantId, NotificationRequestId notificationRequestId) {
@@ -206,16 +205,15 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, String text, NotificationProcessingContext ctx) {
-        PushDeliveryMethodNotificationTemplate template = ctx.getTemplate(NotificationDeliveryMethod.PUSH);
+    public ListenableFuture<Void> sendNotification(User recipient, PushDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         NotificationRequest request = ctx.getRequest();
         log.trace("Creating notification for recipient {} (notification request id: {})", recipient.getId(), request.getId());
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
                 .type(ctx.getNotificationTemplate().getNotificationType())
-                .subject(template.getSubject())
-                .text(text)
+                .subject(processedTemplate.getSubject())
+                .text(processedTemplate.getBody())
                 .info(request.getInfo())
                 .status(NotificationStatus.SENT)
                 .build();
@@ -281,11 +279,14 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
         log.debug("Deleting notification request {}", notificationRequestId);
+        NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, notificationRequestId);// TODO: add caching
         notificationRequestService.deleteNotificationRequestById(tenantId, notificationRequestId);
-        onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
-                .notificationRequestId(notificationRequestId)
-                .deleted(true)
-                .build());
+        if (notificationRequest.isSent()) {
+            onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
+                    .notificationRequestId(notificationRequestId)
+                    .deleted(true)
+                    .build());
+        }
         clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
     }
 

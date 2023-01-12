@@ -17,19 +17,33 @@ package org.thingsboard.server.common.data.notification.template;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
+public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
     private String subject;
     private String icon;
     private String actionButtonConfig;
 
+    public PushDeliveryMethodNotificationTemplate(PushDeliveryMethodNotificationTemplate other) {
+        super(other);
+        this.subject = other.subject;
+        this.icon = other.icon;
+        this.actionButtonConfig = other.actionButtonConfig;
+    }
+
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.PUSH;
+    }
+
+    @Override
+    public PushDeliveryMethodNotificationTemplate copy() {
+        return new PushDeliveryMethodNotificationTemplate(this);
     }
 
 }

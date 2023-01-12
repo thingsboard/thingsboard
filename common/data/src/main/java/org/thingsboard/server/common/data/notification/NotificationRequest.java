@@ -75,4 +75,9 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
         return originatorEntityId instanceof UserId ? (UserId) originatorEntityId : null;
     }
 
+    @JsonIgnore
+    public boolean isSent() {
+        return status == NotificationRequestStatus.SENT;
+    }
+
 }

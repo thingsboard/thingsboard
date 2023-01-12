@@ -28,19 +28,27 @@ import java.util.Map;
 @Data
 public class NotificationTemplateConfig {
 
+    private String notificationSubject;
     private String defaultTextTemplate;
     @Valid
     @NotEmpty
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> deliveryMethodsTemplates;
 
     @JsonIgnore
-    @AssertTrue(message = "defaultTextTemplate must be specified if one absent for delivery method")
+    @AssertTrue(message = "defaultTextTemplate and notificationSubject must be specified if one absent for delivery method")
     public boolean isValid() {
-        if (deliveryMethodsTemplates.values().stream().anyMatch(template -> StringUtils.isEmpty(template.getBody()))) {
-            return StringUtils.isNotEmpty(defaultTextTemplate);
-        } else {
-            return true;
+        for (DeliveryMethodNotificationTemplate template : deliveryMethodsTemplates.values()) {
+            if (StringUtils.isEmpty(template.getBody()) && StringUtils.isEmpty(defaultTextTemplate)) {
+                return false;
+            }
+            if (template instanceof HasSubject) {
+                String subject = ((HasSubject) template).getSubject();
+                if (StringUtils.isEmpty(subject) && StringUtils.isEmpty(notificationSubject)) {
+                    return false;
+                }
+            }
         }
+        return true;
     }
 
 }
