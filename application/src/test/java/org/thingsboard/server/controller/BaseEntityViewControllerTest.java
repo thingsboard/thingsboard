@@ -310,7 +310,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testNotifyEntityAllOneTime(unAssignedView, savedView.getId(), savedView.getId(),
                 tenantId, savedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.UNASSIGNED_FROM_CUSTOMER,
-                savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
+                assignedView.getId().getId().toString(), savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
     }
 
     @Test
@@ -461,7 +461,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testBroadcastEntityStateChangeEventNever(loadedNamesOfView1.get(0).getId());
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new EntityView(), new EntityView(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 2);
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
 
         PageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_TYPE_REF,
                 new PageLink(4, 0, name1));
