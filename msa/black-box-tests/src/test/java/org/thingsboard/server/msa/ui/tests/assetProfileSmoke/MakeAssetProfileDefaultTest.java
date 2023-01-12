@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
@@ -24,10 +24,14 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
+import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
+
+public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
+    private String name;
 
     @BeforeMethod
     public void login() {
@@ -38,32 +42,37 @@ public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeProfileDefault() {
-        testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
+        testRestClient.setDefaultAssetProfile(getAssetProfileByName("default").getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void makeDeviceProfileDefaultByRightCornerBtn() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.setProfileName();
-        String profile = profilesPage.getProfileName();
-        profilesPage.makeProfileDefaultBtn(profile).click();
+        String name = ENTITY_NAME;
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        this.name = name;
+
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.makeProfileDefaultBtn(name).click();
         profilesPage.warningPopUpYesBtn().click();
 
-        Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
+        Assert.assertTrue(profilesPage.defaultCheckbox(name).isDisplayed());
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void makeDeviceProfileDefaultFromView() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.setProfileName();
-        String profile = profilesPage.getProfileName();
-        profilesPage.entity(profile).click();
-        profilesPage.deviceProfileViewMakeDefaultBtn().click();
+        String name = ENTITY_NAME;
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        this.name = name;
+
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.entity(name).click();
+        profilesPage.assetProfileViewMakeDefaultBtn().click();
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.closeEntityViewBtn().click();
 
-        Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
+        Assert.assertTrue(profilesPage.defaultCheckbox(name).isDisplayed());
     }
 }

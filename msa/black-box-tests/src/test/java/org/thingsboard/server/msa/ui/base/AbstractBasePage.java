@@ -142,6 +142,11 @@ abstract public class AbstractBasePage {
         js.executeScript("arguments[0].click();", element);
     }
 
+    public void enterText(WebElement element, CharSequence keysToEnter) {
+        element.click();
+        element.sendKeys(keysToEnter);
+    }
+
     public void scrollToElement(WebElement element) {
         js.executeScript("arguments[0].scrollIntoView(true);", element);
     }

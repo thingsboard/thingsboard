@@ -29,6 +29,8 @@ import io.restassured.specification.RequestSpecification;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -318,6 +320,41 @@ public class TestRestClient {
     public void setDefaultDeviceProfile(DeviceProfileId deviceProfileId) {
         given().spec(requestSpec)
                 .post("/api/deviceProfile/{deviceProfileId}/default", deviceProfileId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public AssetProfile postAssetProfile(AssetProfile assetProfile) {
+        return given().spec(requestSpec).body(assetProfile)
+                .post("/api/assetProfile")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(AssetProfile.class);
+    }
+
+    public PageData<AssetProfile> getAssetProfiles(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/assetProfiles")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<PageData<AssetProfile>>() {
+                });
+    }
+
+    public void deleteAssetProfile(AssetProfileId assetProfileId) {
+        given().spec(requestSpec)
+                .delete("/api/assetProfile/{assetProfileId}", assetProfileId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public void setDefaultAssetProfile(AssetProfileId assetProfileId) {
+        given().spec(requestSpec)
+                .post("/api/assetProfile/{assetProfileId}/default", assetProfileId.getId())
                 .then()
                 .statusCode(HTTP_OK);
     }

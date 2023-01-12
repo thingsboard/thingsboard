@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
@@ -27,16 +27,16 @@ import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_IMPORT_MESSAGE;
-import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_DEVICE_PROFILE_FILE_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_DEVICE_PROFILE_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_ASSET_PROFILE_FILE_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_ASSET_PROFILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_TXT_FILE_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE;
 
-public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
+public class CreateAssetProfileImportTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
-    private final String absolutePathToFileImportDeviceProfile = getClass().getClassLoader().getResource(IMPORT_DEVICE_PROFILE_FILE_NAME).getPath();
+    private final String absolutePathToFileImportAssetProfile = getClass().getClassLoader().getResource(IMPORT_ASSET_PROFILE_FILE_NAME).getPath();
     private final String absolutePathToFileImportTxt = getClass().getClassLoader().getResource(IMPORT_TXT_FILE_NAME).getPath();
     private String name;
 
@@ -50,23 +50,23 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
             name = null;
         }
     }
 
-    @Test(priority = 10, groups = "smoke")
+    @Test(priority = 20, groups = "smoke")
     @Description
-    public void importDeviceProfile() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openImportDeviceProfileView();
-        profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
+    public void importAssetProfile() {
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openImportAssetProfileView();
+        profilesPage.browseFile().sendKeys(absolutePathToFileImportAssetProfile);
         profilesPage.importBrowseFileBtn().click();
-        name = IMPORT_DEVICE_PROFILE_NAME;
+        name = IMPORT_ASSET_PROFILE_NAME;
         profilesPage.refreshBtn().click();
 
-        Assert.assertNotNull(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME));
-        Assert.assertTrue(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME).isDisplayed());
+        Assert.assertNotNull(profilesPage.entity(IMPORT_ASSET_PROFILE_NAME));
+        Assert.assertTrue(profilesPage.entity(IMPORT_ASSET_PROFILE_NAME).isDisplayed());
     }
 
     @Test(priority = 20, groups = "smoke")
@@ -82,45 +82,45 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void addFileTiImportAndRemove() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openImportDeviceProfileView();
-        profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
+    public void addFileToImportAndRemove() {
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openImportAssetProfileView();
+        profilesPage.browseFile().sendKeys(absolutePathToFileImportAssetProfile);
         profilesPage.clearImportFileBtn().click();
 
         Assert.assertNotNull(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE));
         Assert.assertTrue(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
-        Assert.assertTrue(profilesPage.entityIsNotPresent(IMPORT_DEVICE_PROFILE_NAME));
+        Assert.assertTrue(profilesPage.entityIsNotPresent(IMPORT_ASSET_PROFILE_NAME));
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void importDeviceProfileWithSameName() {
-        String name = IMPORT_DEVICE_PROFILE_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+    public void importAssetProfileWithSameName() {
+        String name = IMPORT_ASSET_PROFILE_NAME;
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openImportDeviceProfileView();
-        profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openImportAssetProfileView();
+        profilesPage.browseFile().sendKeys(absolutePathToFileImportAssetProfile);
         profilesPage.importBrowseFileBtn().click();
         profilesPage.refreshBtn().click();
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE);
+        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE);
     }
 
-    @Test(priority = 30, groups = "smoke")
+    @Test(priority = 20, groups = "smoke")
     @Description
-    public void importDeviceProfileWithoutRefresh() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openImportDeviceProfileView();
-        profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
+    public void importAssetProfileWithoutRefresh() {
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openImportAssetProfileView();
+        profilesPage.browseFile().sendKeys(absolutePathToFileImportAssetProfile);
         profilesPage.importBrowseFileBtn().click();
-        name = IMPORT_DEVICE_PROFILE_NAME;
+        name = IMPORT_ASSET_PROFILE_NAME;
 
-        Assert.assertNotNull(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME));
-        Assert.assertTrue(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME).isDisplayed());
+        Assert.assertNotNull(profilesPage.entity(IMPORT_ASSET_PROFILE_NAME));
+        Assert.assertTrue(profilesPage.entity(IMPORT_ASSET_PROFILE_NAME).isDisplayed());
     }
 }

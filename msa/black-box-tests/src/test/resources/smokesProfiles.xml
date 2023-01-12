@@ -30,6 +30,7 @@
         </groups>
         <packages>
             <package name="org.thingsboard.server.msa.ui.tests.deviceProfileSmoke"/>
+            <package name="org.thingsboard.server.msa.ui.tests.assetProfileSmoke"/>
         </packages>
     </test>
 </suite>

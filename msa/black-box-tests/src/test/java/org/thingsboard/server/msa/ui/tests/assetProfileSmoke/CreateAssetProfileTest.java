@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
-import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -27,12 +26,11 @@ import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_ASSET_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.NAME_IS_REQUIRED_MESSAGE;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE;
 
-public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
+public class CreateAssetProfileTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
@@ -48,20 +46,20 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
             name = null;
         }
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
-    public void createDeviceProfile() {
+    public void createAssetProfile() {
         String name = ENTITY_NAME;
 
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openCreateDeviceProfileView();
-        profilesPage.createDeviceProfileEnterName(name);
-        profilesPage.addDeviceProfileAddBtn().click();
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openCreateAssetProfileView();
+        profilesPage.addAssetProfileViewEnterName(name);
+        profilesPage.addAssetProfileAddBtn().click();
         this.name = name;
         profilesPage.refreshBtn().click();
 
@@ -71,21 +69,21 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void createDeviceProfileWithDetails() {
+    public void createAssetProfileWithDetails() {
         String name = ENTITY_NAME;
         String ruleChain = "Root Rule Chain";
         String mobileDashboard = "Firmware";
         String queue = "Main";
         String description = "Description";
 
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openCreateDeviceProfileView();
-        profilesPage.createDeviceProfileEnterName(name);
-        profilesPage.addDeviceProfileViewChooseRuleChain(ruleChain);
-        profilesPage.addDeviceProfileViewChooseMobileDashboard(mobileDashboard);
-        profilesPage.addDeviceProfileViewChooseQueue(queue);
-        profilesPage.addDeviceProfileViewEnterDescription(description);
-        profilesPage.addDeviceProfileAddBtn().click();
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openCreateAssetProfileView();
+        profilesPage.addAssetProfileViewEnterName(name);
+        profilesPage.addAssetProfileViewChooseRuleChain(ruleChain);
+        profilesPage.addAssetProfileViewChooseMobileDashboard(mobileDashboard);
+        profilesPage.addAssetsProfileViewChooseQueue(queue);
+        profilesPage.addAssetProfileViewEnterDescription(description);
+        profilesPage.addAssetProfileAddBtn().click();
         this.name = name;
         profilesPage.refreshBtn().click();
         profilesPage.entity(name).click();
@@ -106,76 +104,71 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void createDeviseProfileWithSameName() {
+    public void createAssetProfileWithSameName() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openCreateDeviceProfileView();
-        profilesPage.createDeviceProfileEnterName(name);
-        profilesPage.addDeviceProfileAddBtn().click();
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openCreateAssetProfileView();
+        profilesPage.addAssetProfileViewEnterName(name);
+        profilesPage.addAssetProfileAddBtn().click();
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE);
-        Assert.assertNotNull(profilesPage.addDeviceProfileView());
-        Assert.assertTrue(profilesPage.addDeviceProfileView().isDisplayed());
+        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE);
+        Assert.assertNotNull(profilesPage.addAssetProfileView());
+        Assert.assertTrue(profilesPage.addAssetProfileView().isDisplayed());
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void createDeviceProfileWithoutName() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openCreateDeviceProfileView();
-        profilesPage.addDeviceProfileAddBtn().click();
+    public void createAssetProfileWithoutName() {
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openCreateAssetProfileView();
 
-        Assert.assertNotNull(profilesPage.addDeviceProfileView());
-        Assert.assertTrue(profilesPage.addDeviceProfileView().isDisplayed());
-        Assert.assertNotNull(profilesPage.errorMessage());
-        Assert.assertEquals(profilesPage.errorMessage().getText(), NAME_IS_REQUIRED_MESSAGE);
+        Assert.assertFalse(profilesPage.addBtnV().isEnabled());
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void createDeviseProfileWithOnlySpaceInName() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openCreateDeviceProfileView();
-        profilesPage.createDeviceProfileEnterName(Keys.SPACE);
-        profilesPage.addDeviceProfileAddBtn().click();
+    public void createAssetProfileWithOnlySpaceInName() {
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openCreateAssetProfileView();
+        profilesPage.addAssetProfileViewEnterName(" ");
+        profilesPage.addAssetProfileAddBtn().click();
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), EMPTY_DEVICE_PROFILE_MESSAGE);
-        Assert.assertNotNull(profilesPage.addDeviceProfileView());
-        Assert.assertTrue(profilesPage.addDeviceProfileView().isDisplayed());
+        Assert.assertEquals(profilesPage.warningMessage().getText(), EMPTY_ASSET_PROFILE_MESSAGE);
+        Assert.assertNotNull(profilesPage.addAssetProfileView());
+        Assert.assertTrue(profilesPage.addAssetProfileView().isDisplayed());
     }
 
-    @Test(priority = 20, groups = "smoke")
+    @Test(priority = 30, groups = "smoke")
     @Description
-    public void createDeviceProfileWithoutRefresh() {
+    public void createAssetProfileWithoutRefresh() {
         String name = ENTITY_NAME;
 
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.openCreateDeviceProfileView();
-        profilesPage.createDeviceProfileEnterName(name);
-        profilesPage.addDeviceProfileAddBtn().click();
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.openCreateAssetProfileView();
+        profilesPage.addAssetProfileViewEnterName(name);
+        profilesPage.addAssetProfileAddBtn().click();
         this.name = name;
 
         Assert.assertNotNull(profilesPage.entity(name));
         Assert.assertTrue(profilesPage.entity(name).isDisplayed());
     }
 
-    @Test(priority = 30, groups = "smoke")
+    @Test(priority = 40, groups = "smoke")
     @Description
     public void documentation() {
-        String urlPath = "docs/user-guide/device-profiles/";
+        String urlPath = "docs/user-guide/asset-profiles/";
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.allEntity().get(0).click();
         profilesPage.goToProfileHelpPage();
 
         Assert.assertTrue(urlContains(urlPath));
     }
 }
-

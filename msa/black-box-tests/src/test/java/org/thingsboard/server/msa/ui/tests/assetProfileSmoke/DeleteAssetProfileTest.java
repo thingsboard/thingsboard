@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
@@ -27,7 +27,7 @@ import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
-public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
+public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
@@ -41,11 +41,11 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
 
     @Test(priority = 10, groups = "smoke")
     @Description
-    public void removeDeviceProfile() {
+    public void removeAssetProfile() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.deleteBtn(name).click();
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.refreshBtn();
@@ -53,28 +53,28 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entityIsNotPresent(name));
     }
 
-    @Test(priority = 20, groups = "smoke")
+    @Test(priority = 10, groups = "smoke")
     @Description
-    public void removeDeviceProfileFromView() {
+    public void removeAssetProfileFromView() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
-        profilesPage.deviceProfileViewDeleteBtn().click();
+        profilesPage.assetProfileViewDeleteBtn().click();
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.refreshBtn();
 
         Assert.assertTrue(profilesPage.entityIsNotPresent(name));
     }
 
-    @Test(priority = 20, groups = "smoke")
+    @Test(priority = 10, groups = "smoke")
     @Description
-    public void removeSelectedDeviceProfile() {
+    public void removeSelectedAssetProfile() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.checkBox(name).click();
         profilesPage.deleteSelectedBtn().click();
         profilesPage.warningPopUpYesBtn().click();
@@ -85,25 +85,25 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void removeDefaultDeviceProfile() {
-        sideBarMenuView.openDeviceProfiles();
+    public void removeDefaultAssetProfile() {
+        sideBarMenuView.openAssetProfiles();
 
         Assert.assertFalse(profilesPage.deleteBtn("default").isEnabled());
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void removeDefaultDeviceProfileFromView() {
-        sideBarMenuView.openDeviceProfiles();
+    public void removeDefaultAssetProfileFromView() {
+        sideBarMenuView.openAssetProfiles();
         profilesPage.entity("default").click();
 
-        Assert.assertTrue(profilesPage.deleteDeviceProfileFromViewBtnIsNotDisplayed());
+        Assert.assertTrue(profilesPage.deleteAssetProfileFromViewBtnIsNotDisplayed());
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void removeSelectedDefaultDeviceProfile() {
-        sideBarMenuView.openDeviceProfiles();
+    public void removeSelectedDefaultAssetProfile() {
+        sideBarMenuView.openAssetProfiles();
 
         Assert.assertNotNull(profilesPage.presentCheckBox("default"));
         Assert.assertFalse(profilesPage.presentCheckBox("default").isDisplayed());
@@ -111,11 +111,11 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
 
     @Test(priority = 30, groups = "smoke")
     @Description
-    public void removeDeviceProfileWithoutRefresh() {
+    public void removeAssetProfileWithoutRefresh() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.deleteBtn(name).click();
         profilesPage.warningPopUpYesBtn().click();
 

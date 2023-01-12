@@ -29,6 +29,7 @@ public class SideBarMenuViewElements extends AbstractBasePage {
     private static final String DASHBOARD_BTN = "//mat-toolbar//a[@href='/dashboards']";
     private static final String PROFILES_BTN = "//mat-toolbar//a[@href='/profiles']";
     private static final String DEVICE_PROFILE_BTN = "//mat-toolbar//a[@href='/profiles/deviceProfiles']";
+    private static final String ASSET_PROFILE_BTN = "//mat-toolbar//a[@href='/profiles/assetProfiles']";
 
     public WebElement ruleChainsBtn() {
         return waitUntilElementToBeClickable(RULE_CHAINS_BTN);
@@ -48,5 +49,9 @@ public class SideBarMenuViewElements extends AbstractBasePage {
 
     public WebElement deviceProfileBtn() {
         return waitUntilElementToBeClickable(DEVICE_PROFILE_BTN);
+    }
+
+    public WebElement assetProfileBtn() {
+        return waitUntilElementToBeClickable(ASSET_PROFILE_BTN);
     }
 }

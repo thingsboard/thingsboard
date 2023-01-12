@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -28,8 +29,6 @@ import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_CUSTOMER_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_CUSTOMER_MESSAGE;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 
 public class CreateCustomerTest extends AbstractDriverBaseTest {
 
@@ -39,9 +38,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         customerPage = new CustomerPageHelper(driver);
     }
@@ -61,7 +58,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(customerName);
+        customerPage.addCustomerViewEnterName(customerName);
         customerPage.addBtnC().click();
         this.customerName = customerName;
         customerPage.refreshBtn().click();
@@ -80,7 +77,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(customerName);
+        customerPage.addCustomerViewEnterName(customerName);
         customerPage.selectCountryAddEntityView();
         customerPage.descriptionAddEntityView().sendKeys(text);
         customerPage.cityAddEntityView().sendKeys(text);
@@ -128,7 +125,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     public void createCustomerWithOnlySpace() {
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(" ");
+        customerPage.addCustomerViewEnterName(Keys.SPACE);
         customerPage.addBtnC().click();
 
         Assert.assertNotNull(customerPage.warningMessage());
@@ -145,7 +142,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
         customerPage.setCustomerName();
         String customerName = customerPage.getCustomerName();
         customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(customerName);
+        customerPage.addCustomerViewEnterName(customerName);
         customerPage.addBtnC().click();
 
         Assert.assertNotNull(customerPage.warningMessage());
@@ -162,7 +159,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(customerName);
+        customerPage.addCustomerViewEnterName(customerName);
         customerPage.addBtnC().click();
         this.customerName = customerName;
 

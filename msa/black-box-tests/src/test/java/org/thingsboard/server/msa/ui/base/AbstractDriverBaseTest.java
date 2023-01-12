@@ -38,6 +38,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -49,6 +50,8 @@ import java.time.Duration;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 
 @Slf4j
 abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
@@ -66,6 +69,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     @BeforeMethod
     public void openBrowser() {
         log.info("===>>> Setup driver");
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         ChromeOptions options = new ChromeOptions();
         options.setAcceptInsecureCerts(true);
         if (instance.isActive()) {
@@ -77,6 +81,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
+        openLocalhost();
     }
 
     @AfterMethod
@@ -138,6 +143,16 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
         } catch (Exception e) {
             log.error("No such device profile with name: " + name);
+            return null;
+        }
+    }
+
+    public static AssetProfile getAssetProfileByName(String name) {
+        try {
+            return testRestClient.getAssetProfiles(pageLink).getData().stream()
+                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such asset profile with name: " + name);
             return null;
         }
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
@@ -23,11 +23,11 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 
-public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
+public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
 
@@ -40,14 +40,32 @@ public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
 
     @Test(priority = 10, groups = "smoke")
     @Description
-    public void canDeleteSeveralDeviceProfilesByTopBtn() {
+    public void canDeleteSeveralAssetProfilesByTopBtn() {
         String name1 = ENTITY_NAME + "1";
         String name2 = ENTITY_NAME + "2";
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name1));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name2));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.clickOnCheckBoxes(2);
+        profilesPage.deleteSelectedBtn().click();
+        profilesPage.warningPopUpYesBtn().click();
+        profilesPage.refreshBtn().click();
+
+        Assert.assertTrue(profilesPage.profileIsNotPresent(name1));
+        Assert.assertTrue(profilesPage.profileIsNotPresent(name2));
+    }
+
+    @Test(priority = 10, groups = "smoke")
+    @Description
+    public void selectAllDAssetProfiles() {
+        String name1 = ENTITY_NAME + "1";
+        String name2 = ENTITY_NAME + "2";
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
+
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.selectAllCheckBox().click();
         profilesPage.deleteSelectedBtn().click();
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.refreshBtn().click();
@@ -58,20 +76,8 @@ public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke")
     @Description
-    public void selectAllDeviceProfiles() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.selectAllCheckBox().click();
-        profilesPage.deleteSelectedBtn().click();
-
-        Assert.assertNotNull(profilesPage.warningPopUpTitle());
-        Assert.assertTrue(profilesPage.warningPopUpTitle().isDisplayed());
-        Assert.assertTrue(profilesPage.warningPopUpTitle().getText().contains(String.valueOf(profilesPage.markCheckbox().size())));
-    }
-
-    @Test(priority = 20, groups = "smoke")
-    @Description
-    public void removeDefaultDeviceProfile() {
-        sideBarMenuView.openDeviceProfiles();
+    public void removeDefaultAssetProfile() {
+        sideBarMenuView.openAssetProfiles();
         profilesPage.selectAllCheckBox().click();
 
         Assert.assertFalse(profilesPage.checkBoxIsDisplayed("default"));
@@ -80,13 +86,13 @@ public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
 
     @Test(priority = 30, groups = "smoke")
     @Description
-    public void deleteSeveralDeviceProfilesByTopBtnWithoutRefresh() {
+    public void deleteSeveralAssetProfilesByTopBtnWithoutRefresh() {
         String name1 = ENTITY_NAME + "1";
         String name2 = ENTITY_NAME + "2";
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name1));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name2));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.clickOnCheckBoxes(2);
         profilesPage.deleteSelectedBtn().click();
         profilesPage.warningPopUpYesBtn().click();

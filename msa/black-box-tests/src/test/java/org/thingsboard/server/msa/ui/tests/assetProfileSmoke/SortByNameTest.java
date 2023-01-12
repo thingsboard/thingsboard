@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
@@ -26,7 +26,7 @@ import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultAssetProfile;
 
 public class SortByNameTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
@@ -43,7 +43,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
             name = null;
         }
     }
@@ -51,10 +51,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterUp(String name) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.sortByNameBtn().click();
         profilesPage.setProfileName();
 
@@ -63,36 +63,36 @@ public class SortByNameTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
-    public void allSortUp(String deviceProfile, String deviceProfileSymbol, String deviceProfileNumber) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileSymbol));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfile));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileNumber));
+    public void allSortUp(String assetProfile, String assetProfileSymbol, String assetProfileNumber) {
+        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileSymbol));
+        testRestClient.postAssetProfile(defaultAssetProfile(assetProfile));
+        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileNumber));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.sortByNameBtn().click();
         profilesPage.setProfileName(0);
-        String firstDeviceProfile = profilesPage.getProfileName();
+        String firstAssetProfile = profilesPage.getProfileName();
         profilesPage.setProfileName(1);
-        String secondDeviceProfile = profilesPage.getProfileName();
+        String secondAssetProfile = profilesPage.getProfileName();
         profilesPage.setProfileName(2);
-        String thirdDeviceProfile = profilesPage.getProfileName();
+        String thirdAssetProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfile).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileNumber).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileSymbol).getId());
 
-        Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
-        Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);
-        Assert.assertEquals(thirdDeviceProfile, deviceProfile);
+        Assert.assertEquals(firstAssetProfile, assetProfileSymbol);
+        Assert.assertEquals(secondAssetProfile, assetProfileNumber);
+        Assert.assertEquals(thirdAssetProfile, assetProfile);
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterDown(String name) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.sortByNameDown();
         profilesPage.setProfileName(profilesPage.allEntity().size() - 1);
 
@@ -101,27 +101,27 @@ public class SortByNameTest extends AbstractDriverBaseTest {
 
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
-    public void allSortDown(String deviceProfile, String deviceProfileSymbol, String deviceProfileNumber) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileSymbol));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfile));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileNumber));
+    public void allSortDown(String assetProfile, String assetProfileSymbol, String assetProfileNumber) {
+        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileSymbol));
+        testRestClient.postAssetProfile(defaultAssetProfile(assetProfile));
+        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileNumber));
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         int lastIndex = profilesPage.allEntity().size() - 1;
         profilesPage.sortByNameDown();
         profilesPage.setProfileName(lastIndex);
-        String firstDeviceProfile = profilesPage.getProfileName();
+        String firstAssetProfile = profilesPage.getProfileName();
         profilesPage.setProfileName(lastIndex - 1);
-        String secondDeviceProfile = profilesPage.getProfileName();
+        String secondAssetProfile = profilesPage.getProfileName();
         profilesPage.setProfileName(lastIndex - 2);
-        String thirdDeviceProfile = profilesPage.getProfileName();
+        String thirdAssetProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfile).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileNumber).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileSymbol).getId());
 
-        Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
-        Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);
-        Assert.assertEquals(thirdDeviceProfile, deviceProfile);
+        Assert.assertEquals(firstAssetProfile, assetProfileSymbol);
+        Assert.assertEquals(secondAssetProfile, assetProfileNumber);
+        Assert.assertEquals(thirdAssetProfile, assetProfile);
     }
 }

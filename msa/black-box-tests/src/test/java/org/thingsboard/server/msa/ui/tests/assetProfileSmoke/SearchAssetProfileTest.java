@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
@@ -24,10 +24,14 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
+import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
+public class SearchAssetProfileTest extends AbstractDriverBaseTest {
+
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
+    private String name;
 
     @BeforeMethod
     public void login() {
@@ -37,33 +41,22 @@ public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
     }
 
     @AfterMethod
-    public void makeProfileDefault() {
-        testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
+    public void delete() {
+        if (name != null) {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+            name = null;
+        }
     }
 
-    @Test(priority = 10, groups = "smoke")
+    @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "assetProfileSearch")
     @Description
-    public void makeDeviceProfileDefaultByRightCornerBtn() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.setProfileName();
-        String profile = profilesPage.getProfileName();
-        profilesPage.makeProfileDefaultBtn(profile).click();
-        profilesPage.warningPopUpYesBtn().click();
+    public void searchFirstWord(String name, String namePath) {
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        this.name = name;
 
-        Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
-    }
+        sideBarMenuView.openAssetProfiles();
+        profilesPage.searchEntity(namePath);
 
-    @Test(priority = 10, groups = "smoke")
-    @Description
-    public void makeDeviceProfileDefaultFromView() {
-        sideBarMenuView.openDeviceProfiles();
-        profilesPage.setProfileName();
-        String profile = profilesPage.getProfileName();
-        profilesPage.entity(profile).click();
-        profilesPage.deviceProfileViewMakeDefaultBtn().click();
-        profilesPage.warningPopUpYesBtn().click();
-        profilesPage.closeEntityViewBtn().click();
-
-        Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
+        profilesPage.allEntity().forEach(x -> Assert.assertTrue(x.getText().contains(namePath)));
     }
 }

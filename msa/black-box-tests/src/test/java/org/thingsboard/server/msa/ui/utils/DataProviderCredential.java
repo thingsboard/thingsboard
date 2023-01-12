@@ -34,6 +34,7 @@ public class DataProviderCredential {
     private static final String RULE_CHAIN_FIRST_WORD_NAME_PATH = "Root";
     private static final String CUSTOMER_FIRST_WORD_NAME_PATH = "A";
     private static final String DEFAULT_DEVICE_PROFILE_NAME = "Device Profile";
+    private static final String DEFAULT_ASSET_PROFILE_NAME = "Asset Profile";
 
     @DataProvider
     public static Object[][] ruleChainNameForSearchByFirstAndSecondWord() {
@@ -83,6 +84,15 @@ public class DataProviderCredential {
         return new Object[][]{
                 {DEFAULT_DEVICE_PROFILE_NAME, DEFAULT_DEVICE_PROFILE_NAME.split(" ")[0]},
                 {DEFAULT_DEVICE_PROFILE_NAME, DEFAULT_DEVICE_PROFILE_NAME.split(" ")[1]},
+                {NAME, ENTITY_NAME.split("`")[1]},
+                {NAME, String.valueOf(getRandomSymbol())}};
+    }
+
+    @DataProvider
+    public static Object[][] assetProfileSearch() {
+        return new Object[][]{
+                {DEFAULT_ASSET_PROFILE_NAME, DEFAULT_ASSET_PROFILE_NAME.split(" ")[0]},
+                {DEFAULT_ASSET_PROFILE_NAME, DEFAULT_ASSET_PROFILE_NAME.split(" ")[1]},
                 {NAME, ENTITY_NAME.split("`")[1]},
                 {NAME, String.valueOf(getRandomSymbol())}};
     }

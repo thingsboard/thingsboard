@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.msa.ui.utils;
 
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -34,9 +36,23 @@ public class EntityPrototypes {
         return customer;
     }
 
+    public static Customer defaultCustomerPrototype(String entityName, String description) {
+        Customer customer = new Customer();
+        customer.setTitle(entityName);
+        customer.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        return customer;
+    }
+
     public static RuleChain defaultRuleChainPrototype(String entityName) {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
+        return ruleChain;
+    }
+
+    public static RuleChain defaultRuleChainPrototype(String entityName, String description) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(entityName);
+        ruleChain.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
         return ruleChain;
     }
 
@@ -67,5 +83,18 @@ public class EntityPrototypes {
         deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
         deviceProfile.setProfileData(deviceProfileData);
         return deviceProfile;
+    }
+
+    public static AssetProfile defaultAssetProfile(String entityName) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setName(entityName);
+        return assetProfile;
+    }
+
+    public static AssetProfile defaultAssetProfile(String entityName, String description) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setName(entityName);
+        assetProfile.setDescription(description);
+        return assetProfile;
     }
 }

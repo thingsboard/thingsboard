@@ -26,4 +26,9 @@ public class SideBarMenuViewHelper extends SideBarMenuViewElements {
         profilesBtn().click();
         deviceProfileBtn().click();
     }
+
+    public void openAssetProfiles() {
+        profilesBtn().click();
+        assetProfileBtn().click();
+    }
 }

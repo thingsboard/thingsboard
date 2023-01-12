@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
+package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
 import org.openqa.selenium.Keys;
@@ -29,10 +29,10 @@ import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
-import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_ASSET_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
-public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
+public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
@@ -48,7 +48,7 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
             name = null;
         }
     }
@@ -58,32 +58,32 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     public void changeName() {
         String name = ENTITY_NAME;
         String newName = "Changed" + getRandomNumber();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
         profilesPage.setHeaderName();
-        String titleBefore = profilesPage.getHeaderName();
+        String nameBefore = profilesPage.getHeaderName();
         jsClick(profilesPage.editPencilBtn());
         profilesPage.changeNameEditMenu(newName);
         profilesPage.doneBtnEditView().click();
         this.name = newName;
         profilesPage.setHeaderName();
-        String titleAfter = profilesPage.getHeaderName();
+        String nameAfter = profilesPage.getHeaderName();
 
-        Assert.assertNotEquals(titleBefore, titleAfter);
-        Assert.assertEquals(titleAfter, newName);
+        Assert.assertNotEquals(nameBefore, nameAfter);
+        Assert.assertEquals(nameAfter, newName);
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void deleteName() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
         jsClick(profilesPage.editPencilBtn());
         profilesPage.changeNameEditMenu("");
@@ -95,10 +95,10 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void saveWithOnlySpaceInName() {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
         jsClick(profilesPage.editPencilBtn());
         profilesPage.changeNameEditMenu(Keys.SPACE);
@@ -106,17 +106,17 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), EMPTY_DEVICE_PROFILE_MESSAGE);
+        Assert.assertEquals(profilesPage.warningMessage().getText(), EMPTY_ASSET_PROFILE_MESSAGE);
     }
 
     @Test(priority = 30, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
     @Description
     public void editDescription(String description, String newDescription, String finalDescription) {
         String name = ENTITY_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name, description));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name, description));
         this.name = name;
 
-        sideBarMenuView.openDeviceProfiles();
+        sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
         jsClick(profilesPage.editPencilBtn());
         profilesPage.profileViewDescriptionField().sendKeys(newDescription);
