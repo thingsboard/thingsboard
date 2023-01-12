@@ -236,6 +236,10 @@ public class ThingsboardInstallService {
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
+                        case "3.4.3":
+                            log.info("Upgrading ThingsBoard from version 3.4.3 to 3.5 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.4.3");
+                            break;
 
                         //TODO update CacheCleanupService on the next version upgrade
 
