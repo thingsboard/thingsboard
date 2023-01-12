@@ -27,48 +27,128 @@
 <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
 </mat-progress-bar>
 <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-<form mat-dialog-content [formGroup]="templateNotificationForm">
-  <mat-form-field class="mat-block">
-    <mat-label translate>notification.target-name</mat-label>
-    <input matInput formControlName="name" required>
-    <mat-error *ngIf="templateNotificationForm.get('name').hasError('required')">
-      {{ 'notification.target-name-required' | translate }}
-    </mat-error>
-  </mat-form-field>
-  <label style="margin-bottom: 8px">{{ 'notification.type' | translate }}<sup> *</sup></label>
-  <mat-radio-group formControlName="type">
-    <mat-radio-button [value]="NotificationType.GENERIC">
-      <div fxLayout="column">
-        <div>Generic</div>
-        <div class="tb-hint">hint</div>
-      </div>
-    </mat-radio-button>
-    <mat-radio-button [value]="NotificationType.ALARM">
-      <div>Alarm</div>
-      <div class="tb-hint">hint</div>
-    </mat-radio-button>
-  </mat-radio-group>
-  <section formGroupName="configuration">
-    <mat-form-field class="mat-block">
-      <mat-label translate>notification.message</mat-label>
-      <input matInput formControlName="defaultTextTemplate" required>
-      <mat-error *ngIf="templateNotificationForm.get('configuration.defaultTextTemplate').hasError('required')">
-        {{ 'notification.message-required' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>notification.subject</mat-label>
-      <input matInput required>
-    </mat-form-field>
-  </section>
-</form>
+<div mat-dialog-content [formGroup]="templateNotificationForm">
+  <mat-horizontal-stepper [linear]="true" labelPosition="end" #addNotificationTemplate [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="templateNotificationForm">
+      <ng-template matStepLabel>{{ 'notification.basic-settings' | translate }}</ng-template>
+      <form [formGroup]="templateNotificationForm" style="padding-bottom: 16px;">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.target-name</mat-label>
+          <input matInput formControlName="name" required>
+          <mat-error *ngIf="templateNotificationForm.get('name').hasError('required')">
+            {{ 'notification.target-name-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <label style="margin-bottom: 8px">{{ 'notification.type' | translate }}</label>
+        <mat-radio-group formControlName="notificationType">
+          <mat-radio-button *ngFor="let notificationType of notificationTypes" [value]="notificationType">
+            <div fxLayout="column">
+              <div>{{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}</div>
+              <div class="tb-hint">{{ notificationTemplateTypeTranslateMap.get(notificationType).hint }}</div>
+            </div>
+          </mat-radio-button>
+        </mat-radio-group>
+        <section formGroupName="configuration">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.subject</mat-label>
+            <input matInput formControlName="notificationSubject" required>
+            <mat-error *ngIf="templateNotificationForm.get('configuration.notificationSubject').hasError('required')">
+              {{ 'notification.subject-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.message</mat-label>
+            <input matInput formControlName="defaultTextTemplate" required>
+            <mat-error *ngIf="templateNotificationForm.get('configuration.defaultTextTemplate').hasError('required')">
+              {{ 'notification.message-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <label style="margin-bottom: 8px; display: block;">Delivery methods <sup>*</sup></label>
+          <section formGroupName="deliveryMethodsTemplates" fxLayout="row warap">
+            <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
+                     [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
+              <mat-checkbox class="delivery-method" formControlName="enabled">{{ deliveryMethods }}</mat-checkbox>
+            </section>
+          </section>
+          <div class="tb-hint">At least one should be selected</div>
+        </section>
+      </form>
+    </mat-step>
+    <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.PUSH.enabled').value"
+      [stepControl]="pushTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.web-settings' | translate }}</ng-template>
+      <form [formGroup]="pushTemplateForm">
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.subject</mat-label>
+          <input matInput formControlName="subject" [placeholder]="templateNotificationForm.get('configuration.notificationSubject').value">
+        </mat-form-field>
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.message</mat-label>
+          <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
+      [stepControl]="emailTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.email-settings' | translate }}</ng-template>
+      <ng-template matStepContent>
+        <form [formGroup]="emailTemplateForm">
+          <mat-form-field class="mat-block" floatLabel="always">
+            <mat-label translate>notification.subject</mat-label>
+            <input matInput formControlName="subject" [placeholder]="templateNotificationForm.get('configuration.notificationSubject').value">
+          </mat-form-field>
+          <mat-label class="tb-title" translate>notification.message</mat-label>
+          <editor [init]="tinyMceOptions" formControlName="body"></editor>
+        </form>
+      </ng-template>
+    </mat-step>
+    <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SMS.enabled').value"
+              [stepControl]="smsTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.sms-settings' | translate }}</ng-template>
+      <form [formGroup]="smsTemplateForm">
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.message</mat-label>
+          <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SLACK.enabled').value"
+              [stepControl]="slackTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.slack-settings' | translate }}</ng-template>
+      <form [formGroup]="slackTemplateForm">
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.message</mat-label>
+          <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+        </mat-form-field>
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label>Conversation type</mat-label>
+          <input matInput formControlName="conversationType">
+        </mat-form-field>
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label>Conversation id</mat-label>
+          <input matInput formControlName="conversationId" required>
+          <mat-error *ngIf="slackTemplateForm.get('conversationId').hasError('required')">
+            {{ 'notification.subject-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
 <mat-divider></mat-divider>
-<div mat-dialog-actions fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end">
-  <button mat-button
-          [disabled]="(isLoading$ | async)"
-          (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+<div mat-dialog-actions fxLayout="row">
+  <button mat-stroked-button *ngIf="selectedIndex > 0"
+          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  <span fxFlex></span>
+  <button *ngIf="selectedIndex > 0"
+          mat-button mat-stroked-button color="primary">
+    {{ 'notification.send-test-notification' | translate }}
+  </button>
   <button mat-raised-button
-          [disabled]="(isLoading$ | async) || templateNotificationForm.invalid || !templateNotificationForm.dirty"
           color="primary"
-          (click)="save()">{{ saveButtonLabel | translate }}</button>
+          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
 </div>

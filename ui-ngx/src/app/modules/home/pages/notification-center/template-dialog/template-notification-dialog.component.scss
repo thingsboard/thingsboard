@@ -1,12 +1,72 @@
-:host {
-  width: 600px;
+@import "../../../../../../scss/constants";
+
+:host-context(.tb-fullscreen-dialog .mat-dialog-container) {
+  width: 720px;
 
   .tb-hint {
     padding: 0;
   }
+
+  .delivery-method-container {
+    padding-bottom: 8px;
+
+    &.even {
+      padding-right: 8px;
+    }
+
+    .delivery-method {
+      padding: 16px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+      width: 100%;
+    }
+  }
+
+  @media #{$mat-gt-xs} {
+    .mat-dialog-content {
+      max-height: 75vh;
+    }
+  }
 }
 
 :host ::ng-deep {
+  .mat-dialog-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0 !important;
+
+    .mat-stepper-horizontal {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      @media #{$mat-lt-sm} {
+        .mat-step-label {
+          white-space: normal;
+          overflow: visible;
+          .mat-step-text-label {
+            overflow: visible;
+          }
+        }
+      }
+      .mat-horizontal-content-container {
+        height: 500px;
+        max-height: 100%;
+        width: 100%;;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+        @media #{$mat-gt-sm} {
+          min-width: 500px;
+        }
+      }
+      .mat-horizontal-stepper-content[aria-expanded=true] {
+        height: 100%;
+        position: relative;
+      }
+    }
+  }
+
   .mat-radio-group {
     display: flex;
     flex-direction: row;

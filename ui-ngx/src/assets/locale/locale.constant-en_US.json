@@ -55,13 +55,15 @@
         "continue": "Continue",
         "discard-changes": "Discard Changes",
         "download": "Download",
+        "next": "Next",
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
         "hide": "Hide",
         "done": "Done",
         "print": "Print",
         "restore": "Restore",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "skip": "Skip"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -2697,6 +2699,7 @@
         "sent": "Sent",
         "settings": "Notification settings",
         "subject": "Subject",
+        "subject-required": "Subject is required",
         "target-name": "Name",
         "target-name-required": "Name is required",
         "target-type": {
@@ -2707,9 +2710,19 @@
         },
         "targets": "Targets",
         "template": "Template",
+        "template-type": {
+            "general": "General",
+            "alarm": "Alarm"
+        },
         "templates": "Templates",
         "text": "Text",
-        "type": "Type"
+        "type": "Type",
+        "basic-settings": "Basic settings",
+        "send-test-notification": "Send test notification",
+        "web-settings": "Web settings",
+        "email-settings": "Email settings",
+        "sms-settings": "SMS settings",
+        "slack-settings": "Slack settings"
     },
     "ota-update": {
       "add": "Add package",

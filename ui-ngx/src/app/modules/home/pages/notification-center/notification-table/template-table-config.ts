@@ -63,7 +63,8 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
     this.columns.push(
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%'),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
-      new EntityTableColumn<NotificationTemplate>('subject', 'notification.subject', '25%'),
+      new EntityTableColumn<NotificationTemplate>('configuration.notificationSubject', 'notification.subject', '25%',
+        (template) => template.configuration.notificationSubject, () => ({}), false),
       new EntityTableColumn<NotificationTemplate>('configuration.defaultTextTemplate', 'notification.message', '35%',
         (template) => template.configuration.defaultTextTemplate, () => ({}), false)
     );

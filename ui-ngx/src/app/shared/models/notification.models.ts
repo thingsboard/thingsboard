@@ -122,18 +122,22 @@ interface CustomerUsersNotificationTargetConfig {
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
   tenantId: TenantId;
-  notificationType: NotificationType;
+  notificationType: NotificationTemplateType;
   configuration: NotificationTemplateConfig;
 }
 
 interface NotificationTemplateConfig {
   defaultTextTemplate: string;
-  deliveryMethodsTemplates: Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate>;
+  notificationSubject: string;
+  deliveryMethodsTemplates: {
+    [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate
+  };
 }
 
-interface DeliveryMethodNotificationTemplate extends
+export interface DeliveryMethodNotificationTemplate extends
   Partial<PushDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
   body?: string;
+  enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
@@ -176,7 +180,7 @@ export enum NotificationRequestStatus {
 }
 
 export enum SlackChanelType {
-  USER= 'USER',
+  DIRECT= 'DIRECT',
   PUBLIC_CHANNEL = 'PUBLIC_CHANNEL',
   PRIVATE_CHANNEL = 'PRIVATE_CHANNEL'
 }
@@ -193,7 +197,26 @@ export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTarg
   [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
 ]);
 
-export enum NotificationType {
-  GENERIC = 'GENERIC',
+export enum NotificationTemplateType {
+  GENERAL = 'GENERAL',
   ALARM = 'ALARM'
 }
+
+interface NotificationTemplateTypeTranslate {
+  name: string;
+  hint?: string;
+}
+
+export const NotificationTemplateTypeTranslateMap = new Map<NotificationTemplateType, NotificationTemplateTypeTranslate>([
+  [NotificationTemplateType.GENERAL,
+    {
+      name: 'notification.template-type.general',
+      hint: 'hint'
+    }
+  ],
+  [NotificationTemplateType.ALARM,
+    {
+      name: 'notification.template-type.alarm',
+      hint: 'hint'
+    }]
+]);
