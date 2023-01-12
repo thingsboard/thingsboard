@@ -15,39 +15,91 @@
 ///
 
 import {
-  DateEntityTableColumn,
+  CellActionDescriptor,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
-import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
 import { NotificationTemplate } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  TemplateNotificationDialogComponent,
+  TemplateNotificationDialogData
+} from '@home/pages/notification-center/template-dialog/template-notification-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  TemplateTableHeaderComponent
+} from '@home/pages/notification-center/template-dialog/template-table-header.component';
 
 export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate> {
 
   constructor(private notificationService: NotificationService,
-              private datePipe: DatePipe) {
+              private translate: TranslateService,
+              private dialog: MatDialog) {
     super();
     this.loadDataOnInit = false;
-    this.entitiesDeleteEnabled = false;
     this.entityTranslations = {
-      noEntities: 'notification.no-inbox-notification'
+      noEntities: 'notification.no-notification-templates',
+      search: 'notification.search-templates'
     };
     this.entityResources = {} as EntityTypeResource<NotificationTemplate>;
 
     this.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
 
-    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+    this.deleteEntityTitle = template => this.translate.instant('notification.delete-template-title', {templateName: template.name});
+    this.deleteEntityContent = () => this.translate.instant('notification.delete-template-text');
+    this.deleteEntity = id => this.notificationService.deleteNotificationTemplate(id.id);
+
+    this.cellActionDescriptors = this.configureCellActions();
+
+    this.headerComponent = TemplateTableHeaderComponent;
+    this.onEntityAction = action => this.onTemplateAction(action);
+
+    this.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
 
     this.columns.push(
-      new DateEntityTableColumn<NotificationTemplate>('createdTime', 'notification.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<NotificationTemplate>('type', 'notification.type', '10%'),
-      new EntityTableColumn<NotificationTemplate>('text', 'notification.text', '40%'),
-      new EntityTableColumn<NotificationTemplate>('info.description', 'notification.description', '50%')
+      new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%'),
+      new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
+      new EntityTableColumn<NotificationTemplate>('subject', 'notification.subject', '25%'),
+      new EntityTableColumn<NotificationTemplate>('configuration.defaultTextTemplate', 'notification.message', '35%',
+        (template) => template.configuration.defaultTextTemplate, () => ({}), false)
     );
+  }
 
+  private configureCellActions(): Array<CellActionDescriptor<NotificationTemplate>> {
+    return [];
+  }
+
+  private editTemplate($event: Event, template: NotificationTemplate, isAdd = false) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
+      NotificationTemplate>(TemplateNotificationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd,
+        template
+      }
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          this.updateData();
+        }
+      });
+  }
+
+  private onTemplateAction(action: EntityAction<NotificationTemplate>): boolean {
+    switch (action.action) {
+      case 'add':
+        this.editTemplate(action.event, action.entity, true);
+        return true;
+    }
+    return false;
   }
 
 }

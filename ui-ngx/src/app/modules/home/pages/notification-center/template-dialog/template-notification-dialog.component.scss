@@ -1,0 +1,25 @@
+:host {
+  width: 600px;
+
+  .tb-hint {
+    padding: 0;
+  }
+}
+
+:host ::ng-deep {
+  .mat-radio-group {
+    display: flex;
+    flex-direction: row;
+
+    .mat-radio-button {
+      flex: 1 1 100%;
+      padding: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+
+      &:not(:last-child){
+        margin-right: 8px;
+      }
+    }
+  }
+}

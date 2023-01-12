@@ -23,12 +23,26 @@ import { HomeComponentsModule } from '@home/components/home-components.module';
 import {
   TargetNotificationDialogComponent
 } from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
-import { NotificationTableComponent } from '@home/pages/notification-center/notification-table/notification-table.component';
+import {
+  NotificationTableComponent
+} from '@home/pages/notification-center/notification-table/notification-table.component';
+import {
+  TemplateNotificationDialogComponent
+} from '@home/pages/notification-center/template-dialog/template-notification-dialog.component';
+import {
+  TargetTableHeaderComponent
+} from '@home/pages/notification-center/targets-table/target-table-header.component';
+import {
+  TemplateTableHeaderComponent
+} from '@home/pages/notification-center/template-dialog/template-table-header.component';
 
 @NgModule({
   declarations: [
     NotificationCenterComponent,
     TargetNotificationDialogComponent,
+    TemplateNotificationDialogComponent,
+    TargetTableHeaderComponent,
+    TemplateTableHeaderComponent,
     NotificationTableComponent
   ],
   imports: [

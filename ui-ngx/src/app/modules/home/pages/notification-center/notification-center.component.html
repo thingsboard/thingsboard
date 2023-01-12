@@ -17,21 +17,21 @@
 -->
 <div class="tb-notification-center">
   <div class="tb-notification-center-content">
-    <section fxLayout="row" fxLayoutAlign="space-between center" class="title-container">
-      <h2 translate class="title">notification.notification-center</h2>
-      <section class="action-buttons" fxLayoutAlign="end center">
-        <button mat-icon-button [disabled]="isLoading$ | async" (click)="openSetting()"
-                matTooltip="{{ 'notification.settings' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>settings</mat-icon>
-        </button>
-        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
-                matTooltip="{{ 'action.refresh' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>refresh</mat-icon>
-        </button>
-      </section>
-    </section>
+<!--    <section fxLayout="row" fxLayoutAlign="space-between center" class="title-container">-->
+<!--      <h2 translate class="title">notification.notification-center</h2>-->
+<!--      <section class="action-buttons" fxLayoutAlign="end center">-->
+<!--        <button mat-icon-button [disabled]="isLoading$ | async" (click)="openSetting()"-->
+<!--                matTooltip="{{ 'notification.settings' | translate }}"-->
+<!--                matTooltipPosition="above">-->
+<!--          <mat-icon>settings</mat-icon>-->
+<!--        </button>-->
+<!--        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"-->
+<!--                matTooltip="{{ 'action.refresh' | translate }}"-->
+<!--                matTooltipPosition="above">-->
+<!--          <mat-icon>refresh</mat-icon>-->
+<!--        </button>-->
+<!--      </section>-->
+<!--    </section>-->
     <div class="tabs-container">
       <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()">
         <mat-tab label="{{ 'notification.inbox' | translate }}" #inboxTab="matTab">
@@ -62,9 +62,9 @@
         <mat-tab disabled>
           <ng-template mat-tab-label>
             <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
-              <button mat-flat-button color="primary" *ngIf="targetsTab.isActive" (click)="createTarget($event)">
+              <button mat-flat-button color="primary">
                 <div fxLayout="row" fxLayoutAlign="start center">
-                  <mat-icon>add</mat-icon>{{ 'notification.create-target' | translate }}
+                  <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
                 </div>
               </button>
             </div>

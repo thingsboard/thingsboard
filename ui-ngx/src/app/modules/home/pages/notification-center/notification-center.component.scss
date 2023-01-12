@@ -144,6 +144,14 @@
 
     .tb-entity-table {
       padding: 0;
+
+      .mat-toolbar-single-row, .mat-toolbar-tools {
+        height: 56px;
+      }
+
+      .title-container {
+        width: 100%;
+      }
     }
   }
 }

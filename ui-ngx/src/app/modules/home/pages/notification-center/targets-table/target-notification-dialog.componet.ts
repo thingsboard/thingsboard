@@ -70,6 +70,7 @@ export class TargetNotificationDialogComponent extends
       name: [null, Validators.required],
       configuration: this.fb.group({
         type: [NotificationTargetConfigType.ALL_USERS],
+        description: [null],
         usersIds: [{value: null, disabled: true}, Validators.required],
         customerId: [{value: null, disabled: true}, Validators.required],
         getCustomerIdFromOriginatorEntity: [{value: false, disabled: true}],
@@ -90,6 +91,7 @@ export class TargetNotificationDialogComponent extends
           break;
       }
       this.targetNotificationForm.get('configuration.type').enable({emitEvent: false});
+      this.targetNotificationForm.get('configuration.description').enable({emitEvent: false});
     });
     this.targetNotificationForm.get('configuration.getCustomerIdFromOriginatorEntity').valueChanges.pipe(
       takeUntil(this.destroy$)

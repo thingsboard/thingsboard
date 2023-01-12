@@ -53,8 +53,4 @@ export class NotificationCenterComponent extends PageComponent {
   private get currentTableComponent(): NotificationTableComponent {
     return this.tableComponent.get(this.matTabs.selectedIndex);
   }
-
-  createTarget($event: Event) {
-    this.currentTableComponent?.onEntityAction({event: $event, action: 'add', entity: null});
-  }
 }

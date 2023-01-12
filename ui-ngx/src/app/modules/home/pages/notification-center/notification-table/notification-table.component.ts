@@ -25,7 +25,6 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { InboxTableConfig } from '@home/pages/notification-center/notification-table/inbox-table-config';
 import { DatePipe } from '@angular/common';
 import { TemplateTableConfig } from '@home/pages/notification-center/notification-table/template-table-config';
-import { EntityAction } from '@home/models/entity/entity-component.models';
 
 @Component({
   selector: 'tb-notification-table',
@@ -49,21 +48,13 @@ export class NotificationTableComponent implements OnInit {
   ngOnInit() {
     this.entityTableConfig = this.getTableConfig();
     this.entityTableConfig.pageMode = false;
-    this.entityTableConfig.showTitle = false;
     this.entityTableConfig.detailsPanelEnabled = false;
     this.entityTableConfig.selectionEnabled = false;
-    this.entityTableConfig.searchEnabled = false;
     this.entityTableConfig.addEnabled = false;
   }
 
   updateData() {
     this.entitiesTable.updateData();
-  }
-
-  onEntityAction(action: EntityAction<any>) {
-    if (this.entityTableConfig.onEntityAction) {
-      this.entityTableConfig.onEntityAction(action);
-    }
   }
 
   private getTableConfig(): EntityTableConfig<any> {
@@ -82,12 +73,14 @@ export class NotificationTableComponent implements OnInit {
       case EntityType.NOTIFICATION_TEMPLATE:
         return new TemplateTableConfig(
           this.notificationService,
-          this.datePipe
+          this.translate,
+          this.dialog
         );
       case EntityType.NOTIFICATION_REQUEST:
         return new TemplateTableConfig(
           this.notificationService,
-          this.datePipe
+          this.translate,
+          this.dialog
         );
     }
   }

@@ -63,6 +63,10 @@
           *ngIf="!targetNotificationForm.get('configuration.getCustomerIdFromOriginatorEntity').value">
         </tb-entity-autocomplete>
       </section>
+      <mat-form-field class="mat-block">
+        <mat-label translate>notification.description</mat-label>
+        <input matInput formControlName="description">
+      </mat-form-field>
     </section>
   </div>
   <mat-divider></mat-divider>

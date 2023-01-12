@@ -108,6 +108,7 @@ export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>,
 export interface NotificationTargetConfig extends
   Partial<UserListNotificationTargetConfig & CustomerUsersNotificationTargetConfig>{
   type: NotificationTargetConfigType;
+  description?: string;
 }
 
 interface UserListNotificationTargetConfig {
@@ -121,19 +122,25 @@ interface CustomerUsersNotificationTargetConfig {
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
   tenantId: TenantId;
-  notificationType: string;
+  notificationType: NotificationType;
   configuration: NotificationTemplateConfig;
 }
 
 interface NotificationTemplateConfig {
   defaultTextTemplate: string;
-  templates: Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate>;
+  deliveryMethodsTemplates: Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate>;
 }
 
 interface DeliveryMethodNotificationTemplate extends
-  Partial<EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
-  body: string;
+  Partial<PushDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
+  body?: string;
   method: NotificationDeliveryMethod;
+}
+
+interface PushDeliveryMethodNotificationTemplate {
+  subject?: string;
+  icon?: string;
+  actionButtonConfig?: string;
 }
 
 interface EmailDeliveryMethodNotificationTemplate {
@@ -157,7 +164,7 @@ export enum NotificationStatus {
 }
 
 export enum NotificationDeliveryMethod {
-  WEBSOCKET = 'WEBSOCKET',
+  PUSH = 'PUSH',
   SMS = 'SMS',
   EMAIL = 'EMAIL',
   SLACK = 'SLACK'
@@ -185,3 +192,8 @@ export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTarg
   [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
   [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
 ]);
+
+export enum NotificationType {
+  GENERIC = 'GENERIC',
+  ALARM = 'ALARM'
+}

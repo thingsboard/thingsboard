@@ -30,6 +30,9 @@ import {
 } from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
+import {
+  TargetTableHeaderComponent
+} from '@home/pages/notification-center/targets-table/target-table-header.component';
 
 export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
 
@@ -39,7 +42,8 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
     super();
     this.loadDataOnInit = false;
     this.entityTranslations = {
-      noEntities: 'notification.no-targets-notification'
+      noEntities: 'notification.no-targets-notification',
+      search: 'notification.search-targets'
     };
     this.entityResources = {} as EntityTypeResource<NotificationTarget>;
 
@@ -50,15 +54,20 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
     this.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
 
     this.cellActionDescriptors = this.configureCellActions();
+
+    this.headerComponent = TargetTableHeaderComponent;
     this.onEntityAction = action => this.onTargetAction(action);
 
     this.defaultSortOrder = {property: 'name', direction: Direction.ASC};
 
     this.columns.push(
-      new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '30%'),
+      new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
       new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '40%',
         (target) => this.translate.instant(NotificationTargetConfigTypeTranslateMap.get(target.configuration.type)),
-        () => ({}), false)
+        () => ({}), false),
+    new EntityTableColumn<NotificationTarget>('configuration.description', 'notification.description', '40%',
+      (target) => target.configuration.description || '',
+      () => ({}), false)
     );
   }
 
