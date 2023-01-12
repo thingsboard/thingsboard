@@ -181,11 +181,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, Set<AlarmStatus> statuses, UserId assigneeUserId) {
-        UUID assigneeId = null;
-        if (assigneeUserId != null) {
-            assigneeId = assigneeUserId.getId();
-        }
+    public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, Set<AlarmStatus> statuses, String assigneeId) {
         return alarmRepository.findAlarmSeverities(tenantId.getId(), entityId.getId(), entityId.getEntityType().name(), statuses, assigneeId);
     }
 

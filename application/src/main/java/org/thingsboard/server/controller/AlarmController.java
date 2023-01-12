@@ -374,13 +374,9 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        UserId assigneeUserId = null;
-        if (assigneeId != null) {
-            assigneeUserId = new UserId(UUID.fromString(assigneeId));
-        }
         checkEntityId(entityId, Operation.READ);
         try {
-            return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus, assigneeUserId);
+            return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus, assigneeId);
         } catch (Exception e) {
             throw handleException(e);
         }

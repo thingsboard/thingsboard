@@ -65,7 +65,7 @@ public interface AlarmService extends EntityDaoService {
     ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
 
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
-                                           AlarmStatus alarmStatus, UserId assigneeUserId);
+                                           AlarmStatus alarmStatus, String assigneeId);
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 

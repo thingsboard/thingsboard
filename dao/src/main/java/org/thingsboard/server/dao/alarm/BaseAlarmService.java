@@ -371,7 +371,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
-                                                  AlarmStatus alarmStatus, UserId assigneeUserId) {
+                                                  AlarmStatus alarmStatus, String assigneeId) {
         Set<AlarmStatus> statusList = null;
         if (alarmSearchStatus != null) {
             statusList = alarmSearchStatus.getStatuses();
@@ -379,7 +379,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             statusList = Collections.singleton(alarmStatus);
         }
 
-        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList, assigneeUserId);
+        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList, assigneeId);
 
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }

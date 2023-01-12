@@ -154,7 +154,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                            @Param("affectedEntityId") UUID affectedEntityId,
                                            @Param("affectedEntityType") String affectedEntityType,
                                            @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
-                                           @Param("assigneeId") UUID assigneeId);
+                                           @Param("assigneeId") String assigneeId);
 
     @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.createdTime < :time AND a.endTs < :time")
     Page<UUID> findAlarmsIdsByEndTsBeforeAndTenantId(@Param("time") Long time, @Param("tenantId") UUID tenantId, Pageable pageable);
