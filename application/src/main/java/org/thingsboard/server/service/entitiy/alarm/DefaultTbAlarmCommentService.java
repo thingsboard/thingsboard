@@ -36,7 +36,7 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
         alarmComment.setUserId(userId);
         try {
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment));
-            notificationEntityService.notifyCreateOrUpdateAlarmComment(alarm, savedAlarmComment, actionType, user);
+            notificationEntityService.notifyAlarmComment(alarm, savedAlarmComment, actionType, user);
             return savedAlarmComment;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(alarm.getTenantId(), emptyId(EntityType.ALARM), alarm, actionType, user, e, alarmComment);
@@ -47,6 +47,6 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
     @Override
     public void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
         alarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment.getId());
-        notificationEntityService.notifyDeleteAlarmComment(alarm, alarmComment, user);
+        notificationEntityService.notifyAlarmComment(alarm, alarmComment, ActionType.DELETED_COMMENT, user);
     }
 }

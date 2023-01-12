@@ -196,14 +196,6 @@ public class TenantIdLoaderTest {
                 doReturn(alarm).when(alarmService).findAlarmById(eq(tenantId), any());
 
                 break;
-            case ALARM_COMMENT:
-                AlarmComment alarmComment = new AlarmComment();
-                alarmComment.setAlarmId(new AlarmId(UUID.randomUUID()));
-
-                when(ctx.getAlarmCommentService()).thenReturn(alarmCommentService);
-                doReturn(alarmComment).when(alarmCommentService).findAlarmCommentById(eq(tenantId), any());
-
-                break;
             case RULE_CHAIN:
                 RuleChain ruleChain = new RuleChain();
                 ruleChain.setTenantId(tenantId);

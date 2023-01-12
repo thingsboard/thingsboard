@@ -103,9 +103,8 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, User user, Object... additionalInfo);
 
-    void notifyCreateOrUpdateAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user);
+    void notifyAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user);
 
-    void notifyDeleteAlarmComment(Alarm alarm,  AlarmComment alarmComment, User user);
 
     <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
                                                                               I entityId, E entity, User user,
