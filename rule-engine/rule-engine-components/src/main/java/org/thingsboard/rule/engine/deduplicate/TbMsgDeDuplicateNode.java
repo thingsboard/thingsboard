@@ -105,7 +105,7 @@ public class TbMsgDeDuplicateNode implements TbNode {
                                                     states.forEach(state -> {
                                                         if (pack.getStates().contains(state)) {
                                                             int retries = state.getRetries();
-                                                            if (config.getMaxRetries() <= retries) {
+                                                            if (retries < config.getMaxRetries()) {
                                                                 state.incrementRetries();
                                                             } else {
                                                                 statesToRemove.add(state);
