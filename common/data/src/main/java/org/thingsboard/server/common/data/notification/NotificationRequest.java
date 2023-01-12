@@ -46,7 +46,7 @@ import java.util.List;
 public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
-    @NotEmpty
+    @NotNull
     private List<NotificationTargetId> targets;
 
     @NotNull

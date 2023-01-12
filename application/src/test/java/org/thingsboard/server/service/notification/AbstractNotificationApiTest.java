@@ -25,13 +25,16 @@ import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
@@ -52,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class AbstractNotificationApiTest extends AbstractControllerTest {
 
@@ -94,18 +98,26 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
             deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.PUSH};
         }
         NotificationTemplate notificationTemplate = createNotificationTemplate(DEFAULT_NOTIFICATION_TYPE, DEFAULT_NOTIFICATION_SUBJECT, text, deliveryMethods);
+        return submitNotificationRequest(targets, notificationTemplate.getId(), delayInSec);
+    }
+
+    protected NotificationRequest submitNotificationRequest(List<NotificationTargetId> targets, NotificationTemplateId notificationTemplateId, int delayInSec) {
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(delayInSec);
         UserOriginatedNotificationInfo notificationInfo = new UserOriginatedNotificationInfo();
-        notificationInfo.setDescription("The text: " + text);
+        notificationInfo.setDescription("My description");
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .targets(targets)
-                .templateId(notificationTemplate.getId())
+                .templateId(notificationTemplateId)
                 .info(notificationInfo)
                 .additionalConfig(config)
                 .build();
         return doPost("/api/notification/request", notificationRequest, NotificationRequest.class);
+    }
+
+    protected NotificationRequestStats getStats(NotificationRequestId notificationRequestId) throws Exception {
+        return findNotificationRequest(notificationRequestId).getStats();
     }
 
     protected NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
@@ -143,7 +155,15 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
+        return saveNotificationTemplate(notificationTemplate);
+    }
+
+    protected NotificationTemplate saveNotificationTemplate(NotificationTemplate notificationTemplate) {
         return doPost("/api/notification/template", notificationTemplate, NotificationTemplate.class);
+    }
+
+    protected void saveNotificationSettings(NotificationSettings notificationSettings) throws Exception {
+        doPost("/api/notification/settings", notificationSettings).andExpect(status().isOk());
     }
 
     protected Pair<User, NotificationApiWsClient> createUserAndConnectWsClient(Authority authority) throws Exception {

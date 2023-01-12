@@ -15,6 +15,24 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import lombok.Getter;
+
 public enum NotificationDeliveryMethod {
-    PUSH, EMAIL, SMS, SLACK
+
+    PUSH,
+    EMAIL,
+    SMS,
+    SLACK(true);
+
+    @Getter
+    private final boolean independent; // TODO: think of a better name
+
+    NotificationDeliveryMethod() {
+        this(false);
+    }
+
+    NotificationDeliveryMethod(boolean independent) {
+        this.independent = independent;
+    }
+
 }

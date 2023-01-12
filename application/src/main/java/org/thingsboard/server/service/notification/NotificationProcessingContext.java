@@ -90,8 +90,11 @@ public class NotificationProcessingContext {
         return (C) settings.getDeliveryMethodsConfigs().get(deliveryMethod);
     }
 
-    protected <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, User recipient) {
-        Map<String, String> templateContext = createTemplateContext(recipient);
+    protected <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
+        if (request.getInfo() != null) {
+            templateContext = new HashMap<>(templateContext);
+            templateContext.putAll(request.getInfo().getTemplateData());
+        }
 
         T template = (T) templates.get(deliveryMethod).copy();
         template.setBody(processTemplate(template.getBody(), templateContext));
@@ -106,14 +109,11 @@ public class NotificationProcessingContext {
         return TbNodeUtils.processTemplate(template, context);
     }
 
-    private Map<String, String> createTemplateContext(User recipient) {
+    public Map<String, String> createTemplateContext(User recipient) {
         Map<String, String> templateContext = new HashMap<>();
         templateContext.put("email", recipient.getEmail());
         templateContext.put("firstName", Strings.nullToEmpty(recipient.getFirstName()));
         templateContext.put("lastName", Strings.nullToEmpty(recipient.getLastName()));
-        if (request.getInfo() != null) {
-            templateContext.putAll(request.getInfo().getTemplateData());
-        }
         return templateContext;
     }
 

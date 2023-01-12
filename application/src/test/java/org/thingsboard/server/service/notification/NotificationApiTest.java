@@ -30,9 +30,16 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
+import org.thingsboard.server.common.data.notification.template.SlackConversation;
+import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -43,6 +50,7 @@ import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCou
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +63,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -312,8 +321,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         });
 
         await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
-        NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
+                .until(() -> getStats(notificationRequest.getId()) != null);
+        NotificationRequestStats stats = getStats(notificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(usersCount);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(usersCount);
 
@@ -341,8 +350,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         wsClient.waitForUpdate();
 
         await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> findNotificationRequest(notificationRequest.getId()).getStats() != null);
-        NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
+                .until(() -> getStats(notificationRequest.getId()) != null);
+        NotificationRequestStats stats = getStats(notificationRequest.getId());
 
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(1);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(1);
@@ -360,7 +369,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setEmail("test-user-" + i + "@thingsboard.org");
             user = doPost("/api/user", user, User.class);
-            System.err.println(i);
             users.add(user);
         }
 
@@ -389,8 +397,55 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(sentNotifications.getData()).extracting(Notification::getRecipientId)
                 .containsAll(users.stream().map(User::getId).collect(Collectors.toSet()));
 
-        NotificationRequestStats stats = findNotificationRequest(notificationRequest.getId()).getStats();
+        NotificationRequestStats stats = getStats(notificationRequest.getId());
         assertThat(stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum()).isGreaterThanOrEqualTo(usersCount);
+    }
+
+    @Test
+    public void testSlackNotifications() throws Exception {
+        NotificationSettings settings = new NotificationSettings();
+        SlackNotificationDeliveryMethodConfig slackConfig = new SlackNotificationDeliveryMethodConfig();
+        slackConfig.setMethod(NotificationDeliveryMethod.SLACK);
+        slackConfig.setEnabled(true);
+        String slackToken = "xoxb-123123123";
+        slackConfig.setBotToken(slackToken);
+        settings.setDeliveryMethodsConfigs(Map.of(
+                NotificationDeliveryMethod.SLACK, slackConfig
+        ));
+        saveNotificationSettings(settings);
+
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setName("Slack notification template");
+        notificationTemplate.setNotificationType(NotificationType.GENERAL);
+        NotificationTemplateConfig config = new NotificationTemplateConfig();
+        config.setDefaultTextTemplate("To Slack :)");
+
+        SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
+        slackNotificationTemplate.setEnabled(true);
+        slackNotificationTemplate.setConversationType(SlackConversation.Type.PUBLIC_CHANNEL);
+        String conversationId = "U154475415";
+        slackNotificationTemplate.setConversationId(conversationId);
+
+        config.setDeliveryMethodsTemplates(Map.of(
+                NotificationDeliveryMethod.SLACK, slackNotificationTemplate
+        ));
+        notificationTemplate.setConfiguration(config);
+        notificationTemplate = saveNotificationTemplate(notificationTemplate);
+
+        NotificationRequest successfulNotificationRequest = submitNotificationRequest(Collections.emptyList(), notificationTemplate.getId(), 0);
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> getStats(successfulNotificationRequest.getId()) != null);
+        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(config.getDefaultTextTemplate()));
+        NotificationRequestStats stats = getStats(successfulNotificationRequest.getId());
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.SLACK)).hasValue(1);
+
+        String errorMessage = "Error!!!";
+        doThrow(new RuntimeException(errorMessage)).when(slackService).sendMessage(any(), any(), any(), any());
+        NotificationRequest failedNotificationRequest = submitNotificationRequest(Collections.emptyList(), notificationTemplate.getId(), 0);
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> getStats(failedNotificationRequest.getId()) != null);
+        stats = getStats(failedNotificationRequest.getId());
+        assertThat(stats.getErrors().get(NotificationDeliveryMethod.SLACK).values()).containsExactly(errorMessage);
     }
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {

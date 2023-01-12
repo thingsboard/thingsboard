@@ -37,6 +37,7 @@ public class NotificationTemplateConfig {
     @JsonIgnore
     @AssertTrue(message = "defaultTextTemplate and notificationSubject must be specified if one absent for delivery method")
     public boolean isValid() {
+        if (deliveryMethodsTemplates == null) return true;
         for (DeliveryMethodNotificationTemplate template : deliveryMethodsTemplates.values()) {
             if (StringUtils.isEmpty(template.getBody()) && StringUtils.isEmpty(defaultTextTemplate)) {
                 return false;

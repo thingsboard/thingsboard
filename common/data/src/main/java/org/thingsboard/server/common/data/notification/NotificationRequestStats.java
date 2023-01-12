@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.UserId;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,15 +53,18 @@ public class NotificationRequestStats {
 
     public void reportSent(NotificationDeliveryMethod deliveryMethod, User recipient) {
         sent.computeIfAbsent(deliveryMethod, k -> new AtomicInteger()).incrementAndGet();
-        processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipient.getId());
+        if (recipient != null) {
+            processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipient.getId());
+        }
     }
 
-    public void reportError(NotificationDeliveryMethod deliveryMethod, User recipient, Throwable error) {
+    public void reportError(NotificationDeliveryMethod deliveryMethod, Throwable error, User recipient) {
         if (error instanceof AlreadySentException) {
             return;
         }
         String errorMessage = error.getMessage();
-        errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getEmail(), errorMessage);
+        String key = Optional.ofNullable(recipient).map(User::getEmail).orElse("");
+        errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(key, errorMessage);
     }
 
     public boolean contains(NotificationDeliveryMethod deliveryMethod) {
