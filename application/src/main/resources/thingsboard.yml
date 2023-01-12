@@ -584,7 +584,6 @@ audit-log:
       "user": "${AUDIT_LOG_MASK_USER:W}"
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
-      "alarm_comment": "${AUDIT_LOG_MASK_ALARM_COMMENT:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
       "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
       "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}"

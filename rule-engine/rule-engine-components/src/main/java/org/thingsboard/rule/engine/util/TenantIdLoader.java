@@ -71,10 +71,6 @@ public class TenantIdLoader {
             case ALARM:
                 tenantEntity = ctx.getAlarmService().findAlarmById(ctxTenantId, new AlarmId(id));
                 break;
-            case ALARM_COMMENT:
-                AlarmComment alarmComment = ctx.getAlarmCommentService().findAlarmCommentById(ctxTenantId, new AlarmCommentId(id));
-                tenantEntity = ctx.getAlarmService().findAlarmById(ctxTenantId, new AlarmId(alarmComment.getAlarmId().getId()));
-                break;
             case RULE_CHAIN:
                 tenantEntity = ctx.getRuleChainService().findRuleChainById(ctxTenantId, new RuleChainId(id));
                 break;

@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface AlarmCommentService extends EntityDaoService {
+public interface AlarmCommentService {
     AlarmComment createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment);
 
     void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId);

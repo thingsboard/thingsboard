@@ -57,9 +57,6 @@ public class EntitiesFieldsAsyncLoader {
             case ALARM:
                 return getAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original),
                         EntityFieldsData::new);
-            case ALARM_COMMENT:
-                return getAsync(ctx.getAlarmCommentService().findAlarmCommentByIdAsync(ctx.getTenantId(), (AlarmCommentId) original),
-                        EntityFieldsData::new);
             case RULE_CHAIN:
                 return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original),
                         EntityFieldsData::new);

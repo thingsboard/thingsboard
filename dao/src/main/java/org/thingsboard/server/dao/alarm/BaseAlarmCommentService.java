@@ -117,13 +117,4 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         return null;
     }
 
-    @Override
-    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findAlarmCommentById(tenantId, new AlarmCommentId(entityId.getId())));
-    }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.ALARM_COMMENT;
-    }
 }

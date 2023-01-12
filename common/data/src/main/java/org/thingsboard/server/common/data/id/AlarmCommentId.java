@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.EntityType;
 import java.util.UUID;
 
 @ApiModel
-public class AlarmCommentId extends UUIDBased implements EntityId{
+public class AlarmCommentId extends UUIDBased {
 
     private static final long serialVersionUID = 1L;
 
@@ -35,11 +35,5 @@ public class AlarmCommentId extends UUIDBased implements EntityId{
 
     public static AlarmCommentId fromString(String commentId) {
         return new AlarmCommentId(UUID.fromString(commentId));
-    }
-
-    @ApiModelProperty(position = 2, required = true, value = "string", example = "ALARM_COMMENT", allowableValues = "ALARM_COMMENT")
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.ALARM_COMMENT;
     }
 }

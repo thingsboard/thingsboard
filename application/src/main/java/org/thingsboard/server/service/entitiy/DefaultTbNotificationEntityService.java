@@ -232,12 +232,12 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
 
     @Override
     public void notifyCreateOrUpdateAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user) {
-        logEntityAction(alarm.getTenantId(), alarmComment.getId(), alarmComment, alarm.getCustomerId(), actionType, user);
+        logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), actionType, user, alarmComment);
     }
 
     @Override
     public void notifyDeleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
-        logEntityAction(alarm.getTenantId(), alarmComment.getId(), alarmComment, alarm.getCustomerId(), ActionType.DELETED, user);
+        logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), ActionType.DELETED_COMMENT, user, alarmComment);
     }
 
     @Override

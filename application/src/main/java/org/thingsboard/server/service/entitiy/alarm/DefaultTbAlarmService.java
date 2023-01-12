@@ -61,7 +61,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             AlarmComment alarmComment = AlarmComment.builder()
                     .alarmId(alarm.getId())
                     .type(AlarmCommentType.SYSTEM)
-                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was acknowledged by user %s", user.getName())))
+                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was acknowledged by user %s", user.getName()))
+                            .put("userId", user.getId().toString()))
                     .build();
             alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             alarm.setAckTs(ackTs);
