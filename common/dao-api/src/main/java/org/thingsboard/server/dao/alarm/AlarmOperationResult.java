@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.alarm;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Collections;
@@ -27,6 +28,7 @@ public class AlarmOperationResult {
     private final Alarm alarm;
     private final boolean successful;
     private final boolean created;
+    private final AlarmSeverity oldSeverity;
     private final List<EntityId> propagatedEntitiesList;
 
     public AlarmOperationResult(Alarm alarm, boolean successful) {
@@ -34,13 +36,14 @@ public class AlarmOperationResult {
     }
 
     public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList) {
-        this(alarm, successful, false, propagatedEntitiesList);
+        this(alarm, successful, false, null, propagatedEntitiesList);
     }
 
-    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
+    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, AlarmSeverity oldSeverity, List<EntityId> propagatedEntitiesList) {
         this.alarm = alarm;
         this.successful = successful;
         this.created = created;
+        this.oldSeverity = oldSeverity;
         this.propagatedEntitiesList = propagatedEntitiesList;
     }
 }

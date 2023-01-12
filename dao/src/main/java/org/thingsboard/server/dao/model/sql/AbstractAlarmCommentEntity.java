@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -50,7 +51,7 @@ public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends
     private UUID userId;
 
     @Column(name = ALARM_COMMENT_TYPE)
-    private String type;
+    private AlarmCommentType type;
 
     @Type(type = "json")
     @Column(name = ALARM_COMMENT_COMMENT)
@@ -65,9 +66,7 @@ public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends
             this.setUuid(alarmComment.getUuidId());
         }
         this.setCreatedTime(alarmComment.getCreatedTime());
-        if (alarmComment.getAlarmId() != null) {
-            this.alarmId = alarmComment.getAlarmId().getId();
-        }
+        this.alarmId = alarmComment.getAlarmId().getId();
         if (alarmComment.getUserId() != null) {
             this.userId = alarmComment.getUserId().getId();
         }

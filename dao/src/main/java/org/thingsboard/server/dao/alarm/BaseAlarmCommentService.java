@@ -18,26 +18,25 @@ package org.thingsboard.server.dao.alarm;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.user.UserService;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -50,14 +49,11 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     private AlarmCommentDao alarmCommentDao;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private DataValidator<AlarmComment> alarmCommentDataValidator;
 
     @Override
-    public AlarmCommentOperationResult createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
-        alarmCommentDataValidator.validate(alarmComment, tenantId);
+    public AlarmComment createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
+        alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
         if (alarmComment.getId() == null) {
             return createAlarmComment(tenantId, alarmComment);
         } else {
@@ -66,11 +62,9 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     }
 
     @Override
-    public AlarmCommentOperationResult deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId) {
+    public void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.debug("Deleting Alarm Comment with id: {}", alarmCommentId);
-        AlarmCommentOperationResult result = new AlarmCommentOperationResult(new AlarmComment(), true);
         alarmCommentDao.deleteAlarmComment(tenantId, alarmCommentId);
-        return result;
     }
 
     @Override
@@ -93,21 +87,20 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         return alarmCommentDao.findById(tenantId, alarmCommentId.getId());
     }
 
-    private AlarmCommentOperationResult createAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
+    private AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
         log.debug("New Alarm comment : {}", alarmComment);
         if (alarmComment.getType() == null) {
-            alarmComment.setType("OTHER");
+            alarmComment.setType(AlarmCommentType.OTHER);
         }
         if (alarmComment.getId() == null) {
             UUID uuid = Uuids.timeBased();
             alarmComment.setId(new AlarmCommentId(uuid));
             alarmComment.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-        AlarmComment saved = alarmCommentDao.createAlarmComment(tenantId, alarmComment);
-        return new AlarmCommentOperationResult(saved, true, true);
+        return alarmCommentDao.createAlarmComment(tenantId, alarmComment);
     }
 
-    private AlarmCommentOperationResult updateAlarmComment(TenantId tenantId, AlarmComment newAlarmComment) {
+    private AlarmComment updateAlarmComment(TenantId tenantId, AlarmComment newAlarmComment) {
         log.debug("Update Alarm comment : {}", newAlarmComment);
 
         AlarmComment existing = alarmCommentDao.findAlarmCommentById(tenantId, newAlarmComment.getId().getId());
@@ -119,9 +112,18 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
                 ((ObjectNode) comment).put("editedOn", Uuids.unixTimestamp(uuid));
                 existing.setComment(comment);
             }
-            AlarmComment result = alarmCommentDao.save(tenantId, existing);
-            return new AlarmCommentOperationResult(result, true, true);
+            return alarmCommentDao.save(tenantId, existing);
         }
         return null;
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findAlarmCommentById(tenantId, new AlarmCommentId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ALARM_COMMENT;
     }
 }

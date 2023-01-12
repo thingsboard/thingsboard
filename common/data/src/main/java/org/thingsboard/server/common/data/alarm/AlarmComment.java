@@ -39,11 +39,11 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     private EntityId alarmId;
     @ApiModelProperty(position = 4, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private UserId userId;
-    @ApiModelProperty(position = 5, value = "Defines origination of comment", example = "System/Other", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    @NoXss
-    @Length(fieldName = "type")
-    private String type;
+    @ApiModelProperty(position = 5, value = "Defines origination of comment. System type means comment was created by TB. OTHER type means comment was created by user.", example = "SYSTEM/OTHER", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private AlarmCommentType type;
     @ApiModelProperty(position = 6, value = "JSON object with text of comment.", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @NoXss
+    @Length(fieldName = "comment", max = 10000)
     private transient JsonNode comment;
 
     @ApiModelProperty(position = 1, value = "JSON object with the alarm comment Id. " +

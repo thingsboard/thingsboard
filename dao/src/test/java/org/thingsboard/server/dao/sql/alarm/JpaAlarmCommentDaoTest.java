@@ -22,6 +22,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -58,9 +59,9 @@ public class JpaAlarmCommentDaoTest extends AbstractJpaDaoTest {
         saveAlarm(alarmId1, UUID.randomUUID(), UUID.randomUUID(), "TEST_ALARM");
         saveAlarm(alarmId2, UUID.randomUUID(), UUID.randomUUID(), "TEST_ALARM");
 
-        saveAlarmComment(commentId1, alarmId1, userId, "OTHER");
-        saveAlarmComment(commentId2, alarmId1, userId, "OTHER");
-        saveAlarmComment(commentId3, alarmId2, userId, "OTHER");
+        saveAlarmComment(commentId1, alarmId1, userId, AlarmCommentType.OTHER);
+        saveAlarmComment(commentId2, alarmId1, userId, AlarmCommentType.OTHER);
+        saveAlarmComment(commentId3, alarmId2, userId, AlarmCommentType.OTHER);
 
         int count = alarmCommentDao.findAlarmComments(TenantId.fromUUID(tenantId), new AlarmId(alarmId1), new PageLink(10, 0)).getData().size();
         assertEquals(2, count);
@@ -78,7 +79,7 @@ public class JpaAlarmCommentDaoTest extends AbstractJpaDaoTest {
         alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         alarmDao.save(TenantId.fromUUID(tenantId), alarm);
     }
-    private void saveAlarmComment(UUID id, UUID alarmId, UUID userId, String type) {
+    private void saveAlarmComment(UUID id, UUID alarmId, UUID userId, AlarmCommentType type) {
         AlarmComment alarmComment = new AlarmComment();
         alarmComment.setId(new AlarmCommentId(id));
         alarmComment.setAlarmId(TenantId.fromUUID(alarmId));

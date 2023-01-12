@@ -38,6 +38,4 @@ public interface AlarmCommentDao extends Dao<AlarmComment> {
     PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId id, PageLink pageLink);
 
     ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key);
-
-    void cleanUpAlarmComments(long auditLogsExpTime);
 }

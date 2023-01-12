@@ -30,7 +30,6 @@ public class TenantAdminPermissions extends AbstractPermissions {
         super();
         put(Resource.ADMIN_SETTINGS, PermissionChecker.allowAllPermissionChecker);
         put(Resource.ALARM, tenantEntityPermissionChecker);
-        put(Resource.ALARM_COMMENT, tenantEntityPermissionChecker);
         put(Resource.ASSET, tenantEntityPermissionChecker);
         put(Resource.DEVICE, tenantEntityPermissionChecker);
         put(Resource.CUSTOMER, tenantEntityPermissionChecker);

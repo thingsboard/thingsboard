@@ -23,11 +23,12 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface AlarmCommentService {
-    AlarmCommentOperationResult createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment);
+public interface AlarmCommentService extends EntityDaoService {
+    AlarmComment createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment);
 
-    AlarmCommentOperationResult deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId);
+    void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId);
 
     PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink);
 

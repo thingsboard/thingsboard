@@ -67,29 +67,6 @@ public abstract class DataValidator<D extends BaseData<?>> {
         }
     }
 
-    public D validate(D data, TenantId tenantId) {
-        try {
-            if (data == null) {
-                throw new DataValidationException("Data object can't be null!");
-            }
-
-            ConstraintValidator.validateFields(data);
-
-            validateDataImpl(tenantId, data);
-            D old;
-            if (data.getId() == null) {
-                validateCreate(tenantId, data);
-                old = null;
-            } else {
-                old = validateUpdate(tenantId, data);
-            }
-            return old;
-        } catch (DataValidationException e) {
-            log.error("{} object is invalid: [{}]", data == null ? "Data" : data.getClass().getSimpleName(), e.getMessage());
-            throw e;
-        }
-    }
-
     protected void validateDataImpl(TenantId tenantId, D data) {
     }
 

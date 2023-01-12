@@ -722,12 +722,15 @@ public abstract class BaseController {
         }
     }
 
-    AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId) throws ThingsboardException {
+    AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {
         try {
             validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
             AlarmComment alarmComment = alarmCommentService.findAlarmCommentByIdAsync(getCurrentUser().getTenantId(), alarmCommentId).get();
             checkNotNull(alarmComment, "Alarm comment with id [" + alarmCommentId + "] is not found");
-            return alarmComment;
+            if (!alarmId.equals(alarmComment.getAlarmId())) {
+                throw new ThingsboardException("Alarm id does not match with comment alarm id", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+           return alarmComment;
         } catch (Exception e) {
             throw handleException(e, false);
         }
