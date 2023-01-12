@@ -27,88 +27,79 @@ import java.util.Map;
  * Provides utility methods for handling Sparkplug MQTT message topics.
  */
 public class SparkplugTopicUtil {
-	
-	private static final Map<String, String[]> SPLIT_TOPIC_CACHE = new HashMap<String, String[]>();
-	
-	public static String[] getSplitTopic(String topic) {
-		String[] splitTopic = SPLIT_TOPIC_CACHE.get(topic);
-		if (splitTopic == null) {
-			splitTopic = topic.split("/");
-			SPLIT_TOPIC_CACHE.put(topic, splitTopic);
-		}
-		
-		return splitTopic;
-	}
 
-	/**
-	 * Serializes a {@link SparkplugTopic} instance in to a JSON string.
-	 * 
-	 * @param topic a {@link SparkplugTopic} instance
-	 * @return a JSON string
-	 * @throws JsonProcessingException
-	 */
-	public static String sparkplugTopicToString(SparkplugTopic topic) throws JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.writeValueAsString(topic);
-	}
+    private static final Map<String, String[]> SPLIT_TOPIC_CACHE = new HashMap<String, String[]>();
+    private static final String TOPIC_INVALID_NUMBER = "Invalid number of topic elements: ";
 
-	/**
-	 * Parses a Sparkplug MQTT message topic string and returns a {@link SparkplugTopic} instance.
-	 *
-	 * @param topic a topic string
-	 * @return a {@link SparkplugTopic} instance
-	 * @throws ThingsboardException if an error occurs while parsing
-	 */
-	public static SparkplugTopic parseTopic(String topic) throws ThingsboardException {
-		topic = topic.indexOf("#") > 0 ? topic.substring(0, topic.indexOf("#")) : topic;
-		return parseTopic(SparkplugTopicUtil.getSplitTopic(topic));
-	}
+    public static String[] getSplitTopic(String topic) {
+        String[] splitTopic = SPLIT_TOPIC_CACHE.get(topic);
+        if (splitTopic == null) {
+            splitTopic = topic.split("/");
+            SPLIT_TOPIC_CACHE.put(topic, splitTopic);
+        }
 
-	/**
-	 * Parses a Sparkplug MQTT message topic string and returns a {@link SparkplugTopic} instance.
-	 *
-	 * @param splitTopic a topic split into tokens
-	 * @return a {@link SparkplugTopic} instance
-	 * @throws Exception if an error occurs while parsing
-	 */
-	@SuppressWarnings("incomplete-switch")
-	public static SparkplugTopic parseTopic(String[] splitTopic) throws ThingsboardException {
-		SparkplugMessageType type;
-		String namespace, edgeNodeId, groupId;
-		int length = splitTopic.length;
+        return splitTopic;
+    }
 
-		if (length < 4 || length > 5) {
-			throw new ThingsboardException("Invalid number of topic elements: " + length, ThingsboardErrorCode.INVALID_ARGUMENTS);
-		}
+    /**
+     * Serializes a {@link SparkplugTopic} instance in to a JSON string.
+     *
+     * @param topic a {@link SparkplugTopic} instance
+     * @return a JSON string
+     * @throws JsonProcessingException
+     */
+    public static String sparkplugTopicToString(SparkplugTopic topic) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(topic);
+    }
 
-		namespace = splitTopic[0];
-		groupId = splitTopic[1];
-		type = SparkplugMessageType.parseMessageType(splitTopic[2]);
-		edgeNodeId = splitTopic[3];
+    /**
+     * Parses a Sparkplug MQTT message topic string and returns a {@link SparkplugTopic} instance.
+     *
+     * @param topic a topic string
+     * @return a {@link SparkplugTopic} instance
+     * @throws ThingsboardException if an error occurs while parsing
+     */
+    public static SparkplugTopic parseTopicSubscribe(String topic) throws ThingsboardException {
+        // TODO "+", "$"
+        topic = topic.indexOf("#") > 0 ? topic.substring(0, topic.indexOf("#")) : topic;
+        return parseTopic(SparkplugTopicUtil.getSplitTopic(topic));
+    }
 
-		if (length == 4) {
-			// A node topic
-			switch (type) {
-				case STATE:
-				case NBIRTH:
-				case NCMD:
-				case NDATA:
-				case NDEATH:
-				case NRECORD:
-					return new SparkplugTopic(namespace, groupId, edgeNodeId, type);
-			}
-		} else {
-			// A device topic
-			switch (type) {
-				case STATE:
-				case DBIRTH:
-				case DCMD:
-				case DDATA:
-				case DDEATH:
-				case DRECORD:
-					return new SparkplugTopic(namespace, groupId, edgeNodeId, splitTopic[4], type);
-			}
-		}
-		throw new ThingsboardException("Invalid number of topic elements " + length + " for topic type " + type, ThingsboardErrorCode.INVALID_ARGUMENTS);
-	}
+    public static SparkplugTopic parseTopicPublish(String topic) throws ThingsboardException {
+        if (topic.contains("#") || topic.contains("$") || topic.contains("+")) {
+            throw new ThingsboardException("Invalid of topic elements for Publish", ThingsboardErrorCode.INVALID_ARGUMENTS);
+        } else {
+            String[] splitTopic = SparkplugTopicUtil.getSplitTopic(topic);
+            if (splitTopic.length < 4 || splitTopic.length > 5) {
+                throw new ThingsboardException(TOPIC_INVALID_NUMBER + splitTopic.length, ThingsboardErrorCode.INVALID_ARGUMENTS);
+            }
+            return parseTopic(splitTopic);
+        }
+    }
+
+    /**
+     * Parses a Sparkplug MQTT message topic string and returns a {@link SparkplugTopic} instance.
+     *
+     * @param splitTopic a topic split into tokens
+     * @return a {@link SparkplugTopic} instance
+     * @throws Exception if an error occurs while parsing
+     */
+    @SuppressWarnings("incomplete-switch")
+    public static SparkplugTopic parseTopic(String[] splitTopic) throws ThingsboardException {
+        int length = splitTopic.length;
+        if (length == 0) {
+			throw new ThingsboardException(TOPIC_INVALID_NUMBER + length, ThingsboardErrorCode.INVALID_ARGUMENTS);
+        } else {
+            SparkplugMessageType type;
+            String namespace, edgeNodeId, groupId, deviceId;
+            namespace = splitTopic[0];
+            groupId = length > 1 ? splitTopic[1] : null;
+            type = length > 2 ? SparkplugMessageType.parseMessageType(splitTopic[2]) : null;
+            edgeNodeId = length > 3 ? splitTopic[3] : null;
+			deviceId = length > 4 ? splitTopic[4] : null;
+			return new SparkplugTopic(namespace, groupId, edgeNodeId, deviceId, type);
+        }
+    }
+
 }
