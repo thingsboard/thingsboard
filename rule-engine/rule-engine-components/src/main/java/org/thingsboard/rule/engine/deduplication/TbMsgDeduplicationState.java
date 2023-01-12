@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.deduplicate;
+package org.thingsboard.rule.engine.deduplication;
 
 import lombok.Data;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Data
-public class TbMsgDeDuplicateState {
+public class TbMsgDeduplicationState {
 
     private TbMsg tbMsg;
     private int retries;
 
-    public TbMsgDeDuplicateState(TbMsg tbMsg) {
+    public TbMsgDeduplicationState(TbMsg tbMsg) {
         this.tbMsg = tbMsg;
         this.retries = 0;
     }

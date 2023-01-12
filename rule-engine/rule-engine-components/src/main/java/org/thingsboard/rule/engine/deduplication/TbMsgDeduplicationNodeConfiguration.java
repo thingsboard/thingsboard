@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.deduplicate;
+package org.thingsboard.rule.engine.deduplication;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbMsgDeDuplicateNodeConfiguration implements NodeConfiguration<TbMsgDeDuplicateNodeConfiguration> {
+public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<TbMsgDeduplicationNodeConfiguration> {
 
     private int interval;
+    private DeduplicationId id;
+    private DeduplicationStrategy strategy;
+
+    // Advanced settings:
     private int maxPendingMsgs;
     private int maxRetries;
-    private boolean deDuplicateByOriginator;
-    private DeDuplicateStrategy strategy;
 
-    // only for DeDuplicateStrategy.ALL when deDuplicateByOriginator set to false,
-    // otherwise these parameters will be used from first msg of deDuplication msgs list.
+    // only for DeduplicationStrategy.ALL:
     private String outMsgType;
     private String queueName;
 
     @Override
-    public TbMsgDeDuplicateNodeConfiguration defaultConfiguration() {
-        TbMsgDeDuplicateNodeConfiguration configuration = new TbMsgDeDuplicateNodeConfiguration();
+    public TbMsgDeduplicationNodeConfiguration defaultConfiguration() {
+        TbMsgDeduplicationNodeConfiguration configuration = new TbMsgDeduplicationNodeConfiguration();
         configuration.setInterval(60);
+        configuration.setId(DeduplicationId.ORIGINATOR);
+        configuration.setStrategy(DeduplicationStrategy.FIRST);
         configuration.setMaxPendingMsgs(100);
         configuration.setMaxRetries(3);
-        configuration.setDeDuplicateByOriginator(true);
-        configuration.setStrategy(DeDuplicateStrategy.FIRST);
         return configuration;
     }
 }

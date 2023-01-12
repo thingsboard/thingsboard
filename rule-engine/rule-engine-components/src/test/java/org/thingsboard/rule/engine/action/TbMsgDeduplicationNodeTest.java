@@ -31,9 +31,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
-import org.thingsboard.rule.engine.deduplicate.DeDuplicateStrategy;
-import org.thingsboard.rule.engine.deduplicate.TbMsgDeDuplicateNode;
-import org.thingsboard.rule.engine.deduplicate.TbMsgDeDuplicateNodeConfiguration;
+import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
+import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode;
+import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNodeConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -67,22 +67,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class TbMsgDeDuplicateNodeTest {
+public class TbMsgDeduplicationNodeTest {
 
     private static final String MAIN_QUEUE_NAME = "Main";
     private static final String HIGH_PRIORITY_QUEUE_NAME = "HighPriority";
-    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeDuplicateNodeMsg";
+    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
 
     private TbContext ctx;
 
     private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("de-duplication-node-test");
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(factory);
-    private final int deDuplicationInterval = 1;
+    private final int deduplicationInterval = 1;
 
     private TenantId tenantId;
 
-    private TbMsgDeDuplicateNode node;
-    private TbMsgDeDuplicateNodeConfiguration config;
+    private TbMsgDeduplicationNode node;
+    private TbMsgDeduplicationNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
 
     private CountDownLatch awaitTellSelfLatch;
@@ -104,8 +104,8 @@ public class TbMsgDeDuplicateNodeTest {
             String data = (String) (invocationOnMock.getArguments())[4];
             return TbMsg.newMsg(type, originator, metaData.copy(), data);
         }).when(ctx).newMsg(isNull(), eq(TB_MSG_DEDUPLICATION_TIMEOUT_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
-        node = spy(new TbMsgDeDuplicateNode());
-        config = new TbMsgDeDuplicateNodeConfiguration().defaultConfiguration();
+        node = spy(new TbMsgDeduplicationNode());
+        config = new TbMsgDeduplicationNodeConfiguration().defaultConfiguration();
     }
 
     private void invokeTellSelf(int maxNumberOfInvocation) {
@@ -113,7 +113,7 @@ public class TbMsgDeDuplicateNodeTest {
     }
 
     private void invokeTellSelf(int maxNumberOfInvocation, boolean delayScheduleTimeout, int delayMultiplier) {
-        AtomicLong scheduleTimeout = new AtomicLong(deDuplicationInterval);
+        AtomicLong scheduleTimeout = new AtomicLong(deduplicationInterval);
         AtomicInteger scheduleCount = new AtomicInteger(0);
         doAnswer((Answer<Void>) invocationOnMock -> {
             scheduleCount.getAndIncrement();
@@ -149,7 +149,7 @@ public class TbMsgDeDuplicateNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
-        config.setInterval(deDuplicationInterval);
+        config.setInterval(deduplicationInterval);
         config.setMaxPendingMsgs(msgCount);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -185,8 +185,8 @@ public class TbMsgDeDuplicateNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
-        config.setStrategy(DeDuplicateStrategy.LAST);
-        config.setInterval(deDuplicationInterval);
+        config.setStrategy(DeduplicationStrategy.LAST);
+        config.setInterval(deduplicationInterval);
         config.setMaxPendingMsgs(msgCount);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -230,9 +230,10 @@ public class TbMsgDeDuplicateNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
-        config.setInterval(deDuplicationInterval);
-        config.setMaxPendingMsgs(msgCount);
-        config.setStrategy(DeDuplicateStrategy.ALL);
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.ALL);
+        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
+        config.setQueueName(HIGH_PRIORITY_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -258,6 +259,8 @@ public class TbMsgDeDuplicateNodeTest {
         TbMsg outMessage = newMsgCaptor.getAllValues().get(0);
         Assertions.assertEquals(getMergedData(inputMsgs), outMessage.getData());
         Assertions.assertEquals(deviceId, outMessage.getOriginator());
+        Assertions.assertEquals(config.getOutMsgType(), outMessage.getType());
+        Assertions.assertEquals(config.getQueueName(), outMessage.getQueueName());
     }
 
     @Test
@@ -267,9 +270,10 @@ public class TbMsgDeDuplicateNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation, true, 3);
 
-        config.setInterval(deDuplicationInterval);
-        config.setMaxPendingMsgs(msgCount);
-        config.setStrategy(DeDuplicateStrategy.ALL);
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.ALL);
+        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
+        config.setQueueName(HIGH_PRIORITY_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -281,9 +285,9 @@ public class TbMsgDeDuplicateNodeTest {
             node.onMsg(ctx, msg);
         }
         TbMsg firstMsgFromFirstPack = firstMsgPack.get(0);
-        long firstPackDeDuplicationPackEndTs = firstMsgFromFirstPack.getMetaDataTs() + TimeUnit.SECONDS.toMillis(deDuplicationInterval);
+        long firstPackDeduplicationPackEndTs = firstMsgFromFirstPack.getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
 
-        List<TbMsg> secondMsgPack = getTbMsgs(deviceId, msgCount / 2, firstPackDeDuplicationPackEndTs, 500);
+        List<TbMsg> secondMsgPack = getTbMsgs(deviceId, msgCount / 2, firstPackDeduplicationPackEndTs, 500);
         for (TbMsg msg : secondMsgPack) {
             node.onMsg(ctx, msg);
         }
@@ -298,9 +302,20 @@ public class TbMsgDeDuplicateNodeTest {
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
-        Assertions.assertEquals(2, newMsgCaptor.getAllValues().size());
-        Assertions.assertEquals(getMergedData(firstMsgPack), newMsgCaptor.getAllValues().get(0).getData());
-        Assertions.assertEquals(getMergedData(secondMsgPack), newMsgCaptor.getAllValues().get(1).getData());
+        List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
+        Assertions.assertEquals(2, resultMsgs.size());
+
+        TbMsg firstMsg = resultMsgs.get(0);
+        Assertions.assertEquals(getMergedData(firstMsgPack), firstMsg.getData());
+        Assertions.assertEquals(deviceId, firstMsg.getOriginator());
+        Assertions.assertEquals(config.getOutMsgType(), firstMsg.getType());
+        Assertions.assertEquals(config.getQueueName(), firstMsg.getQueueName());
+
+        TbMsg secondMsg = resultMsgs.get(1);
+        Assertions.assertEquals(getMergedData(secondMsgPack), secondMsg.getData());
+        Assertions.assertEquals(deviceId, secondMsg.getOriginator());
+        Assertions.assertEquals(config.getOutMsgType(), secondMsg.getType());
+        Assertions.assertEquals(config.getQueueName(), secondMsg.getQueueName());
     }
 
     private List<TbMsg> getTbMsgs(DeviceId deviceId, int msgCount, long currentTimeMillis, int initTsStep) {

@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.deduplicate;
+package org.thingsboard.rule.engine.deduplication;
 
-public enum DeDuplicateStrategy {
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-    FIRST, LAST, ALL
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+public class DeduplicationPack {
+
+    private int indexOfFirstStateInPack;
+    private int indexOfLastStateInPack;
+    private List<TbMsgDeduplicationState> states;
+
+    public TbMsgDeduplicationState getFirst() {
+        return states.get(indexOfFirstStateInPack);
+    }
+
+    public TbMsgDeduplicationState getLast() {
+        return states.get(indexOfLastStateInPack);
+    }
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.deduplicate;
+package org.thingsboard.rule.engine.deduplication;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -22,20 +22,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class DeDuplicateData {
+public class DeduplicationData {
 
     private EntityId entityId;
-    private List<DeDuplicatePack> deDuplicateStates;
+    private List<DeduplicationPack> deduplicationPacks;
     private int statesCount;
 
-    public DeDuplicateData(EntityId entityId) {
+    public DeduplicationData(EntityId entityId) {
         this.entityId = entityId;
-        this.deDuplicateStates = new ArrayList<>();
+        this.deduplicationPacks = new ArrayList<>();
         this.statesCount = 0;
     }
 
-    public void addDeDuplicatePack(List<TbMsgDeDuplicateState> states, int indexOfFirstStateInPack, int indexOfLastStateInPack) {
-        deDuplicateStates.add(new DeDuplicatePack(indexOfFirstStateInPack, indexOfLastStateInPack, states));
+    public void addDeduplicationPack(List<TbMsgDeduplicationState> states, int indexOfFirstStateInPack, int indexOfLastStateInPack) {
+        deduplicationPacks.add(new DeduplicationPack(indexOfFirstStateInPack, indexOfLastStateInPack, states));
         statesCount += states.size();
     }
 
