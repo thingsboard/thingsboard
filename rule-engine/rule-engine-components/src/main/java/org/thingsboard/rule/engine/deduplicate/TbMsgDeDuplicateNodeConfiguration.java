@@ -21,7 +21,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @Data
 public class TbMsgDeDuplicateNodeConfiguration implements NodeConfiguration<TbMsgDeDuplicateNodeConfiguration> {
 
-    private int delay;
+    private int interval;
     private int maxPendingMsgs;
     private int maxRetries;
     private boolean deDuplicateByOriginator;
@@ -35,7 +35,7 @@ public class TbMsgDeDuplicateNodeConfiguration implements NodeConfiguration<TbMs
     @Override
     public TbMsgDeDuplicateNodeConfiguration defaultConfiguration() {
         TbMsgDeDuplicateNodeConfiguration configuration = new TbMsgDeDuplicateNodeConfiguration();
-        configuration.setDelay(60);
+        configuration.setInterval(60);
         configuration.setMaxPendingMsgs(100);
         configuration.setMaxRetries(3);
         configuration.setDeDuplicateByOriginator(true);

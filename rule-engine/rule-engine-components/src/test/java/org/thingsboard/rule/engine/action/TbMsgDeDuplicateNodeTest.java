@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,8 +43,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -111,7 +108,11 @@ public class TbMsgDeDuplicateNodeTest {
         config = new TbMsgDeDuplicateNodeConfiguration().defaultConfiguration();
     }
 
-    private void invokeTellSelf(int maxNumberOfInvocation, boolean incrementScheduleTimeout) {
+    private void invokeTellSelf(int maxNumberOfInvocation) {
+        invokeTellSelf(maxNumberOfInvocation, false, 0);
+    }
+
+    private void invokeTellSelf(int maxNumberOfInvocation, boolean delayScheduleTimeout, int delayMultiplier) {
         AtomicLong scheduleTimeout = new AtomicLong(deDuplicationInterval);
         AtomicInteger scheduleCount = new AtomicInteger(0);
         doAnswer((Answer<Void>) invocationOnMock -> {
@@ -126,8 +127,8 @@ public class TbMsgDeDuplicateNodeTest {
                         log.error("Failed to execute tellSelf method call due to: ", e);
                     }
                 }, scheduleTimeout.get(), TimeUnit.SECONDS);
-                if (incrementScheduleTimeout) {
-                    scheduleTimeout.set(scheduleTimeout.get() * 3);
+                if (delayScheduleTimeout) {
+                    scheduleTimeout.set(scheduleTimeout.get() * delayMultiplier);
                 }
             }
 
@@ -146,9 +147,9 @@ public class TbMsgDeDuplicateNodeTest {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, false);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
-        config.setDelay(deDuplicationInterval);
+        config.setInterval(deDuplicationInterval);
         config.setMaxPendingMsgs(msgCount);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -182,10 +183,10 @@ public class TbMsgDeDuplicateNodeTest {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, false);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
         config.setStrategy(DeDuplicateStrategy.LAST);
-        config.setDelay(deDuplicationInterval);
+        config.setInterval(deDuplicationInterval);
         config.setMaxPendingMsgs(msgCount);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -227,9 +228,9 @@ public class TbMsgDeDuplicateNodeTest {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, false);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
-        config.setDelay(deDuplicationInterval);
+        config.setInterval(deDuplicationInterval);
         config.setMaxPendingMsgs(msgCount);
         config.setStrategy(DeDuplicateStrategy.ALL);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -264,9 +265,9 @@ public class TbMsgDeDuplicateNodeTest {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, true);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation, true, 3);
 
-        config.setDelay(deDuplicationInterval);
+        config.setInterval(deDuplicationInterval);
         config.setMaxPendingMsgs(msgCount);
         config.setStrategy(DeDuplicateStrategy.ALL);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));

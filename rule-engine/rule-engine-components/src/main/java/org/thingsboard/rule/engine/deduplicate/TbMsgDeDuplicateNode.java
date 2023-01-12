@@ -74,7 +74,7 @@ public class TbMsgDeDuplicateNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeDuplicateNodeConfiguration.class);
-        this.deDuplicationInterval = TimeUnit.SECONDS.toMillis(config.getDelay());
+        this.deDuplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
         this.deDuplicateByOriginator = config.isDeDuplicateByOriginator();
         this.deDuplicateStateMap = new HashMap<>();
         scheduleTickMsg(ctx);
@@ -84,9 +84,9 @@ public class TbMsgDeDuplicateNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         if (TB_MSG_DEDUPLICATION_TIMEOUT_MSG.equals(msg.getType())) {
             if (msg.getId().equals(nextTickId)) {
-                List<DeDuplicateData> deDuplicateDataList = getDeDuplicateDataList();
-                if (!deDuplicateDataList.isEmpty()) {
-                    if (deDuplicateByOriginator) {
+                if (deDuplicateByOriginator) {
+                    List<DeDuplicateData> deDuplicateDataList = getDeDuplicateDataList();
+                    if (!deDuplicateDataList.isEmpty()) {
                         deDuplicateDataList.forEach(deDuplicateData -> {
                             EntityId entityId = deDuplicateData.getEntityId();
                             List<DeDuplicatePack> deDuplicateStates = deDuplicateData.getDeDuplicateStates();
@@ -117,9 +117,9 @@ public class TbMsgDeDuplicateNode implements TbNode {
                                                 });
                                             }));
                         });
-                    } else {
-                        // todo implement
                     }
+                } else {
+                    // todo implement
                 }
                 scheduleTickMsg(ctx);
             } else {
@@ -136,6 +136,11 @@ public class TbMsgDeDuplicateNode implements TbNode {
                 ctx.tellFailure(msg, new RuntimeException("Max limit of pending messages reached for entity: " + msg.getOriginator()));
             }
         }
+    }
+
+    @Override
+    public void destroy() {
+        deDuplicateStateMap.clear();
     }
 
     private List<DeDuplicateData> getDeDuplicateDataList() {
