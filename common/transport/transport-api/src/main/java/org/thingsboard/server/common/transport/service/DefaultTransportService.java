@@ -71,8 +71,8 @@ import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceProfileCredentialsResponse;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
@@ -97,6 +97,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.AfterStartUp;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
@@ -425,6 +426,32 @@ public class DefaultTransportService implements TransportService {
             return result.build();
         }, MoreExecutors.directExecutor());
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceProfileX509CertRequestMsg requestMsg,
+                        TransportServiceCallback<ValidateDeviceProfileCredentialsResponse> callback) {
+        log.trace("Processing msg: {}", requestMsg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
+                TransportApiRequestMsg.newBuilder().setValidateProfileX509CertRequestMsg(requestMsg).build());
+        ListenableFuture<ValidateDeviceProfileCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
+            TransportProtos.ValidateDeviceProfileCredentialsResponseMsg msg = tmp.getValue().getValidateDeviceProfileResponseMsg();
+            ValidateDeviceProfileCredentialsResponse.ValidateDeviceProfileCredentialsResponseBuilder result = ValidateDeviceProfileCredentialsResponse.builder();
+            DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(msg.getDeviceProfileIdMSB(), msg.getDeviceProfileIdLSB()));
+            result.deviceProfileId(deviceProfileId);
+            result.isDeviceProfileFound(msg.getIsDeviceProfileFound());
+            return result.build();
+        }, MoreExecutors.directExecutor());
+        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(DeviceTransportType transportType, TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg requestMsg,
+                        TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        log.trace("Processing msg: {}", requestMsg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder()
+                .setUpdateOrCreateDeviceCertRequestMsg(requestMsg).build());
+        doProcess(transportType, protoMsg, callback);
     }
 
     @Override

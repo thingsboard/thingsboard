@@ -24,12 +24,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceProfileCredentialsResponse;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 import org.thingsboard.server.common.transport.util.SslUtil;
@@ -142,8 +143,15 @@ public class MqttSslHandlerProvider {
         }
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain,
-                                       String authType) throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            String deviceCN = SslUtil.parseCommonName(chain[0]);
+            String deviceCert;
+            String deviceCredentialsValue = SslUtil.getCertificateString(chain[0]);
+            try {
+                deviceCert = EncryptionUtil.getSha3Hash(SslUtil.getCertificateString(chain[0]));
+            } catch (CertificateEncodingException e) {
+                throw new RuntimeException(e);
+            }
             String credentialsBody = null;
             for (X509Certificate cert : chain) {
                 try {
@@ -152,13 +160,53 @@ public class MqttSslHandlerProvider {
                     final String[] credentialsBodyHolder = new String[1];
                     CountDownLatch latch = new CountDownLatch(1);
                     transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
-                            new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
+                            new TransportServiceCallback<>() {
                                 @Override
                                 public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                                     if (!StringUtils.isEmpty(msg.getCredentials())) {
                                         credentialsBodyHolder[0] = msg.getCredentials();
+                                        latch.countDown();
+                                    } else {
+                                        transportService.process(DeviceTransportType.MQTT,
+                                                TransportProtos.ValidateDeviceProfileX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+                                                new TransportServiceCallback<>() {
+                                                    @Override
+                                                    public void onSuccess(ValidateDeviceProfileCredentialsResponse msg) {
+                                                        if (msg.isDeviceProfileFound()) {
+                                                            transportService.process(DeviceTransportType.MQTT,
+                                                                    TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg.newBuilder()
+                                                                            .setHash(deviceCert)
+                                                                            .setCommonName(deviceCN)
+                                                                            .setDeviceProfileIdMSB(msg.getDeviceProfileId().getId().getMostSignificantBits())
+                                                                            .setDeviceProfileIdLSB(msg.getDeviceProfileId().getId().getLeastSignificantBits())
+                                                                            .build(),
+                                                                    new TransportServiceCallback<>() {
+                                                                        @Override
+                                                                        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                                                                            System.out.println("msg.getCredentials() = " + msg.getCredentials());
+                                                                            credentialsBodyHolder[0] = msg.getCredentials();
+                                                                            latch.countDown();
+                                                                        }
+
+                                                                        @Override
+                                                                        public void onError(Throwable e) {
+                                                                            log.error(e.getMessage(), e);
+                                                                            latch.countDown();
+                                                                        }
+                                                                    }
+                                                            );
+                                                        } else {
+                                                            latch.countDown();
+                                                        }
+                                                    }
+
+                                                    @Override
+                                                    public void onError(Throwable e) {
+                                                        log.error(e.getMessage(), e);
+                                                        latch.countDown();
+                                                    }
+                                                });
                                     }
-                                    latch.countDown();
                                 }
 
                                 @Override
@@ -168,7 +216,7 @@ public class MqttSslHandlerProvider {
                                 }
                             });
                     latch.await(10, TimeUnit.SECONDS);
-                    if (strCert.equals(credentialsBodyHolder[0])) {
+                    if (deviceCredentialsValue.equals(credentialsBodyHolder[0])) {
                         credentialsBody = credentialsBodyHolder[0];
                         break;
                     }

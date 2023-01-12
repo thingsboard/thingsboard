@@ -16,15 +16,12 @@
 package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -84,6 +81,13 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         return cache.getAndPutInTransaction(credentialsId,
                 () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
                 false);
+    }
+
+    @Override
+    public DeviceCredentials findDeviceCredentialsByTenantIdAndDeviceName(TenantId tenantId, String deviceName) {
+        log.trace("Executing findDeviceCredentialsByDeviceName [{}]", deviceName);
+        validateString(deviceName, "Incorrect deviceName " + deviceName);
+        return deviceCredentialsDao.findByTenantIdAndDeviceName(tenantId, deviceName);
     }
 
     @Override

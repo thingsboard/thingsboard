@@ -16,11 +16,17 @@
 package org.thingsboard.server.common.transport.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 
 /**
  * @author Valerii Sosliuk
@@ -34,5 +40,16 @@ public class SslUtil {
     public static String getCertificateString(Certificate cert)
             throws CertificateEncodingException {
         return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
+    }
+
+    public static String parseCommonName(X509Certificate certificate) {
+        X500Name x500name;
+        try {
+            x500name = new JcaX509CertificateHolder(certificate).getSubject();
+        } catch (CertificateEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+        return IETFUtils.valueToString(cn.getFirst().getValue());
     }
 }

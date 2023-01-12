@@ -53,4 +53,12 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
      */
     DeviceCredentials findByCredentialsId(TenantId tenantId, String credentialsId);
 
+    /**
+     * Find device credentials by device name.
+     *
+     * @param deviceName the device name
+     * @return the device credentials object
+     */
+    DeviceCredentials findByTenantIdAndDeviceName(TenantId tenantId, String deviceName);
+
 }

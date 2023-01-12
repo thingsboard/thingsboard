@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -68,6 +66,13 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private DeviceTransportType transportType;
     @ApiModelProperty(position = 15, value = "Provisioning strategy.")
     private DeviceProfileProvisionType provisionType;
+    @ApiModelProperty(position = 16, value = "CA certificate value")
+    private String certificateValue;
+    @ApiModelProperty(position = 17, value = "CA certificate hash")
+    private String certificateHash;
+    @ApiModelProperty(position = 18, value = "Regex for fetch deviceName from CN")
+    private String certificateRegexPattern;
+
     @ApiModelProperty(position = 7, value = "Reference to the rule chain. " +
             "If present, the specified rule chain will be used to process all messages related to device, including telemetry, attribute updates, etc. " +
             "Otherwise, the root rule chain will be used to process those messages.")

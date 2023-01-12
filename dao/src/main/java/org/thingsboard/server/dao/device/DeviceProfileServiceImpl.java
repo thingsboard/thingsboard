@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service("DeviceProfileDaoService")
 @Slf4j
@@ -61,6 +62,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
+    private static final String INCORRECT_DEVICE_PROFILE_CREDENTIALS_HASH = "Incorrect deviceProfileCredentialsHash ";
     private static final String DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS = "Device profile with such name already exists!";
 
     @Autowired
@@ -195,6 +197,14 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
         return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink, transportType);
+    }
+
+    @Override
+    public DeviceProfile findDeviceProfileByCertificateHash(String certificateHash) {
+        log.trace("Executing findDeviceProfileIdByCredentialsId credentialId [{}]", certificateHash);
+        validateString(certificateHash, INCORRECT_DEVICE_PROFILE_CREDENTIALS_HASH + certificateHash);
+        return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromCertificateHash(certificateHash),
+                () -> deviceProfileDao.findByCertificateHash(certificateHash), true);
     }
 
     @Override

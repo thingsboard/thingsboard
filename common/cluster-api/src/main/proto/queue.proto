@@ -169,6 +169,18 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
+message ValidateDeviceProfileX509CertRequestMsg {
+  string hash = 1;
+}
+
+message UpdateOrCreateDeviceX509CertRequestMsg {
+  string hash = 1;
+  string value = 2;
+  string commonName = 3;
+  int64 deviceProfileIdMSB = 4;
+  int64 deviceProfileIdLSB = 5;
+}
+
 message ValidateBasicMqttCredRequestMsg {
   string clientId = 1;
   string userName = 2;
@@ -179,6 +191,12 @@ message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
   bytes profileBody = 3;
+}
+
+message ValidateDeviceProfileCredentialsResponseMsg {
+  int64 deviceProfileIdMSB = 1;
+  int64 deviceProfileIdLSB = 2;
+  bool isDeviceProfileFound = 3;
 }
 
 message GetOrCreateDeviceFromGatewayRequestMsg {
@@ -885,33 +903,36 @@ message VersionControlResponseMsg {
 message TransportApiRequestMsg {
   ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
-  GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
-  GetEntityProfileRequestMsg entityProfileRequestMsg = 4;
-  LwM2MRequestMsg lwM2MRequestMsg = 5;
-  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
-  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
-  ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
-  GetResourceRequestMsg resourceRequestMsg = 9;
-  GetOtaPackageRequestMsg otaPackageRequestMsg = 10;
-  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
-  GetDeviceRequestMsg deviceRequestMsg = 12;
-  GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
-  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
+  ValidateDeviceProfileX509CertRequestMsg validateProfileX509CertRequestMsg = 3;
+  GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 4;
+  GetEntityProfileRequestMsg entityProfileRequestMsg = 5;
+  LwM2MRequestMsg lwM2MRequestMsg = 6;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 7;
+  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 8;
+  ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 9;
+  GetResourceRequestMsg resourceRequestMsg = 10;
+  GetOtaPackageRequestMsg otaPackageRequestMsg = 11;
+  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 12;
+  GetDeviceRequestMsg deviceRequestMsg = 13;
+  GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 14;
+  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 15;
+  UpdateOrCreateDeviceX509CertRequestMsg updateOrCreateDeviceCertRequestMsg = 16;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
   ValidateDeviceCredentialsResponseMsg validateCredResponseMsg = 1;
-  GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
-  GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
-  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
-  GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
-  LwM2MResponseMsg lwM2MResponseMsg = 6;
-  GetResourceResponseMsg resourceResponseMsg = 7;
-  GetOtaPackageResponseMsg otaPackageResponseMsg = 8;
-  GetDeviceResponseMsg deviceResponseMsg = 9;
-  GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
-  repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
+  ValidateDeviceProfileCredentialsResponseMsg validateDeviceProfileResponseMsg = 2;
+  GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 3;
+  GetEntityProfileResponseMsg entityProfileResponseMsg = 4;
+  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 5;
+  GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 6;
+  LwM2MResponseMsg lwM2MResponseMsg = 7;
+  GetResourceResponseMsg resourceResponseMsg = 8;
+  GetOtaPackageResponseMsg otaPackageResponseMsg = 9;
+  GetDeviceResponseMsg deviceResponseMsg = 10;
+  GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 11;
+  repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 12;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

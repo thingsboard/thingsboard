@@ -65,8 +65,8 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
@@ -90,11 +90,15 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRespon
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceProfileCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceProfileX509CertRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -108,6 +112,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
@@ -128,6 +134,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbTenantProfileCache tenantProfileCache;
     private final TbApiUsageStateService apiUsageStateService;
     private final DeviceService deviceService;
+    private final DeviceProfileService deviceProfileService;
     private final RelationService relationService;
     private final DeviceCredentialsService deviceCredentialsService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
@@ -159,6 +166,13 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
             result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
+        } else if (transportApiRequestMsg.hasValidateProfileX509CertRequestMsg()) {
+            ValidateDeviceProfileX509CertRequestMsg msg = transportApiRequestMsg.getValidateProfileX509CertRequestMsg();
+            result = validateDeviceProfileCertificate(msg.getHash());
+        } else if (transportApiRequestMsg.hasUpdateOrCreateDeviceCertRequestMsg()) {
+            UpdateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getUpdateOrCreateDeviceCertRequestMsg();
+            DeviceProfile deviceProfile = deviceProfileCache.find(new DeviceProfileId(new UUID(msg.getDeviceProfileIdMSB(), msg.getDeviceProfileIdLSB())));
+            result = updateOrCreateDeviceCredentials(msg.getHash(), msg.getValue(), msg.getCommonName(), deviceProfile, DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
@@ -224,6 +238,31 @@ public class DefaultTransportApiService implements TransportApiService {
                 return validateUserNameCredentials(mqtt);
             }
         }
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> validateDeviceProfileCertificate(String credentialsId) {
+        DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(credentialsId);
+        if (deviceProfile != null) {
+            return getDeviceProfileInfo(deviceProfile);
+        }
+        return getEmptyTransportApiResponseFuture();
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> updateOrCreateDeviceCredentials(String credentialsId,
+                                                                                      String credentialsValue,
+                                                                                      String deviceCN,
+                                                                                      DeviceProfile deviceProfile,
+                                                                                      DeviceCredentialsType credentialsType) {
+        String deviceName = extractRegex(deviceCN, deviceProfile.getCertificateRegexPattern());
+        // find deviceCredentials by deviceName (device exists)
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByTenantIdAndDeviceName(deviceProfile.getTenantId(), deviceName);
+        if (deviceCredentials != null && deviceCredentials.getCredentialsType() == credentialsType) {
+            deviceCredentials.setCredentialsId(credentialsId);
+            deviceCredentials.setCredentialsValue(credentialsValue);
+            deviceCredentialsService.updateDeviceCredentials(deviceProfile.getTenantId(), deviceCredentials);
+            return getDeviceInfo(deviceCredentials);
+        }
+        return getEmptyTransportApiResponseFuture();
     }
 
     private ListenableFuture<TransportApiResponseMsg> validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
@@ -507,6 +546,18 @@ public class DefaultTransportApiService implements TransportApiService {
         }, MoreExecutors.directExecutor());
     }
 
+    private ListenableFuture<TransportApiResponseMsg> getDeviceProfileInfo(DeviceProfile deviceProfile) {
+        ValidateDeviceProfileCredentialsResponseMsg.Builder builder = ValidateDeviceProfileCredentialsResponseMsg.newBuilder()
+                .setDeviceProfileIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(deviceProfile.getId().getId().getLeastSignificantBits())
+                .setIsDeviceProfileFound(true);
+
+        return Futures.immediateFuture(
+                TransportApiResponseMsg.newBuilder()
+                        .setValidateDeviceProfileResponseMsg(builder.build())
+                        .build());
+    }
+
     private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {
         DeviceInfoProto.Builder builder = DeviceInfoProto.newBuilder()
                 .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
@@ -663,5 +714,14 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private Long checkLong(Long l) {
         return l != null ? l : 0;
+    }
+
+    private String extractRegex(String commonName, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(commonName);
+        if (matcher.find()) {
+            return matcher.group(0);
+        }
+        return commonName;
     }
 }
