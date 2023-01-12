@@ -106,6 +106,15 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_CERTIFICATE_VALUE_PROPERTY)
+    private String certificateValue;
+
+    @Column(name = ModelConstants.DEVICE_PROFILE_CERTIFICATE_HASH_PROPERTY)
+    private String certificateHash;
+
+    @Column(name = ModelConstants.DEVICE_PROFILE_CERTIFICATE_REGEX_PATTERN_PROPERTY)
+    private String certificateRegexPattern;
+
     public DeviceProfileEntity() {
         super();
     }
@@ -123,6 +132,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.image = deviceProfile.getImage();
         this.transportType = deviceProfile.getTransportType();
         this.provisionType = deviceProfile.getProvisionType();
+        this.certificateHash = deviceProfile.getCertificateHash();
+        this.certificateValue = deviceProfile.getCertificateValue();
+        this.certificateRegexPattern = deviceProfile.getCertificateRegexPattern();
         this.description = deviceProfile.getDescription();
         this.isDefault = deviceProfile.isDefault();
         this.profileData = JacksonUtil.convertValue(deviceProfile.getProfileData(), ObjectNode.class);
@@ -182,6 +194,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
             deviceProfile.setDefaultDashboardId(new DashboardId(defaultDashboardId));
         }
         deviceProfile.setProvisionDeviceKey(provisionDeviceKey);
+        deviceProfile.setCertificateHash(certificateHash);
+        deviceProfile.setCertificateValue(certificateValue);
+        deviceProfile.setCertificateRegexPattern(certificateRegexPattern);
 
         if (firmwareId != null) {
             deviceProfile.setFirmwareId(new OtaPackageId(firmwareId));
