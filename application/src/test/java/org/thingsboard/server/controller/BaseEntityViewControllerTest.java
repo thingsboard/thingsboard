@@ -314,6 +314,39 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     }
 
     @Test
+    public void testAssignAndUnAssignedEntityViewToPublicCustomer() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Test entity view");
+        Mockito.reset(tbClusterService, auditLogService);
+
+        EntityView assignedView = doPost(
+                "/api/customer/public/entityView/" + savedView.getId().getId().toString(),
+                EntityView.class);
+        Customer publicCustomer = doGet("/api/customer/" + assignedView.getCustomerId(), Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testBroadcastEntityStateChangeEventNever(assignedView.getId());
+        testNotifyEntityAllOneTime(assignedView, assignedView.getId(), assignedView.getId(),
+                tenantId, assignedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedView.getId().getId().toString(), assignedView.getCustomerId().getId().toString(), publicCustomer.getTitle());
+
+        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(publicCustomer.getId(), foundView.getCustomerId());
+
+        EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
+
+        foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
+
+        testBroadcastEntityStateChangeEventNever(foundView.getId());
+        testNotifyEntityAllOneTime(unAssignedView, unAssignedView.getId(), unAssignedView.getId(),
+                tenantId, publicCustomer.getId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.UNASSIGNED_FROM_CUSTOMER,
+                unAssignedView.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
+    }
+
+    @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
 

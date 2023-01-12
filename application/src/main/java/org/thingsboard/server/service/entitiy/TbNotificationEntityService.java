@@ -73,8 +73,7 @@ public interface TbNotificationEntityService {
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                         CustomerId customerId, E entity,
                                                                                         ActionType actionType,
-                                                                                        User user, boolean sendToEdge,
-                                                                                        Object... additionalInfo);
+                                                                                        User user, Object... additionalInfo);
 
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToEdge(TenantId tenantId, I entityId,
                                                                                     CustomerId customerId, EdgeId edgeId,
