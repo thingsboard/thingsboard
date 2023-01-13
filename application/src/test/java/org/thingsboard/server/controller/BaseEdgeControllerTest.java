@@ -826,7 +826,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
 
         assertThat(edgeImitator.findAllMessagesByType(QueueUpdateMsg.class)).as("one msg during sync process").hasSize(1);
-        assertThat(edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class)).as("one msg during sync process, another from edge creation").hasSize(2);
+        List<RuleChainUpdateMsg> ruleChainUpdateMsgs = edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class);
+        assertThat(ruleChainUpdateMsgs).as("one msg during sync process, another from edge creation").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class)).as("one msg during sync process for 'default' device profile").hasSize(3);
         assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("one msg once device assigned to edge").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(AssetProfileUpdateMsg.class)).as("two msgs during sync process for 'default' and 'test' asset profiles").hasSize(4);
@@ -834,13 +835,15 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("one msg during sync process for tenant admin user").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update").hasSize(4);
         assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
+        verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
         edgeImitator.expectMessageAmount(15);
         doPost("/api/edge/sync/" + edge.getId());
         assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
 
         assertThat(edgeImitator.findAllMessagesByType(QueueUpdateMsg.class)).as("queue msg").hasSize(1);
-        assertThat(edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class)).as("rule chain msg").hasSize(1);
+        ruleChainUpdateMsgs = edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class);
+        assertThat(ruleChainUpdateMsgs).as("rule chain msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class)).as("device profile msg").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(AssetProfileUpdateMsg.class)).as("asset profile msg").hasSize(3);
         assertThat(edgeImitator.findAllMessagesByType(AssetUpdateMsg.class)).as("asset update msg").hasSize(1);
@@ -848,6 +851,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update msg").hasSize(4);
         assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("asset update msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
+        verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
         edgeImitator.allowIgnoredTypes();
         try {
@@ -861,6 +865,12 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         doDelete("/api/edge/" + edge.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    private void verifyRuleChainMsgsAreRoot(List<RuleChainUpdateMsg> ruleChainUpdateMsgs) {
+        for (RuleChainUpdateMsg ruleChainUpdateMsg : ruleChainUpdateMsgs) {
+            Assert.assertTrue(ruleChainUpdateMsg.getRoot());
+        }
     }
 
     @Test
