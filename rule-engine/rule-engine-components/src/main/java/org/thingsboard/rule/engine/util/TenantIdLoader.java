@@ -18,8 +18,6 @@ package org.thingsboard.rule.engine.util;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
