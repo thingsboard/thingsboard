@@ -145,13 +145,8 @@ public class MqttSslHandlerProvider {
         @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             String deviceCN = SslUtil.parseCommonName(chain[0]);
-            String deviceCert;
-            String deviceCredentialsValue = SslUtil.getCertificateString(chain[0]);
-            try {
-                deviceCert = EncryptionUtil.getSha3Hash(SslUtil.getCertificateString(chain[0]));
-            } catch (CertificateEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            String clientDeviceCertValue = SslUtil.getCertificateString(chain[0]);
+            String clientDeviceCertHash = EncryptionUtil.getSha3Hash(clientDeviceCertValue);
             String credentialsBody = null;
             for (X509Certificate cert : chain) {
                 try {
@@ -175,7 +170,8 @@ public class MqttSslHandlerProvider {
                                                         if (msg.isDeviceProfileFound()) {
                                                             transportService.process(DeviceTransportType.MQTT,
                                                                     TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg.newBuilder()
-                                                                            .setHash(deviceCert)
+                                                                            .setHash(clientDeviceCertHash)
+                                                                            .setValue(clientDeviceCertValue)
                                                                             .setCommonName(deviceCN)
                                                                             .setDeviceProfileIdMSB(msg.getDeviceProfileId().getId().getMostSignificantBits())
                                                                             .setDeviceProfileIdLSB(msg.getDeviceProfileId().getId().getLeastSignificantBits())
@@ -183,7 +179,6 @@ public class MqttSslHandlerProvider {
                                                                     new TransportServiceCallback<>() {
                                                                         @Override
                                                                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                                                            System.out.println("msg.getCredentials() = " + msg.getCredentials());
                                                                             credentialsBodyHolder[0] = msg.getCredentials();
                                                                             latch.countDown();
                                                                         }
@@ -216,7 +211,7 @@ public class MqttSslHandlerProvider {
                                 }
                             });
                     latch.await(10, TimeUnit.SECONDS);
-                    if (deviceCredentialsValue.equals(credentialsBodyHolder[0])) {
+                    if (clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
                         credentialsBody = credentialsBodyHolder[0];
                         break;
                     }

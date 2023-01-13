@@ -849,7 +849,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate[] chain, MqttConnectMessage connectMessage) {
         try {
             String deviceCN = SslUtil.parseCommonName(chain[0]);
-            String deviceCertHash = EncryptionUtil.getSha3Hash(SslUtil.getCertificateString(chain[0]));
+            String clientDeviceCertValue = SslUtil.getCertificateString(chain[0]);
+            String clientDeviceCertHash = EncryptionUtil.getSha3Hash(clientDeviceCertValue);
             for (X509Certificate cert : chain) {
                 try {
                     String strCert = SslUtil.getCertificateString(cert);
@@ -872,7 +873,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                                                         if (msg.isDeviceProfileFound()) {
                                                             transportService.process(DeviceTransportType.MQTT,
                                                                     TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg.newBuilder()
-                                                                            .setHash(deviceCertHash)
+                                                                            .setHash(clientDeviceCertHash)
+                                                                            .setValue(clientDeviceCertValue)
                                                                             .setCommonName(deviceCN)
                                                                             .setDeviceProfileIdMSB(msg.getDeviceProfileId().getId().getMostSignificantBits())
                                                                             .setDeviceProfileIdLSB(msg.getDeviceProfileId().getId().getLeastSignificantBits())
