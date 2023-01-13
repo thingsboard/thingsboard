@@ -105,8 +105,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
 
         AlarmComment createdComment = createAlarmComment(alarm.getId());
 
-        testLogEntityAction(createdComment, createdComment.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED, 1);
-        testPushMsgToRuleEngineTime(createdComment.getId(), tenantId, createdComment, 1);
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED_COMMENT, 1, createdComment);
     }
 
     @Test
@@ -118,8 +117,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         AlarmComment createdComment = createAlarmComment(alarm.getId());
         Assert.assertEquals(AlarmCommentType.OTHER, createdComment.getType());
 
-        testLogEntityAction(createdComment, createdComment.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED, 1);
-        testPushMsgToRuleEngineTime(createdComment.getId(), tenantId, createdComment, 1);
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED_COMMENT, 1, createdComment);
     }
 
     @Test
@@ -138,8 +136,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
         Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testLogEntityAction(updatedAlarmComment, updatedAlarmComment.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED, 1);
-        testPushMsgToRuleEngineTime(updatedAlarmComment.getId(), tenantId, updatedAlarmComment, 1);
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED_COMMENT, 1, savedComment);
     }
 
     @Test
@@ -158,8 +155,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
         Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testLogEntityAction(updatedAlarmComment, updatedAlarmComment.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED, 1);
-        testPushMsgToRuleEngineTime(updatedAlarmComment.getId(), tenantId, updatedAlarmComment, 1);
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED_COMMENT, 1, updatedAlarmComment);
     }
 
     @Test
@@ -177,7 +173,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
                 .andExpect(status().isForbidden())
                 .andExpect(statusReason(containsString(msgErrorPermission)));
 
-        testNotifyEntityNever(savedComment.getId(), savedComment);
+        testNotifyEntityNever(alarm.getId(), savedComment);
     }
 
     @Test
@@ -195,11 +191,11 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
                 .andExpect(status().isForbidden())
                 .andExpect(statusReason(containsString(msgErrorPermission)));
 
-        testNotifyEntityNever(savedComment.getId(), savedComment);
+        testNotifyEntityNever(alarm.getId(), savedComment);
     }
 
     @Test
-    public void testDeleteAlarmViaCustomer() throws Exception {
+    public void testDeleteAlarmСommentViaCustomer() throws Exception {
         loginCustomerUser();
         AlarmComment alarmComment = createAlarmComment(alarm.getId());
 
@@ -208,8 +204,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(alarmComment, alarmComment.getId(), alarmComment.getId(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED);
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED_COMMENT, 1, alarmComment);
     }
 
     @Test
@@ -222,8 +217,7 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(alarmComment, alarmComment.getId(), alarmComment.getId(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, alarmComment);
     }
 
     @Test
