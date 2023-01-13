@@ -107,9 +107,8 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         if (existing != null) {
             if (newAlarmComment.getComment() != null) {
                 JsonNode comment = newAlarmComment.getComment();
-                UUID uuid = Uuids.timeBased();
                 ((ObjectNode) comment).put("edited", "true");
-                ((ObjectNode) comment).put("editedOn", Uuids.unixTimestamp(uuid));
+                ((ObjectNode) comment).put("editedOn", System.currentTimeMillis());
                 existing.setComment(comment);
             }
             return alarmCommentDao.save(tenantId, existing);
