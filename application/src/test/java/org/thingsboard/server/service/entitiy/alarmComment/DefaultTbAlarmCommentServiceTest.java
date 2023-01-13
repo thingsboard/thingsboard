@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.alarm;
+package org.thingsboard.server.service.entitiy.alarmComment;
 
-import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -27,42 +27,39 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.alarm.DefaultTbAlarmCommentService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = DefaultTbAlarmService.class)
+@ContextConfiguration(classes = DefaultTbAlarmCommentService.class)
 @TestPropertySource(properties = {
         "server.log_controller_error_stack_trace=false"
 })
-public class DefaultTbAlarmServiceTest {
+public class DefaultTbAlarmCommentServiceTest {
 
     @MockBean
     protected DbCallbackExecutorService dbExecutor;
     @MockBean
     protected TbNotificationEntityService notificationEntityService;
-    @MockBean
-    protected EdgeService edgeService;
     @MockBean
     protected AlarmService alarmService;
     @MockBean
@@ -73,51 +70,27 @@ public class DefaultTbAlarmServiceTest {
     protected CustomerService customerService;
     @MockBean
     protected TbClusterService tbClusterService;
-    @MockBean
-    private EntitiesVersionControlService vcService;
-
     @SpyBean
-    DefaultTbAlarmService service;
+    DefaultTbAlarmCommentService service;
 
     @Test
     public void testSave() throws ThingsboardException {
         var alarm = new Alarm();
-        when(alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
-        service.save(alarm, new User());
+        var alarmComment = new AlarmComment();
+        when(alarmCommentService.createOrUpdateAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
+        service.saveAlarmComment(alarm, alarmComment, new User());
 
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).createOrUpdateAlarm(eq(alarm));
-    }
-
-    @Test
-    public void testAck() {
-        var alarm = new Alarm();
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
-        when(alarmSubscriptionService.ackAlarm(any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
-        service.ack(alarm, new User(new UserId(UUID.randomUUID())));
-
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).ackAlarm(any(), any(), anyLong());
-    }
-
-    @Test
-    public void testClear() {
-        var alarm = new Alarm();
-        alarm.setStatus(AlarmStatus.ACTIVE_ACK);
-        when(alarmSubscriptionService.clearAlarm(any(), any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
-        service.clear(alarm, new User(new UserId(UUID.randomUUID())));
-
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), any(), anyLong());
+        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
     }
 
     @Test
     public void testDelete() {
-        service.delete(new Alarm(), new User());
+        var alarmId = new AlarmId(UUID.randomUUID());
+        var alarmCommentId = new AlarmCommentId(UUID.randomUUID());
 
-        verify(notificationEntityService, times(1)).notifyDeleteAlarm(any(), any(), any(), any(), any(), any(), anyString());
-        verify(alarmSubscriptionService, times(1)).deleteAlarm(any(), any());
+        doNothing().when(alarmCommentService).deleteAlarmComment(Mockito.any(), eq(alarmCommentId));
+        service.deleteAlarmComment(new Alarm(alarmId), new AlarmComment(alarmCommentId), new User());
+
+        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
     }
 }
