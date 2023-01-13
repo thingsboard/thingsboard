@@ -28,11 +28,11 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
-} from '@home/pages/notification-center/template-dialog/template-notification-dialog.component';
+} from '@home/pages/notification-center/template-table/template-notification-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
   TemplateTableHeaderComponent
-} from '@home/pages/notification-center/template-dialog/template-table-header.component';
+} from '@home/pages/notification-center/template-table/template-table-header.component';
 
 export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate> {
 
