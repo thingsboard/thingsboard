@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -35,14 +37,21 @@ import org.thingsboard.server.common.data.notification.info.UserOriginatedNotifi
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
+import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -59,6 +68,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -336,6 +346,117 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         });
 
         sessions.values().forEach(WebSocketClient::close);
+    }
+
+    @Test
+    public void testNotificationRequestPreview() throws Exception {
+        NotificationTarget target1 = new NotificationTarget();
+        target1.setName("Me");
+        UserListNotificationTargetConfig target1Config = new UserListNotificationTargetConfig();
+        target1Config.setUsersIds(DaoUtil.toUUIDs(List.of(tenantAdminUserId)));
+        target1.setConfiguration(target1Config);
+        target1 = saveNotificationTarget(target1);
+
+        createDifferentCustomer();
+        loginTenantAdmin();
+        int customerUsersCount = 10;
+        for (int i = 0; i < customerUsersCount; i++) {
+            User customerUser = new User();
+            customerUser.setAuthority(Authority.CUSTOMER_USER);
+            customerUser.setTenantId(tenantId);
+            customerUser.setCustomerId(differentCustomerId);
+            customerUser.setEmail("other-customer-" + i + "@thingsboard.org");
+            customerUser = createUser(customerUser, "12345678");
+        }
+        NotificationTarget target2 = new NotificationTarget();
+        target2.setName("Other customer users");
+        CustomerUsersNotificationTargetConfig target2Config = new CustomerUsersNotificationTargetConfig();
+        target2Config.setCustomerId(differentCustomerId.getId());
+        target2Config.setGetCustomerIdFromOriginatorEntity(false);
+        target2.setConfiguration(target2Config);
+        target2 = saveNotificationTarget(target2);
+
+
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setNotificationType(NotificationType.GENERAL);
+        notificationTemplate.setName("Test template");
+
+        String requestorEmail = TENANT_ADMIN_EMAIL;
+        NotificationTemplateConfig templateConfig = new NotificationTemplateConfig();
+        templateConfig.setDefaultTextTemplate("Default message for SMS and PUSH: ${email}");
+        templateConfig.setNotificationSubject("Default subject for EMAIL: ${email}");
+        HashMap<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates = new HashMap<>();
+        templateConfig.setDeliveryMethodsTemplates(templates);
+        notificationTemplate.setConfiguration(templateConfig);
+
+        PushDeliveryMethodNotificationTemplate pushNotificationTemplate = new PushDeliveryMethodNotificationTemplate();
+        pushNotificationTemplate.setEnabled(true);
+        // using default message for push
+        pushNotificationTemplate.setSubject("Subject for PUSH: ${email}");
+        templates.put(NotificationDeliveryMethod.PUSH, pushNotificationTemplate);
+
+        SmsDeliveryMethodNotificationTemplate smsNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
+        smsNotificationTemplate.setEnabled(true);
+        // using default message for sms
+        templates.put(NotificationDeliveryMethod.SMS, smsNotificationTemplate);
+
+        EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
+        emailNotificationTemplate.setEnabled(true);
+        emailNotificationTemplate.setBody("Message for EMAIL: ${email}");
+        // using default subject for email
+        templates.put(NotificationDeliveryMethod.EMAIL, emailNotificationTemplate);
+
+        SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
+        slackNotificationTemplate.setEnabled(true);
+        slackNotificationTemplate.setConversationType(SlackConversation.Type.PUBLIC_CHANNEL);
+        slackNotificationTemplate.setConversationId("U1234567");
+        slackNotificationTemplate.setBody("Message for SLACK: ${email}");
+        templates.put(NotificationDeliveryMethod.SLACK, slackNotificationTemplate);
+
+        notificationTemplate = saveNotificationTemplate(notificationTemplate);
+
+
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setTargets(List.of(target1.getId(), target2.getId()));
+        notificationRequest.setTemplateId(notificationTemplate.getId());
+        notificationRequest.setAdditionalConfig(new NotificationRequestConfig());
+
+        NotificationRequestPreview preview = doPost("/api/notification/request/preview", notificationRequest, NotificationRequestPreview.class);
+        assertThat(preview.getRecipientsCountByTarget().get(target1.getUuidId())).isEqualTo(1);
+        assertThat(preview.getRecipientsCountByTarget().get(target2.getUuidId())).isEqualTo(customerUsersCount);
+        assertThat(preview.getTotalRecipientsCount()).isEqualTo(1 + customerUsersCount);
+
+        Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = preview.getProcessedTemplates();
+        assertThat(processedTemplates.get(NotificationDeliveryMethod.PUSH)).asInstanceOf(type(PushDeliveryMethodNotificationTemplate.class))
+                .satisfies(template -> {
+                    assertThat(template.getBody())
+                            .startsWith("Default message for SMS and PUSH")
+                            .endsWith(requestorEmail);
+                    assertThat(template.getSubject())
+                            .startsWith("Subject for PUSH")
+                            .endsWith(requestorEmail);
+                });
+        assertThat(processedTemplates.get(NotificationDeliveryMethod.SMS)).asInstanceOf(type(SmsDeliveryMethodNotificationTemplate.class))
+                .satisfies(template -> {
+                    assertThat(template.getBody())
+                            .startsWith("Default message for SMS and PUSH")
+                            .endsWith(requestorEmail);
+                });
+        assertThat(processedTemplates.get(NotificationDeliveryMethod.EMAIL)).asInstanceOf(type(EmailDeliveryMethodNotificationTemplate.class))
+                .satisfies(template -> {
+                    assertThat(template.getBody())
+                            .startsWith("Message for EMAIL")
+                            .endsWith(requestorEmail);
+                    assertThat(template.getSubject())
+                            .startsWith("Default subject for EMAIL")
+                            .endsWith(requestorEmail);
+                });
+        assertThat(processedTemplates.get(NotificationDeliveryMethod.SLACK)).asInstanceOf(type(SlackDeliveryMethodNotificationTemplate.class))
+                .satisfies(template -> {
+                    assertThat(template.getBody())
+                            .startsWith("Message for SLACK")
+                            .endsWith(requestorEmail);
+                });
     }
 
     @Test

@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  width: 600px;
+package org.thingsboard.server.common.data.notification;
 
-  .tb-hint {
-    padding: 0;
-  }
-}
+import lombok.Data;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 
-:host ::ng-deep {
-  .mat-radio-group {
-    display: flex;
-    flex-direction: row;
+import java.util.Map;
+import java.util.UUID;
 
-    .mat-radio-button {
-      flex: 1 1 100%;
-      padding: 14px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
+@Data
+public class NotificationRequestPreview {
 
-      &:not(:last-child){
-        margin-right: 8px;
-      }
-    }
-  }
+    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates;
+    private int totalRecipientsCount;
+    private Map<UUID, Integer> recipientsCountByTarget;
+
 }

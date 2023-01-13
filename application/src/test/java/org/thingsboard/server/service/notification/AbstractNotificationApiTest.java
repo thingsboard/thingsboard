@@ -107,7 +107,6 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         UserOriginatedNotificationInfo notificationInfo = new UserOriginatedNotificationInfo();
         notificationInfo.setDescription("My description");
         NotificationRequest notificationRequest = NotificationRequest.builder()
-                .tenantId(tenantId)
                 .targets(targets)
                 .templateId(notificationTemplateId)
                 .info(notificationInfo)

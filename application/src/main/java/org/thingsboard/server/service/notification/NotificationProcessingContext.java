@@ -90,7 +90,7 @@ public class NotificationProcessingContext {
         return (C) settings.getDeliveryMethodsConfigs().get(deliveryMethod);
     }
 
-    protected <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
+    public  <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
         if (request.getInfo() != null) {
             templateContext = new HashMap<>(templateContext);
             templateContext.putAll(request.getInfo().getTemplateData());
