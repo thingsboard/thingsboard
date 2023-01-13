@@ -32,7 +32,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,10 +57,11 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     private static final int TB_MSG_DEDUPLICATION_TIMEOUT = 5000;
+    public static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
 
     private TbMsgDeduplicationNodeConfiguration config;
 
-    private Map<EntityId, List<TbMsgDeduplicationState>> deduplicationStateMap;
+    private Map<EntityId, List<TbMsg>> deduplicationMap;
     private long deduplicationInterval;
     private long lastScheduledTs;
     private DeduplicationId deduplicationId;
@@ -72,70 +72,39 @@ public class TbMsgDeduplicationNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
         this.deduplicationId = config.getId();
-        this.deduplicationStateMap = new HashMap<>();
+        this.deduplicationMap = new HashMap<>();
         scheduleTickMsg(ctx);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         if (TB_MSG_DEDUPLICATION_TIMEOUT_MSG.equals(msg.getType())) {
-            switch (deduplicationId) {
-                case ORIGINATOR:
-                    List<DeduplicationData> deduplicationDataList = getDeduplicationDataList();
-                    if (!deduplicationDataList.isEmpty()) {
-                        deduplicationDataList.forEach(deduplicationData -> {
-                            EntityId entityId = deduplicationData.getEntityId();
-                            List<DeduplicationPack> deduplicationPacks = deduplicationData.getDeduplicationPacks();
-                            deduplicationPacks.forEach(pack ->
-                                    ctx.enqueueForTellNext(getOutputMsg(pack), TbRelationTypes.SUCCESS,
-                                            () -> deduplicationStateMap.computeIfPresent(entityId, (key, states) -> {
-                                                pack.getStates().forEach(states::remove);
-                                                return states;
-                                            }),
-                                            throwable -> {
-                                                log.trace("[{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), entityId, throwable);
-                                                deduplicationStateMap.computeIfPresent(entityId, (key, states) -> {
-                                                    List<TbMsgDeduplicationState> statesToRemove = new ArrayList<>();
-                                                    states.forEach(state -> {
-                                                        if (pack.getStates().contains(state)) {
-                                                            int retries = state.getRetries();
-                                                            if (retries < config.getMaxRetries()) {
-                                                                state.incrementRetries();
-                                                            } else {
-                                                                statesToRemove.add(state);
-                                                            }
-                                                        }
-                                                    });
-                                                    states.removeAll(statesToRemove);
-                                                    return states;
-                                                });
-                                            }));
-                        });
-                    }
-                    break;
-                case CUSTOMER:
-                    // todo implement
-                    break;
-                default:
-                    // todo implement
-                    break;
-            }
+            processDeduplication(ctx);
             scheduleTickMsg(ctx);
         } else {
-            EntityId deduplicationStateId = getDeduplicationStateId(ctx, msg);
-            List<TbMsgDeduplicationState> deduplicationStateList = deduplicationStateMap.computeIfAbsent(deduplicationStateId, k -> new ArrayList<>());
-            if (deduplicationStateList.size() < config.getMaxPendingMsgs()) {
-                log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), deduplicationStateId, msg.getId(), msg.getMetaDataTs());
-                deduplicationStateList.add(new TbMsgDeduplicationState(msg));
-                ctx.ack(msg);
-            } else {
-                log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), deduplicationStateId);
-                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + deduplicationStateId + "]"));
-            }
+            processOnRegularMsg(ctx, msg);
         }
     }
 
-    private EntityId getDeduplicationStateId(TbContext ctx, TbMsg msg) {
+    @Override
+    public void destroy() {
+        deduplicationMap.clear();
+    }
+
+    private void processOnRegularMsg(TbContext ctx, TbMsg msg) {
+        EntityId id = getDeduplicationId(ctx, msg);
+        List<TbMsg> deduplicationMsgs = deduplicationMap.computeIfAbsent(id, k -> new ArrayList<>());
+        if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
+            log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
+            deduplicationMsgs.add(msg);
+            ctx.ack(msg);
+        } else {
+            log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
+            ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
+        }
+    }
+
+    private EntityId getDeduplicationId(TbContext ctx, TbMsg msg) {
         switch (deduplicationId) {
             case ORIGINATOR:
                 return msg.getOriginator();
@@ -144,85 +113,108 @@ public class TbMsgDeduplicationNode implements TbNode {
             case CUSTOMER:
                 return msg.getCustomerId();
             default:
-                throw new IllegalStateException("Unsupported deduplicationId: " + deduplicationId);
+                throw new IllegalStateException("Unsupported deduplication id: " + deduplicationId);
         }
     }
 
-    @Override
-    public void destroy() {
-        deduplicationStateMap.clear();
-    }
-
-    private List<DeduplicationData> getDeduplicationDataList() {
-        if (deduplicationStateMap.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<DeduplicationData> result = new ArrayList<>();
-        long deduplicationTimeoutMs = System.currentTimeMillis();
-        deduplicationStateMap.forEach((entityId, tbMsgDeduplicationStates) -> {
-            if (!tbMsgDeduplicationStates.isEmpty()) {
-                DeduplicationData deduplicationData = new DeduplicationData(entityId);
-                TbMsgDeduplicationState firstDeduplicationState = getFirstDeduplicationState(tbMsgDeduplicationStates, null);
-                TbMsgDeduplicationState lastStateInPack = firstDeduplicationState;
-                long deduplicationStartTs = firstDeduplicationState.getTs();
-                long deduplicationEndTs = deduplicationStartTs + deduplicationInterval;
-                boolean hasNextDeduplicationPack = deduplicationEndTs < deduplicationTimeoutMs;
-                while (hasNextDeduplicationPack) {
-                    long finalDeduplicationStartTs = deduplicationStartTs;
-                    List<TbMsgDeduplicationState> statesPack = new ArrayList<>();
-                    for (TbMsgDeduplicationState state : tbMsgDeduplicationStates) {
-                        if (state.getTs() >= finalDeduplicationStartTs && state.getTs() < deduplicationEndTs) {
-                            statesPack.add(state);
-                            if (state.getTs() > lastStateInPack.getTs()) {
-                                lastStateInPack = state;
+    private void processDeduplication(TbContext ctx) {
+        if (!deduplicationMap.isEmpty()) {
+            List<TbMsg> deduplicationResults = new ArrayList<>();
+            long deduplicationTimeoutMs = System.currentTimeMillis();
+            for (EntityId entityId : deduplicationMap.keySet()) {
+                deduplicationMap.computeIfPresent(entityId, (id, tbMsgs) -> {
+                    if (tbMsgs.isEmpty()) {
+                        return tbMsgs;
+                    }
+                    List<TbMsg> msgsToRemove = new ArrayList<>();
+                    int pendingMsgCount = tbMsgs.size();
+                    int processedMsgCount = 0;
+                    TbMsg firstMsg = getFirstTbMsg(tbMsgs);
+                    TbMsg lastMsg = firstMsg;
+                    long deduplicationStartTs = firstMsg.getMetaDataTs();
+                    long deduplicationEndTs = deduplicationStartTs + deduplicationInterval;
+                    boolean hasNextDeduplicationPack = deduplicationEndTs < deduplicationTimeoutMs;
+                    while (hasNextDeduplicationPack) {
+                        List<TbMsg> pack = new ArrayList<>();
+                        for (TbMsg tbMsg : tbMsgs) {
+                            if (tbMsg.getMetaDataTs() >= deduplicationStartTs && tbMsg.getMetaDataTs() < deduplicationEndTs) {
+                                pack.add(tbMsg);
+                                if (tbMsg.getMetaDataTs() > lastMsg.getMetaDataTs()) {
+                                    lastMsg = tbMsg;
+                                }
                             }
                         }
-                    }
-                    deduplicationData.addDeduplicationPack(statesPack, statesPack.indexOf(firstDeduplicationState), statesPack.indexOf(lastStateInPack));
-                    if (deduplicationData.getStatesCount() == tbMsgDeduplicationStates.size()) {
-                        hasNextDeduplicationPack = false;
-                    } else {
-                        firstDeduplicationState = getFirstDeduplicationState(tbMsgDeduplicationStates, deduplicationEndTs);
-                        if (firstDeduplicationState == null) {
+                        msgsToRemove.addAll(pack);
+                        processedMsgCount = processedMsgCount + pack.size();
+                        if (processedMsgCount == pendingMsgCount) {
                             hasNextDeduplicationPack = false;
                         } else {
-                            deduplicationStartTs = firstDeduplicationState.getTs();
-                            deduplicationEndTs = deduplicationStartTs + deduplicationInterval;
-                            hasNextDeduplicationPack = deduplicationEndTs < deduplicationTimeoutMs;
+                            firstMsg = getFirstTbMsg(tbMsgs, deduplicationEndTs);
+                            if (firstMsg == null) {
+                                hasNextDeduplicationPack = false;
+                            } else {
+                                deduplicationStartTs = firstMsg.getMetaDataTs();
+                                deduplicationEndTs = deduplicationStartTs + deduplicationInterval;
+                                hasNextDeduplicationPack = deduplicationEndTs < deduplicationTimeoutMs;
+                            }
                         }
+                        deduplicationResults.add(createOutMsg(entityId, pack, pack.indexOf(firstMsg), pack.indexOf(lastMsg)));
                     }
-                }
-                result.add(deduplicationData);
+                    tbMsgs.removeAll(msgsToRemove);
+                    return tbMsgs;
+                });
             }
-        });
-        return result;
+            deduplicationResults.forEach(msg -> enqueueForTellNextWithRetry(ctx, msg, 0));
+        }
     }
 
-    private TbMsgDeduplicationState getFirstDeduplicationState(List<TbMsgDeduplicationState> tbMsgDeduplicationStates, Long previousPackEndTs) {
+    private TbMsg getFirstTbMsg(List<TbMsg> tbMsgs) {
+        return getFirstTbMsg(tbMsgs, null);
+    }
+
+    private TbMsg getFirstTbMsg(List<TbMsg> tbMsgs, Long previousPackEndTs) {
         if (previousPackEndTs != null) {
-            tbMsgDeduplicationStates = tbMsgDeduplicationStates.stream().filter(state -> state.getTs() >= previousPackEndTs).collect(Collectors.toList());
+            tbMsgs = tbMsgs.stream()
+                    .filter(msg -> msg.getMetaDataTs() >= previousPackEndTs)
+                    .collect(Collectors.toList());
         }
-        TbMsgDeduplicationState first = null;
-        for (TbMsgDeduplicationState state : tbMsgDeduplicationStates) {
-            if (first == null || state.getTs() < first.getTs()) {
-                first = state;
+        TbMsg firstMsg = null;
+        for (TbMsg msg : tbMsgs) {
+            if (firstMsg == null || msg.getMetaDataTs() < firstMsg.getMetaDataTs()) {
+                firstMsg = msg;
             }
         }
-        return first;
+        return firstMsg;
     }
 
-    private TbMsg getOutputMsg(DeduplicationPack pack) {
+    private TbMsg createOutMsg(EntityId originator, List<TbMsg> pack, int firstIndex, int lastIndex) {
         switch (config.getStrategy()) {
             case FIRST:
-                return pack.getFirst().getTbMsg();
+                return pack.get(firstIndex);
             case LAST:
-                return pack.getLast().getTbMsg();
+                return pack.get(lastIndex);
             default:
-                EntityId originator = pack.getStates().get(0).getTbMsg().getOriginator();
-                String data = getMergedData(pack.getStates().stream()
-                        .map(TbMsgDeduplicationState::getTbMsg)
-                        .collect(Collectors.toList()));
-                return TbMsg.newMsg(config.getQueueName(), config.getOutMsgType(), originator, getMetadata(), data);
+                return TbMsg.newMsg(
+                        config.getQueueName(),
+                        config.getOutMsgType(),
+                        originator,
+                        getMetadata(),
+                        getMergedData(pack));
+        }
+    }
+
+    private void enqueueForTellNextWithRetry(TbContext ctx, TbMsg msg, int retryAttempt) {
+        if (config.getMaxRetries() > retryAttempt) {
+            ctx.enqueueForTellNext(msg, TbRelationTypes.SUCCESS,
+                    () -> {
+                        log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), msg.getOriginator(), retryAttempt);
+                    },
+                    throwable -> {
+                        log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), msg.getOriginator(), retryAttempt, throwable);
+                        ctx.schedule(() -> {
+                            enqueueForTellNextWithRetry(ctx, msg, retryAttempt + 1);
+                        }, TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
+                    });
         }
     }
 
