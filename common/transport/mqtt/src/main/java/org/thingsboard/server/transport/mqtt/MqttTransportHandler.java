@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonParseException;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -69,8 +70,10 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
+import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
@@ -388,7 +391,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case NBIRTH:
                     case NCMD:
                     case NDATA:
-                        sparkplugSessionHandler.onDeviceTelemetryProto(msgId, mqttMsg.payload(), deviceName, sparkplugTopic.isNode());
+                        SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
+                        sparkplugSessionHandler.onDeviceTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic.getType().name(), sparkplugTopic.isNode());
                         break;
                     case NDEATH:
                         sparkplugSessionHandler.onDeviceDisconnect(mqttMsg);
@@ -406,10 +410,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         break;
                     case DCMD:
                     case DDATA:
-                        sparkplugSessionHandler.onDeviceTelemetryProto(msgId, mqttMsg.payload(), deviceName, sparkplugTopic.isNode());
-                        break;
                     case DBIRTH:
-                        sparkplugSessionHandler.onDeviceConnectProto(mqttMsg, deviceSessionCtx.getDeviceInfo().getDeviceType());
+                        SparkplugBProto.Payload sparkplugBProtoDevice = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
+                        sparkplugSessionHandler.onDeviceTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic.getType().name(), sparkplugTopic.isNode());
                         break;
                     case DDEATH:
                         sparkplugSessionHandler.onDeviceDisconnect(mqttMsg);
@@ -424,7 +427,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             ack(ctx, msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
             ctx.close();
-        } catch (AdaptorException | ThingsboardException e) {
+        } catch (AdaptorException | ThingsboardException | InvalidProtocolBufferException e) {
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendAckOrCloseSession(ctx, topicName, msgId);
         }
@@ -1055,9 +1058,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void checkSparkplugSession(MqttConnectMessage connectMessage) {
         try {
-            SparkplugTopic sparkplugTopic = parseTopicPublish(connectMessage.payload().willTopic());
             if (sparkplugSessionHandler == null) {
                 sparkplugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId);
+                if (StringUtils.isNotBlank(connectMessage.payload().willTopic())
+                        && connectMessage.payload().willMessageInBytes() != null &&  connectMessage.payload().willMessageInBytes().length > 0) {
+                    SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
+                    SparkplugTopic sparkplugTopic = parseTopicPublish(connectMessage.payload().willTopic());
+                    sparkplugSessionHandler.onDeviceTelemetryProto(0, sparkplugBProtoNode,
+                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopic.getType().name(), true);
+                }
             }
         } catch (Exception e) {
             log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);

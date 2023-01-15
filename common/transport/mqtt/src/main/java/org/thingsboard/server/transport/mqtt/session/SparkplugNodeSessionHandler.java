@@ -22,7 +22,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getFromSparkplugBMetricToKeyValueProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicSubscribe;
 
@@ -70,11 +70,10 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    public void onDeviceTelemetryProto(int msgId, ByteBuf payload, String deviceName, boolean isNode) throws AdaptorException {
+    public void onDeviceTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, String topicTypeName, boolean isNode) throws AdaptorException {
         try {
             checkDeviceName(deviceName);
-            SparkplugBProto.Payload sparkplugBProto = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(payload));
-            List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto);
+            List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto, topicTypeName);
             int finalMsgId = msgId;
             ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = isNode ?
                     Futures.immediateFuture(this.deviceSessionCtx) : checkDeviceConnected(deviceName);
@@ -97,7 +96,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                             }
                         }, context.getExecutor());
             }
-        } catch (RuntimeException | InvalidProtocolBufferException e) {
+        } catch (RuntimeException e) {
             throw new AdaptorException(e);
         }
     }
@@ -156,12 +155,14 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    private List<TransportProtos.PostTelemetryMsg> convertToPostTelemetry(SparkplugBProto.Payload sparkplugBProto) throws AdaptorException {
+    private List<TransportProtos.PostTelemetryMsg> convertToPostTelemetry(SparkplugBProto.Payload sparkplugBProto, String topicTypeName) throws AdaptorException {
         try {
             List<TransportProtos.PostTelemetryMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
                 long ts = protoMetric.getTimestamp();
-                Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = getFromSparkplugBMetricToKeyValueProto(protoMetric.getName(), protoMetric);
+                String keys = "bdSeq".equals(protoMetric.getName()) ?
+                        topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
+                Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = getFromSparkplugBMetricToKeyValueProto(keys, protoMetric);
                 if (keyValueProtoOpt.isPresent()) {
                     List<TransportProtos.KeyValueProto> result = new ArrayList<>();
                     result.add(keyValueProtoOpt.get());
@@ -172,6 +173,20 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                     request.addTsKvList(builder.build());
                     msgs.add(request.build());
                 }
+            }
+            if (DBIRTH.name().equals(topicTypeName)) {
+                List<TransportProtos.KeyValueProto> result = new ArrayList<>();
+                TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
+                keyValueProtoBuilder.setKey(topicTypeName + " " + "seq");
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.LONG_V);
+                keyValueProtoBuilder.setLongV(sparkplugBProto.getSeq());
+                result.add(keyValueProtoBuilder.build());
+                TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
+                TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
+                builder.setTs(sparkplugBProto.getTimestamp());
+                builder.addAllKv(result);
+                request.addTsKvList(builder.build());
+                msgs.add(request.build());
             }
             return msgs;
         } catch (IllegalStateException | JsonSyntaxException | ThingsboardException e) {
