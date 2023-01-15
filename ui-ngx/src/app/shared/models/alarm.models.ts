@@ -23,6 +23,8 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/table-widget.models';
+import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
+import { UserId } from '@shared/models/id/user-id';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -99,6 +101,28 @@ export interface Alarm extends BaseData<AlarmId> {
   clearTs: number;
   propagate: boolean;
   details?: any;
+}
+
+export enum AlarmCommentType {
+  SYSTEM = 'SYSTEM',
+  OTHER = 'OTHER'
+}
+
+export interface AlarmComment extends BaseData<AlarmCommentId> {
+  alarmId: AlarmId;
+  userId?: UserId;
+  type: AlarmCommentType;
+  comment: {
+    text: string;
+    edited?: boolean;
+    editedOn?: number;
+  }
+}
+
+export interface AlarmCommentInfo extends AlarmComment {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
 export interface AlarmInfo extends Alarm {

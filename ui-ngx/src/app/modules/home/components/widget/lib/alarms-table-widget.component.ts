@@ -127,6 +127,10 @@ import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import {
+  AlarmCommentDialogComponent,
+  AlarmCommentDialogData
+} from '@home/components/alarm/alarm-comment-dialog.component';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -138,12 +142,14 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   displayDetails: boolean;
   allowAcknowledgment: boolean;
   allowClear: boolean;
+  displayComments: boolean;
 }
 
 interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
   details?: boolean;
   acknowledge?: boolean;
   clear?: boolean;
+  comments?: boolean;
 }
 
 @Component({
@@ -189,6 +195,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private displayDetails = true;
   public allowAcknowledgment = true;
   private allowClear = true;
+  private displayComments = false;
 
   private defaultPageSize = 10;
   private defaultSortOrder = '-' + alarmFields.createdTime.value;
@@ -325,6 +332,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.displayDetails = isDefined(this.settings.displayDetails) ? this.settings.displayDetails : true;
     this.allowAcknowledgment = isDefined(this.settings.allowAcknowledgment) ? this.settings.allowAcknowledgment : true;
     this.allowClear = isDefined(this.settings.allowClear) ? this.settings.allowClear : true;
+    this.displayComments = isDefined(this.settings.displayComments) ? this.settings.displayComments : false;
 
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
       this.alarmsTitlePattern = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
@@ -472,6 +480,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           displayName: this.translate.instant('alarm.clear'),
           icon: 'clear',
           clear: true
+        } as AlarmWidgetActionDescriptor
+      );
+    }
+
+    if (this.displayComments) {
+      actionCellDescriptors.push(
+        {
+          displayName: this.translate.instant('alarm-comment.comments'),
+          icon: 'comment',
+          comments: true
         } as AlarmWidgetActionDescriptor
       );
     }
@@ -791,6 +809,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.ackAlarm($event, alarm);
     } else if (actionDescriptor.clear) {
       this.clearAlarm($event, alarm);
+    } else if (actionDescriptor.comments) {
+      this.openAlarmComments($event, alarm);
     } else {
       if ($event) {
         $event.stopPropagation();
@@ -951,6 +971,24 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           }
         });
       }
+    }
+  }
+
+  private openAlarmComments($event: Event, alarm: AlarmDataInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (alarm && alarm.id && alarm.id.id !== NULL_UUID) {
+      this.dialog.open<AlarmCommentDialogComponent, AlarmCommentDialogData, void>
+      (AlarmCommentDialogComponent,
+        {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            alarmId: alarm.id.id,
+            commentsHeaderEnabled: false
+          }
+        }).afterClosed()
     }
   }
 

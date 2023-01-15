@@ -28,64 +28,78 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-  <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
+  <div mat-dialog-content style="padding: 24px 0 0 0">
+    <fieldset [disabled]="isLoading$ | async" style="padding: 0 24px">
       <div fxLayout="row" fxLayoutGap="6px">
-        <mat-form-field class="mat-block">
-          <mat-label translate>alarm.created-time</mat-label>
-          <input matInput formControlName="createdTime" readonly>
-        </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field appearance="none" fxFlex class="mat-block">
           <mat-label translate>alarm.originator</mat-label>
           <input matInput formControlName="originatorName" readonly>
         </mat-form-field>
-      </div>
-      <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('startTime').value ||
-                                 alarmFormGroup.get('endTime').value">
-        <mat-form-field *ngIf="alarmFormGroup.get('startTime').value" fxFlex class="mat-block">
-          <mat-label translate>alarm.start-time</mat-label>
-          <input matInput formControlName="startTime" readonly>
+        <mat-form-field appearance="none" fxFlex class="mat-block">
+          <mat-label translate>alarm.created-time</mat-label>
+          <input matInput formControlName="createdTime" readonly>
         </mat-form-field>
-        <mat-form-field *ngIf="alarmFormGroup.get('endTime').value" fxFlex class="mat-block">
-          <mat-label translate>alarm.end-time</mat-label>
-          <input matInput formControlName="endTime" readonly>
-        </mat-form-field>
-        <span fxFlex *ngIf="!alarmFormGroup.get('startTime').value || !alarmFormGroup.get('endTime').value"></span>
-      </div>
-      <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('ackTime').value ||
-                                 alarmFormGroup.get('clearTime').value">
-        <mat-form-field *ngIf="alarmFormGroup.get('ackTime').value" fxFlex class="mat-block">
-          <mat-label translate>alarm.ack-time</mat-label>
-          <input matInput formControlName="ackTime" readonly>
-        </mat-form-field>
-        <mat-form-field *ngIf="alarmFormGroup.get('clearTime').value" fxFlex class="mat-block">
-          <mat-label translate>alarm.clear-time</mat-label>
-          <input matInput formControlName="clearTime" readonly>
-        </mat-form-field>
-        <span fxFlex *ngIf="!alarmFormGroup.get('ackTime').value || !alarmFormGroup.get('clearTime').value"></span>
       </div>
       <div fxLayout="row" fxLayoutGap="6px">
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field appearance="none" fxFlex class="mat-block">
           <mat-label translate>alarm.type</mat-label>
           <input matInput formControlName="type" readonly>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field appearance="none" fxFlex class="mat-block">
           <mat-label translate>alarm.severity</mat-label>
           <input matInput formControlName="alarmSeverity" readonly
                  [ngStyle]="{fontWeight: 'bold', color: alarmSeverityColorsMap.get((alarm$ | async)?.severity)}">
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+      </div>
+      <div fxLayout="row" fxLayoutGap="6px">
+        <mat-form-field appearance="none" fxFlex class="mat-block">
           <mat-label translate>alarm.status</mat-label>
           <input matInput formControlName="alarmStatus" readonly>
         </mat-form-field>
       </div>
-      <tb-json-object-edit
-          *ngIf="displayDetails"
-          formControlName="alarmDetails"
-          readonly
-          label="{{ 'alarm.details' | translate }}">
-      </tb-json-object-edit>
+      <mat-expansion-panel class="tb-alarm-details">
+        <mat-expansion-panel-header  fxLayout="row wrap">
+          <mat-panel-title>
+          </mat-panel-title>
+          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+            alarm.advanced-info
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('startTime').value ||
+                                 alarmFormGroup.get('endTime').value">
+            <mat-form-field *ngIf="alarmFormGroup.get('startTime').value" appearance="none" fxFlex class="mat-block">
+              <mat-label translate>alarm.start-time</mat-label>
+              <input matInput formControlName="startTime" readonly>
+            </mat-form-field>
+            <mat-form-field *ngIf="alarmFormGroup.get('endTime').value" appearance="none" fxFlex class="mat-block">
+              <mat-label translate>alarm.end-time</mat-label>
+              <input matInput formControlName="endTime" readonly>
+            </mat-form-field>
+            <span fxFlex *ngIf="!alarmFormGroup.get('startTime').value || !alarmFormGroup.get('endTime').value"></span>
+          </div>
+          <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('ackTime').value ||
+                                 alarmFormGroup.get('clearTime').value">
+            <mat-form-field *ngIf="alarmFormGroup.get('ackTime').value" appearance="none" fxFlex class="mat-block">
+              <mat-label translate>alarm.ack-time</mat-label>
+              <input matInput formControlName="ackTime" readonly>
+            </mat-form-field>
+            <mat-form-field *ngIf="alarmFormGroup.get('clearTime').value" appearance="none" fxFlex class="mat-block">
+              <mat-label translate>alarm.clear-time</mat-label>
+              <input matInput formControlName="clearTime" readonly>
+            </mat-form-field>
+            <span fxFlex *ngIf="!alarmFormGroup.get('ackTime').value || !alarmFormGroup.get('clearTime').value"></span>
+          </div>
+          <tb-json-object-edit
+            *ngIf="displayDetails"
+            formControlName="alarmDetails"
+            readonly
+            label="{{ 'alarm.details' | translate }}">
+          </tb-json-object-edit>
+        </ng-template>
+      </mat-expansion-panel>
     </fieldset>
+    <tb-alarm-comment #alarmCommentComponent [alarmId]="alarmId"></tb-alarm-comment>
   </div>
   <div mat-dialog-actions fxLayout="row">
     <button mat-button color="primary"

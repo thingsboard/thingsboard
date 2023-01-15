@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,6 +33,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
 
 export interface AlarmDetailsDialogData {
   alarmId?: string;
@@ -45,7 +46,7 @@ export interface AlarmDetailsDialogData {
 @Component({
   selector: 'tb-alarm-details-dialog',
   templateUrl: './alarm-details-dialog.component.html',
-  styleUrls: []
+  styleUrls: ['./alarm-details-dialog.component.scss']
 })
 export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> implements OnInit {
 
@@ -65,6 +66,8 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   alarmStatuses = AlarmStatus;
 
   alarmUpdated = false;
+
+  @ViewChild('alarmCommentComponent', { static: true }) alarmCommentComponent: AlarmCommentComponent;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -152,6 +155,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
@@ -163,6 +167,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
