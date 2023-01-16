@@ -48,7 +48,10 @@ public enum ActionType {
     PROVISION_SUCCESS(false),
     PROVISION_FAILURE(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false);
+    UNASSIGNED_FROM_EDGE(false),
+    ADDED_COMMENT(false),
+    UPDATED_COMMENT(false),
+    DELETED_COMMENT(false);
 
     private final boolean isRead;
 

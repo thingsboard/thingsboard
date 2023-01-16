@@ -728,6 +728,9 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
+        "type-added-comment": "Added comment",
+        "type-updated-comment": "Updated comment",
+        "type-deleted-comment": "Deleted comment",
         "type-login": "Login",
         "type-logout": "Logout",
         "type-lockout": "Lockout",
@@ -1280,6 +1283,8 @@
         "description": "Description",
         "default": "Default",
         "default-rule-chain": "Default rule chain",
+        "default-edge-rule-chain": "Default edge rule chain",
+        "default-edge-rule-chain-hint": "Used on edge as rule chain to process incoming data for assets of this asset profile",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a asset details dashboard",
         "select-queue-hint": "Select from a drop-down list.",
@@ -1340,6 +1345,8 @@
         "profile-configuration": "Profile configuration",
         "transport-configuration": "Transport configuration",
         "default-rule-chain": "Default rule chain",
+        "default-edge-rule-chain": "Default edge rule chain",
+        "default-edge-rule-chain-hint": "Used on edge as rule chain to process incoming data for devices of this device profile",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a device details dashboard",
         "select-queue-hint": "Select from a drop-down list.",
@@ -1746,6 +1753,7 @@
         "make-private-edge-title": "Are you sure you want to make the edge '{{edgeName}}' private?",
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
+        "install-connect-instructions": "Install & Connect Instructions",
         "label": "Label",
         "load-entity-error": "Failed to load data. Entity has been deleted.",
         "assign-new-edge": "Assign new edge",
@@ -4793,7 +4801,7 @@
             "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
-            "es_CA": "Catalan",
+            "ca_ES": "Catalan",
             "ja_JP": "日本語",
             "tr_TR": "Türkçe",
             "fa_IR": "فارسي",
@@ -4804,7 +4812,8 @@
             "lv_LV": "Latviešu",
             "ka_GE": "ქართული",
             "pt_BR": "Português do Brasil",
-            "sl_SI": "Slovenščina"
+            "sl_SI": "Slovenščina",
+            "da_DK": "Dansk"
         }
     }
 }

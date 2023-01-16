@@ -43,7 +43,7 @@ public class NoXssValidatorTest {
 
         assertThatThrownBy(() -> {
             ConstraintValidator.validateFields(invalidAsset);
-        }).hasMessageContaining("field value is malformed");
+        }).hasMessageContaining("is malformed");
     }
 
     @Test
@@ -55,7 +55,7 @@ public class NoXssValidatorTest {
 
         assertThatThrownBy(() -> {
             ConstraintValidator.validateFields(invalidAsset);
-        }).hasMessageContaining("field value is malformed");
+        }).hasMessageContaining("is malformed");
     }
 
 }

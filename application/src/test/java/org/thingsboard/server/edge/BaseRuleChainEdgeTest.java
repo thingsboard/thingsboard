@@ -18,6 +18,7 @@ package org.thingsboard.server.edge;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -165,4 +166,48 @@ abstract public class BaseRuleChainEdgeTest extends AbstractEdgeTest {
         doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
     }
 
+    @Test
+    public void testSetRootRuleChain() throws Exception {
+        // create rule chain
+        edgeImitator.expectMessageAmount(1);
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("Edge New Root Rule Chain");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        doPost("/api/edge/" + edge.getUuidId()
+                + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // set new rule chain as root
+        RuleChainId currentRootRuleChainId = edge.getRootRuleChainId();
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/edge/" + edge.getUuidId()
+                + "/" + savedRuleChain.getUuidId() + "/root", Edge.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
+        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
+        RuleChainUpdateMsg ruleChainUpdateMsg = ruleChainUpdateMsgOpt.get();
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, ruleChainUpdateMsg.getMsgType());
+        Assert.assertEquals(ruleChainUpdateMsg.getIdMSB(), savedRuleChain.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(ruleChainUpdateMsg.getIdLSB(), savedRuleChain.getUuidId().getLeastSignificantBits());
+        Assert.assertTrue(ruleChainUpdateMsg.getRoot());
+
+        // revert root rule chain
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/edge/" + edge.getUuidId()
+                + "/" + currentRootRuleChainId.getId() + "/root", Edge.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // unassign rule chain from edge
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/edge/" + edge.getUuidId()
+                + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // delete rule chain
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
+                .andExpect(status().isOk());
+        Assert.assertFalse(edgeImitator.waitForMessages(1));
+    }
 }

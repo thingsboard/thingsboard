@@ -39,7 +39,6 @@ public class RuleChainMetaData {
     @ApiModelProperty(position = 2, required = true, value = "Index of the first rule node in the 'nodes' list")
     private Integer firstNodeIndex;
 
-    @Valid
     @ApiModelProperty(position = 3, required = true, value = "List of rule node JSON objects")
     private List<RuleNode> nodes;
 

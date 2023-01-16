@@ -58,7 +58,7 @@ import java.util.UUID;
 public class RelationEdgeProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processRelationFromEdge(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
-        log.trace("[{}] onRelationUpdate [{}]", tenantId, relationUpdateMsg);
+        log.trace("[{}] processRelationFromEdge [{}]", tenantId, relationUpdateMsg);
         try {
             EntityRelation entityRelation = new EntityRelation();
 
@@ -80,22 +80,24 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     if (isEntityExists(tenantId, entityRelation.getTo())
                             && isEntityExists(tenantId, entityRelation.getFrom())) {
-                        relationService.saveRelationAsync(tenantId, entityRelation);
+                        return Futures.transform(relationService.saveRelationAsync(tenantId, entityRelation),
+                                (result) -> null, dbCallbackExecutorService);
+                    } else {
+                        log.warn("Skipping relating update msg because from/to entity doesn't exists on edge, {}", relationUpdateMsg);
+                        return Futures.immediateFuture(null);
                     }
-                    break;
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    relationService.deleteRelation(tenantId, entityRelation);
-                    break;
+                    return Futures.transform(relationService.deleteRelationAsync(tenantId, entityRelation),
+                            (result) -> null, dbCallbackExecutorService);
                 case UNRECOGNIZED:
-                    log.error("Unsupported msg type");
+                default:
+                    return handleUnsupportedMsgType(relationUpdateMsg.getMsgType());
             }
-            return Futures.immediateFuture(null);
         } catch (Exception e) {
             log.error("Failed to process relation update msg [{}]", relationUpdateMsg, e);
             return Futures.immediateFailedFuture(new RuntimeException("Failed to process relation update msg", e));
         }
     }
-
 
     private boolean isEntityExists(TenantId tenantId, EntityId entityId) throws ThingsboardException {
         switch (entityId.getEntityType()) {

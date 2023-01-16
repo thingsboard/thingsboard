@@ -48,7 +48,6 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"
 )
-
 public class TbMsgDelayNode implements TbNode {
 
     private static final String TB_MSG_DELAY_NODE_MSG = "TbMsgDelayNodeMsg";

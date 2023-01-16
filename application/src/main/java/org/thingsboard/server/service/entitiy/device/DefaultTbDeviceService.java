@@ -76,17 +76,18 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
 
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, User user) throws ThingsboardException {
-        ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        boolean isCreate = device.getId() == null;
+        ActionType actionType = isCreate ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
+            Device oldDevice = isCreate ? null : deviceService.findDeviceById(tenantId, device.getId());
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithCredentials(device, credentials));
             notificationEntityService.notifyCreateOrUpdateDevice(tenantId, savedDevice.getId(), savedDevice.getCustomerId(),
-                    savedDevice, device, actionType, user);
+                    savedDevice, oldDevice, actionType, user);
 
             return savedDevice;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), device,
-                    actionType, user, e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), device, actionType, user, e);
             throw e;
         }
     }
@@ -116,7 +117,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, user, true, deviceId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
@@ -136,7 +137,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             CustomerId customerId = customer.getId();
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, user, true, deviceId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
@@ -154,7 +155,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, publicCustomer.getId()));
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, savedDevice.getCustomerId(), savedDevice,
-                    actionType, user, false, deviceId.toString(),
+                    actionType, user, deviceId.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
 
             return savedDevice;

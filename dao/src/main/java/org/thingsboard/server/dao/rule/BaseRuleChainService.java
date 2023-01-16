@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,17 +62,16 @@ import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +90,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 /**
  * Created by igor on 3/12/18.
  */
-@Service
+@Service("RuleChainDaoService")
 @Slf4j
 public class BaseRuleChainService extends AbstractEntityService implements RuleChainService {
 
@@ -156,12 +156,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (ruleChain == null) {
             return RuleChainUpdateResult.failed();
         }
-        ConstraintValidator.validateFields(ruleChainMetaData);
-        List<RuleNodeUpdateResult> updatedRuleNodes = new ArrayList<>();
-
-        if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
-            validateCircles(ruleChainMetaData.getConnections());
-        }
+        RuleChainDataValidator.validateMetaData(ruleChainMetaData);
 
         List<RuleNode> nodes = ruleChainMetaData.getNodes();
         List<RuleNode> toAddOrUpdate = new ArrayList<>();
@@ -179,6 +174,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
 
+        List<RuleNodeUpdateResult> updatedRuleNodes = new ArrayList<>();
         List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
         for (RuleNode existingNode : existingRuleNodes) {
             deleteEntityRelations(tenantId, existingNode.getId());
@@ -266,31 +262,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
 
         return RuleChainUpdateResult.successful(updatedRuleNodes);
-    }
-
-    private void validateCircles(List<NodeConnectionInfo> connectionInfos) {
-        Map<Integer, Set<Integer>> connectionsMap = new HashMap<>();
-        for (NodeConnectionInfo nodeConnection : connectionInfos) {
-            if (nodeConnection.getFromIndex() == nodeConnection.getToIndex()) {
-                throw new DataValidationException("Can't create the relation to yourself.");
-            }
-            connectionsMap
-                    .computeIfAbsent(nodeConnection.getFromIndex(), from -> new HashSet<>())
-                    .add(nodeConnection.getToIndex());
-        }
-        connectionsMap.keySet().forEach(key -> validateCircles(key, connectionsMap.get(key), connectionsMap));
-    }
-
-    private void validateCircles(int from, Set<Integer> toList, Map<Integer, Set<Integer>> connectionsMap) {
-        if (toList == null) {
-            return;
-        }
-        for (Integer to : toList) {
-            if (from == to) {
-                throw new DataValidationException("Can't create circling relations in rule chain.");
-            }
-            validateCircles(from, connectionsMap.get(to), connectionsMap);
-        }
     }
 
     @Override
@@ -835,6 +806,18 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleNodeStats.setLastErrorMsg(lastErrorMsg);
             ruleNodeStats.setErrorsCount(ruleNodeStats.getErrorsCount() + errorsCount);
         }, executorService);
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        HasId<?> hasId = EntityType.RULE_NODE.equals(entityId.getEntityType()) ?
+                findRuleNodeById(tenantId, new RuleNodeId(entityId.getId())) :
+                findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
+        return Optional.ofNullable(hasId);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {
