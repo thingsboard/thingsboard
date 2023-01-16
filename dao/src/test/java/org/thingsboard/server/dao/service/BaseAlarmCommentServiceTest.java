@@ -60,7 +60,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(System.currentTimeMillis()).build();
-        alarm = alarmService.createOrUpdateAlarm(alarm).getAlarm();
+        alarm = new Alarm(alarmService.createOrUpdateAlarm(alarm).getAlarmInfo());
 
         user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);

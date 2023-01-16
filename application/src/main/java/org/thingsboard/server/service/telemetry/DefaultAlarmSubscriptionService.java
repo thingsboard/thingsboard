@@ -99,11 +99,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
             AlarmSeverity oldSeverity = result.getOldSeverity();
-            if (oldSeverity != null && !oldSeverity.equals(result.getAlarm().getSeverity())) {
+            if (oldSeverity != null && !oldSeverity.equals(result.getAlarmInfo().getSeverity())) {
                 AlarmComment alarmComment = AlarmComment.builder()
                         .alarmId(alarm.getId())
                         .type(AlarmCommentType.SYSTEM)
-                        .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarm().getSeverity())))
+                        .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarmInfo().getSeverity())))
                         .build();
                 alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             }
