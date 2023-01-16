@@ -229,10 +229,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
         }
-        // TODO oldAlarmSeverity
         AlarmInfo alarmInfo = getAlarmInfo(newAlarm.getTenantId(), newAlarm);
-        return new AlarmOperationResult(alarmInfo, true, propagatedEntitiesList);
-        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
+        return new AlarmOperationResult(alarmInfo, true, false, oldAlarmSeverity, propagatedEntitiesList);
     }
 
     @Override
