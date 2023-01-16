@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-:host ::ng-deep {
+::ng-deep {
   .queue-option {
     .mat-option-text {
       display: inline;
     }
+
     .queue-option-description {
       display: block;
       overflow: hidden;
@@ -26,7 +27,9 @@
       white-space: nowrap;
     }
   }
+}
 
+:host ::ng-deep {
   .mat-form-field {
     .mat-form-field-wrapper {
       padding-bottom: 0px;
