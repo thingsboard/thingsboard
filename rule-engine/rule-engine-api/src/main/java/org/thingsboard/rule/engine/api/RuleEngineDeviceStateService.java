@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.state;
+package org.thingsboard.rule.engine.api;
 
-import org.springframework.context.ApplicationListener;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceStateService;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 
-/**
- * Created by ashvayka on 01.05.18.
- */
-public interface DeviceStateService extends RuleEngineDeviceStateService, ApplicationListener<PartitionChangeEvent> {
+public interface RuleEngineDeviceStateService {
 
     void onDeviceConnect(TenantId tenantId, DeviceId deviceId);
 
@@ -36,7 +27,5 @@ public interface DeviceStateService extends RuleEngineDeviceStateService, Applic
     void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId);
 
     void onDeviceInactivityTimeoutUpdate(TenantId tenantId, DeviceId deviceId, long inactivityTimeout);
-
-    void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto proto, TbCallback bytes);
 
 }
