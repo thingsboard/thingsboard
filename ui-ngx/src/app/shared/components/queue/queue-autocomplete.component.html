@@ -52,7 +52,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-hint *ngIf = "autocompleteHint">{{autocompleteHint | translate}}</mat-hint>
+  <mat-hint *ngIf = "autocompleteHint">{{ autocompleteHint | translate }}</mat-hint>
   <mat-error *ngIf="selectQueueFormGroup.get('queueName').hasError('required')">
     {{ 'queue.queue-required' | translate }}
   </mat-error>
