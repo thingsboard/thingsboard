@@ -245,11 +245,9 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             if (deviceDataOpt.isPresent()) {
                 device.setDeviceData(deviceDataOpt.get());
             }
+            deviceValidator.validate(device, Device::getTenantId);
             if (created) {
-                deviceValidator.validate(device, Device::getTenantId);
                 device.setId(deviceId);
-            } else {
-                deviceValidator.validate(device, Device::getTenantId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);
             tbClusterService.onDeviceUpdated(savedDevice, created ? null : device, false);
