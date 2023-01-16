@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
+import org.thingsboard.server.common.data.rule.RuleChainInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
@@ -34,6 +35,8 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created by igor on 3/12/18.
@@ -101,5 +104,20 @@ public interface RuleChainService {
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
+
+    PageData<RuleChainInfo> findRuleChainInfosByTenantIdAndType(TenantId tenantId, RuleChainType type, PageLink pageLink);
+
+    void clearRuleNodeStats(TenantId tenantId, RuleNodeId ruleNodeId);
+
+    void clearRuleChainStats(TenantId tenantId, RuleChainId ruleChainId);
+
+    void reportRuleNodeErrors(TenantId tenantId,
+                              RuleChainId ruleChainId,
+                              RuleNodeId ruleNodeId,
+                              String data,
+                              Map<String, String> metadata,
+                              String lastErrorMsg,
+                              int errorsCount,
+                              ExecutorService executorService);
 
 }

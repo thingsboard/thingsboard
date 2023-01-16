@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbRuleNodeUpdateException;
@@ -181,7 +180,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         logLifecycleEvent(event, null);
     }
 
-    private void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
+    protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         systemContext.persistLifecycleEvent(tenantId, id, event, e);
     }
 

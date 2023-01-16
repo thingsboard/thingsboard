@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntryEntityId;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
@@ -151,6 +152,16 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     public List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
         return attributeKvRepository
                 .findAllKeysByEntityIds(entityType.name(), entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<AttributeKvEntryEntityId> findValuesByKeyAndEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds) {
+        List<AttributeKvEntity> attributeKvEntities = attributeKvRepository.findAllValuesByKeyAndEntityIds(attributeKey, entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+        List<AttributeKvEntryEntityId> attributeKvEntityIdJsons = new ArrayList<>();
+        for (int i = 0; i < attributeKvEntities.size(); i++) {
+            attributeKvEntityIdJsons.add(new AttributeKvEntryEntityId(attributeKvEntities.get(i).getId().getEntityId(), DaoUtil.convertDataList(Lists.newArrayList(attributeKvEntities)).get(i)));
+        }
+        return attributeKvEntityIdJsons;
     }
 
     @Override

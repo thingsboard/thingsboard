@@ -27,7 +27,10 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingRes
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -59,7 +62,7 @@ public class TbRuleEngineConsumerStats {
     private final List<StatsCounter> counters = new ArrayList<>();
     private final ConcurrentMap<UUID, TbTenantRuleEngineStats> tenantStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, Timer> tenantMsgProcessTimers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<TenantId, RuleEngineException> tenantExceptions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, List<RuleEngineException>> tenantExceptions = new ConcurrentHashMap<>();
 
     private final String queueName;
 
@@ -88,7 +91,7 @@ public class TbRuleEngineConsumerStats {
         counters.add(failedIterationsCounter);
     }
 
-    public Timer getTimer(TenantId tenantId, String status){
+    public Timer getTimer(TenantId tenantId, String status) {
         return tenantMsgProcessTimers.computeIfAbsent(tenantId,
                 id -> statsFactory.createTimer(StatsType.RULE_ENGINE.getName() + "." + queueName,
                         "tenantId", tenantId.getId().toString(),
@@ -128,7 +131,7 @@ public class TbRuleEngineConsumerStats {
                 msg.getFailedMap().values().forEach(m -> getTenantStats(m).logTmpFailed());
             }
         }
-        msg.getExceptionsMap().forEach(tenantExceptions::putIfAbsent);
+        msg.getExceptionsMap().forEach((tenantId, e) -> tenantExceptions.computeIfAbsent(tenantId, id -> new LinkedList<>()).add(e));
     }
 
     private TbTenantRuleEngineStats getTenantStats(TbProtoQueueMsg<ToRuleEngineMsg> m) {
@@ -144,7 +147,7 @@ public class TbRuleEngineConsumerStats {
         return queueName;
     }
 
-    public ConcurrentMap<TenantId, RuleEngineException> getTenantExceptions() {
+    public ConcurrentMap<TenantId, List<RuleEngineException>> getTenantExceptions() {
         return tenantExceptions;
     }
 

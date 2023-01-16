@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,9 +59,11 @@ import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
+import org.thingsboard.server.common.data.rule.RuleChainInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -332,6 +335,37 @@ public class RuleChainController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Rule Chains (getRuleChains)",
+            notes = "Returns a page of Rule Chains owned by tenant. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChainsInfo", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<RuleChainInfo> getRuleChainsInfo(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = RULE_CHAIN_TYPE_DESCRIPTION, allowableValues = RULE_CHAIN_TYPES_ALLOWABLE_VALUES)
+            @RequestParam(value = "type", required = false) String typeStr,
+            @ApiParam(value = RULE_CHAIN_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            RuleChainType type = RuleChainType.CORE;
+            if (typeStr != null && typeStr.trim().length() > 0) {
+                type = RuleChainType.valueOf(typeStr);
+            }
+            return checkNotNull(ruleChainService.findRuleChainInfosByTenantIdAndType(tenantId, type, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @ApiOperation(value = "Delete rule chain (deleteRuleChain)",
             notes = "Deletes the rule chain. Referencing non-existing rule chain Id will cause an error. " +
                     "Referencing rule chain that is used in the device profiles will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
@@ -580,6 +614,43 @@ public class RuleChainController extends BaseController {
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
         return tbRuleChainService.unassignRuleChainFromEdge(getTenantId(), ruleChain, edge, getCurrentUser());
+    }
+
+
+    @ApiOperation(value = "Clear error stats for Rule Node (clearRuleNodeStats)",
+            notes = "Clears the error statistics on certain Rule Node . " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @DeleteMapping(value = "/ruleNode/{ruleNodeId}/clearRuleNodeStats")
+    @ResponseStatus(value = HttpStatus.OK)
+    public void clearRuleNodeStats(@ApiParam(value = RULE_NODE_ID_PARAM_DESCRIPTION)
+                                   @PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
+        checkParameter(RULE_NODE_ID, strRuleNodeId);
+        try {
+            RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
+            RuleNode ruleNode = checkRuleNode(ruleNodeId, Operation.WRITE);
+
+            ruleChainService.clearRuleNodeStats(getTenantId(), ruleNode.getId());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Clear error stats for all Rule Nodes in Rule Chain (clearRuleChainStats)",
+            notes = "Clears error statistics for each Rule Node that has one in certain Rule Chain. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @DeleteMapping(value = "/ruleChain/{ruleChainId}/clearRuleChainStats")
+    @ResponseStatus(value = HttpStatus.OK)
+    public void clearRuleChainStats(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+                                    @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+        checkParameter(RULE_CHAIN_ID, strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
+
+            ruleChainService.clearRuleChainStats(getTenantId(), ruleChain.getId());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
