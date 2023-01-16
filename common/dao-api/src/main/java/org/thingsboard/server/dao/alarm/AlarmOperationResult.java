@@ -51,5 +51,6 @@ public class AlarmOperationResult {
         this.successful = successful;
         this.created = created;
         this.propagatedEntitiesList = propagatedEntitiesList;
+        this.oldSeverity = null;
     }
 }
