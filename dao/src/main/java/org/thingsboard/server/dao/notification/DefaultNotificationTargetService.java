@@ -62,11 +62,16 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     @Override
-    public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId notificationTargetId, PageLink pageLink) {
-        NotificationTarget notificationTarget = findNotificationTargetById(tenantId, notificationTargetId);
-        Objects.requireNonNull(notificationTarget, "Notification target [" + notificationTargetId + "] not found");
+    public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId targetId, PageLink pageLink) {
+        NotificationTarget notificationTarget = findNotificationTargetById(tenantId, targetId);
+        Objects.requireNonNull(notificationTarget, "Notification target [" + targetId + "] not found");
         NotificationTargetConfig configuration = notificationTarget.getConfiguration();
         return findRecipientsForNotificationTargetConfig(tenantId, customerId, configuration, pageLink);
+    }
+
+    @Override
+    public int countRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId targetId) {
+        return (int) findRecipientsForNotificationTarget(tenantId, null, targetId, new PageLink(1)).getTotalElements();
     }
 
     @Override

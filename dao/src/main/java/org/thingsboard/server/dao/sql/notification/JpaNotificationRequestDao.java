@@ -72,8 +72,8 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     }
 
     @Override
-    public void updateStatsById(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats) {
-        notificationRequestRepository.updateStatsById(notificationRequestId.getId(), JacksonUtil.valueToTree(stats));
+    public void updateById(TenantId tenantId, NotificationRequestId requestId, NotificationRequestStatus requestStatus, NotificationRequestStats stats) {
+        notificationRequestRepository.updateStatusAndStatsById(requestId.getId(), requestStatus, JacksonUtil.valueToTree(stats));
     }
 
     @Override

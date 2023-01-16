@@ -33,22 +33,32 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -59,6 +69,8 @@ public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
     private final NotificationRequestService notificationRequestService;
+    private final NotificationTemplateService notificationTemplateService;
+    private final NotificationTargetService notificationTargetService;
     private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
 
@@ -110,6 +122,39 @@ public class NotificationController extends BaseController {
         notificationRequest.setStats(null);
 
         return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationCenter::processNotificationRequest);
+    }
+
+    @PostMapping("/notification/request/preview")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public NotificationRequestPreview getNotificationRequestPreview(@RequestBody @Valid NotificationRequest notificationRequest,
+                                                                    @AuthenticationPrincipal SecurityUser user) {
+        NotificationRequestPreview preview = new NotificationRequestPreview();
+
+        notificationRequest.setOriginatorEntityId(user.getId());
+        NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(user.getTenantId(), notificationRequest.getTemplateId());
+        NotificationProcessingContext mockProcessingCtx = NotificationProcessingContext.builder()
+                .tenantId(user.getTenantId())
+                .request(notificationRequest)
+                .settings(null)
+                .template(notificationTemplate)
+                .build();
+        mockProcessingCtx.init();
+
+        Map<String, String> templateContext = mockProcessingCtx.createTemplateContext(user);
+        Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = mockProcessingCtx.getDeliveryMethods().stream()
+                .collect(Collectors.toMap(m -> m, deliveryMethod -> {
+                    return mockProcessingCtx.getProcessedTemplate(deliveryMethod, templateContext);
+                }));
+        preview.setProcessedTemplates(processedTemplates);
+
+        Map<UUID, Integer> recipientsCountByTarget = notificationRequest.getTargets().stream()
+                .collect(Collectors.toMap(id -> id, targetId -> {
+                    return notificationTargetService.countRecipientsForNotificationTarget(user.getTenantId(), new NotificationTargetId(targetId));
+                }));
+        preview.setRecipientsCountByTarget(recipientsCountByTarget);
+        preview.setTotalRecipientsCount(recipientsCountByTarget.values().stream().mapToInt(Integer::intValue).sum());
+
+        return preview;
     }
 
     @GetMapping("/notification/request/{id}")

@@ -32,7 +32,9 @@ public interface NotificationTargetService {
 
     PageData<NotificationTarget> findNotificationTargetsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId notificationTargetId, PageLink pageLink);
+    PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId targetId, PageLink pageLink);
+
+    int countRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId targetId);
 
     PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, CustomerId customerId, NotificationTargetConfig targetConfig, PageLink pageLink);
 

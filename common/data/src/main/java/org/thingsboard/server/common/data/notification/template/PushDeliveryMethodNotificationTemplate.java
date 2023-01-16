@@ -18,11 +18,13 @@ package org.thingsboard.server.common.data.notification.template;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
     private String subject;
