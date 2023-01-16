@@ -31,7 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
+import { RuleChain, RuleChainInfo, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
 import { DialogService } from '@core/services/dialog.service';
@@ -48,9 +48,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { isUndefined } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';
-import { mergeMap } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { Store } from "@ngrx/store";
+import { getCurrentAuthUser } from "@core/auth/auth.selectors";
+import { AppState } from "@core/core.state";
+import { UserService } from "@core/http/user.service";
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -67,7 +71,9 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
               private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private store: Store<AppState>,
+              private userService: UserService) {
     this.config.entityType = EntityType.RULE_CHAIN;
     this.config.entityComponent = RuleChainComponent;
     this.config.entityTabsComponent = RuleChainTabsComponent;
@@ -85,32 +91,41 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.onEntityAction = action => this.onRuleChainAction(action);
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<RuleChain> {
-    const edgeId = route.params?.edgeId;
-    const ruleChainScope = route.data?.ruleChainsType ? route.data?.ruleChainsType : 'tenant';
-    this.config.componentsData = {
-      ruleChainScope,
-      edgeId
-    };
-    this.config.columns = this.configureEntityTableColumns(ruleChainScope);
-    this.config.entitiesFetchFunction = this.configureEntityFunctions(ruleChainScope, edgeId);
-    this.config.groupActionDescriptors = this.configureGroupActions(ruleChainScope);
-    this.config.addActionDescriptors = this.configureAddActions(ruleChainScope);
-    this.config.cellActionDescriptors = this.configureCellActions(ruleChainScope);
-    if (ruleChainScope === 'tenant' || ruleChainScope === 'edges') {
-      this.config.entitySelectionEnabled = ruleChain => ruleChain && !ruleChain.root;
-      this.config.deleteEnabled = (ruleChain) => ruleChain && !ruleChain.root;
-      this.config.entitiesDeleteEnabled = true;
-      this.config.tableTitle = this.configureTableTitle(ruleChainScope, null);
-    } else if (ruleChainScope === 'edge') {
-      this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id !== ruleChain.id.id;
-      this.edgeService.getEdge(edgeId).subscribe(edge => {
-        this.config.componentsData.edge = edge;
-        this.config.tableTitle = this.configureTableTitle(ruleChainScope, edge);
-      });
-      this.config.entitiesDeleteEnabled = false;
-    }
-    return this.config;
+  resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<RuleChain>> {
+    const userId = getCurrentAuthUser(this.store).userId;
+    return this.userService.getUser(userId).pipe(
+      map((user) => {
+        const edgeId = route.params?.edgeId;
+        const ruleChainScope = route.data?.ruleChainsType ? route.data?.ruleChainsType : 'tenant';
+        const showErrorsStatus = user.additionalInfo?.showErrorsStatus;
+        this.config.componentsData = {
+          ruleChainScope,
+          edgeId,
+          showErrorsStatus,
+          user
+        };
+        this.config.componentsData.onShowErrorsStatusChange = () => this.onShowErrorsStatusChange();
+        this.config.columns = this.configureEntityTableColumns(ruleChainScope);
+        this.config.entitiesFetchFunction = this.configureEntityFunctions(ruleChainScope, edgeId);
+        this.config.groupActionDescriptors = this.configureGroupActions(ruleChainScope);
+        this.config.addActionDescriptors = this.configureAddActions(ruleChainScope);
+        this.config.cellActionDescriptors = this.configureCellActions(ruleChainScope);
+        if (ruleChainScope === 'tenant' || ruleChainScope === 'edges') {
+          this.config.entitySelectionEnabled = ruleChain => ruleChain && !ruleChain.root;
+          this.config.deleteEnabled = (ruleChain) => ruleChain && !ruleChain.root;
+          this.config.entitiesDeleteEnabled = true;
+          this.config.tableTitle = this.configureTableTitle(ruleChainScope, null);
+        } else if (ruleChainScope === 'edge') {
+          this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id !== ruleChain.id.id;
+          this.edgeService.getEdge(edgeId).subscribe(edge => {
+            this.config.componentsData.edge = edge;
+            this.config.tableTitle = this.configureTableTitle(ruleChainScope, edge);
+          });
+          this.config.entitiesDeleteEnabled = false;
+        }
+        return this.config;
+      })
+    );
   }
 
   configureEntityTableColumns(ruleChainScope: string): Array<EntityColumn<RuleChain>> {
@@ -140,6 +155,18 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           entity => {
             return checkBoxCell(this.isAutoAssignToEdgeRuleChain(entity));
           })
+      );
+    }
+    if (this.config.componentsData.showErrorsStatus) {
+      columns.push(
+        new EntityTableColumn<RuleChainInfo>('stats', 'rulechain.errors-status', '60px',
+          entity => {
+            return this.errorsStatusContentCell(entity);
+          }, () => ({}), false, () => ({}),
+          entity => {
+            return this.errorsStatusTooltipCell(entity);
+          }
+        )
       );
     }
     return columns;
@@ -566,6 +593,9 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   fetchRuleChains(pageLink: PageLink) {
+    if (this.config.componentsData.showErrorsStatus) {
+      return this.ruleChainService.getRuleChainsInfo(pageLink, RuleChainType.CORE);
+    }
     return this.ruleChainService.getRuleChains(pageLink, RuleChainType.CORE);
   }
 
@@ -577,5 +607,39 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         return this.ruleChainService.getRuleChains(pageLink, RuleChainType.EDGE);
       })
     );
+  }
+
+  private errorsStatusContentCell(entity: RuleChainInfo): string {
+    let icon, iconColor;
+    if (entity) {
+      if (entity.errorPresent) {
+        icon = 'error_outline';
+        iconColor = '#D7503D';
+      } else {
+        icon = 'check_circle_outline';
+        iconColor = '#1E8134';
+      }
+      return `<mat-icon class="material-icons mat-icon" style="cursor:default; color:${iconColor}">${icon}</mat-icon>`;
+    }
+    return '';
+  }
+
+  private errorsStatusTooltipCell(entity: RuleChainInfo): string {
+    if (entity) {
+      return this.translate.instant(entity.errorPresent ? 'rulechain.status-has-errors' : 'rulechain.status-success');
+    }
+    return '';
+  }
+
+  private onShowErrorsStatusChange() {
+    this.userService.saveUser({
+      ...this.config.componentsData.user,
+      additionalInfo: {
+        showErrorsStatus: !this.config.componentsData.showErrorsStatus
+      }
+    }).subscribe(() => {
+      const currentUrl = this.router.url;
+      this.router.navigate(['/']).then(() => this.router.navigate([currentUrl]));
+    });
   }
 }

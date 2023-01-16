@@ -32,6 +32,7 @@ import { RuleNodeDetailsComponent } from './rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
 import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
+import { ClearRuleNodeErrorsDialogComponent } from "@home/pages/rulechain/clear-rule-node-errors-dialog.component";
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
     RuleNodeLinkComponent,
     AddRuleNodeLinkDialogComponent,
     AddRuleNodeDialogComponent,
-    CreateNestedRuleChainDialogComponent
+    CreateNestedRuleChainDialogComponent,
+    ClearRuleNodeErrorsDialogComponent
   ],
   providers: [
     {

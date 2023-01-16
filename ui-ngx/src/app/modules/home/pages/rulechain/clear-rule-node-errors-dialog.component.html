@@ -1,0 +1,79 @@
+<!--
+
+    ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+
+    Copyright © 2016-2022 ThingsBoard, Inc. All Rights Reserved.
+
+    NOTICE: All information contained herein is, and remains
+    the property of ThingsBoard, Inc. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to ThingsBoard, Inc.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+
+    Dissemination of this information or reproduction of this material is strictly forbidden
+    unless prior written permission is obtained from COMPANY.
+
+    Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+    managers or contractors who have executed Confidentiality and Non-disclosure agreements
+    explicitly covering such access.
+
+    The copyright notice above does not evidence any actual or intended publication
+    or disclosure  of  this source code, which includes
+    information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+    ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+    OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+    THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+    AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+    THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+    DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+    OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+
+-->
+<section style="min-width: 480px;">
+  <mat-toolbar color="primary">
+    <h2>{{'rulenode.clear-node-errors-title' | translate }} '{{ node.name }}'</h2>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div class="tb-acknowledge-rule-node-error-header-buttons">
+    <span fxFlex></span>
+    <button mat-mini-fab type="button" class="mat-elevation-z1"
+            matTooltip="{{ 'rulenode.last-message-data' | translate }}"
+            (click)="showData($event)">
+      <span>{{"{D}"}}</span>
+    </button>
+    <button type="button" mat-mini-fab class="mat-elevation-z1"
+            matTooltip="{{ 'rulenode.last-message-metadata' | translate }}"
+            (click)="showMetadata($event)">
+      <span>{{"{M}"}}</span>
+    </button>
+  </div>
+  <div class="tb-acknowledge-rule-node-error-details" mat-dialog-content>
+    <div fxFlex fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="20px">
+      <div fxLayout="column" fxLayoutAlign="center center">
+        <span class="errors-count">{{ translate.get('rulenode.errors-count', {count: node.stats.errorsCount}) | async }}</span>
+        <span>{{ 'rulenode.since-last-acknowledge' | translate }}</span>
+        <span><a aria-label="View on dashboard" (click)="viewOnDashboard($event)">{{ 'rulenode.view-on-dashboard' | translate }} &#8594;</a></span>
+      </div>
+      <div class="last-message-container">
+          <span class="last-message-title">{{ 'rulenode.last-error-message-title' | translate }}:</span>
+          <textarea disabled #lastMessage matInput cdkTextareaAutosize cols="1" cdkAutosizeMinRows="1"></textarea>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="isLoading$ | async"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="acknowledge()"
+            [disabled]="isLoading$ | async">
+      {{ 'rulenode.acknowledge' | translate }}
+    </button>
+  </div>
+</section>

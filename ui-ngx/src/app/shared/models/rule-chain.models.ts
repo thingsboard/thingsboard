@@ -33,6 +33,10 @@ export interface RuleChain extends BaseData<RuleChainId>, ExportableEntity<RuleC
   isDefault?: boolean;
 }
 
+export interface RuleChainInfo extends RuleChain {
+  errorPresent: boolean;
+}
+
 export interface RuleChainMetaData {
   ruleChainId: RuleChainId;
   firstNodeIndex?: number;

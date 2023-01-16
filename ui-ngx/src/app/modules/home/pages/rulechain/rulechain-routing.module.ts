@@ -39,9 +39,10 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { ItemBufferService } from '@core/public-api';
-import { MODULES_MAP } from '@shared/public-api';
+import { AppState, getCurrentAuthUser, ItemBufferService, UserService } from '@core/public-api';
+import { MODULES_MAP, User } from '@shared/public-api';
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { Store } from "@ngrx/store";
 
 @Injectable()
 export class RuleChainResolver implements Resolve<RuleChain> {
@@ -108,6 +109,18 @@ export class RuleChainImportGuard implements CanActivate {
 
 }
 
+@Injectable()
+export class UserProfileResolver implements Resolve<User> {
+  constructor(private store: Store<AppState>,
+              private userService: UserService) {
+  }
+
+  resolve(): Observable<User> {
+    const userId = getCurrentAuthUser(this.store).userId;
+    return this.userService.getUser(userId);
+  }
+}
+
 export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<RuleChainPageComponent>
   = ((route, translate, component) => {
   let label: string = component.ruleChain.name;
@@ -162,7 +175,8 @@ const routes: Routes = [
           ruleChain: RuleChainResolver,
           ruleChainMetaData: RuleChainMetaDataResolver,
           ruleNodeComponents: RuleNodeComponentsResolver,
-          tooltipster: TooltipsterResolver
+          tooltipster: TooltipsterResolver,
+          user: UserProfileResolver
         }
       },
       {
@@ -199,7 +213,8 @@ const routes: Routes = [
     RuleChainMetaDataResolver,
     RuleNodeComponentsResolver,
     TooltipsterResolver,
-    RuleChainImportGuard
+    RuleChainImportGuard,
+    UserProfileResolver
   ]
 })
 export class RuleChainRoutingModule { }

@@ -15,12 +15,21 @@
 ///
 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  ClearRuleNodeErrorsDialogComponent,
+  ClearRuleNodeErrorsDialogData
+} from "@home/pages/rulechain/clear-rule-node-errors-dialog.component";
+import { Observable } from "rxjs/internal/Observable";
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -32,10 +41,15 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
 
   iconUrl: SafeResourceUrl;
   RuleNodeType = RuleNodeType;
+  showErrorsStatus: Observable<boolean>;
 
   constructor(private sanitizer: DomSanitizer,
               private translate: TranslateService,
-              private router: Router) {
+              private router: Router,
+              private cd: ChangeDetectorRef,
+              private ruleChainService: RuleChainService,
+              private dialog: MatDialog,
+              private route: ActivatedRoute) {
     super();
   }
 
@@ -44,6 +58,7 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
     if (this.node.iconUrl) {
       this.iconUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.node.iconUrl);
     }
+    this.showErrorsStatus = this.route.data.pipe(map((data) => data.user.additionalInfo?.showErrorsStatus));
   }
 
   openRuleChain($event: Event, node: FcRuleNode) {
@@ -93,5 +108,40 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
     const contentElement = $(tooltipContent);
     tooltip.content(contentElement);
     tooltip.open();
+  }
+
+  openClearErrorStatsDialog($event: Event, node: FcRuleNode) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (!this.modelservice.isEditable() || this.node.readonly) {
+      return;
+    }
+    this.dialog.open<ClearRuleNodeErrorsDialogComponent, ClearRuleNodeErrorsDialogData,
+      boolean>(ClearRuleNodeErrorsDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog'],
+        data: {
+          node: node
+        }
+      }).afterClosed().pipe(
+        mergeMap((confirmResult) => {
+          return confirmResult ? this.ruleChainService.clearRuleNodeStats(node.ruleNodeId.id) : of(confirmResult);
+        })
+      ).subscribe((result) => {
+        if (result !== false) {
+          node.stats = {
+            errorsCount: 0,
+            lastErrorMsg: null,
+            msgData: null,
+            msgMetadata: null
+          };
+          this.cd.markForCheck();
+        }
+      });
+  }
+
+  isRuleNodeHasErrors(node: FcRuleNode) {
+    return node.stats ? !!node.stats.errorsCount : false;
   }
 }
