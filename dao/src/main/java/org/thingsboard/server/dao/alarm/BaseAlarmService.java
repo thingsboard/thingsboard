@@ -216,6 +216,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         boolean propagationEnabled = !oldAlarm.isPropagate() && newAlarm.isPropagate();
         boolean propagationToOwnerEnabled = !oldAlarm.isPropagateToOwner() && newAlarm.isPropagateToOwner();
         boolean propagationToTenantEnabled = !oldAlarm.isPropagateToTenant() && newAlarm.isPropagateToTenant();
+        AlarmSeverity oldAlarmSeverity = oldAlarm.getSeverity();
         Alarm result = alarmDao.save(newAlarm.getTenantId(), merge(oldAlarm, newAlarm));
         List<EntityId> propagatedEntitiesList;
         if (propagationEnabled || propagationToOwnerEnabled || propagationToTenantEnabled) {
@@ -228,8 +229,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
         }
+        // TODO oldAlarmSeverity
         AlarmInfo alarmInfo = getAlarmInfo(newAlarm.getTenantId(), newAlarm);
         return new AlarmOperationResult(alarmInfo, true, propagatedEntitiesList);
+        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
     }
 
     @Override

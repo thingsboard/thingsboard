@@ -304,6 +304,14 @@ public class ModelConstants {
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
 
+    public static final String ALARM_COMMENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_COMMENT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ALARM_COMMENT_COLUMN_FAMILY_NAME = "alarm_comment";
+    public static final String ALARM_COMMENT_ALARM_ID = "alarm_id";
+    public static final String ALARM_COMMENT_USER_ID = USER_ID_PROPERTY;
+    public static final String ALARM_COMMENT_TYPE = "type";
+    public static final String ALARM_COMMENT_COMMENT = "comment";
+
     /**
      * Cassandra entity relation constants.
      */

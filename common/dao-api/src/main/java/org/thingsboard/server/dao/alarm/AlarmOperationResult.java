@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.alarm;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 
@@ -24,11 +26,13 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 public class AlarmOperationResult {
+    private final AlarmInfo alarmInfo;
     private final boolean successful;
     private final boolean created;
+    private final AlarmSeverity oldSeverity;
     private final List<EntityId> propagatedEntitiesList;
-    private final AlarmInfo alarmInfo;
 
     public AlarmOperationResult(Alarm alarm, boolean successful) {
         this(new AlarmInfo(alarm, null, null, null, null, null), successful, Collections.emptyList());
@@ -39,7 +43,7 @@ public class AlarmOperationResult {
     }
 
     public AlarmOperationResult(AlarmInfo alarmInfo, boolean successful, List<EntityId> propagatedEntitiesList) {
-        this(alarmInfo, successful, false, propagatedEntitiesList);
+        this(alarmInfo, successful, false, null, propagatedEntitiesList);
     }
 
     public AlarmOperationResult(AlarmInfo alarmInfo, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
