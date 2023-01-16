@@ -39,7 +39,7 @@
           <div class="mat-toolbar-tools">
             <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
               <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
-              <mat-slide-toggle *ngIf="entitiesTableConfig.entityType === 'RULE_CHAIN'" style="font-size: 10px"
+              <mat-slide-toggle *ngIf="entitiesTableConfig.componentsData?.showErrorsStatusToggle" style="font-size: 10px"
                                 (change)="entitiesTableConfig.componentsData.onShowErrorsStatusChange()"
                                 [ngModel]="entitiesTableConfig.componentsData?.showErrorsStatus">
                 {{ 'rulechain.show-errors-status' | translate }}

@@ -98,13 +98,15 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         const edgeId = route.params?.edgeId;
         const ruleChainScope = route.data?.ruleChainsType ? route.data?.ruleChainsType : 'tenant';
         const showErrorsStatus = user.additionalInfo?.showErrorsStatus;
+        const showErrorsStatusToggle = ruleChainScope === 'tenant';
         this.config.componentsData = {
           ruleChainScope,
           edgeId,
           showErrorsStatus,
-          user
+          showErrorsStatusToggle,
+          user,
+          onShowErrorsStatusChange: () => this.onShowErrorsStatusChange()
         };
-        this.config.componentsData.onShowErrorsStatusChange = () => this.onShowErrorsStatusChange();
         this.config.columns = this.configureEntityTableColumns(ruleChainScope);
         this.config.entitiesFetchFunction = this.configureEntityFunctions(ruleChainScope, edgeId);
         this.config.groupActionDescriptors = this.configureGroupActions(ruleChainScope);
@@ -157,7 +159,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           })
       );
     }
-    if (this.config.componentsData.showErrorsStatus) {
+    if (this.config.componentsData.showErrorsStatus && this.config.componentsData.showErrorsStatusToggle) {
       columns.push(
         new EntityTableColumn<RuleChainInfo>('stats', 'rulechain.errors-status', '60px',
           entity => {
@@ -593,7 +595,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   fetchRuleChains(pageLink: PageLink) {
-    if (this.config.componentsData.showErrorsStatus) {
+    if (this.config.componentsData.showErrorsStatus && this.config.componentsData.showErrorsStatusToggle) {
       return this.ruleChainService.getRuleChainsInfo(pageLink, RuleChainType.CORE);
     }
     return this.ruleChainService.getRuleChains(pageLink, RuleChainType.CORE);
