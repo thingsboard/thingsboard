@@ -80,7 +80,7 @@ public class DefaultTbAlarmCommentServiceTest {
         when(alarmCommentService.createOrUpdateAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
         service.saveAlarmComment(alarm, alarmComment, new User());
 
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarmComment(any(), any(), any(), any());
+        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
     }
 
     @Test
@@ -91,6 +91,6 @@ public class DefaultTbAlarmCommentServiceTest {
         doNothing().when(alarmCommentService).deleteAlarmComment(Mockito.any(), eq(alarmCommentId));
         service.deleteAlarmComment(new Alarm(alarmId), new AlarmComment(alarmCommentId), new User());
 
-        verify(notificationEntityService, times(1)).notifyDeleteAlarmComment(any(), any(), any());
+        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
     }
 }

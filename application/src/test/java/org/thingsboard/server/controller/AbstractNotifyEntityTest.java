@@ -340,12 +340,6 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 Mockito.argThat(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
     }
 
-    protected void testPushMsgToRuleEngineTime(EntityId matcherOriginatorId, TenantId tenantId, HasName entity, int cntTime) {
-        tenantId = tenantId.isNullUid() && ((HasTenantId) entity).getTenantId() != null ? ((HasTenantId) entity).getTenantId() : tenantId;
-        Mockito.verify(tbClusterService, times(cntTime)).pushMsgToRuleEngine(Mockito.eq(tenantId),
-                Mockito.eq(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
-    }
-
     private void testNotificationMsgToEdgeServiceTime(EntityId entityId, TenantId tenantId, ActionType actionType, int cntTime) {
         EdgeEventActionType edgeEventActionType = ActionType.CREDENTIALS_UPDATED.equals(actionType) ?
                 EdgeEventActionType.CREDENTIALS_UPDATED : edgeTypeByActionType(actionType);

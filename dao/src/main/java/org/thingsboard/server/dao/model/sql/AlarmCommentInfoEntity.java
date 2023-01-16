@@ -19,9 +19,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AlarmCommentInfoEntity extends AbstractAlarmCommentEntity<AlarmCommentInfo> {

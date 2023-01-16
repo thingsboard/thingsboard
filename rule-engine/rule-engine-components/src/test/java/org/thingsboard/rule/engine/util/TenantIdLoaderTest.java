@@ -41,11 +41,9 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -194,14 +192,6 @@ public class TenantIdLoaderTest {
 
                 when(ctx.getAlarmService()).thenReturn(alarmService);
                 doReturn(alarm).when(alarmService).findAlarmById(eq(tenantId), any());
-
-                break;
-            case ALARM_COMMENT:
-                AlarmComment alarmComment = new AlarmComment();
-                alarmComment.setAlarmId(new AlarmId(UUID.randomUUID()));
-
-                when(ctx.getAlarmCommentService()).thenReturn(alarmCommentService);
-                doReturn(alarmComment).when(alarmCommentService).findAlarmCommentById(eq(tenantId), any());
 
                 break;
             case RULE_CHAIN:

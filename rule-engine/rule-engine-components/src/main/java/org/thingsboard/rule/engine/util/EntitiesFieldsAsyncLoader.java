@@ -22,7 +22,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityFieldsData;
-import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -56,9 +55,6 @@ public class EntitiesFieldsAsyncLoader {
                         EntityFieldsData::new);
             case ALARM:
                 return getAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original),
-                        EntityFieldsData::new);
-            case ALARM_COMMENT:
-                return getAsync(ctx.getAlarmCommentService().findAlarmCommentByIdAsync(ctx.getTenantId(), (AlarmCommentId) original),
                         EntityFieldsData::new);
             case RULE_CHAIN:
                 return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original),

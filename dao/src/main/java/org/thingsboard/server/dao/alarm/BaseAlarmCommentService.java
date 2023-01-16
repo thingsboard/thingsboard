@@ -22,21 +22,17 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -107,9 +103,8 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         if (existing != null) {
             if (newAlarmComment.getComment() != null) {
                 JsonNode comment = newAlarmComment.getComment();
-                UUID uuid = Uuids.timeBased();
                 ((ObjectNode) comment).put("edited", "true");
-                ((ObjectNode) comment).put("editedOn", Uuids.unixTimestamp(uuid));
+                ((ObjectNode) comment).put("editedOn", System.currentTimeMillis());
                 existing.setComment(comment);
             }
             return alarmCommentDao.save(tenantId, existing);
@@ -117,13 +112,4 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         return null;
     }
 
-    @Override
-    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findAlarmCommentById(tenantId, new AlarmCommentId(entityId.getId())));
-    }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.ALARM_COMMENT;
-    }
 }

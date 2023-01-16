@@ -31,15 +31,15 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService{
     @Override
     public AlarmComment saveAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException {
-        ActionType actionType = alarmComment.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        ActionType actionType = alarmComment.getId() == null ? ActionType.ADDED_COMMENT : ActionType.UPDATED_COMMENT;
         UserId userId = user.getId();
         alarmComment.setUserId(userId);
         try {
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment));
-            notificationEntityService.notifyCreateOrUpdateAlarmComment(alarm, savedAlarmComment, actionType, user);
+            notificationEntityService.notifyAlarmComment(alarm, savedAlarmComment, actionType, user);
             return savedAlarmComment;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(alarm.getTenantId(), emptyId(EntityType.ALARM_COMMENT), alarmComment, actionType, user, e);
+            notificationEntityService.logEntityAction(alarm.getTenantId(), emptyId(EntityType.ALARM), alarm, actionType, user, e, alarmComment);
             throw e;
         }
     }
@@ -47,6 +47,6 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
     @Override
     public void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
         alarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment.getId());
-        notificationEntityService.notifyDeleteAlarmComment(alarm, alarmComment, user);
+        notificationEntityService.notifyAlarmComment(alarm, alarmComment, ActionType.DELETED_COMMENT, user);
     }
 }
