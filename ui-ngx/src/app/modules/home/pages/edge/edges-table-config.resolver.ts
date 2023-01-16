@@ -51,13 +51,17 @@ import {
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { Edge, EdgeInfo } from '@shared/models/edge.models';
+import { Edge, EdgeInfo, EdgeInstallInstructions } from '@shared/models/edge.models';
 import { EdgeService } from '@core/http/edge.service';
 import { EdgeComponent } from '@home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
 import { EdgeId } from '@shared/models/id/edge-id';
 import { EdgeTabsComponent } from '@home/pages/edge/edge-tabs.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import {
+  EdgeInstructionsData,
+  EdgeInstructionsDialogComponent
+} from "@home/pages/edge/edge-instructions-dialog.component";
 
 @Injectable()
 export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeInfo>> {
@@ -526,6 +530,23 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
+  openInstructions($event, edge) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.edgeService.getEdgeDockerInstallInstructions(edge.id.id).subscribe(
+      (edgeInstructionsTemplate: EdgeInstallInstructions) => {
+        this.dialog.open<EdgeInstructionsDialogComponent, EdgeInstructionsData>(EdgeInstructionsDialogComponent, {
+          disableClose: false,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            instructions: edgeInstructionsTemplate.dockerInstallInstructions
+          }
+        });
+      }
+    )
+  }
+
   onEdgeAction(action: EntityAction<EdgeInfo>, config: EntityTableConfig<EdgeInfo>): boolean {
     switch (action.action) {
       case 'open':
@@ -557,6 +578,9 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         return true;
       case 'syncEdge':
         this.syncEdge(action.event, action.entity);
+        return true;
+      case 'openInstructions':
+        this.openInstructions(action.event, action.entity);
         return true;
     }
   }

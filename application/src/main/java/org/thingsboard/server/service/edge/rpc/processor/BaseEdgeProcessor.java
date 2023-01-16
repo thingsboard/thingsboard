@@ -306,6 +306,12 @@ public abstract class BaseEdgeProcessor {
         return futures;
     }
 
+    protected ListenableFuture<Void> handleUnsupportedMsgType(UpdateMsgType msgType) {
+        String errMsg = String.format("Unsupported msg type %s", msgType);
+        log.error(errMsg);
+        return Futures.immediateFailedFuture(new RuntimeException(errMsg));
+    }
+
     protected UpdateMsgType getUpdateMsgType(EdgeEventActionType actionType) {
         switch (actionType) {
             case UPDATED:
