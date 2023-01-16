@@ -43,6 +43,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -143,7 +144,7 @@ public class TbMsgDeduplicationNodeTest {
     }
 
     @Test
-    public void given_100_messages_then_verifyOutputFirst() throws TbNodeException, ExecutionException, InterruptedException {
+    public void given_100_messages_strategy_first_then_verifyOutput() throws TbNodeException, ExecutionException, InterruptedException {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
@@ -179,7 +180,7 @@ public class TbMsgDeduplicationNodeTest {
     }
 
     @Test
-    public void given_100_messages_then_verifyOutputLast() throws TbNodeException, ExecutionException, InterruptedException {
+    public void given_100_messages_strategy_last_then_verifyOutput() throws TbNodeException, ExecutionException, InterruptedException {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
@@ -195,19 +196,13 @@ public class TbMsgDeduplicationNodeTest {
         long currentTimeMillis = System.currentTimeMillis();
 
         List<TbMsg> inputMsgs = getTbMsgs(deviceId, msgCount, currentTimeMillis, 500);
-
-        int indexOfLastMsgInArray = inputMsgs.size() - 1;
-        int indexToSetMaxTs = new Random().nextInt(indexOfLastMsgInArray) + 1;
-        TbMsg currentMaxTsMsg = inputMsgs.get(indexOfLastMsgInArray);
-        TbMsg newLastMsgOfArray = inputMsgs.get(indexToSetMaxTs);
-        inputMsgs.set(indexOfLastMsgInArray, newLastMsgOfArray);
-        inputMsgs.set(indexToSetMaxTs, currentMaxTsMsg);
+        TbMsg msgWithLatestTs = getMsgWithLatestTs(inputMsgs);
 
         for (TbMsg msg : inputMsgs) {
             node.onMsg(ctx, msg);
         }
 
-        TbMsg msgToReject = createMsg(deviceId, inputMsgs.get(indexOfLastMsgInArray).getMetaDataTs() + 2);
+        TbMsg msgToReject = createMsg(deviceId, inputMsgs.get(inputMsgs.size() - 1).getMetaDataTs() + 2);
         node.onMsg(ctx, msgToReject);
 
         awaitTellSelfLatch.await();
@@ -220,11 +215,11 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        Assertions.assertEquals(currentMaxTsMsg, newMsgCaptor.getValue());
+        Assertions.assertEquals(msgWithLatestTs, newMsgCaptor.getValue());
     }
 
     @Test
-    public void given_100_messages_then_verifyOutputAll() throws TbNodeException, ExecutionException, InterruptedException {
+    public void given_100_messages_strategy_all_then_verifyOutput() throws TbNodeException, ExecutionException, InterruptedException {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
@@ -264,7 +259,7 @@ public class TbMsgDeduplicationNodeTest {
     }
 
     @Test
-    public void given_100_messages_then_verifyOutput_2_packs() throws TbNodeException, ExecutionException, InterruptedException {
+    public void given_100_messages_strategy_all_then_verifyOutput_2_packs() throws TbNodeException, ExecutionException, InterruptedException {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
@@ -284,8 +279,7 @@ public class TbMsgDeduplicationNodeTest {
         for (TbMsg msg : firstMsgPack) {
             node.onMsg(ctx, msg);
         }
-        TbMsg firstMsgFromFirstPack = firstMsgPack.get(0);
-        long firstPackDeduplicationPackEndTs = firstMsgFromFirstPack.getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
+        long firstPackDeduplicationPackEndTs =  firstMsgPack.get(0).getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
 
         List<TbMsg> secondMsgPack = getTbMsgs(deviceId, msgCount / 2, firstPackDeduplicationPackEndTs, 500);
         for (TbMsg msg : secondMsgPack) {
@@ -316,6 +310,60 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(deviceId, secondMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), secondMsg.getType());
         Assertions.assertEquals(config.getQueueName(), secondMsg.getQueueName());
+    }
+
+    @Test
+    public void given_100_messages_strategy_last_then_verifyOutput_2_packs() throws TbNodeException, ExecutionException, InterruptedException {
+        int wantedNumberOfTellSelfInvocation = 2;
+        int msgCount = 100;
+        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation, true, 3);
+
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.LAST);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long currentTimeMillis = System.currentTimeMillis();
+
+        List<TbMsg> firstMsgPack = getTbMsgs(deviceId, msgCount / 2, currentTimeMillis, 500);
+        for (TbMsg msg : firstMsgPack) {
+            node.onMsg(ctx, msg);
+        }
+        long firstPackDeduplicationPackEndTs = firstMsgPack.get(0).getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
+        TbMsg msgWithLatestTsInFirstPack = getMsgWithLatestTs(firstMsgPack);
+
+        List<TbMsg> secondMsgPack = getTbMsgs(deviceId, msgCount / 2, firstPackDeduplicationPackEndTs, 500);
+        for (TbMsg msg : secondMsgPack) {
+            node.onMsg(ctx, msg);
+        }
+        TbMsg msgWithLatestTsInSecondPack = getMsgWithLatestTs(secondMsgPack);
+
+        awaitTellSelfLatch.await();
+
+        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
+
+        verify(ctx, times(msgCount)).ack(any());
+        verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+
+        List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
+        Assertions.assertEquals(2, resultMsgs.size());
+        Assertions.assertTrue(resultMsgs.contains(msgWithLatestTsInFirstPack));
+        Assertions.assertTrue(resultMsgs.contains(msgWithLatestTsInSecondPack));
+    }
+
+    private TbMsg getMsgWithLatestTs(List<TbMsg> firstMsgPack) {
+        int indexOfLastMsgInArray = firstMsgPack.size() - 1;
+        int indexToSetMaxTs = new Random().nextInt(indexOfLastMsgInArray) + 1;
+        TbMsg currentMaxTsMsg = firstMsgPack.get(indexOfLastMsgInArray);
+        TbMsg newLastMsgOfArray = firstMsgPack.get(indexToSetMaxTs);
+        firstMsgPack.set(indexOfLastMsgInArray, newLastMsgOfArray);
+        firstMsgPack.set(indexToSetMaxTs, currentMaxTsMsg);
+        return currentMaxTsMsg;
     }
 
     private List<TbMsg> getTbMsgs(DeviceId deviceId, int msgCount, long currentTimeMillis, int initTsStep) {

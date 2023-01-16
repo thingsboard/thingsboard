@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @RuleNode(
         type = ComponentType.ACTION,
@@ -79,8 +78,11 @@ public class TbMsgDeduplicationNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         if (TB_MSG_DEDUPLICATION_TIMEOUT_MSG.equals(msg.getType())) {
-            processDeduplication(ctx);
-            scheduleTickMsg(ctx);
+            try {
+                processDeduplication(ctx);
+            } finally {
+                scheduleTickMsg(ctx);
+            }
         } else {
             processOnRegularMsg(ctx, msg);
         }
@@ -121,63 +123,47 @@ public class TbMsgDeduplicationNode implements TbNode {
         if (!deduplicationMap.isEmpty()) {
             List<TbMsg> deduplicationResults = new ArrayList<>();
             long deduplicationTimeoutMs = System.currentTimeMillis();
-            for (EntityId entityId : deduplicationMap.keySet()) {
-                deduplicationMap.computeIfPresent(entityId, (id, tbMsgs) -> {
-                    if (tbMsgs.isEmpty()) {
-                        return tbMsgs;
-                    }
-                    List<TbMsg> msgsToRemove = new ArrayList<>();
-                    int pendingMsgCount = tbMsgs.size();
-                    int processedMsgCount = 0;
-                    TbMsg firstMsg = getFirstTbMsg(tbMsgs);
-                    TbMsg lastMsg = firstMsg;
-                    long deduplicationStartTs = firstMsg.getMetaDataTs();
-                    long deduplicationEndTs = deduplicationStartTs + deduplicationInterval;
-                    boolean hasNextDeduplicationPack = deduplicationEndTs < deduplicationTimeoutMs;
-                    while (hasNextDeduplicationPack) {
+            deduplicationMap.forEach((entityId, tbMsgs) -> {
+                if (!tbMsgs.isEmpty()) {
+                    TbMsg firstMsgInPack = getFirstPackMsg(tbMsgs);
+                    long packStartTs = firstMsgInPack.getMetaDataTs();
+                    long packEndTs = packStartTs + deduplicationInterval;
+                    boolean hasNextPack = packEndTs < deduplicationTimeoutMs;
+                    while (hasNextPack) {
+                        TbMsg lastMsgInPack = firstMsgInPack;
                         List<TbMsg> pack = new ArrayList<>();
-                        for (TbMsg tbMsg : tbMsgs) {
-                            if (tbMsg.getMetaDataTs() >= deduplicationStartTs && tbMsg.getMetaDataTs() < deduplicationEndTs) {
-                                pack.add(tbMsg);
-                                if (tbMsg.getMetaDataTs() > lastMsg.getMetaDataTs()) {
-                                    lastMsg = tbMsg;
+                        pack.add(firstMsgInPack);
+                        tbMsgs.remove(firstMsgInPack);
+                        firstMsgInPack = null;
+                        for (TbMsg msg : tbMsgs) {
+                            if (msg.getMetaDataTs() > packStartTs && msg.getMetaDataTs() < packEndTs) {
+                                pack.add(msg);
+                                if (msg.getMetaDataTs() > lastMsgInPack.getMetaDataTs()) {
+                                    lastMsgInPack = msg;
+                                }
+                            } else {
+                                if (firstMsgInPack == null || msg.getMetaDataTs() < firstMsgInPack.getMetaDataTs()) {
+                                    firstMsgInPack = msg;
                                 }
                             }
                         }
-                        msgsToRemove.addAll(pack);
-                        processedMsgCount = processedMsgCount + pack.size();
-                        if (processedMsgCount == pendingMsgCount) {
-                            hasNextDeduplicationPack = false;
+                        deduplicationResults.add(createOutMsg(entityId, pack, pack.indexOf(lastMsgInPack)));
+                        tbMsgs.removeAll(pack);
+                        if (firstMsgInPack == null) {
+                            hasNextPack = false;
                         } else {
-                            firstMsg = getFirstTbMsg(tbMsgs, deduplicationEndTs);
-                            if (firstMsg == null) {
-                                hasNextDeduplicationPack = false;
-                            } else {
-                                deduplicationStartTs = firstMsg.getMetaDataTs();
-                                deduplicationEndTs = deduplicationStartTs + deduplicationInterval;
-                                hasNextDeduplicationPack = deduplicationEndTs < deduplicationTimeoutMs;
-                            }
+                            packStartTs = firstMsgInPack.getMetaDataTs();
+                            packEndTs = packStartTs + deduplicationInterval;
+                            hasNextPack = packEndTs < deduplicationTimeoutMs;
                         }
-                        deduplicationResults.add(createOutMsg(entityId, pack, pack.indexOf(firstMsg), pack.indexOf(lastMsg)));
                     }
-                    tbMsgs.removeAll(msgsToRemove);
-                    return tbMsgs;
-                });
-            }
-            deduplicationResults.forEach(msg -> enqueueForTellNextWithRetry(ctx, msg, 0));
+                }
+            });
+            deduplicationResults.forEach(outMsg -> enqueueForTellNextWithRetry(ctx, outMsg, 0));
         }
     }
 
-    private TbMsg getFirstTbMsg(List<TbMsg> tbMsgs) {
-        return getFirstTbMsg(tbMsgs, null);
-    }
-
-    private TbMsg getFirstTbMsg(List<TbMsg> tbMsgs, Long previousPackEndTs) {
-        if (previousPackEndTs != null) {
-            tbMsgs = tbMsgs.stream()
-                    .filter(msg -> msg.getMetaDataTs() >= previousPackEndTs)
-                    .collect(Collectors.toList());
-        }
+    private TbMsg getFirstPackMsg(List<TbMsg> tbMsgs) {
         TbMsg firstMsg = null;
         for (TbMsg msg : tbMsgs) {
             if (firstMsg == null || msg.getMetaDataTs() < firstMsg.getMetaDataTs()) {
@@ -187,10 +173,10 @@ public class TbMsgDeduplicationNode implements TbNode {
         return firstMsg;
     }
 
-    private TbMsg createOutMsg(EntityId originator, List<TbMsg> pack, int firstIndex, int lastIndex) {
+    private TbMsg createOutMsg(EntityId originator, List<TbMsg> pack, int lastIndex) {
         switch (config.getStrategy()) {
             case FIRST:
-                return pack.get(firstIndex);
+                return pack.get(0);
             case LAST:
                 return pack.get(lastIndex);
             default:
