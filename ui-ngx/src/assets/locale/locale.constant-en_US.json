@@ -1753,6 +1753,7 @@
         "make-private-edge-title": "Are you sure you want to make the edge '{{edgeName}}' private?",
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
+        "install-connect-instructions": "Install & Connect Instructions",
         "label": "Label",
         "load-entity-error": "Failed to load data. Entity has been deleted.",
         "assign-new-edge": "Assign new edge",
