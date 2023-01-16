@@ -49,6 +49,13 @@ public class Latency {
         return key;
     }
 
+    public synchronized Latency snapshot() {
+        Latency snapshot = new Latency(key);
+        snapshot.latencySum.set(latencySum.get());
+        snapshot.counter.set(counter.get());
+        return snapshot;
+    }
+
     @Override
     public String toString() {
         return "Latency{" +

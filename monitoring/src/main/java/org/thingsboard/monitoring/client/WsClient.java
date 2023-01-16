@@ -37,7 +37,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public class WsClient extends WebSocketClient {
+public class WsClient extends WebSocketClient implements AutoCloseable {
 
     public volatile String lastMsg;
     private CountDownLatch reply;

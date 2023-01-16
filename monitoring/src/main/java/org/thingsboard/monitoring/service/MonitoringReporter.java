@@ -70,9 +70,14 @@ public class MonitoringReporter {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startLatenciesMonitoring() {
-        monitoringExecutor.scheduleWithFixedDelay(() -> {
+        monitoringExecutor.scheduleAtFixedRate(() -> {
             List<Latency> latencies = this.latencies.values().stream()
                     .filter(Latency::isNotEmpty)
+                    .map(latency -> {
+                        Latency snapshot = latency.snapshot();
+                        latency.reset();
+                        return snapshot;
+                    })
                     .collect(Collectors.toList());
             if (latencies.isEmpty()) {
                 return;
@@ -95,7 +100,6 @@ public class MonitoringReporter {
                     ObjectNode msg = JacksonUtil.newObjectNode();
                     latencies.forEach(latency -> {
                         msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
-                        latency.reset();
                     });
                     tbClient.saveEntityTelemetry(entityId, "time", msg);
                 } catch (Exception e) {

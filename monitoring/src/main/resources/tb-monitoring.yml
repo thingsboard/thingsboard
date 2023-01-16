@@ -74,4 +74,4 @@ monitoring:
     reporting_entity_type: '${LATENCY_REPORTING_ENTITY_TYPE:ASSET}'
     reporting_entity_id: '${LATENCY_REPORTING_ENTITY_ID:}'
 
-  monitoring_thread_pool_size: '${MONITORING_THREAD_POOL_SIZE:10}'
+  monitoring_executor_thread_pool_size: '${MONITORING_EXECUTOR_THREAD_POOL_SIZE:10}'

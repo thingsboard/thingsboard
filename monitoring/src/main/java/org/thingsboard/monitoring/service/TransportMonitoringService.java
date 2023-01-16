@@ -36,12 +36,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
 public abstract class TransportMonitoringService<C extends TransportMonitoringServiceConfig> {
@@ -58,8 +54,6 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
     private WsClientFactory wsClientFactory;
     @Autowired
     private ScheduledExecutorService monitoringExecutor;
-    @Autowired
-    private ExecutorService requestExecutor;
     @Autowired
     private TbClient tbClient;
     @Autowired
@@ -79,54 +73,41 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
 
     public final void startMonitoring() {
         monitoringExecutor.scheduleWithFixedDelay(() -> {
-            WsClient wsClient = null;
-            try {
-                log.trace("[{}] Checking", transportInfo);
-                wsClient = establishWsClient();
-                wsClient.registerWaitForUpdate();
-
-                String testValue = UUID.randomUUID().toString();
-                String testPayload = JacksonUtil.newObjectNode().set(TEST_TELEMETRY_KEY, new TextNode(testValue)).toString();
-                try {
-                    initClientAndSendPayload(testPayload);
-                    log.trace("[{}] Sent test payload ({})", transportInfo, testPayload);
-                } catch (Throwable e) {
-                    throw new TransportFailureException(e);
-                }
-
-                log.trace("[{}] Waiting for WS update", transportInfo);
-                checkWsUpdate(wsClient, testValue);
-
-                monitoringReporter.serviceIsOk(transportInfo);
-                monitoringReporter.serviceIsOk(MonitoredServiceKey.GENERAL);
-            } catch (TransportFailureException transportFailureException) {
-                monitoringReporter.serviceFailure(transportInfo, transportFailureException);
-            } catch (Exception e) {
-                monitoringReporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
-            } finally {
-                if (wsClient != null) wsClient.close();
-            }
+            check();
         }, config.getInitialDelayMs(), config.getMonitoringRateMs(), TimeUnit.MILLISECONDS);
         log.info("Started monitoring for transport type {} for target {}", getTransportType(), target);
+    }
+
+    private void check() {
+        log.trace("[{}] Checking", transportInfo);
+        try (WsClient wsClient = establishWsClient()) {
+            wsClient.registerWaitForUpdate();
+
+            String testValue = UUID.randomUUID().toString();
+            String testPayload = JacksonUtil.newObjectNode().set(TEST_TELEMETRY_KEY, new TextNode(testValue)).toString();
+            try {
+                initClientAndSendPayload(testPayload);
+                log.trace("[{}] Sent test payload ({})", transportInfo, testPayload);
+            } catch (Throwable e) {
+                throw new TransportFailureException(e);
+            }
+
+            log.trace("[{}] Waiting for WS update", transportInfo);
+            checkWsUpdate(wsClient, testValue);
+
+            monitoringReporter.serviceIsOk(transportInfo);
+            monitoringReporter.serviceIsOk(MonitoredServiceKey.GENERAL);
+        } catch (TransportFailureException transportFailureException) {
+            monitoringReporter.serviceFailure(transportInfo, transportFailureException);
+        } catch (Exception e) {
+            monitoringReporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
+        }
     }
 
     private void initClientAndSendPayload(String payload) throws Throwable {
         initClient();
         stopWatch.start();
-        Future<?> resultFuture = requestExecutor.submit(() -> {
-            try {
-                sendTestPayload(payload);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        });
-        try {
-            resultFuture.get(config.getRequestTimeoutMs(), TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-            throw e.getCause();
-        } catch (TimeoutException e) {
-            throw new TimeoutException("Transport request timeout");
-        }
+        sendTestPayload(payload);
         monitoringReporter.reportLatency(Latencies.transportRequest(getTransportType()), stopWatch.getTime());
     }
 

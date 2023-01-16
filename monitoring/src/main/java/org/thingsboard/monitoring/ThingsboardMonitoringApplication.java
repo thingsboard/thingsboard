@@ -103,13 +103,8 @@ public class ThingsboardMonitoringApplication {
     }
 
     @Bean
-    public ScheduledExecutorService monitoringExecutor(@Value("${monitoring.monitoring_thread_pool_size}") int threadPoolSize) {
+    public ScheduledExecutorService monitoringExecutor(@Value("${monitoring.monitoring_executor_thread_pool_size}") int threadPoolSize) {
         return Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("monitoring-executor"));
-    }
-
-    @Bean
-    public ExecutorService requestExecutor() {
-        return Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("request-executor"));
     }
 
 }
