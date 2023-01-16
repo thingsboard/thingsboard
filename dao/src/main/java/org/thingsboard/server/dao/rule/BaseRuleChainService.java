@@ -398,7 +398,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     private Map<RuleNodeId, RuleNodeStats> getRuleNodesStats(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
-        Validator.validateIds(ruleNodeIds, "Incorrect entity ids for search request");
         List<AttributeKvEntryEntityId> attributeKvEntries = attributesService.findValuesByKeyAndEntityIds(tenantId, "ruleNodeStats", new ArrayList<>(ruleNodeIds));
         Map<RuleNodeId, RuleNodeStats> map = new HashMap<>();
         for (AttributeKvEntryEntityId akv : attributeKvEntries) {
