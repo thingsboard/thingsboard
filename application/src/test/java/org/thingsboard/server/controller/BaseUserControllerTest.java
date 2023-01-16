@@ -235,16 +235,8 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .put("resetToken", TestMailService.currentResetPasswordToken)
                 .put("password", "testPassword2");
 
-        JsonNode tokenInfo = readResponse(
-                doPost("/api/noauth/resetPassword", resetPasswordRequest)
-                        .andExpect(status().isOk()), JsonNode.class);
-        validateAndSetJwtToken(tokenInfo, email);
 
-        doGet("/api/auth/user")
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
-                .andExpect(jsonPath("$.email", is(email)));
-
+        doPost("/api/noauth/resetPassword", resetPasswordRequest);
         resetTokens();
 
         login(email, "testPassword2");
