@@ -522,6 +522,45 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAssignUnassignDeviceToPublicCustomer() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        Device assignedDevice = doPost("/api/customer/public/device/" + savedDevice.getId().getId(), Device.class);
+
+        Customer publicCustomer = doGet("/api/customer/" + assignedDevice.getCustomerId(), Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testNotifyEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
+                publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedDevice.getId().getId().toString(), publicCustomer.getId().getId().toString(),
+                publicCustomer.getTitle());
+        testNotificationUpdateGatewayNever();
+
+        Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
+        Assert.assertEquals(publicCustomer.getId(), foundDevice.getCustomerId());
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        Device unassignedDevice =
+                doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedDevice.getCustomerId().getId());
+
+        testNotifyEntityAllOneTime(unassignedDevice, unassignedDevice.getId(), unassignedDevice.getId(), savedTenant.getId(),
+                publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
+                unassignedDevice.getId().getId().toString(), publicCustomer.getId().getId().toString(),
+                publicCustomer.getTitle());
+        testNotificationDeleteGatewayNever();
+
+        foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, foundDevice.getCustomerId().getId());
+    }
+
+    @Test
     public void testAssignDeviceToNonExistentCustomer() throws Exception {
         Device device = new Device();
         device.setName("My device");

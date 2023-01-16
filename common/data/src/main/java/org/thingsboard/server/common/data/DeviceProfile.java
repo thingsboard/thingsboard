@@ -98,6 +98,11 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     @ApiModelProperty(position = 10, value = "Reference to the software OTA package. If present, the specified package will be used as default device software. ")
     private OtaPackageId softwareId;
 
+    @ApiModelProperty(position = 17, value = "Reference to the edge rule chain. " +
+            "If present, the specified edge rule chain will be used on the edge to process all messages related to device, including telemetry, attribute updates, etc. " +
+            "Otherwise, the edge root rule chain will be used to process those messages.")
+    private RuleChainId defaultEdgeRuleChainId;
+
     private DeviceProfileId externalId;
 
     public DeviceProfile() {
@@ -122,6 +127,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
         this.firmwareId = deviceProfile.getFirmwareId();
         this.softwareId = deviceProfile.getSoftwareId();
+        this.defaultEdgeRuleChainId = deviceProfile.getDefaultEdgeRuleChainId();
         this.externalId = deviceProfile.getExternalId();
     }
 
