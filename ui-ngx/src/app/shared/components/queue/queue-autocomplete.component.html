@@ -16,7 +16,6 @@
 
 -->
 <mat-form-field [formGroup]="selectQueueFormGroup"
-                [ngStyle] = "autocompleteHint ? {'padding-bottom': '16px'} : {}"
                 class="mat-block autocomplete-queue">
   <input matInput type="text" placeholder="{{ 'queue.queue-name' | translate }}"
          #queueInput
