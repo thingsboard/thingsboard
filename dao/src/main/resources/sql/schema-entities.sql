@@ -61,6 +61,16 @@ CREATE TABLE IF NOT EXISTS alarm (
     propagate_to_tenant boolean
 );
 
+CREATE TABLE IF NOT EXISTS alarm_comment (
+    id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    alarm_id uuid NOT NULL,
+    user_id uuid,
+    type varchar(255) NOT NULL,
+    comment varchar(10000),
+    CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
+    ) PARTITION BY RANGE (created_time);
+
 CREATE TABLE IF NOT EXISTS entity_alarm (
     tenant_id uuid NOT NULL,
     entity_type varchar(32),
