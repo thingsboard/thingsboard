@@ -66,7 +66,7 @@ export class ClearRuleNodeErrorsDialogComponent extends DialogComponent<ClearRul
   }
 
   showData($event) {
-    this.showContent($event, this.node.stats.msgData, 'event.metadata', ContentType.JSON, true);
+    this.showContent($event, this.node.stats.msgData, 'event.data', ContentType.JSON, true);
   }
 
   showMetadata($event) {
