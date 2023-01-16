@@ -61,7 +61,6 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
   get required(): boolean {
     return this.requiredValue;
   }
-
   @Input()
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
