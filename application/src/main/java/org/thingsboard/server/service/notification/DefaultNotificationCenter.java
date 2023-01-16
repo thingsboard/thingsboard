@@ -120,7 +120,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
         }
 
-        notificationRequest.setStatus(NotificationRequestStatus.SENT);
+        notificationRequest.setStatus(NotificationRequestStatus.PROCESSING);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
         NotificationProcessingContext ctx = NotificationProcessingContext.builder()
@@ -134,9 +134,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Set<NotificationDeliveryMethod> deliveryMethods = ctx.getDeliveryMethods();
         List<ListenableFuture<Void>> results = new ArrayList<>();
 
-        for (NotificationTargetId targetId : notificationRequest.getTargets()) {
+        for (UUID targetId : notificationRequest.getTargets()) {
             DaoUtil.processBatches(pageLink -> {
-                return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), targetId, pageLink);
+                return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), new NotificationTargetId(targetId), pageLink);
             }, 200, recipientsBatch -> {
                 for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
                     if (deliveryMethod.isIndependent()) continue;
@@ -172,7 +172,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Futures.whenAllComplete(results).run(() -> {
             NotificationRequestStats stats = ctx.getStats();
             try {
-                notificationRequestService.updateNotificationRequestStats(tenantId, savedNotificationRequest.getId(), stats);
+                notificationRequestService.updateNotificationRequest(tenantId, savedNotificationRequest.getId(),
+                        NotificationRequestStatus.SENT, stats);
             } catch (Exception e) {
                 log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
             }

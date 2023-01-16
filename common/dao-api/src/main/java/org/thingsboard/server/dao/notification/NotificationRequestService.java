@@ -44,6 +44,6 @@ public interface NotificationRequestService {
 
     PageData<NotificationRequest> findScheduledNotificationRequests(PageLink pageLink);
 
-    void updateNotificationRequestStats(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats);
+    void updateNotificationRequest(TenantId tenantId, NotificationRequestId requestId, NotificationRequestStatus requestStatus, NotificationRequestStats stats);
 
 }

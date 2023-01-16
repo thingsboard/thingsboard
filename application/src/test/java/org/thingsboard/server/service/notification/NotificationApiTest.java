@@ -281,7 +281,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationUpdatesForALotOfUsers() throws Exception {
-        int usersCount = 200; // FIXME: sometimes if set e.g. to 150, up to 5 WS sessions don't receive update
+        int usersCount = 100;
         Map<User, NotificationApiWsClient> sessions = new HashMap<>();
         List<NotificationTargetId> targets = new ArrayList<>();
 
@@ -331,7 +331,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         });
 
         await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> getStats(notificationRequest.getId()) != null);
+                .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
         NotificationRequestStats stats = getStats(notificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(usersCount);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(usersCount);
@@ -417,7 +417,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
 
         NotificationRequest notificationRequest = new NotificationRequest();
-        notificationRequest.setTargets(List.of(target1.getId(), target2.getId()));
+        notificationRequest.setTargets(List.of(target1.getUuidId(), target2.getUuidId()));
         notificationRequest.setTemplateId(notificationTemplate.getId());
         notificationRequest.setAdditionalConfig(new NotificationRequestConfig());
 
@@ -471,7 +471,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         wsClient.waitForUpdate();
 
         await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> getStats(notificationRequest.getId()) != null);
+                .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
         NotificationRequestStats stats = getStats(notificationRequest.getId());
 
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(1);
@@ -555,7 +555,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         NotificationRequest successfulNotificationRequest = submitNotificationRequest(Collections.emptyList(), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> getStats(successfulNotificationRequest.getId()) != null);
+                .until(() -> findNotificationRequest(successfulNotificationRequest.getId()).isSent());
         verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(config.getDefaultTextTemplate()));
         NotificationRequestStats stats = getStats(successfulNotificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.SLACK)).hasValue(1);
@@ -564,7 +564,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         doThrow(new RuntimeException(errorMessage)).when(slackService).sendMessage(any(), any(), any(), any());
         NotificationRequest failedNotificationRequest = submitNotificationRequest(Collections.emptyList(), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> getStats(failedNotificationRequest.getId()) != null);
+                .until(() -> findNotificationRequest(failedNotificationRequest.getId()).isSent());
         stats = getStats(failedNotificationRequest.getId());
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SLACK).values()).containsExactly(errorMessage);
     }

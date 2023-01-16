@@ -46,8 +46,10 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
 
     @Modifying
     @Transactional
-    @Query("UPDATE NotificationRequestEntity r SET r.stats = :stats WHERE r.id = :id")
-    void updateStatsById(@Param("id") UUID id, @Param("stats") JsonNode stats);
+    @Query("UPDATE NotificationRequestEntity r SET r.status = :status, r.stats = :stats WHERE r.id = :id")
+    void updateStatusAndStatsById(@Param("id") UUID id,
+                                  @Param("status") NotificationRequestStatus status,
+                                  @Param("stats") JsonNode stats);
 
     boolean existsByStatusAndTargetsContaining(NotificationRequestStatus status, String targetIdStr);
 

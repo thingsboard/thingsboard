@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -46,6 +47,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
@@ -131,7 +133,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         NotificationInfo notificationInfo = constructNotificationInfo(alarm);
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
-                .targets(List.of(targetId))
+                .targets(List.of(targetId).stream().map(UUIDBased::getId).collect(Collectors.toList()))
                 .templateId(notificationRule.getTemplateId())
                 .additionalConfig(config)
                 .info(notificationInfo)

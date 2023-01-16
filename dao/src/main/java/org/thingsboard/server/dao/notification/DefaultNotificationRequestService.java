@@ -79,8 +79,8 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     }
 
     @Override
-    public void updateNotificationRequestStats(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationRequestStats stats) {
-        notificationRequestDao.updateStatsById(tenantId, notificationRequestId, stats);
+    public void updateNotificationRequest(TenantId tenantId, NotificationRequestId requestId, NotificationRequestStatus requestStatus, NotificationRequestStats stats) {
+        notificationRequestDao.updateById(tenantId, requestId, requestStatus, stats);
     }
 
 

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -53,6 +54,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -107,7 +109,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         UserOriginatedNotificationInfo notificationInfo = new UserOriginatedNotificationInfo();
         notificationInfo.setDescription("My description");
         NotificationRequest notificationRequest = NotificationRequest.builder()
-                .targets(targets)
+                .targets(targets.stream().map(UUIDBased::getId).collect(Collectors.toList()))
                 .templateId(notificationTemplateId)
                 .info(notificationInfo)
                 .additionalConfig(config)

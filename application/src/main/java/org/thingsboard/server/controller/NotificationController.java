@@ -33,8 +33,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -148,8 +148,8 @@ public class NotificationController extends BaseController {
         preview.setProcessedTemplates(processedTemplates);
 
         Map<UUID, Integer> recipientsCountByTarget = notificationRequest.getTargets().stream()
-                .collect(Collectors.toMap(UUIDBased::getId, targetId -> {
-                    return notificationTargetService.countRecipientsForNotificationTarget(user.getTenantId(), targetId);
+                .collect(Collectors.toMap(id -> id, targetId -> {
+                    return notificationTargetService.countRecipientsForNotificationTarget(user.getTenantId(), new NotificationTargetId(targetId));
                 }));
         preview.setRecipientsCountByTarget(recipientsCountByTarget);
         preview.setTotalRecipientsCount(recipientsCountByTarget.values().stream().mapToInt(Integer::intValue).sum());

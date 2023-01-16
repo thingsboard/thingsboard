@@ -24,12 +24,13 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNotificationNodeConfiguration> {
 
     @NotEmpty
-    private List<NotificationTargetId> targets;
+    private List<UUID> targets;
     @NotNull
     private NotificationTemplateId templateId;
     private NotificationRequestConfig additionalConfig;
