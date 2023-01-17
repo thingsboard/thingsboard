@@ -50,9 +50,9 @@ public interface RuleEngineAlarmService {
 
     ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
-    ListenableFuture<Boolean> assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
+    Alarm assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
 
-    ListenableFuture<Boolean> unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
+    Alarm unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 

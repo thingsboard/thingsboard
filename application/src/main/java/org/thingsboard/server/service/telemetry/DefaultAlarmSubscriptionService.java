@@ -142,17 +142,25 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public ListenableFuture<Boolean> assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
-        ListenableFuture<AlarmOperationResult> result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
-        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
-        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+    public Alarm assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
+        AlarmOperationResult result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
+        if (result.isSuccessful()) {
+            onAlarmUpdated(result);
+        } else {
+            log.warn("Failed to assign alarm!");
+        }
+        return result.getAlarmInfo();
     }
 
     @Override
-    public ListenableFuture<Boolean> unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
-        ListenableFuture<AlarmOperationResult> result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
-        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
-        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+    public Alarm unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
+        AlarmOperationResult result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
+        if (result.isSuccessful()) {
+            onAlarmUpdated(result);
+        } else {
+            log.warn("Failed to unassign alarm!");
+        }
+        return result.getAlarmInfo();
     }
 
     @Override

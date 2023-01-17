@@ -279,8 +279,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<AlarmOperationResult> assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime) {
-        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+    public AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime) {
+        return getAndUpdate(tenantId, alarmId, new Function<>() {
             @Nullable
             @Override
             public AlarmOperationResult apply(@Nullable Alarm alarm) {
@@ -298,8 +298,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<AlarmOperationResult> unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTime) {
-        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+    public AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTime) {
+        return getAndUpdate(tenantId, alarmId, new Function<>() {
             @Nullable
             @Override
             public AlarmOperationResult apply(@Nullable Alarm alarm) {

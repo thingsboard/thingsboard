@@ -81,7 +81,6 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
     alarm_type varchar(255) NOT NULL,
     customer_id uuid,
     alarm_id uuid,
-    assignee_id uuid,
     CONSTRAINT entity_alarm_pkey PRIMARY KEY (entity_id, alarm_id),
     CONSTRAINT fk_entity_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 );

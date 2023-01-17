@@ -29,9 +29,9 @@ public interface TbAlarmService {
 
     ListenableFuture<Void> clear(Alarm alarm, User user);
 
-    ListenableFuture<Void> assign(Alarm alarm, User user, UserId assigneeId);
+    Alarm assign(Alarm alarm, User user, UserId assigneeId);
 
-    ListenableFuture<Void> unassign(Alarm alarm, User user);
+    Alarm unassign(Alarm alarm, User user);
 
     Boolean delete(Alarm alarm, User user);
 }

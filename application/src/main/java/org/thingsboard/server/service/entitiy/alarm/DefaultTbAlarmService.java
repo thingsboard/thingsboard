@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -95,31 +96,19 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public ListenableFuture<Void> assign(Alarm alarm, User user, UserId assigneeId) {
+    public Alarm assign(Alarm alarm, User user, UserId assigneeId) {
         long assignTs = System.currentTimeMillis();
-        ListenableFuture<Boolean> future = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, assignTs);
-        return Futures.transform(future, result -> {
-            if (result != null && result) {
-                alarm.setAssignTs(assignTs);
-                alarm.setAssigneeId(assigneeId);
-                notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_ASSIGN, user);
-            }
-            return null;
-        }, MoreExecutors.directExecutor());
+        Alarm assignedAlarm = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, assignTs);
+        notificationEntityService.notifyCreateOrUpdateAlarm(assignedAlarm, ActionType.ALARM_ASSIGN, user);
+        return assignedAlarm;
     }
 
     @Override
-    public ListenableFuture<Void> unassign(Alarm alarm, User user) {
+    public Alarm unassign(Alarm alarm, User user) {
         long assignTs = System.currentTimeMillis();
-        ListenableFuture<Boolean> future = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs);
-        return Futures.transform(future, result -> {
-            if (result != null && result) {
-                alarm.setAssignTs(assignTs);
-                alarm.setAssigneeId(null);
-                notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_UNASSIGN, user);
-            }
-            return null;
-        }, MoreExecutors.directExecutor());
+        Alarm unassignedAlarm = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs);
+        notificationEntityService.notifyCreateOrUpdateAlarm(unassignedAlarm, ActionType.ALARM_UNASSIGN, user);
+        return unassignedAlarm;
     }
 
     @Override

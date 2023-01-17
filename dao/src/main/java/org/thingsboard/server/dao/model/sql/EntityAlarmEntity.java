@@ -68,9 +68,6 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
     @Column(name = CUSTOMER_ID_PROPERTY, columnDefinition = "uuid")
     private UUID customerId;
 
-    @Column(name = ASSIGNEE_ID_PROPERTY, columnDefinition = "uuid")
-    private UUID assigneeId;
-
     public EntityAlarmEntity() {
         super();
     }
@@ -85,9 +82,6 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
         if (entityAlarm.getCustomerId() != null) {
             customerId = entityAlarm.getCustomerId().getId();
         }
-        if (entityAlarm.getAssigneeId() != null) {
-            assigneeId = entityAlarm.getAssigneeId().getId();
-        }
     }
 
     @Override
@@ -100,9 +94,6 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
         result.setCreatedTime(createdTime);
         if (customerId != null) {
             result.setCustomerId(new CustomerId(customerId));
-        }
-        if (assigneeId != null) {
-            result.setAssigneeId(new UserId(assigneeId));
         }
         return result;
     }

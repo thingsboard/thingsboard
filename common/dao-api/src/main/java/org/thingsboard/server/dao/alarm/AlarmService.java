@@ -50,9 +50,9 @@ public interface AlarmService extends EntityDaoService {
 
     ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
-    ListenableFuture<AlarmOperationResult> assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
+    AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
 
-    ListenableFuture<AlarmOperationResult> unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
+    AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
 
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
