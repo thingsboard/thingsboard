@@ -26,6 +26,7 @@ public class MqttTestConfigProperties {
 
     String deviceName;
     String gatewayName;
+    boolean isSparkPlug;
 
     TransportPayloadType transportPayloadType;
 
