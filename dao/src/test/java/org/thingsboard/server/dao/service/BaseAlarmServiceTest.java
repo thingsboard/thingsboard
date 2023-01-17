@@ -250,7 +250,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         Assert.assertNotNull(tenantUser);
 
-        AlarmOperationResult assignmentResult = alarmService.assignAlarm(tenantId, created.getId(), tenantUser.getId(), ts).get();
+        AlarmOperationResult assignmentResult = alarmService.assignAlarm(tenantId, created.getId(), tenantUser.getId(), ts);
         created = assignmentResult.getAlarmInfo();
 
         PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()

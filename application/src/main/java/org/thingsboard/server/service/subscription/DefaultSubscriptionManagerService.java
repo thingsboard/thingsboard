@@ -569,7 +569,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
         builder.setSessionId(subscription.getSessionId());
         builder.setSubscriptionId(subscription.getSubscriptionId());
-        builder.setAlarmInfo(JacksonUtil.toString(alarmInfo));
+        builder.setAlarm(JacksonUtil.toString(alarmInfo));
         builder.setDeleted(deleted);
 
         ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(
