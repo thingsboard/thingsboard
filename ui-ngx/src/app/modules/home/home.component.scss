@@ -41,7 +41,6 @@
         z-index: 2;
         flex-shrink: 0;
         white-space: nowrap;
-        border-bottom: 1px solid rgba(0, 0, 0, .12);
         & > div {
           height: 64px;
           .tb-logo-title {
@@ -49,7 +48,8 @@
             max-width: 100%;
             height: 36px;
             max-height: 100%;
-            margin: auto;
+            margin: auto 16px;
+
           }
         }
       }
@@ -58,6 +58,8 @@
       overflow-y: auto;
       height: inherit;
       padding: 0;
+      margin-top:16px ;
+      background: #ffffff;
     }
   }
   .tb-primary-toolbar {

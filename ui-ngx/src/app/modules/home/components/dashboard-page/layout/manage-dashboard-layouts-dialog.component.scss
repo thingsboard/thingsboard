@@ -17,7 +17,7 @@
 @use '~@angular/material' as mat;
 @import '../theme.scss';
 
-$tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
+$tb-warn: mat.get-color-from-palette(map-get($theme, warn), text);
 
 :host {
   .tb-layout-fixed-container {
@@ -35,7 +35,7 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
 
   .tb-layout-preview {
     width: 120%;
-    background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.6);
+    background-color: rgba(mat.get-color-from-palette($theme-primary,main, 50), 0.6);
     padding: 35px;
 
     &-container {
