@@ -1,0 +1,74 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="column" class="name-value-map" [formGroup]="attributesValueFormGroup">
+  <div fxLayout="row" fxLayoutGap="8px" style="max-height: 40px; margin-top: 8px;">
+    <label fxFlex="40" class="tb-title no-padding" style="min-width: 230px;" translate>device-profile.lwm2m.attribute-name</label>
+    <label fxFlex="60" class="tb-title no-padding" translate>device-profile.lwm2m.attribute-value</label>
+    <span [fxShow]="!disabled" style="width: 40px;"></span>
+  </div>
+  <div fxLayout="column" class="map-list"
+       *ngFor="let nameValueControl of attributesValueFormArray().controls; let $index = index"
+        [formGroup]="nameValueControl">
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-form-field fxFlex="40" floatLabel="always" hideRequiredMarker>
+        <mat-label></mat-label>
+        <mat-select formControlName="name" required>
+          <mat-option *ngFor="let attributeName of attributeNames" [value]="attributeName"
+                      [disabled]="isDisabledAttributeName(attributeName, $index)">
+            {{ attributeNameTranslationMap.get(attributeName) | translate }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="nameValueControl.get('name').hasError('required')">
+          {{ 'device-profile.lwm2m.attribute-name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex="60" floatLabel="always" hideRequiredMarker>
+        <mat-label></mat-label>
+        <input formControlName="value" matInput required type="number"
+               placeholder="{{ 'key-val.value' | translate }}">
+        <mat-error fxLayout="row" *ngIf="nameValueControl.get('value').hasError('required')">
+          {{ 'device-profile.lwm2m.attribute-value-required' | translate }}
+        </mat-error>
+        <mat-error fxLayout="row" *ngIf="nameValueControl.get('value').hasError('min') ||
+                                          nameValueControl.get('value').hasError('pattern')">
+          {{ 'device-profile.lwm2m.attribute-value-pattern' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <button *ngIf="!disabled"
+              mat-icon-button color="primary" style="min-width: 40px;"
+              type="button"
+              (click)="removeKeyVal($index)"
+              matTooltip="{{ 'device-profile.lwm2m.remove-attribute' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+  <div [fxShow]="!attributesValueFormArray().length"
+        fxLayoutAlign="center center"
+        class="map-list" translate>device-profile.lwm2m.no-attributes-set</div>
+  <div style="margin-top: 9px;" *ngIf="!disabled && isAddEnabled">
+    <button mat-stroked-button color="primary"
+            [disabled]="isLoading$ | async"
+            type="button"
+            (click)="addKeyVal()">
+      <mat-icon class="button-icon">add_circle_outline</mat-icon>
+      {{ 'device-profile.lwm2m.add-attribute' | translate }}
+    </button>
+  </div>
+</section>

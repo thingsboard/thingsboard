@@ -1,0 +1,184 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-expansion-panel [formGroup]="serverFormGroup" #serverPanel>
+  <mat-expansion-panel-header>
+    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <mat-panel-title>
+        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+          <div style="min-width:150px">{{ (serverFormGroup.get('bootstrapServerIs').value ?
+            'device-profile.lwm2m.bootstrap-server' : 'device-profile.lwm2m.lwm2m-server') | translate }}</div>
+          <div *ngIf="!serverPanel.expanded" fxLayout="row" style="font-size:14px">
+            <div style="margin-left:32px">{{ ('device-profile.lwm2m.short-id' | translate) + ': ' }}
+              <span style="font-style: italic">{{ serverFormGroup.get('shortServerId').value }}</span>
+            </div>
+            <div style="margin-left:32px">{{ ('device-profile.lwm2m.mode' | translate) + ': ' }}
+              <span style="font-style: italic">{{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[serverFormGroup.get('securityMode').value]) }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-panel-title>
+      <span fxFlex></span>
+      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
+              type="button"
+              (click)="removeServer.emit($event)"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </mat-expansion-panel-header>
+  <ng-template matExpansionPanelContent>
+    <section>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.mode' | translate }}</mat-label>
+          <mat-select formControlName="securityMode">
+            <mat-option *ngFor="let securityMode of securityConfigLwM2MTypes"
+                        [value]="securityMode">
+              {{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[securityMode]) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
+          <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
+                    matTooltip="{{'device-profile.lwm2m.short-id-tooltip' | translate }}">help</mat-icon>
+          <input matInput type="number" min="1" max="65534" formControlName="shortServerId" required>
+          <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('required')">
+            {{ 'device-profile.lwm2m.short-id-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('pattern')">
+            {{ 'device-profile.lwm2m.short-id-pattern' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('min') ||
+                         serverFormGroup.get('shortServerId').hasError('max')">
+            {{ 'device-profile.lwm2m.short-id-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.server-host' | translate }}</mat-label>
+          <input matInput type="text" formControlName="host" required>
+          <mat-error *ngIf="serverFormGroup.get('host').hasError('required')">
+            {{ 'device-profile.lwm2m.server-host-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.server-port' | translate }}</mat-label>
+          <input matInput type="number" formControlName="port" required min="0" max="65535" readonly>
+          <mat-error *ngIf="serverFormGroup.get('port').hasError('required')">
+            {{ 'device-profile.lwm2m.server-port-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('port').hasError('pattern')">
+            {{ 'device-profile.lwm2m.server-port-pattern' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('port').hasError('min') ||
+                         serverFormGroup.get('port').hasError('max')">
+            {{ 'device-profile.lwm2m.server-port-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.client-hold-off-time' | translate }}</mat-label>
+          <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
+                    matTooltip="{{'device-profile.lwm2m.client-hold-off-time-tooltip' | translate }}">help</mat-icon>
+          <input matInput type="number" formControlName="clientHoldOffTime" required min="0">
+          <mat-error *ngIf="serverFormGroup.get('clientHoldOffTime').hasError('required')">
+            {{ 'device-profile.lwm2m.client-hold-off-time-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('clientHoldOffTime').hasError('min') ||
+                         serverFormGroup.get('clientHoldOffTime').hasError('pattern')">
+            {{ 'device-profile.lwm2m.client-hold-off-time-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.account-after-timeout' | translate }}</mat-label>
+          <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
+                    matTooltip="{{'device-profile.lwm2m.account-after-timeout-tooltip' | translate }}">help</mat-icon>
+          <input matInput type="number" formControlName="bootstrapServerAccountTimeout" required min="0">
+          <mat-error *ngIf="serverFormGroup.get('bootstrapServerAccountTimeout').hasError('required')">
+            {{ 'device-profile.lwm2m.account-after-timeout-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('bootstrapServerAccountTimeout').hasError('min') ||
+                         serverFormGroup.get('bootstrapServerAccountTimeout').hasError('pattern')">
+            {{ 'device-profile.lwm2m.account-after-timeout-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div *ngIf="serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK ||
+        serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509">
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.server-public-key' | translate }}</mat-label>
+          <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
+                    matTooltip="{{ publicKeyOrIdTooltipNamesMap.get(serverFormGroup.get('securityMode').value) | translate }}">help</mat-icon>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="1"
+                    cols="1" required
+                    formControlName="serverPublicKey"
+                    required>
+          </textarea>
+          <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('required')">
+            {{ 'device-profile.lwm2m.server-public-key-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
+          <input matInput type="number" min="0" formControlName="lifetime" required>
+          <mat-error *ngIf="serverFormGroup.get('lifetime').hasError('required')">
+            {{ 'device-profile.lwm2m.lifetime-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('lifetime').hasError('pattern') ||
+                                         serverFormGroup.get('lifetime').hasError('min')">
+            {{ 'device-profile.lwm2m.lifetime-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
+          <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
+                    matTooltip="{{'device-profile.lwm2m.default-min-period-tooltip' | translate }}">help</mat-icon>
+          <input matInput type="number" min="0" formControlName="defaultMinPeriod" required>
+          <mat-error *ngIf="serverFormGroup.get('defaultMinPeriod').hasError('required')">
+            {{ 'device-profile.lwm2m.default-min-period-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('defaultMinPeriod').hasError('pattern') ||
+                                         serverFormGroup.get('defaultMinPeriod').hasError('min')">
+            {{ 'device-profile.lwm2m.default-min-period-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <mat-form-field class="mat-block">
+        <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
+        <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
+                  matTooltip="{{'device-profile.lwm2m.binding-tooltip' | translate }}">help</mat-icon>
+        <mat-select formControlName="binding">
+          <mat-option *ngFor="let bindingMode of bindingModeTypes" [value]="bindingMode">
+            {{ bindingModeTypeNamesMap.get(bindingMode) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-checkbox formControlName="notifIfDisabled" color="primary">
+        {{ 'device-profile.lwm2m.notification-storing' | translate }}
+      </mat-checkbox>
+    </section>
+  </ng-template>
+</mat-expansion-panel>

@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-js-func" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'tb-js-func-title': functionTitle}"
+     tb-fullscreen
+     [fullscreen]="fullscreen" fxLayout="column">
+  <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-js-func-toolbar">
+    <label *ngIf="functionTitle" class="tb-title no-padding"
+           [ngClass]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">{{functionTitle + ': f(' + functionArgsString + ')' }}</label>
+    <label *ngIf="!functionTitle" class="tb-title no-padding"
+           [ngClass]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">{{'function ' + (functionName ? functionName : '') + '(' + functionArgsString + ') {'}}</label>
+    <span fxFlex></span>
+    <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
+      {{'js-func.tidy' | translate }}
+    </button>
+    <div *ngIf="helpId" [tb-help-popup]="helpId"></div>
+    <fieldset style="width: initial">
+      <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           (click)="fullscreen = !fullscreen">
+        <button type='button' mat-button mat-icon-button class="tb-mat-32">
+          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </fieldset>
+  </div>
+  <div id="tb-javascript-panel" class="tb-js-func-panel" fxLayout="column" tb-toast toastTarget="{{toastTargetId}}">
+    <div #javascriptEditor id="tb-javascript-input" [ngStyle]="fillHeight ? {} : {minHeight: minHeight}" [ngClass]="{'fill-height': fillHeight}"></div>
+  </div>
+  <div *ngIf="!functionTitle" fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">}</label>
+  </div>
+</div>

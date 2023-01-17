@@ -1,0 +1,40 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column">
+  <mat-accordion multi="true">
+    <div *ngFor="let serverConfig of serverConfigsFromArray().controls; trackBy: trackByParams; let $index = index;">
+      <tb-profile-lwm2m-device-config-server
+        [formControl]="serverConfig"
+        (removeServer)="removeServerConfig($event, $index)"
+        (isTransportWasRunWithBootstrapChange)="updateIsTransportWasRunWithBootstrap($event)">
+      </tb-profile-lwm2m-device-config-server>
+    </div>
+  </mat-accordion>
+  <div *ngIf="!serverConfigsFromArray().controls.length" style="margin:32px 0">
+      <span translate fxLayoutAlign="center center"
+            class="tb-prompt">device-profile.lwm2m.no-config-servers</span>
+  </div>
+  <div *ngIf="!disabled" style="padding-top: 16px;">
+    <button mat-raised-button color="primary"
+            type="button"
+            (click)="addServerConfig()">
+      <span>{{ (this.isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
+        'device-profile.lwm2m.add-server-config') | translate }}</span>
+    </button>
+  </div>
+</div>

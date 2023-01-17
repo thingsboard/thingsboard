@@ -1,0 +1,59 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="photoCameraInputWidgetSettingsForm">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
+      <input matInput formControlName="widgetTitle">
+    </mat-form-field>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.image-settings</legend>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.image-format</mat-label>
+        <mat-select formControlName="imageFormat">
+          <mat-option [value]="'image/jpeg'">
+            {{ 'widgets.input-widgets.image-format-jpeg' | translate }}
+          </mat-option>
+          <mat-option [value]="'image/png'">
+            {{ 'widgets.input-widgets.image-format-png' | translate }}
+          </mat-option>
+          <mat-option [value]="'image/webp'">
+            {{ 'widgets.input-widgets.image-format-webp' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.image-quality</mat-label>
+        <input matInput type="number" min="0" max="1" formControlName="imageQuality">
+      </mat-form-field>
+    </section>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.max-image-width</mat-label>
+        <input matInput type="number" min="1" formControlName="maxWidth">
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.max-image-height</mat-label>
+        <input matInput type="number" min="1" formControlName="maxHeight">
+      </mat-form-field>
+    </section>
+  </fieldset>
+</section>

@@ -1,0 +1,482 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="defaultTenantProfileConfigurationFormGroup" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.entities' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-devices</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxDevices"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('required')">
+          {{ 'tenant-profile.maximum-devices-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('min')">
+          {{ 'tenant-profile.maximum-devices-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-dashboards</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxDashboards"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('required')">
+          {{ 'tenant-profile.maximum-dashboards-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('min')">
+          {{ 'tenant-profile.maximum-dashboards-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-assets</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxAssets"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('required')">
+          {{ 'tenant-profile.maximum-assets-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('min')">
+          {{ 'tenant-profile.maximum-assets-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-users</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxUsers"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('required')">
+          {{ 'tenant-profile.maximum-users-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('min')">
+          {{ 'tenant-profile.maximum-users-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <mat-expansion-panel class="configuration-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-description fxLayoutAlign="end" translate>
+          tenant-profile.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.maximum-customers</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxCustomers"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('required')">
+              {{ 'tenant-profile.maximum-customers-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('min')">
+              {{ 'tenant-profile.maximum-customers-range' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.maximum-rule-chains</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxRuleChains"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('required')">
+              {{ 'tenant-profile.maximum-rule-chains-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('min')">
+              {{ 'tenant-profile.maximum-rule-chains-range' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.rule-engine' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.max-r-e-executions</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxREExecutions"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('required')">
+          {{ 'tenant-profile.max-r-e-executions-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('min')">
+          {{ 'tenant-profile.max-r-e-executions-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.max-transport-messages</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxTransportMessages"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('required')">
+          {{ 'tenant-profile.max-transport-messages-range' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('min')">
+          {{ 'tenant-profile.max-transport-messages-required' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <mat-expansion-panel class="configuration-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-description fxLayoutAlign="end" translate>
+          tenant-profile.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.max-j-s-executions</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxJSExecutions"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('required')">
+              {{ 'tenant-profile.max-j-s-executions-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('min')">
+              {{ 'tenant-profile.max-j-s-executions-range' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxTransportDataPoints"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('required')">
+              {{ 'tenant-profile.max-transport-data-points-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
+              {{ 'tenant-profile.max-transport-data-points-range' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxRuleNodeExecutionsPerMessage"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('required')">
+              {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('min')">
+              {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <div fxFlex></div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.time-to-live' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.max-d-p-storage-days</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxDPStorageDays"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('required')">
+          {{ 'tenant-profile.max-d-p-storage-days-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('min')">
+          {{ 'tenant-profile.max-d-p-storage-days-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.alarms-ttl-days</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="alarmsTtlDays"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('required')">
+          {{ 'tenant-profile.alarms-ttl-days-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('min')">
+          {{ 'tenant-profile.alarms-ttl-days-days-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.default-storage-ttl-days</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="defaultStorageTtlDays"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('required')">
+          {{ 'tenant-profile.default-storage-ttl-days-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('min')">
+          {{ 'tenant-profile.default-storage-ttl-days-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.rpc-ttl-days</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="rpcTtlDays"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('required')">
+          {{ 'tenant-profile.rpc-ttl-days-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('min')">
+          {{ 'tenant-profile.rpc-ttl-days-days-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.alarms-and-notifications' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.max-emails</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxEmails"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEmails').hasError('required')">
+          {{ 'tenant-profile.max-emails-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEmails').hasError('min')">
+          {{ 'tenant-profile.max-emails-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.max-created-alarms</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxCreatedAlarms"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('required')">
+          {{ 'tenant-profile.max-created-alarms-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('min')">
+          {{ 'tenant-profile.max-created-alarms-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.max-sms</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxSms"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('required')">
+          {{ 'tenant-profile.max-sms-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
+          {{ 'tenant-profile.max-sms-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <div fxFlex></div>
+  </div>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.ota-files-in-bytes' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-resources-sum-data-size</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxResourcesInBytes"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('required')">
+          {{ 'tenant-profile.maximum-resources-sum-data-size-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('min')">
+          {{ 'tenant-profile.maximum-resources-sum-data-size-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-ota-packages-sum-data-size</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxOtaPackagesInBytes"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('required')">
+          {{ 'tenant-profile.maximum-ota-packages-sum-data-size-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('min')">
+          {{ 'tenant-profile.maximum-ota-packages-sum-data-size-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.ws-title' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.ws-limit-max-sessions-per-tenant</mat-label>
+        <input matInput type="number" formControlName="maxWsSessionsPerTenant">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerTenant').hasError('min')">
+          {{ 'tenant-profile.too-small-value-zero' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-tenant</mat-label>
+        <input matInput type="number" formControlName="maxWsSubscriptionsPerTenant">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerTenant').hasError('min')">
+          {{ 'tenant-profile.too-small-value-zero' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.ws-limit-max-sessions-per-customer</mat-label>
+        <input matInput type="number" formControlName="maxWsSessionsPerCustomer">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerCustomer').hasError('min')">
+          {{ 'tenant-profile.too-small-value-zero' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-customer</mat-label>
+        <input matInput type="number" formControlName="maxWsSubscriptionsPerCustomer">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerCustomer').hasError('min')">
+          {{ 'tenant-profile.too-small-value-zero' | translate}}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <mat-expansion-panel class="configuration-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-description fxLayoutAlign="end" translate>
+          tenant-profile.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.ws-limit-max-sessions-per-public-user</mat-label>
+            <input matInput type="number" formControlName="maxWsSessionsPerPublicUser">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerPublicUser').hasError('min')">
+              {{ 'tenant-profile.too-small-value-zero' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-public-user</mat-label>
+            <input matInput type="number" formControlName="maxWsSubscriptionsPerPublicUser">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerPublicUser').hasError('min')">
+              {{ 'tenant-profile.too-small-value-zero' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.ws-limit-max-sessions-per-regular-user</mat-label>
+            <input matInput type="number" formControlName="maxWsSessionsPerRegularUser">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerRegularUser').hasError('min')">
+              {{ 'tenant-profile.too-small-value-zero' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-regular-user</mat-label>
+            <input matInput type="number" formControlName="maxWsSubscriptionsPerRegularUser">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerRegularUser').hasError('min')">
+              {{ 'tenant-profile.too-small-value-zero' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <mat-form-field fxFlex class="mat-block" appearance="fill">
+            <mat-label translate>tenant-profile.ws-limit-queue-per-session</mat-label>
+            <input matInput type="number" formControlName="wsMsgQueueLimitPerSession">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsMsgQueueLimitPerSession').hasError('min')">
+              {{ 'tenant-profile.too-small-value-one' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <div fxFlex></div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.rate-limits.rate-limits' | translate }}
+    </legend>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <tb-rate-limits fxFlex formControlName="transportTenantMsgRateLimit"
+                      [type]="rateLimitsType.TENANT_MESSAGES">
+      </tb-rate-limits>
+      <tb-rate-limits fxFlex formControlName="transportDeviceMsgRateLimit"
+                      [type]="rateLimitsType.DEVICE_MESSAGES">
+      </tb-rate-limits>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <tb-rate-limits fxFlex formControlName="transportTenantTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.TENANT_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
+      <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
+    </div>
+    <mat-expansion-panel class="configuration-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-description fxLayoutAlign="end" translate>
+          tenant-profile.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex formControlName="transportTenantTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.TENANT_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex formControlName="tenantServerRestLimitsConfiguration"
+                          [type]="rateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex formControlName="customerServerRestLimitsConfiguration"
+                          [type]="rateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex formControlName="tenantEntityExportRateLimit"
+                          [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex formControlName="tenantEntityImportRateLimit"
+                          [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex formControlName="wsUpdatesPerSessionRateLimit"
+                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex formControlName="cassandraQueryTenantRateLimitsConfiguration"
+                          [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+</section>

@@ -1,0 +1,94 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="updateMultipleAttributesWidgetSettingsForm">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
+      <input matInput formControlName="widgetTitle">
+    </mat-form-field>
+    <mat-slide-toggle formControlName="showResultMessage" class="slide-block">
+      {{ 'widgets.input-widgets.show-result-message' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.input-widgets.action-buttons</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="updateMultipleAttributesWidgetSettingsForm.get('showActionButtons').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="showActionButtons" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.input-widgets.show-action-buttons' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column">
+          <mat-checkbox formControlName="updateAllValues" style="margin-bottom: 8px;">
+            {{ 'widgets.input-widgets.update-all-values' | translate }}
+          </mat-checkbox>
+          <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>widgets.input-widgets.save-button-label</mat-label>
+              <input matInput formControlName="saveButtonLabel">
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>widgets.input-widgets.reset-button-label</mat-label>
+              <input matInput formControlName="resetButtonLabel">
+            </mat-form-field>
+          </section>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.group-settings</legend>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-slide-toggle fxFlex="30" formControlName="showGroupTitle" class="slide-block">
+        {{ 'widgets.input-widgets.show-group-title' | translate }}
+      </mat-slide-toggle>
+      <mat-form-field fxFlex="70" class="mat-block">
+        <mat-label translate>widgets.input-widgets.group-title</mat-label>
+        <input matInput formControlName="groupTitle">
+      </mat-form-field>
+    </section>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.fields-alignment</legend>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-form-field fxFlex="50" class="mat-block">
+        <mat-label translate>widgets.input-widgets.fields-alignment</mat-label>
+        <mat-select formControlName="fieldsAlignment">
+          <mat-option [value]="'row'">
+            {{ 'widgets.input-widgets.fields-alignment-row' | translate }}
+          </mat-option>
+          <mat-option [value]="'column'">
+            {{ 'widgets.input-widgets.fields-alignment-column' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field fxFlex="50" [fxShow]="updateMultipleAttributesWidgetSettingsForm.get('fieldsAlignment').value === 'row'" class="mat-block">
+        <mat-label translate>widgets.input-widgets.fields-in-row</mat-label>
+        <input matInput type="number" min="1" step="1" formControlName="fieldsInRow">
+      </mat-form-field>
+    </section>
+  </fieldset>
+</section>

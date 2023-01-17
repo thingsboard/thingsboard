@@ -1,0 +1,116 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="mobileActionFormGroup">
+  <mat-form-field class="mat-block">
+    <mat-label translate>widget-action.mobile.action-type</mat-label>
+    <mat-select required formControlName="type">
+      <mat-option *ngFor="let actionType of mobileActionTypes" [value]="actionType">
+        {{ mobileActionTypeTranslations.get(mobileActionType[actionType]) | translate }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="mobileActionFormGroup.get('type').hasError('required')">
+      {{ 'widget-action.mobile.action-type-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <div [formGroup]="mobileActionTypeFormGroup" [ngSwitch]="mobileActionFormGroup.get('type').value">
+    <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
+                                 mobileActionFormGroup.get('type').value === mobileActionType.mapLocation ?
+                                 mobileActionFormGroup.get('type').value : ''">
+      <tb-js-func
+        formControlName="getLocationFunction"
+        functionName="getLocation"
+        [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_get_location_fn"
+      ></tb-js-func>
+    </ng-template>
+    <ng-template [ngSwitchCase]="mobileActionType.makePhoneCall">
+      <tb-js-func
+        formControlName="getPhoneNumberFunction"
+        functionName="getPhoneNumber"
+        [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_get_phone_number_fn"
+      ></tb-js-func>
+    </ng-template>
+    <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.takePhoto ||
+                                 mobileActionFormGroup.get('type').value === mobileActionType.takePictureFromGallery ||
+                                 mobileActionFormGroup.get('type').value === mobileActionType.takeScreenshot ?
+                                 mobileActionFormGroup.get('type').value : ''">
+      <tb-js-func
+        formControlName="processImageFunction"
+        functionName="processImage"
+        [functionArgs]="['imageUrl', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_image_fn"
+      ></tb-js-func>
+    </ng-template>
+    <ng-template [ngSwitchCase]="mobileActionType.scanQrCode">
+      <tb-js-func
+        formControlName="processQrCodeFunction"
+        functionName="processQrCode"
+        [functionArgs]="['code', 'format', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_qr_code_fn"
+      ></tb-js-func>
+    </ng-template>
+    <ng-template [ngSwitchCase]="mobileActionType.getLocation">
+      <tb-js-func
+        formControlName="processLocationFunction"
+        functionName="processLocation"
+        [functionArgs]="['latitude', 'longitude', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_location_fn"
+      ></tb-js-func>
+    </ng-template>
+    <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
+                                 mobileActionFormGroup.get('type').value === mobileActionType.mapLocation ||
+                                 mobileActionFormGroup.get('type').value === mobileActionType.makePhoneCall ?
+                                 mobileActionFormGroup.get('type').value : ''">
+      <tb-js-func
+        formControlName="processLaunchResultFunction"
+        functionName="processLaunchResult"
+        [functionArgs]="['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_launch_result_fn"
+      ></tb-js-func>
+    </ng-template>
+  </div>
+  <tb-js-func *ngIf="mobileActionFormGroup.get('type').value"
+              formControlName="handleEmptyResultFunction"
+              functionName="handleEmptyResult"
+              [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+              [globalVariables]="functionScopeVariables"
+              [editorCompleter]="customActionEditorCompleter"
+              helpId="widget/action/mobile_handle_empty_result_fn"
+  ></tb-js-func>
+  <tb-js-func *ngIf="mobileActionFormGroup.get('type').value"
+    formControlName="handleErrorFunction"
+    functionName="handleError"
+    [functionArgs]="['error', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+    [globalVariables]="functionScopeVariables"
+    [editorCompleter]="customActionEditorCompleter"
+    helpId="widget/action/mobile_handle_error_fn"
+  ></tb-js-func>
+</div>

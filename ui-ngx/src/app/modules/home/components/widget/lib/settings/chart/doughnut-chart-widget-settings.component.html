@@ -1,0 +1,64 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="doughnutChartWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.chart.common-settings</legend>
+    <mat-slide-toggle formControlName="showTooltip" class="slide-block">
+      {{ 'widgets.chart.show-tooltip' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.chart.border-settings</legend>
+    <section class="row-fill" fxLayout="row" fxLayoutGap="8px">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.chart.border-width</mat-label>
+        <input matInput type="number" min="0" formControlName="borderWidth">
+      </mat-form-field>
+      <tb-color-input fxFlex
+                      formControlName="borderColor"
+                      icon="format_color_fill"
+                      label="{{ 'widgets.chart.border-color' | translate }}" openOnInput colorClearButton>
+      </tb-color-input>
+    </section>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider" formGroupName="legend">
+    <legend class="group-title" translate>widgets.chart.legend-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="doughnutChartWidgetSettingsForm.get('legend.display').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="display" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.chart.display-legend' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column">
+          <tb-color-input fxFlex
+                          formControlName="labelsFontColor"
+                          icon="format_color_fill"
+                          label="{{ 'widgets.chart.labels-font-color' | translate }}" openOnInput colorClearButton>
+          </tb-color-input>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+</section>

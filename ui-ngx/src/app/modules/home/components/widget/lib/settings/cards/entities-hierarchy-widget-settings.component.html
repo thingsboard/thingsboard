@@ -1,0 +1,74 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="entitiesHierarchyWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.entities-hierarchy.hierarchy-data-settings</legend>
+    <tb-js-func formControlName="nodeRelationQueryFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
+                functionTitle="{{ 'widgets.entities-hierarchy.relations-query-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/node_relation_query_fn">
+    </tb-js-func>
+    <tb-js-func formControlName="nodeHasChildrenFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
+                functionTitle="{{ 'widgets.entities-hierarchy.has-children-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/node_has_children_fn">
+    </tb-js-func>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.entities-hierarchy.node-state-settings</legend>
+    <tb-js-func formControlName="nodeOpenedFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
+                functionTitle="{{ 'widgets.entities-hierarchy.node-opened-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/node_opened_fn">
+    </tb-js-func>
+    <tb-js-func formControlName="nodeDisabledFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
+                functionTitle="{{ 'widgets.entities-hierarchy.node-disabled-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/node_disabled_fn">
+    </tb-js-func>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.entities-hierarchy.display-settings</legend>
+    <tb-js-func formControlName="nodeIconFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
+                functionTitle="{{ 'widgets.entities-hierarchy.node-icon-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/node_icon_fn">
+    </tb-js-func>
+    <tb-js-func formControlName="nodeTextFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
+                functionTitle="{{ 'widgets.entities-hierarchy.node-text-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/node_text_fn">
+    </tb-js-func>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.entities-hierarchy.sort-settings</legend>
+    <tb-js-func formControlName="nodesSortFunction"
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="['widgetCtx', 'nodeCtx1', 'nodeCtx2']"
+                functionTitle="{{ 'widgets.entities-hierarchy.nodes-sort-function' | translate }}"
+                helpId="widget/lib/entities_hierarchy/nodes_sort_fn">
+    </tb-js-func>
+  </fieldset>
+</section>
+

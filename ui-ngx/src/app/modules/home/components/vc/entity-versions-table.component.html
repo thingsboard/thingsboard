@@ -1,0 +1,176 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="mat-padding tb-entity-table tb-absolute-fill" [ngClass]="{'tb-popover-mode': popoverComponent}">
+  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'mat-elevation-z1': !popoverComponent}">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
+      <div class="mat-toolbar-tools">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+          <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
+          <tb-branch-autocomplete
+            #branchAutocompleteComponent
+            [selectionMode]="true"
+            [selectDefaultBranch]="false"
+            [disabled]="isLoading$ | async"
+            [ngModel]="branch"
+            (ngModelChange)="branchChanged($event)">
+          </tb-branch-autocomplete>
+        </div>
+        <span fxFlex></span>
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center end">
+          <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
+                  #createVersionButton
+                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
+                  (click)="toggleCreateVersion($event, createVersionButton)">
+            <mat-icon>update</mat-icon>
+            {{'version-control.create-version' | translate }}
+          </button>
+          <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
+                  #complexCreateVersionButton
+                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
+                  (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
+            <mat-icon>update</mat-icon>
+            {{'version-control.create-entities-version' | translate }}
+          </button>
+          <div fxLayout="row">
+            <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
+                    matTooltip="{{ 'action.refresh' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button mat-icon-button
+                    [disabled]="isLoading$ | async"
+                    (click)="enterFilterMode()"
+                    matTooltip="{{ 'action.search' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="pageLink.textSearch"
+                 placeholder="{{ 'version-control.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div fxFlex class="table-container">
+      <table mat-table [dataSource]="dataSource"
+             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="timestamp">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'version-control.created-time' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="id">
+          <mat-header-cell *matHeaderCellDef style="min-width: 100px; max-width: 100px; width: 100px;"> {{ 'version-control.version-id' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            <span style="display: inline-block; width: 54px;" [innerHTML]="versionIdContent(entityVersion)"></span>
+            <tb-copy-button
+              [disabled]="isLoading$ | async"
+              [copyText]="entityVersion.id"
+              tooltipText="{{ 'version-control.copy-full-version-id' | translate }}"
+              tooltipPosition="above"
+              icon="content_paste"
+              [style]="{
+                 'font-size': '16px',
+                 color: 'rgba(0,0,0,.87)'
+              }">
+            </tb-copy-button>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <mat-header-cell *matHeaderCellDef style="width: 50%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.name }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="author">
+          <mat-header-cell *matHeaderCellDef style="width: 50%"> {{ 'version-control.author' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.author }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef [ngStyle]="singleEntityMode ? {minWidth: '80px', maxWidth: '80px', width: '80px'} :
+                                                                           {minWidth: '40px', maxWidth: '40px', width: '40px'}">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            <div fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'version-control.compare-with-current' | translate }}"
+                      matTooltipPosition="above"
+                      #diffVersionButton
+                      (click)="toggleShowVersionDiff($event, diffVersionButton, entityVersion)">
+                <mat-icon>difference</mat-icon>
+              </button>
+              <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'version-control.restore-version' | translate }}"
+                      matTooltipPosition="above"
+                      #restoreVersionButton
+                      (click)="toggleRestoreEntityVersion($event, restoreVersionButton, entityVersion)">
+                <mat-icon>restore</mat-icon>
+              </button>
+              <button *ngIf="!singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'version-control.restore-version' | translate }}"
+                      matTooltipPosition="above"
+                      #restoreEntitiesVersionButton
+                      (click)="toggleRestoreEntitiesVersion($event, restoreEntitiesVersionButton, entityVersion)">
+                <mat-icon>restore</mat-icon>
+              </button>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row [fxShow]="!dataSource.dataLoading" *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
+      </table>
+      <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async) && !dataSource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found" translate>{{
+        singleEntityMode
+          ? 'version-control.no-entity-versions-text'
+          : 'version-control.no-versions-text'
+        }}</span>
+      <span [fxShow]="dataSource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-paginator [length]="dataSource.total() | async"
+                   [pageIndex]="pageLink.page"
+                   [pageSize]="pageLink.pageSize"
+                   [pageSizeOptions]="[10, 20, 30]"
+                   [hidePageSize]="hidePageSize"
+                   showFirstLastButtons></mat-paginator>
+  </div>
+</div>
