@@ -1,0 +1,64 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section style="min-width: 480px;">
+  <mat-toolbar color="primary">
+    <h2>{{'rulenode.clear-node-errors-title' | translate }} '{{ node.name }}'</h2>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div class="tb-acknowledge-rule-node-error-header-buttons">
+    <span fxFlex></span>
+    <button mat-mini-fab type="button" class="mat-elevation-z1"
+            matTooltip="{{ 'rulenode.last-message-data' | translate }}"
+            (click)="showData($event)">
+      <span>{{"{D}"}}</span>
+    </button>
+    <button type="button" mat-mini-fab class="mat-elevation-z1"
+            matTooltip="{{ 'rulenode.last-message-metadata' | translate }}"
+            (click)="showMetadata($event)">
+      <span>{{"{M}"}}</span>
+    </button>
+  </div>
+  <div class="tb-acknowledge-rule-node-error-details" mat-dialog-content>
+    <div fxFlex fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="20px">
+      <div fxLayout="column" fxLayoutAlign="center center">
+        <span class="errors-count">{{ translate.get('rulenode.errors-count', {count: node.stats.errorsCount}) | async }}</span>
+        <span>{{ 'rulenode.since-last-acknowledge' | translate }}</span>
+        <span><a aria-label="View on dashboard" (click)="viewOnDashboard($event)">{{ 'rulenode.view-on-dashboard' | translate }} &#8594;</a></span>
+      </div>
+      <div class="last-message-container">
+        <span class="last-message-title">{{ 'rulenode.last-error-message-title' | translate }}:</span>
+        <textarea disabled #lastMessage matInput cdkTextareaAutosize cols="1" cdkAutosizeMinRows="1"></textarea>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="isLoading$ | async"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="acknowledge()"
+            [disabled]="isLoading$ | async">
+      {{ 'rulenode.acknowledge' | translate }}
+    </button>
+  </div>
+</section>

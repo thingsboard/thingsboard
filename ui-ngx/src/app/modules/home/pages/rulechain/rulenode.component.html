@@ -59,6 +59,13 @@
       &times;
     </div>
   </section>
+  <section *ngIf="(showErrorsStatus | async) && isRuleNodeHasErrors(node)">
+    <mat-icon svgIcon="mdi:message-alert-outline"
+              class="material-icons icon fc-error-icon"
+              [ngClass]="{'fc-error-icon-readonly': !modelservice.isEditable() || node.readonly}"
+              (click)="openClearErrorStatsDialog($event, node)">
+    </mat-icon>
+  </section>
   <section *ngIf="node.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode && modelservice.isEditable()">
     <div class="fc-nodeopen" (click)="openRuleChain($event, node)" (mouseenter)="displayOpenRuleChainTooltip($event, node)">
       <mat-icon class="material-icons" svgIcon="mdi:login"></mat-icon>

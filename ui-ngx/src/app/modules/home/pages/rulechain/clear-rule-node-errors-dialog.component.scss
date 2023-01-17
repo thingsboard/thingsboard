@@ -1,0 +1,54 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../../src/theme';
+
+:host ::ng-deep {
+  .tb-acknowledge-rule-node-error-header-buttons {
+    display: flex;
+    padding: 0 16px;
+    gap: 4px;
+  }
+
+  .tb-acknowledge-rule-node-error-details {
+    color: #949494;
+
+    a {
+      cursor: pointer;
+    }
+
+    .errors-count {
+      color: $tb-primary-color;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .last-message-container {
+      width: 100%;
+      background-color: rgba(0,0,0, 0.05) !important;
+      padding: 20px;
+
+      .last-message-title {
+        color: #4A4A4A;
+        font-style: italic;
+      }
+    }
+  }
+
+  .mat-mini-fab {
+    color: #949494 !important;
+    background-color: rgba(0,0,0, 0.05) !important;
+  }
+}

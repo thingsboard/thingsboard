@@ -56,7 +56,7 @@ import {
   getRuleNodeHelpLink,
   LinkLabel, outputNodeClazz, ruleChainNodeClazz,
   RuleNode,
-  RuleNodeComponentDescriptor,
+  RuleNodeComponentDescriptor, RuleNodeErrorStats,
   RuleNodeType,
   ruleNodeTypeDescriptors,
   ruleNodeTypesLibrary
@@ -242,6 +242,10 @@ export class RuleChainPageComponent extends PageComponent
 
   updateBreadcrumbs = new EventEmitter();
 
+  showErrorsStatus: boolean;
+
+  private clearErrorsStatusInAllRuleNodes: boolean = false;
+
   private rxSubscription: Subscription;
 
   private tooltipTimeout: Timeout;
@@ -298,6 +302,7 @@ export class RuleChainPageComponent extends PageComponent
     this.initHotKeys();
     this.isImport = this.route.snapshot.data.import;
     this.ruleChainType = this.route.snapshot.data.ruleChainType;
+    this.showErrorsStatus = this.route.snapshot.data.user?.additionalInfo?.showErrorsStatus;
     if (this.isImport) {
       const ruleChainImport: RuleChainImport = this.itembuffer.getRuleChainImport();
       this.ruleChain = ruleChainImport.ruleChain;
@@ -525,8 +530,8 @@ export class RuleChainPageComponent extends PageComponent
             type: FlowchartConstants.rightConnectorType,
             id: this.inputConnectorId + ''
           },
-        ]
-
+        ],
+        stats: this.createEmptyRuleNodeErrorStats()
       }
     );
     const nodes: FcRuleNode[] = [];
@@ -555,7 +560,8 @@ export class RuleChainPageComponent extends PageComponent
         icon,
         iconUrl,
         connectors: [],
-        ruleChainType: this.ruleChainType
+        ruleChainType: this.ruleChainType,
+        stats: ruleNode.stats
       };
       if (component.configurationDescriptor.nodeDefinition.inEnabled) {
         node.connectors.push(
@@ -1315,6 +1321,12 @@ export class RuleChainPageComponent extends PageComponent
       }
       tooltipContent += '</div>' +
         '</div>';
+      if (this.showErrorsStatus) {
+        if (this.isRuleNodeHasErrors(node)) {
+          tooltipContent += this.addRuleNodeErrorTooltip(node);
+          tooltipContent = '<div class="tb-rule-node-tooltip-error-container">' + tooltipContent + '</div>';
+        }
+      }
       this.displayTooltip(event, tooltipContent);
     }
   }
@@ -1413,7 +1425,8 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
-            debugMode: node.debugMode
+            debugMode: node.debugMode,
+            stats: node.stats
           };
           ruleNode.additionalInfo.layoutX = Math.round(node.x);
           ruleNode.additionalInfo.layoutY = Math.round(node.y);
@@ -1458,6 +1471,9 @@ export class RuleChainPageComponent extends PageComponent
         }
         saveResult.next();
       });
+      if (this.clearErrorsStatusInAllRuleNodes) {
+        this.clearRuleChainErrorsStats();
+      }
     });
     return saveResult;
   }
@@ -1569,6 +1585,25 @@ export class RuleChainPageComponent extends PageComponent
     }
   }
 
+  isRuleChainHasErrors(): boolean {
+    const res = this.ruleChainModel.nodes.find((node) => node?.stats?.errorsCount);
+    return typeof res !== 'undefined';
+  }
+
+  isRuleNodeHasErrors(node: FcRuleNode) {
+    return node.stats ? !!node.stats.errorsCount : false;
+  }
+
+  clearRuleChainErrors() {
+    this.isDirtyValue = true;
+    this.clearErrorsStatusInAllRuleNodes = true;
+    this.ruleChainModel.nodes.forEach((node) => {
+      if (node.stats?.errorsCount) {
+        node.stats = this.createEmptyRuleNodeErrorStats();
+      }
+    });
+  }
+
   private updateNodeErrorTooltip(node: FcRuleNode) {
     if (node.error) {
       const element = $('#' + node.id);
@@ -1655,6 +1690,39 @@ export class RuleChainPageComponent extends PageComponent
       tooltip.content(contentElement);
       tooltip.open();
     }, 500);
+  }
+
+  private clearRuleChainErrorsStats() {
+    this.clearErrorsStatusInAllRuleNodes = false;
+    setTimeout(() => {
+      this.ruleChainService.clearRuleChainStats(this.ruleChain.id.id).subscribe();
+    }, 0);
+  }
+
+  private createEmptyRuleNodeErrorStats(): RuleNodeErrorStats {
+    return {
+      errorsCount: 0,
+      lastErrorMsg: null,
+      msgData: null,
+      msgMetadata: null
+    };
+  }
+
+  private addRuleNodeErrorTooltip(node: FcRuleNode): string {
+    const errorsCount = this.translate.instant('rulenode.errors-count', {count: node.stats.errorsCount});
+    const sinceLastAcknowledge = this.translate.instant('rulenode.since-last-acknowledge');
+    const lastErrorMessageTitle = this.translate.instant('rulenode.last-error-title');
+    const lastErrorMessageText = node.stats?.lastErrorMsg ? node.stats.lastErrorMsg : '-';
+    return '<div class="tb-rule-node-tooltip-error">' +
+      '<section>' +
+      '<div class="error-count">' + errorsCount + '</div>' +
+      '<div class="error-details">' + sinceLastAcknowledge + '</div>' +
+      '</section>'+
+      '<section>' +
+      '<div>' + lastErrorMessageTitle + ':'+ '</div>' +
+      '<div class="error-details">' + lastErrorMessageText + '</div>' +
+      '</section>' +
+      '</div>';
   }
 }
 

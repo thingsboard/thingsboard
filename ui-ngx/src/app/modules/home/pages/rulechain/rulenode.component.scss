@@ -151,4 +151,19 @@
       background-color: #000;
     }
   }
+
+  .fc-error-icon {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translate(-30%, 0);
+    font-size: 26px;
+    color: #D7503D;
+    background-color: #FAEAE7;
+    cursor: pointer;
+  }
+
+  .fc-error-icon-readonly {
+    cursor: default;
+  }
 }

@@ -45,6 +45,10 @@ export interface RuleChainImport {
   metadata: RuleChainMetaData;
 }
 
+export interface RuleChainInfo extends RuleChain {
+  errorPresent: boolean;
+}
+
 export interface NodeConnectionInfo {
   fromIndex: number;
   toIndex: number;

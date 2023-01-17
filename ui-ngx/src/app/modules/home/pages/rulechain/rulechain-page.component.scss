@@ -396,3 +396,26 @@
     }
   }
 }
+
+.tb-rule-node-tooltip-error-container {
+  padding-left: 10px;
+  border-left: 3px solid #D7503D;
+}
+
+.tb-rule-node-tooltip-error {
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+
+  .error-count {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .error-details {
+    color: #9F9F9F;
+  }
+}

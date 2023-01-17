@@ -22,6 +22,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
   RuleChain,
+  RuleChainInfo,
   RuleChainMetaData,
   RuleChainType,
   ruleNodeTypeComponentTypes,
@@ -62,6 +63,12 @@ export class RuleChainService {
   public getRuleChains(pageLink: PageLink, type: RuleChainType = RuleChainType.CORE,
                        config?: RequestConfig): Observable<PageData<RuleChain>> {
     return this.http.get<PageData<RuleChain>>(`/api/ruleChains${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getRuleChainsInfo(pageLink: PageLink, type: RuleChainType = RuleChainType.CORE,
+                           config?: RequestConfig): Observable<PageData<RuleChainInfo>> {
+    return this.http.get<PageData<RuleChainInfo>>(`/api/ruleChainsInfo${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -283,6 +290,14 @@ export class RuleChainService {
 
   public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {
     return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public clearRuleNodeStats(ruleNodeId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/ruleNode/${ruleNodeId}/clearRuleNodeStats`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public clearRuleChainStats(ruleChainId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/ruleChain/${ruleChainId}/clearRuleChainStats`, defaultHttpOptionsFromConfig(config));
   }
 
 }

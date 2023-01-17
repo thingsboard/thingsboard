@@ -2962,7 +2962,11 @@
         "unset-auto-assign-to-edge-title": "Are you sure you do not want to assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
         "unset-auto-assign-to-edge-text": "After the confirmation the edge rule chain will no longer be automatically assigned to edge(s) on creation.",
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainName}}'?",
-        "unassign-rulechains": "Unassign rulechains"
+        "unassign-rulechains": "Unassign rulechains",
+        "show-errors-status": "Show errors status",
+        "errors-status": "Status",
+        "status-has-errors": "Has errors",
+        "status-success": "Success"
     },
     "rulenode": {
         "details": "Details",
@@ -3032,7 +3036,18 @@
         "output": "Output",
         "test": "Test",
         "help": "Help",
-        "reset-debug-mode": "Reset debug mode in all nodes"
+        "reset-debug-mode": "Reset debug mode in all nodes",
+        "acknowledge": "Acknowledge",
+        "acknowledge-all-errors": "Acknowledge all errors",
+        "clear-node-errors-title": "Acknowledge errors on the rule node",
+        "clear-node-errors-text": "Clear error statistics?",
+        "errors-count": "{ count, plural, 1 {1 logged error} other {# logged errors} }",
+        "last-error-title": "Last error",
+        "last-error-message-title": "Last error message",
+        "last-message-data": "Last message data",
+        "last-message-metadata": "Last message metadata",
+        "since-last-acknowledge": "Since last acknowledge",
+        "view-on-dashboard": "View on dashboard"
     },
     "timezone": {
       "timezone": "Timezone",

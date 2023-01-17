@@ -238,6 +238,14 @@
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
             </button>
+            <button [disabled]="(isLoading$ | async) || !isRuleChainHasErrors()"
+                    *ngIf="showErrorsStatus"
+                    mat-fab color="accent" class="tb-btn-footer"
+                    (click)="clearRuleChainErrors()"
+                    matTooltip="{{ 'rulenode.acknowledge-all-errors' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon svgIcon="mdi:message-minus-outline"></mat-icon>
+            </button>
             <button [disabled]="(isLoading$ | async) || !isDebugModeEnabled()"
                     mat-fab color="accent" class="tb-btn-footer"
                     (click)="resetDebugModeInAllNodes()"
