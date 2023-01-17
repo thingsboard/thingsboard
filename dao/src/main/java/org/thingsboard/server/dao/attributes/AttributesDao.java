@@ -46,5 +46,5 @@ public interface AttributesDao {
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds);
 
-    List<AttributeKvEntryEntityId> findValuesByKeyAndEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds);
+    List<AttributeKvEntryEntityId> findAllValuesByKeyAndEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds);
 }

@@ -76,7 +76,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -369,7 +368,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     private Map<RuleNodeId, RuleNodeStats> getRuleNodesStats(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
-        List<AttributeKvEntryEntityId> attributeKvEntries = attributesService.findValuesByKeyAndEntityIds(tenantId, "ruleNodeStats", new ArrayList<>(ruleNodeIds));
+        List<AttributeKvEntryEntityId> attributeKvEntries = attributesService.findAllValuesByKeyAndEntityIds(tenantId, "ruleNodeStats", new ArrayList<>(ruleNodeIds));
         Map<RuleNodeId, RuleNodeStats> map = new HashMap<>();
         for (AttributeKvEntryEntityId akv : attributeKvEntries) {
             map.put(new RuleNodeId(akv.getId()), convertToRuleNodeStats(akv.getEntry().getJsonValue().orElse("")));
@@ -806,6 +805,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleNodeStats.setLastErrorMsg(lastErrorMsg);
             ruleNodeStats.setErrorsCount(ruleNodeStats.getErrorsCount() + errorsCount);
         }, executorService);
+    }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
