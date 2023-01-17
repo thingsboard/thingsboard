@@ -48,11 +48,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { isUndefined } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, take } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { Store } from "@ngrx/store";
-import { getCurrentAuthUser } from "@core/auth/auth.selectors";
+import { select, Store } from "@ngrx/store";
+import { selectUserDetails } from "@core/auth/auth.selectors";
 import { AppState } from "@core/core.state";
 import { UserService } from "@core/http/user.service";
 
@@ -102,19 +102,17 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<RuleChain>> {
-    const userId = getCurrentAuthUser(this.store).userId;
-    return this.userService.getUser(userId).pipe(
+    return this.store.pipe(select(selectUserDetails), take(1)).pipe(
       map((user) => {
         const edgeId = route.params?.edgeId;
         const ruleChainScope = route.data?.ruleChainsType ? route.data?.ruleChainsType : 'tenant';
-        const showErrorsStatus = user.additionalInfo?.showErrorsStatus;
         const showErrorsStatusToggle = ruleChainScope === 'tenant';
+        const showErrorsStatus = user.additionalInfo?.showErrorsStatus;
         this.config.componentsData = {
           ruleChainScope,
           edgeId,
-          showErrorsStatus,
           showErrorsStatusToggle,
-          user,
+          showErrorsStatus,
           onShowErrorsStatusChange: () => this.onShowErrorsStatusChange()
         };
         this.config.columns = this.configureEntityTableColumns(ruleChainScope);
@@ -646,14 +644,16 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   private onShowErrorsStatusChange() {
-    this.userService.saveUser({
-      ...this.config.componentsData.user,
-      additionalInfo: {
-        showErrorsStatus: !this.config.componentsData.showErrorsStatus
-      }
-    }).subscribe(() => {
-      const currentUrl = this.router.url;
-      this.router.navigate(['/']).then(() => this.router.navigate([currentUrl]));
-    });
+    this.store.pipe(select(selectUserDetails), take(1)).pipe(
+      mergeMap((user) => {
+        return this.userService.saveUser({
+          ...user,
+          additionalInfo: {
+            showErrorsStatus: !this.config.componentsData.showErrorsStatus
+          }
+        })
+      })).subscribe(() => {
+        window.location.reload();
+      });
   }
 }

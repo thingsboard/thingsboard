@@ -58,7 +58,7 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
     if (this.node.iconUrl) {
       this.iconUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.node.iconUrl);
     }
-    this.showErrorsStatus = this.route.data.pipe(map((data) => data?.user?.additionalInfo?.showErrorsStatus));
+    this.showErrorsStatus = this.route.data.pipe(map((data) => data.user?.additionalInfo?.showErrorsStatus));
   }
 
   openRuleChain($event: Event, node: FcRuleNode) {
