@@ -204,15 +204,12 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         checkParameter(ASSIGNEE_ID, strAssigneeId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        User assigneeUser = userService.findUserById(getTenantId(), assigneeId);
-
-        SecurityUser assigneeSecurityUser = new SecurityUser(assigneeUser, false, null);
-        try {
-            checkEntityId(alarm.getOriginator(), Operation.WRITE, assigneeSecurityUser);
-        } catch (Exception e) {
-            throw new ThingsboardException("Assignee user doesn't have permission for alarm originator", ThingsboardErrorCode.PERMISSION_DENIED);
+        UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
+        User user = userService.findUserById(getCurrentUser().getTenantId(), assigneeId);
+        checkNotNull(user, "User with id [" + strAssigneeId + "] is not found");
+        if (!getTenantId().equals(user.getTenantId())) {
+            throw new ThingsboardException("User with id [" + strAssigneeId + "] is not found", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         return tbAlarmService.assign(alarm, getCurrentUser(), assigneeId);
     }
