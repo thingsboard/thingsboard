@@ -674,8 +674,9 @@ public class ModelConstants {
 
     public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
     public static final String NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY = "template_id";
-    public static final String NOTIFICATION_RULE_DELIVERY_METHODS_PROPERTY = "delivery_methods";
-    public static final String NOTIFICATION_RULE_CONFIGURATION_PROPERTY = "configuration";
+    public static final String NOTIFICATION_RULE_TRIGGER_TYPE_PROPERTY = "trigger_type";
+    public static final String NOTIFICATION_RULE_TRIGGER_CONFIG_PROPERTY = "trigger_config";
+    public static final String NOTIFICATION_RULE_RECIPIENTS_CONFIG_PROPERTY = "recipients_config";
 
     public static final String NOTIFICATION_TEMPLATE_TABLE_NAME = "notification_template";
     public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";

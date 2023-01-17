@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.service.notification.rule.trigger;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
-@Component
-public class NotificationExecutorService extends AbstractListeningExecutor {
+public interface NotificationRuleTriggerProcessor<T, C extends NotificationRuleTriggerConfig> {
 
-    @Value("${notification_system.thread_pool_size}")
-    private int notificationSystemExecutorThreadPoolSize;
+    boolean matchesFilter(T triggerObject, C triggerConfig);
 
-    @Override
-    protected int getThreadPollSize() {
-        return notificationSystemExecutorThreadPoolSize;
+    default boolean matchesClearRule(T triggerObject, C triggerConfig) {
+        return false;
     }
+
+    NotificationRuleTriggerType getTriggerType();
 
 }

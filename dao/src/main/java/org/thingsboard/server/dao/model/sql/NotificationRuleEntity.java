@@ -22,15 +22,18 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
-import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleRecipientsConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.util.UUID;
 
@@ -49,12 +52,17 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY, nullable = false)
     private UUID templateId;
 
-    @Column(name = ModelConstants.NOTIFICATION_RULE_DELIVERY_METHODS_PROPERTY, nullable = false)
-    private String deliveryMethods;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.NOTIFICATION_RULE_TRIGGER_TYPE_PROPERTY, nullable = false)
+    private NotificationRuleTriggerType triggerType;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.NOTIFICATION_RULE_CONFIGURATION_PROPERTY, nullable = false)
-    private JsonNode configuration;
+    @Column(name = ModelConstants.NOTIFICATION_RULE_TRIGGER_CONFIG_PROPERTY, nullable = false)
+    private JsonNode triggerConfig;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_RULE_RECIPIENTS_CONFIG_PROPERTY, nullable = false)
+    private JsonNode recipientsConfig;
 
     public NotificationRuleEntity() {}
 
@@ -64,8 +72,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setTenantId(getTenantUuid(notificationRule.getTenantId()));
         setName(notificationRule.getName());
         setTemplateId(getUuid(notificationRule.getTemplateId()));
-        setDeliveryMethods(listToString(notificationRule.getDeliveryMethods()));
-        setConfiguration(toJson(notificationRule.getConfiguration()));
+        setTriggerType(notificationRule.getTriggerType());
+        setTriggerConfig(toJson(notificationRule.getTriggerConfig()));
+        setRecipientsConfig(toJson(notificationRule.getRecipientsConfig()));
     }
 
     @Override
@@ -76,8 +85,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         notificationRule.setTenantId(getTenantId(tenantId));
         notificationRule.setName(name);
         notificationRule.setTemplateId(getEntityId(templateId, NotificationTemplateId::new));
-        notificationRule.setDeliveryMethods(listFromString(deliveryMethods, NotificationDeliveryMethod::valueOf));
-        notificationRule.setConfiguration(fromJson(configuration, NotificationRuleConfig.class));
+        notificationRule.setTriggerType(triggerType);
+        notificationRule.setTriggerConfig(fromJson(triggerConfig, NotificationRuleTriggerConfig.class));
+        notificationRule.setRecipientsConfig(fromJson(recipientsConfig, NotificationRuleRecipientsConfig.class));
         return notificationRule;
     }
 

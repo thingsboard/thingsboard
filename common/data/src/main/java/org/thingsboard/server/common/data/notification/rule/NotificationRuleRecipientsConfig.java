@@ -13,29 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.notification.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.common.data.EntityType;
+import lombok.Data;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
+import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "originatorType")
+@JsonIgnoreProperties
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
 @JsonSubTypes({
-        @Type(name = "USER", value = UserOriginatedNotificationInfo.class),
-        @Type(name = "ALARM", value = AlarmOriginatedNotificationInfo.class),
-        @Type(name = "RULE_CHAIN", value = RuleEngineOriginatedNotificationInfo.class)
+        @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
 })
-public interface NotificationInfo {
+@Data
+public abstract class NotificationRuleRecipientsConfig {
 
-    EntityType getOriginatorType();
+    @NotNull
+    private NotificationRuleTriggerType triggerType;
 
     @JsonIgnore
-    Map<String, String> getTemplateData();
+    public abstract Map<Integer, List<UUID>> getTargetsTable();
 
 }

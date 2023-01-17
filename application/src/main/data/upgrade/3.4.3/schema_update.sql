@@ -39,8 +39,9 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     tenant_id UUID NULL CONSTRAINT fk_notification_rule_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
-    delivery_methods VARCHAR(255) NOT NULL,
-    configuration VARCHAR(2000) NOT NULL
+    trigger_type VARCHAR(50) NOT NULL,
+    trigger_config VARCHAR(1000) NOT NULL,
+    recipients_config VARCHAR(10000) NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_created_time ON notification_rule(tenant_id, created_time DESC);
 

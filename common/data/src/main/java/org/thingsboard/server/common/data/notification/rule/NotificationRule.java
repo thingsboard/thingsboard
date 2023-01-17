@@ -15,22 +15,22 @@
  */
 package org.thingsboard.server.common.data.notification.rule;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 import javax.validation.Valid;
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -41,10 +41,20 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     private String name;
     @NotNull
     private NotificationTemplateId templateId;
-    @NotEmpty
-    private List<NotificationDeliveryMethod> deliveryMethods;
+
+    @NotNull
+    private NotificationRuleTriggerType triggerType;
+    @NotNull
+    private NotificationRuleTriggerConfig triggerConfig;
     @NotNull
     @Valid
-    private NotificationRuleConfig configuration; // todo: add pg_tgrm index (but index is 2.5x size of the column)
+    private NotificationRuleRecipientsConfig recipientsConfig; // todo: add pg_tgrm index (but index is 2.5x size of the column)
+
+    @JsonIgnore
+    @AssertTrue(message = "trigger type not matching")
+    public boolean isValid() {
+        return triggerType == triggerConfig.getTriggerType() &&
+                triggerType == recipientsConfig.getTriggerType();
+    }
 
 }

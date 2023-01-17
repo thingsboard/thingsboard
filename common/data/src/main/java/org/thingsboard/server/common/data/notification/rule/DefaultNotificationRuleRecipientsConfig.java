@@ -16,20 +16,23 @@
 package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
-import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import lombok.EqualsAndHashCode;
 
-import javax.validation.constraints.Max;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Data
-public class NotificationEscalation {
+@EqualsAndHashCode(callSuper = true)
+public class DefaultNotificationRuleRecipientsConfig extends NotificationRuleRecipientsConfig {
 
-    @Max(NotificationRequestConfig.MAX_SENDING_DELAY)
-    private int delayInSec;
     @NotEmpty
-    private List<NotificationTargetId> notificationTargets;
+    private List<UUID> targets;
+
+    @Override
+    public Map<Integer, List<UUID>> getTargetsTable() {
+        return Map.of(0, targets);
+    }
 
 }

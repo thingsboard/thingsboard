@@ -48,6 +48,13 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     Page<NotificationEntity> findByRequestId(UUID requestId, Pageable pageable);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE NotificationEntity n SET n.status = :status " +
+            "WHERE n.requestId = :requestId AND n.status <> :status")
+    int updateStatusesByRequestId(@Param("requestId") UUID requestId,
+                                  @Param("status") NotificationStatus status);
+
     int deleteByIdAndRecipientId(UUID id, UUID recipientId);
 
 }

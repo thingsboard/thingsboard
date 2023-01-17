@@ -29,6 +29,7 @@ public class CacheConstants {
     public static final String TENANTS_CACHE = "tenants";
     public static final String TENANTS_EXIST_CACHE = "tenantsExist";
     public static final String DEVICE_PROFILE_CACHE = "deviceProfiles";
+    public static final String NOTIFICATION_RULES_CACHE = "notificationRules";
 
     public static final String ASSET_PROFILE_CACHE = "assetProfiles";
     public static final String ATTRIBUTES_CACHE = "attributes";

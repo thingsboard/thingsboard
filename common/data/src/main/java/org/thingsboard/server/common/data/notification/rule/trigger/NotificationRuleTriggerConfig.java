@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.common.data.EntityType;
-
-import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "originatorType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType")
 @JsonSubTypes({
-        @Type(name = "USER", value = UserOriginatedNotificationInfo.class),
-        @Type(name = "ALARM", value = AlarmOriginatedNotificationInfo.class),
-        @Type(name = "RULE_CHAIN", value = RuleEngineOriginatedNotificationInfo.class)
+        @Type(value = AlarmNotificationRuleTriggerConfig.class, name = "ALARM"),
+        @Type(value = DeviceInactivityNotificationRuleTriggerConfig.class, name = "DEVICE_INACTIVITY"),
+        @Type(value = EntityActionNotificationRuleTriggerConfig.class, name = "ENTITY_ACTION")
 })
-public interface NotificationInfo {
+public interface NotificationRuleTriggerConfig {
 
-    EntityType getOriginatorType();
-
-    @JsonIgnore
-    Map<String, String> getTemplateData();
+    NotificationRuleTriggerType getTriggerType();
 
 }

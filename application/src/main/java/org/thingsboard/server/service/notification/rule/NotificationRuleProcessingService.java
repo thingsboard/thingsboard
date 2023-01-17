@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.service.notification.rule;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbMsg;
 
-@Component
-public class NotificationExecutorService extends AbstractListeningExecutor {
+public interface NotificationRuleProcessingService {
 
-    @Value("${notification_system.thread_pool_size}")
-    private int notificationSystemExecutorThreadPoolSize;
+    void process(TenantId tenantId, TbMsg ruleEngineMsg);
 
-    @Override
-    protected int getThreadPollSize() {
-        return notificationSystemExecutorThreadPoolSize;
-    }
+    void process(TenantId tenantId, Alarm alarm, boolean deleted);
 
 }

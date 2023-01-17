@@ -13,21 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.dao.notification.cache;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.AbstractListeningExecutor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 
-@Component
-public class NotificationExecutorService extends AbstractListeningExecutor {
+import java.io.Serializable;
+import java.util.List;
 
-    @Value("${notification_system.thread_pool_size}")
-    private int notificationSystemExecutorThreadPoolSize;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class NotificationRuleCacheValue implements Serializable {
 
-    @Override
-    protected int getThreadPollSize() {
-        return notificationSystemExecutorThreadPoolSize;
-    }
+    private static final long serialVersionUID = 9503216785105415L;
+
+    private List<NotificationRule> notificationRules;
 
 }

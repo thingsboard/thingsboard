@@ -20,42 +20,33 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class AlarmOriginatedNotificationInfo implements NotificationInfo {
+public class RuleEngineOriginatedNotificationInfo implements NotificationInfo {
 
-    private AlarmId alarmId;
-    private String alarmType;
-    private EntityId alarmOriginator;
-    private AlarmSeverity alarmSeverity;
-    private AlarmStatus alarmStatus;
-    private CustomerId customerId;
+    private EntityId msgOriginator;
+    private String msgType;
+    private Map<String, String> msgMetadata;
 
     @Override
     public EntityType getOriginatorType() {
-        return EntityType.ALARM;
+        return EntityType.RULE_CHAIN;
     }
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Map.of(
-                "alarmType", alarmType,
-                "alarmId", alarmId.toString(),
-                "alarmSeverity", alarmSeverity.toString(),
-                "alarmStatus", alarmStatus.toString(),
-                "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
-                "alarmOriginatorId", alarmOriginator.getId().toString()
-        );
+        Map<String, String> templateData = new HashMap<>(msgMetadata);
+        templateData.put("originatorType", msgOriginator.getEntityType().toString());
+        templateData.put("originatorId", msgOriginator.getId().toString());
+        templateData.put("msgType", msgType);
+        return templateData;
     }
 
 }

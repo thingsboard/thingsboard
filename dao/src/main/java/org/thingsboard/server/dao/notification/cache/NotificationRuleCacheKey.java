@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.notification.sub;
+package org.thingsboard.server.dao.notification.cache;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+
+import java.io.Serializable;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class NotificationRequestUpdate {
-    private NotificationRequestId notificationRequestId;
-    private NotificationInfo notificationInfo;
-    private boolean deleted;
+public class NotificationRuleCacheKey implements Serializable {
+
+    private static final long serialVersionUID = 5987113265482170L;
+
+    private TenantId tenantId;
+    private NotificationRuleTriggerType triggerType;
+
+    @Override
+    public String toString() {
+        return tenantId + "_" + triggerType;
+    }
+
 }

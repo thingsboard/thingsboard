@@ -64,6 +64,7 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
 
     @Override
     public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
+        // FIXME: add caching
         return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
     }
 

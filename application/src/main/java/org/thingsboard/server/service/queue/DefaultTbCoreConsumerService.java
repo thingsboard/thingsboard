@@ -69,6 +69,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
+import org.thingsboard.server.service.notification.rule.NotificationRuleProcessingService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -155,9 +156,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         GitVersionControlQueueService vcQueueService,
                                         PartitionService partitionService,
                                         ApplicationEventPublisher eventPublisher,
+                                        NotificationRuleProcessingService notificationRuleProcessingService,
                                         Optional<JwtSettingsService> jwtSettingsService,
                                         NotificationSchedulerService notificationSchedulerService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, notificationRuleProcessingService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();

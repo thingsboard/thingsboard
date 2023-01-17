@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.List;
+@RequiredArgsConstructor
+public enum NotificationRuleTriggerType {
 
-@Data
-public class NotificationRuleConfig {
+    ALARM(true),
+    DEVICE_INACTIVITY(false),
+    ENTITY_ACTION(false);
 
-    @NotEmpty
-    @Valid
-    private List<NotificationEscalation> escalations;
+    @Getter
+    private final boolean isUpdatable;
 
 }

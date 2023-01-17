@@ -52,17 +52,19 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
         super(new URI(wsUrl + "/api/ws/plugins/notifications?token=" + token));
     }
 
-    public void subscribeForUnreadNotifications(int limit) {
+    public NotificationApiWsClient subscribeForUnreadNotifications(int limit) {
         NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
         cmdsWrapper.setUnreadSubCmd(new NotificationsSubCmd(1, limit));
         sendCmd(cmdsWrapper);
         this.limit = limit;
+        return this;
     }
 
-    public void subscribeForUnreadNotificationsCount() {
+    public NotificationApiWsClient subscribeForUnreadNotificationsCount() {
         NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
         cmdsWrapper.setUnreadCountSubCmd(new NotificationsCountSubCmd(2));
         sendCmd(cmdsWrapper);
+        return this;
     }
 
     public void markNotificationAsRead(UUID... notifications) {

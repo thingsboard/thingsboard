@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 
-public interface NotificationRuleProcessingService {
+@Data
+public class EntityActionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    ListenableFuture<Void> onAlarmCreatedOrUpdated(TenantId tenantId, Alarm alarm);
+    private EntityType entityType; // maybe add name filter ?
+    private boolean created;
+    private boolean updated;
+    private boolean deleted;
 
-    ListenableFuture<Void> onAlarmDeleted(TenantId tenantId, Alarm alarm);
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.ENTITY_ACTION;
+    }
 
 }

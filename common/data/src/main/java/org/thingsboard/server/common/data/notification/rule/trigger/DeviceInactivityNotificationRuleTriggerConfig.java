@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.AbstractListeningExecutor;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 
-@Component
-public class NotificationExecutorService extends AbstractListeningExecutor {
+import java.util.Set;
 
-    @Value("${notification_system.thread_pool_size}")
-    private int notificationSystemExecutorThreadPoolSize;
+@Data
+public class DeviceInactivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    private Set<DeviceId> devices;
+    private Set<DeviceProfileId> deviceProfiles;
+    // set either devices or profiles
 
     @Override
-    protected int getThreadPollSize() {
-        return notificationSystemExecutorThreadPoolSize;
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.DEVICE_INACTIVITY;
     }
 
 }

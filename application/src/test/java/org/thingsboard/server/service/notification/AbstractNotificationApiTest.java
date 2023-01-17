@@ -197,16 +197,9 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         return wsClient;
     }
 
-    protected void connectWsClient() throws Exception {
-        loginCustomerUser();
-        wsClient = (NotificationApiWsClient) super.getWsClient();
-        loginTenantAdmin();
-    }
-
-    protected void connectOtherWsClient() throws Exception {
-        loginCustomerUser();
-        otherWsClient = (NotificationApiWsClient) super.getAnotherWsClient();
-        loginTenantAdmin();
+    @Override
+    public NotificationApiWsClient getWsClient() {
+        return (NotificationApiWsClient) super.getWsClient();
     }
 
 }

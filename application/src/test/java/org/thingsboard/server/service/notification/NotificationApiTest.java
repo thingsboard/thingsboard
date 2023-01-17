@@ -90,7 +90,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Before
     public void beforeEach() throws Exception {
-        connectWsClient();
+        loginCustomerUser();
+        wsClient = getWsClient();
+        loginTenantAdmin();
     }
 
     @Test
@@ -274,7 +276,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationRequest.setInfo(newNotificationInfo);
         notificationCenter.updateNotificationRequest(tenantId, notificationRequest);
         wsClient.waitForUpdate(true);
-        Notification updatedNotification = wsClient.getLastDataUpdate().getUpdate();
+        Notification updatedNotification = wsClient.getLastDataUpdate().getNotifications().iterator().next();
         assertThat(updatedNotification.getInfo()).isEqualTo(newNotificationInfo);
         assertThat(getMyNotifications(false, 10)).singleElement().isEqualTo(updatedNotification);
     }
@@ -581,6 +583,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(notificationsUpdate.getUpdate()).extracting(Notification::getType).isEqualTo(DEFAULT_NOTIFICATION_TYPE);
         assertThat(notificationsUpdate.getUpdate()).extracting(Notification::getSubject).isEqualTo(DEFAULT_NOTIFICATION_SUBJECT);
         assertThat(notificationsUpdate.getTotalUnreadCount()).isEqualTo(expectedUnreadCount);
+    }
+
+    protected void connectOtherWsClient() throws Exception {
+        loginCustomerUser();
+        otherWsClient = (NotificationApiWsClient) super.getAnotherWsClient();
+        loginTenantAdmin();
     }
 
 }

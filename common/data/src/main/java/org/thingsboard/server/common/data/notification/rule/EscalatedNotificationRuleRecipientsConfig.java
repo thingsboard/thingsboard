@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotEmpty;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
-public class RuleNodeOriginatedNotificationInfo implements NotificationInfo {
+@EqualsAndHashCode(callSuper = true)
+public class EscalatedNotificationRuleRecipientsConfig extends NotificationRuleRecipientsConfig {
 
-    private EntityId msgOriginator;
-    private Map<String, String> msgMetadata;
-
-    @Override
-    public EntityType getOriginatorType() {
-        return EntityType.RULE_NODE;
-    }
+    @NotEmpty
+    private Map<Integer, List<UUID>> escalationTable;
 
     @Override
-    public Map<String, String> getTemplateData() {
-        return msgMetadata;
+    public Map<Integer, List<UUID>> getTargetsTable() {
+        return escalationTable;
     }
 
 }

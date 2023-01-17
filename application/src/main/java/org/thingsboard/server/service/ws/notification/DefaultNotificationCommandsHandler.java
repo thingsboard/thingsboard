@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.NotificationId;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
@@ -175,21 +174,8 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void handleNotificationRequestUpdate(NotificationsSubscription subscription, NotificationRequestUpdate update) {
         log.trace("[{}, subId: {}] Handling notification request update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
-        NotificationRequestId notificationRequestId = update.getNotificationRequestId();
-        if (update.isDeleted()) {
-            if (subscription.getLatestUnreadNotifications().values().stream()
-                    .anyMatch(notification -> notificationRequestId.equals(notification.getRequestId()))) {
-                fetchUnreadNotifications(subscription);
-                sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
-            }
-        } else {
-            subscription.getLatestUnreadNotifications().values().stream()
-                    .filter(notification -> notificationRequestId.equals(notification.getRequestId()))
-                    .forEach(notification -> {
-                        notification.setInfo(update.getNotificationInfo());
-                        sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
-                    });
-        }
+        fetchUnreadNotifications(subscription); // FIXME: figure out how not to fetch notifications on each request update...
+        sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
     }
 
 
@@ -230,10 +216,8 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void handleNotificationRequestUpdate(NotificationsCountSubscription subscription, NotificationRequestUpdate update) {
         log.trace("[{}, subId: {}] Handling notification request update for count sub: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
-        if (update.isDeleted()) {
-            fetchUnreadNotificationsCount(subscription);
-            sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-        }
+        fetchUnreadNotificationsCount(subscription); // FIXME: figure out how not to fetch notifications on each request update...
+        sendUpdate(subscription.getSessionId(), subscription.createUpdate());
     }
 
 
