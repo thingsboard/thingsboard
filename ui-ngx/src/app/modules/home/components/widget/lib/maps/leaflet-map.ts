@@ -188,7 +188,7 @@ export default abstract class LeafletMap {
           entities = this.datasources.filter(pData => !this.isValidPolygonPosition(pData));
           break;
         case 'Marker':
-          entities = this.datasources.filter(mData => !this.convertPosition(mData));
+          entities = this.datasources.filter(mData => !this.extractPosition(mData));
           break;
         case 'Circle':
           entities = this.datasources.filter(mData => !this.isValidCircle(mData));
@@ -616,16 +616,29 @@ export default abstract class LeafletMap {
         }
     }
 
-    convertPosition(expression: object): L.LatLng {
-      if (!expression) {
+    extractPosition(data: FormattedData): {x: number, y: number} {
+      if (!data) {
         return null;
       }
-      const lat = expression[this.options.latKeyName];
-      const lng = expression[this.options.lngKeyName];
+      const lat = data[this.options.latKeyName];
+      const lng = data[this.options.lngKeyName];
       if (!isDefinedAndNotNull(lat) || isString(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isString(lng) || isNaN(lng)) {
         return null;
       }
-      return L.latLng(lat, lng) as L.LatLng;
+      return {x: lat, y: lng};
+    }
+
+    positionToLatLng(position: {x: number, y: number}): L.LatLng {
+      return L.latLng(position.x, position.y) as L.LatLng;
+    }
+
+    convertPosition(data: FormattedData, dsData: FormattedData[]): L.LatLng {
+      const position = this.extractPosition(data);
+      if (position) {
+        return this.positionToLatLng(position);
+      } else {
+        return null;
+      }
     }
 
     convertPositionPolygon(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]) {
@@ -707,7 +720,7 @@ export default abstract class LeafletMap {
           if (this.options.draggableMarker && !this.options.hideDrawControlButton && !this.options.hideAllControlButton) {
             let foundEntityWithoutLocation = false;
             for (const mData of formattedData) {
-              const position = this.convertPosition(mData);
+              const position = this.extractPosition(mData);
               if (!position) {
                 foundEntityWithoutLocation = true;
               } else if (!!position) {
@@ -836,7 +849,7 @@ export default abstract class LeafletMap {
 
   // Markers
     updateMarkers(markersData: FormattedData[], updateBounds = true, callback?) {
-      const rawMarkers = markersData.filter(mdata => !!this.convertPosition(mdata));
+      const rawMarkers = markersData.filter(mdata => !!this.extractPosition(mdata));
       const toDelete = new Set(Array.from(this.markers.keys()));
       const createdMarkers: Marker[] = [];
       const updatedMarkers: Marker[] = [];
@@ -900,7 +913,7 @@ export default abstract class LeafletMap {
 
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetMarkersSettings>,
                          updateBounds = true, callback?, snappable = false): Marker {
-      const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker, snappable);
+      const newMarker = new Marker(this, this.convertPosition(data, dataSources), settings, data, dataSources, this.dragMarker, snappable);
       if (callback) {
         newMarker.leafletMarker.on('click', () => {
           callback(data, true);
@@ -921,7 +934,7 @@ export default abstract class LeafletMap {
 
     private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetMarkersSettings>): Marker {
         const marker: Marker = this.markers.get(key);
-        const location = this.convertPosition(data);
+        const location = this.convertPosition(data, dataSources);
         marker.updateMarkerPosition(location);
         marker.setDataSources(data, dataSources);
         if (settings.showTooltip) {
@@ -964,12 +977,12 @@ export default abstract class LeafletMap {
     for (const pointsList of pointsData) {
       for (let tsIndex = 0; tsIndex < pointsList.length; tsIndex++) {
         const pdata = pointsList[tsIndex];
-        if (!!this.convertPosition(pdata)) {
+        if (!!this.extractPosition(pdata)) {
           const dsData = pointsData.map(ds => ds[tsIndex]);
           if (this.options.useColorPointFunction) {
             pointColor = safeExecute(this.options.parsedColorPointFunction, [pdata, dsData, pdata.dsIndex]);
           }
-          const point = L.circleMarker(this.convertPosition(pdata), {
+          const point = L.circleMarker(this.convertPosition(pdata, dsData), {
             color: pointColor,
             radius: this.options.pointSize
           });
@@ -1017,7 +1030,7 @@ export default abstract class LeafletMap {
     createPolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[],
                    settings: Partial<WidgetPolylineSettings>, updateBounds = true) {
         const poly = new Polyline(this.map,
-          tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
+          tsData.map(el => this.extractPosition(el)).filter(el => !!el).map(el => this.positionToLatLng(el)), data, dsData, settings);
         if (updateBounds) {
           const bounds = poly.leafletPoly.getBounds();
           this.fitBounds(bounds);
@@ -1029,7 +1042,8 @@ export default abstract class LeafletMap {
                    settings: Partial<WidgetPolylineSettings>, updateBounds = true) {
         const poly = this.polylines.get(data.entityName);
         const oldBounds = poly.leafletPoly.getBounds();
-        poly.updatePolyline(tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
+        poly.updatePolyline(tsData.map(el => this.extractPosition(el)).filter(el => !!el)
+          .map(el => this.positionToLatLng(el)), data, dsData, settings);
         const newBounds = poly.leafletPoly.getBounds();
         if (updateBounds && oldBounds.toBBoxString() !== newBounds.toBBoxString()) {
             this.fitBounds(newBounds);
