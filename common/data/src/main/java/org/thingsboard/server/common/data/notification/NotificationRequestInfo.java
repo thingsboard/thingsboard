@@ -16,15 +16,23 @@
 package org.thingsboard.server.common.data.notification;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
-public class NotificationRequestPreview {
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class NotificationRequestInfo extends NotificationRequest {
 
-    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates;
-    private int totalRecipientsCount;
-    private Map<String, Integer> recipientsCountByTarget;
+    private String templateName;
+    private List<NotificationDeliveryMethod> deliveryMethods;
+
+    public NotificationRequestInfo(NotificationRequest request, String templateName, List<NotificationDeliveryMethod> deliveryMethods) {
+        super(request);
+        this.templateName = templateName;
+        this.deliveryMethods = deliveryMethods;
+    }
 
 }

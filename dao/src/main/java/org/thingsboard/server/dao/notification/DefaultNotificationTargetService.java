@@ -70,8 +70,8 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     @Override
-    public int countRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId targetId) {
-        return (int) findRecipientsForNotificationTarget(tenantId, null, targetId, new PageLink(1)).getTotalElements();
+    public int countRecipientsForNotificationTargetConfig(TenantId tenantId, NotificationTargetConfig targetConfig) {
+        return (int) findRecipientsForNotificationTargetConfig(tenantId, null, targetConfig, new PageLink(1)).getTotalElements();
     }
 
     @Override

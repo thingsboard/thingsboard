@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
@@ -177,8 +178,13 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         return Pair.of(user, wsClient);
     }
 
-    protected NotificationRequest findNotificationRequest(NotificationRequestId id) throws Exception {
-        return doGet("/api/notification/request/" + id, NotificationRequest.class);
+    protected NotificationRequestInfo findNotificationRequest(NotificationRequestId id) throws Exception {
+        return doGet("/api/notification/request/" + id, NotificationRequestInfo.class);
+    }
+
+    protected PageData<NotificationRequestInfo> findNotificationRequests() throws Exception {
+        PageLink pageLink = new PageLink(10);
+        return doGetTypedWithPageLink("/api/notification/requests?", new TypeReference<PageData<NotificationRequestInfo>>() {}, pageLink);
     }
 
     protected void deleteNotificationRequest(NotificationRequestId id) throws Exception {

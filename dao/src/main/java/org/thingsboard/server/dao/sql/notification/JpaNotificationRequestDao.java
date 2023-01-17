@@ -27,12 +27,14 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.NotificationRequestEntity;
+import org.thingsboard.server.dao.model.sql.NotificationRequestInfoEntity;
 import org.thingsboard.server.dao.notification.NotificationRequestDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
@@ -52,7 +54,14 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
 
     @Override
     public PageData<NotificationRequest> findByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRequestRepository.findByTenantIdAndOriginatorEntityType(getId(tenantId, true), originatorType, DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(notificationRequestRepository.findByTenantIdAndOriginatorEntityType(getId(tenantId, true),
+                originatorType, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
+        return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityType(getId(tenantId, true),
+                originatorType, DaoUtil.toPageable(pageLink))).mapData(NotificationRequestInfoEntity::toData);
     }
 
     @Override
@@ -89,6 +98,12 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public int removeAllByCreatedTimeBefore(long ts) {
         return notificationRequestRepository.deleteAllByCreatedTimeBefore(ts);
+    }
+
+    @Override
+    public NotificationRequestInfo findInfoById(TenantId tenantId, NotificationRequestId id) {
+        NotificationRequestInfoEntity info = notificationRequestRepository.findInfoById(id.getId());
+        return info != null ? info.toData() : null;
     }
 
     @Override
