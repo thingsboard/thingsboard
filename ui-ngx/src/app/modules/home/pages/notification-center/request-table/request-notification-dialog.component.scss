@@ -16,25 +16,21 @@
 @import "../../../../../../scss/constants";
 
 :host-context(.tb-fullscreen-dialog .mat-dialog-container) {
-  width: 720px;
+  width: 640px;
 
-  .tb-hint {
-    padding: 0;
-  }
+  .preview-group {
+    padding: 16px;
+    margin-bottom: 10px;
+    border: 1px groove rgba(0, 0, 0, .12);
+    border-radius: 4px;
 
-  .delivery-method-container {
-    padding-bottom: 8px;
-
-    &.even {
-      padding-right: 8px;
+    .mat-icon {
+      color: rgba(0, 0, 0, 0.38);
     }
 
-    .delivery-method {
-      padding: 16px 12px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-      width: 100%;
-      height: 100%;
+    .total-recipients {
+      font-weight: 500;
+      letter-spacing: .25px;
     }
   }
 
@@ -67,7 +63,7 @@
         }
       }
       .mat-horizontal-content-container {
-        height: 500px;
+        height: 400px;
         max-height: 100%;
         width: 100%;;
         overflow-y: auto;
@@ -79,22 +75,6 @@
       .mat-horizontal-stepper-content[aria-expanded=true] {
         height: 100%;
         position: relative;
-      }
-    }
-  }
-
-  .mat-radio-group {
-    display: flex;
-    flex-direction: row;
-
-    .mat-radio-button {
-      flex: 1 1 100%;
-      padding: 14px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-
-      &:not(:last-child){
-        margin-right: 8px;
       }
     }
   }

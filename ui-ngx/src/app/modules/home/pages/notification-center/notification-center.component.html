@@ -41,6 +41,7 @@
         </mat-tab>
         <mat-tab label="{{ 'notification.sent' | translate }}">
           <tb-notification-table
+            #notificationRequest
             [notificationType]="entityType.NOTIFICATION_REQUEST">
           </tb-notification-table>
         </mat-tab>
@@ -62,7 +63,7 @@
         <mat-tab disabled>
           <ng-template mat-tab-label>
             <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
-              <button mat-flat-button color="primary">
+              <button mat-flat-button color="primary" (click)="sendNotification($event)">
                 <div fxLayout="row" fxLayoutAlign="start center">
                   <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
                 </div>

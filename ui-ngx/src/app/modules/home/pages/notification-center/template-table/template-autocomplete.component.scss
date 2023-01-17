@@ -17,13 +17,26 @@
 ::ng-deep {
   .template-option {
     .mat-option-text {
-      display: inline;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 4px;
     }
-    .queue-option-description {
-      display: block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+
+    .template-option-name {
+      margin-right: 8px;
+    }
+
+    .mat-chip {
+      &.mat-standard-chip {
+        padding: 4px 8px;
+        border-radius: 14px;
+        min-height: 28px;
+
+        &.mat-chip-disabled {
+          opacity: 1;
+        }
+      }
     }
   }
 }

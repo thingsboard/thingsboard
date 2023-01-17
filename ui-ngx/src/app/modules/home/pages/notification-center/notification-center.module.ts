@@ -35,15 +35,25 @@ import {
 import {
   TemplateTableHeaderComponent
 } from '@home/pages/notification-center/template-table/template-table-header.component';
+import {
+  RequestNotificationDialogComponent
+} from '@home/pages/notification-center/request-table/request-notification-dialog.componet';
+import {
+  TemplateAutocompleteComponent
+} from '@home/pages/notification-center/template-table/template-autocomplete.component';
+import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
 
 @NgModule({
   declarations: [
     NotificationCenterComponent,
     TargetNotificationDialogComponent,
     TemplateNotificationDialogComponent,
+    RequestNotificationDialogComponent,
     TargetTableHeaderComponent,
     TemplateTableHeaderComponent,
-    NotificationTableComponent
+    NotificationTableComponent,
+    TemplateAutocompleteComponent,
+    InboxTableHeaderComponent
   ],
   imports: [
     CommonModule,

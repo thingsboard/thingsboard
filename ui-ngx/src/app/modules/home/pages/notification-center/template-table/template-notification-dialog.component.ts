@@ -15,11 +15,12 @@
 ///
 
 import {
-  DeliveryMethodNotificationTemplate,
   NotificationDeliveryMethod,
+  NotificationDeliveryMethodTranslateMap,
   NotificationTemplate,
-  NotificationTemplateType,
-  NotificationTemplateTypeTranslateMap, SlackChanelType
+  NotificationTemplateTypeTranslateMap,
+  NotificationType,
+  SlackChanelType
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -27,7 +28,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { deepTrim, isDefined } from '@core/utils';
 import { Observable, Subject } from 'rxjs';
@@ -36,7 +37,6 @@ import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper'
 import { MatStepper } from '@angular/material/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { NotificationType } from '@core/notification/notification.models';
 
 export interface TemplateNotificationDialogData {
   template?: NotificationTemplate;
@@ -64,9 +64,10 @@ export class TemplateNotificationDialogComponent
   dialogTitle = 'notification.edit-notification-template';
   saveButtonLabel = 'action.save';
 
-  notificationTypes = Object.keys(NotificationTemplateType) as NotificationType[];
+  notificationTypes = Object.keys(NotificationType) as NotificationType[];
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
+  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   selectedIndex = 0;
 
@@ -109,11 +110,11 @@ export class TemplateNotificationDialogComponent
 
     this.templateNotificationForm = this.fb.group({
       name: ['', Validators.required],
-      notificationType: [NotificationTemplateType.GENERAL],
+      notificationType: [NotificationType.GENERAL],
       configuration: this.fb.group({
         notificationSubject: ['', Validators.required],
         defaultTextTemplate: ['', Validators.required],
-        deliveryMethodsTemplates: this.fb.group({})
+        deliveryMethodsTemplates: this.fb.group({}, {validators: this.atLeastOne()})
       })
     });
     this.notificationDeliveryMethods.forEach(method => {
@@ -190,7 +191,7 @@ export class TemplateNotificationDialogComponent
     if (this.selectedIndex === 3 && this.selectedIndex < this.maxStepperIndex && this.smsTemplateForm.pristine) {
       return 'action.skip';
     }
-    if (this.selectedIndex >= this.maxStepperIndex) {
+    if (this.selectedIndex !== 0 && this.selectedIndex >= this.maxStepperIndex) {
       return 'action.add';
     }
     return 'action.next';
@@ -229,7 +230,7 @@ export class TemplateNotificationDialogComponent
     }
   }
 
-  allValid(): boolean {
+  private allValid(): boolean {
     return !this.addNotificationTemplate.steps.find((item, index) => {
       if (item.stepControl.invalid) {
         item.interacted = true;
@@ -239,5 +240,16 @@ export class TemplateNotificationDialogComponent
         return false;
       }
     });
+  }
+
+  private atLeastOne() {
+    return (group: FormGroup): ValidationErrors | null => {
+      let hasAtLeastOne = true;
+      if (group?.controls) {
+        const controlsFormValue: FormGroup[] = Object.entries(group.controls).map(method => method[1]) as any;
+        hasAtLeastOne = controlsFormValue.some(value => value.controls.enabled.value);
+      }
+      return hasAtLeastOne ? null : {atLeastOne: true};
+    };
   }
 }

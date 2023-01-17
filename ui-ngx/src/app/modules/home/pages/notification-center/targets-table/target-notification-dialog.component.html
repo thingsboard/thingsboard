@@ -49,6 +49,9 @@
         required
         formControlName="usersIds"
         [entityType]="entityType.USER"
+        labelText="user.user-list"
+        placeholderText="user.user"
+        requiredText="user.user-list-required"
         *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetConfigType.USER_LIST">
       </tb-entity-list>
       <section

@@ -23,6 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import {
   Notification,
   NotificationRequest,
+  NotificationRequestPreview,
   NotificationRule,
   NotificationSettings,
   NotificationTarget,
@@ -42,15 +43,16 @@ export class NotificationService {
   ) {
   }
 
-  public getNotifications(pageLink: PageLink, config?: RequestConfig): Observable<PageData<Notification>> {
-    return this.http.get<PageData<Notification>>(`/api/notifications${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  public getNotifications(pageLink: PageLink, unreadOnly = false, config?: RequestConfig): Observable<PageData<Notification>> {
+    return this.http.get<PageData<Notification>>(`/api/notifications${pageLink.toQuery()}&unreadOnly=${unreadOnly}`,
+                                                  defaultHttpOptionsFromConfig(config));
   }
 
   public markNotificationAsRead(id: string, config?: RequestConfig): Observable<void> {
     return this.http.put<void>(`/api/notification/${id}/read`, defaultHttpOptionsFromConfig(config));
   }
 
-  public createNotificationRequest(notification: NotificationRequest, config?: RequestConfig): Observable<any> {
+  public createNotificationRequest(notification: NotificationRequest, config?: RequestConfig): Observable<NotificationRequest> {
     return this.http.post<NotificationRequest>('/api/notification/request', notification, defaultHttpOptionsFromConfig(config));
   }
 
@@ -62,8 +64,14 @@ export class NotificationService {
     return this.http.delete<void>(`/api/notification/request/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getNotificationRequestPreview(notification: NotificationRequest, config?: RequestConfig): Observable<NotificationRequestPreview> {
+    return this.http.post<NotificationRequestPreview>('/api/notification/request/preview',
+                                                       notification, defaultHttpOptionsFromConfig(config));
+  }
+
   public getNotificationRequests(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationRequest>> {
-    return this.http.get<PageData<NotificationRequest>>('/api/notification/request/', defaultHttpOptionsFromConfig(config));
+    return this.http.get<PageData<NotificationRequest>>(`/api/notification/requests${pageLink.toQuery()}`,
+                                                        defaultHttpOptionsFromConfig(config));
   }
 
   public getNotificationSettings(config?: RequestConfig): Observable<NotificationSettings> {

@@ -29,7 +29,8 @@ export interface Notification {
   readonly id: NotificationId;
   readonly requestId: NotificationRequestId;
   readonly recipientId: UserId;
-  readonly type: string;
+  readonly type: NotificationType;
+  readonly subject: string;
   readonly text: string;
   readonly info: NotificationInfo;
   readonly originatorType: NotificationOriginatorType;
@@ -44,7 +45,7 @@ export interface NotificationInfo {
 
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
   tenantId?: TenantId;
-  targets: Array<NotificationTargetId>;
+  targets: Array<string>;
   templateId: NotificationTemplateId;
   info?: NotificationInfo;
   deliveryMethods: Array<NotificationDeliveryMethod>;
@@ -53,6 +54,12 @@ export interface NotificationRequest extends Omit<BaseData<NotificationRequestId
   status: NotificationRequestStatus;
   stats: NotificationRequestStats;
   additionalConfig: NotificationRequestConfig;
+}
+
+export interface NotificationRequestPreview {
+  totalRecipientsCount: number;
+  recipientsCountByTarget: { [key in string]: number };
+  processedTemplates: { [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate };
 }
 
 export interface NotificationRequestStats {
@@ -122,7 +129,7 @@ interface CustomerUsersNotificationTargetConfig {
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
   tenantId: TenantId;
-  notificationType: NotificationTemplateType;
+  notificationType: NotificationType;
   configuration: NotificationTemplateConfig;
 }
 
@@ -174,10 +181,24 @@ export enum NotificationDeliveryMethod {
   SLACK = 'SLACK'
 }
 
+export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
+  [NotificationDeliveryMethod.PUSH, 'notification.delivery-method-type.push'],
+  [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
+  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack'],
+]);
+
 export enum NotificationRequestStatus {
-  PROCESSED = 'PROCESSED',
-  SCHEDULED = 'SCHEDULED'
+  PROCESSING = 'PROCESSING',
+  SCHEDULED = 'SCHEDULED',
+  SENT = 'SENT'
 }
+
+export const NotificationRequestStatusTranslateMap = new Map<NotificationRequestStatus, string>([
+  [NotificationRequestStatus.PROCESSING, 'notification.requet-status.processing'],
+  [NotificationRequestStatus.SCHEDULED, 'notification.requet-status.scheduled'],
+  [NotificationRequestStatus.SENT, 'notification.requet-status.sent']
+]);
 
 export enum SlackChanelType {
   DIRECT= 'DIRECT',
@@ -197,7 +218,7 @@ export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTarg
   [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
 ]);
 
-export enum NotificationTemplateType {
+export enum NotificationType {
   GENERAL = 'GENERAL',
   ALARM = 'ALARM'
 }
@@ -207,14 +228,14 @@ interface NotificationTemplateTypeTranslate {
   hint?: string;
 }
 
-export const NotificationTemplateTypeTranslateMap = new Map<NotificationTemplateType, NotificationTemplateTypeTranslate>([
-  [NotificationTemplateType.GENERAL,
+export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, NotificationTemplateTypeTranslate>([
+  [NotificationType.GENERAL,
     {
       name: 'notification.template-type.general',
       hint: 'hint'
     }
   ],
-  [NotificationTemplateType.ALARM,
+  [NotificationType.ALARM,
     {
       name: 'notification.template-type.alarm',
       hint: 'hint'

@@ -34,6 +34,7 @@ export class NotificationCenterComponent extends PageComponent {
   entityType = EntityType;
 
   @ViewChild('matTabGroup', {static: true}) matTabs: MatTabGroup;
+  @ViewChild('notificationRequest', {static: true}) notificationRequestTable: NotificationTableComponent;
   @ViewChildren(NotificationTableComponent) tableComponent: QueryList<NotificationTableComponent>;
 
 
@@ -52,5 +53,9 @@ export class NotificationCenterComponent extends PageComponent {
 
   private get currentTableComponent(): NotificationTableComponent {
     return this.tableComponent.get(this.matTabs.selectedIndex);
+  }
+
+  sendNotification($event: Event) {
+    this.notificationRequestTable.entityTableConfig.onEntityAction({event: $event, action: 'add', entity: null});
   }
 }
