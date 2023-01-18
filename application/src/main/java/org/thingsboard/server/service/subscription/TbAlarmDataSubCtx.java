@@ -211,7 +211,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
-        AlarmInfo alarmInfo = subscriptionUpdate.getAlarmInfo();
+        AlarmInfo alarmInfo = subscriptionUpdate.getAlarm();
         AlarmId alarmId = alarmInfo.getId();
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);

@@ -106,6 +106,7 @@ export interface Alarm extends BaseData<AlarmId> {
 
 export interface AlarmInfo extends Alarm {
   originatorName: string;
+  originatorLabel: string;
   assigneeFirstName: string;
   assigneeLastName: string;
   assigneeEmail: string;
@@ -129,6 +130,7 @@ export const simulatedAlarm: AlarmInfo = {
   clearTs: 0,
   assignTs: 0,
   originatorName: 'Simulated',
+  originatorLabel: 'Simulated',
   assigneeFirstName: "",
   assigneeLastName: "",
   assigneeEmail: "test@example.com",
@@ -193,6 +195,11 @@ export const alarmFields: {[fieldName: string]: AlarmField} = {
     keyName: 'originator',
     value: 'originatorName',
     name: 'alarm.originator'
+  },
+  originatorLabel: {
+    keyName: 'originatorLabel',
+    value: 'originatorLabel',
+    name: 'alarm.originator-label'
   },
   originatorType: {
     keyName: 'originatorType',

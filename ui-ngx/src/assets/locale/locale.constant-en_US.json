@@ -433,6 +433,7 @@
         "type": "Type",
         "severity": "Severity",
         "originator": "Originator",
+        "originator-label": "Originator label",
         "originator-type": "Originator type",
         "assignee-id": "Assignee id",
         "assignee-first-name": "Assignee first name",

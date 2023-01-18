@@ -206,11 +206,7 @@ public class AlarmController extends BaseController {
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
         UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
-        User user = userService.findUserById(getCurrentUser().getTenantId(), assigneeId);
-        checkNotNull(user, "User with id [" + strAssigneeId + "] is not found");
-        if (!getTenantId().equals(user.getTenantId())) {
-            throw new ThingsboardException("User with id [" + strAssigneeId + "] is not found", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
+        checkUserId(assigneeId, Operation.READ);
         return tbAlarmService.assign(alarm, getCurrentUser(), assigneeId);
     }
 

@@ -37,18 +37,18 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private String errorMsg;
     @Getter
-    private AlarmInfo alarmInfo;
+    private AlarmInfo alarm;
     @Getter
     private boolean alarmDeleted;
 
-    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarmInfo) {
-        this(subscriptionId, alarmInfo, false);
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm) {
+        this(subscriptionId, alarm, false);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarmInfo, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
-        this.alarmInfo = alarmInfo;
+        this.alarm = alarm;
         this.alarmDeleted = alarmDeleted;
     }
 
@@ -66,6 +66,7 @@ public class AlarmSubscriptionUpdate {
     @Override
     public String toString() {
         return "AlarmUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg +
-                ", alarmInfo=" + alarmInfo + "]";
+                ", alarm=" + alarm + "]";
     }
 }
+// TODO imbeacon Alarm instead of alarm info
