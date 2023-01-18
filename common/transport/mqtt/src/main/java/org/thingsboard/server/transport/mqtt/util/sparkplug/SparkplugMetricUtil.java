@@ -69,6 +69,7 @@ public class SparkplugMetricUtil {
                 return Optional.of(TransportProtos.KeyValueProto.newBuilder().setKey(key).setType(TransportProtos.KeyValueType.DOUBLE_V)
                         .setDoubleV(protoMetric.getDoubleValue()).build());
             case Int8:
+            case UInt8:
             case Int16:
             case Int32:
             case UInt16:

@@ -113,7 +113,7 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
 
         for (String deviceName: deviceIds) {
             AtomicReference<Device> device = new AtomicReference<>();
-            await(alias + SparkplugMessageType.DBIRTH.name())
+            await(alias + "find device [" + deviceName + "] after crete")
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
                         device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
@@ -121,7 +121,7 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
                     });
             Assert.assertEquals(deviceName, device.get().getName());
             AtomicReference<ListenableFuture<Optional<TsKvEntry>>> finalFuture = new AtomicReference<>();
-            await(alias + SparkplugMessageType.NDEATH.name())
+            await(alias + SparkplugMessageType.DBIRTH.name())
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
                         finalFuture.set(tsService.findLatest(tenantId, device.get().getId(), keys));
@@ -130,9 +130,6 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
             TsKvEntry actualTsKvEntry = finalFuture.get().get().get();
             Assert.assertEquals(expectedTsKvEntryDeviceInt32, actualTsKvEntry);
         }
-
-
-
     }
 
     private MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH(byte[] deathBytes) throws Exception {

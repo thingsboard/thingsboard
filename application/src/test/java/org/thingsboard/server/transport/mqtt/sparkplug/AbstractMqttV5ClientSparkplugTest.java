@@ -15,13 +15,9 @@
  */
 package org.thingsboard.server.transport.mqtt.sparkplug;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
-import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
@@ -29,15 +25,12 @@ import org.junit.Assert;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -47,20 +40,14 @@ import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import static org.awaitility.Awaitility.await;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
 
 /**
  * Created by nickAS21 on 12.01.23
  */
 @Slf4j
-public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttIntegrationTest {
+public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttIntegrationTest {
 
     protected MqttV5TestClient client;
     protected Calendar calendar = Calendar.getInstance();
@@ -85,7 +72,7 @@ public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInt
         processBeforeTest(configProperties);
     }
 
-    public void processClientWithCorrectNodeAccess () throws Exception {
+    public void processClientWithCorrectNodeAccess() throws Exception {
         this.client = new MqttV5TestClient();
         MqttWireMessage response = clientWithCorrectNodeAccessToken(client);
         Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
@@ -106,8 +93,8 @@ public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInt
             case Int32:
             case UInt8:
             case UInt16:
-            case UInt32:
                 return metric.toBuilder().setIntValue(Integer.parseInt(String.valueOf(value))).build();
+            case UInt32:
             case Int64:
             case UInt64:
             case DateTime:
@@ -121,9 +108,9 @@ public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInt
             case String:
             case Text:
             case UUID:
-                return metric.toBuilder().setDatasetValue((SparkplugBProto.Payload.DataSet) value).build();
-            case DataSet:
                 return metric.toBuilder().setStringValue(String.valueOf(value)).build();
+            case DataSet:
+                return metric.toBuilder().setDatasetValue((SparkplugBProto.Payload.DataSet) value).build();
             case Bytes:
             case Int8Array:
                 ByteString byteString = ByteString.copyFrom((byte[]) value);
@@ -255,7 +242,6 @@ public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInt
         }
         return longToByte_ByteBuffer_Method(ll);
     }
-
 
 
     private MqttWireMessage clientWithCorrectNodeAccessToken(MqttV5TestClient client) throws Exception {

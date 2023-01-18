@@ -39,13 +39,18 @@ public class MqttV5ClientSparkplugBTelemetryTest extends AbstractMqttV5ClientSpa
     }
 
     @Test
-    public void testClientWithCorrectAccessTokenCreatedPublishBirthNode() throws Exception {
-        processClientWithCorrectAccessTokenCreatedPublishBirthNode();
+    public void testClientWithCorrectAccessTokenPushDeviceMetricBuildSimple() throws Exception {
+        processClientWithCorrectAccessTokenPushDeviceMetricBuildSimple();
     }
 
     @Test
-    public void testPushTelemetry() throws Exception {
-        processPushTelemetry();
+    public void testClientWithCorrectAccessTokenPublishNBIRTH() throws Exception {
+        processClientWithCorrectAccessTokenPublishNBIRTH();
+    }
+
+    @Test
+    public void testClientWithCorrectAccessTokenPublishNCMDReBirth() throws Exception {
+        processClientWithCorrectAccessTokenPublishNCMDReBirth();
     }
 
 }
