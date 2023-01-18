@@ -155,7 +155,6 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         } else {
             this.propagateRelationTypes = null;
         }
-        this.notificationRuleId = getUuid(alarm.getNotificationRuleId());
     }
 
     public AbstractAlarmEntity(AlarmEntity alarmEntity) {
@@ -178,7 +177,6 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.clearTs = alarmEntity.getClearTs();
         this.details = alarmEntity.getDetails();
         this.propagateRelationTypes = alarmEntity.getPropagateRelationTypes();
-        this.notificationRuleId = alarmEntity.getNotificationRuleId();
     }
 
     protected Alarm toAlarm() {
@@ -207,7 +205,6 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         } else {
             alarm.setPropagateRelationTypes(Collections.emptyList());
         }
-        alarm.setNotificationRuleId(getEntityId(notificationRuleId, NotificationRuleId::new));
         return alarm;
     }
 }

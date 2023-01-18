@@ -19,13 +19,12 @@ import lombok.Data;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Data
 public class NotificationRequestPreview {
 
     private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates;
     private int totalRecipientsCount;
-    private Map<UUID, Integer> recipientsCountByTarget;
+    private Map<String, Integer> recipientsCountByTarget;
 
 }

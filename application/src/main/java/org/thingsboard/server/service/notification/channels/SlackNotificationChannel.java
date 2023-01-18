@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
-import org.thingsboard.server.service.notification.NotificationProcessingContext;
+import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 
 @Component
 @RequiredArgsConstructor

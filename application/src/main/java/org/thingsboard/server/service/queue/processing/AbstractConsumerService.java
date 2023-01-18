@@ -34,6 +34,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.service.notification.rule.NotificationRuleProcessingService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -77,6 +78,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
     protected final ApplicationEventPublisher eventPublisher;
+    protected final NotificationRuleProcessingService notificationRuleProcessingService;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
     protected final Optional<JwtSettingsService> jwtSettingsService;
@@ -86,6 +88,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
                                    TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
                                    PartitionService partitionService, ApplicationEventPublisher eventPublisher,
+                                   NotificationRuleProcessingService notificationRuleProcessingService,
                                    TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
@@ -95,6 +98,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.apiUsageStateService = apiUsageStateService;
         this.partitionService = partitionService;
         this.eventPublisher = eventPublisher;
+        this.notificationRuleProcessingService = notificationRuleProcessingService;
         this.nfConsumer = nfConsumer;
         this.jwtSettingsService = jwtSettingsService;
     }

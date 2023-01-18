@@ -29,7 +29,7 @@ import java.util.Map;
 @JsonSubTypes({
         @Type(name = "USER", value = UserOriginatedNotificationInfo.class),
         @Type(name = "ALARM", value = AlarmOriginatedNotificationInfo.class),
-        @Type(name = "RULE_NODE", value = RuleNodeOriginatedNotificationInfo.class)
+        @Type(name = "RULE_CHAIN", value = RuleEngineOriginatedNotificationInfo.class)
 })
 public interface NotificationInfo {
 

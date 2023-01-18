@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -69,6 +70,11 @@ public class DefaultNotificationService implements NotificationService {
     @Override
     public int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId) {
         return notificationDao.countUnreadByUserId(tenantId, userId);
+    }
+
+    @Override
+    public void updateNotificationsStatusByRequestId(TenantId tenantId, NotificationRequestId requestId, NotificationStatus status) {
+        notificationDao.updateStatusesByRequestId(tenantId, requestId, status);
     }
 
     @Override

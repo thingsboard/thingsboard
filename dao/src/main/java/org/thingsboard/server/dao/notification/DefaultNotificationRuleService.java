@@ -20,18 +20,38 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.notification.cache.NotificationRuleCacheKey;
+import org.thingsboard.server.dao.notification.cache.NotificationRuleCacheValue;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultNotificationRuleService implements NotificationRuleService {
+public class DefaultNotificationRuleService extends AbstractCachedEntityService<NotificationRuleCacheKey, NotificationRuleCacheValue, NotificationRule> implements NotificationRuleService {
 
     private final NotificationRuleDao notificationRuleDao;
 
     @Override
     public NotificationRule saveNotificationRule(TenantId tenantId, NotificationRule notificationRule) {
-        return notificationRuleDao.save(tenantId, notificationRule);
+        boolean created = notificationRule.getId() == null;
+        if (!created) {
+            NotificationRule oldNotificationRule = findNotificationRuleById(tenantId, notificationRule.getId());
+            if (notificationRule.getTriggerType() != oldNotificationRule.getTriggerType()) {
+                throw new IllegalArgumentException("Notification rule trigger type cannot be updated");
+            }
+        }
+        try {
+            notificationRule = notificationRuleDao.saveAndFlush(tenantId, notificationRule);
+            publishEvictEvent(notificationRule);
+        } catch (Exception e) {
+            handleEvictEvent(notificationRule);
+            throw e;
+        }
+        return notificationRule;
     }
 
     @Override
@@ -45,8 +65,31 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
     }
 
     @Override
+    public List<NotificationRule> findNotificationRulesByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType) {
+        NotificationRuleCacheKey cacheKey = NotificationRuleCacheKey.builder()
+                .tenantId(tenantId)
+                .triggerType(triggerType)
+                .build();
+        return cache.getAndPutInTransaction(cacheKey, () -> NotificationRuleCacheValue.builder()
+                        .notificationRules(notificationRuleDao.findByTenantIdAndTriggerType(tenantId, triggerType))
+                        .build(), false)
+                .getNotificationRules();
+    }
+
+    @Override
     public void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
+        NotificationRule notificationRule = findNotificationRuleById(tenantId, id);
+        publishEvictEvent(notificationRule);
         notificationRuleDao.removeById(tenantId, id.getId());
+    }
+
+    @Override
+    public void handleEvictEvent(NotificationRule notificationRule) {
+        NotificationRuleCacheKey cacheKey = NotificationRuleCacheKey.builder()
+                .tenantId(notificationRule.getTenantId())
+                .triggerType(notificationRule.getTriggerType())
+                .build();
+        cache.evict(cacheKey);
     }
 
 }

@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -37,13 +38,16 @@ import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
-import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
-import org.thingsboard.server.common.data.notification.rule.NotificationEscalation;
+import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
+import org.thingsboard.server.common.data.notification.rule.EscalatedNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
-import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -58,14 +62,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
+import static org.assertj.core.api.Assertions.offset;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
@@ -79,40 +85,98 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void testNotificationRuleProcessing() throws Exception {
-        NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL};
-        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, "New alarm", "NEW ALARM ${alarmType}", deliveryMethods);
+    public void testNotificationRuleProcessing_entityActionTrigger() throws Exception {
+        String notificationSubject = "${msgType}: ${originatorType} [${originatorId}]";
+        String notificationText = "User: ${userName}";
+        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.GENERAL, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
 
         NotificationRule notificationRule = new NotificationRule();
-        notificationRule.setTenantId(tenantId);
-        notificationRule.setName("Test rule for my alarms");
+        notificationRule.setName("Push-notification when any device is created, updated or deleted");
         notificationRule.setTemplateId(notificationTemplate.getId());
-        notificationRule.setDeliveryMethods(List.of(deliveryMethods));
-        NotificationRuleConfig config = new NotificationRuleConfig();
+        notificationRule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
 
-        List<NotificationEscalation> escalations = new ArrayList<>();
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        triggerConfig.setEntityType(EntityType.DEVICE);
+        triggerConfig.setCreated(true);
+        triggerConfig.setUpdated(true);
+        triggerConfig.setDeleted(true);
+
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        recipientsConfig.setTargets(List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
+
+        notificationRule.setTriggerConfig(triggerConfig);
+        notificationRule.setRecipientsConfig(recipientsConfig);
+        notificationRule = saveNotificationRule(notificationRule);
+
+        getWsClient().subscribeForUnreadNotifications(10).waitForReply(true);
+
+
+        getWsClient().registerWaitForUpdate();
+        Device device = createDevice("DEVICE!!!", "default", "12345");
+        getWsClient().waitForUpdate(true);
+
+        Notification notification = getWsClient().getLastDataUpdate().getUpdate();
+        assertThat(notification.getSubject()).isEqualTo("ENTITY_CREATED: DEVICE [" + device.getId() + "]");
+        assertThat(notification.getText()).isEqualTo("User: " + TENANT_ADMIN_EMAIL);
+
+
+        getWsClient().registerWaitForUpdate();
+        device.setName("Updated name");
+        device = doPost("/api/device", device, Device.class);
+        getWsClient().waitForUpdate(true);
+
+        notification = getWsClient().getLastDataUpdate().getUpdate();
+        assertThat(notification.getSubject()).isEqualTo("ENTITY_UPDATED: DEVICE [" + device.getId() + "]");
+
+
+        getWsClient().registerWaitForUpdate();
+        doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
+        getWsClient().waitForUpdate(true);
+
+        notification = getWsClient().getLastDataUpdate().getUpdate();
+        assertThat(notification.getSubject()).isEqualTo("ENTITY_DELETED: DEVICE [" + device.getId() + "]");
+        System.err.println(notification);
+    }
+
+    @Test
+    public void testNotificationRuleProcessing_alarmTrigger() throws Exception {
+        String notificationSubject = "Alarm type: ${alarmType}, status: ${alarmStatus}, " +
+                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}";
+        String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
+        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
+
+        NotificationRule notificationRule = new NotificationRule();
+        notificationRule.setName("Push-notification on any alarm");
+        notificationRule.setTemplateId(notificationTemplate.getId());
+        notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
+
+        AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
+        triggerConfig.setAlarmTypes(null);
+        triggerConfig.setAlarmSeverities(null);
+        notificationRule.setTriggerConfig(triggerConfig);
+
+        EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
+        Map<Integer, List<UUID>> escalationTable = new HashMap<>();
+        recipientsConfig.setEscalationTable(escalationTable);
         Map<Integer, NotificationApiWsClient> clients = new HashMap<>();
         for (int delay = 0; delay <= 5; delay++) {
             Pair<User, NotificationApiWsClient> userAndClient = createUserAndConnectWsClient(Authority.TENANT_ADMIN);
             NotificationTarget notificationTarget = createNotificationTarget(userAndClient.getFirst().getId());
-
-            NotificationEscalation escalation = new NotificationEscalation();
-            escalation.setDelayInSec(delay);
-            escalation.setNotificationTargets(List.of(notificationTarget.getId()));
-            escalations.add(escalation);
+            escalationTable.put(delay, List.of(notificationTarget.getUuidId()));
             clients.put(delay, userAndClient.getSecond());
         }
-
-        config.setEscalations(escalations);
-        notificationRule.setConfiguration(config);
+        notificationRule.setRecipientsConfig(recipientsConfig);
         notificationRule = saveNotificationRule(notificationRule);
-        String alarmType = "boolIsTrue";
+
+
+        String alarmType = "myBoolIsTrue";
         DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(notificationRule.getId(), alarmType);
         Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
 
         clients.values().forEach(wsClient -> {
-            wsClient.subscribeForUnreadNotifications(10);
-            wsClient.waitForReply();
+            wsClient.subscribeForUnreadNotifications(10).waitForReply(true);
             wsClient.registerWaitForUpdate();
         });
 
@@ -122,9 +186,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         verify(alarmSubscriptionService, timeout(2000)).createOrUpdateAlarm(argThat(alarm -> alarm.getType().equals(alarmType)));
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
-        assertThat(alarm.getNotificationRuleId()).isEqualTo(notificationRule.getId());
-        long ts = System.currentTimeMillis();
 
+        long ts = System.currentTimeMillis();
         await().atMost(7, TimeUnit.SECONDS)
                 .until(() -> clients.values().stream().allMatch(client -> client.getLastDataUpdate() != null));
         clients.forEach((expectedDelay, wsClient) -> {
@@ -132,27 +195,88 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             double actualDelay = (double) (notification.getCreatedTime() - ts) / 1000;
             assertThat(actualDelay).isCloseTo(expectedDelay, offset(0.5));
 
-            assertThat(notification.getText()).isEqualTo("NEW ALARM " + alarm.getType());
+            AlarmStatus expectedStatus = AlarmStatus.ACTIVE_UNACK;
+            AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
+
+            assertThat(notification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + expectedStatus + ", " +
+                    "severity: " + expectedSeverity + ", deviceId: " + device.getId());
+            assertThat(notification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity);
+
             assertThat(notification.getType()).isEqualTo(NotificationType.ALARM);
-            assertThat(notification.getSubject()).isEqualTo("New alarm");
             assertThat(notification.getInfo()).isInstanceOf(AlarmOriginatedNotificationInfo.class);
             AlarmOriginatedNotificationInfo info = (AlarmOriginatedNotificationInfo) notification.getInfo();
             assertThat(info.getAlarmId()).isEqualTo(alarm.getId());
-            assertThat(info.getAlarmType()).isEqualTo(alarm.getType());
-            assertThat(info.getAlarmSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
-            assertThat(info.getAlarmStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+            assertThat(info.getAlarmType()).isEqualTo(alarmType);
+            assertThat(info.getAlarmSeverity()).isEqualTo(expectedSeverity);
+            assertThat(info.getAlarmStatus()).isEqualTo(expectedStatus);
         });
 
         clients.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
         alarmSubscriptionService.ackAlarm(tenantId, alarm.getId(), System.currentTimeMillis());
+        AlarmStatus expectedStatus = AlarmStatus.ACTIVE_ACK;
+        AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
         clients.values().forEach(wsClient -> {
             wsClient.waitForUpdate(true);
-            Notification updatedNotification = wsClient.getLastDataUpdate().getUpdate();
-            assertThat(((AlarmOriginatedNotificationInfo) updatedNotification.getInfo()).getAlarmStatus())
-                    .isEqualTo(AlarmStatus.ACTIVE_ACK);
+            Notification updatedNotification = wsClient.getLastDataUpdate().getNotifications().stream().findFirst().get();
+            assertThat(updatedNotification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + expectedStatus + ", " +
+                    "severity: " + expectedSeverity + ", deviceId: " + device.getId());
+            assertThat(updatedNotification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity);
 
             wsClient.close();
         });
+
+        // TODO: test clear rule + alarm not escalated
+        // TODO: test severity changes
+    }
+
+    @Test
+    public void testNotificationRuleProcessing_alarmTrigger_clearRule() throws Exception {
+/*
+        String notificationSubject = "New alarm '${alarmType}'";
+        String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
+        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
+
+        NotificationRule notificationRule = new NotificationRule();
+        notificationRule.setName("Push-notification on any alarm");
+        notificationRule.setTemplateId(notificationTemplate.getId());
+        notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
+
+        AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
+        triggerConfig.setAlarmTypes(null);
+        triggerConfig.setAlarmSeverities(null);
+        notificationRule.setTriggerConfig(triggerConfig);
+
+        EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
+        Map<Integer, List<UUID>> escalationTable = new HashMap<>();
+        recipientsConfig.setEscalationTable(escalationTable);
+        Map<Integer, NotificationApiWsClient> clients = new HashMap<>();
+        for (int delay = 0; delay <= 5; delay++) {
+            Pair<User, NotificationApiWsClient> userAndClient = createUserAndConnectWsClient(Authority.TENANT_ADMIN);
+            NotificationTarget notificationTarget = createNotificationTarget(userAndClient.getFirst().getId());
+            escalationTable.put(delay, List.of(notificationTarget.getUuidId()));
+            clients.put(delay, userAndClient.getSecond());
+        }
+        notificationRule.setRecipientsConfig(recipientsConfig);
+        notificationRule = saveNotificationRule(notificationRule);
+
+
+        String alarmType = "myBoolIsTrue";
+        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(notificationRule.getId(), alarmType);
+        Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
+
+        clients.values().forEach(wsClient -> {
+            wsClient.subscribeForUnreadNotifications(10).waitForReply(true);
+            wsClient.registerWaitForUpdate();
+        });
+
+        JsonNode attr = JacksonUtil.newObjectNode()
+                .set("bool", BooleanNode.TRUE);
+        doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
+
+        verify(alarmSubscriptionService, timeout(2000)).createOrUpdateAlarm(argThat(alarm -> alarm.getType().equals(alarmType)));
+        Alarm alarm = alarmSubscri
+*/
     }
 
     private DeviceProfile createDeviceProfileWithAlarmRules(NotificationRuleId notificationRuleId, String alarmType) {

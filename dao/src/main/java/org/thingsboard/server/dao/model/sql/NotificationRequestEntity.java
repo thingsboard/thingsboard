@@ -103,6 +103,21 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setStats(toJson(notificationRequest.getStats()));
     }
 
+    public NotificationRequestEntity(NotificationRequestEntity other) {
+        this.id = other.id;
+        this.createdTime = other.createdTime;
+        this.tenantId = other.tenantId;
+        this.targets = other.targets;
+        this.templateId = other.templateId;
+        this.info = other.info;
+        this.additionalConfig = other.additionalConfig;
+        this.originatorEntityId = other.originatorEntityId;
+        this.originatorEntityType = other.originatorEntityType;
+        this.ruleId = other.ruleId;
+        this.status = other.status;
+        this.stats = other.stats;
+    }
+
     @Override
     public NotificationRequest toData() {
         NotificationRequest notificationRequest = new NotificationRequest();

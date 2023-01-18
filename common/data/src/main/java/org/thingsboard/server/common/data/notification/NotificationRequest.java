@@ -63,6 +63,19 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
 
     private NotificationRequestStats stats;
 
+    public NotificationRequest(NotificationRequest other) {
+        super(other);
+        this.tenantId = other.tenantId;
+        this.targets = other.targets;
+        this.templateId = other.templateId;
+        this.info = other.info;
+        this.additionalConfig = other.additionalConfig;
+        this.originatorEntityId = other.originatorEntityId;
+        this.ruleId = other.ruleId;
+        this.status = other.status;
+        this.stats = other.stats;
+    }
+
     @JsonIgnore
     @Override
     public String getName() {

@@ -16,9 +16,11 @@
 package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
@@ -35,6 +37,8 @@ public interface NotificationService {
     PageData<Notification> findLatestUnreadNotificationsByUserId(TenantId tenantId, UserId userId, int limit);
 
     int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId);
+
+    void updateNotificationsStatusByRequestId(TenantId tenantId, NotificationRequestId requestId, NotificationStatus status);
 
     boolean deleteNotification(TenantId tenantId, UserId userId, NotificationId notificationId);
 

@@ -15,15 +15,19 @@
  */
 package org.thingsboard.server.service.executors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 
 @Component
 public class NotificationExecutorService extends AbstractListeningExecutor {
 
+    @Value("${notification_system.thread_pool_size}")
+    private int notificationSystemExecutorThreadPoolSize;
+
     @Override
     protected int getThreadPollSize() {
-        return 10; // FIXME [viacheslav]
+        return notificationSystemExecutorThreadPoolSize;
     }
 
 }

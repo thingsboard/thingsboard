@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
@@ -92,7 +93,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        log.debug("Processing notification request (tenant id: {}, notification targets: {})", tenantId, notificationRequest.getTargets());
         notificationRequest.setTenantId(tenantId);
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
@@ -120,6 +120,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
         }
 
+        log.debug("Processing notification request (tenant id: {}, notification targets: {})", tenantId, notificationRequest.getTargets());
         notificationRequest.setStatus(NotificationRequestStatus.PROCESSING);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
@@ -283,10 +284,26 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     @Override
+    public NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        log.debug("Updating notification request {}", notificationRequest.getId());
+        notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
+        // marking related notifications as unread: FIXME: causes each subscription to fetch notifications on each request update
+        notificationService.updateNotificationsStatusByRequestId(tenantId, notificationRequest.getId(), NotificationStatus.SENT);
+
+        onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
+                .notificationRequestId(notificationRequest.getId())
+                .notificationInfo(notificationRequest.getInfo())
+                .deleted(false)
+                .build());
+        return notificationRequest;
+    }
+
+    @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
         log.debug("Deleting notification request {}", notificationRequestId);
         NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, notificationRequestId);// TODO: add caching
         notificationRequestService.deleteNotificationRequestById(tenantId, notificationRequestId);
+        // todo: check delivery method ?
         if (notificationRequest.isSent()) {
             onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                     .notificationRequestId(notificationRequestId)
@@ -294,18 +311,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     .build());
         }
         clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
-    }
-
-    @Override
-    public NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        log.debug("Updating notification request {}", notificationRequest.getId());
-        notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
-        onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
-                .notificationRequestId(notificationRequest.getId())
-                .notificationInfo(notificationRequest.getInfo())
-                .deleted(false)
-                .build());
-        return notificationRequest;
     }
 
     private void forwardToNotificationSchedulerService(TenantId tenantId, NotificationRequestId notificationRequestId) {
@@ -331,7 +336,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     private void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update) {
-        // todo: check delivery method
         log.trace("Submitting notification request update: {}", update);
         wsCallBackExecutor.submit(() -> {
             TransportProtos.ToCoreNotificationMsg notificationRequestUpdateProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);

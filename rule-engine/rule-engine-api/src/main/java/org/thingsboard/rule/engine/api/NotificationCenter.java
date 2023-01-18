@@ -25,9 +25,9 @@ public interface NotificationCenter {
 
     NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
-    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
-
     NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
+
+    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 
     void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text);
 

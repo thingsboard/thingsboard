@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification;
+package org.thingsboard.server.common.data.notification;
 
 import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
@@ -91,7 +88,7 @@ public class NotificationProcessingContext {
     }
 
     public  <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
-        if (request.getInfo() != null) {
+        if (request.getInfo() != null && deliveryMethod != NotificationDeliveryMethod.PUSH) { // for push notifications we are processing template from info on each serialization
             templateContext = new HashMap<>(templateContext);
             templateContext.putAll(request.getInfo().getTemplateData());
         }
@@ -105,8 +102,19 @@ public class NotificationProcessingContext {
         return template;
     }
 
-    private <T extends DeliveryMethodNotificationTemplate> String processTemplate(String template, Map<String, String> context) {
-        return TbNodeUtils.processTemplate(template, context);
+    private static String processTemplate(String template, Map<String, String> context) {
+        if (template == null || context.isEmpty()) return template;
+        String result = template;
+        for (Map.Entry<String, String> kv : context.entrySet()) {
+            result = result.replace("${" + kv.getKey() + '}', kv.getValue());
+        }
+        return result;
+    }
+
+    public static String processTemplate(String template, NotificationInfo notificationInfo) {
+        if (notificationInfo == null) return template;
+        Map<String, String> templateContext = notificationInfo.getTemplateData();
+        return processTemplate(template, templateContext);
     }
 
     public Map<String, String> createTemplateContext(User recipient) {

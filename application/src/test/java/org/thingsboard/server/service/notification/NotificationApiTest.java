@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -63,6 +64,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -90,7 +92,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Before
     public void beforeEach() throws Exception {
-        connectWsClient();
+        loginCustomerUser();
+        wsClient = getWsClient();
+        loginTenantAdmin();
     }
 
     @Test
@@ -274,7 +278,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationRequest.setInfo(newNotificationInfo);
         notificationCenter.updateNotificationRequest(tenantId, notificationRequest);
         wsClient.waitForUpdate(true);
-        Notification updatedNotification = wsClient.getLastDataUpdate().getUpdate();
+        Notification updatedNotification = wsClient.getLastDataUpdate().getNotifications().iterator().next();
         assertThat(updatedNotification.getInfo()).isEqualTo(newNotificationInfo);
         assertThat(getMyNotifications(false, 10)).singleElement().isEqualTo(updatedNotification);
     }
@@ -422,8 +426,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationRequest.setAdditionalConfig(new NotificationRequestConfig());
 
         NotificationRequestPreview preview = doPost("/api/notification/request/preview", notificationRequest, NotificationRequestPreview.class);
-        assertThat(preview.getRecipientsCountByTarget().get(target1.getUuidId())).isEqualTo(1);
-        assertThat(preview.getRecipientsCountByTarget().get(target2.getUuidId())).isEqualTo(customerUsersCount);
+        assertThat(preview.getRecipientsCountByTarget().get(target1.getName())).isEqualTo(1);
+        assertThat(preview.getRecipientsCountByTarget().get(target2.getName())).isEqualTo(customerUsersCount);
         assertThat(preview.getTotalRecipientsCount()).isEqualTo(1 + customerUsersCount);
 
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = preview.getProcessedTemplates();
@@ -457,6 +461,21 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                             .startsWith("Message for SLACK")
                             .endsWith(requestorEmail);
                 });
+    }
+
+    @Test
+    public void testNotificationRequestInfo() throws Exception {
+        NotificationDeliveryMethod[] deliveryMethods = new NotificationDeliveryMethod[]{
+                NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL
+        };
+        NotificationTemplate template = createNotificationTemplate(NotificationType.GENERAL, "Test subject", "Test text", deliveryMethods);
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        NotificationRequest request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
+
+        NotificationRequestInfo requestInfo = findNotificationRequests().getData().get(0);
+        assertThat(requestInfo.getId()).isEqualTo(request.getId());
+        assertThat(requestInfo.getTemplateName()).isEqualTo(template.getName());
+        assertThat(requestInfo.getDeliveryMethods()).containsOnly(deliveryMethods);
     }
 
     @Test
@@ -581,6 +600,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(notificationsUpdate.getUpdate()).extracting(Notification::getType).isEqualTo(DEFAULT_NOTIFICATION_TYPE);
         assertThat(notificationsUpdate.getUpdate()).extracting(Notification::getSubject).isEqualTo(DEFAULT_NOTIFICATION_SUBJECT);
         assertThat(notificationsUpdate.getTotalUnreadCount()).isEqualTo(expectedUnreadCount);
+    }
+
+    protected void connectOtherWsClient() throws Exception {
+        loginCustomerUser();
+        otherWsClient = (NotificationApiWsClient) super.getAnotherWsClient();
+        loginTenantAdmin();
     }
 
 }

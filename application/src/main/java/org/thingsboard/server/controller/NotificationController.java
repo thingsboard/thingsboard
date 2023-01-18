@@ -37,9 +37,12 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
@@ -50,12 +53,12 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -147,10 +150,16 @@ public class NotificationController extends BaseController {
                 }));
         preview.setProcessedTemplates(processedTemplates);
 
-        Map<UUID, Integer> recipientsCountByTarget = notificationRequest.getTargets().stream()
-                .collect(Collectors.toMap(id -> id, targetId -> {
-                    return notificationTargetService.countRecipientsForNotificationTarget(user.getTenantId(), new NotificationTargetId(targetId));
-                }));
+        Map<String, Integer> recipientsCountByTarget = new HashMap<>();
+        notificationRequest.getTargets().forEach(targetId -> {
+            NotificationTarget notificationTarget = notificationTargetService.findNotificationTargetById(user.getTenantId(), new NotificationTargetId(targetId));
+            if (notificationTarget == null) {
+                throw new IllegalArgumentException("Notification target with id " + targetId + " not found");
+            }
+
+            int recipientsCount = notificationTargetService.countRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration());
+            recipientsCountByTarget.put(notificationTarget.getName(), recipientsCount);
+        });
         preview.setRecipientsCountByTarget(recipientsCountByTarget);
         preview.setTotalRecipientsCount(recipientsCountByTarget.values().stream().mapToInt(Integer::intValue).sum());
 
@@ -159,21 +168,21 @@ public class NotificationController extends BaseController {
 
     @GetMapping("/notification/request/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationRequest getNotificationRequestById(@PathVariable UUID id) throws ThingsboardException {
+    public NotificationRequestInfo getNotificationRequestById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        return checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestById, Operation.READ);
+        return checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestInfoById, Operation.READ);
     }
 
     @GetMapping("/notification/requests")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public PageData<NotificationRequest> getNotificationRequests(@RequestParam int pageSize,
-                                                                 @RequestParam int page,
-                                                                 @RequestParam(required = false) String textSearch,
-                                                                 @RequestParam(required = false) String sortProperty,
-                                                                 @RequestParam(required = false) String sortOrder,
-                                                                 @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+    public PageData<NotificationRequestInfo> getNotificationRequests(@RequestParam int pageSize,
+                                                                     @RequestParam int page,
+                                                                     @RequestParam(required = false) String textSearch,
+                                                                     @RequestParam(required = false) String sortProperty,
+                                                                     @RequestParam(required = false) String sortOrder,
+                                                                     @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(user.getTenantId(), EntityType.USER, pageLink);
+        return notificationRequestService.findNotificationRequestsInfosByTenantIdAndOriginatorType(user.getTenantId(), EntityType.USER, pageLink);
     }
 
     @DeleteMapping("/notification/request/{id}")

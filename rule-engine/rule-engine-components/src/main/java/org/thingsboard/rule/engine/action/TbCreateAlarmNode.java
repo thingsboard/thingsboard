@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -184,7 +183,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setDetails(details);
             }
             existingAlarm.setEndTs(System.currentTimeMillis());
-            existingAlarm.setNotificationRuleId(config.getNotificationRuleId());
             return ctx.getAlarmService().createOrUpdateAlarm(existingAlarm);
         }, ctx.getDbCallbackExecutor());
 
@@ -206,7 +204,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .startTs(ts)
                 .endTs(ts)
                 .details(details)
-                .notificationRuleId(config.getNotificationRuleId())
                 .build();
     }
 

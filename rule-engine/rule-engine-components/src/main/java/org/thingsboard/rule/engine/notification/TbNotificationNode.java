@@ -24,7 +24,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
-import org.thingsboard.server.common.data.notification.info.RuleNodeOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleEngineOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -50,7 +50,7 @@ public class TbNotificationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        RuleNodeOriginatedNotificationInfo notificationInfo = new RuleNodeOriginatedNotificationInfo();
+        RuleEngineOriginatedNotificationInfo notificationInfo = new RuleEngineOriginatedNotificationInfo();
         notificationInfo.setMsgOriginator(msg.getOriginator());
         notificationInfo.setMsgMetadata(msg.getMetaData().getData());
 
@@ -60,7 +60,7 @@ public class TbNotificationNode implements TbNode {
                 .templateId(config.getTemplateId())
                 .info(notificationInfo)
                 .additionalConfig(new NotificationRequestConfig())
-                .originatorEntityId(ctx.getSelfId())
+                .originatorEntityId(ctx.getSelf().getRuleChainId())
                 .build();
 
         DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() -> {

@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
-import org.thingsboard.server.service.notification.NotificationProcessingContext;
+import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 
 public interface NotificationChannel<T extends DeliveryMethodNotificationTemplate> {
 

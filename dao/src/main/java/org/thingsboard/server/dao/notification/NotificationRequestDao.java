@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
@@ -34,6 +35,8 @@ import java.util.List;
 public interface NotificationRequestDao extends Dao<NotificationRequest> {
 
     PageData<NotificationRequest> findByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink);
+
+    PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink);
 
     List<NotificationRequestId> findIdsByRuleId(TenantId tenantId, NotificationRequestStatus requestStatus, NotificationRuleId ruleId);
 
@@ -48,5 +51,7 @@ public interface NotificationRequestDao extends Dao<NotificationRequest> {
     boolean existsByStatusAndTemplateId(TenantId tenantId, NotificationRequestStatus status, NotificationTemplateId templateId);
 
     int removeAllByCreatedTimeBefore(long ts);
+
+    NotificationRequestInfo findInfoById(TenantId tenantId, NotificationRequestId id);
 
 }

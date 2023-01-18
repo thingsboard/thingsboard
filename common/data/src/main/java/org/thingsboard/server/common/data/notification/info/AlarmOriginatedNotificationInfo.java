@@ -51,6 +51,8 @@ public class AlarmOriginatedNotificationInfo implements NotificationInfo {
         return Map.of(
                 "alarmType", alarmType,
                 "alarmId", alarmId.toString(),
+                "alarmSeverity", alarmSeverity.toString(),
+                "alarmStatus", alarmStatus.toString(),
                 "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
                 "alarmOriginatorId", alarmOriginator.getId().toString()
         );
