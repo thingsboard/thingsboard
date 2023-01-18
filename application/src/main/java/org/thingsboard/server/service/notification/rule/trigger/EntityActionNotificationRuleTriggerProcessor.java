@@ -17,9 +17,15 @@ package org.thingsboard.server.service.notification.rule.trigger;
 
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.UUID;
 
 @Service
 public class EntityActionNotificationRuleTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, EntityActionNotificationRuleTriggerConfig> {
@@ -35,7 +41,7 @@ public class EntityActionNotificationRuleTriggerProcessor implements Notificatio
             if (!triggerConfig.isUpdated()) {
                 return false;
             }
-        } else if (msgType.equals(DataConstants.ENTITY_DELETED)){
+        } else if (msgType.equals(DataConstants.ENTITY_DELETED)) {
             if (!triggerConfig.isDeleted()) {
                 return false;
             }
@@ -43,6 +49,22 @@ public class EntityActionNotificationRuleTriggerProcessor implements Notificatio
             return false;
         }
         return triggerConfig.getEntityType() == null || ruleEngineMsg.getOriginator().getEntityType() == triggerConfig.getEntityType();
+    }
+
+    @Override
+    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, EntityActionNotificationRuleTriggerConfig triggerConfig) {
+        EntityId entityId = ruleEngineMsg.getOriginator();
+        String msgType = ruleEngineMsg.getType();
+        ActionType actionType = msgType.equals(DataConstants.ENTITY_CREATED) ? ActionType.ADDED :
+                                msgType.equals(DataConstants.ENTITY_UPDATED) ? ActionType.UPDATED :
+                                msgType.equals(DataConstants.ENTITY_DELETED) ? ActionType.DELETED : null;
+        return EntityActionNotificationInfo.builder()
+                .entityType(entityId.getEntityType())
+                .entityId(entityId.getId())
+                .actionType(actionType)
+                .userId(UUID.fromString(ruleEngineMsg.getMetaData().getValue("userId")))
+                .userName(ruleEngineMsg.getMetaData().getValue("userName"))
+                .build();
     }
 
     @Override

@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
@@ -129,7 +129,7 @@ public class NotificationProcessingContext {
         CustomerId customerId;
         switch (request.getOriginatorEntityId().getEntityType()) {
             case ALARM:
-                customerId = ((AlarmOriginatedNotificationInfo) request.getInfo()).getCustomerId();
+                customerId = ((AlarmNotificationInfo) request.getInfo()).getCustomerId();
                 break;
             default:
                 customerId = null;

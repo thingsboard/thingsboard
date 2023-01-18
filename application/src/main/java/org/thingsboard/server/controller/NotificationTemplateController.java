@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -104,9 +105,14 @@ public class NotificationTemplateController extends BaseController {
                                                                    @RequestParam(required = false) String textSearch,
                                                                    @RequestParam(required = false) String sortProperty,
                                                                    @RequestParam(required = false) String sortOrder,
+                                                                   @RequestParam(required = false) NotificationType[] notificationTypes,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationTemplateService.findNotificationTemplatesByTenantId(user.getTenantId(), pageLink);
+        if (notificationTypes == null || notificationTypes.length == 0) {
+            notificationTypes = NotificationType.values();
+        }
+        return notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(user.getTenantId(),
+                List.of(notificationTypes), pageLink);
     }
 
     @ApiOperation(value = "Delete notification template by id (deleteNotificationTemplateById",

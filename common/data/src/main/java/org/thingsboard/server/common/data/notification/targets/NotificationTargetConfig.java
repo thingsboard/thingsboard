@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -33,6 +34,7 @@ public abstract class NotificationTargetConfig {
 
     private String description;
 
+    @JsonIgnore
     public abstract NotificationTargetConfigType getType();
 
 }

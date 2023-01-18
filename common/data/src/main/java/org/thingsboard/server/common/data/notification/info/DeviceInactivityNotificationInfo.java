@@ -15,25 +15,37 @@
  */
 package org.thingsboard.server.common.data.notification.info;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
-public class UserOriginatedNotificationInfo implements NotificationInfo {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DeviceInactivityNotificationInfo implements NotificationInfo {
 
-    private String description;
+    private UUID deviceId;
+    private String deviceName;
+    private String deviceType;
 
     @Override
     public EntityType getOriginatorType() {
-        return EntityType.USER;
+        return EntityType.DEVICE;
     }
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
+        return Map.of(
+                "deviceId", deviceId.toString(),
+                "deviceName", deviceName,
+                "deviceType", deviceType
+        );
     }
 
 }

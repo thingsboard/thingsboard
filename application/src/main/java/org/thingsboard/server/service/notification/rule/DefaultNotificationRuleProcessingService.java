@@ -34,9 +34,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
-import org.thingsboard.server.common.data.notification.info.RuleEngineOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
@@ -53,7 +51,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -85,48 +82,30 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             return;
         }
 
-        processTrigger(tenantId, triggerType, ruleEngineMsg.getOriginator(), ruleEngineMsg, false, () -> {
-            return RuleEngineOriginatedNotificationInfo.builder()
-                    .msgOriginator(ruleEngineMsg.getOriginator())
-                    .msgType(ruleEngineMsg.getType())
-                    .msgMetadata(ruleEngineMsg.getMetaData().getData())
-                    .build();
-        });
+        processTrigger(tenantId, triggerType, ruleEngineMsg.getOriginator(), ruleEngineMsg, false);
     }
 
     @Override
     public void process(TenantId tenantId, Alarm alarm, boolean deleted) {
-        processTrigger(tenantId, NotificationRuleTriggerType.ALARM, alarm.getId(), alarm, deleted, () -> {
-            // TODO: add info about assignee
-            return AlarmOriginatedNotificationInfo.builder()
-                    .alarmId(alarm.getId())
-                    .alarmType(alarm.getType())
-                    .alarmOriginator(alarm.getOriginator())
-                    .alarmSeverity(alarm.getSeverity())
-                    .alarmStatus(alarm.getStatus())
-                    .customerId(alarm.getCustomerId())
-                    .build();
-        });
+        processTrigger(tenantId, NotificationRuleTriggerType.ALARM, alarm.getId(), alarm, deleted);
     }
 
     private void processTrigger(TenantId tenantId, NotificationRuleTriggerType triggerType, EntityId originatorEntityId,
-                                Object triggerObject, boolean triggerRemoved,
-                                Supplier<NotificationInfo> notificationInfoProvider) {
+                                Object triggerObject, boolean triggerRemoved) {
         ListenableFuture<List<NotificationRule>> rulesFuture = dbCallbackExecutor.submit(() -> {
             return notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
         });
         DonAsynchron.withCallback(rulesFuture, rules -> {
             for (NotificationRule rule : rules) {
                 notificationExecutor.submit(() -> {
-                    processNotificationRule(rule, originatorEntityId, triggerObject, triggerRemoved, notificationInfoProvider);
+                    processNotificationRule(rule, originatorEntityId, triggerObject, triggerRemoved);
                 });
             }
         }, e -> {});
     }
 
     private <T> void processNotificationRule(NotificationRule rule, EntityId originatorEntityId,
-                                             T triggerObject, boolean triggerRemoved,
-                                             Supplier<NotificationInfo> notificationInfoProvider) {
+                                             T triggerObject, boolean triggerRemoved) {
         NotificationRuleTriggerConfig triggerConfig = rule.getTriggerConfig();
         log.debug("Processing notification rule '{}' for trigger type {}", rule.getName(), rule.getTriggerType());
 
@@ -149,7 +128,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                     // not returning because we need to update notifications if any
                 }
 
-                NotificationInfo notificationInfo = notificationInfoProvider.get();
+                NotificationInfo notificationInfo = constructNotificationInfo(triggerObject, triggerConfig);
                 for (NotificationRequest notificationRequest : notificationRequests) {
                     NotificationInfo previousNotificationInfo = notificationRequest.getInfo();
                     if (!notificationInfo.equals(previousNotificationInfo)) {
@@ -168,7 +147,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             return;
         }
 
-        NotificationInfo notificationInfo = notificationInfoProvider.get();
+        NotificationInfo notificationInfo = constructNotificationInfo(triggerObject, triggerConfig);
         rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
             notificationExecutor.submit(() -> {
                 try {
@@ -187,6 +166,10 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
     private boolean matchesClearRule(Object triggerObject, NotificationRuleTriggerConfig triggerConfig) {
         return triggerProcessors.get(triggerConfig.getTriggerType()).matchesClearRule(triggerObject, triggerConfig);
+    }
+
+    private NotificationInfo constructNotificationInfo(Object triggerObject, NotificationRuleTriggerConfig triggerConfig) {
+        return triggerProcessors.get(triggerConfig.getTriggerType()).constructNotificationInfo(triggerObject, triggerConfig);
     }
 
     private void submitNotificationRequest(List<UUID> targets, NotificationRule rule,

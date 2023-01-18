@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
-import org.thingsboard.server.common.data.notification.info.AlarmOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.EscalatedNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
@@ -86,7 +86,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationRuleProcessing_entityActionTrigger() throws Exception {
-        String notificationSubject = "${msgType}: ${originatorType} [${originatorId}]";
+        String notificationSubject = "${actionType}: ${entityType} [${entityId}]";
         String notificationText = "User: ${userName}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.GENERAL, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
 
@@ -117,7 +117,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().waitForUpdate(true);
 
         Notification notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("ENTITY_CREATED: DEVICE [" + device.getId() + "]");
+        assertThat(notification.getSubject()).isEqualTo("ADDED: DEVICE [" + device.getId() + "]");
         assertThat(notification.getText()).isEqualTo("User: " + TENANT_ADMIN_EMAIL);
 
 
@@ -127,7 +127,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().waitForUpdate(true);
 
         notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("ENTITY_UPDATED: DEVICE [" + device.getId() + "]");
+        assertThat(notification.getSubject()).isEqualTo("UPDATED: DEVICE [" + device.getId() + "]");
 
 
         getWsClient().registerWaitForUpdate();
@@ -135,8 +135,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().waitForUpdate(true);
 
         notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("ENTITY_DELETED: DEVICE [" + device.getId() + "]");
-        System.err.println(notification);
+        assertThat(notification.getSubject()).isEqualTo("DELETED: DEVICE [" + device.getId() + "]");
     }
 
     @Test
@@ -203,9 +202,9 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             assertThat(notification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity);
 
             assertThat(notification.getType()).isEqualTo(NotificationType.ALARM);
-            assertThat(notification.getInfo()).isInstanceOf(AlarmOriginatedNotificationInfo.class);
-            AlarmOriginatedNotificationInfo info = (AlarmOriginatedNotificationInfo) notification.getInfo();
-            assertThat(info.getAlarmId()).isEqualTo(alarm.getId());
+            assertThat(notification.getInfo()).isInstanceOf(AlarmNotificationInfo.class);
+            AlarmNotificationInfo info = (AlarmNotificationInfo) notification.getInfo();
+            assertThat(info.getAlarmId()).isEqualTo(alarm.getUuidId());
             assertThat(info.getAlarmType()).isEqualTo(alarmType);
             assertThat(info.getAlarmSeverity()).isEqualTo(expectedSeverity);
             assertThat(info.getAlarmStatus()).isEqualTo(expectedStatus);

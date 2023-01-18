@@ -16,13 +16,16 @@
 package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.List;
+
 public interface NotificationTemplateDao extends Dao<NotificationTemplate> {
 
-    PageData<NotificationTemplate> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<NotificationTemplate> findByTenantIdAndNotificationTypesAndPageLink(TenantId tenantId, List<NotificationType> notificationTypes, PageLink pageLink);
 
 }

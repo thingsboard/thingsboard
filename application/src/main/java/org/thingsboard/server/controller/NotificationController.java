@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -77,6 +78,54 @@ public class NotificationController extends BaseController {
     private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
 
+    @ApiOperation(value = "Get notifications (getNotifications)",
+            notes = "**WebSocket API**:\n\n" +
+                    "There are 2 types of subscriptions: one for unread notifications count, another for unread notifications themselves.\n\n" +
+                    "The URI for opening WS session for notifications: `/api/ws/plugins/notifications`.\n\n" +
+                    "Subscription command for unread notifications count:\n" +
+                    "```\n{\n  \"unreadCountSubCmd\": {\n    \"cmdId\": 1234\n  }\n}\n```\n" +
+                    "To subscribe for latest unread notifications:\n" +
+                    "```\n{\n  \"unreadSubCmd\": {\n    \"cmdId\": 1234,\n    \"limit\": 10\n  }\n}\n```\n" +
+                    "To unsubscribe from any subscription:\n" +
+                    "```\n{\n  \"unsubCmd\": {\n    \"cmdId\": 1234\n  }\n}\n```\n" +
+                    "To mark certain notifications as read, use following command:\n" +
+                    "```\n{\n  \"markAsReadCmd\": {\n    \"cmdId\": 1234,\n    \"notifications\": [\n      \"6f860330-7fc2-11ed-b855-7dd3b7d2faa9\",\n      \"5b6dfee0-8d0d-11ed-b61f-35a57b03dade\"\n    ]\n  }\n}\n\n```\n" +
+                    "\n\n" +
+                    "Update structure for unread **notifications count subscription**:\n" +
+                    "```\n{\n  \"cmdId\": 1234,\n  \"totalUnreadCount\": 55\n}\n```\n" +
+                    "For **notifications subscription**:\n" +
+                    "- full update of latest unread notifications:\n" +
+                    "```\n{\n" +
+                    "  \"cmdId\": 1234,\n" +
+                    "  \"notifications\": [\n" +
+                    "    {\n" +
+                    "      \"id\": {\n" +
+                    "        \"entityType\": \"NOTIFICATION\",\n" +
+                    "        \"id\": \"6f860330-7fc2-11ed-b855-7dd3b7d2faa9\"\n" +
+                    "      },\n" +
+                    "      ...\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"totalUnreadCount\": 1\n" +
+                    "}\n```\n" +
+                    "- when new notification arrives or shown notification is updated:\n" +
+                    "```\n{\n" +
+                    "  \"cmdId\": 1234,\n" +
+                    "  \"update\": {\n" +
+                    "    \"id\": {\n" +
+                    "      \"entityType\": \"NOTIFICATION\",\n" +
+                    "      \"id\": \"6f860330-7fc2-11ed-b855-7dd3b7d2faa9\"\n" +
+                    "    },\n" +
+                    "    # updated notification info, text, subject etc.\n" +
+                    "    ...\n" +
+                    "  },\n" +
+                    "  \"totalUnreadCount\": 2\n" +
+                    "}\n```\n" +
+                    "- when unread notifications count changes:\n" +
+                    "```\n{\n" +
+                    "  \"cmdId\": 1234,\n" +
+                    "  \"totalUnreadCount\": 5\n" +
+                    "}\n```" )
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public PageData<Notification> getNotifications(@RequestParam int pageSize,

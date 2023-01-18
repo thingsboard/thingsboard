@@ -22,20 +22,20 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AlarmOriginatedNotificationInfo implements NotificationInfo {
+public class AlarmNotificationInfo implements NotificationInfo {
 
-    private AlarmId alarmId;
     private String alarmType;
+    private UUID alarmId;
     private EntityId alarmOriginator;
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
