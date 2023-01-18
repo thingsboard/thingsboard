@@ -193,8 +193,10 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void doSync(EdgeSyncCursor cursor) {
         if (cursor.hasNext()) {
-            log.info("[{}][{}] starting sync process, cursor current idx = {}", edge.getTenantId(), edge.getId(), cursor.getCurrentIdx());
-            ListenableFuture<UUID> uuidListenableFuture = startProcessingEdgeEvents(cursor.getNext());
+            EdgeEventFetcher next = cursor.getNext();
+            log.info("[{}][{}] starting sync process, cursor current idx = {}, class = {}",
+                    edge.getTenantId(), edge.getId(), cursor.getCurrentIdx(), next.getClass().getSimpleName());
+            ListenableFuture<UUID> uuidListenableFuture = startProcessingEdgeEvents(next);
             Futures.addCallback(uuidListenableFuture, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable UUID result) {

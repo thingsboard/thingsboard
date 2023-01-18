@@ -50,6 +50,7 @@ import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
@@ -57,6 +58,10 @@ import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
+import java.io.File;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,7 +97,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         }
     }
 
-   @Before
+    @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
 
@@ -327,7 +332,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String customerIdStr = customerId.getId().toString();
 
         String msgError = msgErrorNoFound("Customer", customerIdStr);
-        doPost("/api/customer/" + customerIdStr+ "/edge/" + savedEdge.getId().getId().toString())
+        doPost("/api/customer/" + customerIdStr + "/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgError)));
 
@@ -820,7 +825,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(19);
+        edgeImitator.expectMessageAmount(20);
         edgeImitator.connect();
         assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
 
@@ -833,9 +838,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.findAllMessagesByType(AssetUpdateMsg.class)).as("two msgs - one during sync process, and one more once asset assigned to edge").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("one msg during sync process for tenant admin user").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update").hasSize(4);
+        assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
         verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
-        edgeImitator.expectMessageAmount(14);
+        edgeImitator.expectMessageAmount(15);
         doPost("/api/edge/sync/" + edge.getId());
         assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
 
@@ -848,6 +854,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("user update msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update msg").hasSize(4);
         assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("asset update msg").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
         verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
         edgeImitator.allowIgnoredTypes();
@@ -885,5 +892,14 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private Edge savedEdge(String name) {
         Edge edge = constructEdge(name, "default");
         return doPost("/api/edge", edge, Edge.class);
+    }
+
+    @Test
+    public void testGetEdgeInstallInstructions() throws Exception {
+        Edge edge = constructEdge(tenantId, "Edge for Test Docker Install Instructions", "default", "7390c3a6-69b0-9910-d155-b90aca4b772e", "l7q4zsjplzwhk16geqxy");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+        String installInstructions = doGet("/api/edge/instructions/" + savedEdge.getId().getId().toString(), String.class);
+        Assert.assertTrue(installInstructions.contains("l7q4zsjplzwhk16geqxy"));
+        Assert.assertTrue(installInstructions.contains("7390c3a6-69b0-9910-d155-b90aca4b772e"));
     }
 }

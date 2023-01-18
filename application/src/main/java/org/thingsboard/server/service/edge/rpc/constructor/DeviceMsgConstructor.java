@@ -66,6 +66,10 @@ public class DeviceMsgConstructor {
             builder.setFirmwareIdMSB(device.getFirmwareId().getId().getMostSignificantBits())
                     .setFirmwareIdLSB(device.getFirmwareId().getId().getLeastSignificantBits());
         }
+        if (device.getSoftwareId() != null) {
+            builder.setSoftwareIdMSB(device.getSoftwareId().getId().getMostSignificantBits())
+                    .setSoftwareIdLSB(device.getSoftwareId().getId().getLeastSignificantBits());
+        }
         if (conflictName != null) {
             builder.setConflictName(conflictName);
         }

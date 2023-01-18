@@ -132,8 +132,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 return Futures.immediateFuture(null);
             case UNRECOGNIZED:
             default:
-                log.error("Unsupported msg type {}", deviceUpdateMsg.getMsgType());
-                return Futures.immediateFailedFuture(new RuntimeException("Unsupported msg type " + deviceUpdateMsg.getMsgType()));
+                return handleUnsupportedMsgType(deviceUpdateMsg.getMsgType());
         }
     }
 
@@ -246,11 +245,9 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             if (deviceDataOpt.isPresent()) {
                 device.setDeviceData(deviceDataOpt.get());
             }
+            deviceValidator.validate(device, Device::getTenantId);
             if (created) {
-                deviceValidator.validate(device, Device::getTenantId);
                 device.setId(deviceId);
-            } else {
-                deviceValidator.validate(device, Device::getTenantId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);
             tbClusterService.onDeviceUpdated(savedDevice, created ? null : device, false);

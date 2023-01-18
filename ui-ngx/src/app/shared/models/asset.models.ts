@@ -35,6 +35,7 @@ export interface AssetProfile extends BaseData<AssetProfileId>, ExportableEntity
   defaultRuleChainId?: RuleChainId;
   defaultDashboardId?: DashboardId;
   defaultQueueName?: string;
+  defaultEdgeRuleChainId?: RuleChainId;
 }
 
 export interface AssetProfileInfo extends EntityInfoData {

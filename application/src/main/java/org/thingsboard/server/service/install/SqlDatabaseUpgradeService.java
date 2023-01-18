@@ -680,10 +680,29 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "3.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.3", SCHEMA_UPDATE_SQL);
-                    loadSql(schemaUpdateFile, conn);
-                    log.info("Updating schema settings...");
-                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004004;");
+                    if (isOldSchema(conn, 3004002)) {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.3", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
+
+                        try {
+                            conn.createStatement().execute("ALTER TABLE asset_profile ADD COLUMN default_edge_rule_chain_id uuid"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE device_profile ADD COLUMN default_edge_rule_chain_id uuid"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE asset_profile ADD CONSTRAINT fk_default_edge_rule_chain_asset_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE device_profile ADD CONSTRAINT fk_default_edge_rule_chain_device_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        } catch (Exception e) {
+                        }
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005000;");
+                    }
                     log.info("Schema updated.");
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);
