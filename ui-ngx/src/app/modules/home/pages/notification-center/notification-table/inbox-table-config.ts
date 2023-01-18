@@ -110,7 +110,8 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
           }
         );
       } else {
-        this.updateData();
+        entity.status = NotificationStatus.READ;
+        this.getTable().detectChanges();
       }
     });
   }

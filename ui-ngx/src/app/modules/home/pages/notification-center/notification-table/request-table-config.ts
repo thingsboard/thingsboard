@@ -21,7 +21,9 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import {
+  NotificationDeliveryMethodTranslateMap,
   NotificationRequest,
+  NotificationRequestInfo,
   NotificationRequestStatus,
   NotificationRequestStatusTranslateMap,
   NotificationTemplate
@@ -37,8 +39,9 @@ import {
   RequestNotificationDialogComponent,
   RequestNotificationDialogData
 } from '@home/pages/notification-center/request-table/request-notification-dialog.componet';
+import { PageLink } from '@shared/models/page/page-link';
 
-export class RequestTableConfig extends EntityTableConfig<NotificationRequest> {
+export class RequestTableConfig extends EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> {
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
@@ -66,16 +69,18 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest> {
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.columns.push(
-      new DateEntityTableColumn<NotificationRequest>('createdTime', 'notification.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<NotificationRequest>('status', 'notification.status', '100%',
+      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '150px'),
+      new EntityTableColumn<NotificationRequestInfo>('status', 'notification.status', '15%',
         request => this.requestStatus(request.status), request => this.requestStatusStyle(request.status)),
-      // new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '20%',
-      //   (request) => request.deliveryMethods.toString(),
-      //   () => ({}), false)
+      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '35%',
+        (request) => request.deliveryMethods
+          .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodTranslateMap.get(deliveryMethod))).join(', '),
+        () => ({}), false),
+      new EntityTableColumn<NotificationRequest>('templateName', 'notification.template', '50%')
     );
   }
 
-  private configureCellActions(): Array<CellActionDescriptor<NotificationRequest>> {
+  private configureCellActions(): Array<CellActionDescriptor<NotificationRequestInfo>> {
     return [];
   }
 

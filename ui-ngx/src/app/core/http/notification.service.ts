@@ -23,6 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import {
   Notification,
   NotificationRequest,
+  NotificationRequestInfo,
   NotificationRequestPreview,
   NotificationRule,
   NotificationSettings,
@@ -69,8 +70,8 @@ export class NotificationService {
                                                        notification, defaultHttpOptionsFromConfig(config));
   }
 
-  public getNotificationRequests(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationRequest>> {
-    return this.http.get<PageData<NotificationRequest>>(`/api/notification/requests${pageLink.toQuery()}`,
+  public getNotificationRequests(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationRequestInfo>> {
+    return this.http.get<PageData<NotificationRequestInfo>>(`/api/notification/requests${pageLink.toQuery()}`,
                                                         defaultHttpOptionsFromConfig(config));
   }
 

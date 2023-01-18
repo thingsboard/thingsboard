@@ -56,6 +56,11 @@ export interface NotificationRequest extends Omit<BaseData<NotificationRequestId
   additionalConfig: NotificationRequestConfig;
 }
 
+export interface NotificationRequestInfo extends NotificationRequest {
+  templateName: string;
+  deliveryMethods: NotificationDeliveryMethod[];
+}
+
 export interface NotificationRequestPreview {
   totalRecipientsCount: number;
   recipientsCountByTarget: { [key in string]: number };

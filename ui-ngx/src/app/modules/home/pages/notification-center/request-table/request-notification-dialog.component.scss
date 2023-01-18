@@ -32,6 +32,25 @@
       font-weight: 500;
       letter-spacing: .25px;
     }
+
+    &> div:not(:last-child) {
+      margin-bottom: 12px;
+    }
+
+    .details-recipient {
+      font-size: 14px;
+      line-height: 14px;
+      letter-spacing: .2px;
+
+      .number {
+        font-weight: 500;
+        margin-right: 4px;
+      }
+
+      &:not(:last-of-type) {
+        margin-bottom: 8px;
+      }
+    }
   }
 
   @media #{$mat-gt-xs} {

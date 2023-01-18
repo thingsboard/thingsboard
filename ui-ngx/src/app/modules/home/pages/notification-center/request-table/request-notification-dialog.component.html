@@ -62,6 +62,11 @@
             <mat-icon>supervisor_account</mat-icon>
             <div class="total-recipients">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
           </div>
+          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value.length">
+            <div *ngFor="let detail of preview.recipientsCountByTarget | keyvalue" class="details-recipient">
+              <span class="number">{{ detail.value }}</span>{{ detail.key }}
+            </div>
+          </div>
         </section>
       </div>
     </mat-step>
