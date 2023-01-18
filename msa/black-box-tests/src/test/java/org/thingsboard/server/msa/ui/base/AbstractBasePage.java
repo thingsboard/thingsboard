@@ -146,6 +146,9 @@ abstract public class AbstractBasePage {
     public void enterText(WebElement element, CharSequence keysToEnter) {
         element.click();
         element.sendKeys(keysToEnter);
+        if (element.getAttribute("value").isEmpty()) {
+            element.sendKeys(keysToEnter);
+        }
     }
 
     public void scrollToElement(WebElement element) {
