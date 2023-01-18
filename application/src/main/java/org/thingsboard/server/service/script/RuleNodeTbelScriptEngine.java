@@ -124,7 +124,7 @@ public class RuleNodeTbelScriptEngine extends RuleNodeScriptEngine<TbelInvokeSer
     protected Object[] prepareArgs(TbMsg msg) {
         Object[] args = new Object[3];
         if (msg.getData() != null) {
-            args[0] = JacksonUtil.fromString(msg.getData(), Map.class);
+            args[0] = JacksonUtil.fromString(msg.getData(), Object.class);
         } else {
             args[0] = new HashMap<>();
         }
