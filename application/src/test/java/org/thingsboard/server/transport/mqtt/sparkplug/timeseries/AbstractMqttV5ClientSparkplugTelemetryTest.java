@@ -15,40 +15,15 @@
  */
 package org.thingsboard.server.transport.mqtt.sparkplug.timeseries;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.mqttv5.client.IMqttToken;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
-import org.eclipse.paho.mqttv5.common.MqttMessage;
-import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
-import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
-import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
-import org.junit.Assert;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
-import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSparkplugTest;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.awaitility.Awaitility.await;
-import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
 
 /**
@@ -59,6 +34,37 @@ public  abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstra
 
     protected void processPushTelemetry() throws Exception {
         processClientWithCorrectNodeAccess();
+
+    }
+
+    protected void processClientWithCorrectAccessTokenCreatedPublishBirthNode() throws Exception {
+        processClientWithCorrectNodeAccess();
+        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(calendar.getTimeInMillis());
+
+        long ts = calendar.getTimeInMillis()-PUBLISH_TS_DELTA_MS;
+        long valueBdSec = getBdSeqNum();
+        MetricDataType metricDataType = Int64;
+        TsKvEntry tsKvEntryBdSecOriginal = new BasicTsKvEntry(ts, new LongDataEntry(keysBdSeq, valueBdSec));
+        payloadBirthNode.addMetrics(createMetric(tsKvEntryBdSecOriginal, metricDataType));
+
+        String keys  = "Node Control/Rebirth";
+        boolean valueRebirth = false;
+        metricDataType = MetricDataType.Boolean;
+        TsKvEntry expectedSsKvEntryRebirth = new BasicTsKvEntry(ts, new BooleanDataEntry(keys, valueRebirth));
+        payloadBirthNode.addMetrics(createMetric(expectedSsKvEntryRebirth , metricDataType));
+
+        keys  = "Node Metric int32";
+        int valueNodeInt32 = 1024;
+        metricDataType = MetricDataType.Boolean;
+        TsKvEntry expectedSsKvEntryNodeInt32 = new BasicTsKvEntry(ts, new LongDataEntry(keys, Integer.toUnsignedLong(valueNodeInt32)));
+        payloadBirthNode.addMetrics(createMetric(expectedSsKvEntryNodeInt32 , metricDataType));
+
+        client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+                payloadBirthNode.build().toByteArray(), 0, false);
+
+
+
 
     }
 

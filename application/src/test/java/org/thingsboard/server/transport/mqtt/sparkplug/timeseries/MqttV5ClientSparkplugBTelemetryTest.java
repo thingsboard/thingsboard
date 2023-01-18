@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.mqtt.sparkplug.connection.AbstractMqttV5ClientSparkplugConnectionTest;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -37,6 +36,11 @@ public class MqttV5ClientSparkplugBTelemetryTest extends AbstractMqttV5ClientSpa
     public void afterTest () throws MqttException {
         if (client.isConnected()) {
             client.disconnect();        }
+    }
+
+    @Test
+    public void testClientWithCorrectAccessTokenCreatedPublishBirthNode() throws Exception {
+        processClientWithCorrectAccessTokenCreatedPublishBirthNode();
     }
 
     @Test

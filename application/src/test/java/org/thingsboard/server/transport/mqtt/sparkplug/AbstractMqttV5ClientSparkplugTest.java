@@ -69,6 +69,8 @@ public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInt
     protected static final String groupId = "SparkplugBGroupId";
     protected static final String edgeNode = "SparkpluBNode";
     protected static final String keysBdSeq = "bdSeq";
+    protected static final String alias = "Failed Post Telemetry node proto payload. SparkplugMessageType ";
+    protected String deviceId = "Test Sparkplug B Device";
     protected int bdSeq = 0;
     protected int seq = 0;
     protected static final long PUBLISH_TS_DELTA_MS = 86400000;// Publish start TS <-> 24h
@@ -259,6 +261,20 @@ public  abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInt
     private MqttWireMessage clientWithCorrectNodeAccessToken(MqttV5TestClient client) throws Exception {
         IMqttToken connectionResult = client.connectAndWait(gatewayAccessToken);
         return connectionResult.getResponse();
+    }
+
+    protected long getBdSeqNum() throws Exception {
+        if (bdSeq == 256) {
+            bdSeq = 0;
+        }
+        return bdSeq++;
+    }
+
+    protected long getSeqNum() throws Exception {
+        if (seq == 256) {
+            seq = 0;
+        }
+        return seq++;
     }
 
 }
