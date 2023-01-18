@@ -20,7 +20,7 @@ import {
   CircleData,
   defaultImageMapProviderSettings,
   MapImage,
-  PosFuncton,
+  PosFunction,
   WidgetUnitedMapSettings
 } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
@@ -30,7 +30,7 @@ import {
   calculateNewPointCoordinate
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
@@ -45,11 +45,12 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
     imageUrl: string;
-    posFunction: PosFuncton;
+    posFunction: PosFunction;
 
     constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
-        this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as PosFuncton;
+        this.posFunction = parseFunction(options.posFunction,
+          ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']) as PosFunction;
         this.mapImage(options).subscribe((mapImage) => {
           this.imageUrl = mapImage.imageUrl;
           this.aspect = mapImage.aspect;
@@ -248,16 +249,32 @@ export class ImageMap extends LeafletMap {
       }
     }
 
-    convertPosition(expression): L.LatLng {
-      const xPos = expression[this.options.xPosKeyName];
-      const yPos = expression[this.options.yPosKeyName];
+    extractPosition(data: FormattedData): {x: number, y: number} {
+      if (!data) {
+        return null;
+      }
+      const xPos = data[this.options.xPosKeyName];
+      const yPos = data[this.options.yPosKeyName];
       if (!isDefinedAndNotNull(xPos) || isEmptyStr(xPos) || isNaN(xPos) || !isDefinedAndNotNull(yPos) || isEmptyStr(yPos) || isNaN(yPos)) {
         return null;
       }
-      Object.assign(expression, this.posFunction(xPos, yPos));
+      return {x: xPos, y: yPos};
+    }
+
+    positionToLatLng(position: {x: number, y: number}): L.LatLng {
       return this.pointToLatLng(
-        expression.x * this.width,
-        expression.y * this.height);
+        position.x * this.width,
+        position.y * this.height);
+    }
+
+    convertPosition(data, dsData: FormattedData[]): L.LatLng {
+      const position = this.extractPosition(data);
+      if (position) {
+        const converted = this.posFunction(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
+        return this.positionToLatLng(converted);
+      } else {
+        return null;
+      }
     }
 
     convertPositionPolygon(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]){
