@@ -13,61 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor;
+package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
 @Slf4j
 @TbCoreComponent
-public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
+public class DeviceProfileEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertEntityViewEventToDownlink(EdgeEvent edgeEvent) {
-        EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
+    public DownlinkMsg convertDeviceProfileEventToDownlink(EdgeEvent edgeEvent) {
+        DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
-            case ASSIGNED_TO_EDGE:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
-                EntityView entityView = entityViewService.findEntityViewById(edgeEvent.getTenantId(), entityViewId);
-                if (entityView != null) {
+                DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
+                if (deviceProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    EntityViewUpdateMsg entityViewUpdateMsg =
-                            entityViewMsgConstructor.constructEntityViewUpdatedMsg(msgType, entityView);
+                    DeviceProfileUpdateMsg deviceProfileUpdateMsg =
+                            deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addEntityViewUpdateMsg(entityViewUpdateMsg)
+                            .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
                             .build();
                 }
                 break;
             case DELETED:
-            case UNASSIGNED_FROM_EDGE:
-                EntityViewUpdateMsg entityViewUpdateMsg =
-                        entityViewMsgConstructor.constructEntityViewDeleteMsg(entityViewId);
+                DeviceProfileUpdateMsg deviceProfileUpdateMsg =
+                        deviceProfileMsgConstructor.constructDeviceProfileDeleteMsg(deviceProfileId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addEntityViewUpdateMsg(entityViewUpdateMsg)
+                        .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
                         .build();
                 break;
         }
         return downlinkMsg;
     }
 
-    public ListenableFuture<Void> processEntityViewNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotification(tenantId, edgeNotificationMsg);
+    public ListenableFuture<Void> processDeviceProfileNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
     }
 }

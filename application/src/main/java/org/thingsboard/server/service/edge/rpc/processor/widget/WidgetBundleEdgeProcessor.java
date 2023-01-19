@@ -13,57 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor;
+package org.thingsboard.server.service.edge.rpc.processor.widget;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
 @Slf4j
 @TbCoreComponent
-public class QueueEdgeProcessor extends BaseEdgeProcessor {
+public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertQueueEventToDownlink(EdgeEvent edgeEvent) {
-        QueueId queueId = new QueueId(edgeEvent.getEntityId());
+    public DownlinkMsg convertWidgetsBundleEventToDownlink(EdgeEvent edgeEvent) {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
-                Queue queue = queueService.findQueueById(edgeEvent.getTenantId(), queueId);
-                if (queue != null) {
+                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
+                if (widgetsBundle != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    QueueUpdateMsg queueUpdateMsg =
-                            queueMsgConstructor.constructQueueUpdatedMsg(msgType, queue);
+                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
+                            widgetsBundleMsgConstructor.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addQueueUpdateMsg(queueUpdateMsg)
+                            .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                             .build();
                 }
                 break;
             case DELETED:
-                QueueUpdateMsg queueDeleteMsg =
-                        queueMsgConstructor.constructQueueDeleteMsg(queueId);
+                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
+                        widgetsBundleMsgConstructor.constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addQueueUpdateMsg(queueDeleteMsg)
+                        .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                         .build();
                 break;
         }
         return downlinkMsg;
     }
 
-    public ListenableFuture<Void> processQueueNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    public ListenableFuture<Void> processWidgetsBundleNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
     }
 }

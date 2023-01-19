@@ -13,57 +13,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor;
+package org.thingsboard.server.service.edge.rpc.processor.user;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
 @Slf4j
 @TbCoreComponent
-public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
+public class UserEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertWidgetsBundleEventToDownlink(EdgeEvent edgeEvent) {
-        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
+    public DownlinkMsg convertUserEventToDownlink(EdgeEvent edgeEvent) {
+        UserId userId = new UserId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
-                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
-                if (widgetsBundle != null) {
+                User user = userService.findUserById(edgeEvent.getTenantId(), userId);
+                if (user != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                            widgetsBundleMsgConstructor.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                            .addUserUpdateMsg(userMsgConstructor.constructUserUpdatedMsg(msgType, user))
                             .build();
                 }
                 break;
             case DELETED:
-                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                        widgetsBundleMsgConstructor.constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                        .addUserUpdateMsg(userMsgConstructor.constructUserDeleteMsg(userId))
                         .build();
                 break;
+            case CREDENTIALS_UPDATED:
+                UserCredentials userCredentialsByUserId = userService.findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
+                if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
+                    UserCredentialsUpdateMsg userCredentialsUpdateMsg =
+                            userMsgConstructor.constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
+                    downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                            .addUserCredentialsUpdateMsg(userCredentialsUpdateMsg)
+                            .build();
+                }
         }
         return downlinkMsg;
     }
 
-    public ListenableFuture<Void> processWidgetsBundleNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    public ListenableFuture<Void> processUserNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
     }
 }
