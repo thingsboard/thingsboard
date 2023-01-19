@@ -30,16 +30,18 @@ import org.thingsboard.server.common.data.notification.targets.NotificationTarge
 import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultNotificationTargetService implements NotificationTargetService {
+public class DefaultNotificationTargetService extends AbstractEntityService implements NotificationTargetService {
 
     private final NotificationTargetDao notificationTargetDao;
     private final NotificationRequestDao notificationRequestDao;
@@ -48,7 +50,14 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
 
     @Override
     public NotificationTarget saveNotificationTarget(TenantId tenantId, NotificationTarget notificationTarget) {
-        return notificationTargetDao.save(tenantId, notificationTarget);
+        try {
+            return notificationTargetDao.saveAndFlush(tenantId, notificationTarget);
+        } catch (Exception e) {
+            checkConstraintViolation(e, Map.of(
+                    "uq_notification_target_name", "Notification target with such name already exists"
+            ));
+            throw e;
+        }
     }
 
     @Override

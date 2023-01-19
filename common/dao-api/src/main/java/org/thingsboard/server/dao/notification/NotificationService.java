@@ -30,16 +30,18 @@ public interface NotificationService {
 
     Notification findNotificationById(TenantId tenantId, NotificationId notificationId);
 
-    boolean markNotificationAsRead(TenantId tenantId, UserId userId, NotificationId notificationId);
+    boolean markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
-    PageData<Notification> findNotificationsByUserIdAndReadStatus(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink);
+    int markAllNotificationsAsRead(TenantId tenantId, UserId recipientId);
 
-    PageData<Notification> findLatestUnreadNotificationsByUserId(TenantId tenantId, UserId userId, int limit);
+    PageData<Notification> findNotificationsByRecipientIdAndReadStatus(TenantId tenantId, UserId recipientId, boolean unreadOnly, PageLink pageLink);
 
-    int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId);
+    PageData<Notification> findLatestUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId, int limit);
+
+    int countUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId);
 
     void updateNotificationsStatusByRequestId(TenantId tenantId, NotificationRequestId requestId, NotificationStatus status);
 
-    boolean deleteNotification(TenantId tenantId, UserId userId, NotificationId notificationId);
+    boolean deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
 }

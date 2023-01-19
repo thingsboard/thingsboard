@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,12 +33,16 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 public class NotificationUpdate {
 
     private NotificationId notificationId;
-    private NotificationStatus updatedStatus;
     private Notification notification;
+
+    boolean allNotifications;
+
+    private NotificationStatus updatedStatus;
     private ComponentLifecycleEvent updateType;
 
-    public NotificationId getNotificationId() {
-        return notificationId != null ? notificationId : notification.getId();
+    public UUID getNotificationId() {
+        return notificationId != null ? notificationId.getId() :
+                notification != null ? notification.getUuidId() : null;
     }
 
 }

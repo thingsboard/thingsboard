@@ -140,7 +140,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), new NotificationTargetId(targetId), pageLink);
             }, 200, recipientsBatch -> {
                 for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-                    if (deliveryMethod.isIndependent()) continue;
+                    if (deliveryMethod.isStandalone()) continue;
 
                     List<User> recipients = recipientsBatch.getData();
                     log.debug("Sending {} notifications for request {} to recipients batch ({})", deliveryMethod, savedNotificationRequest.getId(), recipients.size());
@@ -158,7 +158,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             });
         }
         for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-            if (deliveryMethod.isIndependent()) {
+            if (deliveryMethod.isStandalone()) {
                 NotificationChannel notificationChannel = channels.get(deliveryMethod);
                 ListenableFuture<Void> resultFuture = process(notificationChannel, null, ctx);
                 DonAsynchron.withCallback(resultFuture, result -> {
@@ -221,6 +221,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .type(ctx.getNotificationTemplate().getNotificationType())
                 .subject(processedTemplate.getSubject())
                 .text(processedTemplate.getBody())
+                .additionalConfig(processedTemplate.getAdditionalConfig())
                 .info(request.getInfo())
                 .status(NotificationStatus.SENT)
                 .build();
@@ -260,9 +261,23 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
         boolean updated = notificationService.markNotificationAsRead(tenantId, recipientId, notificationId);
         if (updated) {
-            log.debug("Marking notification {} as read (recipient id: {}, tenant id: {})", notificationId, recipientId, tenantId);
+            log.trace("Marked notification {} as read (recipient id: {}, tenant id: {})", notificationId, recipientId, tenantId);
             NotificationUpdate update = NotificationUpdate.builder()
                     .notificationId(notificationId)
+                    .updatedStatus(NotificationStatus.READ)
+                    .updateType(ComponentLifecycleEvent.UPDATED)
+                    .build();
+            onNotificationUpdate(tenantId, recipientId, update);
+        }
+    }
+
+    @Override
+    public void markAllNotificationsAsRead(TenantId tenantId, UserId recipientId) {
+        int updatedCount = notificationService.markAllNotificationsAsRead(tenantId, recipientId);
+        if (updatedCount > 0) {
+            log.trace("Marked all notifications as read (recipient id: {}, tenant id: {})", recipientId, tenantId);
+            NotificationUpdate update = NotificationUpdate.builder()
+                    .allNotifications(true)
                     .updatedStatus(NotificationStatus.READ)
                     .updateType(ComponentLifecycleEvent.UPDATED)
                     .build();

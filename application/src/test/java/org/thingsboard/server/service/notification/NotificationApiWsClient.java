@@ -22,6 +22,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
+import org.thingsboard.server.service.ws.notification.cmd.MarkAllNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
@@ -70,6 +71,12 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
     public void markNotificationAsRead(UUID... notifications) {
         NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
         cmdsWrapper.setMarkAsReadCmd(new MarkNotificationsAsReadCmd(newCmdId(), Arrays.asList(notifications)));
+        sendCmd(cmdsWrapper);
+    }
+
+    public void markAllNotificationsAsRead() {
+        NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
+        cmdsWrapper.setMarkAllAsReadCmd(new MarkAllNotificationsAsReadCmd(newCmdId()));
         sendCmd(cmdsWrapper);
     }
 

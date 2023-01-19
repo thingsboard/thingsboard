@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,14 +29,12 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
     private String subject;
-    private String icon;
-    private String actionButtonConfig;
+    private JsonNode additionalConfig;
 
     public PushDeliveryMethodNotificationTemplate(PushDeliveryMethodNotificationTemplate other) {
         super(other);
         this.subject = other.subject;
-        this.icon = other.icon;
-        this.actionButtonConfig = other.actionButtonConfig;
+        this.additionalConfig = other.additionalConfig;
     }
 
     @Override

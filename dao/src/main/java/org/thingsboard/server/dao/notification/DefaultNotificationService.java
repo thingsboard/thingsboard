@@ -47,29 +47,34 @@ public class DefaultNotificationService implements NotificationService {
     }
 
     @Override
-    public boolean markNotificationAsRead(TenantId tenantId, UserId userId, NotificationId notificationId) {
-        return notificationDao.updateStatusByIdAndUserId(tenantId, userId, notificationId, NotificationStatus.READ);
+    public boolean markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
+        return notificationDao.updateStatusByIdAndRecipientId(tenantId, recipientId, notificationId, NotificationStatus.READ);
     }
 
     @Override
-    public PageData<Notification> findNotificationsByUserIdAndReadStatus(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink) {
+    public int markAllNotificationsAsRead(TenantId tenantId, UserId recipientId) {
+        return notificationDao.updateStatusByRecipientId(tenantId, recipientId, NotificationStatus.READ);
+    }
+
+    @Override
+    public PageData<Notification> findNotificationsByRecipientIdAndReadStatus(TenantId tenantId, UserId recipientId, boolean unreadOnly, PageLink pageLink) {
         if (unreadOnly) {
-            return notificationDao.findUnreadByUserIdAndPageLink(tenantId, userId, pageLink);
+            return notificationDao.findUnreadByRecipientIdAndPageLink(tenantId, recipientId, pageLink);
         } else {
-            return notificationDao.findByUserIdAndPageLink(tenantId, userId, pageLink);
+            return notificationDao.findByRecipientIdAndPageLink(tenantId, recipientId, pageLink);
         }
     }
 
     @Override
-    public PageData<Notification> findLatestUnreadNotificationsByUserId(TenantId tenantId, UserId userId, int limit) {
+    public PageData<Notification> findLatestUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId, int limit) {
         SortOrder sortOrder = new SortOrder(EntityKeyMapping.CREATED_TIME, SortOrder.Direction.DESC);
         PageLink pageLink = new PageLink(limit, 0, null, sortOrder);
-        return findNotificationsByUserIdAndReadStatus(tenantId, userId, true, pageLink);
+        return findNotificationsByRecipientIdAndReadStatus(tenantId, recipientId, true, pageLink);
     }
 
     @Override
-    public int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId) {
-        return notificationDao.countUnreadByUserId(tenantId, userId);
+    public int countUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId) {
+        return notificationDao.countUnreadByRecipientId(tenantId, recipientId);
     }
 
     @Override
@@ -78,8 +83,8 @@ public class DefaultNotificationService implements NotificationService {
     }
 
     @Override
-    public boolean deleteNotification(TenantId tenantId, UserId userId, NotificationId notificationId) {
-        return notificationDao.deleteByIdAndUserId(tenantId, userId, notificationId);
+    public boolean deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
+        return notificationDao.deleteByIdAndRecipientId(tenantId, recipientId, notificationId);
     }
 
 }

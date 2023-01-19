@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.notification;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,7 @@ public class Notification extends BaseData<NotificationId> {
     private NotificationType type;
     private String subject;
     private String text;
+    private JsonNode additionalConfig;
     private NotificationInfo info;
 
     private NotificationStatus status;
