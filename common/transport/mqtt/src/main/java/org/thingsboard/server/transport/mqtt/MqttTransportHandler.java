@@ -62,7 +62,6 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.common.transport.auth.ValidateDeviceProfileCredentialsResponse;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.util.SslUtil;
@@ -79,7 +78,7 @@ import org.thingsboard.server.transport.mqtt.util.ReturnCodeResolver;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.security.cert.CertificateEncodingException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,7 +88,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -808,9 +806,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             deviceSessionCtx.setProvisionOnly(true);
             ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SUCCESS, msg));
         } else {
-            X509Certificate[] chain;
-            if (sslHandler != null && (chain = getX509Certificate()) != null) {
-                processX509CertConnect(ctx, chain, msg);
+            X509Certificate cert;
+            if (sslHandler != null && (cert = getX509Certificate()) != null) {
+                processX509CertConnect(ctx, cert, msg);
             } else {
                 processAuthTokenConnect(ctx, msg);
             }
@@ -846,84 +844,25 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 });
     }
 
-    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate[] chain, MqttConnectMessage connectMessage) {
+    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert, MqttConnectMessage connectMessage) {
         try {
-            String deviceCN = SslUtil.parseCommonName(chain[0]);
-            String clientDeviceCertValue = SslUtil.getCertificateString(chain[0]);
-            String clientDeviceCertHash = EncryptionUtil.getSha3Hash(clientDeviceCertValue);
-            for (X509Certificate cert : chain) {
-                try {
-                    String strCert = SslUtil.getCertificateString(cert);
-                    String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                    final ValidateDeviceCredentialsResponse[] validateDeviceCredentialsResponses = new ValidateDeviceCredentialsResponse[1];
-                    CountDownLatch latch = new CountDownLatch(1);
-                    transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
-                            new TransportServiceCallback<>() {
-                                @Override
-                                public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                    if (!StringUtils.isEmpty(msg.getCredentials())) {
-                                        validateDeviceCredentialsResponses[0] = msg;
-                                        latch.countDown();
-                                    } else {
-                                        transportService.process(DeviceTransportType.MQTT,
-                                                TransportProtos.ValidateDeviceProfileX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
-                                                new TransportServiceCallback<>() {
-                                                    @Override
-                                                    public void onSuccess(ValidateDeviceProfileCredentialsResponse msg) {
-                                                        if (msg.isDeviceProfileFound()) {
-                                                            transportService.process(DeviceTransportType.MQTT,
-                                                                    TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg.newBuilder()
-                                                                            .setHash(clientDeviceCertHash)
-                                                                            .setValue(clientDeviceCertValue)
-                                                                            .setCommonName(deviceCN)
-                                                                            .setDeviceProfileIdMSB(msg.getDeviceProfileId().getId().getMostSignificantBits())
-                                                                            .setDeviceProfileIdLSB(msg.getDeviceProfileId().getId().getLeastSignificantBits())
-                                                                            .build(),
-                                                                    new TransportServiceCallback<>() {
-                                                                        @Override
-                                                                        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                                                            if (!StringUtils.isEmpty(msg.getCredentials())) {
-                                                                                validateDeviceCredentialsResponses[0] = msg;
-                                                                                latch.countDown();
-                                                                            }
-                                                                        }
-
-                                                                        @Override
-                                                                        public void onError(Throwable e) {
-                                                                            log.error(e.getMessage(), e);
-                                                                            latch.countDown();
-                                                                        }
-                                                                    }
-                                                            );
-                                                        } else {
-                                                            latch.countDown();
-                                                        }
-                                                    }
-
-                                                    @Override
-                                                    public void onError(Throwable e) {
-                                                        log.error(e.getMessage(), e);
-                                                        latch.countDown();
-                                                    }
-                                                });
-                                    }
-                                }
-
-                                @Override
-                                public void onError(Throwable e) {
-                                    log.error(e.getMessage(), e);
-                                    latch.countDown();
-                                }
-                            });
-                    latch.await(10, TimeUnit.SECONDS);
-                    if (validateDeviceCredentialsResponses[0] != null && validateDeviceCredentialsResponses[0].hasDeviceInfo()) {
-                        onValidateDeviceResponse(validateDeviceCredentialsResponses[0], ctx, connectMessage);
-                        break;
-                    }
-                } catch (InterruptedException | CertificateEncodingException e) {
-                    log.error(e.getMessage(), e);
-                }
+            if (!context.isSkipValidityCheckForClientCert()) {
+                cert.checkValidity();
             }
+            String strCert = SslUtil.getCertificateString(cert);
+            String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+            transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+                    new TransportServiceCallback<>() {
+                        @Override
+                        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                            onValidateDeviceResponse(msg, ctx, connectMessage);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            log.error(e.getMessage(), e);
+                        }
+                    });
         } catch (Exception e) {
             context.onAuthFailure(address);
             ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.NOT_AUTHORIZED_5, connectMessage));
@@ -932,13 +871,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private X509Certificate[] getX509Certificate() {
+    private X509Certificate getX509Certificate() {
         try {
-            return (X509Certificate[]) sslHandler.engine().getSession().getPeerCertificates();
+            Certificate[] certChains = sslHandler.engine().getSession().getPeerCertificates();
+            if (certChains.length > 1) {
+                return (X509Certificate) certChains[0];
+            }
         } catch (SSLPeerUnverifiedException e) {
             log.warn(e.getMessage());
             return null;
         }
+        return null;
     }
 
     private MqttConnAckMessage createMqttConnAckMsg(ReturnCode returnCode, MqttConnectMessage msg) {

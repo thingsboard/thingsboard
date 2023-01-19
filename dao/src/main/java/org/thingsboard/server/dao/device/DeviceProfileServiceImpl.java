@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
@@ -51,6 +52,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -62,7 +65,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
-    private static final String INCORRECT_DEVICE_PROFILE_CREDENTIALS_HASH = "Incorrect deviceProfileCredentialsHash ";
+    private static final String INCORRECT_DEVICE_PROFILE_CREDENTIALS_HASH = "Incorrect deviceProfileCertificateHash ";
     private static final String DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS = "Device profile with such name already exists!";
 
     @Autowired
@@ -124,6 +127,9 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
+        if (deviceProfile.getCertificateValue() != null) {
+            formatDeviceProfileCertificate(deviceProfile);
+        }
         DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         DeviceProfile savedDeviceProfile;
         try {
@@ -327,6 +333,22 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     private DeviceProfileInfo toDeviceProfileInfo(DeviceProfile profile) {
         return profile == null ? null : new DeviceProfileInfo(profile.getId(), profile.getName(), profile.getImage(),
                 profile.getDefaultDashboardId(), profile.getType(), profile.getTransportType());
+    }
+
+    private void formatDeviceProfileCertificate(DeviceProfile deviceProfile) {
+        String cert = regexCertificateChain(deviceProfile.getCertificateValue());
+        String sha3Hash = EncryptionUtil.getSha3Hash(cert);
+        deviceProfile.setCertificateHash(sha3Hash);
+    }
+
+    private String regexCertificateChain(String chain) {
+        String regex = "-----BEGIN CERTIFICATE-----\\s*((.+\\s+)*?)-----END CERTIFICATE----";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(chain);
+        if (matcher.find()) {
+            return matcher.group(0);
+        }
+        return chain;
     }
 
 }

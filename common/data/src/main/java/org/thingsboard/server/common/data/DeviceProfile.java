@@ -70,7 +70,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private String certificateValue;
     @ApiModelProperty(position = 17, value = "CA certificate hash")
     private String certificateHash;
-    @ApiModelProperty(position = 18, value = "Regex for fetch deviceName from CN")
+    @ApiModelProperty(position = 18, value = "Regex to fetch deviceName from CN")
     private String certificateRegexPattern;
 
     @ApiModelProperty(position = 7, value = "Reference to the rule chain. " +

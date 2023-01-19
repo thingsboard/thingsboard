@@ -124,7 +124,7 @@ public class MqttSslHandlerProvider {
     static class ThingsboardMqttX509TrustManager implements X509TrustManager {
 
         private final X509TrustManager trustManager;
-        private TransportService transportService;
+        private final TransportService transportService;
 
         ThingsboardMqttX509TrustManager(X509TrustManager trustManager, TransportService transportService) {
             this.trustManager = trustManager;
@@ -220,7 +220,7 @@ public class MqttSslHandlerProvider {
                 }
             }
             if (credentialsBody == null) {
-                throw new CertificateException("Invalid Device Certificate");
+                throw new CertificateException("Invalid Certificate's chain");
             }
         }
     }

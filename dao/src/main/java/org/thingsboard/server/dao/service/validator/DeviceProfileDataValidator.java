@@ -21,6 +21,7 @@ import org.eclipse.leshan.core.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -55,6 +56,19 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -117,6 +131,15 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
         if (deviceProfile.getProvisionType() == null) {
             deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+        }
+        if (deviceProfile.getCertificateHash() != null) {
+            DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
+            if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(deviceProfile.getId())) {
+                throw new DataValidationException("Cannot create device profile with certificate because such certificate already exists!");
+            }
+        }
+        if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
+            throw new DataValidationException("Device profile certificate cannot be well known root CA!");
         }
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         transportConfiguration.validate();
@@ -210,6 +233,13 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 }
                 throw new DataValidationException(message);
             }
+        }
+        DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
+        if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(old.getId())) {
+            throw new DataValidationException("Can't change device profile certificate because such certificate already exists!");
+        }
+        if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
+            throw new DataValidationException("Device profile certificate cannot be well known root CA!");
         }
         return old;
     }
@@ -362,5 +392,29 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 }
                 break;
         }
+    }
+
+    private boolean getRootCAFromJavaCacerts(String deviceProfileHash) {
+        Set<String> rootCa = new HashSet<>();
+        try {
+            String filename = System.getProperty("java.home") + "/lib/security/cacerts".replace('/', File.separatorChar);
+            FileInputStream is = new FileInputStream(filename);
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            String password = "changeit";
+            keystore.load(is, password.toCharArray());
+
+            PKIXParameters params = new PKIXParameters(keystore);
+            for (TrustAnchor ta : params.getTrustAnchors()) {
+                X509Certificate cert = ta.getTrustedCert();
+                rootCa.add(EncryptionUtil.getSha3Hash(getCertificateString(cert)));
+            }
+        } catch (CertificateException | KeyStoreException | NoSuchAlgorithmException |
+                 InvalidAlgorithmParameterException | IOException ignored) {
+        }
+        return rootCa.contains(deviceProfileHash);
+    }
+
+    private String getCertificateString(Certificate cert) throws CertificateEncodingException {
+        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 }
