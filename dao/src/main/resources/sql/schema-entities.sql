@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     default_dashboard_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
-    certificate_value varchar;
+    certificate_value varchar,
     certificate_hash varchar,
     certificate_regex_pattern varchar(255),
     default_edge_rule_chain_id uuid,

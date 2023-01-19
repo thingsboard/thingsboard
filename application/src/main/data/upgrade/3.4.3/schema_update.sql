@@ -24,3 +24,15 @@ CREATE TABLE IF NOT EXISTS alarm_comment (
     CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
+
+
+
+-- DEVICE PROFILE CERTIFICATE START
+
+ALTER TABLE device_profile
+    ADD COLUMN IF NOT EXISTS certificate_hash varchar,
+    ADD COLUMN IF NOT EXISTS certificate_value varchar,
+    ADD COLUMN IF NOT EXISTS certificate_regex_pattern varchar(255),
+    DROP CONSTRAINT IF EXISTS device_profile_credentials_hash_unq_key,
+    ADD CONSTRAINT device_profile_credentials_hash_unq_key UNIQUE (certificate_hash);
+-- DEVICE PROFILE CERTIFICATE END
