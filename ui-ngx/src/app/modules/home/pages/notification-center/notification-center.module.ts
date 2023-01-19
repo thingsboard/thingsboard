@@ -28,22 +28,32 @@ import {
 } from '@home/pages/notification-center/notification-table/notification-table.component';
 import {
   TemplateNotificationDialogComponent
-} from '@home/pages/notification-center/template-dialog/template-notification-dialog.component';
+} from '@home/pages/notification-center/template-table/template-notification-dialog.component';
 import {
   TargetTableHeaderComponent
 } from '@home/pages/notification-center/targets-table/target-table-header.component';
 import {
   TemplateTableHeaderComponent
-} from '@home/pages/notification-center/template-dialog/template-table-header.component';
+} from '@home/pages/notification-center/template-table/template-table-header.component';
+import {
+  RequestNotificationDialogComponent
+} from '@home/pages/notification-center/request-table/request-notification-dialog.componet';
+import {
+  TemplateAutocompleteComponent
+} from '@home/pages/notification-center/template-table/template-autocomplete.component';
+import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
 
 @NgModule({
   declarations: [
     NotificationCenterComponent,
     TargetNotificationDialogComponent,
     TemplateNotificationDialogComponent,
+    RequestNotificationDialogComponent,
     TargetTableHeaderComponent,
     TemplateTableHeaderComponent,
-    NotificationTableComponent
+    NotificationTableComponent,
+    TemplateAutocompleteComponent,
+    InboxTableHeaderComponent
   ],
   imports: [
     CommonModule,

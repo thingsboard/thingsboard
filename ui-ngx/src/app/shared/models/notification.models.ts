@@ -29,7 +29,8 @@ export interface Notification {
   readonly id: NotificationId;
   readonly requestId: NotificationRequestId;
   readonly recipientId: UserId;
-  readonly type: string;
+  readonly type: NotificationType;
+  readonly subject: string;
   readonly text: string;
   readonly info: NotificationInfo;
   readonly originatorType: NotificationOriginatorType;
@@ -44,7 +45,7 @@ export interface NotificationInfo {
 
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
   tenantId?: TenantId;
-  targets: Array<NotificationTargetId>;
+  targets: Array<string>;
   templateId: NotificationTemplateId;
   info?: NotificationInfo;
   deliveryMethods: Array<NotificationDeliveryMethod>;
@@ -53,6 +54,17 @@ export interface NotificationRequest extends Omit<BaseData<NotificationRequestId
   status: NotificationRequestStatus;
   stats: NotificationRequestStats;
   additionalConfig: NotificationRequestConfig;
+}
+
+export interface NotificationRequestInfo extends NotificationRequest {
+  templateName: string;
+  deliveryMethods: NotificationDeliveryMethod[];
+}
+
+export interface NotificationRequestPreview {
+  totalRecipientsCount: number;
+  recipientsCountByTarget: { [key in string]: number };
+  processedTemplates: { [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate };
 }
 
 export interface NotificationRequestStats {
@@ -128,12 +140,16 @@ export interface NotificationTemplate extends Omit<BaseData<NotificationTemplate
 
 interface NotificationTemplateConfig {
   defaultTextTemplate: string;
-  deliveryMethodsTemplates: Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate>;
+  notificationSubject: string;
+  deliveryMethodsTemplates: {
+    [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate
+  };
 }
 
-interface DeliveryMethodNotificationTemplate extends
+export interface DeliveryMethodNotificationTemplate extends
   Partial<PushDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
   body?: string;
+  enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
@@ -170,13 +186,27 @@ export enum NotificationDeliveryMethod {
   SLACK = 'SLACK'
 }
 
+export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
+  [NotificationDeliveryMethod.PUSH, 'notification.delivery-method-type.push'],
+  [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
+  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack'],
+]);
+
 export enum NotificationRequestStatus {
-  PROCESSED = 'PROCESSED',
-  SCHEDULED = 'SCHEDULED'
+  PROCESSING = 'PROCESSING',
+  SCHEDULED = 'SCHEDULED',
+  SENT = 'SENT'
 }
 
+export const NotificationRequestStatusTranslateMap = new Map<NotificationRequestStatus, string>([
+  [NotificationRequestStatus.PROCESSING, 'notification.requet-status.processing'],
+  [NotificationRequestStatus.SCHEDULED, 'notification.requet-status.scheduled'],
+  [NotificationRequestStatus.SENT, 'notification.requet-status.sent']
+]);
+
 export enum SlackChanelType {
-  USER= 'USER',
+  DIRECT= 'DIRECT',
   PUBLIC_CHANNEL = 'PUBLIC_CHANNEL',
   PRIVATE_CHANNEL = 'PRIVATE_CHANNEL'
 }
@@ -194,6 +224,25 @@ export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTarg
 ]);
 
 export enum NotificationType {
-  GENERIC = 'GENERIC',
+  GENERAL = 'GENERAL',
   ALARM = 'ALARM'
 }
+
+interface NotificationTemplateTypeTranslate {
+  name: string;
+  hint?: string;
+}
+
+export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, NotificationTemplateTypeTranslate>([
+  [NotificationType.GENERAL,
+    {
+      name: 'notification.template-type.general',
+      hint: 'hint'
+    }
+  ],
+  [NotificationType.ALARM,
+    {
+      name: 'notification.template-type.alarm',
+      hint: 'hint'
+    }]
+]);

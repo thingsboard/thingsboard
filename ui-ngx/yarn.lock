@@ -1641,6 +1641,13 @@
     "@angular-devkit/schematics" "12.2.17"
     jsonc-parser "3.0.0"
 
+"@tinymce/tinymce-angular@~4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tinymce/tinymce-angular/-/tinymce-angular-4.2.4.tgz#45974f39fcdb1af6f30dba6405bfb0b8a3db748f"
+  integrity sha512-A+FIvhTahHaqDuvcXovuhzvpCR2yjUbPuF+Z/t/MnNaCv/9Y0w7W5Qgmo5wARIW+NM7o8msWcMSxOMK4xkv10Q==
+  dependencies:
+    tslib "^1.10.0"
+
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
@@ -9581,6 +9588,11 @@ tinycolor2@^1.4.2:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.4.2.tgz#3f6a4d1071ad07676d7fa472e1fac40a719d8803"
   integrity sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==
+
+tinymce@~5.10.7:
+  version "5.10.7"
+  resolved "https://registry.yarnpkg.com/tinymce/-/tinymce-5.10.7.tgz#d89d446f1962f2a1df6b2b70018ce475ec7ffb80"
+  integrity sha512-9UUjaO0R7FxcFo0oxnd1lMs7H+D0Eh+dDVo5hKbVe1a+VB0nit97vOqlinj+YwgoBDt6/DSCUoWqAYlLI8BLYA==
 
 tmp@0.0.30:
   version "0.0.30"

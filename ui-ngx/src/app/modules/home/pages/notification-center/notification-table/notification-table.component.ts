@@ -25,6 +25,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { InboxTableConfig } from '@home/pages/notification-center/notification-table/inbox-table-config';
 import { DatePipe } from '@angular/common';
 import { TemplateTableConfig } from '@home/pages/notification-center/notification-table/template-table-config';
+import { RequestTableConfig } from '@home/pages/notification-center/notification-table/request-table-config';
 
 @Component({
   selector: 'tb-notification-table',
@@ -68,6 +69,7 @@ export class NotificationTableComponent implements OnInit {
       case EntityType.NOTIFICATION:
         return new InboxTableConfig(
           this.notificationService,
+          this.translate,
           this.datePipe
         );
       case EntityType.NOTIFICATION_TEMPLATE:
@@ -77,10 +79,11 @@ export class NotificationTableComponent implements OnInit {
           this.dialog
         );
       case EntityType.NOTIFICATION_REQUEST:
-        return new TemplateTableConfig(
+        return new RequestTableConfig(
           this.notificationService,
           this.translate,
-          this.dialog
+          this.dialog,
+          this.datePipe
         );
     }
   }

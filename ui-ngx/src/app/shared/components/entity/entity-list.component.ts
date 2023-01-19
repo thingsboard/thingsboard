@@ -63,6 +63,15 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   @Input()
   subType: string;
 
+  @Input()
+  labelText: string;
+
+  @Input()
+  placeholderText = 'entity.entity-list';
+
+  @Input()
+  requiredText = 'entity.entity-list-empty';
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;

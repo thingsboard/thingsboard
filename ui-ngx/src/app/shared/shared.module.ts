@@ -64,6 +64,7 @@ import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
+import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -187,6 +188,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     {
       provide: FlowInjectionToken,
       useValue: Flow
+    },
+    {
+      provide: TINYMCE_SCRIPT_SRC,
+      useValue: 'assets/tinymce/tinymce.min.js'
     },
     {
       provide: MAT_DATE_LOCALE,
@@ -457,6 +462,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
+    EditorModule,
     DndModule,
     NgxFlowchartModule,
     MarkdownModule,

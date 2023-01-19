@@ -28,11 +28,11 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
-} from '@home/pages/notification-center/template-dialog/template-notification-dialog.component';
+} from '@home/pages/notification-center/template-table/template-notification-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
   TemplateTableHeaderComponent
-} from '@home/pages/notification-center/template-dialog/template-table-header.component';
+} from '@home/pages/notification-center/template-table/template-table-header.component';
 
 export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate> {
 
@@ -63,7 +63,8 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
     this.columns.push(
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%'),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
-      new EntityTableColumn<NotificationTemplate>('subject', 'notification.subject', '25%'),
+      new EntityTableColumn<NotificationTemplate>('configuration.notificationSubject', 'notification.subject', '25%',
+        (template) => template.configuration.notificationSubject, () => ({}), false),
       new EntityTableColumn<NotificationTemplate>('configuration.defaultTextTemplate', 'notification.message', '35%',
         (template) => template.configuration.defaultTextTemplate, () => ({}), false)
     );

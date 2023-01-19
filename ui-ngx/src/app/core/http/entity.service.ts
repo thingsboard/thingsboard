@@ -88,6 +88,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { QueueService } from '@core/http/queue.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
+import { NotificationService } from '@core/http/notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -113,7 +114,8 @@ export class EntityService {
     private deviceProfileService: DeviceProfileService,
     private assetProfileService: AssetProfileService,
     private utils: UtilsService,
-    private queueService: QueueService
+    private queueService: QueueService,
+    private notificationService: NotificationService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -401,6 +403,10 @@ export class EntityService {
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.widgetService.getWidgetBundles(pageLink, config);
+        break;
+      case EntityType.NOTIFICATION_TARGET:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.notificationService.getNotificationTargets(pageLink, config);
         break;
     }
     return entitiesObservable;

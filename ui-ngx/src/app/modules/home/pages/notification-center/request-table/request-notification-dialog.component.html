@@ -1,0 +1,83 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2 translate>notification.new-notification</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+<div mat-dialog-content>
+  <mat-horizontal-stepper [linear]="true" labelPosition="end" #createNotification
+                          [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="notificationRequestForm">
+      <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
+      <form [formGroup]="notificationRequestForm" style="padding-bottom: 16px;">
+        <tb-template-autocomplete
+          required
+          formControlName="templateId">
+        </tb-template-autocomplete>
+        <tb-entity-list
+          required
+          formControlName="targets"
+          labelText="notification.targets"
+          placeholderText="notification.target"
+          requiredText="notification.targets-required"
+          [entityType]="entityType.NOTIFICATION_TARGET">
+        </tb-entity-list>
+      </form>
+    </mat-step>
+    <mat-step>
+      <ng-template matStepLabel>{{ 'notification.review' | translate }}</ng-template>
+      <mat-progress-spinner color="warn" mode="indeterminate"
+                            strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
+      </mat-progress-spinner>
+      <div *ngIf="preview">
+        <section class="preview-group">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon>supervisor_account</mat-icon>
+            <div class="total-recipients">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
+          </div>
+          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value.length">
+            <div *ngFor="let detail of preview.recipientsCountByTarget | keyvalue" class="details-recipient">
+              <span class="number">{{ detail.value }}</span>{{ detail.key }}
+            </div>
+          </div>
+        </section>
+      </div>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
+<mat-divider></mat-divider>
+<div mat-dialog-actions fxLayout="row">
+  <button mat-stroked-button *ngIf="selectedIndex > 0"
+          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  <span fxFlex></span>
+  <button mat-raised-button
+          color="primary"
+          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+</div>

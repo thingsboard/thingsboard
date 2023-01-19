@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  width: 600px;
 
-  .tb-hint {
-    padding: 0;
-  }
-}
+::ng-deep {
+  .template-option {
+    .mat-option-text {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 4px;
+    }
 
-:host ::ng-deep {
-  .mat-radio-group {
-    display: flex;
-    flex-direction: row;
+    .template-option-name {
+      margin-right: 8px;
+    }
 
-    .mat-radio-button {
-      flex: 1 1 100%;
-      padding: 14px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
+    .mat-chip {
+      &.mat-standard-chip {
+        padding: 4px 8px;
+        border-radius: 14px;
+        min-height: 28px;
 
-      &:not(:last-child){
-        margin-right: 8px;
+        &.mat-chip-disabled {
+          opacity: 1;
+        }
       }
     }
   }
