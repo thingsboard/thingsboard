@@ -64,23 +64,23 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     }
 
     @Override
-    public PageData<Notification> findUnreadByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(userId.getId(), NotificationStatus.READ, DaoUtil.toPageable(pageLink)));
+    public PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(recipientId.getId(), NotificationStatus.READ, DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<Notification> findByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRepository.findByRecipientId(userId.getId(), DaoUtil.toPageable(pageLink)));
+    public PageData<Notification> findByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRepository.findByRecipientId(recipientId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public boolean updateStatusByIdAndUserId(TenantId tenantId, UserId userId, NotificationId notificationId, NotificationStatus status) {
-        return notificationRepository.updateStatusByIdAndRecipientId(notificationId.getId(), userId.getId(), status) != 0;
+    public boolean updateStatusByIdAndRecipientId(TenantId tenantId, UserId recipientId, NotificationId notificationId, NotificationStatus status) {
+        return notificationRepository.updateStatusByIdAndRecipientId(notificationId.getId(), recipientId.getId(), status) != 0;
     }
 
     @Override
-    public int countUnreadByUserId(TenantId tenantId, UserId userId) {
-        return notificationRepository.countByRecipientIdAndStatusNot(userId.getId(), NotificationStatus.READ);
+    public int countUnreadByRecipientId(TenantId tenantId, UserId recipientId) {
+        return notificationRepository.countByRecipientIdAndStatusNot(recipientId.getId(), NotificationStatus.READ);
     }
 
     @Override
@@ -94,8 +94,13 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     }
 
     @Override
-    public boolean deleteByIdAndUserId(TenantId tenantId, UserId userId, NotificationId notificationId) {
-        return notificationRepository.deleteByIdAndRecipientId(notificationId.getId(), userId.getId()) != 0;
+    public boolean deleteByIdAndRecipientId(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
+        return notificationRepository.deleteByIdAndRecipientId(notificationId.getId(), recipientId.getId()) != 0;
+    }
+
+    @Override
+    public int updateStatusByRecipientId(TenantId tenantId, UserId recipientId, NotificationStatus status) {
+        return notificationRepository.updateStatusByRecipientId(recipientId.getId(), status);
     }
 
     @Override

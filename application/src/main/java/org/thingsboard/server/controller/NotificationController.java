@@ -90,6 +90,8 @@ public class NotificationController extends BaseController {
                     "```\n{\n  \"unsubCmd\": {\n    \"cmdId\": 1234\n  }\n}\n```\n" +
                     "To mark certain notifications as read, use following command:\n" +
                     "```\n{\n  \"markAsReadCmd\": {\n    \"cmdId\": 1234,\n    \"notifications\": [\n      \"6f860330-7fc2-11ed-b855-7dd3b7d2faa9\",\n      \"5b6dfee0-8d0d-11ed-b61f-35a57b03dade\"\n    ]\n  }\n}\n\n```\n" +
+                    "To mark all notifications as read:\n" +
+                    "```\n{\n  \"markAllAsReadCmd\": {\n    \"cmdId\": 1234\n  }\n}\n```\n" +
                     "\n\n" +
                     "Update structure for unread **notifications count subscription**:\n" +
                     "```\n{\n  \"cmdId\": 1234,\n  \"totalUnreadCount\": 55\n}\n```\n" +
@@ -136,7 +138,7 @@ public class NotificationController extends BaseController {
                                                    @RequestParam(defaultValue = "false") boolean unreadOnly,
                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationService.findNotificationsByUserIdAndReadStatus(user.getTenantId(), user.getId(), unreadOnly, pageLink);
+        return notificationService.findNotificationsByRecipientIdAndReadStatus(user.getTenantId(), user.getId(), unreadOnly, pageLink);
     }
 
     @PutMapping("/notification/{id}/read")
@@ -145,6 +147,12 @@ public class NotificationController extends BaseController {
                                        @AuthenticationPrincipal SecurityUser user) {
         NotificationId notificationId = new NotificationId(id);
         notificationCenter.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
+    }
+
+    @PutMapping("/notifications/read")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public void markAllNotificationsAsRead(@AuthenticationPrincipal SecurityUser user) {
+        notificationCenter.markAllNotificationsAsRead(user.getTenantId(), user.getId());
     }
 
     @DeleteMapping("/notification/{id}")

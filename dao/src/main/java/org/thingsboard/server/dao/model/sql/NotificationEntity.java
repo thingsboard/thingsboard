@@ -63,6 +63,10 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     private String text;
 
     @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_ADDITIONAL_CONFIG_PROPERTY)
+    private JsonNode additionalConfig;
+
+    @Type(type = "json")
     @Formula("(SELECT r.info FROM notification_request r WHERE r.id = request_id)")
     private JsonNode info;
 
@@ -80,6 +84,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         setType(notification.getType());
         setSubject(notification.getSubject());
         setText(notification.getText());
+        setAdditionalConfig(notification.getAdditionalConfig());
         setInfo(toJson(notification.getInfo()));
         setStatus(notification.getStatus());
     }
@@ -94,6 +99,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         notification.setType(type);
         notification.setSubject(subject);
         notification.setText(text);
+        notification.setAdditionalConfig(additionalConfig);
         notification.setInfo(fromJson(info, NotificationInfo.class));
         notification.setStatus(status);
         return notification;

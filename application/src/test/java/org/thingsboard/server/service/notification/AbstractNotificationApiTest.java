@@ -126,7 +126,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
                                                               String text, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setTenantId(tenantId);
-        notificationTemplate.setName("Notification template for testing");
+        notificationTemplate.setName("Notification template: " + text);
         notificationTemplate.setNotificationType(notificationType);
         NotificationTemplateConfig config = new NotificationTemplateConfig();
         config.setDefaultTextTemplate(text);

@@ -34,6 +34,8 @@ public interface NotificationCenter {
 
     void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
+    void markAllNotificationsAsRead(TenantId tenantId, UserId recipientId);
+
     void deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
 }

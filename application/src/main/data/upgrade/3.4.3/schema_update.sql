@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS notification_target (
     created_time BIGINT NOT NULL,
     tenant_id UUID NULL CONSTRAINT fk_notification_target_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    configuration VARCHAR(10000) NOT NULL
+    configuration VARCHAR(10000) NOT NULL,
+    CONSTRAINT uq_notification_target_name UNIQUE (tenant_id, name)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON notification_target(tenant_id, created_time DESC);
 
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS notification_template (
     tenant_id UUID NULL CONSTRAINT fk_notification_template_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(32) NOT NULL,
-    configuration VARCHAR(10000) NOT NULL
+    configuration VARCHAR(10000) NOT NULL,
+    CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_template_tenant_id_created_time ON notification_template(tenant_id, created_time DESC);
 
@@ -41,7 +43,8 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
     trigger_type VARCHAR(50) NOT NULL,
     trigger_config VARCHAR(1000) NOT NULL,
-    recipients_config VARCHAR(10000) NOT NULL
+    recipients_config VARCHAR(10000) NOT NULL,
+    CONSTRAINT uq_notification_rule_name UNIQUE (tenant_id, name)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_created_time ON notification_rule(tenant_id, created_time DESC);
 
@@ -71,6 +74,7 @@ CREATE TABLE IF NOT EXISTS notification (
     type VARCHAR(32) NOT NULL,
     subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
+    additional_config VARCHAR(500),
     info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);

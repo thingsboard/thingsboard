@@ -27,18 +27,20 @@ import org.thingsboard.server.dao.Dao;
 
 public interface NotificationDao extends Dao<Notification> {
 
-    PageData<Notification> findUnreadByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink);
+    PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink);
 
-    PageData<Notification> findByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink);
+    PageData<Notification> findByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink);
 
-    boolean updateStatusByIdAndUserId(TenantId tenantId, UserId userId, NotificationId notificationId, NotificationStatus status);
+    boolean updateStatusByIdAndRecipientId(TenantId tenantId, UserId recipientId, NotificationId notificationId, NotificationStatus status);
 
-    int countUnreadByUserId(TenantId tenantId, UserId userId);
+    int countUnreadByRecipientId(TenantId tenantId, UserId recipientId);
 
     PageData<Notification> findByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, PageLink pageLink);
 
     void updateStatusesByRequestId(TenantId tenantId, NotificationRequestId requestId, NotificationStatus status);
 
-    boolean deleteByIdAndUserId(TenantId tenantId, UserId userId, NotificationId notificationId);
+    boolean deleteByIdAndRecipientId(TenantId tenantId, UserId recipientId, NotificationId notificationId);
+
+    int updateStatusByRecipientId(TenantId tenantId, UserId recipientId, NotificationStatus status);
 
 }

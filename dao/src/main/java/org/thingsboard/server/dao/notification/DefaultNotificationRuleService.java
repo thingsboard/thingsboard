@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.notification.cache.NotificationRuleCacheKey;
 import org.thingsboard.server.dao.notification.cache.NotificationRuleCacheValue;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +50,9 @@ public class DefaultNotificationRuleService extends AbstractCachedEntityService<
             publishEvictEvent(notificationRule);
         } catch (Exception e) {
             handleEvictEvent(notificationRule);
+            checkConstraintViolation(e, Map.of(
+                    "uq_notification_rule_name", "Notification rule with such name already exists"
+            ));
             throw e;
         }
         return notificationRule;

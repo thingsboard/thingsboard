@@ -43,7 +43,14 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
 
     @Override
     public NotificationTemplate saveNotificationTemplate(TenantId tenantId, NotificationTemplate notificationTemplate) {
-        return notificationTemplateDao.save(tenantId, notificationTemplate);
+        try {
+            return notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+        } catch (Exception e) {
+            checkConstraintViolation(e, Map.of(
+                    "uq_notification_template_name", "Notification template with such name already exists"
+            ));
+            throw e;
+        }
     }
 
     @Override

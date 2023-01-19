@@ -25,14 +25,14 @@ public enum NotificationDeliveryMethod {
     SLACK(true);
 
     @Getter
-    private final boolean independent; // TODO: think of a better name
+    private final boolean standalone; // means that notifications for the delivery method are sent independently of specified recipients
 
     NotificationDeliveryMethod() {
         this(false);
     }
 
-    NotificationDeliveryMethod(boolean independent) {
-        this.independent = independent;
+    NotificationDeliveryMethod(boolean standalone) {
+        this.standalone = standalone;
     }
 
 }
