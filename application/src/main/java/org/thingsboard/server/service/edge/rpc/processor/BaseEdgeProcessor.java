@@ -97,9 +97,13 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public abstract class BaseEdgeProcessor {
+
+    protected static final Lock deviceCreationLock = new ReentrantLock();
 
     protected static final int DEFAULT_PAGE_SIZE = 100;
 
@@ -467,5 +471,18 @@ public abstract class BaseEdgeProcessor {
                         entityTypeStr, entityIdMSB, entityIdLSB);
                 return null;
         }
+    }
+
+    protected UUID safeGetUUID(long mSB, long lSB) {
+        return mSB != 0 && lSB != 0 ? new UUID(mSB, lSB) : null;
+    }
+
+    protected CustomerId safeGetCustomerId(long mSB, long lSB) {
+        CustomerId customerId = null;
+        UUID customerUUID = safeGetUUID(mSB, lSB);
+        if (customerUUID != null) {
+            customerId = new CustomerId(customerUUID);
+        }
+        return customerId;
     }
 }
