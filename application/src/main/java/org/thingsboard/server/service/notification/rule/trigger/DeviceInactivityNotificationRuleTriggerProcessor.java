@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.info.DeviceInactivityNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceInactivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -43,6 +45,15 @@ public class DeviceInactivityNotificationRuleTriggerProcessor implements Notific
         } else {
             return true;
         }
+    }
+
+    @Override
+    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
+        return DeviceInactivityNotificationInfo.builder()
+                .deviceId(ruleEngineMsg.getOriginator().getId())
+                .deviceName(ruleEngineMsg.getMetaData().getValue("deviceName"))
+                .deviceType(ruleEngineMsg.getMetaData().getValue("deviceType"))
+                .build();
     }
 
     @Override

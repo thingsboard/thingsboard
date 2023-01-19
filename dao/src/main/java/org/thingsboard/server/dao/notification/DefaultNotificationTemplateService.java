@@ -20,11 +20,13 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -45,8 +47,8 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
-    public PageData<NotificationTemplate> findNotificationTemplatesByTenantId(TenantId tenantId, PageLink pageLink) {
-        return notificationTemplateDao.findByTenantIdAndPageLink(tenantId, pageLink);
+    public PageData<NotificationTemplate> findNotificationTemplatesByTenantIdAndNotificationTypes(TenantId tenantId, List<NotificationType> notificationTypes, PageLink pageLink) {
+        return notificationTemplateDao.findByTenantIdAndNotificationTypesAndPageLink(tenantId, notificationTypes, pageLink);
     }
 
     @Override

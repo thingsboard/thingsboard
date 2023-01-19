@@ -50,9 +50,11 @@ public class TbNotificationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        RuleEngineOriginatedNotificationInfo notificationInfo = new RuleEngineOriginatedNotificationInfo();
-        notificationInfo.setMsgOriginator(msg.getOriginator());
-        notificationInfo.setMsgMetadata(msg.getMetaData().getData());
+        RuleEngineOriginatedNotificationInfo notificationInfo = RuleEngineOriginatedNotificationInfo.builder()
+                .msgOriginator(msg.getOriginator())
+                .msgMetadata(msg.getMetaData().getData())
+                .msgType(msg.getType())
+                .build();
 
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(ctx.getTenantId())

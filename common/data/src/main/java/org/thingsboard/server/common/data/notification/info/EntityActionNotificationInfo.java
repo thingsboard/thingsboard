@@ -15,25 +15,43 @@
  */
 package org.thingsboard.server.common.data.notification.info;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
-public class UserOriginatedNotificationInfo implements NotificationInfo {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EntityActionNotificationInfo implements NotificationInfo {
 
-    private String description;
+    private EntityType entityType;
+    private UUID entityId;
+    private ActionType actionType;
+    private UUID userId;
+    private String userName;
+    // maybe add entityName and other info (from TbMsg data)
 
     @Override
     public EntityType getOriginatorType() {
-        return EntityType.USER;
+        return EntityType.TENANT;
     }
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
+        return Map.of(
+                "entityType", entityType.name(),
+                "entityId", entityId.toString(),
+                "actionType", actionType.name(),
+                "userId", userId.toString(),
+                "userName", userName
+        );
     }
 
 }

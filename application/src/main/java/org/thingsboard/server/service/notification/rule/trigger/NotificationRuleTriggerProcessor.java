@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
@@ -25,6 +26,8 @@ public interface NotificationRuleTriggerProcessor<T, C extends NotificationRuleT
     default boolean matchesClearRule(T triggerObject, C triggerConfig) {
         return false;
     }
+
+    NotificationInfo constructNotificationInfo(T triggerObject, C triggerConfig);
 
     NotificationRuleTriggerType getTriggerType();
 

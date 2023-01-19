@@ -21,19 +21,25 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.UserId;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "originatorType")
 @JsonSubTypes({
         @Type(name = "USER", value = UserOriginatedNotificationInfo.class),
-        @Type(name = "ALARM", value = AlarmOriginatedNotificationInfo.class),
-        @Type(name = "RULE_CHAIN", value = RuleEngineOriginatedNotificationInfo.class)
+        @Type(name = "ALARM", value = AlarmNotificationInfo.class),
+        @Type(name = "RULE_CHAIN", value = RuleEngineOriginatedNotificationInfo.class),
+        @Type(name = "DEVICE", value = DeviceInactivityNotificationInfo.class),
+        @Type(name = "TENANT", value = EntityActionNotificationInfo.class)
 })
 public interface NotificationInfo {
 
-    EntityType getOriginatorType();
+    @JsonIgnore
+    EntityType getOriginatorType(); // FIXME: originatorType is bad identifier, might have 2 types of info related to device
 
     @JsonIgnore
     Map<String, String> getTemplateData();

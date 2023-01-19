@@ -18,6 +18,8 @@ package org.thingsboard.server.service.notification.rule.trigger;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
@@ -39,6 +41,18 @@ public class AlarmNotificationRuleTriggerProcessor implements NotificationRuleTr
             }
         }
         return false;
+    }
+
+    @Override
+    public NotificationInfo constructNotificationInfo(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        return AlarmNotificationInfo.builder()
+                .alarmId(alarm.getUuidId())
+                .alarmType(alarm.getType())
+                .alarmOriginator(alarm.getOriginator())
+                .alarmSeverity(alarm.getSeverity())
+                .alarmStatus(alarm.getStatus())
+                .customerId(alarm.getCustomerId())
+                .build();
     }
 
     @Override

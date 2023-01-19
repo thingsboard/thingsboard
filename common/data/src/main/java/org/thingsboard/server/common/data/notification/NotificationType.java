@@ -15,16 +15,11 @@
  */
 package org.thingsboard.server.common.data.notification;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
-@Getter
 public enum NotificationType {
 
-    GENERAL("General"),
-    ALARM("Alarm");
-
-    private final String name;
+    GENERAL,
+    ALARM,
+    DEVICE_INACTIVITY,
+    ENTITY_ACTION;
 
 }
