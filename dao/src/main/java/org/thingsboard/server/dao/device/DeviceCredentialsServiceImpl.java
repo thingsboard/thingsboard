@@ -84,13 +84,6 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     }
 
     @Override
-    public DeviceCredentials findDeviceCredentialsByTenantIdAndDeviceName(TenantId tenantId, String deviceName) {
-        log.trace("Executing findDeviceCredentialsByDeviceName [{}]", deviceName);
-        validateString(deviceName, "Incorrect deviceName " + deviceName);
-        return deviceCredentialsDao.findByTenantIdAndDeviceName(tenantId, deviceName);
-    }
-
-    @Override
     public DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         return saveOrUpdate(tenantId, deviceCredentials);
     }

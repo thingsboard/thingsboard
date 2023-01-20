@@ -133,13 +133,13 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         }
         if (deviceProfile.getCertificateHash() != null) {
+            if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
+                throw new DataValidationException("Device profile certificate cannot be well known root CA!");
+            }
             DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
             if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(deviceProfile.getId())) {
                 throw new DataValidationException("Cannot create device profile with certificate because such certificate already exists!");
             }
-        }
-        if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
-            throw new DataValidationException("Device profile certificate cannot be well known root CA!");
         }
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         transportConfiguration.validate();
@@ -234,12 +234,14 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DataValidationException(message);
             }
         }
-        DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
-        if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(old.getId())) {
-            throw new DataValidationException("Can't change device profile certificate because such certificate already exists!");
-        }
-        if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
-            throw new DataValidationException("Device profile certificate cannot be well known root CA!");
+        if (deviceProfile.getCertificateHash() != null) {
+            if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
+                throw new DataValidationException("Device profile certificate cannot be well known root CA!");
+            }
+            DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
+            if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(old.getId())) {
+                throw new DataValidationException("Can't change device profile certificate because such certificate already exists!");
+            }
         }
         return old;
     }

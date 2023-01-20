@@ -35,6 +35,11 @@ public class EncryptionUtil {
                 .replaceAll("-----END CERTIFICATE-----", "");
     }
 
+    public static String certTrimNewLinesWithoutBeginEnd(String input) {
+        return input.replaceAll("\n", "")
+                .replaceAll("\r", "");
+    }
+
     public static String pubkTrimNewLines(String input) {
         return input.replaceAll("-----BEGIN PUBLIC KEY-----", "")
                 .replaceAll("\n", "")

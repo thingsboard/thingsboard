@@ -66,9 +66,4 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     public DeviceCredentials findByCredentialsId(TenantId tenantId, String credentialsId) {
         return DaoUtil.getData(deviceCredentialsRepository.findByCredentialsId(credentialsId));
     }
-
-    @Override
-    public DeviceCredentials findByTenantIdAndDeviceName(TenantId tenantId, String deviceName) {
-        return DaoUtil.getData(deviceCredentialsRepository.findByTenantIdAndDeviceName(tenantId.getId(), deviceName));
-    }
 }

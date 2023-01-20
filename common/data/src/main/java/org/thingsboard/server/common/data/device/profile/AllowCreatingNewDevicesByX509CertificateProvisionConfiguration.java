@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.auth;
 
-import lombok.Builder;
+package org.thingsboard.server.common.data.device.profile;
+
 import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 @Data
-@Builder
-public class ValidateDeviceProfileCredentialsResponse {
+public class AllowCreatingNewDevicesByX509CertificateProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
-    private final DeviceProfileId deviceProfileId;
-    private final boolean isDeviceProfileFound;
+    private final String provisionDeviceSecret;
+
+    @Override
+    public DeviceProfileProvisionType getType() {
+        return DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE;
+    }
+
 }

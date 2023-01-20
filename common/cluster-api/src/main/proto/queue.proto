@@ -169,16 +169,8 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
-message ValidateDeviceProfileX509CertRequestMsg {
-  string hash = 1;
-}
-
-message UpdateOrCreateDeviceX509CertRequestMsg {
-  string hash = 1;
-  string value = 2;
-  string commonName = 3;
-  int64 deviceProfileIdMSB = 4;
-  int64 deviceProfileIdLSB = 5;
+message ValidateOrCreateDeviceX509CertRequestMsg {
+  string certificate = 1;
 }
 
 message ValidateBasicMqttCredRequestMsg {
@@ -191,12 +183,6 @@ message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
   bytes profileBody = 3;
-}
-
-message ValidateDeviceProfileCredentialsResponseMsg {
-  int64 deviceProfileIdMSB = 1;
-  int64 deviceProfileIdLSB = 2;
-  bool isDeviceProfileFound = 3;
 }
 
 message GetOrCreateDeviceFromGatewayRequestMsg {
@@ -915,8 +901,7 @@ message TransportApiRequestMsg {
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
-  UpdateOrCreateDeviceX509CertRequestMsg updateOrCreateDeviceCertRequestMsg = 15;
-  ValidateDeviceProfileX509CertRequestMsg validateProfileX509CertRequestMsg = 16;
+  ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -932,7 +917,6 @@ message TransportApiResponseMsg {
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
   repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
-  ValidateDeviceProfileCredentialsResponseMsg validateDeviceProfileResponseMsg = 12;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

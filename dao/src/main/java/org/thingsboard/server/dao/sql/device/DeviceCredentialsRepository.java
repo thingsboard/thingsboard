@@ -16,8 +16,6 @@
 package org.thingsboard.server.dao.sql.device;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.DeviceCredentialsEntity;
 
 import java.util.UUID;
@@ -30,7 +28,4 @@ public interface DeviceCredentialsRepository extends JpaRepository<DeviceCredent
     DeviceCredentialsEntity findByDeviceId(UUID deviceId);
 
     DeviceCredentialsEntity findByCredentialsId(String credentialsId);
-
-    @Query("SELECT dc FROM DeviceCredentialsEntity dc INNER JOIN DeviceEntity de ON dc.deviceId = de.id WHERE de.tenantId = :tenantId AND de.name = :deviceName ")
-    DeviceCredentialsEntity findByTenantIdAndDeviceName(@Param("tenantId") UUID tenantId, @Param("deviceName") String deviceName);
 }

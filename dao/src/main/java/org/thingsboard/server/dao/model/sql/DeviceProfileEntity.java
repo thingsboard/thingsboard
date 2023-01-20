@@ -118,6 +118,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_CERTIFICATE_REGEX_PATTERN_PROPERTY)
     private String certificateRegexPattern;
 
+    @Column(name = ModelConstants.ALLOW_CREATE_NEW_DEVICES_BY_X509_PROVISION)
+    private boolean allowCreateDevice;
+
     public DeviceProfileEntity() {
         super();
     }
@@ -138,6 +141,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.certificateHash = deviceProfile.getCertificateHash();
         this.certificateValue = deviceProfile.getCertificateValue();
         this.certificateRegexPattern = deviceProfile.getCertificateRegexPattern();
+        this.allowCreateDevice = deviceProfile.isAllowCreateNewDevicesByX509Strategy();
         this.description = deviceProfile.getDescription();
         this.isDefault = deviceProfile.isDefault();
         this.profileData = JacksonUtil.convertValue(deviceProfile.getProfileData(), ObjectNode.class);
@@ -203,6 +207,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         deviceProfile.setCertificateHash(certificateHash);
         deviceProfile.setCertificateValue(certificateValue);
         deviceProfile.setCertificateRegexPattern(certificateRegexPattern);
+        deviceProfile.setAllowCreateNewDevicesByX509Strategy(allowCreateDevice);
 
         if (firmwareId != null) {
             deviceProfile.setFirmwareId(new OtaPackageId(firmwareId));

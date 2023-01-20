@@ -67,6 +67,7 @@ import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
@@ -851,7 +852,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
             String strCert = SslUtil.getCertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-            transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+            transportService.process(DeviceTransportType.MQTT, ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
                     new TransportServiceCallback<>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
@@ -860,7 +861,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
                         @Override
                         public void onError(Throwable e) {
-                            log.error(e.getMessage(), e);
+                            log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
+                            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
+                            ctx.close();
                         }
                     });
         } catch (Exception e) {
@@ -873,9 +876,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private X509Certificate getX509Certificate() {
         try {
-            Certificate[] certChains = sslHandler.engine().getSession().getPeerCertificates();
-            if (certChains.length > 1) {
-                return (X509Certificate) certChains[0];
+            Certificate[] certChain = sslHandler.engine().getSession().getPeerCertificates();
+            if (certChain.length > 1) {
+                return (X509Certificate) certChain[0];
             }
         } catch (SSLPeerUnverifiedException e) {
             log.warn(e.getMessage());

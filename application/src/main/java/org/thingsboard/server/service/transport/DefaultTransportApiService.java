@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -65,6 +67,7 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -90,11 +93,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRespon
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.UpdateOrCreateDeviceX509CertRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceProfileCredentialsResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceProfileX509CertRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -105,6 +105,13 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -166,13 +173,9 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
             result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
-        } else if (transportApiRequestMsg.hasValidateProfileX509CertRequestMsg()) {
-            ValidateDeviceProfileX509CertRequestMsg msg = transportApiRequestMsg.getValidateProfileX509CertRequestMsg();
-            result = validateDeviceProfileCertificate(msg.getHash());
-        } else if (transportApiRequestMsg.hasUpdateOrCreateDeviceCertRequestMsg()) {
-            UpdateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getUpdateOrCreateDeviceCertRequestMsg();
-            DeviceProfile deviceProfile = deviceProfileCache.find(new DeviceProfileId(new UUID(msg.getDeviceProfileIdMSB(), msg.getDeviceProfileIdLSB())));
-            result = updateOrCreateDeviceCredentials(msg.getHash(), msg.getValue(), msg.getCommonName(), deviceProfile, DeviceCredentialsType.X509_CERTIFICATE);
+        } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
+            TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
+            result = validateOrCreateDeviceX509Certificate(msg.getCertificate(), DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
@@ -240,27 +243,43 @@ public class DefaultTransportApiService implements TransportApiService {
         }
     }
 
-    private ListenableFuture<TransportApiResponseMsg> validateDeviceProfileCertificate(String credentialsId) {
-        DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(credentialsId);
-        if (deviceProfile != null) {
-            return getDeviceProfileInfo(deviceProfile);
-        }
-        return getEmptyTransportApiResponseFuture();
-    }
+    private ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certChain, DeviceCredentialsType credentialsType) {
+        try {
+            List<X509Certificate> chain = getX509CertificateChainFromString(certChain);
+            String updateDeviceCertificateValue = SslUtil.getCertificateString(chain.get(0));
+            String updateDeviceCertificateHash = EncryptionUtil.getSha3Hash(updateDeviceCertificateValue);
 
-    private ListenableFuture<TransportApiResponseMsg> updateOrCreateDeviceCredentials(String credentialsId,
-                                                                                      String credentialsValue,
-                                                                                      String deviceCN,
-                                                                                      DeviceProfile deviceProfile,
-                                                                                      DeviceCredentialsType credentialsType) {
-        String deviceName = extractRegex(deviceCN, deviceProfile.getCertificateRegexPattern());
-        // find deviceCredentials by deviceName (device exists)
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByTenantIdAndDeviceName(deviceProfile.getTenantId(), deviceName);
-        if (deviceCredentials != null && deviceCredentials.getCredentialsType() == credentialsType) {
-            deviceCredentials.setCredentialsId(credentialsId);
-            deviceCredentials.setCredentialsValue(credentialsValue);
-            deviceCredentialsService.updateDeviceCredentials(deviceProfile.getTenantId(), deviceCredentials);
-            return getDeviceInfo(deviceCredentials);
+            for (X509Certificate cert: chain) {
+                String certificateValue = SslUtil.getCertificateString(cert);
+                String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
+                DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
+                if (credentials != null && credentials.getCredentialsType() == credentialsType) {
+                    return getDeviceInfo(credentials);
+                }
+                DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(certificateHash);
+                if (deviceProfile != null) {
+                    String deviceCN = extractDeviceNameFromCNByRegEx(SslUtil.parseCommonName(chain.get(0)), deviceProfile.getCertificateRegexPattern());
+                    String deviceName = extractDeviceNameFromCNByRegEx(deviceCN, deviceProfile.getCertificateRegexPattern());
+                    Device device = deviceService.findDeviceByTenantIdAndName(deviceProfile.getTenantId(), deviceName);
+                    if (device != null) {
+                        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
+                        if (deviceCredentials != null && deviceCredentials.getCredentialsType() == credentialsType) {
+                            deviceCredentials = updateDeviceCredentials(device.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
+                        } else if (deviceCredentials == null) {
+                            deviceCredentials = createDeviceCredentials(device.getTenantId(), device.getId(), updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
+                        }
+                        return getDeviceInfo(deviceCredentials);
+                    } else if (deviceProfile.getProvisionType() == DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE && deviceProfile.isAllowCreateNewDevicesByX509Strategy()) {
+                        Device savedDevice = createDevice(deviceProfile.getTenantId(), deviceProfile.getId(), deviceName, deviceProfile.getName());
+                        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
+                        deviceCredentials = updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
+                        return getDeviceInfo(deviceCredentials);
+                    }
+
+                }
+            }
+        } catch (CertificateEncodingException e) {
+            throw new RuntimeException(e);
         }
         return getEmptyTransportApiResponseFuture();
     }
@@ -546,18 +565,6 @@ public class DefaultTransportApiService implements TransportApiService {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<TransportApiResponseMsg> getDeviceProfileInfo(DeviceProfile deviceProfile) {
-        ValidateDeviceProfileCredentialsResponseMsg.Builder builder = ValidateDeviceProfileCredentialsResponseMsg.newBuilder()
-                .setDeviceProfileIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
-                .setDeviceProfileIdLSB(deviceProfile.getId().getId().getLeastSignificantBits())
-                .setIsDeviceProfileFound(true);
-
-        return Futures.immediateFuture(
-                TransportApiResponseMsg.newBuilder()
-                        .setValidateDeviceProfileResponseMsg(builder.build())
-                        .build());
-    }
-
     private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {
         DeviceInfoProto.Builder builder = DeviceInfoProto.newBuilder()
                 .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
@@ -716,12 +723,67 @@ public class DefaultTransportApiService implements TransportApiService {
         return l != null ? l : 0;
     }
 
-    private String extractRegex(String commonName, String regex) {
+    private String extractDeviceNameFromCNByRegEx(String commonName, String regex) {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(commonName);
         if (matcher.find()) {
             return matcher.group(0);
         }
         return commonName;
+    }
+
+    private List<X509Certificate> getX509CertificateChainFromString(String certificateChain) {
+        List<X509Certificate> chain = new ArrayList<>();
+        String[] test = Arrays.stream(certificateChain.split("-----BEGIN CERTIFICATE-----")).filter(e -> e.trim().length() > 0).map(EncryptionUtil::certTrimNewLines).toArray(String[]::new);
+        Arrays.stream(test).forEach(s -> {
+            try {
+                chain.add(readCertFile(s));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return chain;
+    }
+
+    private X509Certificate readCertFile(String fileContent) throws Exception {
+        X509Certificate certificate = null;
+        if (fileContent != null && !fileContent.trim().isEmpty()) {
+            fileContent = fileContent.replace("-----BEGIN CERTIFICATE-----", "")
+                    .replace("-----END CERTIFICATE-----", "")
+                    .replaceAll("\\s", "");
+            byte[] decoded = Base64.decodeBase64(fileContent);
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            try (InputStream inStream = new ByteArrayInputStream(decoded)) {
+                certificate = (X509Certificate) certFactory.generateCertificate(inStream);
+            }
+        }
+        return certificate;
+    }
+
+    private DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials, String certificateValue,
+                                                      String certificateHash, DeviceCredentialsType credentialsType) {
+        deviceCredentials.setCredentialsId(certificateHash);
+        deviceCredentials.setCredentialsValue(certificateValue);
+        deviceCredentials.setCredentialsType(credentialsType);
+        return deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+    }
+
+    private DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceId deviceId, String certificateValue,
+                                                      String certificateHash, DeviceCredentialsType credentialsType) {
+        DeviceCredentials createDevCredentials = new DeviceCredentials();
+        createDevCredentials.setDeviceId(deviceId);
+        createDevCredentials.setCredentialsType(credentialsType);
+        createDevCredentials.setCredentialsId(certificateHash);
+        createDevCredentials.setCredentialsValue(certificateValue);
+        return deviceCredentialsService.createDeviceCredentials(tenantId, createDevCredentials);
+    }
+
+    private Device createDevice(TenantId tenantId, DeviceProfileId deviceProfileId, String deviceName, String type) {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setDeviceProfileId(deviceProfileId);
+        device.setName(deviceName);
+        device.setType(type);
+        return deviceService.saveDevice(device);
     }
 }

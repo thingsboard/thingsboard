@@ -66,12 +66,15 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private DeviceTransportType transportType;
     @ApiModelProperty(position = 15, value = "Provisioning strategy.")
     private DeviceProfileProvisionType provisionType;
-    @ApiModelProperty(position = 16, value = "CA certificate value")
+    @ApiModelProperty(position = 16, value = "CA certificate value. ")
     private String certificateValue;
-    @ApiModelProperty(position = 17, value = "CA certificate hash")
+    @ApiModelProperty(position = 17, value = "CA certificate hash. ")
     private String certificateHash;
-    @ApiModelProperty(position = 18, value = "Regex to fetch deviceName from CN")
+    @ApiModelProperty(position = 18, value = "Regex to fetch deviceName from CN. ")
     private String certificateRegexPattern;
+    @ApiModelProperty(position = 19, value = "Allow to create new devices by x509 provision strategy. ")
+    private boolean allowCreateNewDevicesByX509Strategy;
+
 
     @ApiModelProperty(position = 7, value = "Reference to the rule chain. " +
             "If present, the specified rule chain will be used to process all messages related to device, including telemetry, attribute updates, etc. " +
@@ -128,6 +131,10 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.firmwareId = deviceProfile.getFirmwareId();
         this.softwareId = deviceProfile.getSoftwareId();
         this.defaultEdgeRuleChainId = deviceProfile.getDefaultEdgeRuleChainId();
+        this.allowCreateNewDevicesByX509Strategy = deviceProfile.isAllowCreateNewDevicesByX509Strategy();
+        this.certificateRegexPattern = deviceProfile.getCertificateRegexPattern();
+        this.certificateValue = deviceProfile.getCertificateValue();
+        this.certificateHash = deviceProfile.getCertificateHash();
         this.externalId = deviceProfile.getExternalId();
     }
 

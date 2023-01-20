@@ -26,8 +26,6 @@ public interface DeviceCredentialsService {
 
     DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId);
 
-    DeviceCredentials findDeviceCredentialsByTenantIdAndDeviceName(TenantId tenantId, String deviceName);
-
     DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
     DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
