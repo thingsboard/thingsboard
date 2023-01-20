@@ -32,6 +32,10 @@
 
       .mat-toolbar-tools{
         min-height: auto;
+
+        mat-slide-toggle {
+          font-size: 12px;
+        }
       }
 
       .title-container{

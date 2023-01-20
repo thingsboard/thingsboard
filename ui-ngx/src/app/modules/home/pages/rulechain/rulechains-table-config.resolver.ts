@@ -55,6 +55,7 @@ import { select, Store } from "@ngrx/store";
 import { selectUserDetails } from "@core/auth/auth.selectors";
 import { AppState } from "@core/core.state";
 import { UserService } from "@core/http/user.service";
+import { ActionAuthUpdateUserDetails } from "@core/auth/auth.actions";
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -106,12 +107,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       map((user) => {
         const edgeId = route.params?.edgeId;
         const ruleChainScope = route.data?.ruleChainsType ? route.data?.ruleChainsType : 'tenant';
-        const showErrorsStatusToggle = ruleChainScope === 'tenant';
         const showErrorsStatus = user.additionalInfo?.showErrorsStatus;
         this.config.componentsData = {
           ruleChainScope,
           edgeId,
-          showErrorsStatusToggle,
           showErrorsStatus,
           onShowErrorsStatusChange: () => this.onShowErrorsStatusChange()
         };
@@ -167,7 +166,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           })
       );
     }
-    if (this.config.componentsData.showErrorsStatus && this.config.componentsData.showErrorsStatusToggle) {
+    if (this.config.componentsData.showErrorsStatus && this.config.componentsData.ruleChainScope === 'tenant') {
       columns.push(
         new EntityTableColumn<RuleChainInfo>('stats', 'rulechain.errors-status', '60px',
           entity => {
@@ -645,15 +644,20 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
   private onShowErrorsStatusChange() {
     this.store.pipe(select(selectUserDetails), take(1)).pipe(
-      mergeMap((user) => {
+      mergeMap((userDetails) => {
+        this.config.componentsData.showErrorsStatus = !userDetails.additionalInfo.showErrorsStatus;
         return this.userService.saveUser({
-          ...user,
+          ...userDetails,
           additionalInfo: {
-            showErrorsStatus: !this.config.componentsData.showErrorsStatus
+            showErrorsStatus: this.config.componentsData.showErrorsStatus
           }
         })
-      })).subscribe(() => {
-      window.location.reload();
+      }))
+      .subscribe(( user) => {
+        this.store.dispatch(new ActionAuthUpdateUserDetails({ userDetails: user}));
+        this.config.columns = this.configureEntityTableColumns(this.config.componentsData.ruleChainScope);
+        this.config.getTable().columnsUpdated();
+        this.config.getTable().updateData();
     });
   }
 }
