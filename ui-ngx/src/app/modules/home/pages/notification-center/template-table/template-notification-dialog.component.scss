@@ -38,6 +38,19 @@
     }
   }
 
+  .additional-config-group {
+    padding: 16px 16px 4px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    width: 100%;
+    height: 100%;
+
+    .toggle {
+      margin-bottom: 12px;
+    }
+  }
+
   @media #{$mat-gt-xs} {
     .mat-dialog-content {
       max-height: 75vh;
@@ -86,6 +99,7 @@
   .mat-radio-group {
     display: flex;
     flex-direction: row;
+    margin-bottom: 8px;
 
     .mat-radio-button {
       flex: 1 1 100%;

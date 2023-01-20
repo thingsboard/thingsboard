@@ -18,7 +18,7 @@ import { Component, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MatTabGroup } from '@angular/material/tabs';
+import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import {
   NotificationTableComponent
 } from '@home/pages/notification-center/notification-table/notification-table.component';
@@ -34,6 +34,7 @@ export class NotificationCenterComponent extends PageComponent {
   entityType = EntityType;
 
   @ViewChild('matTabGroup', {static: true}) matTabs: MatTabGroup;
+  @ViewChild('requestTab', {static: true}) requestTab: MatTab;
   @ViewChild('notificationRequest', {static: true}) notificationRequestTable: NotificationTableComponent;
   @ViewChildren(NotificationTableComponent) tableComponent: QueryList<NotificationTableComponent>;
 
@@ -56,6 +57,6 @@ export class NotificationCenterComponent extends PageComponent {
   }
 
   sendNotification($event: Event) {
-    this.notificationRequestTable.entityTableConfig.onEntityAction({event: $event, action: 'add', entity: null});
+    this.notificationRequestTable.entityTableConfig.onEntityAction({event: $event, action: this.requestTab.isActive ? 'add' : 'add-without-update', entity: null});
   }
 }

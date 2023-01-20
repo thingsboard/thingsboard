@@ -57,12 +57,21 @@
                             strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
       </mat-progress-spinner>
       <div *ngIf="preview">
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.PUSH.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon svgIcon="mdi:bell-badge"></mat-icon>
+            <div class="group-title">Web notification preview</div>
+          </div>
+          <div class="web-preview">
+            <tb-notification preview [notification]="preview.processedTemplates.PUSH"></tb-notification>
+          </div>
+        </section>
         <section class="preview-group">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
             <mat-icon>supervisor_account</mat-icon>
-            <div class="total-recipients">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
+            <div class="group-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
           </div>
-          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value.length">
+          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value.length > 1">
             <div *ngFor="let detail of preview.recipientsCountByTarget | keyvalue" class="details-recipient">
               <span class="number">{{ detail.value }}</span>{{ detail.key }}
             </div>

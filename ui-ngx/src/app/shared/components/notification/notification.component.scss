@@ -17,7 +17,7 @@
   padding: 10px;
   display: block;
 
-  .mat-icon {
+  .icon {
     margin-right: 14px;
     color: rgba(0, 0, 0, 0.54);
   }
@@ -32,6 +32,11 @@
       font-size: 14px;
       line-height: 16px;
       color: rgba(0, 0, 0, 0.76);
+    }
+
+    .button {
+      margin-top: 8px;
+      border-color: initial;
     }
   }
 

@@ -183,11 +183,12 @@ export class UnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
 }
 
-export class MarkAsReadCmd extends UnreadCountSubCmd {
+export class MarkAsReadCmd implements WebsocketCmd {
+
+  cmdId: number;
   notifications: string[];
 
   constructor(ids: string[]) {
-    super();
     this.notifications = ids;
   }
 }

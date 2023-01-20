@@ -53,6 +53,10 @@ export class NotificationService {
     return this.http.put<void>(`/api/notification/${id}/read`, defaultHttpOptionsFromConfig(config));
   }
 
+  public markAllNotificationsAsRead(config?: RequestConfig): Observable<void> {
+    return this.http.put<void>('/api/notifications/read', defaultHttpOptionsFromConfig(config));
+  }
+
   public createNotificationRequest(notification: NotificationRequest, config?: RequestConfig): Observable<NotificationRequest> {
     return this.http.post<NotificationRequest>('/api/notification/request', notification, defaultHttpOptionsFromConfig(config));
   }

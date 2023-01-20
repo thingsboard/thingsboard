@@ -88,11 +88,13 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.componentsData.unreadOnly) {
-      this.getTable().resetSortAndFilter(true);
-    } else {
-      this.updateData();
-    }
+    this.notificationService.markAllNotificationsAsRead().subscribe(() => {
+      if (this.componentsData.unreadOnly) {
+        this.getTable().resetSortAndFilter(true);
+      } else {
+        this.updateData();
+      }
+    });
   }
 
   private markAsRead($event, entity){

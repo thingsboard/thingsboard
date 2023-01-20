@@ -95,6 +95,44 @@
           <mat-label translate>notification.message</mat-label>
           <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
         </mat-form-field>
+        <section formGroupName="additionalConfig">
+          <section formGroupName="icon" class="additional-config-group">
+            <mat-slide-toggle formControlName="enabled" class="toggle">
+              {{ 'icon.icon' | translate }}
+            </mat-slide-toggle>
+            <div *ngIf="pushTemplateForm.get('additionalConfig.icon.enabled').value" fxLayout="row" fxLayoutGap="12px">
+              <tb-material-icon-select formControlName="icon" required fxFlex>
+              </tb-material-icon-select>
+              <tb-color-input formControlName="color" fxFlex>
+              </tb-color-input>
+            </div>
+          </section>
+          <section formGroupName="actionButtonConfig" class="additional-config-group">
+            <mat-slide-toggle formControlName="enabled" class="toggle">
+              {{ 'notification.action-button' | translate }}
+            </mat-slide-toggle>
+            <div *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
+              <div fxLayout="row" fxLayoutGap="12px">
+                <mat-form-field class="mat-block" fxFlex>
+                  <mat-label translate>notification.button-text</mat-label>
+                  <input matInput formControlName="text" required>
+                  <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
+                    {{ 'notification.button-text-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <tb-color-input formControlName="color" fxFlex>
+                </tb-color-input>
+              </div>
+              <mat-form-field class="mat-block">
+                <mat-label translate>notification.link</mat-label>
+                <input matInput formControlName="link" required>
+                <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
+                  {{ 'notification.link-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </section>
+        </section>
       </form>
     </mat-step>
     <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.EMAIL.enabled').value"

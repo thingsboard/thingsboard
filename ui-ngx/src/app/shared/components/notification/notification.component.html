@@ -16,15 +16,22 @@
 
 -->
 <section fxLayout="row" fxLayoutAlign="space-between start">
-  <mat-icon>account_circle</mat-icon>
+  <mat-icon class="icon" *ngIf="showIcon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
+    {{ notification.additionalConfig.icon.icon }}
+  </mat-icon>
   <div class="content" fxFlex>
     <div class="title">{{ notification.subject }}</div>
     <div class="message">{{ notification.text }}</div>
+    <button *ngIf="showButton" mat-stroked-button class="button"
+            [ngStyle]="{color: notification.additionalConfig.actionButtonConfig.color}"
+            (click)="navigate($event)">
+      {{ buttonLabel }}
+    </button>
   </div>
   <div class="description" fxLayout="column" fxLayoutAlign="start end">
     <button mat-icon-button class="tb-mat-28 mark-read" (click)="markRead($event)">
       <mat-icon>check_circle_outline</mat-icon>
     </button>
-    <span class="time">{{ notification.createdTime | dateAgo }}</span>
+    <span class="time" *ngIf="preview">{{ notification.createdTime | dateAgo }}</span>
   </div>
 </section>

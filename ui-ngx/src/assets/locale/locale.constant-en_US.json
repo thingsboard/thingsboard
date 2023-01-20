@@ -2669,6 +2669,7 @@
         "copied": "Copied!"
     },
     "notification": {
+        "action-button": "Action button",
         "add-notification-target": "Add notification target",
         "add-notification-template": "Add notification template",
         "add-target": "Add target",
@@ -2676,6 +2677,8 @@
         "at-least-one-should-be-selected": "At least one should be selected",
         "all": "All",
         "basic-settings": "Basic settings",
+        "button-text": "Button text",
+        "button-text-required": "Button text is required",
         "compose": "Compose",
         "copy-notification-template": "Copy notification template",
         "create-target": "Create target",
@@ -2700,6 +2703,8 @@
         "email-settings": "Email settings",
         "get-customer-id-from-originator": "Get Customer id from originator",
         "inbox": "Inbox",
+        "link": "Link",
+        "link-required": "Link is required",
         "management": "Notification management",
         "mark-all-as-read": "Mark all as read",
         "mark-as-read": "Mark as read",
