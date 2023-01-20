@@ -14,12 +14,28 @@
 /// limitations under the License.
 ///
 
-export * from './date-ago.pipe';
-export * from './enum-to-array.pipe';
-export * from './highlight.pipe';
-export * from './keyboard-shortcut.pipe';
-export * from './milliseconds-to-time-string.pipe';
-export * from './nospace.pipe';
-export * from './truncate.pipe';
-export * from './file-size.pipe';
-export * from './selectable-columns.pipe';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Notification } from '@shared/models/notification.models';
+
+@Component({
+  selector: 'tb-notification',
+  templateUrl: './notification.component.html',
+  styleUrls: ['./notification.component.scss']
+})
+export class NotificationComponent {
+
+  @Input()
+  notification: Notification;
+
+  @Output()
+  markAsRead = new EventEmitter<string>();
+  constructor() {
+  }
+
+  markRead($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.markAsRead.next(this.notification.id.id);
+  }
+}

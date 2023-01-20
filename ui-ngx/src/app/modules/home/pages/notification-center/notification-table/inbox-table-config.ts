@@ -59,7 +59,7 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     this.headerComponent = InboxTableHeaderComponent;
 
     this.headerActionDescriptors = [{
-      name: this.translate.instant('notification.mark-all-read'),
+      name: this.translate.instant('notification.mark-all-as-read'),
       icon: 'done_all',
       isEnabled: () => true,
       onAction: $event => this.markAllRead($event)

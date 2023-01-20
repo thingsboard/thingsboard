@@ -25,6 +25,7 @@ import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -170,6 +171,8 @@ import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
+import { NotificationComponent } from '@shared/components/notification/notification.component';
+import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -184,6 +187,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
     {
       provide: FlowInjectionToken,
@@ -285,6 +289,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
@@ -300,12 +305,14 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
-    TbScriptLangComponent
+    TbScriptLangComponent,
+    NotificationComponent
   ],
   imports: [
     CommonModule,
     RouterModule,
     TranslateModule,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
@@ -418,6 +425,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
@@ -491,6 +499,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
     SelectableColumnsPipe,
     RouterModule,
@@ -506,7 +515,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
-    TbScriptLangComponent
+    TbScriptLangComponent,
+    NotificationComponent
   ]
 })
 export class SharedModule { }

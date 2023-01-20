@@ -39,6 +39,7 @@ export * from './event.models';
 export * from './login.models';
 export * from './material.models';
 export * from './notification.models';
+export * from './notification-ws.models';
 export * from './oauth2.models';
 export * from './queue.models';
 export * from './relation.models';

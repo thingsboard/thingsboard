@@ -2701,7 +2701,7 @@
         "get-customer-id-from-originator": "Get Customer id from originator",
         "inbox": "Inbox",
         "management": "Notification management",
-        "mark-all-read": "Mark all read",
+        "mark-all-as-read": "Mark all as read",
         "mark-as-read": "Mark as read",
         "message": "Message",
         "message-required": "Message is required",
@@ -2710,6 +2710,7 @@
         "no-notification-request": "No notification request",
         "no-notification-templates": "No notification templates",
         "no-targets-notification": "No targets notification",
+        "notification": "Notification",
         "notification-center": "Notification center",
         "notification-target": "Notification target",
         "recipients-count": "{ count, plural, 1 {1 Recipient} other {# Recipients} }",
@@ -2753,6 +2754,7 @@
         "text": "Text",
         "type": "Type",
         "unread": "Unread",
+        "view-all": "View al;",
         "web-settings": "Web settings"
     },
     "ota-update": {
@@ -3465,10 +3467,16 @@
         "days": "Days"
     },
     "timewindow": {
+        "years": "{ years, plural, 1 { year } other {# years } }",
+        "months": "{ months, plural, 1 { month } other {# months } }",
+        "weeks": "{ weeks, plural, 1 { week } other {# weeks } }",
         "days": "{ days, plural, 1 { day } other {# days } }",
         "hours": "{ hours, plural, 0 { hour } 1 {1 hour } other {# hours } }",
+        "hr": "{{ hr }} hr",
         "minutes": "{ minutes, plural, 0 { minute } 1 {1 minute } other {# minutes } }",
+        "min": "{{ min }} min",
         "seconds": "{ seconds, plural, 0 { second } 1 {1 second } other {# seconds } }",
+        "sec": "{{ sec }} sec",
         "realtime": "Realtime",
         "history": "History",
         "last-prefix": "last",
@@ -3478,7 +3486,8 @@
         "last": "Last",
         "time-period": "Time period",
         "hide": "Hide",
-        "interval": "Interval"
+        "interval": "Interval",
+        "just-now": "Just now"
     },
     "user": {
         "user": "User",
