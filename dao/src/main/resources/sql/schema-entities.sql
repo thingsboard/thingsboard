@@ -297,6 +297,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     certificate_regex_pattern varchar(255),
     default_edge_rule_chain_id uuid,
     external_id uuid,
+    allow_create_device_by_x509 boolean,
     CONSTRAINT device_profile_credentials_hash_unq_key UNIQUE (certificate_hash),
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),

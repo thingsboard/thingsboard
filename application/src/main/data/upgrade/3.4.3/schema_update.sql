@@ -33,6 +33,8 @@ ALTER TABLE device_profile
     ADD COLUMN IF NOT EXISTS certificate_hash varchar,
     ADD COLUMN IF NOT EXISTS certificate_value varchar,
     ADD COLUMN IF NOT EXISTS certificate_regex_pattern varchar(255),
+    ADD COLUMN IF NOT EXISTS allow_create_device_by_x509 boolean,
     DROP CONSTRAINT IF EXISTS device_profile_credentials_hash_unq_key,
     ADD CONSTRAINT device_profile_credentials_hash_unq_key UNIQUE (certificate_hash);
+
 -- DEVICE PROFILE CERTIFICATE END
