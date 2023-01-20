@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.EXTERNAL,
+        type = ComponentType.TRANSFORMATION,
         name = "split array msg",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
