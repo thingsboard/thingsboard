@@ -31,7 +31,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 import java.util.UUID;
 
 @Slf4j
-public abstract class BaseDeviceEdgeProcessor extends BaseEdgeProcessor {
+public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
 
     @Autowired
     protected DataDecodingEncodingService dataDecodingEncodingService;

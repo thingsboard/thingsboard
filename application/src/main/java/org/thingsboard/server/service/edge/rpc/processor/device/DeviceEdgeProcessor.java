@@ -71,7 +71,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 @TbCoreComponent
-public class DeviceEdgeProcessor extends BaseDeviceEdgeProcessor {
+public class DeviceEdgeProcessor extends BaseDeviceProcessor {
 
     public ListenableFuture<Void> processDeviceFromEdge(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
         log.trace("[{}] executing processDeviceFromEdge [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
