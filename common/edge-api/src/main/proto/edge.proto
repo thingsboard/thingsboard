@@ -111,7 +111,6 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  ENTITY_MERGE_RPC_MESSAGE = 5;
 }
 
 message EntityDataProto {
@@ -199,7 +198,7 @@ message DeviceUpdateMsg {
   string type = 9;
   optional string label = 10;
   optional string additionalInfo = 11;
-  optional string conflictName = 12;
+  optional string conflictName = 12; // deprecated
   optional int64 firmwareIdMSB = 13;
   optional int64 firmwareIdLSB = 14;
   optional bytes deviceDataBytes = 15;
