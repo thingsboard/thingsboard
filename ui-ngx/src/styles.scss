@@ -850,6 +850,23 @@ mat-label {
   }
 }
 
+// Tooltipster
+
+.tooltipster-sidetip.tooltipster-tb {
+  .tooltipster-box {
+    background: rgba(3, 8, 40, 0.64);
+    border: none;
+    border-radius: 4px;
+    .tooltipster-content {
+      padding: 4px 8px;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+  }
+}
+
 .tb-default, .tb-dark {
 
   /*********************************

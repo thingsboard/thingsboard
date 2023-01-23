@@ -25,33 +25,51 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
   constructor(private translate: TranslateService) {
   }
 
-  transform(millseconds: number, args?: any): string {
+  transform(millseconds: number, shortFormat = false): string {
     let seconds = Math.floor(millseconds / 1000);
     const days = Math.floor(seconds / 86400);
     let hours = Math.floor((seconds % 86400) / 3600);
     let minutes = Math.floor(((seconds % 86400) % 3600) / 60);
     seconds = seconds % 60;
     let timeString = '';
-    if (days > 0) {
-      timeString += this.translate.instant('timewindow.days', {days});
-    }
-    if (hours > 0) {
-      if (timeString.length === 0 && hours === 1) {
-        hours = 0;
+    if (shortFormat) {
+      if (days > 0) {
+        timeString += this.translate.instant('timewindow.short.days', {days});
       }
-      timeString += this.translate.instant('timewindow.hours', {hours});
-    }
-    if (minutes > 0) {
-      if (timeString.length === 0 && minutes === 1) {
-        minutes = 0;
+      if (hours > 0) {
+        timeString += this.translate.instant('timewindow.short.hours', {hours});
       }
-      timeString += this.translate.instant('timewindow.minutes', {minutes});
-    }
-    if (seconds > 0) {
-      if (timeString.length === 0 && seconds === 1) {
-        seconds = 0;
+      if (minutes > 0) {
+        timeString += this.translate.instant('timewindow.short.minutes', {minutes});
       }
-      timeString += this.translate.instant('timewindow.seconds', {seconds});
+      if (seconds > 0) {
+        timeString += this.translate.instant('timewindow.short.seconds', {seconds});
+      }
+      if (!timeString.length) {
+        timeString += this.translate.instant('timewindow.short.seconds', {seconds: 0});
+      }
+    } else {
+      if (days > 0) {
+        timeString += this.translate.instant('timewindow.days', {days});
+      }
+      if (hours > 0) {
+        if (timeString.length === 0 && hours === 1) {
+          hours = 0;
+        }
+        timeString += this.translate.instant('timewindow.hours', {hours});
+      }
+      if (minutes > 0) {
+        if (timeString.length === 0 && minutes === 1) {
+          minutes = 0;
+        }
+        timeString += this.translate.instant('timewindow.minutes', {minutes});
+      }
+      if (seconds > 0) {
+        if (timeString.length === 0 && seconds === 1) {
+          seconds = 0;
+        }
+        timeString += this.translate.instant('timewindow.seconds', {seconds});
+      }
     }
     return timeString;
   }
