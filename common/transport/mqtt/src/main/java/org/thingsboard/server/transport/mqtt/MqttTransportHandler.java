@@ -330,6 +330,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(ctx, topicName, msgId, mqttMsg);
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+            } else {
+                log.error("[gatewaySessionHandler] is null, [{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId);
             }
         } else if (sparkplugSessionHandler != null) {
             handleSparkplugPublishMsg(ctx, topicName, mqttMsg);
@@ -375,10 +377,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void handleSparkplugPublishMsg(ChannelHandlerContext ctx, String topicName, MqttPublishMessage mqttMsgOld) {
-        MqttPublishMessage mqttMsg = sparkplugSessionHandler.reCreateMqttPublishMessageWithPacketId(mqttMsgOld);
+    private void handleSparkplugPublishMsg(ChannelHandlerContext ctx, String topicName, MqttPublishMessage mqttMsg) {
         int msgId = mqttMsg.variableHeader().packetId();
-
         try {
             SparkplugTopic sparkplugTopic = parseTopicPublish(topicName);
             String deviceName = sparkplugTopic.isNode() ? deviceSessionCtx.getDeviceInfo().getDeviceName() : sparkplugTopic.getDeviceId();

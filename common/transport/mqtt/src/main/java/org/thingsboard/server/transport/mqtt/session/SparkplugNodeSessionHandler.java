@@ -21,9 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
@@ -34,7 +32,6 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
-import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import javax.annotation.Nullable;
@@ -192,17 +189,6 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         } catch (IllegalStateException | JsonSyntaxException | ThingsboardException e) {
             log.error("Failed to decode post telemetry request", e);
             throw new AdaptorException(e);
-        }
-    }
-
-    public MqttPublishMessage reCreateMqttPublishMessageWithPacketId(MqttPublishMessage mqttMsgOld) {
-        try {
-            SparkplugBProto.Payload sparkplugBProto = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsgOld.payload()));
-            MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(mqttMsgOld.variableHeader().topicName(), (int) sparkplugBProto.getSeq());
-            return new MqttPublishMessage(mqttMsgOld.fixedHeader(), variableHeader, mqttMsgOld.payload());
-        } catch (InvalidProtocolBufferException e) {
-            log.error("Failed to deserialize SparkplugBProto.Payload", e);
-            throw new RuntimeException("Failed to deserialize SparkplugBProto.Payload");
         }
     }
 
