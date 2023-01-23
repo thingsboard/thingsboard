@@ -96,13 +96,14 @@ export interface SlackConversation {
 export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{
   tenantId: TenantId;
   templateId: NotificationTemplateId;
-  deliveryMethods: Array<NotificationDeliveryMethod>;
+  // deliveryMethods: Array<NotificationDeliveryMethod>;
   configuration: NotificationRuleConfig;
 }
 
 export interface NotificationRuleConfig {
   initialNotificationTargetId: NotificationTargetId;
   escalationConfig: NotificationEscalationConfig;
+  description?: string;
 }
 
 export interface NotificationEscalationConfig {

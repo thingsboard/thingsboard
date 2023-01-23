@@ -42,6 +42,8 @@ import {
   TemplateAutocompleteComponent
 } from '@home/pages/notification-center/template-table/template-autocomplete.component';
 import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
+import { RuleTableHeaderComponent } from '@home/pages/notification-center/rule-table/rule-table-header.component';
+import { RuleNotificationDialogComponent } from '@home/pages/notification-center/rule-table/rule-notification-dialog.component';
 
 @NgModule({
   declarations: [
@@ -53,7 +55,9 @@ import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox
     TemplateTableHeaderComponent,
     NotificationTableComponent,
     TemplateAutocompleteComponent,
-    InboxTableHeaderComponent
+    InboxTableHeaderComponent,
+    RuleTableHeaderComponent,
+    RuleNotificationDialogComponent
   ],
   imports: [
     CommonModule,

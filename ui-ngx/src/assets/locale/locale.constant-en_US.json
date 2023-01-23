@@ -2680,6 +2680,7 @@
         "button-text": "Button text",
         "button-text-required": "Button text is required",
         "compose": "Compose",
+        "add-rule": "Add rule",
         "copy-notification-template": "Copy notification template",
         "create-target": "Create target",
         "created-time": "Created time",
@@ -2697,6 +2698,8 @@
             "slack": "Slack",
             "sms": "SMS"
         },
+        "delete-rule-text": "Be careful, after the confirmation the notification rule will become unrecoverable.",
+        "delete-rule-title": "Are you sure you want to delete the notification rule '{{ruleName}}'?",
         "description": "Description",
         "edit-notification-target": "Edit notification target",
         "edit-notification-template": "Edit notification template",
@@ -2726,10 +2729,13 @@
             "sent": "Sent"
         },
         "review": "Review",
+        "no-rules-notification": "No rules notification",
+        "rule": "Rule",
         "rules": "Rules",
         "search-notification": "Search notification",
         "search-targets": "Search targets",
         "search-templates": "Search templates",
+        "search-rules": "Search rules",
         "send-notification": "Send notification",
         "send-test-notification": "Send test notification",
         "sent": "Sent",
@@ -2750,6 +2756,7 @@
         },
         "targets": "Targets",
         "targets-required": "Targets is required",
+        "recipient": "Recipient",
         "template": "Template",
         "template-required": "Template is required",
         "template-type": {
@@ -2761,7 +2768,11 @@
         "type": "Type",
         "unread": "Unread",
         "view-all": "View al;",
-        "web-settings": "Web settings"
+        "web-settings": "Web settings",
+        "rule-name": "Rule name",
+        "rule-name-required": "Name is required",
+        "template-name": "Template name",
+        "hierarchy-of-receiving": "Hierarchy of receiving notifications"
     },
     "ota-update": {
       "add": "Add package",
