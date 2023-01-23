@@ -575,7 +575,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRelationUpdateMsgCount() > 0) {
                 for (RelationUpdateMsg relationUpdateMsg : uplinkMsg.getRelationUpdateMsgList()) {
-                    result.add(ctx.getRelationProcessor().processRelationFromEdge(edge.getTenantId(), relationUpdateMsg));
+                    result.add(ctx.getRelationProcessor().processRelationMsg(edge.getTenantId(), relationUpdateMsg));
                 }
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {
