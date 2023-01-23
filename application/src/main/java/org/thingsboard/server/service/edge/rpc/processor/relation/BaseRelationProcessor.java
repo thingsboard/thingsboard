@@ -38,7 +38,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 import java.util.UUID;
 
 @Slf4j
-public class BaseRelationProcessor extends BaseEdgeProcessor {
+public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         log.trace("[{}] processRelationFromEdge [{}]", tenantId, relationUpdateMsg);

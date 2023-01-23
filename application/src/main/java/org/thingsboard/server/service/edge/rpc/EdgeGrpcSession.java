@@ -555,7 +555,7 @@ public final class EdgeGrpcSession implements Closeable {
         try {
             if (uplinkMsg.getEntityDataCount() > 0) {
                 for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
-                    result.addAll(ctx.getTelemetryProcessor().processTelemetryFromEdge(edge.getTenantId(), entityData));
+                    result.addAll(ctx.getTelemetryProcessor().processTelemetryMsg(edge.getTenantId(), entityData));
                 }
             }
             if (uplinkMsg.getDeviceUpdateMsgCount() > 0) {

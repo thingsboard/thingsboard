@@ -37,7 +37,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 import java.util.UUID;
 
 @Slf4j
-public class BaseAlarmProcessor extends BaseEdgeProcessor {
+public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] processAlarmMsg [{}]", tenantId, alarmUpdateMsg);
