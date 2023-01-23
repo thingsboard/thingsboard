@@ -15,7 +15,7 @@
 ///
 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,7 +46,6 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
   constructor(private sanitizer: DomSanitizer,
               private translate: TranslateService,
               private router: Router,
-              private cd: ChangeDetectorRef,
               private ruleChainService: RuleChainService,
               private dialog: MatDialog,
               private route: ActivatedRoute) {
@@ -136,7 +135,6 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
           msgData: null,
           msgMetadata: null
         };
-        this.cd.markForCheck();
       }
     });
   }
