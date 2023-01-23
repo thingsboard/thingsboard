@@ -54,6 +54,7 @@ export class NotificationBellComponent implements OnInit {
     this.notificationSubscriber = NotificationSubscriber.createNotificationCountSubscription(
       this.notificationWsService, this.zone);
     this.notificationSubscriber.subscribe();
+
     this.count$ = this.notificationSubscriber.notificationCount$.pipe(
       distinctUntilChanged(),
       publishReplay(1),

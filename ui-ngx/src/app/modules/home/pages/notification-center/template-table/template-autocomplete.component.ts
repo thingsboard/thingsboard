@@ -28,7 +28,11 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { NotificationDeliveryMethodTranslateMap, NotificationTemplate } from '@shared/models/notification.models';
+import {
+  NotificationDeliveryMethodTranslateMap,
+  NotificationTemplate,
+  NotificationType
+} from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { isEqual } from '@core/utils';
 
@@ -64,6 +68,9 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  notificationTypes: NotificationType;
 
   @ViewChild('templateInput', {static: true}) templateInput: ElementRef;
 
@@ -187,7 +194,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
       property: 'name',
       direction: Direction.ASC
     });
-    return this.notificationService.getNotificationTemplates(pageLink, {ignoreLoading: true}).pipe(
+    return this.notificationService.getNotificationTemplates(pageLink, this.notificationTypes, {ignoreLoading: true}).pipe(
       catchError(() => of(emptyPageData<NotificationTemplate>())),
       map(pageData => {
         return pageData.data;

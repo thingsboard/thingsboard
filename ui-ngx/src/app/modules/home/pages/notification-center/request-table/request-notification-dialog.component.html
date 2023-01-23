@@ -39,6 +39,7 @@
       <form [formGroup]="notificationRequestForm" style="padding-bottom: 16px;">
         <tb-template-autocomplete
           required
+          [notificationTypes]="notificationType.GENERAL"
           formControlName="templateId">
         </tb-template-autocomplete>
         <tb-entity-list

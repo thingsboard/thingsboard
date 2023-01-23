@@ -2714,6 +2714,7 @@
         "no-inbox-notification": "No notification found",
         "no-notification-request": "No notification request",
         "no-notification-templates": "No notification templates",
+        "no-notifications-yet": "No notifications yet",
         "no-targets-notification": "No targets notification",
         "notification": "Notification",
         "notification-center": "Notification center",

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { NotificationRequest, NotificationRequestPreview } from '@shared/models/notification.models';
+import { NotificationRequest, NotificationRequestPreview, NotificationType } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -49,6 +49,7 @@ export class RequestNotificationDialogComponent extends
   stepperOrientation: Observable<StepperOrientation>;
   isAdd = true;
   entityType = EntityType;
+  notificationType = NotificationType;
   notificationRequestForm: FormGroup;
 
   selectedIndex = 0;

@@ -56,11 +56,7 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
     this.notifications$ = this.notificationSubscriber.notifications$.pipe(
       publishReplay(1),
       refCount(),
-      tap(() => {
-        setTimeout(() => {
-          this.cd.markForCheck();
-        });
-      })
+      tap(() => setTimeout(() => this.cd.markForCheck()))
     );
     this.notificationSubscriber.subscribe();
   }

@@ -29,10 +29,12 @@ import {
   NotificationSettings,
   NotificationTarget,
   NotificationTemplate,
+  NotificationType,
   SlackChanelType,
   SlackConversation
 } from '@shared/models/notification.models';
 import { User } from '@shared/models/user.model';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -143,8 +145,12 @@ export class NotificationService {
     return this.http.delete<void>(`/api/notification/template/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getNotificationTemplates(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationTemplate>> {
-    return this.http.get<PageData<NotificationTemplate>>(`/api/notification/templates${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config));
+  public getNotificationTemplates(pageLink: PageLink, notificationTypes?: NotificationType,
+                                  config?: RequestConfig): Observable<PageData<NotificationTemplate>> {
+    let url = `/api/notification/templates${pageLink.toQuery()}`;
+    if (isDefinedAndNotNull(notificationTypes)) {
+      url += `&notificationTypes=${notificationTypes}`;
+    }
+    return this.http.get<PageData<NotificationTemplate>>(url, defaultHttpOptionsFromConfig(config));
   }
 }
