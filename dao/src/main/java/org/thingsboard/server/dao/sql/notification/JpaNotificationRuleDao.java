@@ -46,7 +46,7 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
 
     @Override
     public PageData<NotificationRule> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRuleRepository.findByTenantIdAndNameContainingIgnoreCase(getId(tenantId, true),
+        return DaoUtil.toPageData(notificationRuleRepository.findByTenantIdAndSearchText(getId(tenantId, true),
                 Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 

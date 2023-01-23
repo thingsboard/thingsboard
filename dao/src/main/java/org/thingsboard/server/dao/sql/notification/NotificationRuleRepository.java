@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.sql.notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
@@ -28,7 +30,11 @@ import java.util.UUID;
 @Repository
 public interface NotificationRuleRepository extends JpaRepository<NotificationRuleEntity, UUID> {
 
-    Page<NotificationRuleEntity> findByTenantIdAndNameContainingIgnoreCase(UUID tenantId, String searchText, Pageable pageable);
+    @Query("SELECT r FROM NotificationRuleEntity r WHERE r.tenantId = :tenantId " +
+            "AND lower(r.name) LIKE lower(concat('%', :searchText, '%')) ")
+    Page<NotificationRuleEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
+                                                             @Param("searchText") String searchText,
+                                                             Pageable pageable);
 
     boolean existsByRecipientsConfigContaining(String string);
 

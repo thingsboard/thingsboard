@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -60,8 +61,8 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
 
     @Override
     public PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
-        return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityType(getId(tenantId, true),
-                originatorType, DaoUtil.toPageable(pageLink))).mapData(NotificationRequestInfoEntity::toData);
+        return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(getId(tenantId, true),
+                originatorType, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink))).mapData(NotificationRequestInfoEntity::toData);
     }
 
     @Override

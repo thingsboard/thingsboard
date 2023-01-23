@@ -74,13 +74,11 @@ CREATE TABLE IF NOT EXISTS notification (
     type VARCHAR(32) NOT NULL,
     subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
-    additional_config VARCHAR(500),
+    additional_config VARCHAR(1000),
     info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_notification_id_recipient_id ON notification(id, recipient_id);
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_status_created_time ON notification(recipient_id, status, created_time DESC);
-
-ALTER TABLE alarm ADD COLUMN IF NOT EXISTS notification_rule_id UUID;
 
 ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS phone VARCHAR(255);
