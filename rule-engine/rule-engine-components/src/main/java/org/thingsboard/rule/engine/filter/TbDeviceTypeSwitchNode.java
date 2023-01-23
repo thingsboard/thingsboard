@@ -40,11 +40,11 @@ public class TbDeviceTypeSwitchNode extends TbAbstractTypeSwitchNode {
 
     protected String getRelationType(TbContext ctx, EntityId originator) {
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
-            throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!");
+            throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "! Only 'DEVICE' type is allowed.");
         }
         DeviceProfile deviceProfile = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) originator);
         if (deviceProfile == null) {
-            throw new RuntimeException("Device profile with entity id: " + originator.getId() + " wasn't found!");
+            throw new RuntimeException("Device profile for entity id: " + originator.getId() + " wasn't found!");
         }
         return deviceProfile.getName();
     }

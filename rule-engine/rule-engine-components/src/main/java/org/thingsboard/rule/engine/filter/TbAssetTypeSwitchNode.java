@@ -40,11 +40,11 @@ public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
 
     protected String getRelationType(TbContext ctx, EntityId originator) {
         if (!EntityType.ASSET.equals(originator.getEntityType())) {
-            throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!");
+            throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "! Only 'ASSET' type is allowed.");
         }
         AssetProfile assetProfile = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator);
         if (assetProfile == null) {
-            throw new RuntimeException("Asset profile with entity id: " + originator.getId() + " wasn't found!");
+            throw new RuntimeException("Asset profile for entity id: " + originator.getId() + " wasn't found!");
         }
         return assetProfile.getName();
     }
