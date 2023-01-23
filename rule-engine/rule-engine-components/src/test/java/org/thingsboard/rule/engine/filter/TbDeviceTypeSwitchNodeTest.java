@@ -34,7 +34,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,16 +94,20 @@ class TbDeviceTypeSwitchNodeTest {
     @Test
     void givenMsg_whenOnMsg_then_Fail() {
         CustomerId customerId = new CustomerId(UUID.randomUUID());
-        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(customerId))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> {
+            node.onMsg(ctx, getTbMsg(customerId));
+        }).isInstanceOf(TbNodeException.class).hasMessageContaining("Unsupported originator type");
     }
 
     @Test
     void givenMsg_whenOnMsg_EntityIdDeleted_then_Fail() {
-        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(deviceIdDeleted))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> {
+            node.onMsg(ctx, getTbMsg(deviceIdDeleted));
+        }).isInstanceOf(TbNodeException.class).hasMessageContaining("Device profile for entity id");
     }
 
     @Test
-    void givenMsg_whenOnMsg_then_Success() {
+    void givenMsg_whenOnMsg_then_Success() throws TbNodeException {
         TbMsg msg = getTbMsg(deviceId);
         node.onMsg(ctx, msg);
 

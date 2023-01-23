@@ -94,16 +94,20 @@ class TbAssetTypeSwitchNodeTest {
     @Test
     void givenMsg_whenOnMsg_then_Fail() {
         CustomerId customerId = new CustomerId(UUID.randomUUID());
-        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(customerId))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> {
+            node.onMsg(ctx, getTbMsg(customerId));
+        }).isInstanceOf(TbNodeException.class).hasMessageContaining("Unsupported originator type");
     }
 
     @Test
     void givenMsg_whenOnMsg_EntityIdDeleted_then_Fail() {
-        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(assetIdDeleted))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> {
+            node.onMsg(ctx, getTbMsg(assetIdDeleted));
+        }).isInstanceOf(TbNodeException.class).hasMessageContaining("Asset profile for entity id");
     }
 
     @Test
-    void givenMsg_whenOnMsg_then_Success() {
+    void givenMsg_whenOnMsg_then_Success() throws TbNodeException {
         TbMsg msg = getTbMsg(assetId);
         node.onMsg(ctx, msg);
 

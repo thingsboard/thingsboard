@@ -19,13 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
 @RuleNode(
@@ -37,19 +34,12 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Routes messages to chain according to the entity type ('Device', 'Asset', etc.).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
-public class TbOriginatorTypeSwitchNode implements TbNode {
-
-    EmptyNodeConfiguration config;
+public class TbOriginatorTypeSwitchNode extends TbAbstractTypeSwitchNode {
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
-    }
-
-    @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+    protected String getRelationType(TbContext ctx, EntityId originator) throws TbNodeException {
         String relationType;
-        EntityType originatorType = msg.getOriginator().getEntityType();
+        EntityType originatorType = originator.getEntityType();
         switch (originatorType) {
             case TENANT:
                 relationType = "Tenant";
@@ -87,7 +77,7 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
             default:
                 throw new TbNodeException("Unsupported originator type: " + originatorType);
         }
-        ctx.tellNext(msg, relationType);
+        return relationType;
     }
 
 }

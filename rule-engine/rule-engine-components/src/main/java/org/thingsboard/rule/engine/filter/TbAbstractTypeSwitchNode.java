@@ -36,10 +36,10 @@ public abstract class TbAbstractTypeSwitchNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         ctx.tellNext(msg, getRelationType(ctx, msg.getOriginator()));
     }
 
-    protected abstract String getRelationType(TbContext ctx, EntityId originator);
+    protected abstract String getRelationType(TbContext ctx, EntityId originator) throws TbNodeException;
 
 }

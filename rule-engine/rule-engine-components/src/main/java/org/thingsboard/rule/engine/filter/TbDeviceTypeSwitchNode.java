@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -30,21 +31,22 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         type = ComponentType.FILTER,
         name = "device type switch",
         customRelations = true,
-        relationTypes = {},
+        relationTypes = {"default"},
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Route incoming messages by Device Type",
-        nodeDetails = "Routes messages to chain according to the device type",
+        nodeDescription = "Route incoming messages based on the name of the device profile",
+        nodeDetails = "Route incoming messages based on the name of the device profile. The device profile name is case-sensitive",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbDeviceTypeSwitchNode extends TbAbstractTypeSwitchNode {
 
-    protected String getRelationType(TbContext ctx, EntityId originator) {
+    @Override
+    protected String getRelationType(TbContext ctx, EntityId originator) throws TbNodeException {
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
-            throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "! Only 'DEVICE' type is allowed.");
+            throw new TbNodeException("Unsupported originator type: " + originator.getEntityType() + "! Only 'DEVICE' type is allowed.");
         }
         DeviceProfile deviceProfile = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) originator);
         if (deviceProfile == null) {
-            throw new RuntimeException("Device profile for entity id: " + originator.getId() + " wasn't found!");
+            throw new TbNodeException("Device profile for entity id: " + originator.getId() + " wasn't found!");
         }
         return deviceProfile.getName();
     }
