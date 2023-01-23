@@ -335,7 +335,9 @@ export interface SubscriptionUpdateMsg extends SubscriptionDataHolder {
 export enum CmdUpdateType {
   ENTITY_DATA = 'ENTITY_DATA',
   ALARM_DATA = 'ALARM_DATA',
-  COUNT_DATA = 'COUNT_DATA'
+  COUNT_DATA = 'COUNT_DATA',
+  NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
+  NOTIFICATIONS = 'NOTIFICATIONS'
 }
 
 export interface CmdUpdateMsg {

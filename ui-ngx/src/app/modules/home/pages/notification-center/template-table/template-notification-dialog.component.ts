@@ -32,7 +32,7 @@ import { FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/f
 import { NotificationService } from '@core/http/notification.service';
 import { deepTrim, isDefined } from '@core/utils';
 import { Observable, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
 import { MatStepper } from '@angular/material/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -125,8 +125,41 @@ export class TemplateNotificationDialogComponent
     this.pushTemplateForm = this.fb.group({
       subject: [''],
       body: [''],
-      icon: [''],
-      actionButtonConfig: ['']
+      additionalConfig: this.fb.group({
+        icon: this.fb.group({
+          enabled: [false],
+          icon: [{value: '', disabled: true}, Validators.required],
+          color: ['#757575']
+        }),
+        actionButtonConfig: this.fb.group({
+          enabled: [false],
+          text: [{value: '', disabled: true}, Validators.required],
+          color: ['#305680'],
+          link: [{value: '', disabled: true}, Validators.required]
+        }),
+      })
+    });
+
+    this.pushTemplateForm.get('additionalConfig.icon.enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (value) {
+        this.pushTemplateForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
+      } else {
+        this.pushTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
+      }
+    });
+
+    this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (value) {
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.text').enable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
+      } else {
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.text').disable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
+      }
     });
 
     this.emailTemplateForm = this.fb.group({

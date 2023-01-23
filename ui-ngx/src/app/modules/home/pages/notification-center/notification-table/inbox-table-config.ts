@@ -59,7 +59,7 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     this.headerComponent = InboxTableHeaderComponent;
 
     this.headerActionDescriptors = [{
-      name: this.translate.instant('notification.mark-all-read'),
+      name: this.translate.instant('notification.mark-all-as-read'),
       icon: 'done_all',
       isEnabled: () => true,
       onAction: $event => this.markAllRead($event)
@@ -88,11 +88,13 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.componentsData.unreadOnly) {
-      this.getTable().resetSortAndFilter(true);
-    } else {
-      this.updateData();
-    }
+    this.notificationService.markAllNotificationsAsRead().subscribe(() => {
+      if (this.componentsData.unreadOnly) {
+        this.getTable().resetSortAndFilter(true);
+      } else {
+        this.updateData();
+      }
+    });
   }
 
   private markAsRead($event, entity){

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @import "../../../../../../scss/constants";
+@import "../../../../../../theme";
 
 :host-context(.tb-fullscreen-dialog .mat-dialog-container) {
   width: 640px;
@@ -24,11 +25,15 @@
     border: 1px groove rgba(0, 0, 0, .12);
     border-radius: 4px;
 
+    &.notification {
+      background-color: #F3F6FA; //map_get($tb-mat-indigo, 50);
+    }
+
     .mat-icon {
       color: rgba(0, 0, 0, 0.38);
     }
 
-    .total-recipients {
+    .group-title {
       font-weight: 500;
       letter-spacing: .25px;
     }
@@ -49,6 +54,20 @@
 
       &:not(:last-of-type) {
         margin-bottom: 8px;
+      }
+    }
+
+    .web-preview {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      display: flex;
+
+      tb-notification {
+        border: 1px groove $tb-primary-color;
+        border-radius: 4px;
+        width: 80%;
+        background-color: #fff;
       }
     }
   }

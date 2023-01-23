@@ -17,40 +17,25 @@
 -->
 <div class="tb-notification-center">
   <div class="tb-notification-center-content">
-<!--    <section fxLayout="row" fxLayoutAlign="space-between center" class="title-container">-->
-<!--      <h2 translate class="title">notification.notification-center</h2>-->
-<!--      <section class="action-buttons" fxLayoutAlign="end center">-->
-<!--        <button mat-icon-button [disabled]="isLoading$ | async" (click)="openSetting()"-->
-<!--                matTooltip="{{ 'notification.settings' | translate }}"-->
-<!--                matTooltipPosition="above">-->
-<!--          <mat-icon>settings</mat-icon>-->
-<!--        </button>-->
-<!--        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"-->
-<!--                matTooltip="{{ 'action.refresh' | translate }}"-->
-<!--                matTooltipPosition="above">-->
-<!--          <mat-icon>refresh</mat-icon>-->
-<!--        </button>-->
-<!--      </section>-->
-<!--    </section>-->
     <div class="tabs-container">
       <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()">
-        <mat-tab label="{{ 'notification.inbox' | translate }}" #inboxTab="matTab">
+        <mat-tab label="{{ 'notification.inbox' | translate }}">
           <tb-notification-table
             [notificationType]="entityType.NOTIFICATION">
           </tb-notification-table>
         </mat-tab>
-        <mat-tab label="{{ 'notification.sent' | translate }}">
+        <mat-tab label="{{ 'notification.sent' | translate }}" #requestTab="matTab">
           <tb-notification-table
             #notificationRequest
             [notificationType]="entityType.NOTIFICATION_REQUEST">
           </tb-notification-table>
         </mat-tab>
-        <mat-tab label="{{ 'notification.templates' | translate }}" #templateTab="matTab">
+        <mat-tab label="{{ 'notification.templates' | translate }}">
           <tb-notification-table
             [notificationType]="entityType.NOTIFICATION_TEMPLATE">
           </tb-notification-table>
         </mat-tab>
-        <mat-tab label="{{ 'notification.targets' | translate }}" #targetsTab="matTab">
+        <mat-tab label="{{ 'notification.targets' | translate }}">
           <tb-notification-table
             [notificationType]="entityType.NOTIFICATION_TARGET">
           </tb-notification-table>

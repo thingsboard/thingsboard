@@ -495,9 +495,4 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 .map(TenantProfile::getDefaultProfileConfiguration).orElse(null);
     }
 
-    private DefaultTenantProfileConfiguration getTenantProfileConfiguration(WebSocketSessionRef sessionRef) {
-        return Optional.ofNullable(tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()))
-                .map(TenantProfile::getDefaultProfileConfiguration).orElse(null);
-    }
-
 }

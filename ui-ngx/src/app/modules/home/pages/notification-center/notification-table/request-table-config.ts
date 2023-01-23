@@ -84,7 +84,7 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
     return [];
   }
 
-  private createRequest($event: Event, request: NotificationRequest, isAdd = false) {
+  private createRequest($event: Event, request: NotificationRequest, isAdd = false, updateData = true) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -96,18 +96,20 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
         isAdd,
         request
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.updateData();
-        }
-      });
+    }).afterClosed().subscribe((res) => {
+      if (res && updateData) {
+        this.updateData();
+      }
+    });
   }
 
   private onRequestAction(action: EntityAction<NotificationRequest>): boolean {
     switch (action.action) {
       case 'add':
         this.createRequest(action.event, action.entity, true);
+        return true;
+      case 'add-without-update':
+        this.createRequest(action.event, action.entity, true, false);
         return true;
     }
     return false;

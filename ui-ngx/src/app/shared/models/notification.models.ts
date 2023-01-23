@@ -35,6 +35,8 @@ export interface Notification {
   readonly info: NotificationInfo;
   readonly originatorType: NotificationOriginatorType;
   readonly status: NotificationStatus;
+  readonly createdTime: number;
+  readonly additionalConfig?: PushDeliveryMethodAdditionalConfig;
 }
 
 export interface NotificationInfo {
@@ -155,8 +157,21 @@ export interface DeliveryMethodNotificationTemplate extends
 
 interface PushDeliveryMethodNotificationTemplate {
   subject?: string;
-  icon?: string;
-  actionButtonConfig?: string;
+  additionalConfig: PushDeliveryMethodAdditionalConfig;
+}
+
+interface PushDeliveryMethodAdditionalConfig {
+  icon: {
+    enabled: boolean;
+    icon: string;
+    color: string;
+  };
+  actionButtonConfig: {
+    enabled: boolean;
+    text: string;
+    color: string;
+    link: string;
+  };
 }
 
 interface EmailDeliveryMethodNotificationTemplate {

@@ -129,7 +129,14 @@ export class RequestNotificationDialogComponent extends
   private getPreview() {
     if (this.allValid()) {
       this.preview = null;
-      this.notificationService.getNotificationRequestPreview(this.notificationFormValue).subscribe(
+      this.notificationService.getNotificationRequestPreview(this.notificationFormValue).pipe(
+        map(data => {
+          if (data.processedTemplates.PUSH?.enabled) {
+            (data.processedTemplates.PUSH as any).text = data.processedTemplates.PUSH.body;
+          }
+          return data;
+        })
+      ).subscribe(
         (preview) => this.preview = preview
       );
     }
