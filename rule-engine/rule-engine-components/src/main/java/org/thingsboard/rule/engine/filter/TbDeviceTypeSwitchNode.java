@@ -44,7 +44,7 @@ public class TbDeviceTypeSwitchNode extends TbAbstractTypeSwitchNode {
         }
         DeviceProfile deviceProfile = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) originator);
         if (deviceProfile == null) {
-            throw new RuntimeException("Device profile with entity id: " + originator.getId() + " doesn't not found!");
+            throw new RuntimeException("Device profile with entity id: " + originator.getId() + " wasn't found!");
         }
         return deviceProfile.getName();
     }

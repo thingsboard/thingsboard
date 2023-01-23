@@ -40,10 +40,6 @@ public abstract class TbAbstractTypeSwitchNode implements TbNode {
         ctx.tellNext(msg, getRelationType(ctx, msg.getOriginator()));
     }
 
-    @Override
-    public void destroy() {
-    }
-
     protected abstract String getRelationType(TbContext ctx, EntityId originator);
 
 }

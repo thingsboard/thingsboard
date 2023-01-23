@@ -44,7 +44,7 @@ public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
         }
         AssetProfile assetProfile = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator);
         if (assetProfile == null) {
-            throw new RuntimeException("Asset profile with entity id: " + originator.getId() + " doesn't not found!");
+            throw new RuntimeException("Asset profile with entity id: " + originator.getId() + " wasn't found!");
         }
         return assetProfile.getName();
     }
