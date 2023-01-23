@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Slf4j
 public abstract class TbAbstractTypeSwitchNode implements TbNode {
 
-    protected EmptyNodeConfiguration config;
+    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -36,14 +36,10 @@ public abstract class TbAbstractTypeSwitchNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         ctx.tellNext(msg, getRelationType(ctx, msg.getOriginator()));
     }
 
-    @Override
-    public void destroy() {
-    }
-
-    protected abstract String getRelationType(TbContext ctx, EntityId originator);
+    protected abstract String getRelationType(TbContext ctx, EntityId originator) throws TbNodeException;
 
 }

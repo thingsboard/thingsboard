@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -31,17 +33,22 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         customRelations = true,
         relationTypes = {},
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Route incoming messages by Asset Type",
-        nodeDetails = "Routes messages to chain according to the asset type",
+        nodeDescription = "Route incoming messages based on the name of the asset profile",
+        nodeDetails = "Route incoming messages based on the name of the asset profile. The asset profile name is case-sensitive",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
 
-    protected String getRelationType(TbContext ctx, EntityId originator) {
+    @Override
+    protected String getRelationType(TbContext ctx, EntityId originator) throws TbNodeException {
         if (!EntityType.ASSET.equals(originator.getEntityType())) {
-            throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!");
+            throw new TbNodeException("Unsupported originator type: " + originator.getEntityType() + "! Only 'ASSET' type is allowed.");
         }
-        return ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator).getName();
+        AssetProfile assetProfile = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator);
+        if (assetProfile == null) {
+            throw new TbNodeException("Asset profile for entity id: " + originator.getId() + " wasn't found!");
+        }
+        return assetProfile.getName();
     }
 
 }
