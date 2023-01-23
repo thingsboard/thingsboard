@@ -44,7 +44,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +52,7 @@ class TbDeviceTypeSwitchNodeTest {
 
     TenantId tenantId;
     DeviceId deviceId;
+    DeviceId deviceIdDeleted;
     DeviceProfile deviceProfile;
     TbContext ctx;
     TbDeviceTypeSwitchNode node;
@@ -64,6 +64,7 @@ class TbDeviceTypeSwitchNodeTest {
     void setUp() throws TbNodeException {
         tenantId = new TenantId(UUID.randomUUID());
         deviceId = new DeviceId(UUID.randomUUID());
+        deviceIdDeleted = new DeviceId(UUID.randomUUID());
 
         deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
@@ -71,7 +72,7 @@ class TbDeviceTypeSwitchNodeTest {
 
         //node
         config = new EmptyNodeConfiguration();
-        node = spy(new TbDeviceTypeSwitchNode());
+        node = new TbDeviceTypeSwitchNode();
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         //init mock
@@ -83,6 +84,7 @@ class TbDeviceTypeSwitchNodeTest {
         when(ctx.getDeviceProfileCache()).thenReturn(deviceProfileCache);
 
         doReturn(deviceProfile).when(deviceProfileCache).get(tenantId, deviceId);
+        doReturn(null).when(deviceProfileCache).get(tenantId, deviceIdDeleted);
     }
 
     @AfterEach
@@ -93,12 +95,17 @@ class TbDeviceTypeSwitchNodeTest {
     @Test
     void givenMsg_whenOnMsg_then_Fail() {
         CustomerId customerId = new CustomerId(UUID.randomUUID());
-        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(customerId, "{}"))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(customerId))).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void givenMsg_whenOnMsg_EntityIdDeleted_then_Fail() {
+        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(deviceIdDeleted))).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void givenMsg_whenOnMsg_then_Success() {
-        TbMsg msg = getTbMsg(deviceId, "{}");
+        TbMsg msg = getTbMsg(deviceId);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -110,13 +117,7 @@ class TbDeviceTypeSwitchNodeTest {
         assertThat(newMsg).isSameAs(msg);
     }
 
-    private TbMsg getTbMsg(EntityId entityId, String data) {
-        final Map<String, String> mdMap = Map.of(
-                "TestKey_1", "Test",
-                "country", "US",
-                "voltageDataValue", "220",
-                "city", "NY"
-        );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+    private TbMsg getTbMsg(EntityId entityId) {
+        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(), "{}", callback);
     }
 }

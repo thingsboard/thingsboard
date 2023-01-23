@@ -34,7 +34,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +43,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +51,7 @@ class TbAssetTypeSwitchNodeTest {
 
     TenantId tenantId;
     AssetId assetId;
+    AssetId assetIdDeleted;
     AssetProfile assetProfile;
     TbContext ctx;
     TbAssetTypeSwitchNode node;
@@ -64,6 +63,7 @@ class TbAssetTypeSwitchNodeTest {
     void setUp() throws TbNodeException {
         tenantId = new TenantId(UUID.randomUUID());
         assetId = new AssetId(UUID.randomUUID());
+        assetIdDeleted = new AssetId(UUID.randomUUID());
 
         assetProfile = new AssetProfile();
         assetProfile.setTenantId(tenantId);
@@ -71,7 +71,7 @@ class TbAssetTypeSwitchNodeTest {
 
         //node
         config = new EmptyNodeConfiguration();
-        node = spy(new TbAssetTypeSwitchNode());
+        node = new TbAssetTypeSwitchNode();
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         //init mock
@@ -83,6 +83,7 @@ class TbAssetTypeSwitchNodeTest {
         when(ctx.getAssetProfileCache()).thenReturn(assetProfileCache);
 
         doReturn(assetProfile).when(assetProfileCache).get(tenantId, assetId);
+        doReturn(null).when(assetProfileCache).get(tenantId, assetIdDeleted);
     }
 
     @AfterEach
@@ -93,12 +94,17 @@ class TbAssetTypeSwitchNodeTest {
     @Test
     void givenMsg_whenOnMsg_then_Fail() {
         CustomerId customerId = new CustomerId(UUID.randomUUID());
-        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(customerId, "{}"))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(customerId))).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void givenMsg_whenOnMsg_EntityIdDeleted_then_Fail() {
+        assertThatThrownBy(() -> node.onMsg(ctx, getTbMsg(assetIdDeleted))).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void givenMsg_whenOnMsg_then_Success() {
-        TbMsg msg = getTbMsg(assetId, "{}");
+        TbMsg msg = getTbMsg(assetId);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -110,13 +116,7 @@ class TbAssetTypeSwitchNodeTest {
         assertThat(newMsg).isSameAs(msg);
     }
 
-    private TbMsg getTbMsg(EntityId entityId, String data) {
-        final Map<String, String> mdMap = Map.of(
-                "TestKey_1", "Test",
-                "country", "US",
-                "voltageDataValue", "220",
-                "city", "NY"
-        );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+    private TbMsg getTbMsg(EntityId entityId) {
+        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(), "{}", callback);
     }
 }

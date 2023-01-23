@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -41,7 +42,11 @@ public class TbDeviceTypeSwitchNode extends TbAbstractTypeSwitchNode {
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
             throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!");
         }
-        return ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) originator).getName();
+        DeviceProfile deviceProfile = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) originator);
+        if (deviceProfile == null) {
+            throw new RuntimeException("Device profile with entity id: " + originator.getId() + " doesn't not found!");
+        }
+        return deviceProfile.getName();
     }
 
 }

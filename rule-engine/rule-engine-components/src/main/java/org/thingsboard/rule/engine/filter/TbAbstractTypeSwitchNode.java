@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Slf4j
 public abstract class TbAbstractTypeSwitchNode implements TbNode {
 
-    protected EmptyNodeConfiguration config;
+    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

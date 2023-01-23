@@ -20,6 +20,7 @@ import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -41,7 +42,11 @@ public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
         if (!EntityType.ASSET.equals(originator.getEntityType())) {
             throw new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!");
         }
-        return ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator).getName();
+        AssetProfile assetProfile = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator);
+        if (assetProfile == null) {
+            throw new RuntimeException("Asset profile with entity id: " + originator.getId() + " doesn't not found!");
+        }
+        return assetProfile.getName();
     }
 
 }
