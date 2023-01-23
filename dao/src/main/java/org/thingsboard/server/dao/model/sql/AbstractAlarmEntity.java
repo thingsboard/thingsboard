@@ -48,7 +48,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPE
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_NOTIFICATION_RULE_ID;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
@@ -117,9 +116,6 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     @Column(name = ALARM_PROPAGATE_RELATION_TYPES)
     private String propagateRelationTypes;
-
-    @Column(name = ALARM_NOTIFICATION_RULE_ID)
-    private UUID notificationRuleId;
 
     public AbstractAlarmEntity() {
         super();

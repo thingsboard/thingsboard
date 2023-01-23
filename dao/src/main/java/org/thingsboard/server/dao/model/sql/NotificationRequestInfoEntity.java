@@ -19,11 +19,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Data
@@ -41,11 +46,21 @@ public class NotificationRequestInfoEntity extends NotificationRequestEntity {
 
     @Override
     public NotificationRequestInfo toData() {
-        List<NotificationDeliveryMethod> deliveryMethods = fromJson(templateConfig, NotificationTemplateConfig.class)
-                .getDeliveryMethodsTemplates().entrySet().stream()
-                .filter(entry -> entry.getValue().isEnabled())
-                .map(Map.Entry::getKey).collect(Collectors.toList());
-        return new NotificationRequestInfo(super.toData(), templateName, deliveryMethods);
+        NotificationRequest request = super.toData();
+        List<NotificationDeliveryMethod> deliveryMethods;
+        if (templateConfig != null) {
+            deliveryMethods = fromJson(templateConfig, NotificationTemplateConfig.class)
+                    .getDeliveryMethodsTemplates().entrySet().stream()
+                    .filter(entry -> entry.getValue().isEnabled())
+                    .map(Map.Entry::getKey).collect(Collectors.toList());
+        } else if (request.getStats() != null) {
+            Set<NotificationDeliveryMethod> methods = new HashSet<>(request.getStats().getSent().keySet());
+            methods.addAll(request.getStats().getErrors().keySet());
+            deliveryMethods = new ArrayList<>(methods);
+        } else {
+            deliveryMethods = Collections.emptyList();
+        }
+        return new NotificationRequestInfo(request, templateName, deliveryMethods);
     }
 
 }

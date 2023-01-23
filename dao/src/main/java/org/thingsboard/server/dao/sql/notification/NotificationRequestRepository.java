@@ -36,14 +36,16 @@ import java.util.UUID;
 public interface NotificationRequestRepository extends JpaRepository<NotificationRequestEntity, UUID> {
 
     String REQUEST_INFO_QUERY = "SELECT new org.thingsboard.server.dao.model.sql.NotificationRequestInfoEntity(r, t.name, t.configuration) " +
-            "FROM NotificationRequestEntity r INNER JOIN NotificationTemplateEntity t ON r.templateId = t.id";
+            "FROM NotificationRequestEntity r LEFT JOIN NotificationTemplateEntity t ON r.templateId = t.id";
 
     Page<NotificationRequestEntity> findByTenantIdAndOriginatorEntityType(UUID tenantId, EntityType originatorType, Pageable pageable);
 
-    @Query(REQUEST_INFO_QUERY + " WHERE r.tenantId = :tenantId AND r.originatorEntityType = :originatorType")
-    Page<NotificationRequestInfoEntity> findInfosByTenantIdAndOriginatorEntityType(@Param("tenantId") UUID tenantId,
-                                                                                   @Param("originatorType") EntityType originatorType,
-                                                                                   Pageable pageable);
+    @Query(REQUEST_INFO_QUERY + " WHERE r.tenantId = :tenantId AND r.originatorEntityType = :originatorType " +
+            "AND (:searchText = '' OR (t.name IS NOT NULL AND lower(t.name) LIKE lower(concat('%', :searchText, '%'))))")
+    Page<NotificationRequestInfoEntity> findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(@Param("tenantId") UUID tenantId,
+                                                                                                @Param("originatorType") EntityType originatorType,
+                                                                                                @Param("searchText") String searchText,
+                                                                                                Pageable pageable);
 
     @Query(REQUEST_INFO_QUERY + " WHERE r.id = :id")
     NotificationRequestInfoEntity findInfoById(@Param("id") UUID id);

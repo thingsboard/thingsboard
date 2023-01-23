@@ -58,8 +58,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     propagate_relation_types varchar,
     type varchar(255),
     propagate_to_owner boolean,
-    propagate_to_tenant boolean,
-    notification_rule_id uuid
+    propagate_to_tenant boolean
 );
 
 CREATE TABLE IF NOT EXISTS entity_alarm (
@@ -834,7 +833,7 @@ CREATE TABLE IF NOT EXISTS notification (
     type VARCHAR(32) NOT NULL,
     subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
-    additional_config VARCHAR(500),
+    additional_config VARCHAR(1000),
     info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);

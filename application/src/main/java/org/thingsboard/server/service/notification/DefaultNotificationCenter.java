@@ -58,6 +58,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
@@ -85,6 +86,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationService notificationService;
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
+    private final NotificationExecutorService notificationExecutor;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
@@ -124,74 +126,76 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         notificationRequest.setStatus(NotificationRequestStatus.PROCESSING);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
-        NotificationProcessingContext ctx = NotificationProcessingContext.builder()
-                .tenantId(tenantId)
-                .request(savedNotificationRequest)
-                .settings(settings)
-                .template(notificationTemplate)
-                .build();
-        ctx.init();
+        notificationExecutor.submit(() -> {
+            NotificationProcessingContext ctx = NotificationProcessingContext.builder()
+                    .tenantId(tenantId)
+                    .request(savedNotificationRequest)
+                    .settings(settings)
+                    .template(notificationTemplate)
+                    .build();
+            ctx.init();
 
-        Set<NotificationDeliveryMethod> deliveryMethods = ctx.getDeliveryMethods();
-        List<ListenableFuture<Void>> results = new ArrayList<>();
+            Set<NotificationDeliveryMethod> deliveryMethods = ctx.getDeliveryMethods();
+            List<ListenableFuture<Void>> results = new ArrayList<>();
 
-        for (UUID targetId : notificationRequest.getTargets()) {
-            DaoUtil.processBatches(pageLink -> {
-                return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), new NotificationTargetId(targetId), pageLink);
-            }, 200, recipientsBatch -> {
-                for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-                    if (deliveryMethod.isStandalone()) continue;
+            for (UUID targetId : notificationRequest.getTargets()) {
+                DaoUtil.processBatches(pageLink -> {
+                    return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), new NotificationTargetId(targetId), pageLink);
+                }, 200, recipientsBatch -> {
+                    for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+                        if (deliveryMethod.isStandalone()) continue;
 
-                    List<User> recipients = recipientsBatch.getData();
-                    log.debug("Sending {} notifications for request {} to recipients batch ({})", deliveryMethod, savedNotificationRequest.getId(), recipients.size());
+                        List<User> recipients = recipientsBatch.getData();
+                        log.debug("Sending {} notifications for request {} to recipients batch ({})", deliveryMethod, savedNotificationRequest.getId(), recipients.size());
+                        NotificationChannel notificationChannel = channels.get(deliveryMethod);
+                        for (User recipient : recipients) {
+                            ListenableFuture<Void> resultFuture = process(notificationChannel, recipient, ctx);
+                            DonAsynchron.withCallback(resultFuture, result -> {
+                                ctx.getStats().reportSent(deliveryMethod, recipient);
+                            }, error -> {
+                                ctx.getStats().reportError(deliveryMethod, error, recipient);
+                            });
+                            results.add(resultFuture);
+                        }
+                    }
+                });
+            }
+            for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+                if (deliveryMethod.isStandalone()) {
                     NotificationChannel notificationChannel = channels.get(deliveryMethod);
-                    for (User recipient : recipients) {
-                        ListenableFuture<Void> resultFuture = process(notificationChannel, recipient, ctx);
-                        DonAsynchron.withCallback(resultFuture, result -> {
-                            ctx.getStats().reportSent(deliveryMethod, recipient);
-                        }, error -> {
-                            ctx.getStats().reportError(deliveryMethod, error, recipient);
-                        });
-                        results.add(resultFuture);
+                    ListenableFuture<Void> resultFuture = process(notificationChannel, null, ctx);
+                    DonAsynchron.withCallback(resultFuture, result -> {
+                        ctx.getStats().reportSent(deliveryMethod, null);
+                    }, error -> {
+                        ctx.getStats().reportError(deliveryMethod, error, null);
+                    });
+                    results.add(resultFuture);
+                }
+            }
+
+            Futures.whenAllComplete(results).run(() -> {
+                NotificationRequestStats stats = ctx.getStats();
+                try {
+                    notificationRequestService.updateNotificationRequest(tenantId, savedNotificationRequest.getId(),
+                            NotificationRequestStatus.SENT, stats);
+                } catch (Exception e) {
+                    log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
+                }
+
+                UserId senderId = notificationRequest.getSenderId();
+                if (senderId != null) {
+                    if (stats.getErrors().isEmpty()) {
+                        int sent = stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum();
+                        sendBasicNotification(tenantId, senderId, "Notifications sent",
+                                "All notifications were successfully sent (" + sent + ")");
+                    } else {
+                        int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
+                        sendBasicNotification(tenantId, senderId, "Notification failure",
+                                "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to request' button
                     }
                 }
-            });
-        }
-        for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-            if (deliveryMethod.isStandalone()) {
-                NotificationChannel notificationChannel = channels.get(deliveryMethod);
-                ListenableFuture<Void> resultFuture = process(notificationChannel, null, ctx);
-                DonAsynchron.withCallback(resultFuture, result -> {
-                    ctx.getStats().reportSent(deliveryMethod, null);
-                }, error -> {
-                    ctx.getStats().reportError(deliveryMethod, error, null);
-                });
-                results.add(resultFuture);
-            }
-        }
-
-        Futures.whenAllComplete(results).run(() -> {
-            NotificationRequestStats stats = ctx.getStats();
-            try {
-                notificationRequestService.updateNotificationRequest(tenantId, savedNotificationRequest.getId(),
-                        NotificationRequestStatus.SENT, stats);
-            } catch (Exception e) {
-                log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
-            }
-
-            UserId senderId = notificationRequest.getSenderId();
-            if (senderId != null) {
-                if (stats.getErrors().isEmpty()) {
-                    int sent = stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum();
-                    sendBasicNotification(tenantId, senderId, "Notifications sent",
-                            "All notifications were successfully sent (" + sent + ")");
-                } else {
-                    int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
-                    sendBasicNotification(tenantId, senderId, "Notification failure",
-                            "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to request' button
-                }
-            }
-        }, dbCallbackExecutorService);
+            }, dbCallbackExecutorService);
+        });
 
         return savedNotificationRequest;
     }

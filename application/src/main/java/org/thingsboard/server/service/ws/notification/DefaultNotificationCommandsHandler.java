@@ -200,7 +200,11 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
             }
             case UPDATED: {
                 if (update.getUpdatedStatus() == NotificationStatus.READ) {
-                    subscription.getUnreadCounter().decrementAndGet();
+                    if (update.isAllNotifications()) {
+                        fetchUnreadNotificationsCount(subscription);
+                    } else {
+                        subscription.getUnreadCounter().decrementAndGet();
+                    }
                     sendUpdate(subscription.getSessionId(), subscription.createUpdate());
                 }
                 break;
