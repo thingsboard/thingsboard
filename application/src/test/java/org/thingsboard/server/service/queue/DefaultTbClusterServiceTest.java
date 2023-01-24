@@ -24,6 +24,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -239,7 +240,7 @@ public class DefaultTbClusterServiceTest {
         TenantId tenantId = TenantId.SYS_TENANT_ID;
         Queue queue = new Queue(new QueueId(UUID.randomUUID()));
         queue.setTenantId(tenantId);
-        queue.setName("Main");
+        queue.setName(DataConstants.MAIN_QUEUE_NAME);
         queue.setTopic("main");
         queue.setPartitions(10);
         return queue;
