@@ -21,6 +21,8 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @Data
 public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<TbMsgDeduplicationNodeConfiguration> {
 
+    private static final String DEFAULT_QUEUE_NAME = "Main";
+
     private int interval;
     private DeduplicationId id;
     private DeduplicationStrategy strategy;
@@ -39,6 +41,7 @@ public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<Tb
         configuration.setInterval(60);
         configuration.setId(DeduplicationId.ORIGINATOR);
         configuration.setStrategy(DeduplicationStrategy.FIRST);
+        configuration.setQueueName(DEFAULT_QUEUE_NAME);
         configuration.setMaxPendingMsgs(100);
         configuration.setMaxRetries(3);
         return configuration;

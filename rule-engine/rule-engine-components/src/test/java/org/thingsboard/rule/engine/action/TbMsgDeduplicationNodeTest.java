@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -54,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -175,7 +177,7 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        Assertions.assertEquals(inputMsgs.get(0), newMsgCaptor.getValue());
+        Assertions.assertEquals(TbMsg.toByteString(inputMsgs.get(0)), TbMsg.toByteString(newMsgCaptor.getValue()));
     }
 
     @Test
@@ -214,7 +216,7 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        Assertions.assertEquals(msgWithLatestTs, newMsgCaptor.getValue());
+        Assertions.assertEquals(TbMsg.toByteString(msgWithLatestTs), TbMsg.toByteString(newMsgCaptor.getValue()));
     }
 
     @Test
@@ -351,8 +353,9 @@ public class TbMsgDeduplicationNodeTest {
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());
-        Assertions.assertTrue(resultMsgs.contains(msgWithLatestTsInFirstPack));
-        Assertions.assertTrue(resultMsgs.contains(msgWithLatestTsInSecondPack));
+        List<ByteString> resultMsgsByteStrings = resultMsgs.stream().map(TbMsg::toByteString).collect(Collectors.toList());
+        Assertions.assertTrue(resultMsgsByteStrings.contains(TbMsg.toByteString(msgWithLatestTsInFirstPack)));
+        Assertions.assertTrue(resultMsgsByteStrings.contains(TbMsg.toByteString(msgWithLatestTsInSecondPack)));
     }
 
     private TbMsg getMsgWithLatestTs(List<TbMsg> firstMsgPack) {

@@ -28,7 +28,6 @@ import java.util.TreeSet;
 
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Slf4j
 public class DefaultRuleNodeCache implements RuleNodeCache {
 
     private final Map<String, Set<byte[]>> cache;
