@@ -15,16 +15,31 @@
  */
 package org.thingsboard.server.cache.rule;
 
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.List;
 import java.util.Set;
 
 public interface RuleNodeCache {
 
-    void add(String key, byte[]... values);
+    void add(String key, String value);
 
-    void remove(String key, byte[]... values);
+    void add(String key, EntityId value);
 
-    Set<byte[]> get(String key);
+    void add(String key, TbMsg value);
+
+    void removeStringList(String key, List<String> values);
+
+    void removeEntityIdList(String key, List<EntityId> values);
+
+    void removeTbMsgList(String key, List<TbMsg> values);
+
+    Set<String> getStringSetByKey(String key);
+
+    Set<EntityId> getEntityIdSetByKey(String key);
+
+    Set<TbMsg> getTbMsgSetByKey(String key, String queueName);
 
     void evict(String key);
-
 }

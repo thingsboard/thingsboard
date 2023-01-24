@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -98,6 +99,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.rule.TbRuleNodeCacheService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -119,11 +121,13 @@ class DefaultTbContext implements TbContext {
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
+    private final TbRuleNodeCacheService ruleNodeCacheService;
 
     public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
         this.mainCtx = mainCtx;
         this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
+        this.ruleNodeCacheService = new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache());
     }
 
     @Override
@@ -734,58 +738,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void addToRuleNodeCache(String key, TbMsg msg) {
-        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, msg);
-    }
-
-    @Override
-    public void addToRuleNodeCache(String key, List<TbMsg> tbMsgList) {
-        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, tbMsgList);
-    }
-
-    @Override
-    public void addToRuleNodeCache(String key, byte[]... values) {
-        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, values);
-    }
-
-    @Override
-    public void addToRuleNodeCache(String key, String value) {
-        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, value.getBytes());
-    }
-
-    @Override
-    public Set<byte[]> getFromRuleNodeCache(String key) {
-        return mainCtx.getRuleNodeCacheService().get(this.getSelfId(), key);
-    }
-
-    @Override
-    public Set<TbMsg> getFromRuleNodeCache(String key, String queueName) {
-        return mainCtx.getRuleNodeCacheService().get(this.getSelfId(), key, queueName);
-    }
-
-    @Override
-    public void removeFromRuleNodeCache(String key, TbMsg msg) {
-        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, msg);
-    }
-
-    @Override
-    public void removeFromRuleNodeCache(String key, List<TbMsg> tbMsgList) {
-        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, tbMsgList);
-    }
-
-    @Override
-    public void removeFromRuleNodeCache(String key, byte[]... values) {
-        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, values);
-    }
-
-    @Override
-    public void removeFromRuleNodeCache(String key, String value) {
-        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, value.getBytes());
-    }
-
-    @Override
-    public void evictFromRuleNodeCache(String key) {
-        mainCtx.getRuleNodeCacheService().evict(this.getSelfId(), key);
+    public RuleNodeCacheService getRuleNodeCacheService() {
+        return ruleNodeCacheService;
     }
 
     @Override

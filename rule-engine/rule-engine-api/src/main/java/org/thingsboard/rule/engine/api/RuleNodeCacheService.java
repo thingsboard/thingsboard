@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rule;
+package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -23,21 +23,24 @@ import java.util.Set;
 
 public interface RuleNodeCacheService {
 
-    void add(RuleNodeId ruleNodeId, String key, byte[]... values);
+    void add(String key, String value);
 
-    void add(RuleNodeId ruleNodeId, String key, TbMsg value);
+    void add(String key, EntityId id);
 
-    void add(RuleNodeId ruleNodeId, String key, List<TbMsg> values);
+    void add(String key, TbMsg value);
 
-    Set<byte[]> get(RuleNodeId ruleNodeId, String key);
+    void removeStringList(String key, List<String> values);
 
-    Set<TbMsg> get(RuleNodeId ruleNodeId, String key, String queueName);
+    void removeEntityIdList(String key, List<EntityId> values);
 
-    void remove(RuleNodeId ruleNodeId, String key, byte[]... values);
+    void removeTbMsgList(String key, List<TbMsg> values);
 
-    void remove(RuleNodeId ruleNodeId, String key, TbMsg value);
+    Set<String> getStrings(String key);
 
-    void remove(RuleNodeId ruleNodeId, String key, List<TbMsg> values);
+    Set<EntityId> getEntityIds(String key);
 
-    void evict(RuleNodeId ruleNodeId, String key);
+    Set<TbMsg> getTbMsgs(String key, String queueName);
+
+    void evict(String key);
+
 }

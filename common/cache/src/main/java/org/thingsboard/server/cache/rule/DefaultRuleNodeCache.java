@@ -15,49 +15,60 @@
  */
 package org.thingsboard.server.cache.rule;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
 public class DefaultRuleNodeCache implements RuleNodeCache {
 
-    private final Map<String, Set<byte[]>> cache;
-
-    public DefaultRuleNodeCache() {
-        cache = new HashMap<>();
+    @Override
+    public void add(String key, String value) {
     }
 
     @Override
-    public void add(String key, byte[]... values) {
-        Set<byte[]> data = cache.computeIfAbsent(key, s -> new TreeSet<>(Arrays::compare));
-        data.addAll(Arrays.asList(values));
+    public void add(String key, EntityId value) {
     }
 
     @Override
-    public void remove(String key, byte[]... values) {
-        cache.computeIfPresent(key, (id, data) -> {
-            Arrays.asList(values).forEach(data::remove);
-            return data;
-        });
+    public void add(String key, TbMsg value) {
     }
 
     @Override
-    public Set<byte[]> get(String key) {
-        return cache.getOrDefault(key, Collections.emptySet());
+    public void removeStringList(String key, List<String> values) {
+    }
+
+    @Override
+    public void removeEntityIdList(String key, List<EntityId> values) {
+    }
+
+    @Override
+    public void removeTbMsgList(String key, List<TbMsg> values) {
+    }
+
+    @Override
+    public Set<String> getStringSetByKey(String key) {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Set<EntityId> getEntityIdSetByKey(String key) {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Set<TbMsg> getTbMsgSetByKey(String key, String queueName) {
+        return Collections.emptySet();
     }
 
     @Override
     public void evict(String key) {
-        cache.remove(key);
     }
 
 }

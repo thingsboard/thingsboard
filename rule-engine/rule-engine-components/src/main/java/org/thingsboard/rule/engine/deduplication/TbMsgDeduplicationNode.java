@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.deduplication;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.SerializationUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -43,7 +42,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @RuleNode(
         type = ComponentType.ACTION,
@@ -97,14 +95,14 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     @Override
-    public void onRemove(TbContext ctx) {
+    public void destroy(TbContext ctx) {
         deduplicationMap.clear();
         Set<EntityId> deduplicationIds = getDeduplicationIds(ctx);
         if (deduplicationIds == null) {
             return;
         }
-        deduplicationIds.forEach(id -> ctx.evictFromRuleNodeCache(id.toString()));
-        ctx.evictFromRuleNodeCache(DEDUPLICATION_IDS_CACHE_KEY);
+        deduplicationIds.forEach(id -> ctx.getRuleNodeCacheService().evict(id.toString()));
+        ctx.getRuleNodeCacheService().evict(DEDUPLICATION_IDS_CACHE_KEY);
     }
 
     private void getDeduplicationDataFromCacheAndSchedule(TbContext ctx) {
@@ -113,7 +111,7 @@ public class TbMsgDeduplicationNode implements TbNode {
             return;
         }
         deduplicationIds.forEach(id -> {
-            List<TbMsg> tbMsgs = new ArrayList<>(ctx.getFromRuleNodeCache(id.toString(), config.getQueueName()));
+            List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), config.getQueueName()));
             DeduplicationData deduplicationData = new DeduplicationData();
             deduplicationData.addAll(tbMsgs);
             deduplicationMap.put(id, deduplicationData);
@@ -122,10 +120,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     private Set<EntityId> getDeduplicationIds(TbContext ctx) {
-        Set<EntityId> deduplicationIds = ctx.getFromRuleNodeCache(TbMsgDeduplicationNode.DEDUPLICATION_IDS_CACHE_KEY)
-                .stream()
-                .map(bytes -> (EntityId) SerializationUtils.deserialize(bytes))
-                .collect(Collectors.toSet());
+        Set<EntityId> deduplicationIds = ctx.getRuleNodeCacheService().getEntityIds(TbMsgDeduplicationNode.DEDUPLICATION_IDS_CACHE_KEY);
         if (deduplicationIds.isEmpty()) {
             return null;
         }
@@ -138,10 +133,10 @@ public class TbMsgDeduplicationNode implements TbNode {
         if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
             log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
             if (deduplicationMsgs.isEmpty()) {
-                ctx.addToRuleNodeCache(DEDUPLICATION_IDS_CACHE_KEY, SerializationUtils.serialize(id));
+                ctx.getRuleNodeCacheService().add(DEDUPLICATION_IDS_CACHE_KEY, id);
             }
             deduplicationMsgs.add(msg);
-            ctx.addToRuleNodeCache(id.toString(), msg);
+            ctx.getRuleNodeCacheService().add(id.toString(), msg);
             ctx.ack(msg);
             scheduleTickMsg(ctx, id, deduplicationMsgs);
         } else {
@@ -252,7 +247,7 @@ public class TbMsgDeduplicationNode implements TbNode {
             ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
-                        ctx.removeFromRuleNodeCache(outMsg.getOriginator().toString(), msgsToRemoveFromCache);
+                        ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator().toString(), msgsToRemoveFromCache);
                     },
                     throwable -> {
                         log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt, throwable);

@@ -28,6 +28,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -58,11 +60,15 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,6 +80,7 @@ public class TbMsgDeduplicationNodeTest {
     private static final String MAIN_QUEUE_NAME = "Main";
     private static final String HIGH_PRIORITY_QUEUE_NAME = "HighPriority";
     private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
+    private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
 
     private TbContext ctx;
 
@@ -86,18 +93,24 @@ public class TbMsgDeduplicationNodeTest {
     private TbMsgDeduplicationNode node;
     private TbMsgDeduplicationNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
+    private RuleNodeCacheService ruleNodeCacheService;
 
     private CountDownLatch awaitTellSelfLatch;
 
     @BeforeEach
     public void init() throws TbNodeException {
         ctx = mock(TbContext.class);
+        ruleNodeCacheService = mock(RuleNodeCacheService.class);
 
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         RuleNodeId ruleNodeId = new RuleNodeId(UUID.randomUUID());
 
         when(ctx.getSelfId()).thenReturn(ruleNodeId);
         when(ctx.getTenantId()).thenReturn(tenantId);
+        when(ctx.getRuleNodeCacheService()).thenReturn(ruleNodeCacheService);
+        when(ruleNodeCacheService.getStrings(anyString())).thenReturn(Collections.emptySet());
+        when(ruleNodeCacheService.getEntityIds(anyString())).thenReturn(Collections.emptySet());
+        when(ruleNodeCacheService.getTbMsgs(anyString(), anyString())).thenReturn(Collections.emptySet());
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
             String type = (String) (invocationOnMock.getArguments())[1];
@@ -173,10 +186,22 @@ public class TbMsgDeduplicationNodeTest {
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
+        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
+        verify(ruleNodeCacheService, times(1)).add(eq(DEDUPLICATION_IDS_CACHE_KEY), eq(deviceId));
+        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId.toString()), any(TbMsg.class));
+
+        verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
+
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
-        verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+
+        for (Runnable valueCaptor : successCaptor.getAllValues()) {
+            valueCaptor.run();
+        }
+        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId.toString()), anyList());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
+
         Assertions.assertEquals(TbMsg.toByteString(inputMsgs.get(0)), TbMsg.toByteString(newMsgCaptor.getValue()));
     }
 
@@ -212,10 +237,22 @@ public class TbMsgDeduplicationNodeTest {
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
+        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
+        verify(ruleNodeCacheService, times(1)).add(eq(DEDUPLICATION_IDS_CACHE_KEY), eq(deviceId));
+        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId.toString()), any(TbMsg.class));
+
+        verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
+
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
-        verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+
+        for (Runnable valueCaptor : successCaptor.getAllValues()) {
+            valueCaptor.run();
+        }
+        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId.toString()), anyList());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
+
         Assertions.assertEquals(TbMsg.toByteString(msgWithLatestTs), TbMsg.toByteString(newMsgCaptor.getValue()));
     }
 
@@ -247,9 +284,20 @@ public class TbMsgDeduplicationNodeTest {
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
-        verify(ctx, times(msgCount)).ack(any());
+        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
+        verify(ruleNodeCacheService, times(1)).add(eq(DEDUPLICATION_IDS_CACHE_KEY), eq(deviceId));
+        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId.toString()), any(TbMsg.class));
+
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
+
+        verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+
+        for (Runnable valueCaptor : successCaptor.getAllValues()) {
+            valueCaptor.run();
+        }
+        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId.toString()), anyList());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
 
         Assertions.assertEquals(1, newMsgCaptor.getAllValues().size());
         TbMsg outMessage = newMsgCaptor.getAllValues().get(0);
@@ -293,9 +341,20 @@ public class TbMsgDeduplicationNodeTest {
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
-        verify(ctx, times(msgCount)).ack(any());
+        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
+        verify(ruleNodeCacheService, times(1)).add(eq(DEDUPLICATION_IDS_CACHE_KEY), eq(deviceId));
+        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId.toString()), any(TbMsg.class));
+
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
+
+        verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+
+        for (Runnable valueCaptor : successCaptor.getAllValues()) {
+            valueCaptor.run();
+        }
+        verify(ruleNodeCacheService, times(2)).removeTbMsgList(eq(deviceId.toString()), anyList());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());
@@ -347,9 +406,20 @@ public class TbMsgDeduplicationNodeTest {
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
-        verify(ctx, times(msgCount)).ack(any());
+        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
+        verify(ruleNodeCacheService, times(1)).add(eq(DEDUPLICATION_IDS_CACHE_KEY), eq(deviceId));
+        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId.toString()), any(TbMsg.class));
+
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
+
+        verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+
+        for (Runnable valueCaptor : successCaptor.getAllValues()) {
+            valueCaptor.run();
+        }
+        verify(ruleNodeCacheService, times(2)).removeTbMsgList(eq(deviceId.toString()), anyList());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());

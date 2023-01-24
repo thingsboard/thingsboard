@@ -36,6 +36,7 @@ import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
+import org.thingsboard.server.cache.rule.RuleNodeCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
@@ -96,7 +97,6 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
-import org.thingsboard.server.service.rule.RuleNodeCacheService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -237,7 +237,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private RuleNodeCacheService ruleNodeCacheService;
+    private RuleNodeCache ruleNodeCache;
 
     @Autowired
     private PartitionService partitionService;
