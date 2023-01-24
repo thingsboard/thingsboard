@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor;
+package org.thingsboard.server.service.edge.rpc.processor.telemetry;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -26,19 +27,16 @@ import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -60,24 +58,22 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
-import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-@Component
 @Slf4j
-@TbCoreComponent
-public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
+public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
     private final Gson gson = new Gson();
 
@@ -88,15 +84,17 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
         tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
     }
 
-    public List<ListenableFuture<Void>> processTelemetryFromEdge(TenantId tenantId, EntityDataProto entityData) {
-        log.trace("[{}] processTelemetryFromEdge [{}]", tenantId, entityData);
+    abstract protected String getMsgSourceKey();
+
+    public List<ListenableFuture<Void>> processTelemetryMsg(TenantId tenantId, EntityDataProto entityData) {
+        log.trace("[{}] processTelemetryMsg [{}]", tenantId, entityData);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData.getEntityType(), entityData.getEntityIdMSB(), entityData.getEntityIdLSB());
         if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg()) && entityId != null) {
             Pair<TbMsgMetaData, CustomerId> pair = getBaseMsgMetadataAndCustomerId(tenantId, entityId);
             TbMsgMetaData metaData = pair.getKey();
             CustomerId customerId = pair.getValue();
-            metaData.putValue(DataConstants.MSG_SOURCE_KEY, DataConstants.EDGE_MSG_SOURCE);
+            metaData.putValue(DataConstants.MSG_SOURCE_KEY, getMsgSourceKey());
             if (entityData.hasPostAttributesMsg()) {
                 result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(), metaData));
             }
@@ -283,11 +281,11 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
                                                              String entityType) {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         String scope = attributeDeleteMsg.getScope();
-        List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
-        attributesService.removeAll(tenantId, entityId, scope, attributeNames);
+        List<String> attributeKeys = attributeDeleteMsg.getAttributeNamesList();
+        attributesService.removeAll(tenantId, entityId, scope, attributeKeys);
         if (EntityType.DEVICE.name().equals(entityType)) {
             tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                    tenantId, (DeviceId) entityId, scope, attributeNames), new TbQueueCallback() {
+                    tenantId, (DeviceId) entityId, scope, attributeKeys), new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
                     futureToSet.set(null);
@@ -303,47 +301,42 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
         return futureToSet;
     }
 
-    public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) throws JsonProcessingException {
+    public EntityDataProto convertTelemetryEventToEntityDataProto(EntityType entityType,
+                                                                  UUID entityUUID,
+                                                                  EdgeEventActionType actionType,
+                                                                  JsonNode body) throws JsonProcessingException {
         EntityId entityId;
-        switch (edgeEvent.getType()) {
+        switch (entityType) {
             case DEVICE:
-                entityId = new DeviceId(edgeEvent.getEntityId());
+                entityId = new DeviceId(entityUUID);
                 break;
             case ASSET:
-                entityId = new AssetId(edgeEvent.getEntityId());
+                entityId = new AssetId(entityUUID);
                 break;
             case ENTITY_VIEW:
-                entityId = new EntityViewId(edgeEvent.getEntityId());
+                entityId = new EntityViewId(entityUUID);
                 break;
             case DASHBOARD:
-                entityId = new DashboardId(edgeEvent.getEntityId());
+                entityId = new DashboardId(entityUUID);
                 break;
             case TENANT:
-                entityId = TenantId.fromUUID(edgeEvent.getEntityId());
+                entityId = TenantId.fromUUID(entityUUID);
                 break;
             case CUSTOMER:
-                entityId = new CustomerId(edgeEvent.getEntityId());
+                entityId = new CustomerId(entityUUID);
                 break;
             case USER:
-                entityId = new UserId(edgeEvent.getEntityId());
+                entityId = new UserId(entityUUID);
                 break;
             case EDGE:
-                entityId = new EdgeId(edgeEvent.getEntityId());
+                entityId = new EdgeId(entityUUID);
                 break;
             default:
-                log.warn("Unsupported edge event type [{}]", edgeEvent);
+                log.warn("Unsupported edge event type [{}]", entityType);
                 return null;
         }
-        return constructEntityDataProtoMsg(entityId, edgeEvent.getAction(),
-                JsonParser.parseString(JacksonUtil.OBJECT_MAPPER.writeValueAsString(edgeEvent.getBody())));
-    }
-
-    private DownlinkMsg constructEntityDataProtoMsg(EntityId entityId, EdgeEventActionType actionType, JsonElement entityData) {
-        EntityDataProto entityDataProto = entityDataMsgConstructor.constructEntityDataMsg(entityId, actionType, entityData);
-        return DownlinkMsg.newBuilder()
-                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addEntityData(entityDataProto)
-                .build();
+        JsonElement entityData = JsonParser.parseString(JacksonUtil.OBJECT_MAPPER.writeValueAsString(body));
+        return entityDataMsgConstructor.constructEntityDataMsg(entityId, actionType, entityData);
     }
 
 }

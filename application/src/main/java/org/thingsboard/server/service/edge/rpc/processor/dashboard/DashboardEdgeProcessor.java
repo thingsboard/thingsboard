@@ -13,57 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor;
+package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
 @Slf4j
 @TbCoreComponent
-public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
+public class DashboardEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent) {
-        OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
+    public DownlinkMsg convertDashboardEventToDownlink(EdgeEvent edgeEvent) {
+        DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
-                OtaPackage otaPackage = otaPackageService.findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
-                if (otaPackage != null) {
+            case ASSIGNED_TO_EDGE:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
+                Dashboard dashboard = dashboardService.findDashboardById(edgeEvent.getTenantId(), dashboardId);
+                if (dashboard != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg =
-                            otaPackageMsgConstructor.constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                    DashboardUpdateMsg dashboardUpdateMsg =
+                            dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
+                            .addDashboardUpdateMsg(dashboardUpdateMsg)
                             .build();
                 }
                 break;
             case DELETED:
-                OtaPackageUpdateMsg otaPackageUpdateMsg =
-                        otaPackageMsgConstructor.constructOtaPackageDeleteMsg(otaPackageId);
+            case UNASSIGNED_FROM_EDGE:
+                DashboardUpdateMsg dashboardUpdateMsg =
+                        dashboardMsgConstructor.constructDashboardDeleteMsg(dashboardId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
+                        .addDashboardUpdateMsg(dashboardUpdateMsg)
                         .build();
                 break;
         }
         return downlinkMsg;
     }
 
-    public ListenableFuture<Void> processOtaPackageNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
+    public ListenableFuture<Void> processDashboardNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        return processEntityNotification(tenantId, edgeNotificationMsg);
     }
 }
