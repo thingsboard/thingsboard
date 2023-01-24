@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
@@ -69,7 +70,7 @@ public class TbMsgPackProcessingContextTest {
         TbRuleEngineSubmitStrategy strategyMock = mock(TbRuleEngineSubmitStrategy.class);
         when(strategyMock.getPendingMap()).thenReturn(messages);
 
-        TbMsgPackProcessingContext context = new TbMsgPackProcessingContext("Main", strategyMock, false);
+        TbMsgPackProcessingContext context = new TbMsgPackProcessingContext(DataConstants.MAIN_QUEUE_NAME, strategyMock, false);
         for (UUID uuid : messages.keySet()) {
             final CountDownLatch readyLatch = new CountDownLatch(parallelCount);
             final CountDownLatch startLatch = new CountDownLatch(1);

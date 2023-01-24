@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.action;
+package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,6 +36,7 @@ import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -77,8 +78,6 @@ import static org.mockito.Mockito.when;
 @Slf4j
 public class TbMsgDeduplicationNodeTest {
 
-    private static final String MAIN_QUEUE_NAME = "Main";
-    private static final String HIGH_PRIORITY_QUEUE_NAME = "HighPriority";
     private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
 
@@ -266,7 +265,7 @@ public class TbMsgDeduplicationNodeTest {
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(HIGH_PRIORITY_QUEUE_NAME);
+        config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -317,7 +316,7 @@ public class TbMsgDeduplicationNodeTest {
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(HIGH_PRIORITY_QUEUE_NAME);
+        config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -454,7 +453,7 @@ public class TbMsgDeduplicationNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(ts));
         return TbMsg.newMsg(
-                MAIN_QUEUE_NAME,
+                DataConstants.MAIN_QUEUE_NAME,
                 SessionMsgType.POST_TELEMETRY_REQUEST.name(),
                 deviceId,
                 metaData,

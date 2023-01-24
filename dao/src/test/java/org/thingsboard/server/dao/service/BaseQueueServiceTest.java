@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,8 +55,8 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         tenantProfile.setIsolatedTbRuleEngine(true);
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
+        mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
         mainQueueConfiguration.setPollInterval(25);
         mainQueueConfiguration.setPartitions(10);
         mainQueueConfiguration.setConsumerPerPartition(true);
@@ -495,7 +496,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
         for (int i = 0; i < loadedQueues.size(); i++) {
             Queue queue = loadedQueues.get(i);
-            if (queue.getName().equals("Main")) {
+            if (queue.getName().equals(DataConstants.MAIN_QUEUE_NAME)) {
                 loadedQueues.remove(queue);
                 break;
             }

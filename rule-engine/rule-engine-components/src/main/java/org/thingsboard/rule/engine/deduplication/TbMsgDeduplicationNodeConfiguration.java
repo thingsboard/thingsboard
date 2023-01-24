@@ -17,11 +17,10 @@ package org.thingsboard.rule.engine.deduplication;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 
 @Data
 public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<TbMsgDeduplicationNodeConfiguration> {
-
-    private static final String DEFAULT_QUEUE_NAME = "Main";
 
     private int interval;
     private DeduplicationId id;
@@ -30,10 +29,10 @@ public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<Tb
     // Advanced settings:
     private int maxPendingMsgs;
     private int maxRetries;
+    private String queueName;
 
     // only for DeduplicationStrategy.ALL:
     private String outMsgType;
-    private String queueName;
 
     @Override
     public TbMsgDeduplicationNodeConfiguration defaultConfiguration() {
@@ -41,9 +40,9 @@ public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<Tb
         configuration.setInterval(60);
         configuration.setId(DeduplicationId.ORIGINATOR);
         configuration.setStrategy(DeduplicationStrategy.FIRST);
-        configuration.setQueueName(DEFAULT_QUEUE_NAME);
         configuration.setMaxPendingMsgs(100);
         configuration.setMaxRetries(3);
+        configuration.setQueueName(DataConstants.MAIN_QUEUE_NAME);
         return configuration;
     }
 }
