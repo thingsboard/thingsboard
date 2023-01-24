@@ -138,7 +138,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
             DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
             if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(deviceProfile.getId())) {
-                throw new DataValidationException("Cannot create device profile with certificate because such certificate already exists!");
+                throw new DataValidationException("Device profile with such certificate hash already exists!");
             }
         }
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
@@ -240,7 +240,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
             DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
             if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(old.getId())) {
-                throw new DataValidationException("Can't change device profile certificate because such certificate already exists!");
+                throw new DataValidationException("Device profile with such certificate hash already exists!");
             }
         }
         return old;
@@ -396,8 +396,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
     }
 
-    private boolean getRootCAFromJavaCacerts(String deviceProfileHash) {
-        Set<String> rootCa = new HashSet<>();
+    boolean getRootCAFromJavaCacerts(String deviceProfileHash) {
         try {
             String filename = System.getProperty("java.home") + "/lib/security/cacerts".replace('/', File.separatorChar);
             FileInputStream is = new FileInputStream(filename);
@@ -408,12 +407,14 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             PKIXParameters params = new PKIXParameters(keystore);
             for (TrustAnchor ta : params.getTrustAnchors()) {
                 X509Certificate cert = ta.getTrustedCert();
-                rootCa.add(EncryptionUtil.getSha3Hash(getCertificateString(cert)));
+                if (EncryptionUtil.getSha3Hash(getCertificateString(cert)).equals(deviceProfileHash)) {
+                    return true;
+                }
             }
         } catch (CertificateException | KeyStoreException | NoSuchAlgorithmException |
                  InvalidAlgorithmParameterException | IOException ignored) {
         }
-        return rootCa.contains(deviceProfileHash);
+        return false;
     }
 
     private String getCertificateString(Certificate cert) throws CertificateEncodingException {

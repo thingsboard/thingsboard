@@ -877,7 +877,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private X509Certificate getX509Certificate() {
         try {
             Certificate[] certChain = sslHandler.engine().getSession().getPeerCertificates();
-            if (certChain.length > 1) {
+            if (certChain.length > 0) {
                 return (X509Certificate) certChain[0];
             }
         } catch (SSLPeerUnverifiedException e) {

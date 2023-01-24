@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -161,14 +160,13 @@ public class MqttSslHandlerProvider {
 
                             @Override
                             public void onError(Throwable e) {
-                                // to fix this error, cuz no one can understand this ...
-                                log.error(e.getMessage(), e);
+                                log.trace("Failed to process certificate chain: {}", certificateChain, e);
                                 latch.countDown();
                             }
                         });
                 latch.await(10, TimeUnit.SECONDS);
                 if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
-                    throw new CertificateException("Invalid Certificate's chain");
+                    throw new CertificateException("Invalid Certificate's chain. Cannot find such device credentials.");
                 }
             } catch (CertificateEncodingException | InterruptedException e) {
                 log.error(e.getMessage(), e);

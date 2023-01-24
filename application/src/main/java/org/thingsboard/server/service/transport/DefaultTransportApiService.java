@@ -258,8 +258,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 }
                 DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(certificateHash);
                 if (deviceProfile != null) {
-                    String deviceCN = extractDeviceNameFromCNByRegEx(SslUtil.parseCommonName(chain.get(0)), deviceProfile.getCertificateRegexPattern());
-                    String deviceName = extractDeviceNameFromCNByRegEx(deviceCN, deviceProfile.getCertificateRegexPattern());
+                    String deviceName = extractDeviceNameFromCNByRegEx(SslUtil.parseCommonName(chain.get(0)), deviceProfile.getCertificateRegexPattern());
                     Device device = deviceService.findDeviceByTenantIdAndName(deviceProfile.getTenantId(), deviceName);
                     if (device != null) {
                         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
@@ -275,7 +274,6 @@ public class DefaultTransportApiService implements TransportApiService {
                         deviceCredentials = updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
                         return getDeviceInfo(deviceCredentials);
                     }
-
                 }
             }
         } catch (CertificateEncodingException e) {

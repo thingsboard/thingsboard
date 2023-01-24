@@ -56,14 +56,18 @@ public class DeviceProfileCacheKey implements Serializable {
         return new DeviceProfileCacheKey(tenantId, null, null, null, true);
     }
 
+    /**
+     * IMPORTANT: Method toString() has to return unique value, if you add additional field to this class, please also refactor toString().
+     */
     @Override
     public String toString() {
         if (deviceProfileId != null) {
             return deviceProfileId.toString();
         } else if (defaultProfile) {
             return tenantId.toString();
-        } else {
-            return tenantId + "_" + name;
+        } else if (certificateHash != null) {
+            return certificateHash;
         }
+        return tenantId + "_" + name;
     }
 }

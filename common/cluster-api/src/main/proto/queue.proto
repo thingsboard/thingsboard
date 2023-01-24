@@ -422,6 +422,7 @@ message CredentialsDataProto {
   ValidateDeviceTokenRequestMsg validateDeviceTokenRequestMsg = 1;
   ValidateDeviceX509CertRequestMsg validateDeviceX509CertRequestMsg = 2;
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 3;
+  ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateDeviceX509CertRequestMsg = 4;
 }
 
 message ProvisionDeviceRequestMsg {

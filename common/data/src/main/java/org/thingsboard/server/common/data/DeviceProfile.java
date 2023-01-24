@@ -66,13 +66,13 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private DeviceTransportType transportType;
     @ApiModelProperty(position = 15, value = "Provisioning strategy.")
     private DeviceProfileProvisionType provisionType;
-    @ApiModelProperty(position = 16, value = "CA certificate value. ")
+    @ApiModelProperty(position = 18, value = "CA certificate value. ")
     private String certificateValue;
-    @ApiModelProperty(position = 17, value = "CA certificate hash. ")
+    @ApiModelProperty(position = 19, value = "CA certificate hash. ")
     private String certificateHash;
-    @ApiModelProperty(position = 18, value = "Regex to fetch deviceName from CN. ")
+    @ApiModelProperty(position = 20, value = "Regex to fetch deviceName from CN. ")
     private String certificateRegexPattern;
-    @ApiModelProperty(position = 19, value = "Allow to create new devices by x509 provision strategy. ")
+    @ApiModelProperty(position = 21, value = "Allow to create new devices by x509 provision strategy. ")
     private boolean allowCreateNewDevicesByX509Strategy;
 
 
