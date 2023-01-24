@@ -317,6 +317,28 @@ public interface TbContext {
 
     void clearRuleNodeStates();
 
+    void addToRuleNodeCache(String key, TbMsg msg);
+
+    void addToRuleNodeCache(String key, List<TbMsg> tbMsgList);
+
+    void addToRuleNodeCache(String key, String value);
+
+    void addToRuleNodeCache(String key, byte[]... values);
+
+    Set<byte[]> getFromRuleNodeCache(String key);
+
+    Set<TbMsg> getFromRuleNodeCache(String key, String queueName);
+
+    void removeFromRuleNodeCache(String key, TbMsg msg);
+
+    void removeFromRuleNodeCache(String key, List<TbMsg> tbMsgList);
+
+    void removeFromRuleNodeCache(String key, byte[]... values);
+
+    void removeFromRuleNodeCache(String key, String value);
+
+    void evictFromRuleNodeCache(String key);
+
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);

@@ -75,7 +75,7 @@ public class TbMsgDeduplicationNodeTest {
 
     private TbContext ctx;
 
-    private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("de-duplication-node-test");
+    private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("deduplication-node-test");
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(factory);
     private final int deduplicationInterval = 1;
 
@@ -278,7 +278,7 @@ public class TbMsgDeduplicationNodeTest {
         for (TbMsg msg : firstMsgPack) {
             node.onMsg(ctx, msg);
         }
-        long firstPackDeduplicationPackEndTs =  firstMsgPack.get(0).getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
+        long firstPackDeduplicationPackEndTs = firstMsgPack.get(0).getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
 
         List<TbMsg> secondMsgPack = getTbMsgs(deviceId, msgCount / 2, firstPackDeduplicationPackEndTs, 500);
         for (TbMsg msg : secondMsgPack) {

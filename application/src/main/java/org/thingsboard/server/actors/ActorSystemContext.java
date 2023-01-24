@@ -96,6 +96,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
+import org.thingsboard.server.service.rule.RuleNodeCacheService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -233,6 +234,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleNodeStateService ruleNodeStateService;
+
+    @Autowired
+    @Getter
+    private RuleNodeCacheService ruleNodeCacheService;
 
     @Autowired
     private PartitionService partitionService;

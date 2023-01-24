@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.cache.rule;
 
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import java.util.Set;
 
-import java.util.concurrent.ExecutionException;
+public interface RuleNodeCache {
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public interface TbNode {
+    void add(String key, byte[]... values);
 
-    void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException;
+    void remove(String key, byte[]... values);
 
-    void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException;
+    Set<byte[]> get(String key);
 
-    default void destroy() {}
-
-    default void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {}
-
-    default void onRemove(TbContext ctx) {}
+    void evict(String key);
 
 }

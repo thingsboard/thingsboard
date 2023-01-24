@@ -39,6 +39,10 @@ public class DeduplicationData {
         msgList.add(msg);
     }
 
+    public void addAll(List<TbMsg> tbMsgs) {
+        msgList.addAll(tbMsgs);
+    }
+
     public boolean isEmpty() {
         return msgList.isEmpty();
     }

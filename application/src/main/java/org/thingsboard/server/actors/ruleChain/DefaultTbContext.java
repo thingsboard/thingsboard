@@ -734,6 +734,61 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void addToRuleNodeCache(String key, TbMsg msg) {
+        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, msg);
+    }
+
+    @Override
+    public void addToRuleNodeCache(String key, List<TbMsg> tbMsgList) {
+        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, tbMsgList);
+    }
+
+    @Override
+    public void addToRuleNodeCache(String key, byte[]... values) {
+        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, values);
+    }
+
+    @Override
+    public void addToRuleNodeCache(String key, String value) {
+        mainCtx.getRuleNodeCacheService().add(this.getSelfId(), key, value.getBytes());
+    }
+
+    @Override
+    public Set<byte[]> getFromRuleNodeCache(String key) {
+        return mainCtx.getRuleNodeCacheService().get(this.getSelfId(), key);
+    }
+
+    @Override
+    public Set<TbMsg> getFromRuleNodeCache(String key, String queueName) {
+        return mainCtx.getRuleNodeCacheService().get(this.getSelfId(), key, queueName);
+    }
+
+    @Override
+    public void removeFromRuleNodeCache(String key, TbMsg msg) {
+        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, msg);
+    }
+
+    @Override
+    public void removeFromRuleNodeCache(String key, List<TbMsg> tbMsgList) {
+        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, tbMsgList);
+    }
+
+    @Override
+    public void removeFromRuleNodeCache(String key, byte[]... values) {
+        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, values);
+    }
+
+    @Override
+    public void removeFromRuleNodeCache(String key, String value) {
+        mainCtx.getRuleNodeCacheService().remove(this.getSelfId(), key, value.getBytes());
+    }
+
+    @Override
+    public void evictFromRuleNodeCache(String key) {
+        mainCtx.getRuleNodeCacheService().evict(this.getSelfId(), key);
+    }
+
+    @Override
     public void removeRuleNodeStateForEntity(EntityId entityId) {
         if (log.isDebugEnabled()) {
             log.debug("[{}][{}][{}] Remove Rule Node State for entity.", getTenantId(), getSelfId(), entityId);
