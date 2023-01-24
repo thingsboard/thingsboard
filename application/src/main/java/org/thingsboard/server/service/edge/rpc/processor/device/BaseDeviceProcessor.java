@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
@@ -61,7 +60,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
                 Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
                 if (deviceByName != null) {
-                    deviceName = deviceName + "_" + RandomStringUtils.randomAlphabetic(15);
+                    deviceName = deviceName + "_" + StringUtils.randomAlphabetic(15);
                     log.warn("Device with name {} already exists. Renaming device name to {}",
                             deviceUpdateMsg.getName(), deviceName);
                     deviceNameUpdated = true;
