@@ -111,6 +111,7 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
+  ENTITY_MERGE_RPC_MESSAGE = 5; // deprecated
 }
 
 message EntityDataProto {
