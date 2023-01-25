@@ -250,7 +250,6 @@ public class AdminController extends BaseController {
                 }
             }
             String email = getCurrentUser().getEmail();
-            adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
             mailService.sendTestMail(adminSettings.getJsonValue(), email);
         }
     }
