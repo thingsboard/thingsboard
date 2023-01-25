@@ -87,6 +87,10 @@ import static org.thingsboard.server.controller.ControllerConstants.*;
 @Slf4j
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
+    private static final String PREV_URI_PATH_PARAMETER = "prevUri";
+    private static final String PREV_URI_COOKIE_NAME = "prev_uri";
+    private static final String STATE_COOKIE_NAME = "state";
+    private static final String MAIL_SETTINGS_KEY = "mail";
     private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
     @Autowired
     private MailService mailService;
@@ -458,8 +462,8 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/mail/oauth2/login", method = RequestMethod.GET)
     public void authorize(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
         String state = this.secureKeyGenerator.generateKey();
-        if (request.getParameter(PREV_URI_PARAMETER) != null) {
-            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PARAMETER), 180);
+        if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
+            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
         }
         CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
 
