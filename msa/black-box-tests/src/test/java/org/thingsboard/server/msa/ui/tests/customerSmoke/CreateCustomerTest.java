@@ -26,6 +26,7 @@ import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_CUSTOMER_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_CUSTOMER_MESSAGE;
@@ -54,7 +55,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void createCustomer() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
@@ -70,7 +71,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createCustomerWithFullInformation() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         String text = "Text";
         String email = "email@mail.com";
         String number = "12015550123";
@@ -155,7 +156,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createCustomerWithoutRefresh() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();

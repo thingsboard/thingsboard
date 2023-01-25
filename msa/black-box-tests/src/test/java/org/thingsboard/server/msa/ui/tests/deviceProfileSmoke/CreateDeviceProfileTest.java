@@ -27,6 +27,7 @@ import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.NAME_IS_REQUIRED_MESSAGE;
@@ -56,7 +57,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void createDeviceProfile() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openCreateDeviceProfileView();
@@ -72,7 +73,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createDeviceProfileWithDetails() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         String ruleChain = "Root Rule Chain";
         String mobileDashboard = "Firmware";
         String queue = "Main";
@@ -107,7 +108,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createDeviseProfileWithSameName() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
         this.name = name;
 
@@ -154,7 +155,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void createDeviceProfileWithoutRefresh() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openCreateDeviceProfileView();

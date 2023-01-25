@@ -25,6 +25,7 @@ import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
 public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
@@ -41,8 +42,8 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void canDeleteSeveralAssetProfilesByTopBtn() {
-        String name1 = ENTITY_NAME + "1";
-        String name2 = ENTITY_NAME + "2";
+        String name1 = ENTITY_NAME + random() + "1";
+        String name2 = ENTITY_NAME + random() + "2";
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
 
@@ -59,8 +60,8 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void selectAllDAssetProfiles() {
-        String name1 = ENTITY_NAME + "1";
-        String name2 = ENTITY_NAME + "2";
+        String name1 = ENTITY_NAME + random() + "1";
+        String name2 = ENTITY_NAME + random() +"2";
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
 
@@ -87,8 +88,8 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void deleteSeveralAssetProfilesByTopBtnWithoutRefresh() {
-        String name1 = ENTITY_NAME + "1";
-        String name2 = ENTITY_NAME + "2";
+        String name1 = ENTITY_NAME + random() + "1";
+        String name2 = ENTITY_NAME + random() + "2";
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
 

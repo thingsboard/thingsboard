@@ -24,6 +24,7 @@ import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 
@@ -42,8 +43,8 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void canDeleteSeveralCustomersByTopBtn() {
-        String title1 = ENTITY_NAME + "1";
-        String title2 = ENTITY_NAME + "2";
+        String title1 = ENTITY_NAME + random() + "1";
+        String title2 = ENTITY_NAME + random() + "2";
         testRestClient.postCustomer(defaultCustomerPrototype(title1));
         testRestClient.postCustomer(defaultCustomerPrototype(title2));
 
@@ -72,8 +73,8 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void deleteSeveralCustomersByTopBtnWithoutRefresh() {
-        String title1 = ENTITY_NAME + "1";
-        String title2 = ENTITY_NAME + "2";
+        String title1 = ENTITY_NAME + random() + "1";
+        String title2 = ENTITY_NAME + random() + "2";
         testRestClient.postCustomer(defaultCustomerPrototype(title1));
         testRestClient.postCustomer(defaultCustomerPrototype(title2));
 

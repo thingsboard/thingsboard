@@ -25,6 +25,7 @@ import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
 public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
@@ -42,7 +43,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void removeAssetProfile() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
         sideBarMenuView.openAssetProfiles();
@@ -56,7 +57,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void removeAssetProfileFromView() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
         sideBarMenuView.openAssetProfiles();
@@ -71,7 +72,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void removeSelectedAssetProfile() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
         sideBarMenuView.openAssetProfiles();
@@ -112,7 +113,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void removeAssetProfileWithoutRefresh() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
 
         sideBarMenuView.openAssetProfiles();

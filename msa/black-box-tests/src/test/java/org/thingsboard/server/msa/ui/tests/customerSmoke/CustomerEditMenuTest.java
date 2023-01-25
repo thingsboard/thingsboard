@@ -29,6 +29,7 @@ import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_CUSTOMER_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.PHONE_NUMBER_ERROR_MESSAGE;
@@ -61,7 +62,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void changeTitle() {
         String customerName = "Changed" + getRandomNumber();
-        testRestClient.postCustomer(defaultCustomerPrototype(ENTITY_NAME));
+        testRestClient.postCustomer(defaultCustomerPrototype(ENTITY_NAME + random()));
         this.customerName = customerName;
 
         sideBarMenuView.customerBtn().click();
@@ -109,7 +110,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
     @Description
     public void editDescription(String description, String newDescription, String finalDescription) {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postCustomer(EntityPrototypes.defaultCustomerPrototype(name, description));
         customerName = name;
 
@@ -126,7 +127,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboardFromDashboard() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
 
@@ -153,7 +154,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboard() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
 
@@ -179,7 +180,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void assignedDashboardWithoutHide() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
 
@@ -212,7 +213,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void addPhoneNumber() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
         String number = "2015550123";
@@ -245,7 +246,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void addAllInformation() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
         String text = "Text";

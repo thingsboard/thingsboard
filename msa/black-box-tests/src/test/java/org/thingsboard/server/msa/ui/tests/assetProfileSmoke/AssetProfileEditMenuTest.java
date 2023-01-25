@@ -29,6 +29,7 @@ import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_ASSET_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
@@ -56,7 +57,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void changeName() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         String newName = "Changed" + getRandomNumber();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
@@ -79,7 +80,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void deleteName() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
@@ -94,7 +95,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void saveWithOnlySpaceInName() {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;
 
@@ -112,7 +113,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
     @Description
     public void editDescription(String description, String newDescription, String finalDescription) {
-        String name = ENTITY_NAME;
+        String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name, description));
         this.name = name;
 

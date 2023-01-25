@@ -27,6 +27,7 @@ import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
 public class OpenRuleChainTest extends AbstractDriverBaseTest {
@@ -55,8 +56,8 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void openRuleChainByRightCornerBtn() {
-        String ruleChainName = ENTITY_NAME;
-        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ENTITY_NAME));
+        String ruleChainName = ENTITY_NAME + random();
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
@@ -72,7 +73,7 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void openRuleChainByViewBtn() {
-        String ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 

@@ -23,7 +23,7 @@ public class Const {
     public static final String URL = getBaseUrl();
     public static final String TENANT_EMAIL = "tenant@thingsboard.org";
     public static final String TENANT_PASSWORD = "tenant";
-    public static final String ENTITY_NAME = "Az!@#$%^&*()_-+=~`" + getRandomNumber();
+    public static final String ENTITY_NAME = "Az!@#$%^&*()_-+=~`";
     public static final String ROOT_RULE_CHAIN_NAME = "Root Rule Chain";
     public static final String IMPORT_RULE_CHAIN_NAME = "Rule Chain For Import";
     public static final String IMPORT_DEVICE_PROFILE_NAME = "Device Profile For Import";
