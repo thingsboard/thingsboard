@@ -128,7 +128,19 @@ security:
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
-
+mail:
+  oauth2:
+    refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}" # Number of seconds (1 day).
+    loginProcessingUrl: "${MAIL_OAUTH2_LOGIN_PROCESSING_URL:/mail/oauth2/code}"
+    providers:
+      - name: "${GOOGLE_PROVIDER_NAME:GOOGLE}"
+        authUri: "${GOOGLE_AUTH_URL:https://accounts.google.com/o/oauth2/v2/auth?prompt=select_account&access_type=offline}"
+        tokenUri: "${GOOGLE_TOKEN_URL:https://oauth2.googleapis.com/token}"
+        scope: "${GOOGLE_MAIL_SCOPE:https://mail.google.com/}"
+      - name: "${MICROSOFT_PROVIDER_NAME:MICROSOFT}"
+        authUri: "${MICROSOFT_AUTH_URL:https://login.microsoftonline.com/%s/oauth2/v2.0/authorize}"
+        tokenUri: "${MICROSOFT_TOKEN_URL:https://login.microsoftonline.com/%s/oauth2/v2.0/token}"
+        scope: "${MICROSOFT_MAIL_SCOPE:https://outlook.office365.com/SMTP.Send offline_access openid}"
 # Usage statistics parameters
 usage:
   stats:

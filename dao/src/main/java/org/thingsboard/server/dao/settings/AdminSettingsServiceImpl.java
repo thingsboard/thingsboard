@@ -19,12 +19,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
+
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -59,10 +60,18 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings, data -> tenantId);
-        if (adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
+        if (adminSettings.getKey().equals("mail")){
             AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
             if (mailSettings != null) {
-                ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
+                if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
+                    Optional.ofNullable(mailSettings.getJsonValue().get("refreshToken")).ifPresent(token ->
+                            ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", token.asText()));
+                }
+                else {
+                    if (!adminSettings.getJsonValue().has("password")){
+                         ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
+                    }
+                }
             }
         }
         if (adminSettings.getTenantId() == null) {

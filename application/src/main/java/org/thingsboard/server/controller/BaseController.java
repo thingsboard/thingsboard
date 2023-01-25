@@ -167,6 +167,11 @@ public abstract class BaseController {
 
     private static final ObjectMapper json = new ObjectMapper();
 
+    protected static final String PREV_URI_PARAMETER = "prevUri";
+    protected static final String PREV_URI_COOKIE_NAME = "prev_uri";
+    protected static final String STATE_COOKIE_NAME = "state";
+    protected static final String MAIL_SETTINGS_KEY = "mail";
+
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
 

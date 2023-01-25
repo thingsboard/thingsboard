@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -26,12 +28,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
+import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
@@ -40,10 +45,14 @@ import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.config.MailOAuth2Configuration;
+import org.thingsboard.server.config.MailOauth2ProviderConfiguration;
+import org.thingsboard.server.config.MailOauth2Provider;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -53,13 +62,20 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
 import org.thingsboard.server.service.update.UpdateService;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
+
 import static org.thingsboard.server.controller.ControllerConstants.*;
 
 @RestController
 @TbCoreComponent
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
-
+    private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
     @Autowired
     private MailService mailService;
 
@@ -89,6 +105,9 @@ public class AdminController extends BaseController {
     @Autowired
     private UpdateService updateService;
 
+    @Autowired
+    private MailOAuth2Configuration mailOAuth2Configuration;
+
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
@@ -102,6 +121,7 @@ public class AdminController extends BaseController {
             AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
             if (adminSettings.getKey().equals("mail")) {
                 ((ObjectNode) adminSettings.getJsonValue()).remove("password");
+                ((ObjectNode) adminSettings.getJsonValue()).remove("refreshToken");
             }
             return adminSettings;
         } catch (Exception e) {
@@ -123,10 +143,14 @@ public class AdminController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
             adminSettings.setTenantId(getTenantId());
+            if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
+                updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
+            }
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
                 ((ObjectNode) adminSettings.getJsonValue()).remove("password");
+                ((ObjectNode) adminSettings.getJsonValue()).remove("refreshToken");
             } else if (adminSettings.getKey().equals("sms")) {
                 smsService.updateSmsConfiguration();
             }
@@ -209,19 +233,25 @@ public class AdminController extends BaseController {
     public void sendTestMail(
             @ApiParam(value = "A JSON value representing the Mail Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            adminSettings = checkNotNull(adminSettings);
-            if (adminSettings.getKey().equals("mail")) {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        adminSettings = checkNotNull(adminSettings);
+        if (adminSettings.getKey().equals("mail")) {
+            if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
+                AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
+                JsonNode refreshToken = checkNotNull(mailSettings.getJsonValue().get("refreshToken"),
+                        "Refresh token was not generated. Please save settings and generate token.");
+                ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", refreshToken.asText());
+                updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
+            }
+            else {
                 if (!adminSettings.getJsonValue().has("password")) {
                     AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
                     ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
                 }
-                String email = getCurrentUser().getEmail();
-                mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }
-        } catch (Exception e) {
-            throw handleException(e);
+            String email = getCurrentUser().getEmail();
+            adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
+            mailService.sendTestMail(adminSettings.getJsonValue(), email);
         }
     }
 
@@ -399,4 +429,60 @@ public class AdminController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get OAuth2 log in processing URL (getMailProcessingUrl)", notes = "Returns the URL enclosed in " +
+            "double quotes. After successful authentication with OAuth2 provider and user consent for requested scope, it makes a redirect to this path so that the platform can do " +
+            "further log in processing and generatin access tokens. This URL may be configured as 'mail.oauth2.loginProcessingUrl' property in yml configuration file, or " +
+            "as 'MAIL_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/mail/oauth2/code/'" + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/mail/oauth2/loginProcessingUrl", method = RequestMethod.GET)
+    @ResponseBody
+    public String getMailProcessingUrl() throws ThingsboardException {
+         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+         return "\"" + mailOAuth2Configuration.getLoginProcessingUrl() + "\"";
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/mail/oauth2Login", method = RequestMethod.GET)
+    public void authorize(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
+        String state = this.secureKeyGenerator.generateKey();
+        if (request.getParameter(PREV_URI_PARAMETER) != null) {
+            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PARAMETER), 180);
+        }
+        CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
+
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");
+        JsonNode jsonValue = adminSettings.getJsonValue();
+
+        String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
+        String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
+        String redirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
+        String scope = checkNotNull(jsonValue.get("scope"), "No scope was configured").asText();
+
+        String url = new AuthorizationCodeRequestUrl(authUri, clientId)
+                .setScopes(List.of(scope))
+                .setState(state)
+                .setRedirectUri(redirectUri)
+                .build();
+        response.sendRedirect(url);
+    }
+
+    private void updateSettingsWithOauth2ProviderTemplateInfo(AdminSettings adminSettings) throws ThingsboardException {
+        MailOauth2Provider providerId;
+        try {
+             providerId = MailOauth2Provider.valueOf(checkNotNull(adminSettings.getJsonValue().get("providerId"),
+                    "ProviderId should be configured for oauth2 type of authentication").asText());
+        } catch (IllegalArgumentException e) {
+            throw new ThingsboardException("Unsupported providerId for oauth2 type of authentication. Possible variants are: "
+                    + Arrays.toString(MailOauth2Provider.values()), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
+        if (providerConfig != null) {
+            ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
+            JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
+            settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId.isNull() ? null : providerTenantId.asText()));
+            settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId.isNull() ? null : providerTenantId.asText()));
+            settings.put("scope", providerConfig.getScope());
+        }
+    }
 }
