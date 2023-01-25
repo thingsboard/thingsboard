@@ -29,12 +29,12 @@
       </mat-select>
     </div>
     <mat-form-field class="phone-input" [appearance]="appearance" [floatLabel]="floatLabel">
-      <mat-label>{{ label | translate }}</mat-label>
+      <mat-label>{{ label }}</mat-label>
       <input
         formControlName="phoneNumber"
         type="tel"
         matInput
-        placeholder="{{ placeholder | translate }}"
+        placeholder="{{ placeholder }}"
         (focus)="focus()"
         autocomplete="off"
         [required]="required">

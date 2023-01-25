@@ -75,7 +75,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   placeholder;
 
   @Input()
-  label = 'phone-input.phone-input-label';
+  label = this.translate.instant('phone-input.phone-input-label');
 
   get showFlagSelect(): boolean {
     return this.enableFlagsSelect && !this.isLegacy;
