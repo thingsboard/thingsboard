@@ -399,6 +399,41 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAssignUnassignAssetToPublicCustomer() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Asset assignedAsset = doPost("/api/customer/public/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        Customer publicCustomer = doGet("/api/customer/" + assignedAsset.getCustomerId(), Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
+
+        Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(publicCustomer.getId(), foundAsset.getCustomerId());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Asset unassignedAsset =
+                doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
+
+        foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
+    }
+
+    @Test
     public void testAssignAssetToNonExistentCustomer() throws Exception {
         Asset asset = new Asset();
         asset.setName("My asset");

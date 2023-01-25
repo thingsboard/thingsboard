@@ -289,6 +289,8 @@ sql:
     partition_size: "${SQL_EDGE_EVENTS_PARTITION_SIZE_HOURS:168}" # Number of hours to partition the events. The current value corresponds to one week.
   audit_logs:
     partition_size: "${SQL_AUDIT_LOGS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
+  alarm_comments:
+    partition_size: "${SQL_ALARM_COMMENTS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
   batch_sort: "${SQL_BATCH_SORT:true}"
   # Specify whether to remove null characters from strValue of attributes and timeseries before insert
