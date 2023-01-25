@@ -452,6 +452,8 @@ public class AdminController extends BaseController {
          return "\"" + mailOAuth2Configuration.getLoginProcessingUrl() + "\"";
     }
 
+    @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in " +
+            "provider sends authorization code to specified redirect uri.)" )
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/mail/oauth2/login", method = RequestMethod.GET)
     public void authorize(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
