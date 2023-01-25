@@ -83,6 +83,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.mail.TestMailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -166,6 +167,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     private TenantProfileService tenantProfileService;
+
+    @Autowired
+    public TimeseriesService tsService;
 
     @Rule
     public TestRule watcher = new TestWatcher() {

@@ -80,35 +80,40 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
 
-    protected SparkplugBProto.Payload.Metric createMetric(TsKvEntry tsKvEntry, MetricDataType metricDataType) throws ThingsboardException {
+    protected SparkplugBProto.Payload.Metric createMetric(Object value, TsKvEntry tsKvEntry, MetricDataType metricDataType) throws ThingsboardException {
         SparkplugBProto.Payload.Metric metric = SparkplugBProto.Payload.Metric.newBuilder()
                 .setTimestamp(tsKvEntry.getTs())
                 .setName(tsKvEntry.getKey())
                 .setDatatype(metricDataType.toIntValue())
                 .build();
-        Object value = tsKvEntry.getValue();
         switch (metricDataType) {
             case Int8:
             case Int16:
-            case Int32:
             case UInt8:
             case UInt16:
-                return metric.toBuilder().setIntValue(Integer.parseInt(String.valueOf(value))).build();
+                int valueMetric = Integer.valueOf(String.valueOf(value));
+                return metric.toBuilder().setIntValue(valueMetric).build();
+            case Int32:
             case UInt32:
+                if (value instanceof Long) {
+                    return metric.toBuilder().setLongValue((long) value).build();
+                } else {
+                    return metric.toBuilder().setIntValue((int)value).build();
+                }
             case Int64:
             case UInt64:
             case DateTime:
-                return metric.toBuilder().setLongValue(Long.parseLong(String.valueOf(value))).build();
+                return metric.toBuilder().setLongValue((long) value).build();
             case Float:
-                return metric.toBuilder().setFloatValue(Float.parseFloat(String.valueOf(value))).build();
+                return metric.toBuilder().setFloatValue((float) value).build();
             case Double:
-                return metric.toBuilder().setDoubleValue(Double.parseDouble(String.valueOf(value))).build();
+                return metric.toBuilder().setDoubleValue((double) value).build();
             case Boolean:
-                return metric.toBuilder().setBooleanValue(Boolean.parseBoolean(String.valueOf(value))).build();
+                return metric.toBuilder().setBooleanValue((boolean) value).build();
             case String:
             case Text:
             case UUID:
-                return metric.toBuilder().setStringValue(String.valueOf(value)).build();
+                return metric.toBuilder().setStringValue((String) value).build();
             case DataSet:
                 return metric.toBuilder().setDatasetValue((SparkplugBProto.Payload.DataSet) value).build();
             case Bytes:

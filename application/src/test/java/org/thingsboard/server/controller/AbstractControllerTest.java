@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -30,7 +29,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,9 +48,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
 
     public static final String WS_URL = "ws://localhost:";
-
-    @Autowired
-    public TimeseriesService tsService;
 
     @LocalServerPort
     protected int wsPort;

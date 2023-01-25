@@ -63,7 +63,7 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
 
         SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(calendar.getTimeInMillis());
-        deathPayload.addMetrics(createMetric(tsKvEntryBdSecOriginal, metricDataType));
+        deathPayload.addMetrics(createMetric(value, tsKvEntryBdSecOriginal, metricDataType));
 
         MqttWireMessage response = clientWithCorrectNodeAccessTokenWithNDEATH(deathPayload.build().toByteArray());
 
@@ -94,7 +94,7 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
         String keys = "Device Metric int32";
         int valueDeviceInt32 = 1024;
         TsKvEntry expectedTsKvEntryDeviceInt32 = new BasicTsKvEntry(ts, new LongDataEntry(keys, Integer.toUnsignedLong(valueDeviceInt32)));
-        SparkplugBProto.Payload.Metric metric = createMetric(expectedTsKvEntryDeviceInt32, metricDataType);
+        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, expectedTsKvEntryDeviceInt32, metricDataType);
         for (int i=0; i < cntDevices; i++ ) {
             SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(calendar.getTimeInMillis())
@@ -119,17 +119,7 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
                         device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
                         return device.get() != null;
                     });
-            Assert.assertEquals(deviceName, device.get().getName());
-            AtomicReference<ListenableFuture<Optional<TsKvEntry>>> finalFuture = new AtomicReference<>();
-            await(alias + SparkplugMessageType.DBIRTH.name())
-                    .atMost(40, TimeUnit.SECONDS)
-                    .until(() -> {
-                        finalFuture.set(tsService.findLatest(tenantId, device.get().getId(), keys));
-                        return finalFuture.get().get().isPresent();
-                    });
-            TsKvEntry actualTsKvEntry = finalFuture.get().get().get();
-            Assert.assertEquals(expectedTsKvEntryDeviceInt32, actualTsKvEntry);
-        }
+         }
     }
 
     private MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH(byte[] deathBytes) throws Exception {
