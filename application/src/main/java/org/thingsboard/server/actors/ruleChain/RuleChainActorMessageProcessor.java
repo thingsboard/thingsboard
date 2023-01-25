@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -43,7 +44,6 @@ import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -73,7 +73,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
     private final TbClusterService clusterService;
-    private final TbApiUsageReportClient apiUsageClient;
     private String ruleChainName;
 
     private RuleNodeId firstId;
@@ -82,7 +81,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     RuleChainActorMessageProcessor(TenantId tenantId, RuleChain ruleChain, ActorSystemContext systemContext, TbActorRef parent, TbActorRef self) {
         super(systemContext, tenantId, ruleChain.getId());
-        this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChain.getName();
         this.parent = parent;
         this.self = self;
@@ -98,7 +96,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    public void start(TbActorCtx context) {
+    public void start(TbActorCtx context, ComponentLifecycleEvent reason) {
         if (!started) {
             RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
@@ -114,12 +112,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 started = true;
             }
         } else {
-            onUpdate(context);
+            onUpdate(context, reason);
         }
     }
 
     @Override
-    public void onUpdate(TbActorCtx context) {
+    public void onUpdate(TbActorCtx context, ComponentLifecycleEvent reason) {
         RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
         if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
             ruleChainName = ruleChain.getName();
@@ -143,7 +141,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             removedRules.forEach(ruleNodeId -> {
                 log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
                 RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
-                removed.getSelfActor().tellWithHighPriority(new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED));
+                removed.getSelfActor().tellWithHighPriority(toDeletedMsg(removed));
             });
 
             initRoutes(ruleChain, ruleNodeList);
@@ -151,12 +149,21 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    public void stop(TbActorCtx ctx) {
+    public void stop(TbActorCtx ctx, ComponentLifecycleEvent reason) {
         log.trace("[{}][{}] Stopping rule chain with {} nodes", tenantId, entityId, nodeActors.size());
-        nodeActors.values().stream().map(RuleNodeCtx::getSelfActor).map(TbActorRef::getActorId).forEach(ctx::stop);
+        var actorsStream = nodeActors.values().stream();
+        if (ComponentLifecycleEvent.DELETED.equals(reason)) {
+            actorsStream.forEach(actor -> actor.getSelfActor().tellWithHighPriority(toDeletedMsg(actor)));
+        } else {
+            actorsStream.map(RuleNodeCtx::getSelfActor).map(TbActorRef::getActorId).forEach(ctx::stop);
+        }
         nodeActors.clear();
         nodeRoutes.clear();
         started = false;
+    }
+
+    private ComponentLifecycleMsg toDeletedMsg(RuleNodeCtx removed) {
+        return new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED);
     }
 
     @Override

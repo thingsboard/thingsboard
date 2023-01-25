@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -95,14 +96,12 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     @Override
-    public void destroy(TbContext ctx) {
-        deduplicationMap.clear();
-        Set<EntityId> deduplicationIds = getDeduplicationIds(ctx);
-        if (deduplicationIds == null) {
-            return;
+    public void destroy(TbContext ctx, ComponentLifecycleEvent reason) {
+        if (ComponentLifecycleEvent.DELETED.equals(reason)) {
+            deduplicationMap.keySet().forEach(id -> ctx.getRuleNodeCacheService().evict(id.toString()));
+            ctx.getRuleNodeCacheService().evict(DEDUPLICATION_IDS_CACHE_KEY);
         }
-        deduplicationIds.forEach(id -> ctx.getRuleNodeCacheService().evict(id.toString()));
-        ctx.getRuleNodeCacheService().evict(DEDUPLICATION_IDS_CACHE_KEY);
+        deduplicationMap.clear();
     }
 
     private void getDeduplicationDataFromCacheAndSchedule(TbContext ctx) {

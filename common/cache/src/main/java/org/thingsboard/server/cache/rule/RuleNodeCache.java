@@ -16,6 +16,7 @@
 package org.thingsboard.server.cache.rule;
 
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -23,23 +24,23 @@ import java.util.Set;
 
 public interface RuleNodeCache {
 
-    void add(String key, String value);
+    void add(RuleNodeId ruleNodeId, String key, String value);
 
-    void add(String key, EntityId value);
+    void add(RuleNodeId ruleNodeId, String key, EntityId value);
 
-    void add(String key, TbMsg value);
+    void add(RuleNodeId ruleNodeId, String key, TbMsg value);
 
-    void removeStringList(String key, List<String> values);
+    void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values);
 
-    void removeEntityIdList(String key, List<EntityId> values);
+    void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values);
 
-    void removeTbMsgList(String key, List<TbMsg> values);
+    void removeTbMsgList(RuleNodeId ruleNodeId, String key, List<TbMsg> values);
 
-    Set<String> getStringSetByKey(String key);
+    Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key);
 
-    Set<EntityId> getEntityIdSetByKey(String key);
+    Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key);
 
-    Set<TbMsg> getTbMsgSetByKey(String key, String queueName);
+    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key, String queueName);
 
-    void evict(String key);
+    void evict(RuleNodeId ruleNodeId, String key);
 }

@@ -25,6 +25,7 @@ import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -58,7 +59,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void start(TbActorCtx context) throws Exception {
+    public void start(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
         tbNode = initComponent(ruleNode);
         if (tbNode != null) {
             state = ComponentLifecycleState.ACTIVE;
@@ -66,7 +67,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void onUpdate(TbActorCtx context) throws Exception {
+    public void onUpdate(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
         RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.info = new RuleNodeInfo(entityId, ruleChainName, newRuleNode != null ? newRuleNode.getName() : "Unknown");
         boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
@@ -78,7 +79,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 tbNode.destroy();
             }
             try {
-                start(context);
+                start(context, reason);
             } catch (Exception e) {
                 throw new TbRuleNodeUpdateException("Failed to update rule node", e);
             }
@@ -86,9 +87,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void stop(TbActorCtx context) {
+    public void stop(TbActorCtx context, ComponentLifecycleEvent reason) {
         if (tbNode != null) {
-            tbNode.destroy(defaultCtx);
+            tbNode.destroy(defaultCtx, reason);
             state = ComponentLifecycleState.SUSPENDED;
         }
     }

@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbRuleNodeUpdateException;
@@ -60,7 +59,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     protected void initProcessor(TbActorCtx ctx) throws TbActorException {
         try {
             log.debug("[{}][{}][{}] Starting processor.", tenantId, id, id.getEntityType());
-            processor.start(ctx);
+            processor.start(ctx, ComponentLifecycleEvent.STARTED);
             logLifecycleEvent(ComponentLifecycleEvent.STARTED);
             if (systemContext.isStatisticsEnabled()) {
                 scheduleStatsPersistTick();
@@ -87,7 +86,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         try {
             log.debug("[{}][{}][{}] Stopping processor.", tenantId, id, id.getEntityType());
             if (processor != null) {
-                processor.stop(ctx);
+                processor.stop(ctx, ComponentLifecycleEvent.STOPPED);
             }
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED);
         } catch (Exception e) {
@@ -100,21 +99,22 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     protected void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         log.debug("[{}][{}][{}] onComponentLifecycleMsg: [{}]", tenantId, id, id.getEntityType(), msg.getEvent());
         try {
-            switch (msg.getEvent()) {
+            var reason = msg.getEvent();
+            switch (reason) {
                 case CREATED:
-                    processor.onCreated(ctx);
+                    processor.onCreated(ctx, reason);
                     break;
                 case UPDATED:
-                    processor.onUpdate(ctx);
+                    processor.onUpdate(ctx, reason);
                     break;
                 case ACTIVATED:
-                    processor.onActivate(ctx);
+                    processor.onActivate(ctx, reason);
                     break;
                 case SUSPENDED:
-                    processor.onSuspend(ctx);
+                    processor.onSuspend(ctx, reason);
                     break;
                 case DELETED:
-                    processor.onStop(ctx);
+                    processor.onStop(ctx, reason);
                     ctx.stop(ctx.getSelf());
                     break;
                 default:

@@ -19,9 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -47,35 +47,35 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     public abstract String getComponentName();
 
-    public abstract void start(TbActorCtx context) throws Exception;
+    public abstract void start(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception;
 
-    public abstract void stop(TbActorCtx context) throws Exception;
+    public abstract void stop(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception;
 
     public abstract void onPartitionChangeMsg(PartitionChangeMsg msg) throws Exception;
 
-    public void onCreated(TbActorCtx context) throws Exception {
-        start(context);
+    public void onCreated(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
+        start(context, reason);
     }
 
-    public void onUpdate(TbActorCtx context) throws Exception {
-        restart(context);
+    public void onUpdate(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
+        restart(context, reason);
     }
 
-    public void onActivate(TbActorCtx context) throws Exception {
-        restart(context);
+    public void onActivate(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
+        restart(context, reason);
     }
 
-    public void onSuspend(TbActorCtx context) throws Exception {
-        stop(context);
+    public void onSuspend(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
+        stop(context, reason);
     }
 
-    public void onStop(TbActorCtx context) throws Exception {
-        stop(context);
+    public void onStop(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
+        stop(context, reason);
     }
 
-    private void restart(TbActorCtx context) throws Exception {
-        stop(context);
-        start(context);
+    private void restart(TbActorCtx context, ComponentLifecycleEvent reason) throws Exception {
+        stop(context, reason);
+        start(context, reason);
     }
 
     public void scheduleStatsPersistTick(TbActorCtx context, long statsPersistFrequency) {

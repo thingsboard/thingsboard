@@ -17,74 +17,71 @@ package org.thingsboard.server.actors.ruleChain;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.server.cache.rule.RuleNodeCache;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.service.rule.TbRuleNodeCacheService;
 
 import java.util.List;
 import java.util.Set;
 
 @Data
 @RequiredArgsConstructor
-public class DefaultTbRuleNodeCacheService implements TbRuleNodeCacheService {
+public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
 
     private final RuleNodeId ruleNodeId;
     private final RuleNodeCache cache;
 
     @Override
     public void add(String key, String value) {
-        cache.add(toRuleNodeCacheKey(key), value);
+        cache.add(ruleNodeId, key, value);
     }
 
     @Override
     public void add(String key, EntityId id) {
-        cache.add(toRuleNodeCacheKey(key), id);
+        cache.add(ruleNodeId, key, id);
     }
 
     @Override
     public void add(String key, TbMsg value) {
-        cache.add(toRuleNodeCacheKey(key), value);
+        cache.add(ruleNodeId, key, value);
     }
 
     @Override
     public void removeTbMsgList(String key, List<TbMsg> values) {
-        cache.removeTbMsgList(toRuleNodeCacheKey(key), values);
+        cache.removeTbMsgList(ruleNodeId, key, values);
     }
 
     @Override
     public void removeStringList(String key, List<String> values) {
-        cache.removeStringList(toRuleNodeCacheKey(key), values);
+        cache.removeStringList(ruleNodeId, key, values);
     }
 
     @Override
     public void removeEntityIdList(String key, List<EntityId> values) {
-        cache.removeEntityIdList(toRuleNodeCacheKey(key), values);
+        cache.removeEntityIdList(ruleNodeId, key, values);
     }
 
     @Override
     public Set<String> getStrings(String key) {
-        return cache.getStringSetByKey(toRuleNodeCacheKey(key));
+        return cache.getStringSetByKey(ruleNodeId, key);
     }
 
     @Override
     public Set<EntityId> getEntityIds(String key) {
-        return cache.getEntityIdSetByKey(toRuleNodeCacheKey(key));
+        return cache.getEntityIdSetByKey(ruleNodeId, key);
     }
 
     @Override
     public Set<TbMsg> getTbMsgs(String key, String queueName) {
-        return cache.getTbMsgSetByKey(toRuleNodeCacheKey(key), queueName);
+        return cache.getTbMsgSetByKey(ruleNodeId, key, queueName);
     }
 
     @Override
     public void evict(String key) {
-        cache.evict(key);
+        cache.evict(ruleNodeId, key);
     }
 
-    private String toRuleNodeCacheKey(String key) {
-        return String.format("%s::%s", ruleNodeId.toString(), key);
-    }
 
 }

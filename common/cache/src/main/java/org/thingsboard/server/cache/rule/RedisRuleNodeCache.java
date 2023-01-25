@@ -22,6 +22,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
@@ -38,75 +39,75 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     private final RedisConnectionFactory redisConnectionFactory;
 
     @Override
-    public void add(String key, String value) {
-        processAdd(key, value.getBytes());
+    public void add(RuleNodeId ruleNodeId, String key, String value) {
+        processAdd(ruleNodeId, key, value.getBytes());
     }
 
     @Override
-    public void add(String key, EntityId value) {
-        processAdd(key, SerializationUtils.serialize(value));
+    public void add(RuleNodeId ruleNodeId, String key, EntityId value) {
+        processAdd(ruleNodeId, key, SerializationUtils.serialize(value));
     }
 
     @Override
-    public void add(String key, TbMsg value) {
-        processAdd(key, TbMsg.toByteArray(value));
+    public void add(RuleNodeId ruleNodeId, String key, TbMsg value) {
+        processAdd(ruleNodeId, key, TbMsg.toByteArray(value));
     }
 
     @Override
-    public void removeStringList(String key, List<String> values) {
-        processRemove(key, stringListToBytes(values));
+    public void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values) {
+        processRemove(ruleNodeId, key, stringListToBytes(values));
     }
 
     @Override
-    public void removeEntityIdList(String key, List<EntityId> values) {
-        processRemove(key, entityIdListToBytes(values));
+    public void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values) {
+        processRemove(ruleNodeId, key, entityIdListToBytes(values));
     }
 
     @Override
-    public void removeTbMsgList(String key, List<TbMsg> values) {
-        processRemove(key, tbMsgListToBytes(values));
+    public void removeTbMsgList(RuleNodeId ruleNodeId, String key, List<TbMsg> values) {
+        processRemove(ruleNodeId, key, tbMsgListToBytes(values));
     }
 
     @Override
-    public Set<String> getStringSetByKey(String key) {
-        return toStringSet(processGetMembers(key));
+    public Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key) {
+        return toStringSet(processGetMembers(ruleNodeId, key));
     }
 
     @Override
-    public Set<EntityId> getEntityIdSetByKey(String key) {
-        return toEntityIdSet(processGetMembers(key));
+    public Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key) {
+        return toEntityIdSet(processGetMembers(ruleNodeId, key));
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(String key, String queueName) {
-        return toTbMsgSet(processGetMembers(key), queueName);
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key, String queueName) {
+        return toTbMsgSet(processGetMembers(ruleNodeId, key), queueName);
     }
 
     @Override
-    public void evict(String key) {
+    public void evict(RuleNodeId ruleNodeId, String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.del(key.getBytes());
+            connection.del(toRuleNodeCacheKey(ruleNodeId, key).getBytes());
         }
     }
 
-    private void processAdd(String key, byte[] value) {
+    private void processAdd(RuleNodeId ruleNodeId, String key, byte[] value) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.setCommands().sAdd(key.getBytes(), value);
+            connection.setCommands().sAdd(toRuleNodeCacheKey(ruleNodeId, key).getBytes(), value);
         }
     }
 
-    private void processRemove(String key, byte[][] values) {
+    private void processRemove(RuleNodeId ruleNodeId, String key, byte[][] values) {
         if (values.length == 0) {
             return;
         }
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.setCommands().sRem(key.getBytes(), values);
+            connection.setCommands().sRem(toRuleNodeCacheKey(ruleNodeId, key).getBytes(), values);
         }
     }
 
-    private Set<byte[]> processGetMembers(String key) {
+    private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            Set<byte[]> bytes = connection.setCommands().sMembers(key.getBytes());
+            Set<byte[]> bytes = connection.setCommands().sMembers(toRuleNodeCacheKey(ruleNodeId, key).getBytes());
             if (bytes == null) {
                 return Collections.emptySet();
             }
@@ -148,6 +149,10 @@ public class RedisRuleNodeCache implements RuleNodeCache {
         return values.stream()
                 .map(bytes -> TbMsg.fromBytes(queueName, bytes, TbMsgCallback.EMPTY))
                 .collect(Collectors.toSet());
+    }
+
+    private String toRuleNodeCacheKey(RuleNodeId ruleNodeId, String key) {
+        return String.format("%s::%s", ruleNodeId.getId().toString(), key);
     }
 
 }

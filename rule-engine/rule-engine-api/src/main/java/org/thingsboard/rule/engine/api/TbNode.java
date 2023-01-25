@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
@@ -31,8 +32,8 @@ public interface TbNode {
 
     default void destroy() {}
 
-    // todo: add reason for destroy
-    default void destroy(TbContext ctx) {
+    default void destroy(TbContext ctx, ComponentLifecycleEvent reason) {
+        // Call legacy method for backward compatibility.
         destroy();
     }
 

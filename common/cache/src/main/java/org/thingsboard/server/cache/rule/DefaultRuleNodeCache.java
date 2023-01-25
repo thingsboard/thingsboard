@@ -18,6 +18,7 @@ package org.thingsboard.server.cache.rule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Collections;
@@ -29,46 +30,46 @@ import java.util.Set;
 public class DefaultRuleNodeCache implements RuleNodeCache {
 
     @Override
-    public void add(String key, String value) {
+    public void add(RuleNodeId ruleNodeId, String key, String value) {
     }
 
     @Override
-    public void add(String key, EntityId value) {
+    public void add(RuleNodeId ruleNodeId, String key, EntityId value) {
     }
 
     @Override
-    public void add(String key, TbMsg value) {
+    public void add(RuleNodeId ruleNodeId, String key, TbMsg value) {
     }
 
     @Override
-    public void removeStringList(String key, List<String> values) {
+    public void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values) {
     }
 
     @Override
-    public void removeEntityIdList(String key, List<EntityId> values) {
+    public void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values) {
     }
 
     @Override
-    public void removeTbMsgList(String key, List<TbMsg> values) {
+    public void removeTbMsgList(RuleNodeId ruleNodeId, String key, List<TbMsg> values) {
     }
 
     @Override
-    public Set<String> getStringSetByKey(String key) {
+    public Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key) {
         return Collections.emptySet();
     }
 
     @Override
-    public Set<EntityId> getEntityIdSetByKey(String key) {
+    public Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key) {
         return Collections.emptySet();
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(String key, String queueName) {
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key, String queueName) {
         return Collections.emptySet();
     }
 
     @Override
-    public void evict(String key) {
+    public void evict(RuleNodeId ruleNodeId, String key) {
     }
 
 }
