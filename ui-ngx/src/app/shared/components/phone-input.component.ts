@@ -75,7 +75,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   placeholder;
 
   @Input()
-  label = 'phone-input.phone-input-label';
+  label = this.translate.instant('phone-input.phone-input-label');
 
   get showFlagSelect(): boolean {
     return this.enableFlagsSelect && !this.isLegacy;
@@ -274,6 +274,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     if (phoneNumber.value === '+' || phoneNumber.value === this.countryCallingCode) {
       this.propagateChange(null);
     } else if (phoneNumber.valid) {
+      this.modelValue = phoneNumber.value;
       if (parsedPhoneNumber) {
         this.updateModelValueInFormat(parsedPhoneNumber);
       }
