@@ -59,6 +59,7 @@ public class InstallScripts {
     public static final String JSON_DIR = "json";
     public static final String SYSTEM_DIR = "system";
     public static final String TENANT_DIR = "tenant";
+    public static final String EDGE_DIR = "edge";
     public static final String DEVICE_PROFILE_DIR = "device_profile";
     public static final String DEMO_DIR = "demo";
     public static final String RULE_CHAINS_DIR = "rule_chains";
@@ -67,8 +68,6 @@ public class InstallScripts {
     public static final String DASHBOARDS_DIR = "dashboards";
     public static final String MODELS_DIR = "models";
     public static final String CREDENTIALS_DIR = "credentials";
-
-    public static final String EDGE_MANAGEMENT = "edge_management";
 
     public static final String JSON_EXT = ".json";
     public static final String XML_EXT = ".xml";
@@ -103,7 +102,7 @@ public class InstallScripts {
     }
 
     private Path getEdgeRuleChainsDir() {
-        return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, EDGE_MANAGEMENT, RULE_CHAINS_DIR);
+        return Paths.get(getDataDir(), JSON_DIR, EDGE_DIR, RULE_CHAINS_DIR);
     }
 
     public String getDataDir() {
