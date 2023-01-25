@@ -522,7 +522,7 @@ public class DefaultMailService implements MailService {
                     new GenericUrl(tokenUri), refreshToken)
                     .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
                     .execute();
-            if (MICROSOFT.toString().equals(providerId)) {
+            if (MICROSOFT.name().equals(providerId)) {
                 ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
                 ((ObjectNode)jsonValue).put("expiresIn", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
                 adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);

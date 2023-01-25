@@ -77,7 +77,7 @@ public class ThingsboardSecurityConfiguration {
     protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[] {"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**",  "/api/license/**"};
     public static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/api/**";
     public static final String WS_TOKEN_BASED_AUTH_ENTRY_POINT = "/api/ws/**";
-    public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/mail/oauth2/code";
+    public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     @Autowired private ThingsboardErrorResponseHandler restAccessDeniedHandler;
 
     @Autowired(required = false)

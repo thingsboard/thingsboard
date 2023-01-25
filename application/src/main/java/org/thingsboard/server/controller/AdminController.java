@@ -18,11 +18,18 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
+import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -38,6 +45,8 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
@@ -62,17 +71,20 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
 import org.thingsboard.server.service.update.UpdateService;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.controller.ControllerConstants.*;
 
 @RestController
 @TbCoreComponent
+@Slf4j
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
     private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
@@ -441,7 +453,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/mail/oauth2Login", method = RequestMethod.GET)
+    @RequestMapping(value = "/mail/oauth2/login", method = RequestMethod.GET)
     public void authorize(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
         String state = this.secureKeyGenerator.generateKey();
         if (request.getParameter(PREV_URI_PARAMETER) != null) {
@@ -464,6 +476,46 @@ public class AdminController extends BaseController {
                 .setRedirectUri(redirectUri)
                 .build();
         response.sendRedirect(url);
+    }
+    @RequestMapping(value = "/mail/oauth2/code", params = {"code", "state"}, method = RequestMethod.GET)
+    public void codeProcessingUrl(
+            @RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
+            HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
+        Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
+        Optional<Cookie> cookieState = CookieUtils.getCookie(request, STATE_COOKIE_NAME);
+
+        String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        String prevUri = baseUrl + (prevUrlOpt.isPresent() ? prevUrlOpt.get().getValue(): "/settings/outgoing-mail");
+
+        if (cookieState.isEmpty() || !cookieState.get().getValue().equals(state)) {
+            CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);
+            throw new ThingsboardException("Access token was not generated, invalid state param", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);
+        CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
+
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");
+        JsonNode jsonValue = adminSettings.getJsonValue();
+
+        String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
+        String clientSecret = checkNotNull(jsonValue.get("clientSecret"), "No client secret was configured").asText();
+        String clientRedirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
+        String tokenUri = checkNotNull(jsonValue.get("tokenUri"), "No authorization uri was configured").asText();
+
+        TokenResponse tokenResponse;
+        try{
+            tokenResponse = new AuthorizationCodeTokenRequest(new NetHttpTransport(), new GsonFactory(), new GenericUrl(tokenUri), code)
+                    .setRedirectUri(clientRedirectUri)
+                    .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
+                    .execute();
+        }catch (IOException e) {
+            log.warn("Unable to retrieve refresh token: {}", e.getMessage());
+            throw new ThingsboardException("Error while requesting refresh token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
+        }
+
+        ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
+        response.sendRedirect(prevUri);
     }
 
     private void updateSettingsWithOauth2ProviderTemplateInfo(AdminSettings adminSettings) throws ThingsboardException {
