@@ -203,8 +203,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedRuleEngineTenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
+        mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
         mainQueueConfiguration.setPollInterval(25);
         mainQueueConfiguration.setPartitions(10);
         mainQueueConfiguration.setConsumerPerPartition(true);
@@ -598,12 +598,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createQueues() {
-        Queue mainQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "Main");
+        Queue mainQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, DataConstants.MAIN_QUEUE_NAME);
         if (mainQueue == null) {
             mainQueue = new Queue();
             mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
-            mainQueue.setName("Main");
-            mainQueue.setTopic("tb_rule_engine.main");
+            mainQueue.setName(DataConstants.MAIN_QUEUE_NAME);
+            mainQueue.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
             mainQueue.setPollInterval(25);
             mainQueue.setPartitions(10);
             mainQueue.setConsumerPerPartition(true);
@@ -622,12 +622,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             queueService.saveQueue(mainQueue);
         }
 
-        Queue highPriorityQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "HighPriority");
+        Queue highPriorityQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, DataConstants.HP_QUEUE_NAME);
         if (highPriorityQueue == null) {
             highPriorityQueue = new Queue();
             highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
-            highPriorityQueue.setName("HighPriority");
-            highPriorityQueue.setTopic("tb_rule_engine.hp");
+            highPriorityQueue.setName(DataConstants.HP_QUEUE_NAME);
+            highPriorityQueue.setTopic(DataConstants.HP_QUEUE_TOPIC);
             highPriorityQueue.setPollInterval(25);
             highPriorityQueue.setPartitions(10);
             highPriorityQueue.setConsumerPerPartition(true);
@@ -646,12 +646,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             queueService.saveQueue(highPriorityQueue);
         }
 
-        Queue sequentialByOriginatorQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "SequentialByOriginator");
+        Queue sequentialByOriginatorQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, DataConstants.SQ_QUEUE_NAME);
         if (sequentialByOriginatorQueue == null) {
             sequentialByOriginatorQueue = new Queue();
             sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
-            sequentialByOriginatorQueue.setName("SequentialByOriginator");
-            sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
+            sequentialByOriginatorQueue.setName(DataConstants.SQ_QUEUE_NAME);
+            sequentialByOriginatorQueue.setTopic(DataConstants.SQ_QUEUE_TOPIC);
             sequentialByOriginatorQueue.setPollInterval(25);
             sequentialByOriginatorQueue.setPartitions(10);
             sequentialByOriginatorQueue.setPackProcessingTimeout(2000);

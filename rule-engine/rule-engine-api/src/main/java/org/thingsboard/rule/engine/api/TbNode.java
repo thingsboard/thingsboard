@@ -31,6 +31,11 @@ public interface TbNode {
 
     default void destroy() {}
 
+    // todo: add reason for destroy
+    default void destroy(TbContext ctx) {
+        destroy();
+    }
+
     default void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {}
 
 }

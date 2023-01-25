@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.service.rule;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public class TbNodeException extends Exception {
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 
-    public TbNodeException(String message) {
-        super(message);
-    }
-
-    public TbNodeException(Exception e) {
-        super(e);
-    }
+public interface TbRuleNodeCacheService extends RuleNodeCacheService {
 
 }

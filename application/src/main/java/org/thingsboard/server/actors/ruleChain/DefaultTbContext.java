@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -98,6 +99,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.rule.TbRuleNodeCacheService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -119,11 +121,13 @@ class DefaultTbContext implements TbContext {
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
+    private final TbRuleNodeCacheService ruleNodeCacheService;
 
     public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
         this.mainCtx = mainCtx;
         this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
+        this.ruleNodeCacheService = new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache());
     }
 
     @Override
@@ -731,6 +735,11 @@ class DefaultTbContext implements TbContext {
             log.debug("[{}][{}] Going to clear rule node states", getTenantId(), getSelfId());
         }
         mainCtx.getRuleNodeStateService().removeByRuleNodeId(getTenantId(), getSelfId());
+    }
+
+    @Override
+    public RuleNodeCacheService getRuleNodeCacheService() {
+        return ruleNodeCacheService;
     }
 
     @Override

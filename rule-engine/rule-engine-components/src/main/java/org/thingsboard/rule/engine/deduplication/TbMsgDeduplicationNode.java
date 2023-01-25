@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -59,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 public class TbMsgDeduplicationNode implements TbNode {
 
     private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
+    private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
     public static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
     private static final String EMPTY_DATA = "";
     private static final TbMsgMetaData EMPTY_META_DATA = new TbMsgMetaData();
@@ -78,6 +80,9 @@ public class TbMsgDeduplicationNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
         this.deduplicationId = config.getId();
+        if (deduplicationMap.isEmpty()) {
+            getDeduplicationDataFromCacheAndSchedule(ctx);
+        }
     }
 
     @Override
@@ -90,8 +95,36 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     @Override
-    public void destroy() {
+    public void destroy(TbContext ctx) {
         deduplicationMap.clear();
+        Set<EntityId> deduplicationIds = getDeduplicationIds(ctx);
+        if (deduplicationIds == null) {
+            return;
+        }
+        deduplicationIds.forEach(id -> ctx.getRuleNodeCacheService().evict(id.toString()));
+        ctx.getRuleNodeCacheService().evict(DEDUPLICATION_IDS_CACHE_KEY);
+    }
+
+    private void getDeduplicationDataFromCacheAndSchedule(TbContext ctx) {
+        Set<EntityId> deduplicationIds = getDeduplicationIds(ctx);
+        if (deduplicationIds == null) {
+            return;
+        }
+        deduplicationIds.forEach(id -> {
+            List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), config.getQueueName()));
+            DeduplicationData deduplicationData = new DeduplicationData();
+            deduplicationData.addAll(tbMsgs);
+            deduplicationMap.put(id, deduplicationData);
+            scheduleTickMsg(ctx, id, deduplicationData);
+        });
+    }
+
+    private Set<EntityId> getDeduplicationIds(TbContext ctx) {
+        Set<EntityId> deduplicationIds = ctx.getRuleNodeCacheService().getEntityIds(TbMsgDeduplicationNode.DEDUPLICATION_IDS_CACHE_KEY);
+        if (deduplicationIds.isEmpty()) {
+            return null;
+        }
+        return deduplicationIds;
     }
 
     private void processOnRegularMsg(TbContext ctx, TbMsg msg) {
@@ -99,7 +132,11 @@ public class TbMsgDeduplicationNode implements TbNode {
         DeduplicationData deduplicationMsgs = deduplicationMap.computeIfAbsent(id, k -> new DeduplicationData());
         if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
             log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
+            if (deduplicationMsgs.isEmpty()) {
+                ctx.getRuleNodeCacheService().add(DEDUPLICATION_IDS_CACHE_KEY, id);
+            }
             deduplicationMsgs.add(msg);
+            ctx.getRuleNodeCacheService().add(id.toString(), msg);
             ctx.ack(msg);
             scheduleTickMsg(ctx, id, deduplicationMsgs);
         } else {
@@ -132,13 +169,13 @@ public class TbMsgDeduplicationNode implements TbNode {
         }
         long deduplicationTimeoutMs = System.currentTimeMillis();
         try {
-            List<TbMsg> deduplicationResults = new ArrayList<>();
+            List<TbPair<TbMsg, List<TbMsg>>> deduplicationResults = new ArrayList<>();
             List<TbMsg> msgList = data.getMsgList();
             Optional<TbPair<Long, Long>> packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
             while (packBoundsOpt.isPresent()) {
                 TbPair<Long, Long> packBounds = packBoundsOpt.get();
+                List<TbMsg> pack = new ArrayList<>();
                 if (DeduplicationStrategy.ALL.equals(config.getStrategy())) {
-                    List<TbMsg> pack = new ArrayList<>();
                     for (Iterator<TbMsg> iterator = msgList.iterator(); iterator.hasNext(); ) {
                         TbMsg msg = iterator.next();
                         long msgTs = msg.getMetaDataTs();
@@ -147,12 +184,12 @@ public class TbMsgDeduplicationNode implements TbNode {
                             iterator.remove();
                         }
                     }
-                    deduplicationResults.add(TbMsg.newMsg(
+                    deduplicationResults.add(new TbPair<>(TbMsg.newMsg(
                             config.getQueueName(),
                             config.getOutMsgType(),
                             deduplicationId,
-                            getMetadata(),
-                            getMergedData(pack)));
+                            getMetadata(packBounds.getFirst()),
+                            getMergedData(pack)), pack));
                 } else {
                     TbMsg resultMsg = null;
                     boolean searchMin = DeduplicationStrategy.FIRST.equals(config.getStrategy());
@@ -160,6 +197,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                         TbMsg msg = iterator.next();
                         long msgTs = msg.getMetaDataTs();
                         if (msgTs >= packBounds.getFirst() && msgTs < packBounds.getSecond()) {
+                            pack.add(msg);
                             iterator.remove();
                             if (resultMsg == null
                                     || (searchMin && msg.getMetaDataTs() < resultMsg.getMetaDataTs())
@@ -168,11 +206,14 @@ public class TbMsgDeduplicationNode implements TbNode {
                             }
                         }
                     }
-                    deduplicationResults.add(resultMsg);
+                    if (resultMsg != null) {
+                        resultMsg = TbMsg.transformMsg(resultMsg, config.getQueueName());
+                        deduplicationResults.add(new TbPair<>(resultMsg, pack));
+                    }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
             }
-            deduplicationResults.forEach(outMsg -> enqueueForTellNextWithRetry(ctx, outMsg, 0));
+            deduplicationResults.forEach(result -> enqueueForTellNextWithRetry(ctx, result, 0));
         } finally {
             if (!data.isEmpty()) {
                 scheduleTickMsg(ctx, deduplicationId, data);
@@ -199,17 +240,18 @@ public class TbMsgDeduplicationNode implements TbNode {
         });
     }
 
-    private void enqueueForTellNextWithRetry(TbContext ctx, TbMsg msg, int retryAttempt) {
+    private void enqueueForTellNextWithRetry(TbContext ctx, TbPair<TbMsg, List<TbMsg>> result, int retryAttempt) {
         if (config.getMaxRetries() > retryAttempt) {
-            ctx.enqueueForTellNext(msg, TbRelationTypes.SUCCESS,
+            TbMsg outMsg = result.getFirst();
+            List<TbMsg> msgsToRemoveFromCache = result.getSecond();
+            ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
                     () -> {
-                        log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), msg.getOriginator(), retryAttempt);
+                        log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
+                        ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator().toString(), msgsToRemoveFromCache);
                     },
                     throwable -> {
-                        log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), msg.getOriginator(), retryAttempt, throwable);
-                        ctx.schedule(() -> {
-                            enqueueForTellNextWithRetry(ctx, msg, retryAttempt + 1);
-                        }, TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
+                        log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt, throwable);
+                        ctx.schedule(() -> enqueueForTellNextWithRetry(ctx, result, retryAttempt + 1), TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
                     });
         }
     }
@@ -229,9 +271,9 @@ public class TbMsgDeduplicationNode implements TbNode {
         return JacksonUtil.toString(mergedData);
     }
 
-    private TbMsgMetaData getMetadata() {
+    private TbMsgMetaData getMetadata(long packStartTs) {
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("ts", String.valueOf(System.currentTimeMillis()));
+        metaData.putValue("ts", String.valueOf(packStartTs));
         return metaData;
     }
 

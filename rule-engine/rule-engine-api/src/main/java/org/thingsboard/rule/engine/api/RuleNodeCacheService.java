@@ -13,37 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.deduplication;
+package org.thingsboard.rule.engine.api;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
-@Data
-public class DeduplicationData {
+public interface RuleNodeCacheService {
 
-    private final List<TbMsg> msgList;
-    private boolean tickScheduled;
+    void add(String key, String value);
 
-    public DeduplicationData() {
-        msgList = new LinkedList<>();
-    }
+    void add(String key, EntityId id);
 
-    public int size() {
-        return msgList.size();
-    }
+    void add(String key, TbMsg value);
 
-    public void add(TbMsg msg) {
-        msgList.add(msg);
-    }
+    void removeStringList(String key, List<String> values);
 
-    public void addAll(List<TbMsg> tbMsgs) {
-        msgList.addAll(tbMsgs);
-    }
+    void removeEntityIdList(String key, List<EntityId> values);
 
-    public boolean isEmpty() {
-        return msgList.isEmpty();
-    }
+    void removeTbMsgList(String key, List<TbMsg> values);
+
+    Set<String> getStrings(String key);
+
+    Set<EntityId> getEntityIds(String key);
+
+    Set<TbMsg> getTbMsgs(String key, String queueName);
+
+    void evict(String key);
+
 }

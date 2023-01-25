@@ -88,7 +88,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     @Override
     public void stop(TbActorCtx context) {
         if (tbNode != null) {
-            tbNode.destroy();
+            tbNode.destroy(defaultCtx);
             state = ComponentLifecycleState.SUSPENDED;
         }
     }

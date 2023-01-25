@@ -317,6 +317,8 @@ public interface TbContext {
 
     void clearRuleNodeStates();
 
+    RuleNodeCacheService getRuleNodeCacheService();
+
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
