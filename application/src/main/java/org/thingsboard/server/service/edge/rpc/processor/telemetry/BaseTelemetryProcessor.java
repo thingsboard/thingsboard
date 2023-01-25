@@ -90,42 +90,46 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         log.trace("[{}] processTelemetryMsg [{}]", tenantId, entityData);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData.getEntityType(), entityData.getEntityIdMSB(), entityData.getEntityIdLSB());
-        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg()) && entityId != null) {
-            Pair<TbMsgMetaData, CustomerId> pair = getBaseMsgMetadataAndCustomerId(tenantId, entityId);
-            TbMsgMetaData metaData = pair.getKey();
-            CustomerId customerId = pair.getValue();
-            metaData.putValue(DataConstants.MSG_SOURCE_KEY, getMsgSourceKey());
-            if (entityData.hasPostAttributesMsg()) {
-                result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(), metaData));
-            }
-            if (entityData.hasAttributesUpdatedMsg()) {
-                metaData.putValue("scope", entityData.getPostAttributeScope());
-                result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
-            }
-            if (entityData.hasPostTelemetryMsg()) {
-                result.add(processPostTelemetry(tenantId, customerId, entityId, entityData.getPostTelemetryMsg(), metaData));
-            }
-            if (EntityType.DEVICE.equals(entityId.getEntityType())) {
-                DeviceId deviceId = new DeviceId(entityId.getId());
+        if (entityId != null && isEntityExists(tenantId, entityId)) {
+            if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg())) {
+                Pair<TbMsgMetaData, CustomerId> pair = getBaseMsgMetadataAndCustomerId(tenantId, entityId);
+                TbMsgMetaData metaData = pair.getKey();
+                CustomerId customerId = pair.getValue();
+                metaData.putValue(DataConstants.MSG_SOURCE_KEY, getMsgSourceKey());
+                if (entityData.hasPostAttributesMsg()) {
+                    result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(), metaData));
+                }
+                if (entityData.hasAttributesUpdatedMsg()) {
+                    metaData.putValue("scope", entityData.getPostAttributeScope());
+                    result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
+                }
+                if (entityData.hasPostTelemetryMsg()) {
+                    result.add(processPostTelemetry(tenantId, customerId, entityId, entityData.getPostTelemetryMsg(), metaData));
+                }
+                if (EntityType.DEVICE.equals(entityId.getEntityType())) {
+                    DeviceId deviceId = new DeviceId(entityId.getId());
 
-                long currentTs = System.currentTimeMillis();
+                    long currentTs = System.currentTimeMillis();
 
-                TransportProtos.DeviceActivityProto deviceActivityMsg = TransportProtos.DeviceActivityProto.newBuilder()
-                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                        .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
-                        .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
-                        .setLastActivityTime(currentTs).build();
+                    TransportProtos.DeviceActivityProto deviceActivityMsg = TransportProtos.DeviceActivityProto.newBuilder()
+                            .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                            .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                            .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                            .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                            .setLastActivityTime(currentTs).build();
 
-                log.trace("[{}][{}] device activity time is going to be updated, ts {}", tenantId, deviceId, currentTs);
+                    log.trace("[{}][{}] device activity time is going to be updated, ts {}", tenantId, deviceId, currentTs);
 
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
-                tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(deviceId.getId(),
-                        TransportProtos.ToCoreMsg.newBuilder().setDeviceActivityMsg(deviceActivityMsg).build()), null);
+                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
+                    tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(deviceId.getId(),
+                            TransportProtos.ToCoreMsg.newBuilder().setDeviceActivityMsg(deviceActivityMsg).build()), null);
+                }
             }
-        }
-        if (entityData.hasAttributeDeleteMsg()) {
-            result.add(processAttributeDeleteMsg(tenantId, entityId, entityData.getAttributeDeleteMsg(), entityData.getEntityType()));
+            if (entityData.hasAttributeDeleteMsg()) {
+                result.add(processAttributeDeleteMsg(tenantId, entityId, entityData.getAttributeDeleteMsg(), entityData.getEntityType()));
+            }
+        } else {
+            log.warn("Skipping telemetry update msg because entity doesn't exists on edge, {}", entityData);
         }
         return result;
     }
