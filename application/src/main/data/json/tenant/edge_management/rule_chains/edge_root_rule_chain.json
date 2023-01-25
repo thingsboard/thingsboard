@@ -6,7 +6,8 @@
     "firstRuleNodeId": null,
     "root": true,
     "debugMode": false,
-    "configuration": null
+    "configuration": null,
+    "externalId": null
   },
   "metadata": {
     "firstNodeIndex": 0,
@@ -23,7 +24,8 @@
         "configuration": {
           "persistAlarmRulesState": false,
           "fetchAlarmRulesStateOnStart": false
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
@@ -35,7 +37,8 @@
         "debugMode": false,
         "configuration": {
           "defaultTTL": 0
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
@@ -47,7 +50,8 @@
         "debugMode": false,
         "configuration": {
           "scope": "CLIENT_SCOPE"
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
@@ -59,7 +63,8 @@
         "debugMode": false,
         "configuration": {
           "version": 0
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
@@ -73,7 +78,8 @@
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
           "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
@@ -87,7 +93,8 @@
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
           "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
@@ -99,19 +106,34 @@
         "debugMode": false,
         "configuration": {
           "timeoutInSeconds": 60
-        }
+        },
+        "externalId": null
       },
       {
         "additionalInfo": {
-          "layoutX": 1129,
-          "layoutY": 52
+          "layoutX": 1126,
+          "layoutY": 104
         },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
         "debugMode": false,
         "configuration": {
           "scope": "SERVER_SCOPE"
-        }
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 826,
+          "layoutY": 601
+        },
+        "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
+        "name": "Push to cloud",
+        "debugMode": false,
+        "configuration": {
+          "scope": "SERVER_SCOPE"
+        },
+        "externalId": null
       }
     ],
     "connections": [
@@ -132,13 +154,8 @@
       },
       {
         "fromIndex": 3,
-        "toIndex": 6,
-        "type": "RPC Request to Device"
-      },
-      {
-        "fromIndex": 3,
-        "toIndex": 5,
-        "type": "Other"
+        "toIndex": 1,
+        "type": "Post telemetry"
       },
       {
         "fromIndex": 3,
@@ -147,33 +164,28 @@
       },
       {
         "fromIndex": 3,
-        "toIndex": 1,
-        "type": "Post telemetry"
-      },
-      {
-        "fromIndex": 3,
         "toIndex": 4,
         "type": "RPC Request from Device"
       },
       {
         "fromIndex": 3,
-        "toIndex": 7,
-        "type": "Attributes Updated"
+        "toIndex": 5,
+        "type": "Other"
       },
       {
         "fromIndex": 3,
-        "toIndex": 7,
+        "toIndex": 6,
+        "type": "RPC Request to Device"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 8,
         "type": "Attributes Deleted"
       },
       {
         "fromIndex": 3,
-        "toIndex": 7,
-        "type": "Timeseries Deleted"
-      },
-      {
-        "fromIndex": 3,
-        "toIndex": 7,
-        "type": "Timeseries Updated"
+        "toIndex": 8,
+        "type": "Attributes Updated"
       }
     ],
     "ruleChainConnections": null
