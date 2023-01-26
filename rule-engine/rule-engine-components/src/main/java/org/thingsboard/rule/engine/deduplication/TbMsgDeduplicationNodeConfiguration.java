@@ -17,13 +17,13 @@ package org.thingsboard.rule.engine.deduplication;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.DataConstants;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<TbMsgDeduplicationNodeConfiguration> {
 
     private int interval;
-    private DeduplicationId id;
     private DeduplicationStrategy strategy;
 
     // Advanced settings:
@@ -38,11 +38,9 @@ public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<Tb
     public TbMsgDeduplicationNodeConfiguration defaultConfiguration() {
         TbMsgDeduplicationNodeConfiguration configuration = new TbMsgDeduplicationNodeConfiguration();
         configuration.setInterval(60);
-        configuration.setId(DeduplicationId.ORIGINATOR);
         configuration.setStrategy(DeduplicationStrategy.FIRST);
         configuration.setMaxPendingMsgs(100);
         configuration.setMaxRetries(3);
-        configuration.setQueueName(DataConstants.MAIN_QUEUE_NAME);
         return configuration;
     }
 }

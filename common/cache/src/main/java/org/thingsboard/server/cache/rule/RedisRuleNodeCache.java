@@ -79,8 +79,8 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key, String queueName) {
-        return toTbMsgSet(processGetMembers(ruleNodeId, key), queueName);
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key) {
+        return toTbMsgSet(processGetMembers(ruleNodeId, key));
     }
 
     @Override
@@ -145,9 +145,9 @@ public class RedisRuleNodeCache implements RuleNodeCache {
                 .collect(Collectors.toSet());
     }
 
-    private Set<TbMsg> toTbMsgSet(Set<byte[]> values, String queueName) {
+    private Set<TbMsg> toTbMsgSet(Set<byte[]> values) {
         return values.stream()
-                .map(bytes -> TbMsg.fromBytes(queueName, bytes, TbMsgCallback.EMPTY))
+                .map(bytes -> TbMsg.fromBytes(bytes, TbMsgCallback.EMPTY))
                 .collect(Collectors.toSet());
     }
 

@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -109,7 +110,7 @@ public class TbMsgDeduplicationNodeTest {
         when(ctx.getRuleNodeCacheService()).thenReturn(ruleNodeCacheService);
         when(ruleNodeCacheService.getStrings(anyString())).thenReturn(Collections.emptySet());
         when(ruleNodeCacheService.getEntityIds(anyString())).thenReturn(Collections.emptySet());
-        when(ruleNodeCacheService.getTbMsgs(anyString(), anyString())).thenReturn(Collections.emptySet());
+        when(ruleNodeCacheService.getTbMsgs(anyString())).thenReturn(Collections.emptySet());
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
             String type = (String) (invocationOnMock.getArguments())[1];
@@ -202,6 +203,10 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, never()).schedule(any(), anyLong(), any());
 
         Assertions.assertEquals(TbMsg.toByteString(inputMsgs.get(0)), TbMsg.toByteString(newMsgCaptor.getValue()));
+
+        node.destroy(ctx, ComponentLifecycleEvent.DELETED);
+        verify(ruleNodeCacheService, times(2)).evict(anyString());
+
     }
 
     @Test
@@ -253,6 +258,9 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, never()).schedule(any(), anyLong(), any());
 
         Assertions.assertEquals(TbMsg.toByteString(msgWithLatestTs), TbMsg.toByteString(newMsgCaptor.getValue()));
+
+        node.destroy(ctx, ComponentLifecycleEvent.DELETED);
+        verify(ruleNodeCacheService, times(2)).evict(anyString());
     }
 
     @Test
@@ -304,6 +312,9 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(deviceId, outMessage.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), outMessage.getType());
         Assertions.assertEquals(config.getQueueName(), outMessage.getQueueName());
+
+        node.destroy(ctx, ComponentLifecycleEvent.DELETED);
+        verify(ruleNodeCacheService, times(2)).evict(anyString());
     }
 
     @Test
@@ -369,6 +380,9 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(deviceId, secondMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), secondMsg.getType());
         Assertions.assertEquals(config.getQueueName(), secondMsg.getQueueName());
+
+        node.destroy(ctx, ComponentLifecycleEvent.DELETED);
+        verify(ruleNodeCacheService, times(2)).evict(anyString());
     }
 
     @Test
@@ -425,6 +439,9 @@ public class TbMsgDeduplicationNodeTest {
         List<ByteString> resultMsgsByteStrings = resultMsgs.stream().map(TbMsg::toByteString).collect(Collectors.toList());
         Assertions.assertTrue(resultMsgsByteStrings.contains(TbMsg.toByteString(msgWithLatestTsInFirstPack)));
         Assertions.assertTrue(resultMsgsByteStrings.contains(TbMsg.toByteString(msgWithLatestTsInSecondPack)));
+
+        node.destroy(ctx, ComponentLifecycleEvent.DELETED);
+        verify(ruleNodeCacheService, times(2)).evict(anyString());
     }
 
     private TbMsg getMsgWithLatestTs(List<TbMsg> firstMsgPack) {

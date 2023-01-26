@@ -40,7 +40,7 @@ public interface RuleNodeCache {
 
     Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key);
 
-    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key, String queueName);
+    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key);
 
     void evict(RuleNodeId ruleNodeId, String key);
 }

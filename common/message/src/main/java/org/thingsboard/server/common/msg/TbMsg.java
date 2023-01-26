@@ -227,7 +227,16 @@ public final class TbMsg implements Serializable {
         builder.setData(msg.getData());
 
         builder.setCtx(msg.ctx.toProto());
+
+        if (msg.getQueueName() != null) {
+            builder.setQueueName(msg.getQueueName());
+        }
+
         return builder.build().toByteArray();
+    }
+
+    public static TbMsg fromBytes(byte[] data, TbMsgCallback callback) {
+        return fromBytes(null, data, callback);
     }
 
     public static TbMsg fromBytes(String queueName, byte[] data, TbMsgCallback callback) {
@@ -254,6 +263,10 @@ public final class TbMsg implements Serializable {
             } else {
                 // Backward compatibility with unprocessed messages fetched from queue after update.
                 ctx = new TbMsgProcessingCtx(proto.getRuleNodeExecCounter());
+            }
+
+            if (queueName == null && proto.hasQueueName()) {
+                queueName = proto.getQueueName();
             }
 
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];

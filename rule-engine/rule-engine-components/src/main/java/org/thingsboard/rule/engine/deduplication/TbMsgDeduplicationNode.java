@@ -68,22 +68,16 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private TbMsgDeduplicationNodeConfiguration config;
 
-    private final Map<EntityId, DeduplicationData> deduplicationMap;
+    private Map<EntityId, DeduplicationData> deduplicationMap;
     private long deduplicationInterval;
-    private DeduplicationId deduplicationId;
-
-    public TbMsgDeduplicationNode() {
-        this.deduplicationMap = new HashMap<>();
-    }
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
-        this.deduplicationId = config.getId();
-        if (deduplicationMap.isEmpty()) {
-            getDeduplicationDataFromCacheAndSchedule(ctx);
-        }
+        this.deduplicationMap = new HashMap<>();
+        getDeduplicationDataFromCacheAndSchedule(ctx);
+
     }
 
     @Override
@@ -110,7 +104,7 @@ public class TbMsgDeduplicationNode implements TbNode {
             return;
         }
         deduplicationIds.forEach(id -> {
-            List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), config.getQueueName()));
+            List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString()));
             DeduplicationData deduplicationData = new DeduplicationData();
             deduplicationData.addAll(tbMsgs);
             deduplicationMap.put(id, deduplicationData);
@@ -127,7 +121,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     private void processOnRegularMsg(TbContext ctx, TbMsg msg) {
-        EntityId id = getDeduplicationId(ctx, msg);
+        EntityId id = msg.getOriginator();
         DeduplicationData deduplicationMsgs = deduplicationMap.computeIfAbsent(id, k -> new DeduplicationData());
         if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
             log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
@@ -141,19 +135,6 @@ public class TbMsgDeduplicationNode implements TbNode {
         } else {
             log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
             ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
-        }
-    }
-
-    private EntityId getDeduplicationId(TbContext ctx, TbMsg msg) {
-        switch (deduplicationId) {
-            case ORIGINATOR:
-                return msg.getOriginator();
-            case TENANT:
-                return ctx.getTenantId();
-            case CUSTOMER:
-                return msg.getCustomerId();
-            default:
-                throw new IllegalStateException("Unsupported deduplication id: " + deduplicationId);
         }
     }
 
@@ -206,7 +187,6 @@ public class TbMsgDeduplicationNode implements TbNode {
                         }
                     }
                     if (resultMsg != null) {
-                        resultMsg = TbMsg.transformMsg(resultMsg, config.getQueueName());
                         deduplicationResults.add(new TbPair<>(resultMsg, pack));
                     }
                 }
@@ -240,9 +220,9 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     private void enqueueForTellNextWithRetry(TbContext ctx, TbPair<TbMsg, List<TbMsg>> result, int retryAttempt) {
+        TbMsg outMsg = result.getFirst();
+        List<TbMsg> msgsToRemoveFromCache = result.getSecond();
         if (config.getMaxRetries() > retryAttempt) {
-            TbMsg outMsg = result.getFirst();
-            List<TbMsg> msgsToRemoveFromCache = result.getSecond();
             ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
@@ -252,6 +232,9 @@ public class TbMsgDeduplicationNode implements TbNode {
                         log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt, throwable);
                         ctx.schedule(() -> enqueueForTellNextWithRetry(ctx, result, retryAttempt + 1), TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
                     });
+        } else {
+            log.trace("[{}][{}] Removing deduplication messages pack due to max enqueue retry attempts exhausted!", ctx.getSelfId(), outMsg.getOriginator());
+            ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator().toString(), msgsToRemoveFromCache);
         }
     }
 

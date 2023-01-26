@@ -39,7 +39,7 @@ public interface RuleNodeCacheService {
 
     Set<EntityId> getEntityIds(String key);
 
-    Set<TbMsg> getTbMsgs(String key, String queueName);
+    Set<TbMsg> getTbMsgs(String key);
 
     void evict(String key);
 

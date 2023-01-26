@@ -64,7 +64,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key, String queueName) {
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key) {
         return Collections.emptySet();
     }
 

@@ -74,8 +74,8 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgs(String key, String queueName) {
-        return cache.getTbMsgSetByKey(ruleNodeId, key, queueName);
+    public Set<TbMsg> getTbMsgs(String key) {
+        return cache.getTbMsgSetByKey(ruleNodeId, key);
     }
 
     @Override
