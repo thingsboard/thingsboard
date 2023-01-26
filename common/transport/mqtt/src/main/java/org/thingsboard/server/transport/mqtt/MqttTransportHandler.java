@@ -384,6 +384,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             String deviceName = sparkplugTopic.isNode() ? deviceSessionCtx.getDeviceInfo().getDeviceName() : sparkplugTopic.getDeviceId();
             if (sparkplugTopic.isNode()) {
                 // A node topic
+                SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
                 switch (sparkplugTopic.getType()) {
                     case STATE:
                         // TODO
@@ -391,8 +392,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case NBIRTH:
                     case NCMD:
                     case NDATA:
-                        SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
-                        sparkplugSessionHandler.onDeviceTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic.getType().name(), sparkplugTopic.isNode());
+                        sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
                         break;
                     case NDEATH:
                         sparkplugSessionHandler.onDeviceDisconnect(mqttMsg);
@@ -404,15 +404,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             } else {
                 // A device topic
+                SparkplugBProto.Payload sparkplugBProtoDevice = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
                 switch (sparkplugTopic.getType()) {
                     case STATE:
                         // TODO
                         break;
+                    case DBIRTH:
+
+                        sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);
+                        System.out.println();
+                        break;
                     case DCMD:
                     case DDATA:
-                    case DBIRTH:
-                        SparkplugBProto.Payload sparkplugBProtoDevice = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
-                        sparkplugSessionHandler.onDeviceTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic.getType().name(), sparkplugTopic.isNode());
+                        sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);
                         break;
                     case DDEATH:
                         sparkplugSessionHandler.onDeviceDisconnect(mqttMsg);
@@ -1064,8 +1068,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         && connectMessage.payload().willMessageInBytes() != null &&  connectMessage.payload().willMessageInBytes().length > 0) {
                     SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
                     SparkplugTopic sparkplugTopic = parseTopicPublish(connectMessage.payload().willTopic());
-                    sparkplugSessionHandler.onDeviceTelemetryProto(0, sparkplugBProtoNode,
-                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopic.getType().name(), true);
+                    sparkplugSessionHandler.onTelemetryProto(0, sparkplugBProtoNode,
+                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopic);
                 }
             }
         } catch (Exception e) {

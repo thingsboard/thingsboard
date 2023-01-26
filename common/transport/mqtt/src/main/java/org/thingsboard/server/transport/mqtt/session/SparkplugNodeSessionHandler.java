@@ -39,8 +39,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NBIRTH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getFromSparkplugBMetricToKeyValueProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicSubscribe;
 
@@ -67,13 +69,25 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    public void onDeviceTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, String topicTypeName, boolean isNode) throws AdaptorException {
-        try {
-            checkDeviceName(deviceName);
-            List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto, topicTypeName);
-            int finalMsgId = msgId;
-            ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = isNode ?
+    public void onTelemetryProto (int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, SparkplugTopic topic) throws AdaptorException {
+        checkDeviceName(deviceName);
+        ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = topic.isNode() ?
                     Futures.immediateFuture(this.deviceSessionCtx) : checkDeviceConnected(deviceName);
+        List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto, topic.getType().name());
+        if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
+            try {
+                contextListenableFuture.get().setMetricBirth(sparkplugBProto.getMetricsList());
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Failed add Metrics. MessageType *BIRTH.", e);
+            }
+        }
+        onDeviceTelemetryProto(contextListenableFuture, msgId, msgs, deviceName);
+    }
+
+    public void onDeviceTelemetryProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture,
+                                       int msgId, List<TransportProtos.PostTelemetryMsg> msgs, String deviceName) throws AdaptorException {
+        try {
+            int finalMsgId = msgId;
             for (TransportProtos.PostTelemetryMsg msg : msgs) {
                 Futures.addCallback(contextListenableFuture,
                         new FutureCallback<>() {

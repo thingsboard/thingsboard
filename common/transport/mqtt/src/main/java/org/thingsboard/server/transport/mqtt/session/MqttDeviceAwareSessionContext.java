@@ -17,9 +17,12 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionContext {
 
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
+    private final Set<SparkplugBProto.Payload.Metric> metricBirth = new HashSet<>();
 
     public MqttDeviceAwareSessionContext(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(sessionId);
@@ -38,6 +42,14 @@ public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionCo
 
     public ConcurrentMap<MqttTopicMatcher, Integer> getMqttQoSMap() {
         return mqttQoSMap;
+    }
+
+    public Set<SparkplugBProto.Payload.Metric> getMetricBirth() {
+        return metricBirth;
+    }
+
+    public void setMetricBirth(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
+        this.metricBirth.addAll(metrics);
     }
 
     public MqttQoS getQoSForTopic(String topic) {
