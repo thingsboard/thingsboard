@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.transport.mqtt.sparkplug.timeseries;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -37,20 +35,35 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
+import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.BooleanArray;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.DateTimeArray;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.DoubleArray;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.FloatArray;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int16;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int16Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int8;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int8Array;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.StringArray;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt16;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt16Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8Array;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -134,7 +147,6 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     protected void processClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple() throws Exception {
         processClientWithCorrectNodeAccess();
 
-        String deviceName = deviceId + "_" + 10;
         String messageTypeName = SparkplugMessageType.NDATA.name();
         List<String> listKeys = new ArrayList<>();
         List<TsKvEntry> listTsKvEntry = new ArrayList<>();
@@ -144,7 +156,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                 .setSeq(getSeqNum());
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
 
-        createdAddMetricTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
+        createdAddMetricValuePrimitiveTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
 
         if (client.isConnected()) {
             client.publish(NAMESPACE + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
@@ -152,7 +164,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         }
 
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
-        await(alias + SparkplugMessageType.NCMD.name())
+        await(alias + SparkplugMessageType.NDATA.name())
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
@@ -162,8 +174,38 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         Assert.assertTrue("Actual tsKvEntrys is not equal Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
     }
 
-    private void createdAddMetricTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
-                                      SparkplugBProto.Payload.Builder dataPayload, long ts) throws ThingsboardException {
+    protected void processClientWithCorrectAccessTokenPushNodeMetricBuildArraysSimple() throws Exception {
+        processClientWithCorrectNodeAccess();
+
+        String messageTypeName = SparkplugMessageType.NDATA.name();
+        List<String> listKeys = new ArrayList<>();
+        List<TsKvEntry> listTsKvEntry = new ArrayList<>();
+
+        SparkplugBProto.Payload.Builder ndataPayload = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(calendar.getTimeInMillis())
+                .setSeq(getSeqNum());
+        long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+
+        createdAddMetricValueArraysTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
+
+        if (client.isConnected()) {
+            client.publish(NAMESPACE + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
+                    ndataPayload.build().toByteArray(), 0, false);
+        }
+
+        AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
+        await(alias + SparkplugMessageType.NDATA.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
+                    return finalFuture.get().get().size() == listTsKvEntry.size();
+                });
+        Assert.assertTrue("Expected tsKvEntrys is not equal Actual tsKvEntrys", listTsKvEntry.containsAll(finalFuture.get().get()));
+        Assert.assertTrue("Actual tsKvEntrys is not equal Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
+    }
+
+    private void createdAddMetricValuePrimitiveTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
+                                                    SparkplugBProto.Payload.Builder dataPayload, long ts) throws ThingsboardException {
 
         String keys = "MyInt8";
         listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, nextInt8(), ts, Int8));
@@ -206,7 +248,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         listKeys.add(keys);
 
         keys = "MyDateTime";
-        listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, ts, ts, MetricDataType.DateTime));
+        listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, nextDateTime(), ts, MetricDataType.DateTime));
         listKeys.add(keys);
 
         keys = "MyDouble";
@@ -229,6 +271,65 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         listTsKvEntry.add(createdAddMetricTsKvString(dataPayload, keys, nexString(), ts, MetricDataType.UUID));
         listKeys.add(keys);
 
+    }
+
+   private void createdAddMetricValueArraysTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
+                                                SparkplugBProto.Payload.Builder dataPayload, long ts) throws ThingsboardException {
+        String keys = "MyBytesArray";
+        byte[] bytes =  {nextInt8(), nextInt8(), nextInt8()};
+        createdAddMetricTsKvJson(dataPayload, keys, bytes, ts, Bytes, listTsKvEntry, listKeys);
+
+        keys = "MyInt8Array";
+        byte[] int8s =  {nextInt8(), nextInt8(), nextInt8()};
+        createdAddMetricTsKvJson(dataPayload, keys, int8s, ts, Int8Array, listTsKvEntry, listKeys);
+
+        keys = "MyInt16Array";
+        short[] int16s =  {nextInt16(), nextInt16(), nextInt16()};
+        createdAddMetricTsKvJson(dataPayload, keys, int16s, ts, Int16Array, listTsKvEntry, listKeys);
+
+        keys = "MyInt32Array";
+        int[] int32s =  {nextInt32(), nextInt32(), nextInt32()};
+        createdAddMetricTsKvJson(dataPayload, keys, int32s, ts, Int32Array, listTsKvEntry, listKeys);
+
+        keys = "MyInt64Array";
+        long[] int64s =  {nextInt64(), nextInt64(), nextInt64()};
+        createdAddMetricTsKvJson(dataPayload, keys, int64s, ts, Int64Array, listTsKvEntry, listKeys);
+
+        keys = "MyUInt8Array";
+        short[] uInt8s =  {nextUInt16(), nextUInt16(), nextUInt16()};
+        createdAddMetricTsKvJson(dataPayload, keys, uInt8s, ts, UInt8Array, listTsKvEntry, listKeys);
+
+        keys = "MyUInt16Array";
+        int[] uInt16s =  {nextUInt16(), nextUInt16(), nextUInt16()};
+        createdAddMetricTsKvJson(dataPayload, keys, uInt16s, ts, UInt16Array, listTsKvEntry, listKeys);
+
+        keys = "MyUInt32LArray";
+        long[] uInt32Ls =  {nextUInt32L(), nextUInt32L(), nextUInt32L()};
+        createdAddMetricTsKvJson(dataPayload, keys, uInt32Ls, ts, UInt32Array, listTsKvEntry, listKeys);
+
+        keys = "MyUInt64Array";
+        long[] uInt64s =  {nextUInt64(), nextUInt64(), nextUInt64()};
+        createdAddMetricTsKvJson(dataPayload, keys, uInt64s, ts, UInt64Array, listTsKvEntry, listKeys);
+
+        keys = "MyFloatArray";
+        float[] floats =  {nextFloat(0,300), nextFloat(0,4000), nextFloat(10,10000)};
+        createdAddMetricTsKvJson(dataPayload, keys, floats, ts, FloatArray, listTsKvEntry, listKeys);
+
+        keys = "MyDateTimeArray";
+        long[] dateTimes =  {nextDateTime(), nextDateTime(), nextDateTime()};
+        createdAddMetricTsKvJson(dataPayload, keys, dateTimes, ts, DateTimeArray, listTsKvEntry, listKeys);
+
+        keys = "MyDoubleArray";
+        double [] doubles =  {nextDouble(), nextDouble(), nextDouble()};
+        createdAddMetricTsKvJson(dataPayload, keys, doubles, ts, DoubleArray, listTsKvEntry, listKeys);
+
+        keys = "MyBooleanArray";
+        boolean [] booleans =  {nextBoolean(), nextBoolean(), nextBoolean()};
+        createdAddMetricTsKvJson(dataPayload, keys, booleans, ts, BooleanArray, listTsKvEntry, listKeys);
+
+        keys = "MyStringArray";
+        String [] strings =  {nexString(), nexString(), nexString()};
+        createdAddMetricTsKvJson(dataPayload, keys, strings, ts, StringArray, listTsKvEntry, listKeys);
     }
 
     private TsKvEntry createdAddMetricTsKvLong(SparkplugBProto.Payload.Builder dataPayload, String keys, Object value,
@@ -269,11 +370,71 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         return tsKvEntry;
     }
 
-    private TsKvEntry createdAddMetricTsKvJson(SparkplugBProto.Payload.Builder dataPayload, String keys, String value,
-                                               long ts, MetricDataType metricDataType) throws ThingsboardException {
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new JsonDataEntry(keys, value));
-        dataPayload.addMetrics(createMetric(value, tsKvEntry, metricDataType));
-        return tsKvEntry;
+    private void createdAddMetricTsKvJson(SparkplugBProto.Payload.Builder dataPayload, String keys,
+                                                        Object values, long ts, MetricDataType metricDataType,
+                                                         List<TsKvEntry> listTsKvEntry,
+                                                         List<String> listKeys) throws ThingsboardException {
+        ArrayNode nodeArray = newArrayNode();
+        switch (metricDataType) {
+            case Bytes:
+            case Int8Array:
+                for (byte b : (byte[])values) {
+                    nodeArray.add(b);
+                }
+                break;
+            case Int16Array:
+            case UInt8Array:
+                for (short b : (short[])values) {
+                    nodeArray.add(b);
+                }
+                break;
+            case Int32Array:
+            case UInt16Array:
+            case Int64Array:
+            case UInt32Array:
+            case UInt64Array:
+            case DateTimeArray:
+                if (values instanceof int[]) {
+                    for (int b : (int[])values) {
+                        nodeArray.add(b);
+                    }
+                } else {
+                    for (long b : (long[])values) {
+                        nodeArray.add(b);
+                    }
+                }
+                break;
+            case DoubleArray:
+                for (double b : (double[])values) {
+                    nodeArray.add(b);
+                }
+                break;
+            case FloatArray:
+                for (float b : (float[])values) {
+                    nodeArray.add(b);
+                }
+                break;
+            case BooleanArray:
+                for (boolean b : (boolean[])values) {
+                    nodeArray.add(b);
+                }
+                break;
+            case StringArray:
+                for (String b : (String[])values) {
+                    nodeArray.add(b);
+                }
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + metricDataType);
+        }
+        if (nodeArray.size() > 0) {
+            Optional<TsKvEntry> tsKvEntryOptional = Optional.of(new BasicTsKvEntry(ts, new JsonDataEntry(keys, nodeArray.toString())));
+            if (tsKvEntryOptional.isPresent()) {
+                dataPayload.addMetrics(createMetric(values, tsKvEntryOptional.get(), metricDataType));
+                listTsKvEntry.add(tsKvEntryOptional.get());
+                listKeys.add(keys);
+            }
+        }
     }
 
     private byte nextInt8() {
@@ -318,6 +479,12 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         return random.nextDouble(Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
+    private long nextDateTime() {
+        long min = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+        long max = calendar.getTimeInMillis();
+        return random.nextLong(min, max);
+    }
+
     private float nextFloat(float min, float max) {
         if (min >= max)
             throw new IllegalArgumentException("max must be greater than min");
@@ -327,34 +494,12 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         return result;
     }
 
-
     private boolean nextBoolean() {
         return random.nextBoolean();
     }
 
     private String nexString() {
         return java.util.UUID.randomUUID().toString();
-    }
-
-    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys, long start) throws Exception {
-//        long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 3000;
-
-        List<String> actualKeys = null;
-        while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {
-            });
-
-            Map<String, List<JsonNode>> timeseries = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" +
-                    savedGateway.getId().getId() + "/values/timeseries?keys=" + expectedKeys.get(6), new TypeReference<>() {
-            });
-            if (actualKeys.size() == expectedKeys.size()) {
-                break;
-            }
-            Thread.sleep(300);
-            start += 100;
-        }
-        return actualKeys;
     }
 
 }

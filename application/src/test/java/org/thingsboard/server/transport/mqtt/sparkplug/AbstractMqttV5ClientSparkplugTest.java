@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Calendar;
-import java.util.Date;
 
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 
@@ -122,40 +121,40 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 return metric.toBuilder().setBytesValue(byteString).build();
             case Int16Array:
             case UInt8Array:
-                byte[] int16Array = shortToByte_ByteBuffer_Method((short[]) value);
+                byte[] int16Array = shortArrayToByteArray((short[]) value);
                 ByteString byteInt16Array = ByteString.copyFrom((int16Array));
                 return metric.toBuilder().setBytesValue(byteInt16Array).build();
             case Int32Array:
             case UInt16Array:
-                byte[] int32Array = integerToByte_ByteBuffer_Method((int[]) value);
-                ByteString byteInt32Array = ByteString.copyFrom((int32Array));
-                return metric.toBuilder().setBytesValue(byteInt32Array).build();
             case Int64Array:
             case UInt32Array:
-                byte[] int64Array = longToByte_ByteBuffer_Method((long[]) value);
-                ByteString byteInt64Array = ByteString.copyFrom((int64Array));
-                return metric.toBuilder().setBytesValue(byteInt64Array).build();
             case UInt64Array:
+            case DateTimeArray:
+                if (value instanceof int[]) {
+                    byte[] int32Array = integerArrayToByteArray((int[]) value);
+                    ByteString byteInt32Array = ByteString.copyFrom((int32Array));
+                    return metric.toBuilder().setBytesValue(byteInt32Array).build();
+                } else {
+                    byte[] int64Array = longArrayToByteArray((long[]) value);
+                    ByteString byteInt64Array = ByteString.copyFrom((int64Array));
+                    return metric.toBuilder().setBytesValue(byteInt64Array).build();
+                }
             case DoubleArray:
-                byte[] doubleArray = doubleToByte_ByteBuffer_Method((double[]) value);
+                byte[] doubleArray = doublArrayToByteArray((double[]) value);
                 ByteString byteDoubleArray = ByteString.copyFrom(doubleArray);
                 return metric.toBuilder().setBytesValue(byteDoubleArray).build();
             case FloatArray:
-                byte[] floatArray = floatToByte_ByteBuffer_Method((float[]) value);
+                byte[] floatArray = floatArrayToByteArray((float[]) value);
                 ByteString byteFloatArray = ByteString.copyFrom(floatArray);
                 return metric.toBuilder().setBytesValue(byteFloatArray).build();
             case BooleanArray:
-                byte[] booleanArray = booleanToByte_ByteBuffer_Method((boolean[]) value);
+                byte[] booleanArray = booleanArrayToByteArray((boolean[]) value);
                 ByteString byteBooleanArray = ByteString.copyFrom(booleanArray);
                 return metric.toBuilder().setBytesValue(byteBooleanArray).build();
             case StringArray:
-                byte[] stringArray = stringToByte_ByteBuffer_Method((String[]) value);
+                byte[] stringArray = stringArrayToByteArray((String[]) value);
                 ByteString byteStringArray = ByteString.copyFrom(stringArray);
                 return metric.toBuilder().setBytesValue(byteStringArray).build();
-            case DateTimeArray:
-                byte[] dateArray = dateToByte_ByteBuffer_Method((Date[]) value);
-                ByteString byteDateArray = ByteString.copyFrom(dateArray);
-                return metric.toBuilder().setBytesValue(byteDateArray).build();
             case File:
                 SparkplugMetricUtil.File file = (SparkplugMetricUtil.File) value;
                 ByteString byteFileString = ByteString.copyFrom(file.getBytes());
@@ -168,7 +167,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return metric;
     }
 
-    private byte[] shortToByte_ByteBuffer_Method(short[] inputs) {
+    private byte[] shortArrayToByteArray(short[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 2);
         for (short d : inputs) {
             bb.putShort(d);
@@ -176,15 +175,15 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return bb.array();
     }
 
-    private byte[] integerToByte_ByteBuffer_Method(int[] inputs) {
+    private byte[] integerArrayToByteArray(int[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 4);
         for (int d : inputs) {
-            bb.putLong(d);
+            bb.putInt(d);
         }
         return bb.array();
     }
 
-    private byte[] longToByte_ByteBuffer_Method(long[] inputs) {
+    private byte[] longArrayToByteArray(long[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
         for (long d : inputs) {
             bb.putLong(d);
@@ -192,7 +191,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return bb.array();
     }
 
-    private byte[] doubleToByte_ByteBuffer_Method(double[] inputs) {
+    private byte[] doublArrayToByteArray(double[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
         for (double d : inputs) {
             bb.putDouble(d);
@@ -200,7 +199,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return bb.array();
     }
 
-    private byte[] floatToByte_ByteBuffer_Method(float[] inputs) throws ThingsboardException {
+    private byte[] floatArrayToByteArray(float[] inputs) throws ThingsboardException {
         ByteArrayOutputStream bas = new ByteArrayOutputStream();
         DataOutputStream ds = new DataOutputStream(bas);
         for (float f : inputs) {
@@ -213,19 +212,15 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return bas.toByteArray();
     }
 
-    private byte[] booleanToByte_ByteBuffer_Method(boolean[] inputs) {
-        byte[] toReturn = new byte[inputs.length / 8];
+    private byte[] booleanArrayToByteArray(boolean[] inputs) {
+        byte[] toReturn = new byte[inputs.length];
         for (int entry = 0; entry < toReturn.length; entry++) {
-            for (int bit = 0; bit < 8; bit++) {
-                if (inputs[entry * 8 + bit]) {
-                    toReturn[entry] |= (128 >> bit);
-                }
-            }
+            toReturn[entry] = (byte) (inputs[entry]?1:0);
         }
         return toReturn;
     }
 
-    private byte[] stringToByte_ByteBuffer_Method(String[] inputs) throws ThingsboardException {
+    private byte[] stringArrayToByteArray(String[] inputs) throws ThingsboardException {
         final ByteArrayOutputStream bas = new ByteArrayOutputStream();
         try {
             final ObjectOutputStream os = new ObjectOutputStream(bas);
@@ -236,16 +231,6 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             throw new ThingsboardException("Invalid value float ", ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
         return bas.toByteArray();
-    }
-
-    private byte[] dateToByte_ByteBuffer_Method(Date[] inputs) {
-        long[] ll = new long[inputs.length];
-        int i = 0;
-        for (Date date : inputs) {
-            ll[i] = date.getTime();
-            i++;
-        }
-        return longToByte_ByteBuffer_Method(ll);
     }
 
 

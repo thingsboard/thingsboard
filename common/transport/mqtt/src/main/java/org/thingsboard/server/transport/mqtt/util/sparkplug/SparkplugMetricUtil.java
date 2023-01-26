@@ -25,15 +25,19 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.util.Arrays;
 import java.util.Optional;
 
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.BooleanArray;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
 
 /**
  * Provides utility methods for SparkplugB MQTT Payload Metric.
@@ -91,42 +95,85 @@ public class SparkplugMetricUtil {
                 case UUID:
                     return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.STRING_V)
                             .setStringV(protoMetric.getStringValue()).build());
-                case Bytes:
+                // byte[]
                 case BooleanArray:
+                    ByteBuffer booleanByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
+                    while (booleanByteBuffer.hasRemaining()){
+                        nodeArray.add(booleanByteBuffer.get() == (byte) 0 ? false : true);
+                    }
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
+                            .setJsonV(nodeArray.toString()).build());
+                // byte[]
+                case Bytes:
                 case Int8Array:
+                    ByteBuffer byteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
+                    while (byteBuffer.hasRemaining()){
+                        nodeArray.add(byteBuffer.get());
+                    }
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
+                            .setJsonV(nodeArray.toString()).build());
+                // short[]
                 case Int16Array:
-                case Int32Array:
                 case UInt8Array:
+                    ShortBuffer shortByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
+                            .asShortBuffer();
+                    while (shortByteBuffer.hasRemaining()){
+                        nodeArray.add(shortByteBuffer.get());
+                    }
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
+                            .setJsonV(nodeArray.toString()).build());
+                // int[]
+                case Int32Array:
                 case UInt16Array:
+                    IntBuffer intByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
+                            .asIntBuffer();
+                    while (intByteBuffer.hasRemaining()){
+                        nodeArray.add(intByteBuffer.get());
+                    }
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
+                            .setJsonV(nodeArray.toString()).build());
+                // float[]
                 case FloatArray:
+                    FloatBuffer floatByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
+                            .asFloatBuffer();
+                    while (floatByteBuffer.hasRemaining()){
+                        nodeArray.add(floatByteBuffer.get());
+                    }
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
+                            .setJsonV(nodeArray.toString()).build());
+                // double[]
                 case DoubleArray:
+                    DoubleBuffer doubleByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
+                            .asDoubleBuffer();
+                    while (doubleByteBuffer.hasRemaining()){
+                        nodeArray.add(doubleByteBuffer.get());
+                    }
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
+                            .setJsonV(nodeArray.toString()).build());
+                // long[]
                 case DateTimeArray:
                 case Int64Array:
                 case UInt64Array:
                 case UInt32Array:
-                    ByteBuffer byteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
-                    if (!(metricDataType.equals(Bytes) || metricDataType.equals(BooleanArray))) {
-                        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-                    }
-                    while (byteBuffer.hasRemaining()) {
-                        setValueToNodeArray(nodeArray, byteBuffer, metricType);
+                    LongBuffer longByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
+                            .asLongBuffer();
+                    while (longByteBuffer.hasRemaining()){
+                        nodeArray.add(longByteBuffer.get());
                     }
                     return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
                             .setJsonV(nodeArray.toString()).build());
                 case StringArray:
                     ByteBuffer stringByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
-                    stringByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-                    StringBuilder sb = new StringBuilder();
-                    while (stringByteBuffer.hasRemaining()) {
-                        byte b = stringByteBuffer.get();
-                        if (b == (byte) 0) {
-                            nodeArray.add(sb.toString());
-                            sb = new StringBuilder();
-                        } else {
-                            sb.append((char) b);
-                        }
+                    final ByteArrayInputStream byteArrayInputStream =
+                            new ByteArrayInputStream(stringByteBuffer.array());
+                    final ObjectInputStream objectInputStream =
+                            new ObjectInputStream(byteArrayInputStream);
+                    final String[] stringArray = (String[]) objectInputStream.readObject();
+                    objectInputStream.close();
+                    for (String s: stringArray) {
+                        nodeArray.add(s);
                     }
-                    return Optional.of(builderProto.setKey(key)
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
                             .setJsonV(nodeArray.toString()).build());
                 case DataSet:
                 case Template:
@@ -164,35 +211,6 @@ public class SparkplugMetricUtil {
         } catch (Exception e){
             log.error("", e);
             return  Optional.empty();
-        }
-    }
-
-    private static void setValueToNodeArray(ArrayNode nodeArray,  ByteBuffer byteBuffer, int metricType) {
-        switch (MetricDataType.fromInteger(metricType)) {
-            case Bytes:
-                nodeArray.add(byteBuffer.get());
-                break;
-            case BooleanArray:
-                nodeArray.add(byteBuffer.get() == (byte) 0 ? "false" : "true");
-                break;
-            case Int8Array:
-            case Int16Array:
-            case Int32Array:
-            case UInt8Array:
-            case UInt16Array:
-                nodeArray.add(byteBuffer.getInt());
-                break;
-            case FloatArray:
-                nodeArray.add(byteBuffer.getFloat());
-                break;
-            case DoubleArray:
-                nodeArray.add(byteBuffer.getDouble());
-                break;
-            case DateTimeArray:
-            case Int64Array:
-            case UInt64Array:
-            case UInt32Array:
-                nodeArray.add(byteBuffer.getLong());
         }
     }
 
