@@ -20,7 +20,8 @@ import {
   NotificationTemplate,
   NotificationTemplateTypeTranslateMap,
   NotificationType,
-  SlackChanelType
+  SlackChanelType,
+  SlackChanelTypesTranslateMap
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -65,9 +66,11 @@ export class TemplateNotificationDialogComponent
   saveButtonLabel = 'action.save';
 
   notificationTypes = Object.keys(NotificationType) as NotificationType[];
+  slackChanelTypes = Object.keys(SlackChanelType) as SlackChanelType[];
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
+  slackChanelTypesTranslateMap = SlackChanelTypesTranslateMap;
 
   selectedIndex = 0;
 

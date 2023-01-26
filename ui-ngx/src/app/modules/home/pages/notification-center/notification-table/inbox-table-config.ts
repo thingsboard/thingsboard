@@ -32,12 +32,14 @@ import { NotificationService } from '@core/http/notification.service';
 import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
+import { EventEmitter } from '@angular/core';
 
 export class InboxTableConfig extends EntityTableConfig<Notification> {
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private toggleSettings: EventEmitter<void>) {
     super();
     this.entitiesDeleteEnabled = false;
     this.entityTranslations = {
@@ -58,12 +60,20 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
 
     this.headerComponent = InboxTableHeaderComponent;
 
-    this.headerActionDescriptors = [{
-      name: this.translate.instant('notification.mark-all-as-read'),
-      icon: 'done_all',
-      isEnabled: () => true,
-      onAction: $event => this.markAllRead($event)
-    }];
+    this.headerActionDescriptors = [
+      {
+        name: 'Notification setting',
+        icon: 'settings',
+        isEnabled: () => true,
+        onAction: $event => this.togleNotificationSettings($event)
+      },
+      {
+        name: this.translate.instant('notification.mark-all-as-read'),
+        icon: 'done_all',
+        isEnabled: () => true,
+        onAction: $event => this.markAllRead($event)
+      }
+    ];
 
     this.columns.push(
       new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '150px'),
@@ -95,6 +105,13 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
         this.updateData();
       }
     });
+  }
+
+  private togleNotificationSettings($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.toggleSettings.emit();
   }
 
   private markAsRead($event, entity){

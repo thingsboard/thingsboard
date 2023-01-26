@@ -173,10 +173,6 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     }
   }
 
-  reset() {
-    this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
-  }
-
   updateView(value: EntityId | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
@@ -184,8 +180,8 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     }
   }
 
-  displayTemplateFn(queue?: NotificationTemplate): string | undefined {
-    return queue ? queue.name : undefined;
+  displayTemplateFn(template?: NotificationTemplate): string | undefined {
+    return template ? template.name : undefined;
   }
 
   fetchTemplate(searchText?: string): Observable<Array<NotificationTemplate>> {
@@ -200,14 +196,6 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
         return pageData.data;
       })
     );
-  }
-
-  getDescription(value) {
-    return value.additionalInfo?.description ? value.additionalInfo.description :
-      this.translate.instant(
-        'queue.alt-description',
-        {submitStrategy: value.submitStrategy.type, processingStrategy: value.processingStrategy.type}
-      );
   }
 
   clear() {

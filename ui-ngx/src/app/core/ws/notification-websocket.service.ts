@@ -161,7 +161,6 @@ export class NotificationWebsocketService implements NotificationWsService {
   private publishCommands() {
     while (this.isOpened && this.cmdsWrapper.hasCommands()) {
       this.dataStream.next(this.cmdsWrapper.preparePublishCommands());
-      this.cmdsWrapper.clear();
       this.checkToClose();
     }
     this.tryOpenSocket();
