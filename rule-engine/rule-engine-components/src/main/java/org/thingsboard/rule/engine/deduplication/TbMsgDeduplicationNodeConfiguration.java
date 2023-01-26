@@ -22,22 +22,20 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<TbMsgDeduplicationNodeConfiguration> {
 
     private int interval;
-    private DeduplicationId id;
     private DeduplicationStrategy strategy;
-
-    // Advanced settings:
-    private int maxPendingMsgs;
-    private int maxRetries;
 
     // only for DeduplicationStrategy.ALL:
     private String outMsgType;
     private String queueName;
 
+    // Advanced settings:
+    private int maxPendingMsgs;
+    private int maxRetries;
+
     @Override
     public TbMsgDeduplicationNodeConfiguration defaultConfiguration() {
         TbMsgDeduplicationNodeConfiguration configuration = new TbMsgDeduplicationNodeConfiguration();
         configuration.setInterval(60);
-        configuration.setId(DeduplicationId.ORIGINATOR);
         configuration.setStrategy(DeduplicationStrategy.FIRST);
         configuration.setMaxPendingMsgs(100);
         configuration.setMaxRetries(3);

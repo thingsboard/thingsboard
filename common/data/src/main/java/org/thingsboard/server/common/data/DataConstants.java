@@ -118,4 +118,12 @@ public class DataConstants {
     public static final String MSG_SOURCE_KEY = "source";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
+
+    public static final String MAIN_QUEUE_NAME = "Main";
+    public static final String MAIN_QUEUE_TOPIC = "tb_rule_engine.main";
+    public static final String HP_QUEUE_NAME = "HighPriority";
+    public static final String HP_QUEUE_TOPIC = "tb_rule_engine.hp";
+    public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
+    public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
+
 }
