@@ -1062,19 +1062,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void checkSparkplugSession(MqttConnectMessage connectMessage) {
         try {
-            if (sparkplugSessionHandler == null) {
-                sparkplugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId);
-                if (StringUtils.isNotBlank(connectMessage.payload().willTopic())
-                        && connectMessage.payload().willMessageInBytes() != null &&  connectMessage.payload().willMessageInBytes().length > 0) {
+            if (sparkplugSessionHandler == null && validatedSparkplugTopic(connectMessage)) {
                     SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
-                    SparkplugTopic sparkplugTopic = parseTopicPublish(connectMessage.payload().willTopic());
+                    SparkplugTopic sparkplugTopicNode = parseTopicPublish(connectMessage.payload().willTopic());
+                    sparkplugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopicNode);
                     sparkplugSessionHandler.onTelemetryProto(0, sparkplugBProtoNode,
-                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopic);
-                }
+                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopicNode);
             }
         } catch (Exception e) {
             log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);
         }
+    }
+
+    private boolean validatedSparkplugTopic (MqttConnectMessage connectMessage) {
+        return StringUtils.isNotBlank(connectMessage.payload().willTopic())
+                && connectMessage.payload().willMessageInBytes() != null
+                && connectMessage.payload().willMessageInBytes().length > 0;
     }
 
     @Override

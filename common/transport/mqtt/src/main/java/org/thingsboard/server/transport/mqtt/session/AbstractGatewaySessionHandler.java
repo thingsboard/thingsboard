@@ -252,7 +252,7 @@ public abstract class AbstractGatewaySessionHandler {
                         new TransportServiceCallback<>() {
                             @Override
                             public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                                GatewayDeviceSessionContext deviceSessionCtx = new GatewayDeviceSessionContext(AbstractGatewaySessionHandler.this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
+                                AbstractGatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg) ;
                                 if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                     log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
@@ -280,6 +280,11 @@ public abstract class AbstractGatewaySessionHandler {
                 deviceFutures.remove(deviceName);
                 throw e;
             }
+    }
+
+    private AbstractGatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
+        return this.deviceSessionCtx.isSparkplug() ? new SparkplugSessionCtx(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService) :
+         new GatewayDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
     }
 
     protected int getMsgId(MqttPublishMessage mqttMsg) {

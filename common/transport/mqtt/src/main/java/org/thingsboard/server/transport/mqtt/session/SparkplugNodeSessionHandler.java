@@ -52,8 +52,11 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopi
 @Slf4j
 public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
 
-    public SparkplugNodeSessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
+    final SparkplugTopic sparkplugTopicNode;
+
+    public SparkplugNodeSessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, SparkplugTopic sparkplugTopicNode) {
         super(deviceSessionCtx, sessionId);
+        this.sparkplugTopicNode = sparkplugTopicNode;
     }
 
 
