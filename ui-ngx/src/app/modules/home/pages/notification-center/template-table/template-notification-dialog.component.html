@@ -162,22 +162,23 @@
     <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SLACK.enabled').value"
               [stepControl]="slackTemplateForm">
       <ng-template matStepLabel>{{ 'notification.slack-settings' | translate }}</ng-template>
-      <form [formGroup]="slackTemplateForm">
+      <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.message</mat-label>
           <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
         </mat-form-field>
-        <mat-form-field class="mat-block" floatLabel="always">
-          <mat-label>Conversation type</mat-label>
-          <input matInput formControlName="conversationType">
-        </mat-form-field>
-        <mat-form-field class="mat-block" floatLabel="always">
-          <mat-label>Conversation id</mat-label>
-          <input matInput formControlName="conversationId" required>
-          <mat-error *ngIf="slackTemplateForm.get('conversationId').hasError('required')">
-            {{ 'notification.subject-required' | translate }}
-          </mat-error>
-        </mat-form-field>
+        <label>{{ 'Recipient type' | translate }}</label>
+        <mat-radio-group formControlName="conversationType">
+          <mat-radio-button *ngFor="let slackChanelType of slackChanelTypes" [value]="slackChanelType">
+            <div fxLayout="column">
+              <div>{{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}</div>
+            </div>
+          </mat-radio-button>
+        </mat-radio-group>
+        <tb-slack-conversation-autocomplete
+          formControlName="conversationId" required
+          [slackChanelType]="slackTemplateForm.get('conversationType').value">
+        </tb-slack-conversation-autocomplete>
       </form>
     </mat-step>
   </mat-horizontal-stepper>

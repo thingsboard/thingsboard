@@ -173,6 +173,9 @@ import { RateLimitsDetailsDialogComponent } from '@home/components/profile/tenan
 import { AssetProfileComponent } from '@home/components/profile/asset-profile.component';
 import { AssetProfileDialogComponent } from '@home/components/profile/asset-profile-dialog.component';
 import { AssetProfileAutocompleteComponent } from '@home/components/profile/asset-profile-autocomplete.component';
+import {
+  SlackConversationAutocompleteComponent
+} from '@home/components/notification/slack-conversation-autocomplete.component';
 
 @NgModule({
   declarations:
@@ -316,7 +319,8 @@ import { AssetProfileAutocompleteComponent } from '@home/components/profile/asse
       RateLimitsListComponent,
       RateLimitsComponent,
       RateLimitsTextComponent,
-      RateLimitsDetailsDialogComponent
+      RateLimitsDetailsDialogComponent,
+      SlackConversationAutocompleteComponent
     ],
   imports: [
     CommonModule,
@@ -453,7 +457,8 @@ import { AssetProfileAutocompleteComponent } from '@home/components/profile/asse
     RateLimitsListComponent,
     RateLimitsComponent,
     RateLimitsTextComponent,
-    RateLimitsDetailsDialogComponent
+    RateLimitsDetailsDialogComponent,
+    SlackConversationAutocompleteComponent
   ],
   providers: [
     WidgetComponentService,

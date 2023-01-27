@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @import "../../../../../../scss/constants";
+@import "../../../../../../theme";
 
 :host-context(.tb-fullscreen-dialog .mat-dialog-container) {
   width: 720px;
@@ -109,6 +110,10 @@
 
       &:not(:last-child){
         margin-right: 8px;
+      }
+
+      &.mat-radio-checked {
+        border-color: map_get($tb-accent, 500);
       }
     }
   }

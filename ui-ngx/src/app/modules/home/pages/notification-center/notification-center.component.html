@@ -16,47 +16,92 @@
 
 -->
 <div class="tb-notification-center">
-  <div class="tb-notification-center-content">
-    <div class="tabs-container">
-      <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()">
-        <mat-tab label="{{ 'notification.inbox' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.sent' | translate }}" #requestTab="matTab">
-          <tb-notification-table
-            #notificationRequest
-            [notificationType]="entityType.NOTIFICATION_REQUEST">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.templates' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION_TEMPLATE">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.targets' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION_TARGET">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.rules' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION_RULE">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab disabled>
-          <ng-template mat-tab-label>
-            <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
-              <button mat-flat-button color="primary" (click)="sendNotification($event)">
-                <div fxLayout="row" fxLayoutAlign="start center">
-                  <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
-                </div>
-              </button>
-            </div>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
+  <mat-drawer-container class="tb-absolute-fill tb-notification-draw-container">
+    <div class="tb-notification-center-content">
+      <div class="tabs-container">
+        <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()">
+          <mat-tab label="{{ 'notification.inbox' | translate }}">
+            <tb-notification-table
+              [notificationType]="entityType.NOTIFICATION"
+              (toggleSettings)="toggleNotificationSettings()">
+            </tb-notification-table>
+          </mat-tab>
+          <mat-tab label="{{ 'notification.sent' | translate }}" #requestTab="matTab">
+            <tb-notification-table
+              #notificationRequest
+              [notificationType]="entityType.NOTIFICATION_REQUEST">
+            </tb-notification-table>
+          </mat-tab>
+          <mat-tab label="{{ 'notification.templates' | translate }}">
+            <tb-notification-table
+              [notificationType]="entityType.NOTIFICATION_TEMPLATE">
+            </tb-notification-table>
+          </mat-tab>
+          <mat-tab label="{{ 'notification.targets' | translate }}">
+            <tb-notification-table
+              [notificationType]="entityType.NOTIFICATION_TARGET">
+            </tb-notification-table>
+          </mat-tab>
+          <mat-tab label="{{ 'notification.rules' | translate }}">
+            <tb-notification-table
+              [notificationType]="entityType.NOTIFICATION_RULE">
+            </tb-notification-table>
+          </mat-tab>
+          <mat-tab disabled>
+            <ng-template mat-tab-label>
+              <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
+                <button mat-flat-button color="primary" (click)="sendNotification($event)">
+                  <div fxLayout="row" fxLayoutAlign="start center">
+                    <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
+                  </div>
+                </button>
+              </div>
+            </ng-template>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
     </div>
-  </div>
+    <mat-drawer mode="over"
+                #notificationSettings
+                position="end"
+                class="notification-settings">
+      <div>
+        <div fxLayout="row" fxLayoutAlign="start center">
+          <button mat-icon-button (click)="toggleNotificationSettings()">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <h6 class="title">Notification settings</h6>
+        </div>
+        <div style="max-width: 450px">
+          <fieldset class="fields-group">
+            <legend class="group-title">Current user allow delivery method</legend>
+            <form [formGroup]="notificationSettingsForm">
+              <section formGroupName="deliveryMethodsConfigs">
+                <section *ngFor="let deliveryMethods of notificationDeliveryMethods" [formGroupName]="deliveryMethods">
+                  <mat-slide-toggle class="delivery-method" formControlName="enabled">
+                    {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
+                  </mat-slide-toggle>
+                </section>
+                <section formGroupName="SLACK">
+                  <mat-form-field class="mat-block">
+                    <mat-label>Slack bot token</mat-label>
+                    <input matInput formControlName="botToken" required>
+                    <mat-error *ngIf="notificationSettingsForm.get('deliveryMethodsConfigs.SLACK.botToken').hasError('required')">
+                      {{ 'notification.link-required' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+                </section>
+              </section>
+            </form>
+          </fieldset>
+          <button mat-raised-button
+                  [disabled]="notificationSettingsForm.pristine || notificationSettingsForm.invalid"
+                  (click)="saveNotificationSettigs($event)"
+                  color="primary">
+            Save
+          </button>
+        </div>
+      </div>
+    </mat-drawer>
+  </mat-drawer-container>
 </div>

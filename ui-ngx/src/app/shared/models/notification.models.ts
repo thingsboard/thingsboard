@@ -80,12 +80,16 @@ export interface NotificationRequestConfig {
 }
 
 export interface NotificationSettings {
-  deliveryMethodsConfigs: Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig>;
+  deliveryMethodsConfigs: { [key in NotificationDeliveryMethod]: NotificationDeliveryMethodConfig };
 }
 
-export interface NotificationDeliveryMethodConfig {
+export interface NotificationDeliveryMethodConfig extends Partial<SlackNotificationDeliveryMethodConfig>{
   enabled: boolean;
   method: NotificationDeliveryMethod;
+}
+
+interface SlackNotificationDeliveryMethodConfig {
+  botToken: string;
 }
 
 export interface SlackConversation {
@@ -226,6 +230,12 @@ export enum SlackChanelType {
   PUBLIC_CHANNEL = 'PUBLIC_CHANNEL',
   PRIVATE_CHANNEL = 'PRIVATE_CHANNEL'
 }
+
+export const SlackChanelTypesTranslateMap = new Map<SlackChanelType, string>([
+  [SlackChanelType.DIRECT, 'notification.slack-chanel-types.direct'],
+  [SlackChanelType.PUBLIC_CHANNEL, 'notification.slack-chanel-types.public-channel'],
+  [SlackChanelType.PRIVATE_CHANNEL, 'notification.slack-chanel-types.private-channel']
+]);
 
 export enum NotificationTargetConfigType {
   USER_LIST = 'USER_LIST',

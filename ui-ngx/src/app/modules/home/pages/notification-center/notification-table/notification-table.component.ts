@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { NotificationService } from '@core/http/notification.service';
 import { TargetsTableConfig } from '@home/pages/notification-center/notification-table/targets-table-config';
@@ -36,6 +36,9 @@ export class NotificationTableComponent implements OnInit {
 
   @Input()
   notificationType = EntityType.NOTIFICATION;
+
+  @Output()
+  toggleSettings: EventEmitter<void> = new EventEmitter<void>();
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
@@ -71,7 +74,8 @@ export class NotificationTableComponent implements OnInit {
         return new InboxTableConfig(
           this.notificationService,
           this.translate,
-          this.datePipe
+          this.datePipe,
+          this.toggleSettings
         );
       case EntityType.NOTIFICATION_TEMPLATE:
         return new TemplateTableConfig(
