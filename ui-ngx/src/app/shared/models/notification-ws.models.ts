@@ -236,14 +236,13 @@ export class NotificationPluginCmdsWrapper {
   unsubCmd: UnsubscribeCmd;
   markAsReadCmd: MarkAsReadCmd;
   markAllAsReadCmd: MarkAllAsReadCmd;
-  #hasSend = false;
 
   public hasCommands(): boolean {
-    return !this.#hasSend && (isDefinedAndNotNull(this.unreadCountSubCmd) ||
+    return isDefinedAndNotNull(this.unreadCountSubCmd) ||
       isDefinedAndNotNull(this.unreadSubCmd) ||
       isDefinedAndNotNull(this.unsubCmd) ||
       isDefinedAndNotNull(this.markAsReadCmd) ||
-      isDefinedAndNotNull(this.markAllAsReadCmd));
+      isDefinedAndNotNull(this.markAllAsReadCmd);
   }
 
   public clear() {
@@ -252,7 +251,6 @@ export class NotificationPluginCmdsWrapper {
     this.unsubCmd = null;
     this.markAsReadCmd = null;
     this.markAllAsReadCmd = null;
-    this.#hasSend = false;
   }
 
   public preparePublishCommands(): NotificationPluginCmdsWrapper {
@@ -262,7 +260,6 @@ export class NotificationPluginCmdsWrapper {
     preparedWrapper.unsubCmd = this.unsubCmd || undefined;
     preparedWrapper.markAsReadCmd = this.markAsReadCmd || undefined;
     preparedWrapper.markAllAsReadCmd = this.markAllAsReadCmd || undefined;
-    this.#hasSend = true;
     return preparedWrapper;
   }
 }
