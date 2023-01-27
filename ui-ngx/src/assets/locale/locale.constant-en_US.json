@@ -1952,7 +1952,14 @@
         "list-of-edges": "{ count, plural, 1 {One edge} other {List of # edges} }",
         "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
         "type-tb-resource": "Resource",
-        "type-ota-package": "OTA package"
+        "type-ota-package": "OTA package",
+        "type-rpc": "RPC",
+        "type-queue": "Queue",
+        "type-notification": "Notification",
+        "type-notification-rule": "Notification rule",
+        "type-notification-target": "Notification recipient",
+        "type-notification-request": "Notification request",
+        "type-notification-template": "Notification template"
     },
     "entity-field": {
         "created-time": "Created time",
@@ -2768,11 +2775,34 @@
         "type": "Type",
         "unread": "Unread",
         "view-all": "View all",
-        "web-settings": "Web settings"
+        "web-settings": "Web settings",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
         "template-name": "Template name",
-        "hierarchy-of-receiving": "Hierarchy of receiving notifications"
+        "hierarchy-of-receiving": "Hierarchy of receiving notifications",
+        "trigger": {
+            "trigger": "Trigger",
+            "trigger-required": "Trigger is required",
+            "alarm": "Alarm",
+            "device-inactivity": "Device inactivity",
+            "entity-action": "Entity action"
+        },
+        "trigger-settings": "Trigger settings",
+        "filter": "Filter",
+        "clear-rule": "Clear rule",
+        "no-severity-matching": "'{{severity}}' not found.",
+        "no-severity-found": "No severity found",
+        "first-recipient": "First recipient",
+        "notify": "notify",
+        "no-rule": "No rule configured",
+        "device": "Device",
+        "device-profile": "Device profile",
+        "filter-by": "Filter by",
+        "entity-type": "Entity type",
+        "created": "Created",
+        "updated": "Updated",
+        "deleted": "Deleted",
+        "type-settings": "Type settings"
     },
     "ota-update": {
       "add": "Add package",

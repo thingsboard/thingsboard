@@ -13,8 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../../theme";
 
 :host {
+  ::ng-deep{
+    width: 100%;
+    min-width: 800px !important;
+    max-width: 100%;
+
+    .mat-button-toggle-group.tb-notification-unread-toggle-group {
+      &.mat-button-toggle-group-appearance-standard {
+        border: none;
+        border-radius: 14px;
+
+        .mat-button-toggle + .mat-button-toggle {
+          border-left: none;
+        }
+      }
+
+      .mat-button-toggle {
+        background: rgba(0, 0, 0, 0.06);
+        height: 28px;
+        align-items: center;
+        display: flex;
+
+        .mat-button-toggle-ripple {
+          top: 2px;
+          left: 2px;
+          right: 2px;
+          bottom: 2px;
+          border-radius: 12px;
+        }
+      }
+
+      .mat-button-toggle-button {
+        color: #959595;
+      }
+
+      .mat-button-toggle-focus-overlay {
+        border-radius: 14px;
+        margin: 2px;
+      }
+
+      .mat-button-toggle-checked .mat-button-toggle-button {
+        background-color: $tb-primary-color;
+        color: #fff;
+        border-radius: 14px;
+        margin-left: 2px;
+        margin-right: 2px;
+      }
+
+      .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+        line-height: 24px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
+        opacity: .01;
+      }
+    }
+  }
   .fields-group {
     padding: 0 16px 8px;
     margin-bottom: 10px;

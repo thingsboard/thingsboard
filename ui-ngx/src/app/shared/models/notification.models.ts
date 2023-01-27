@@ -262,3 +262,15 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       hint: 'hint'
     }]
 ]);
+
+export enum TriggerType {
+  ALARM = 'ALARM',
+  DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
+  ENTITY_ACTION = 'ENTITY_ACTION'
+}
+
+export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
+  [TriggerType.ALARM, 'notification.trigger.alarm'],
+  [TriggerType.DEVICE_INACTIVITY, 'notification.trigger.device-inactivity'],
+  [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action']
+]);

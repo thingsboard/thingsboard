@@ -20,7 +20,7 @@
                            style="width: 180px;"
                            [ngModel]="entitiesTableConfig.componentsData.unreadOnly"
                            (ngModelChange)="changeUnreadOnly($event)">
-    <mat-button-toggle fxFlex [value]=true>Unread</mat-button-toggle>
+    <mat-button-toggle fxFlex [value]=true>{{ 'notification.unread' | translate }}</mat-button-toggle>
     <mat-button-toggle fxFlex [value]=false>{{ 'notification.all' | translate }}</mat-button-toggle>
   </mat-button-toggle-group>
 
