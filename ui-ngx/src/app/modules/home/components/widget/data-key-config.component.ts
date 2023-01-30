@@ -19,7 +19,8 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  ComparisonResultType, comparisonResultTypeTranslationMap,
+  ComparisonResultType,
+  comparisonResultTypeTranslationMap,
   DataKey,
   dataKeyAggregationTypeHintTranslationMap,
   Widget,
@@ -50,6 +51,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { aggregationTranslations, AggregationType, ComparisonDuration } from '@shared/models/time/time.models';
+import { genNextLabel } from '@core/utils';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -201,7 +203,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
           let newLabel = this.dataKeyFormGroup.get('name').value;
           if (aggType !== AggregationType.NONE) {
             const prefix = this.translate.instant(aggregationTranslations.get(aggType));
-            newLabel = this.genNextLabelWithAggregation(prefix + ' ' + newLabel);
+            newLabel = genNextLabel(prefix + ' ' + newLabel, this.widget.config.datasources);
           }
           this.dataKeyFormGroup.get('label').patchValue(newLabel);
         }
@@ -239,30 +241,6 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         map(value => value ? value : ''),
         mergeMap(name => this.fetchKeys(name) )
       );
-  }
-
-  private genNextLabelWithAggregation(name: string): string {
-    let label = name;
-    let i = 1;
-    let matches = false;
-    const datasources = this.widget.config.datasources;
-    if (datasources) {
-      do {
-        matches = false;
-        datasources.forEach((datasource) => {
-          if (datasource && datasource?.dataKeys) {
-            datasource.dataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
-                i++;
-                label = name + ' ' + i;
-                matches = true;
-              }
-            });
-          }
-        });
-      } while (matches);
-    }
-    return label;
   }
 
   registerOnChange(fn: any): void {
