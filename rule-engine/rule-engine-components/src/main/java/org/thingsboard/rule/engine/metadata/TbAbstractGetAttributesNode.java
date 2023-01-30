@@ -110,9 +110,6 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 getAttrAsync(ctx, entityId, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresMap)
         );
         withCallback(allFutures, futuresList -> {
-            if (!failuresMap.isEmpty()) {
-                throw reportFailures(failuresMap);
-            }
             TbMsgMetaData msgMetaData = msg.getMetaData().copy();
             futuresList.stream().filter(Objects::nonNull).forEach(kvEntriesMap -> {
                 kvEntriesMap.forEach((keyScope, kvEntryList) -> {
@@ -127,10 +124,13 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                     });
                 });
             });
-            if (fetchToData) {
-                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msgMetaData, JacksonUtil.toString(msgDataNode)));
+            TbMsg outMsg = fetchToData ?
+                    TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode)) :
+                    TbMsg.transformMsg(msg, msgMetaData);
+            if (failuresMap.isEmpty()) {
+                ctx.tellSuccess(outMsg);
             } else {
-                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msgMetaData, msg.getData()));
+                ctx.tellFailure(outMsg, reportFailures(failuresMap));
             }
         }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
