@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueClusterService;
 
+import java.util.Set;
 import java.util.UUID;
 
 public interface TbClusterService extends TbQueueClusterService {
@@ -57,6 +58,8 @@ public interface TbClusterService extends TbQueueClusterService {
     void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, ToRuleEngineMsg msg, TbQueueCallback callback);
 
     void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback);
+
+    void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Set<String> relations, TbQueueCallback callback);
 
     void pushNotificationToRuleEngine(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
 

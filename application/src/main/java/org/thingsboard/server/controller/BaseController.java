@@ -55,6 +55,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -65,6 +66,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -98,6 +100,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -199,6 +202,9 @@ public abstract class BaseController {
 
     @Autowired
     protected AlarmSubscriptionService alarmService;
+
+    @Autowired
+    protected AlarmRuleService alarmRuleService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;
@@ -534,6 +540,9 @@ public abstract class BaseController {
                 case ALARM:
                     checkAlarmId(new AlarmId(entityId.getId()), operation);
                     return;
+                case ALARM_RULE:
+
+                    return;
                 case DEVICE:
                     checkDeviceId(new DeviceId(entityId.getId()), operation);
                     return;
@@ -711,6 +720,18 @@ public abstract class BaseController {
             checkNotNull(alarmInfo, "Alarm with id [" + alarmId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, operation, alarmId, alarmInfo);
             return alarmInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    AlarmRule checkAlarmRuleId(AlarmRuleId alarmRuleId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(alarmRuleId, "Incorrect alarmRuleId " + alarmRuleId);
+            AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(getCurrentUser().getTenantId(), alarmRuleId);
+            checkNotNull(alarmRule, "AlarmRule with id [" + alarmRuleId + "] is not found");
+            accessControlService.checkPermission(getCurrentUser(), Resource.ALARM_RULE, operation, alarmRuleId, alarmRule);
+            return alarmRule;
         } catch (Exception e) {
             throw handleException(e, false);
         }

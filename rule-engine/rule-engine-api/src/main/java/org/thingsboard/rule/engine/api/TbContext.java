@@ -329,4 +329,6 @@ public interface TbContext {
     WidgetTypeService getWidgetTypeService();
 
     RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
+
+    TbAlarmRuleStateService getAlarmRuleStateService();
 }

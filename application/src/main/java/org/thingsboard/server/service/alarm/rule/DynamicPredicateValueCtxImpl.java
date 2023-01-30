@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,12 +33,12 @@ import java.util.concurrent.ExecutionException;
 public class DynamicPredicateValueCtxImpl implements DynamicPredicateValueCtx {
     private final TenantId tenantId;
     private CustomerId customerId;
-    private final DeviceId deviceId;
-    private final TbContext ctx;
+    private final EntityId entityId;
+    private final TbAlarmRuleContext ctx;
 
-    public DynamicPredicateValueCtxImpl(TenantId tenantId, DeviceId deviceId, TbContext ctx) {
+    public DynamicPredicateValueCtxImpl(TenantId tenantId, EntityId entityId, TbAlarmRuleContext ctx) {
         this.tenantId = tenantId;
-        this.deviceId = deviceId;
+        this.entityId = entityId;
         this.ctx = ctx;
         resetCustomer();
     }
@@ -54,9 +55,15 @@ public class DynamicPredicateValueCtxImpl implements DynamicPredicateValueCtx {
 
     @Override
     public void resetCustomer() {
-        Device device = ctx.getDeviceService().findDeviceById(tenantId, deviceId);
-        if (device != null) {
-            this.customerId = device.getCustomerId();
+        HasCustomerId customerEntity;
+        if (entityId.getEntityType() == EntityType.DEVICE) {
+            customerEntity = ctx.getDeviceService().findDeviceById(tenantId, (DeviceId) entityId);
+        } else {
+            customerEntity = ctx.getAssetService().findAssetById(tenantId, (AssetId) entityId);
+        }
+
+        if (customerEntity != null) {
+            this.customerId = customerEntity.getCustomerId();
         }
     }
 
@@ -64,7 +71,7 @@ public class DynamicPredicateValueCtxImpl implements DynamicPredicateValueCtx {
         try {
             Optional<AttributeKvEntry> entry = ctx.getAttributesService().find(tenantId, entityId, DataConstants.SERVER_SCOPE, key).get();
             if (entry.isPresent()) {
-                return DeviceState.toEntityValue(entry.get());
+                return EntityState.toEntityValue(entry.get());
             }
         } catch (InterruptedException | ExecutionException e) {
             log.warn("Failed to get attribute by key: {} for {}: [{}]", key, entityId.getEntityType(), entityId.getId());

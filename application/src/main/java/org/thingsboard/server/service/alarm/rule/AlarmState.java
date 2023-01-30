@@ -13,34 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
-import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
+import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -51,29 +57,39 @@ import java.util.function.BiFunction;
 class AlarmState {
 
     public static final String ERROR_MSG = "Failed to process alarm rule for Device [%s]: %s";
-    private final ProfileState deviceProfile;
+    private final EntityRulesState entityRulesState;
+    private final TenantId tenantId;
     private final EntityId originator;
-    private AlarmRuleConfiguration alarmDefinition;
+    private AlarmRule alarmDefinition;
     private volatile List<AlarmRuleState> createRulesSortedBySeverityDesc;
     private volatile AlarmRuleState clearState;
     private volatile Alarm currentAlarm;
     private volatile boolean initialFetchDone;
     private volatile TbMsgMetaData lastMsgMetaData;
     private volatile String lastMsgQueueName;
+    private volatile RuleChainId lastRuleChainId;
+    private volatile RuleNodeId lastRuleNodeId;
+    private volatile boolean isLastRuleNodeDebugMode;
     private volatile DataSnapshot dataSnapshot;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmState(ProfileState deviceProfile, EntityId originator, AlarmRuleConfiguration alarmDefinition, PersistedAlarmState alarmState, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
-        this.deviceProfile = deviceProfile;
+    AlarmState(EntityRulesState entityRulesState, TenantId tenantId, EntityId originator, AlarmRule alarmDefinition,
+               PersistedAlarmState alarmState, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
+        this.entityRulesState = entityRulesState;
+        this.tenantId = tenantId;
         this.originator = originator;
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
         this.updateState(alarmDefinition, alarmState);
     }
 
-    public boolean process(TbContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
+    //TODO: maybe need to synchronize it because we can use more then 1 nodes
+    public boolean process(TbContext tbContext, TbAlarmRuleContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
+        lastRuleChainId = tbContext.getSelf().getRuleChainId();
+        lastRuleNodeId = tbContext.getSelf().getId();
+        isLastRuleNodeDebugMode = tbContext.getSelf().isDebugMode();
         this.dataSnapshot = data;
         try {
             return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
@@ -82,7 +98,7 @@ class AlarmState {
         }
     }
 
-    public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
+    public boolean process(TbAlarmRuleContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         try {
             return createOrClearAlarms(ctx, null, ts, null, (alarmState, tsParam) -> alarmState.eval(tsParam, dataSnapshot));
@@ -91,7 +107,7 @@ class AlarmState {
         }
     }
 
-    public <T> boolean createOrClearAlarms(TbContext ctx, TbMsg msg, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
+    public <T> boolean createOrClearAlarms(TbAlarmRuleContext ctx, TbMsg msg, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
         boolean stateUpdate = false;
         AlarmRuleState resultState = null;
         log.debug("[{}] processing update: {}", alarmDefinition.getId(), data);
@@ -110,7 +126,7 @@ class AlarmState {
             }
         }
         if (resultState != null) {
-            TbAlarmResult result = calculateAlarmResult(ctx, resultState);
+            TbAlarmResult result = calculateAlarmResult(tenantId, ctx, resultState);
             if (result != null) {
                 pushMsg(ctx, msg, result, resultState);
             }
@@ -127,7 +143,7 @@ class AlarmState {
                     stateUpdate = clearAlarmState(stateUpdate, state);
                 }
                 ListenableFuture<AlarmOperationResult> alarmClearOperationResult = ctx.getAlarmService().clearAlarmForResult(
-                        ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
+                        tenantId, currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
                 );
                 DonAsynchron.withCallback(alarmClearOperationResult,
                         result -> {
@@ -164,9 +180,9 @@ class AlarmState {
         return true;
     }
 
-    public void initCurrentAlarm(TbContext ctx) throws InterruptedException, ExecutionException {
+    public void initCurrentAlarm(TbAlarmRuleContext ctx) throws InterruptedException, ExecutionException {
         if (!initialFetchDone) {
-            Alarm alarm = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), originator, alarmDefinition.getAlarmType()).get();
+            Alarm alarm = ctx.getAlarmService().findLatestByOriginatorAndType(tenantId, originator, alarmDefinition.getAlarmType()).get();
             if (alarm != null && !alarm.getStatus().isCleared()) {
                 currentAlarm = alarm;
             }
@@ -174,7 +190,7 @@ class AlarmState {
         }
     }
 
-    public void pushMsg(TbContext ctx, TbMsg msg, TbAlarmResult alarmResult, AlarmRuleState ruleState) {
+    public void pushMsg(TbAlarmRuleContext ctx, TbMsg msg, TbAlarmResult alarmResult, AlarmRuleState ruleState) {
         JsonNode jsonNodes = JacksonUtil.valueToTree(alarmResult.getAlarm());
         String data = jsonNodes.toString();
         TbMsgMetaData metaData = lastMsgMetaData != null ? lastMsgMetaData.copy() : new TbMsgMetaData();
@@ -194,9 +210,25 @@ class AlarmState {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         setAlarmConditionMetadata(ruleState, metaData);
-        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : null, "ALARM",
-                originator, msg != null ? msg.getCustomerId() : null, metaData, data);
-        ctx.enqueueForTellNext(newMsg, relationType);
+
+        TbMsg newMsg = TbMsg.newMsg(lastMsgQueueName, "ALARM", originator, msg != null ? msg.getCustomerId() : null, metaData, data, lastRuleChainId, lastRuleNodeId);
+
+        if (isLastRuleNodeDebugMode) {
+            ctx.getActorSystemContext().persistDebugOutput(tenantId, lastRuleNodeId, newMsg, relationType);
+        }
+
+        ctx.getClusterService().pushMsgToRuleEngine(tenantId, originator, newMsg, Collections.singleton(relationType), new TbQueueCallback() {
+
+            @Override
+            public void onSuccess(TbQueueMsgMetadata metadata) {
+                log.debug("[{}] Successfully send Alarm result to rule engine [{}]", tenantId, originator);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}][{}] Failed to push Alarm result [{}].", tenantId, originator, alarmResult, t);
+            }
+        });
     }
 
     protected void setAlarmConditionMetadata(AlarmRuleState ruleState, TbMsgMetaData metaData) {
@@ -208,12 +240,16 @@ class AlarmState {
         }
     }
 
-    public void updateState(AlarmRuleConfiguration alarm, PersistedAlarmState alarmState) {
+    public void updateState(AlarmRule alarm, PersistedAlarmState alarmState) {
         this.alarmDefinition = alarm;
         this.createRulesSortedBySeverityDesc = new ArrayList<>();
-        alarmDefinition.getCreateRules().forEach((severity, rule) -> {
+        alarmDefinition.getConfiguration().getCreateRules().forEach((severity, rule) -> {
             PersistedAlarmRuleState ruleState = null;
             if (alarmState != null) {
+                alarmState.setLastMsgQueueName(lastMsgQueueName);
+                alarmState.setLastRuleChainId(lastRuleChainId);
+                alarmState.setLastRuleNodeId(lastRuleNodeId);
+                alarmState.setLastRuleNodeDebugMode(isLastRuleNodeDebugMode);
                 ruleState = alarmState.getCreateRuleStates().get(severity);
                 if (ruleState == null) {
                     ruleState = new PersistedAlarmRuleState();
@@ -221,16 +257,16 @@ class AlarmState {
                 }
             }
             createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule,
-                    deviceProfile.getCreateAlarmKeys(alarm.getId(), severity), ruleState, dynamicPredicateValueCtx));
+                    entityRulesState.getCreateAlarmKeys(alarm.getId(), severity), ruleState, dynamicPredicateValueCtx));
         });
         createRulesSortedBySeverityDesc.sort(Comparator.comparingInt(state -> state.getSeverity().ordinal()));
         PersistedAlarmRuleState ruleState = alarmState == null ? null : alarmState.getClearRuleState();
-        if (alarmDefinition.getClearRule() != null) {
-            clearState = new AlarmRuleState(null, alarmDefinition.getClearRule(), deviceProfile.getClearAlarmKeys(alarm.getId()), ruleState, dynamicPredicateValueCtx);
+        if (alarmDefinition.getConfiguration().getClearRule() != null) {
+            clearState = new AlarmRuleState(null, alarmDefinition.getConfiguration().getClearRule(), entityRulesState.getClearAlarmKeys(alarm.getId()), ruleState, dynamicPredicateValueCtx);
         }
     }
 
-    private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmRuleState ruleState) {
+    private TbAlarmResult calculateAlarmResult(TenantId tenantId, TbAlarmRuleContext ctx, AlarmRuleState ruleState) {
         AlarmSeverity severity = ruleState.getSeverity();
         if (currentAlarm != null) {
             // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
@@ -264,12 +300,12 @@ class AlarmState {
             currentAlarm.setEndTs(currentAlarm.getStartTs());
             currentAlarm.setDetails(createDetails(ruleState));
             currentAlarm.setOriginator(originator);
-            currentAlarm.setTenantId(ctx.getTenantId());
-            currentAlarm.setPropagate(alarmDefinition.isPropagate());
-            currentAlarm.setPropagateToOwner(alarmDefinition.isPropagateToOwner());
-            currentAlarm.setPropagateToTenant(alarmDefinition.isPropagateToTenant());
-            if (alarmDefinition.getPropagateRelationTypes() != null) {
-                currentAlarm.setPropagateRelationTypes(alarmDefinition.getPropagateRelationTypes());
+            currentAlarm.setTenantId(tenantId);
+            currentAlarm.setPropagate(alarmDefinition.getConfiguration().isPropagate());
+            currentAlarm.setPropagateToOwner(alarmDefinition.getConfiguration().isPropagateToOwner());
+            currentAlarm.setPropagateToTenant(alarmDefinition.getConfiguration().isPropagateToTenant());
+            if (alarmDefinition.getConfiguration().getPropagateRelationTypes() != null) {
+                currentAlarm.setPropagateRelationTypes(alarmDefinition.getConfiguration().getPropagateRelationTypes());
             }
             currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
             boolean updated = currentAlarm.getStartTs() != currentAlarm.getEndTs();
@@ -328,7 +364,7 @@ class AlarmState {
         return String.valueOf(result);
     }
 
-    public boolean processAlarmClear(TbContext ctx, Alarm alarmNf) {
+    public boolean processAlarmClear(Alarm alarmNf) {
         boolean updated = false;
         if (currentAlarm != null && currentAlarm.getId().equals(alarmNf.getId())) {
             currentAlarm = null;

@@ -152,6 +152,11 @@ public class ControllerConstants {
     protected static final String VERSION_ID_PARAM_DESCRIPTION = "Version id, for example fd82625bdd7d6131cf8027b44ee967012ecaf990. Represents commit hash.";
     protected static final String BRANCH_PARAM_DESCRIPTION = "The name of the working branch, for example 'master'";
 
+    protected static final String ALARM_RULE_ID = "alarmRuleId";
+    protected static final String ALARM_RULE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the alarm rule name.";
+    protected static final String ALARM_RULE_ID_PARAM_DESCRIPTION = "A string value representing the alarm rule id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String ALARM_RULE_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, alarmType";
+
     protected static final String MARKDOWN_CODE_BLOCK_START = "```json\n";
     protected static final String MARKDOWN_CODE_BLOCK_END = "\n```";
     protected static final String EVENT_ERROR_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START +

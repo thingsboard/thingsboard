@@ -19,41 +19,39 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class AlarmRuleInfo extends SearchTextBased<AlarmRuleId> implements HasName, HasTenantId, HasCustomerId {
+public class AlarmRuleInfo extends SearchTextBased<AlarmRuleId> implements HasName, HasTenantId {
 
     private static final long serialVersionUID = -8353967477463356805L;
 
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private CustomerId customerId;
-
     @NoXss
-    @ApiModelProperty(position = 5, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private String alarmType;
-
-    @NoXss
-    @ApiModelProperty(position = 6, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Length(fieldName = "name")
+    @ApiModelProperty(position = 4, value = "Unique Alarm Rule Name in scope of Tenant", example = "High Temperature Alarm Rule")
     private String name;
 
-    @ApiModelProperty(position = 7, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @NoXss
+    @Length(fieldName = "alarm type")
+    @ApiModelProperty(position = 5, value = "String value representing type of the alarm", example = "High Temperature Alarm")
+    private String alarmType;
+
+    @ApiModelProperty(position = 6, value = "Boolean value representing is alarm rule enabled")
     private boolean enabled;
 
     @NoXss
-    @ApiModelProperty(position = 8, value = "Alarm rule description. ")
+    @ApiModelProperty(position = 7, value = "Alarm rule description. ")
     private String description;
 
     public AlarmRuleInfo() {
@@ -68,7 +66,6 @@ public class AlarmRuleInfo extends SearchTextBased<AlarmRuleId> implements HasNa
         super(alarmRuleInfo.getId());
         this.createdTime = alarmRuleInfo.getCreatedTime();
         this.tenantId = alarmRuleInfo.getTenantId();
-        this.customerId = alarmRuleInfo.getCustomerId();
         this.alarmType = alarmRuleInfo.getAlarmType();
         this.name = alarmRuleInfo.getName();
         this.enabled = alarmRuleInfo.isEnabled();

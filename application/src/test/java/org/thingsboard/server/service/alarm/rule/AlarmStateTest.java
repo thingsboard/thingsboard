@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
@@ -82,6 +83,8 @@ public class AlarmStateTest {
     }
 
     private AlarmState createMockAlarmState() {
-        return new AlarmState(null, null, mock(AlarmRuleConfiguration.class), null, null);
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setConfiguration(mock(AlarmRuleConfiguration.class));
+        return new AlarmState(null, null, null, alarmRule, null, null);
     }
 }

@@ -13,10 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule.state;
 
-public enum AlarmEvalResult {
+import lombok.Data;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 
-    FALSE, NOT_YET_TRUE, TRUE;
+import java.util.Map;
+
+@Data
+public class PersistedAlarmState {
+
+    private String lastMsgQueueName;
+    private RuleChainId lastRuleChainId;
+    private RuleNodeId lastRuleNodeId;
+    private boolean isLastRuleNodeDebugMode;
+    private Map<AlarmSeverity, PersistedAlarmRuleState> createRuleStates;
+    private PersistedAlarmRuleState clearRuleState;
 
 }

@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.alarm.rule;
+package org.thingsboard.server.common.data.alarm.rule;
 
-import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.UUID;
+@Data
+public class AlarmRuleOriginatorTargetEntity implements AlarmRuleTargetEntity {
 
-public interface AlarmRuleDao extends Dao<AlarmRule> {
+    private static final long serialVersionUID = -2174020331194800349L;
 
-    PageData<AlarmRuleInfo> findAlarmRuleInfosByTenantId(UUID tenantId, PageLink pageLink);
+    @Override
+    public AlarmRuleTargetEntityType getType() {
+        return AlarmRuleTargetEntityType.ORIGINATOR;
+    }
 
-    PageData<AlarmRule> findAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
-
+    @Override
+    public EntityId getTargetEntity(EntityId entityId) {
+        return entityId;
+    }
 }

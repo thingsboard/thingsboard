@@ -29,7 +29,7 @@ public class AlarmRule extends AlarmRuleInfo {
 
     private static final long serialVersionUID = -8491640876881610526L;
 
-    @ApiModelProperty(position = 8, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 8, value = "JSON object with Alarm Rule Configuration")
     private AlarmRuleConfiguration configuration;
 
     public AlarmRule() {

@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile.state;
+package org.thingsboard.server.service.alarm.rule;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-
-import java.util.Map;
-
-@Data
-public class PersistedAlarmState {
-
-    private Map<AlarmSeverity, PersistedAlarmRuleState> createRuleStates;
-    private PersistedAlarmRuleState clearRuleState;
-
+public class NumericParseException extends RuntimeException {
+    public NumericParseException(String message) {
+        super(message);
+    }
 }

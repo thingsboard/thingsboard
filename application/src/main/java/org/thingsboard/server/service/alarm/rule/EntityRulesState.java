@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -42,57 +42,62 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
-class ProfileState {
+class EntityRulesState {
 
-    private DeviceProfile deviceProfile;
     @Getter(AccessLevel.PACKAGE)
-    private final List<AlarmRuleConfiguration> alarmSettings = new CopyOnWriteArrayList<>();
+    private final Map<AlarmRuleId, AlarmRule> alarmRules = new ConcurrentHashMap<>();
     @Getter(AccessLevel.PACKAGE)
     private final Set<AlarmConditionFilterKey> entityKeys = ConcurrentHashMap.newKeySet();
 
-    private final Map<String, Map<AlarmSeverity, Set<AlarmConditionFilterKey>>> alarmCreateKeys = new HashMap<>();
-    private final Map<String, Set<AlarmConditionFilterKey>> alarmClearKeys = new HashMap<>();
+    private final Map<AlarmRuleId, Map<AlarmSeverity, Set<AlarmConditionFilterKey>>> alarmCreateKeys = new HashMap<>();
+    private final Map<AlarmRuleId, Set<AlarmConditionFilterKey>> alarmClearKeys = new HashMap<>();
 
-    ProfileState(DeviceProfile deviceProfile) {
-        updateDeviceProfile(deviceProfile);
+    EntityRulesState(AlarmRule alarmRule) {
+        addAlarmRule(alarmRule);
     }
 
-    void updateDeviceProfile(DeviceProfile deviceProfile) {
-        this.deviceProfile = deviceProfile;
-        alarmSettings.clear();
+    void addAlarmRule(AlarmRule alarmRule) {
+        alarmRules.computeIfAbsent(alarmRule.getId(), key -> {
+            addAlarmRuleKeys(alarmRule);
+            return alarmRule;
+        });
+    }
+
+    void updateAlarmRule(AlarmRule alarmRule) {
+        alarmRules.put(alarmRule.getId(), alarmRule);
         alarmCreateKeys.clear();
         alarmClearKeys.clear();
         entityKeys.clear();
-        if (deviceProfile.getProfileData().getAlarms() != null) {
-            alarmSettings.addAll(deviceProfile.getProfileData().getAlarms());
-            for (AlarmRuleConfiguration alarm : deviceProfile.getProfileData().getAlarms()) {
-                Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarm.getId(), id -> new HashMap<>());
-                alarm.getCreateRules().forEach(((severity, alarmRule) -> {
-                    var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
-                    for (var keyFilter : alarmRule.getCondition().getCondition()) {
-                        entityKeys.add(keyFilter.getKey());
-                        ruleKeys.add(keyFilter.getKey());
-                        addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
-                    }
-                    addEntityKeysFromAlarmConditionSpec(alarmRule);
-                    AlarmSchedule schedule = alarmRule.getSchedule();
-                    if (schedule != null) {
-                        addScheduleDynamicValues(schedule);
-                    }
-                }));
-                if (alarm.getClearRule() != null) {
-                    var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarm.getId(), id -> new HashSet<>());
-                    for (var keyFilter : alarm.getClearRule().getCondition().getCondition()) {
-                        entityKeys.add(keyFilter.getKey());
-                        clearAlarmKeys.add(keyFilter.getKey());
-                        addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, clearAlarmKeys);
-                    }
-                    addEntityKeysFromAlarmConditionSpec(alarm.getClearRule());
-                }
+
+        alarmRules.values().forEach(this::addAlarmRuleKeys);
+    }
+
+    private void addAlarmRuleKeys(AlarmRule alarmRule) {
+        AlarmRuleConfiguration configuration = alarmRule.getConfiguration();
+        Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarmRule.getId(), id -> new HashMap<>());
+        configuration.getCreateRules().forEach(((severity, alarmRuleCondition) -> {
+            var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
+            for (var keyFilter : alarmRuleCondition.getCondition().getCondition()) {
+                entityKeys.add(keyFilter.getKey());
+                ruleKeys.add(keyFilter.getKey());
+                addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
             }
+            addEntityKeysFromAlarmConditionSpec(alarmRuleCondition);
+            AlarmSchedule schedule = alarmRuleCondition.getSchedule();
+            if (schedule != null) {
+                addScheduleDynamicValues(schedule);
+            }
+        }));
+        if (configuration.getClearRule() != null) {
+            var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarmRule.getId(), id -> new HashSet<>());
+            for (var keyFilter : configuration.getClearRule().getCondition().getCondition()) {
+                entityKeys.add(keyFilter.getKey());
+                clearAlarmKeys.add(keyFilter.getKey());
+                addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, clearAlarmKeys);
+            }
+            addEntityKeysFromAlarmConditionSpec(configuration.getClearRule());
         }
     }
 
@@ -115,7 +120,7 @@ class ProfileState {
         switch (specType) {
             case DURATION:
                 DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
-                if(duration.getPredicate().getDynamicValue() != null
+                if (duration.getPredicate().getDynamicValue() != null
                         && duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
                     entityKeys.add(
                             new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
@@ -125,7 +130,7 @@ class ProfileState {
                 break;
             case REPEATING:
                 RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
-                if(repeating.getPredicate().getDynamicValue() != null
+                if (repeating.getPredicate().getDynamicValue() != null
                         && repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
                     entityKeys.add(
                             new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
@@ -134,7 +139,6 @@ class ProfileState {
                 }
                 break;
         }
-
     }
 
     private void addDynamicValuesRecursively(KeyFilterPredicate predicate, Set<AlarmConditionFilterKey> entityKeys, Set<AlarmConditionFilterKey> ruleKeys) {
@@ -159,11 +163,7 @@ class ProfileState {
         }
     }
 
-    DeviceProfileId getProfileId() {
-        return deviceProfile.getId();
-    }
-
-    Set<AlarmConditionFilterKey> getCreateAlarmKeys(String id, AlarmSeverity severity) {
+    Set<AlarmConditionFilterKey> getCreateAlarmKeys(AlarmRuleId id, AlarmSeverity severity) {
         Map<AlarmSeverity, Set<AlarmConditionFilterKey>> sKeys = alarmCreateKeys.get(id);
         if (sKeys == null) {
             return Collections.emptySet();
@@ -177,7 +177,7 @@ class ProfileState {
         }
     }
 
-    Set<AlarmConditionFilterKey> getClearAlarmKeys(String id) {
+    Set<AlarmConditionFilterKey> getClearAlarmKeys(AlarmRuleId id) {
         Set<AlarmConditionFilterKey> keys = alarmClearKeys.get(id);
         if (keys == null) {
             return Collections.emptySet();

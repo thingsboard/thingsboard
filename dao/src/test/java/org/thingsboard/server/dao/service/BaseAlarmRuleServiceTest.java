@@ -103,7 +103,7 @@ public abstract class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(17);
         PageData<AlarmRuleInfo> pageData;
         do {
-            pageData = alarmRuleService.findAlarmInfos(tenantId, pageLink);
+            pageData = alarmRuleService.findAlarmRuleInfos(tenantId, pageLink);
             loadedAlarmRuleInfos.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -128,7 +128,7 @@ public abstract class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRule.setDescription("test rule");
 
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
-        alarmRuleConfiguration.setAlarmType("High Temperature");
+//        alarmRuleConfiguration.setAlarmType("High Temperature");
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setAlarmDetails("Alarm Details");
         AlarmCondition alarmCondition = new AlarmCondition();

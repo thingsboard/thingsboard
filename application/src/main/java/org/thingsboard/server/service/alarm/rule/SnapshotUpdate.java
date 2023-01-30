@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
-public class NumericParseException extends RuntimeException {
-    public NumericParseException(String message) {
-        super(message);
+import lombok.Getter;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
+
+import java.util.Set;
+
+class SnapshotUpdate {
+
+    @Getter
+    private final AlarmConditionKeyType type;
+    @Getter
+    private final Set<AlarmConditionFilterKey> keys;
+
+    SnapshotUpdate(AlarmConditionKeyType type, Set<AlarmConditionFilterKey> keys) {
+        this.type = type;
+        this.keys = keys;
+    }
+
+    boolean hasUpdate(){
+        return !keys.isEmpty();
     }
 }

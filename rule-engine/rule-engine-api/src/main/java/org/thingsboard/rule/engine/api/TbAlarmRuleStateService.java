@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.rule.engine.api;
 
-public interface DynamicPredicateValueCtx {
+import org.thingsboard.server.common.msg.TbMsg;
 
-    EntityKeyValue getTenantValue(String key);
-
-    EntityKeyValue getCustomerValue(String key);
-
-    void resetCustomer();
+public interface TbAlarmRuleStateService {
+    void process(TbContext tbContext, TbMsg msg) throws Exception;
 }

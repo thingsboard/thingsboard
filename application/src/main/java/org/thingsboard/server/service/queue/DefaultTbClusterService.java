@@ -77,6 +77,7 @@ import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -170,6 +171,11 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, TbQueueCallback callback) {
+        pushMsgToRuleEngine(tenantId, entityId, tbMsg, Collections.emptySet(), callback);
+    }
+
+    @Override
+    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Set<String> relations, TbQueueCallback callback) {
         if (tenantId == null || tenantId.isNullUid()) {
             if (entityId.getEntityType().equals(EntityType.TENANT)) {
                 tenantId = TenantId.fromUUID(entityId.getId());
@@ -193,6 +199,7 @@ public class DefaultTbClusterService implements TbClusterService {
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .addAllRelationTypes(relations)
                 .setTbMsg(TbMsg.toByteString(tbMsg)).build();
         producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
         toRuleEngineMsgs.incrementAndGet();

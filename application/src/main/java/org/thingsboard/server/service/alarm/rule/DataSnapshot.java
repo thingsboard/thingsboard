@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class DataSnapshot {
 
-    private volatile boolean ready;
     @Getter
     @Setter
     private long ts;

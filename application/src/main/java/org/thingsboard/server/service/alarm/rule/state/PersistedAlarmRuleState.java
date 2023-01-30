@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.alarm.rule;
+package org.thingsboard.server.service.alarm.rule.state;
 
-import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.UUID;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PersistedAlarmRuleState {
 
-public interface AlarmRuleDao extends Dao<AlarmRule> {
-
-    PageData<AlarmRuleInfo> findAlarmRuleInfosByTenantId(UUID tenantId, PageLink pageLink);
-
-    PageData<AlarmRule> findAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
+    private long lastEventTs;
+    private long duration;
+    private long eventCount;
 
 }

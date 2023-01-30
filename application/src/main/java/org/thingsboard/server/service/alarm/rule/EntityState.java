@@ -13,36 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import com.google.gson.JsonParser;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
-import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
+import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,161 +57,177 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
-class DeviceState {
+class EntityState {
 
-    private final boolean persistState;
-    private final DeviceId deviceId;
-    private final ProfileState deviceProfile;
-    private RuleNodeState state;
-    private PersistedDeviceState pds;
+    @Getter
+    private final TenantId tenantId;
+    @Getter
+    private final EntityId entityId;
+    private final TbAlarmRuleContext ctx;
+    private final EntityRulesState entityRulesState;
+    private AlarmRuleEntityState state;
+    private PersistedEntityState pes;
     private DataSnapshot latestValues;
-    private final ConcurrentMap<String, AlarmState> alarmStates = new ConcurrentHashMap<>();
+    private final ConcurrentMap<AlarmRuleId, AlarmState> alarmStates = new ConcurrentHashMap<>();
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    DeviceState(TbContext ctx, TbDeviceProfileNodeConfiguration config, DeviceId deviceId, ProfileState deviceProfile, RuleNodeState state) {
-        this.persistState = config.isPersistAlarmRulesState();
-        this.deviceId = deviceId;
-        this.deviceProfile = deviceProfile;
+    EntityState(TenantId tenantId, EntityId entityId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, AlarmRuleEntityState state) {
+        this.tenantId = tenantId;
+        this.entityId = entityId;
+        this.ctx = ctx;
+        this.entityRulesState = entityRulesState;
 
-        this.dynamicPredicateValueCtx = new DynamicPredicateValueCtxImpl(ctx.getTenantId(), deviceId, ctx);
+        this.dynamicPredicateValueCtx = new DynamicPredicateValueCtxImpl(tenantId, entityId, ctx);
 
-        if (config.isPersistAlarmRulesState()) {
-            if (state != null) {
-                this.state = state;
-            } else {
-                this.state = ctx.findRuleNodeStateForEntity(deviceId);
-            }
-            if (this.state != null) {
-                pds = JacksonUtil.fromString(this.state.getStateData(), PersistedDeviceState.class);
-            } else {
-                this.state = new RuleNodeState();
-                this.state.setRuleNodeId(ctx.getSelfId());
-                this.state.setEntityId(deviceId);
-                pds = new PersistedDeviceState();
-                pds.setAlarmStates(new HashMap<>());
-            }
+        if (state != null) {
+            this.state = state;
+        } else {
+            //TODO: maybe we should search by id here
         }
-        if (pds != null) {
-            for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
-                alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new AlarmState(deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+        if (this.state != null) {
+            this.state = state;
+            pes = JacksonUtil.fromString(this.state.getData(), PersistedEntityState.class);
+        } else {
+            this.state = new AlarmRuleEntityState();
+            this.state.setTenantId(tenantId);
+            this.state.setEntityId(entityId);
+
+            pes = new PersistedEntityState();
+            pes.setAlarmStates(new HashMap<>());
+        }
+        if (pes != null) {
+            for (AlarmRule alarmRule : entityRulesState.getAlarmRules().values()) {
+                alarmStates.computeIfAbsent(alarmRule.getId(),
+                        a -> new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
             }
         }
     }
 
-    public void updateProfile(TbContext ctx, DeviceProfile deviceProfile) throws ExecutionException, InterruptedException {
-        Set<AlarmConditionFilterKey> oldKeys = Set.copyOf(this.deviceProfile.getEntityKeys());
-        this.deviceProfile.updateDeviceProfile(deviceProfile);
+    public boolean addAlarmRule(AlarmRule alarmRule) {
+        if (!alarmStates.containsKey(alarmRule.getId())) {
+            entityRulesState.addAlarmRule(alarmRule);
+            alarmStates.put(alarmRule.getId(),
+                    new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
+            return true;
+        }
+        return false;
+    }
+
+    //TODO: check if we need to recalculate all keys
+    public void updateAlarmRule(AlarmRule alarmRule) throws ExecutionException, InterruptedException {
+        Set<AlarmConditionFilterKey> oldKeys = Set.copyOf(this.entityRulesState.getEntityKeys());
+        this.entityRulesState.updateAlarmRule(alarmRule);
         if (latestValues != null) {
-            Set<AlarmConditionFilterKey> keysToFetch = new HashSet<>(this.deviceProfile.getEntityKeys());
+            Set<AlarmConditionFilterKey> keysToFetch = new HashSet<>(this.entityRulesState.getEntityKeys());
             keysToFetch.removeAll(oldKeys);
             if (!keysToFetch.isEmpty()) {
-                addEntityKeysToSnapshot(ctx, deviceId, keysToFetch, latestValues);
+                addEntityKeysToSnapshot(ctx, entityId, keysToFetch, latestValues);
             }
         }
-        Set<String> newAlarmStateIds = this.deviceProfile.getAlarmSettings().stream().map(AlarmRuleConfiguration::getId).collect(Collectors.toSet());
-        alarmStates.keySet().removeIf(id -> !newAlarmStateIds.contains(id));
-        for (AlarmRuleConfiguration alarm : this.deviceProfile.getAlarmSettings()) {
-            if (alarmStates.containsKey(alarm.getId())) {
-                alarmStates.get(alarm.getId()).updateState(alarm, getOrInitPersistedAlarmState(alarm));
-            } else {
-                alarmStates.putIfAbsent(alarm.getId(), new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-            }
+
+        if (alarmStates.containsKey(alarmRule.getId())) {
+            alarmStates.get(alarmRule.getId()).updateState(alarmRule, getOrInitPersistedAlarmState(alarmRule));
+        } else {
+            alarmStates.putIfAbsent(alarmRule.getId(), new AlarmState(this.entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
         }
     }
 
-    public void harvestAlarms(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
-        log.debug("[{}] Going to harvest alarms: {}", ctx.getSelfId(), ts);
+    public void removeAlarmRule(AlarmRuleId alarmRuleId) {
+        //TODO: remove states and persisted states
+    }
+
+    public void harvestAlarms(long ts) throws ExecutionException, InterruptedException {
+//        log.debug("[{}] Going to harvest alarms: {}", ctx.getSelfId(), ts);
         boolean stateChanged = false;
         for (AlarmState state : alarmStates.values()) {
             stateChanged |= state.process(ctx, ts);
         }
-        if (persistState && stateChanged) {
-            state.setStateData(JacksonUtil.toString(pds));
-            state = ctx.saveRuleNodeState(state);
+        if (stateChanged) {
+            state.setData(JacksonUtil.toString(pes));
+            ctx.getStateService().save(tenantId, state);
         }
     }
 
-    public void process(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+    public void process(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         if (latestValues == null) {
-            latestValues = fetchLatestValues(ctx, deviceId);
+            latestValues = fetchLatestValues(ctx, entityId);
         }
         boolean stateChanged = false;
         if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-            stateChanged = processTelemetry(ctx, msg);
+            stateChanged = processTelemetry(tbContext, msg);
         } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
-            stateChanged = processAttributesUpdateRequest(ctx, msg);
+            stateChanged = processAttributesUpdateRequest(tbContext, msg);
         } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
-            stateChanged = processDeviceActivityEvent(ctx, msg);
+            stateChanged = processDeviceActivityEvent(tbContext, msg);
         } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
-            stateChanged = processAttributesUpdateNotification(ctx, msg);
+            stateChanged = processAttributesUpdateNotification(tbContext, msg);
         } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
-            stateChanged = processAttributesDeleteNotification(ctx, msg);
+            stateChanged = processAttributesDeleteNotification(tbContext, msg);
         } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
-            stateChanged = processAlarmClearNotification(ctx, msg);
+            stateChanged = processAlarmClearNotification(msg);
         } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
-            processAlarmAckNotification(ctx, msg);
+            processAlarmAckNotification(msg);
         } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
-            processAlarmDeleteNotification(ctx, msg);
+            processAlarmDeleteNotification(msg);
         } else {
             if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
                 dynamicPredicateValueCtx.resetCustomer();
             }
-            ctx.tellSuccess(msg);
+//            ctx.tellSuccess(msg);
         }
-        if (persistState && stateChanged) {
-            state.setStateData(JacksonUtil.toString(pds));
-            state = ctx.saveRuleNodeState(state);
+        if (stateChanged) {
+            state.setData(JacksonUtil.toString(pes));
+            ctx.getStateService().save(tenantId, state);
         }
     }
 
-    private boolean processDeviceActivityEvent(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processDeviceActivityEvent(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
-            return processTelemetry(ctx, msg);
+            return processTelemetry(tbContext, msg);
         } else {
-            return processAttributes(ctx, msg, scope);
+            return processAttributes(tbContext, msg, scope);
         }
     }
 
-    private boolean processAlarmClearNotification(TbContext ctx, TbMsg msg) {
+    private boolean processAlarmClearNotification(TbMsg msg) {
         boolean stateChanged = false;
         Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
-        for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
+        for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
             AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-            stateChanged |= alarmState.processAlarmClear(ctx, alarmNf);
+                    a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+            stateChanged |= alarmState.processAlarmClear(alarmNf);
         }
-        ctx.tellSuccess(msg);
+//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
-    private void processAlarmAckNotification(TbContext ctx, TbMsg msg) {
+    private void processAlarmAckNotification(TbMsg msg) {
         Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
-        for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
+        for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
             AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+                    a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             alarmState.processAckAlarm(alarmNf);
         }
-        ctx.tellSuccess(msg);
+//        ctx.tellSuccess(msg);
     }
 
-    private void processAlarmDeleteNotification(TbContext ctx, TbMsg msg) {
+    private void processAlarmDeleteNotification(TbMsg msg) {
         Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm() != null
                 && alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
-        ctx.tellSuccess(msg);
+//        ctx.tellSuccess(msg);
     }
 
-    private boolean processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processAttributesUpdateNotification(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
-        return processAttributes(ctx, msg, scope);
+        return processAttributes(tbContext, msg, scope);
     }
 
-    private boolean processAttributesDeleteNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processAttributesDeleteNotification(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         List<String> keys = new ArrayList<>();
         new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
@@ -225,36 +242,36 @@ class DeviceState {
                     .map(DataSnapshot::toConditionKey).collect(Collectors.toSet());
             SnapshotUpdate update = new SnapshotUpdate(AlarmConditionKeyType.ATTRIBUTE, removedKeys);
 
-            for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
+            for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                        a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+                stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
             }
         }
-        ctx.tellSuccess(msg);
+//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
-    protected boolean processAttributesUpdateRequest(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        return processAttributes(ctx, msg, DataConstants.CLIENT_SCOPE);
+    protected boolean processAttributesUpdateRequest(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+        return processAttributes(tbContext, msg, DataConstants.CLIENT_SCOPE);
     }
 
-    private boolean processAttributes(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
+    private boolean processAttributes(TbContext tbContext, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
-            for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
+            for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                        a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+                stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
             }
         }
-        ctx.tellSuccess(msg);
+//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
-    protected boolean processTelemetry(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+    protected boolean processTelemetry(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), msg.getMetaDataTs());
         // iterate over data by ts (ASC order).
@@ -263,11 +280,11 @@ class DeviceState {
             List<KvEntry> data = entry.getValue();
             SnapshotUpdate update = merge(latestValues, ts, data);
             if (update.hasUpdate()) {
-                for (AlarmRuleConfiguration alarm : deviceProfile.getAlarmSettings()) {
+                for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
                     AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                            a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+                            a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                     try {
-                        stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                        stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
                     } catch (ApiUsageLimitsExceededException e) {
                         alarmStates.remove(alarm.getId());
                         throw e;
@@ -275,7 +292,7 @@ class DeviceState {
                 }
             }
         }
-        ctx.tellSuccess(msg);
+//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
@@ -317,14 +334,14 @@ class DeviceState {
         return EntityKeyType.ATTRIBUTE;
     }
 
-    private DataSnapshot fetchLatestValues(TbContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
-        Set<AlarmConditionFilterKey> entityKeysToFetch = deviceProfile.getEntityKeys();
+    private DataSnapshot fetchLatestValues(TbAlarmRuleContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
+        Set<AlarmConditionFilterKey> entityKeysToFetch = entityRulesState.getEntityKeys();
         DataSnapshot result = new DataSnapshot(entityKeysToFetch);
         addEntityKeysToSnapshot(ctx, originator, entityKeysToFetch, result);
         return result;
     }
 
-    private void addEntityKeysToSnapshot(TbContext ctx, EntityId originator, Set<AlarmConditionFilterKey> entityKeysToFetch, DataSnapshot result) throws InterruptedException, ExecutionException {
+    private void addEntityKeysToSnapshot(TbAlarmRuleContext ctx, EntityId originator, Set<AlarmConditionFilterKey> entityKeysToFetch, DataSnapshot result) throws InterruptedException, ExecutionException {
         Set<String> attributeKeys = new HashSet<>();
         Set<String> latestTsKeys = new HashSet<>();
 
@@ -338,9 +355,10 @@ class DeviceState {
                 case TIME_SERIES:
                     latestTsKeys.add(key);
                     break;
+                //TODO: add other entities
                 case ENTITY_FIELD:
                     if (device == null) {
-                        device = ctx.getDeviceService().findDeviceById(ctx.getTenantId(), new DeviceId(originator.getId()));
+                        device = ctx.getDeviceService().findDeviceById(tenantId, new DeviceId(originator.getId()));
                     }
                     if (device != null) {
                         switch (key) {
@@ -363,7 +381,7 @@ class DeviceState {
         }
 
         if (!latestTsKeys.isEmpty()) {
-            List<TsKvEntry> data = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), originator, latestTsKeys).get();
+            List<TsKvEntry> data = ctx.getTimeseriesService().findLatest(tenantId, originator, latestTsKeys).get();
             for (TsKvEntry entry : data) {
                 if (entry.getValue() != null) {
                     result.putValue(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, entry.getKey()), entry.getTs(), toEntityValue(entry));
@@ -371,9 +389,9 @@ class DeviceState {
             }
         }
         if (!attributeKeys.isEmpty()) {
-            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, DataConstants.CLIENT_SCOPE, attributeKeys).get());
-            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, DataConstants.SHARED_SCOPE, attributeKeys).get());
-            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, DataConstants.SERVER_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, DataConstants.CLIENT_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, DataConstants.SHARED_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, DataConstants.SERVER_SCOPE, attributeKeys).get());
         }
     }
 
@@ -403,17 +421,13 @@ class DeviceState {
         }
     }
 
-    public DeviceProfileId getProfileId() {
-        return deviceProfile.getProfileId();
-    }
-
-    private PersistedAlarmState getOrInitPersistedAlarmState(AlarmRuleConfiguration alarm) {
-        if (pds != null) {
-            PersistedAlarmState alarmState = pds.getAlarmStates().get(alarm.getId());
+    private PersistedAlarmState getOrInitPersistedAlarmState(AlarmRule alarm) {
+        if (pes != null) {
+            PersistedAlarmState alarmState = pes.getAlarmStates().get(alarm.getUuidId().toString());
             if (alarmState == null) {
                 alarmState = new PersistedAlarmState();
                 alarmState.setCreateRuleStates(new HashMap<>());
-                pds.getAlarmStates().put(alarm.getId(), alarmState);
+                pes.getAlarmStates().put(alarm.getUuidId().toString(), alarmState);
             }
             return alarmState;
         } else {

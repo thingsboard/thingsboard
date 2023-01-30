@@ -15,18 +15,23 @@
  */
 package org.thingsboard.server.dao.alarm.rule;
 
-import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.util.TbPair;
 
-import java.util.UUID;
+import java.util.List;
 
-public interface AlarmRuleDao extends Dao<AlarmRule> {
+public interface AlarmRuleEntityStateService {
 
-    PageData<AlarmRuleInfo> findAlarmRuleInfosByTenantId(UUID tenantId, PageLink pageLink);
+    PageData<TbPair<TenantId, EntityId>> findAll(PageLink pageLink);
 
-    PageData<AlarmRule> findAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
+    List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds);
+
+    AlarmRuleEntityState save(TenantId tenantId, AlarmRuleEntityState entityState);
+
+    void removeByEntityId(TenantId tenantId, EntityId entityId);
 
 }

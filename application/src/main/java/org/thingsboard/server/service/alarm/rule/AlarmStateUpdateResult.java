@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile.state;
+package org.thingsboard.server.service.alarm.rule;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+enum AlarmStateUpdateResult {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class PersistedAlarmRuleState {
-
-    private long lastEventTs;
-    private long duration;
-    private long eventCount;
+    NONE, CREATED, UPDATED, SEVERITY_UPDATED, CLEARED;
 
 }

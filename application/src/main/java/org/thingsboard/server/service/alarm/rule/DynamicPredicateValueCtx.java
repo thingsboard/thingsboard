@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
-enum AlarmStateUpdateResult {
+public interface DynamicPredicateValueCtx {
 
-    NONE, CREATED, UPDATED, SEVERITY_UPDATED, CLEARED;
+    EntityKeyValue getTenantValue(String key);
 
+    EntityKeyValue getCustomerValue(String key);
+
+    void resetCustomer();
 }

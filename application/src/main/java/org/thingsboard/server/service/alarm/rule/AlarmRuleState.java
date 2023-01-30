@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
+import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -62,7 +62,8 @@ class AlarmRuleState {
     private boolean updateFlag;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmRuleState(AlarmSeverity severity, AlarmRuleCondition alarmRule, Set<AlarmConditionFilterKey> entityKeys, PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
+    AlarmRuleState(AlarmSeverity severity, AlarmRuleCondition alarmRule, Set<AlarmConditionFilterKey> entityKeys,
+                   PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
         this.severity = severity;
         this.alarmRule = alarmRule;
         this.entityKeys = entityKeys;

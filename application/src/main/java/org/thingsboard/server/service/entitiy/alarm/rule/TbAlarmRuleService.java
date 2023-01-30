@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.alarm.rule;
+package org.thingsboard.server.service.entitiy.alarm.rule;
 
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 
-import java.util.UUID;
-
-public interface AlarmRuleDao extends Dao<AlarmRule> {
-
-    PageData<AlarmRuleInfo> findAlarmRuleInfosByTenantId(UUID tenantId, PageLink pageLink);
-
-    PageData<AlarmRule> findAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
-
+public interface TbAlarmRuleService extends SimpleTbEntityService<AlarmRule> {
 }

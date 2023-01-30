@@ -210,7 +210,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         DeviceProfileData profileData = deviceProfile.getProfileData();
         List<AlarmRuleConfiguration> alarms = new ArrayList<>();
         AlarmRuleConfiguration deviceProfileAlarm = new AlarmRuleConfiguration();
-        deviceProfileAlarm.setAlarmType("High Temperature");
+//        deviceProfileAlarm.setAlarmType("High Temperature");
         AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         alarmRule.setAlarmDetails("Alarm Details");
         AlarmCondition alarmCondition = new AlarmCondition();

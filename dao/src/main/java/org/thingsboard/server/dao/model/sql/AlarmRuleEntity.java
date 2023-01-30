@@ -24,7 +24,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -37,7 +36,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ALARM_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_DESCRIPTION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENABLED_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_NAME_PROPERTY;
@@ -52,9 +50,6 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
 
     @Column(name = ALARM_RULE_TENANT_ID_PROPERTY)
     private UUID tenantId;
-
-    @Column(name = ALARM_RULE_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
 
     @Column(name = ALARM_RULE_ALARM_TYPE_PROPERTY)
     private String alarmType;
@@ -84,9 +79,6 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
         if (alarmRule.getTenantId() != null) {
             this.tenantId = alarmRule.getTenantId().getId();
         }
-        if (alarmRule.getCustomerId() != null) {
-            this.customerId = alarmRule.getCustomerId().getId();
-        }
         this.alarmType = alarmRule.getAlarmType();
         this.name = alarmRule.getName();
         this.enabled = alarmRule.isEnabled();
@@ -100,9 +92,6 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
         alarmRule.setCreatedTime(createdTime);
         if (tenantId != null) {
             alarmRule.setTenantId(TenantId.fromUUID(tenantId));
-        }
-        if (customerId != null) {
-            alarmRule.setCustomerId(new CustomerId(customerId));
         }
         alarmRule.setAlarmType(alarmType);
         alarmRule.setName(name);

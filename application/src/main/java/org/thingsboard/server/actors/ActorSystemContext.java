@@ -31,6 +31,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
@@ -277,6 +278,11 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private AlarmSubscriptionService alarmService;
+
+    @Lazy
+    @Getter
+    @Autowired(required = false)
+    private TbAlarmRuleStateService alarmRuleStateService;
 
     @Autowired
     @Getter

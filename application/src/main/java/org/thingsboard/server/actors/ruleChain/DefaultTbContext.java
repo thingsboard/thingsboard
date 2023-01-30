@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -780,6 +781,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleEngineApiUsageStateService getRuleEngineApiUsageStateService() {
         return mainCtx.getApiUsageStateService();
+    }
+
+    @Override
+    public TbAlarmRuleStateService getAlarmRuleStateService() {
+        return mainCtx.getAlarmRuleStateService();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

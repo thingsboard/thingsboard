@@ -343,8 +343,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         thermostatDeviceProfile.setProfileData(deviceProfileData);
 
         AlarmRuleConfiguration highTemperature = new AlarmRuleConfiguration();
-        highTemperature.setId("highTemperatureAlarmID");
-        highTemperature.setAlarmType("High Temperature");
+//        highTemperature.setId("highTemperatureAlarmID");
+//        highTemperature.setAlarmType("High Temperature");
         AlarmRuleCondition temperatureRule = new AlarmRuleCondition();
         AlarmCondition temperatureCondition = new AlarmCondition();
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
@@ -393,8 +393,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         highTemperature.setClearRule(clearTemperatureRule);
 
         AlarmRuleConfiguration lowHumidity = new AlarmRuleConfiguration();
-        lowHumidity.setId("lowHumidityAlarmID");
-        lowHumidity.setAlarmType("Low Humidity");
+//        lowHumidity.setId("lowHumidityAlarmID");
+//        lowHumidity.setAlarmType("Low Humidity");
         AlarmRuleCondition humidityRule = new AlarmRuleCondition();
         AlarmCondition humidityCondition = new AlarmCondition();
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());

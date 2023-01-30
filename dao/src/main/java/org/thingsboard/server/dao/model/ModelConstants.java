@@ -648,7 +648,6 @@ public class ModelConstants {
      */
     public static final String ALARM_RULE_COLUMN_FAMILY_NAME = "alarm_rule";
     public static final String ALARM_RULE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String ALARM_RULE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ALARM_RULE_NAME_PROPERTY = "name";
     public static final String ALARM_RULE_ALARM_TYPE_PROPERTY = "alarm_type";
     public static final String ALARM_RULE_ENABLED_PROPERTY = "enabled";

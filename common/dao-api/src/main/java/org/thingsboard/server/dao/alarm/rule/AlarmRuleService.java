@@ -30,6 +30,8 @@ public interface AlarmRuleService {
 
     AlarmRule findAlarmRuleById(TenantId tenantId, AlarmRuleId alarmRuleId);
 
-    PageData<AlarmRuleInfo> findAlarmInfos(TenantId tenantId, PageLink pageLink);
+    PageData<AlarmRuleInfo> findAlarmRuleInfos(TenantId tenantId, PageLink pageLink);
+
+    PageData<AlarmRule> findAlarmRules(TenantId tenantId, PageLink pageLink);
 
 }

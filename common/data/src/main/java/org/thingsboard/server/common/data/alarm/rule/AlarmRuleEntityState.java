@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile.state;
+package org.thingsboard.server.common.data.alarm.rule;
 
 import lombok.Data;
-
-import java.util.Map;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class PersistedDeviceState {
-
-    Map<String, PersistedAlarmState> alarmStates;
-
+public class AlarmRuleEntityState {
+    private TenantId tenantId;
+    private EntityId entityId;
+    private String data;
 }
