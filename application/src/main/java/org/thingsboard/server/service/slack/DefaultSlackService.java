@@ -30,12 +30,13 @@ import com.slack.api.model.ConversationType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 
@@ -66,9 +67,9 @@ public class DefaultSlackService implements SlackService {
     }
 
     @Override
-    public List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversation.Type conversationType) {
+    public List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversationType conversationType) {
         return cache.get(conversationType + ":" + token, k -> {
-            if (conversationType == SlackConversation.Type.DIRECT) {
+            if (conversationType == SlackConversationType.DIRECT) {
                 UsersListRequest request = UsersListRequest.builder()
                         .limit(CONVERSATIONS_LIMIT)
                         .build();
@@ -85,7 +86,7 @@ public class DefaultSlackService implements SlackService {
                         .collect(Collectors.toList());
             } else {
                 ConversationsListRequest request = ConversationsListRequest.builder()
-                        .types(List.of(conversationType == SlackConversation.Type.PUBLIC_CHANNEL ?
+                        .types(List.of(conversationType == SlackConversationType.PUBLIC_CHANNEL ?
                                 ConversationType.PUBLIC_CHANNEL :
                                 ConversationType.PRIVATE_CHANNEL))
                         .limit(CONVERSATIONS_LIMIT)
@@ -107,7 +108,7 @@ public class DefaultSlackService implements SlackService {
     }
 
     @Override
-    public SlackConversation findConversation(TenantId tenantId, String token, SlackConversation.Type conversationType, String namePattern) {
+    public SlackConversation findConversation(TenantId tenantId, String token, SlackConversationType conversationType, String namePattern) {
         List<SlackConversation> conversations = listConversations(tenantId, token, conversationType);
         return conversations.stream()
                 .filter(conversation -> StringUtils.containsIgnoreCase(conversation.getName(), namePattern))

@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets;
+package org.thingsboard.server.common.data.notification.targets.platform;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import javax.validation.constraints.AssertTrue;
 import java.util.UUID;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class CustomerUsersNotificationTargetConfig extends NotificationTargetConfig {
+public class CustomerUsersFilter implements UsersFilter {
 
     private UUID customerId; // might not be set if using with notification rule
     private boolean getCustomerIdFromOriginatorEntity; // e.g. from alarm
 
     @Override
-    public NotificationTargetConfigType getType() {
-        return NotificationTargetConfigType.CUSTOMER_USERS;
+    public UsersFilterType getType() {
+        return UsersFilterType.CUSTOMER_USERS;
     }
 
     @AssertTrue(message = "customerId is required")

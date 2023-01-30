@@ -20,30 +20,30 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.slack.SlackService;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
-import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 
 @Component
 @RequiredArgsConstructor
-public class SlackNotificationChannel implements NotificationChannel<SlackDeliveryMethodNotificationTemplate> {
+public class SlackNotificationChannel implements NotificationChannel<SlackConversation, SlackDeliveryMethodNotificationTemplate> {
 
     private final SlackService slackService;
     private final ExternalCallExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, SlackDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
+    public ListenableFuture<Void> sendNotification(SlackConversation conversation, SlackDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         if (ctx.getStats().contains(NotificationDeliveryMethod.SLACK)) {
             return Futures.immediateFailedFuture(new AlreadySentException());
         }
 
         SlackNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.SLACK);
         return executor.submit(() -> {
-            slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), processedTemplate.getConversationId(), processedTemplate.getBody());
+            slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), conversation.getId(), processedTemplate.getBody());
             return null;
         });
     }

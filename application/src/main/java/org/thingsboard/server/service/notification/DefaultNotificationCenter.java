@@ -40,14 +40,18 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -79,7 +83,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
-public class DefaultNotificationCenter extends AbstractSubscriptionService implements NotificationCenter, NotificationChannel<PushDeliveryMethodNotificationTemplate> {
+public class DefaultNotificationCenter extends AbstractSubscriptionService implements NotificationCenter, NotificationChannel<User, PushDeliveryMethodNotificationTemplate> {
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationRequestService notificationRequestService;
@@ -95,9 +99,17 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        notificationRequest.setTenantId(tenantId);
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
+        List<NotificationTarget> targets = notificationRequest.getTargets().stream()
+                .map(NotificationTargetId::new)
+                .map(targetId -> notificationTargetService.findNotificationTargetById(tenantId, targetId))
+                .peek(target -> {
+                    if (target == null) {
+                        throw new IllegalArgumentException("Some of the targets no longer exist");
+                    }
+                })
+                .collect(Collectors.toList());
 
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
@@ -109,6 +121,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod)) {
                     throw new IllegalArgumentException("Slack must be configured in the settings");
                 }
+            }
+            if (targets.stream().noneMatch(target -> target.getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
+                throw new IllegalArgumentException("Target for " + deliveryMethod + " delivery method is missing");
             }
         });
 
@@ -122,64 +137,33 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
         }
 
-        log.debug("Processing notification request (tenant id: {}, notification targets: {})", tenantId, notificationRequest.getTargets());
+        log.debug("Processing notification request (tenantId: {}, targets: {})", tenantId, notificationRequest.getTargets());
         notificationRequest.setStatus(NotificationRequestStatus.PROCESSING);
         NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
-        notificationExecutor.submit(() -> {
-            NotificationProcessingContext ctx = NotificationProcessingContext.builder()
-                    .tenantId(tenantId)
-                    .request(savedNotificationRequest)
-                    .settings(settings)
-                    .template(notificationTemplate)
-                    .build();
-            ctx.init();
+        NotificationProcessingContext ctx = NotificationProcessingContext.builder()
+                .tenantId(tenantId)
+                .request(savedNotificationRequest)
+                .settings(settings)
+                .template(notificationTemplate)
+                .build();
 
-            Set<NotificationDeliveryMethod> deliveryMethods = ctx.getDeliveryMethods();
+        notificationExecutor.submit(() -> {
             List<ListenableFuture<Void>> results = new ArrayList<>();
 
-            for (UUID targetId : notificationRequest.getTargets()) {
-                DaoUtil.processBatches(pageLink -> {
-                    return notificationTargetService.findRecipientsForNotificationTarget(tenantId, ctx.getCustomerId(), new NotificationTargetId(targetId), pageLink);
-                }, 200, recipientsBatch -> {
-                    for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-                        if (deliveryMethod.isStandalone()) continue;
-
-                        List<User> recipients = recipientsBatch.getData();
-                        log.debug("Sending {} notifications for request {} to recipients batch ({})", deliveryMethod, savedNotificationRequest.getId(), recipients.size());
-                        NotificationChannel notificationChannel = channels.get(deliveryMethod);
-                        for (User recipient : recipients) {
-                            ListenableFuture<Void> resultFuture = process(notificationChannel, recipient, ctx);
-                            DonAsynchron.withCallback(resultFuture, result -> {
-                                ctx.getStats().reportSent(deliveryMethod, recipient);
-                            }, error -> {
-                                ctx.getStats().reportError(deliveryMethod, error, recipient);
-                            });
-                            results.add(resultFuture);
-                        }
-                    }
-                });
-            }
-            for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-                if (deliveryMethod.isStandalone()) {
-                    NotificationChannel notificationChannel = channels.get(deliveryMethod);
-                    ListenableFuture<Void> resultFuture = process(notificationChannel, null, ctx);
-                    DonAsynchron.withCallback(resultFuture, result -> {
-                        ctx.getStats().reportSent(deliveryMethod, null);
-                    }, error -> {
-                        ctx.getStats().reportError(deliveryMethod, error, null);
-                    });
-                    results.add(resultFuture);
-                }
+            for (NotificationTarget target : targets) {
+                List<ListenableFuture<Void>> result = processForTarget(target, ctx);
+                results.addAll(result);
             }
 
             Futures.whenAllComplete(results).run(() -> {
+                NotificationRequestId requestId = savedNotificationRequest.getId();
+                log.debug("[{}] Notification request processing is finished", requestId);
                 NotificationRequestStats stats = ctx.getStats();
                 try {
-                    notificationRequestService.updateNotificationRequest(tenantId, savedNotificationRequest.getId(),
-                            NotificationRequestStatus.SENT, stats);
+                    notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
                 } catch (Exception e) {
-                    log.error("Failed to update stats for notification request {}", savedNotificationRequest.getId(), e);
+                    log.error("[{}] Failed to update stats for notification request", requestId, e);
                 }
 
                 UserId senderId = notificationRequest.getSenderId();
@@ -200,25 +184,70 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         return savedNotificationRequest;
     }
 
-    private ListenableFuture<Void> process(NotificationChannel notificationChannel, User recipient, NotificationProcessingContext ctx) {
-        NotificationDeliveryMethod deliveryMethod = notificationChannel.getDeliveryMethod();
-        if (recipient != null && ctx.getStats().contains(deliveryMethod, recipient.getId())) {
+    private List<ListenableFuture<Void>> processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
+        Iterable<? extends NotificationRecipient> recipients;
+        switch (target.getType()) {
+            case PLATFORM_USERS: {
+                recipients = new PageDataIterable<>(pageLink -> {
+                    return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), ctx.getCustomerId(), target.getConfiguration(), pageLink);
+                }, 200);
+                break;
+            }
+            case SLACK: {
+                SlackNotificationTargetConfig slackTargetConfig = (SlackNotificationTargetConfig) target.getConfiguration();
+                SlackConversation conversation = new SlackConversation(slackTargetConfig.getConversationId(), slackTargetConfig.getConversationName());
+                recipients = List.of(conversation);
+                break;
+            }
+            default: {
+                recipients = Collections.emptyList();
+            }
+        }
+
+        Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>(ctx.getDeliveryMethods());
+        deliveryMethods.removeIf(deliveryMethod -> !target.getType().getSupportedDeliveryMethods().contains(deliveryMethod));
+        log.debug("[{}] Processing notification request for {} target ({}) for delivery methods {}", ctx.getRequest().getId(), target.getType(), target.getId(), deliveryMethods);
+
+        List<ListenableFuture<Void>> results = new ArrayList<>();
+        for (NotificationRecipient recipient : recipients) {
+            for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+                ListenableFuture<Void> resultFuture = processForRecipient(deliveryMethod, recipient, ctx);
+                DonAsynchron.withCallback(resultFuture, result -> {
+                    ctx.getStats().reportSent(deliveryMethod, recipient);
+                }, error -> {
+                    ctx.getStats().reportError(deliveryMethod, error, recipient);
+                });
+                results.add(resultFuture);
+            }
+        }
+        return results;
+    }
+
+    private ListenableFuture<Void> processForRecipient(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient, NotificationProcessingContext ctx) {
+        if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
             return Futures.immediateFailedFuture(new AlreadySentException());
+        }
+        Map<String, String> templateContext;
+        if (recipient instanceof User) {
+            templateContext = ctx.createTemplateContext(((User) recipient));
+        } else {
+            templateContext = Collections.emptyMap();
         }
         DeliveryMethodNotificationTemplate processedTemplate;
         try {
-            Map<String, String> templateContext = recipient != null ? ctx.createTemplateContext(recipient) : Collections.emptyMap();
             processedTemplate = ctx.getProcessedTemplate(deliveryMethod, templateContext);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
+
+        NotificationChannel notificationChannel = channels.get(deliveryMethod);
+        log.trace("[{}] Sending {} notification for recipient {}", ctx.getRequest().getId(), deliveryMethod, recipient);
         return notificationChannel.sendNotification(recipient, processedTemplate, ctx);
     }
 
     @Override
     public ListenableFuture<Void> sendNotification(User recipient, PushDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         NotificationRequest request = ctx.getRequest();
-        log.trace("Creating notification for recipient {} (notification request id: {})", recipient.getId(), request.getId());
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS notification_target (
     created_time BIGINT NOT NULL,
     tenant_id UUID NULL CONSTRAINT fk_notification_target_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
+    type VARCHAR(32) NOT NULL,
     configuration VARCHAR(10000) NOT NULL,
     CONSTRAINT uq_notification_target_name UNIQUE (tenant_id, name)
 );

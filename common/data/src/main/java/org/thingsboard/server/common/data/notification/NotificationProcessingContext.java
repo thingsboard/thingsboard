@@ -62,9 +62,10 @@ public class NotificationProcessingContext {
         this.notificationTemplate = template;
         this.templates = new EnumMap<>(NotificationDeliveryMethod.class);
         this.stats = new NotificationRequestStats();
+        init();
     }
 
-    public void init() {
+    private void init() {
         NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
         templateConfig.getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;

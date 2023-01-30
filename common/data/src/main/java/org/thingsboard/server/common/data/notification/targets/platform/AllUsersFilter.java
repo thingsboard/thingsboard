@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.targets.platform;
 
-public enum NotificationDeliveryMethod {
+import lombok.Data;
 
-    PUSH,
-    EMAIL,
-    SMS,
-    SLACK
+@Data
+public class AllUsersFilter implements UsersFilter {
+
+    @Override
+    public UsersFilterType getType() {
+        return UsersFilterType.ALL_USERS;
+    }
 
 }

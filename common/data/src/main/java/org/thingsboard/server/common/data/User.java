@@ -25,13 +25,14 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
+public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
 
     private static final long serialVersionUID = 8250339805336035966L;
 

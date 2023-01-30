@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets;
+package org.thingsboard.server.common.data.notification.targets.slack;
 
-public enum NotificationTargetConfigType {
-    USER_LIST,
-    CUSTOMER_USERS,
-    ALL_USERS
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
-//    USER_GROUP,
-//    USERS_WITH_ROLE,
-//    QUERY // ?
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SlackConversation implements NotificationRecipient {
+    private String id;
+    private String name;
 }
