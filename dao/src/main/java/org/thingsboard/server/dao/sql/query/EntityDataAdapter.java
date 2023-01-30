@@ -92,8 +92,9 @@ public class EntityDataAdapter {
                 }
                 try {
                     double dblVal = Double.parseDouble(strVal);
-                    if (!Double.isInfinite(dblVal)) {
-                        return Double.toString(dblVal);
+                    String doubleAsString = Double.toString(dblVal);
+                    if (!Double.isInfinite(dblVal) && isSimpleDouble(doubleAsString)) {
+                        return doubleAsString;
                     }
                 } catch (NumberFormatException ignored) {
                 }
@@ -103,5 +104,10 @@ public class EntityDataAdapter {
             return "";
         }
     }
+
+    private static boolean isSimpleDouble(String valueAsString) {
+        return valueAsString.contains(".") && !valueAsString.contains("E") && !valueAsString.contains("e");
+    }
+
 
 }
