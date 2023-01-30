@@ -1028,17 +1028,20 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Received broadcast notification", sessionId);
         String topicBase = attrReqTopicType.getAttributesResponseTopicBase();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrReqTopicType);
-        try {
-            // todo: 不广播给发送者
-            ConcurrentMap<UUID, ChannelHandlerContext> notificationMap = context.getBroadcastNotificationMap();
-            adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent((msg) -> notificationMap.forEach((k, v)-> {
-                if (v != null && v.channel() != null && v.channel().isActive()) {
-                    v.channel().writeAndFlush(msg);
+        // todo: 不广播给发送者
+        ConcurrentMap<UUID, ChannelHandlerContext> notificationMap = context.getBroadcastNotificationMap();
+        notificationMap.forEach((k, v)-> {
+            if (v != null && v.channel() != null && v.channel().isActive()) {
+                try {
+                    adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent((msg) -> {
+                        log.debug("session [{}] Received broadcast notification [{}]", k, msg);
+                        v.channel().writeAndFlush(msg);
+                    });
+                } catch (Exception e) {
+                    log.trace("[{}] Failed to convert broadcast notification to MQTT msg", sessionId, e);
                 }
-            }));
-        } catch (Exception e) {
-            log.trace("[{}] Failed to convert broadcast notification to MQTT msg", sessionId, e);
-        }
+            }
+        });
     }
 
     @Override
