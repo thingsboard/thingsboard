@@ -110,7 +110,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Epic("Asset profiles smoke")
     @Feature("Sort by name")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
-    @Description("Sort asset profile 'DAWN'")
+    @Description("Sort asset profile 'DOWN'")
     public void allSortDown(String assetProfile, String assetProfileSymbol, String assetProfileNumber) {
         testRestClient.postAssetProfile(defaultAssetProfile(assetProfileSymbol));
         testRestClient.postAssetProfile(defaultAssetProfile(assetProfile));

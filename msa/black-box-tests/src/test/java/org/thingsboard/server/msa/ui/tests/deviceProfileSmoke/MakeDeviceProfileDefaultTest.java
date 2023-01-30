@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -41,8 +43,10 @@ public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
         testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Make device profile default")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Make device profile default by clicking on the 'Make device profile default'  icon in the right corner")
     public void makeDeviceProfileDefaultByRightCornerBtn() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.setProfileName();
@@ -53,8 +57,10 @@ public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Make device profile default")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Make device profile default by clicking on the 'Make device profile default' button in the entity view")
     public void makeDeviceProfileDefaultFromView() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.setProfileName();

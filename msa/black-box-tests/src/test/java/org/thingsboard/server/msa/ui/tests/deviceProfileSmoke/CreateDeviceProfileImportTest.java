@@ -56,7 +56,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     }
 
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Import device profile")
     public void importDeviceProfile() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openImportDeviceProfileView();
@@ -70,7 +70,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Import txt file")
     public void importTxtFile() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openImportDeviceProfileView();
@@ -81,8 +81,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description
-    public void addFileTiImportAndRemove() {
+    @Description("Drop json file and delete it")
+    public void addFileToImportAndRemove() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openImportDeviceProfileView();
         profilesPage.browseFile().sendKeys(absolutePathToFileImportDeviceProfile);
@@ -94,7 +94,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     }
 
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Import device profile with same name")
     public void importDeviceProfileWithSameName() {
         String name = IMPORT_DEVICE_PROFILE_NAME;
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
@@ -112,7 +112,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     }
 
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("*CHANGE TESTCASE*")
     public void importDeviceProfileWithoutRefresh() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openImportDeviceProfileView();
