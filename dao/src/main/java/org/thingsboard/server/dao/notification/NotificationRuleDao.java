@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -29,8 +31,12 @@ public interface NotificationRuleDao extends Dao<NotificationRule> {
 
     PageData<NotificationRule> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 
+    PageData<NotificationRuleInfo> findInfosByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+
     boolean existsByTargetId(TenantId tenantId, NotificationTargetId targetId);
 
     List<NotificationRule> findByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType);
+
+    NotificationRuleInfo findInfoById(TenantId tenantId, NotificationRuleId id);
 
 }

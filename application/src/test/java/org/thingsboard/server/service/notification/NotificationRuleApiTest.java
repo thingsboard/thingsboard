@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.junit.Before;
@@ -40,20 +41,25 @@ import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpe
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.EscalatedNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -78,6 +84,9 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
     private AlarmSubscriptionService alarmSubscriptionService;
+
+    @SpyBean
+    private AlarmService alarmService;
 
     @Before
     public void beforeEach() throws Exception {
@@ -183,7 +192,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("bool", BooleanNode.TRUE);
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
-        verify(alarmSubscriptionService, timeout(2000)).createOrUpdateAlarm(argThat(alarm -> alarm.getType().equals(alarmType)));
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
 
         long ts = System.currentTimeMillis();
@@ -278,6 +288,31 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 */
     }
 
+    @Test
+    public void testNotificationRuleInfo() throws Exception {
+        NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL};
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Subject", "Text", deliveryMethods);
+
+        NotificationRule rule = new NotificationRule();
+        rule.setName("Test");
+        rule.setTemplateId(template.getId());
+
+        rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        rule.setTriggerConfig(triggerConfig);
+
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        recipientsConfig.setTargets(List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
+        rule.setRecipientsConfig(recipientsConfig);
+        rule = saveNotificationRule(rule);
+
+        NotificationRuleInfo ruleInfo = findNotificationRules().getData().get(0);
+        assertThat(ruleInfo.getId()).isEqualTo(ruleInfo.getId());
+        assertThat(ruleInfo.getTemplateName()).isEqualTo(template.getName());
+        assertThat(ruleInfo.getDeliveryMethods()).containsOnly(deliveryMethods);
+    }
+
     private DeviceProfile createDeviceProfileWithAlarmRules(NotificationRuleId notificationRuleId, String alarmType) {
         DeviceProfile deviceProfile = createDeviceProfile("For notification rule test");
         deviceProfile.setTenantId(tenantId);
@@ -318,4 +353,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         return doPost("/api/notification/rule", notificationRule, NotificationRule.class);
     }
 
+    private PageData<NotificationRuleInfo> findNotificationRules() throws Exception {
+        PageLink pageLink = new PageLink(10);
+        return doGetTypedWithPageLink("/api/notification/rules?", new TypeReference<PageData<NotificationRuleInfo>>() {}, pageLink);
+    }
 }

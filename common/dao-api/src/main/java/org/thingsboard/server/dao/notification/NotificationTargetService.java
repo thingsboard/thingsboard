@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.notification.targets.NotificationTarge
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.util.List;
+
 public interface NotificationTargetService {
 
     NotificationTarget saveNotificationTarget(TenantId tenantId, NotificationTarget notificationTarget);
@@ -31,6 +33,8 @@ public interface NotificationTargetService {
     NotificationTarget findNotificationTargetById(TenantId tenantId, NotificationTargetId id);
 
     PageData<NotificationTarget> findNotificationTargetsByTenantId(TenantId tenantId, PageLink pageLink);
+
+    List<NotificationTarget> findNotificationTargetsByTenantIdAndIds(TenantId tenantId, List<NotificationTargetId> ids);
 
     PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId targetId, PageLink pageLink);
 

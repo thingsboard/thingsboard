@@ -77,6 +77,17 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setRecipientsConfig(toJson(notificationRule.getRecipientsConfig()));
     }
 
+    public NotificationRuleEntity(NotificationRuleEntity other) {
+        this.id = other.id;
+        this.createdTime = other.createdTime;
+        this.tenantId = other.tenantId;
+        this.name = other.name;
+        this.templateId = other.templateId;
+        this.triggerType = other.triggerType;
+        this.triggerConfig = other.triggerConfig;
+        this.recipientsConfig = other.recipientsConfig;
+    }
+
     @Override
     public NotificationRule toData() {
         NotificationRule notificationRule = new NotificationRule();
