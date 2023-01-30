@@ -27,9 +27,8 @@ import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 
 public class OpenRuleChainTest extends AbstractDriverBaseTest {
 
@@ -40,16 +39,14 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         ruleChainsPage = new RuleChainsPageHelper(driver);
         openRuleChainPage = new OpenRuleChainPageHelper(driver);
     }
 
     @AfterMethod
-    public void delete(){
+    public void delete() {
         if (ruleChainName != null) {
             testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
             ruleChainName = null;
@@ -59,8 +56,8 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void openRuleChainByRightCornerBtn() {
-        String ruleChainName = ENTITY_NAME;
-        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ENTITY_NAME));
+        String ruleChainName = ENTITY_NAME + random();
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
@@ -76,7 +73,7 @@ public class OpenRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void openRuleChainByViewBtn() {
-        String ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 

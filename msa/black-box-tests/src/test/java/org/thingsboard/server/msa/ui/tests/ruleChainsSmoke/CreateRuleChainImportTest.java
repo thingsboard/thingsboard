@@ -32,8 +32,6 @@ import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_IMPORT_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_RULE_CHAIN_FILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_RULE_CHAIN_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_TXT_FILE_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
 public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
@@ -46,9 +44,7 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         ruleChainsPage = new RuleChainsPageHelper(driver);
         openRuleChainPage = new OpenRuleChainPageHelper(driver);
@@ -83,7 +79,7 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE));
         Assert.assertTrue(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(IMPORT_TXT_FILE_NAME));
+        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(IMPORT_RULE_CHAIN_FILE_NAME));
     }
 
     @Test(priority = 20, groups = "smoke")

@@ -18,31 +18,11 @@
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="UI smoke tests">
+<suite name="Profiles Smoke Tests">
     <listeners>
         <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
     </listeners>
-    <test name="Smoke rule chains tests">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <packages>
-            <package name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke"/>
-        </packages>
-    </test>
-    <test name="Smoke customers tests">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <packages>
-            <package name="org.thingsboard.server.msa.ui.tests.customerSmoke"/>
-        </packages>
-    </test>
-    <test name="Smoke device profile tests">
+    <test name="Profiles ui smoke tests">
         <groups>
             <run>
                 <exclude name="broken"/>
@@ -50,15 +30,6 @@
         </groups>
         <packages>
             <package name="org.thingsboard.server.msa.ui.tests.deviceProfileSmoke"/>
-        </packages>
-    </test>
-    <test name="Smoke asset profile tests">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <packages>
             <package name="org.thingsboard.server.msa.ui.tests.assetProfileSmoke"/>
         </packages>
     </test>

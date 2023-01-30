@@ -49,13 +49,15 @@ public class OtherPageElementsHelper extends OtherPageElements {
         }
     }
 
-    public void changeNameEditMenu(String newName) {
-        nameFieldEditMenu().sendKeys(Keys.CONTROL + "a" + Keys.BACK_SPACE);
-        nameFieldEditMenu().sendKeys(newName);
+    public void changeNameEditMenu(CharSequence keysToSend) {
+        nameFieldEditMenu().click();
+        nameFieldEditMenu().clear();
+        nameFieldEditMenu().sendKeys(keysToSend);
     }
 
     public void changeDescription(String newDescription) {
-        descriptionEntityView().sendKeys(Keys.CONTROL + "a" + Keys.BACK_SPACE);
+        descriptionEntityView().click();
+        descriptionEntityView().clear();
         descriptionEntityView().sendKeys(newDescription);
     }
 
