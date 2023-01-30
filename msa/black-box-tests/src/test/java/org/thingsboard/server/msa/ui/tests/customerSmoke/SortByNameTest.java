@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -48,8 +50,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Sort customers by name")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
-    @Description
+    @Description("Sort customers 'UP'")
     public void specialCharacterUp(String title) {
         testRestClient.postCustomer(defaultCustomerPrototype(title));
         this.customerName = title;
@@ -61,8 +65,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         Assert.assertEquals(customerPage.getCustomerName(), title);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Sort customers by name")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
-    @Description
+    @Description("Sort customers 'UP'")
     public void allSortUp(String customer, String customerSymbol, String customerNumber) {
         testRestClient.postCustomer(defaultCustomerPrototype(customerSymbol));
         testRestClient.postCustomer(defaultCustomerPrototype(customer));
@@ -86,8 +92,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         Assert.assertEquals(thirdCustomer, customer);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Sort customers by name")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
-    @Description
+    @Description("Sort customers 'DOWN'")
     public void specialCharacterDown(String title) {
         testRestClient.postCustomer(defaultCustomerPrototype(title));
         customerName = title;
@@ -99,8 +107,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         Assert.assertEquals(customerPage.getCustomerName(), title);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Sort customers by name")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
-    @Description
+    @Description("Sort customers 'DOWN'")
     public void allSortDown(String customer, String customerSymbol, String customerNumber) {
         testRestClient.postCustomer(defaultCustomerPrototype(customerSymbol));
         testRestClient.postCustomer(defaultCustomerPrototype(customer));

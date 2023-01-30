@@ -104,8 +104,8 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
 
     @Epic("Rule chains smoke tests")
     @Feature("Import rule chain")
-    @Description("Import rule chain")
     @Test(priority = 30, groups = "smoke")
+    @Description("Import rule chain")
     public void importRuleChainAndSave() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -121,7 +121,7 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
     }
 
     @Epic("Rule chains smoke tests")
-    @Feature("Import rule chain with same name")
+    @Feature("Import rule chain")
     @Test(priority = 40, groups = "smoke")
     @Description("Import rule chain with same name")
     public void importRuleChainAndSaveWithSameName() {
