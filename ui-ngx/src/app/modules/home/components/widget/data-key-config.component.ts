@@ -201,7 +201,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
           let newLabel = this.dataKeyFormGroup.get('name').value;
           if (aggType !== AggregationType.NONE) {
             const prefix = this.translate.instant(aggregationTranslations.get(aggType));
-            newLabel = prefix + ' ' + newLabel;
+            newLabel = this.genNextLabelWithAggregation(prefix + ' ' + newLabel);
           }
           this.dataKeyFormGroup.get('label').patchValue(newLabel);
         }
@@ -239,6 +239,30 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         map(value => value ? value : ''),
         mergeMap(name => this.fetchKeys(name) )
       );
+  }
+
+  private genNextLabelWithAggregation(name: string): string {
+    let label = name;
+    let i = 1;
+    let matches = false;
+    const datasources = this.widget.config.datasources;
+    if (datasources) {
+      do {
+        matches = false;
+        datasources.forEach((datasource) => {
+          if (datasource && datasource?.dataKeys) {
+            datasource.dataKeys.forEach((dataKey) => {
+              if (dataKey.label === label) {
+                i++;
+                label = name + ' ' + i;
+                matches = true;
+              }
+            });
+          }
+        });
+      } while (matches);
+    }
+    return label;
   }
 
   registerOnChange(fn: any): void {
