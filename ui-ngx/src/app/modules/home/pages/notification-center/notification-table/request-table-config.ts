@@ -81,7 +81,12 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationRequestInfo>> {
-    return [];
+    return [{
+      name: this.translate.instant('notification.notify-again'),
+      mdiIcon: 'mdi:repeat-variant',
+      isEnabled: (request) => request.status !== NotificationRequestStatus.SCHEDULED,
+      onAction: ($event, entity) => this.createRequest($event, entity)
+    }];
   }
 
   private createRequest($event: Event, request: NotificationRequest, isAdd = false, updateData = true) {

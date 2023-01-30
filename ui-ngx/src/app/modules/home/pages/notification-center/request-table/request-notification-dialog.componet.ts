@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
-import { deepTrim, isDefined } from '@core/utils';
+import { deepTrim } from '@core/utils';
 import { Observable, Subject } from 'rxjs';
 import { EntityType } from '@shared/models/entity-type.models';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -55,6 +55,8 @@ export class RequestNotificationDialogComponent extends
   selectedIndex = 0;
   preview: NotificationRequestPreview = null;
 
+  dialogTitle = 'notification.notify-again';
+
   private readonly destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
@@ -66,10 +68,6 @@ export class RequestNotificationDialogComponent extends
               private notificationService: NotificationService) {
     super(store, router, dialogRef);
 
-    if (isDefined(data.isAdd)) {
-      this.isAdd = data.isAdd;
-    }
-
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
@@ -77,6 +75,13 @@ export class RequestNotificationDialogComponent extends
       templateId: [null, Validators.required],
       targets: [null, Validators.required]
     });
+
+    if (data.isAdd) {
+      this.dialogTitle = 'notification.new-notification';
+    }
+    if (data.request) {
+      this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
+    }
   }
 
   ngOnDestroy() {
