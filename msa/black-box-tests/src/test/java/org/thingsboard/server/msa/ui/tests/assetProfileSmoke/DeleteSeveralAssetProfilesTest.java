@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -39,8 +41,10 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
         profilesPage = new ProfilesPageHelper(driver);
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete several asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove several asset profiles by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void canDeleteSeveralAssetProfilesByTopBtn() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() + "2";
@@ -57,8 +61,10 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.profileIsNotPresent(name2));
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete several asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove several asset profiles by mark all the asset profiles on the page by clicking in the topmost checkbox and then clicking on the trash icon in the menu that appears")
     public void selectAllDAssetProfiles() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() +"2";
@@ -75,8 +81,10 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.profileIsNotPresent(name2));
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete several asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the default asset profile by mark all the asset profiles on the page by clicking in the topmost checkbox and then clicking on the trash icon in the menu that appears")
     public void removeDefaultAssetProfile() {
         sideBarMenuView.openAssetProfiles();
         profilesPage.selectAllCheckBox().click();
@@ -85,8 +93,10 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
         Assert.assertFalse(profilesPage.deleteBtn("default").isEnabled());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete several asset profile")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Remove several asset profiles by mark in the checkbox and then click on the trash can icon in the menu that appears at the top without refresh")
     public void deleteSeveralAssetProfilesByTopBtnWithoutRefresh() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() + "2";
