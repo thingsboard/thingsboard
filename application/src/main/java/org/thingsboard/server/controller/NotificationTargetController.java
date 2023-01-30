@@ -45,7 +45,10 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 
@@ -118,6 +121,14 @@ public class NotificationTargetController extends BaseController {
             }
         }
         return recipients;
+    }
+
+    @GetMapping(value = "/targets", params = {"ids"})
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public List<NotificationTarget> getNotificationTargetsByIds(@RequestParam("ids") UUID[] ids,
+                                                                @AuthenticationPrincipal SecurityUser user) {
+        List<NotificationTargetId> targetsIds = Arrays.stream(ids).map(NotificationTargetId::new).collect(Collectors.toList());
+        return notificationTargetService.findNotificationTargetsByTenantIdAndIds(user.getTenantId(), targetsIds);
     }
 
     @ApiOperation(value = "Get notification targets (getNotificationTargets)",
