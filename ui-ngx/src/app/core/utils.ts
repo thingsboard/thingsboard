@@ -729,3 +729,37 @@ function prepareMessageFromData(data): string {
     return data;
   }
 }
+
+export function genNextLabel(name: string, datasources: Datasource[]): string {
+  let label = name;
+  let i = 1;
+  let matches = false;
+  if (datasources) {
+    do {
+      matches = false;
+      datasources.forEach((datasource) => {
+        if (datasource) {
+          if (datasource.dataKeys) {
+            datasource.dataKeys.forEach((dataKey) => {
+              if (dataKey.label === label) {
+                i++;
+                label = name + ' ' + i;
+                matches = true;
+              }
+            });
+          }
+          if (datasource.latestDataKeys) {
+            datasource.latestDataKeys.forEach((dataKey) => {
+              if (dataKey.label === label) {
+                i++;
+                label = name + ' ' + i;
+                matches = true;
+              }
+            });
+          }
+        }
+      });
+    } while (matches);
+  }
+  return label;
+}

@@ -20,7 +20,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
-  Datasource, datasourcesHasAggregation, datasourcesHasOnlyComparisonAggregation,
+  Datasource,
+  datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   datasourceTypeTranslationMap,
   defaultLegendConfig,
@@ -42,7 +44,7 @@ import {
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isObject } from '@app/core/utils';
+import { deepClone, genNextLabel, isDefined, isObject } from '@app/core/utils';
 import {
   alarmFields,
   AlarmSearchStatus,
@@ -74,7 +76,6 @@ import { FilterDialogComponent, FilterDialogData } from '@home/components/filter
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { AggregationType } from '@shared/models/time/time.models';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -794,7 +795,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           label = this.translate.instant(keyField.name);
         }
       }
-      label = this.genNextLabel(label);
+      const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
+      label = genNextLabel(label, datasources);
       const result: DataKey = {
         name: chip,
         type,
@@ -817,41 +819,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       }
       return result;
     }
-  }
-
-  private genNextLabel(name: string): string {
-    let label = name;
-    let i = 1;
-    let matches = false;
-    const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
-    if (datasources) {
-      do {
-        matches = false;
-        datasources.forEach((datasource) => {
-          if (datasource) {
-            if (datasource.dataKeys) {
-              datasource.dataKeys.forEach((dataKey) => {
-                if (dataKey.label === label) {
-                  i++;
-                  label = name + ' ' + i;
-                  matches = true;
-                }
-              });
-            }
-            if (datasource.latestDataKeys) {
-              datasource.latestDataKeys.forEach((dataKey) => {
-                if (dataKey.label === label) {
-                  i++;
-                  label = name + ' ' + i;
-                  matches = true;
-                }
-              });
-            }
-          }
-        });
-      } while (matches);
-    }
-    return label;
   }
 
   private genNextColor(): string {
