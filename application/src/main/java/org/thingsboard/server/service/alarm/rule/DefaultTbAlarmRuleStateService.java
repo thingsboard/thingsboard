@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -83,28 +82,26 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         int fetchCount = 0;
         PageLink pageLink = new PageLink(1024);
         while (true) {
-            PageData<TbPair<TenantId, EntityId>> ids = alarmRuleEntityStateService.findAll(pageLink);
-            List<EntityId> myEntityIds = new ArrayList<>();
+            PageData<AlarmRuleEntityState> entityStates = alarmRuleEntityStateService.findAll(pageLink);
+            List<AlarmRuleEntityState> myStates = new ArrayList<>();
 
-            ids.getData().forEach(pair -> {
-                TenantId tenantId = pair.getFirst();
-                EntityId entityId = pair.getSecond();
+            entityStates.getData().forEach(state -> {
+                TenantId tenantId = state.getTenantId();
+                EntityId entityId = state.getEntityId();
                 if (isLocalEntity(tenantId, entityId)) {
-                    myEntityIds.add(entityId);
+                    myStates.add(state);
                 } else {
                     otherEntityStateIds.computeIfAbsent(tenantId, key -> ConcurrentHashMap.newKeySet()).add(entityId);
                 }
             });
 
-            List<AlarmRuleEntityState> states = alarmRuleEntityStateService.findAllByIds(myEntityIds);
-
-            for (AlarmRuleEntityState ares : states) {
+            for (AlarmRuleEntityState ares : myStates) {
                 TenantId tenantId = ares.getTenantId();
                 EntityId entityId = ares.getEntityId();
                 fetchCount++;
                 getOrCreateEntityStates(tenantId, entityId, ares);
             }
-            if (!ids.hasNext()) {
+            if (!entityStates.hasNext()) {
                 break;
             } else {
                 pageLink = pageLink.nextPageLink();

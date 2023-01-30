@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule;
+package org.thingsboard.server.dao.alarm.rule;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.Dao;
 
-@Data
-public class AlarmRuleEntityState extends BaseData<UUIDBased> {
-    private TenantId tenantId;
-    private EntityId entityId;
-    private String data;
+import java.util.List;
+import java.util.UUID;
+
+public interface AlarmRuleEntityStateDao extends Dao<AlarmRuleEntityState> {
+
+    PageData<AlarmRuleEntityState> findAll(PageLink pageLink);
+
+    List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds);
+
+    boolean removeByEntityId(TenantId tenantId, UUID id);
 }

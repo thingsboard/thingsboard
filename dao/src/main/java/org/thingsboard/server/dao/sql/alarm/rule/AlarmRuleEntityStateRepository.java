@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.alarm.rule;
+package org.thingsboard.server.dao.sql.alarm.rule;
 
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.model.sql.AlarmRuleEntityStateEntity;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface AlarmRuleEntityStateService {
+public interface AlarmRuleEntityStateRepository extends JpaRepository<AlarmRuleEntityStateEntity, UUID> {
 
-    PageData<AlarmRuleEntityState> findAll(PageLink pageLink);
+    @Query("SELECT ares FROM AlarmRuleEntityStateEntity ares WHERE ares.entityId in (:entityIds)")
+    List<AlarmRuleEntityStateEntity> findAllByIds(@Param("entityIds") List<EntityId> entityIds);
 
-    List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds);
-
-    AlarmRuleEntityState save(TenantId tenantId, AlarmRuleEntityState entityState);
-
-    boolean removeByEntityId(TenantId tenantId, EntityId entityId);
-
+    boolean removeByEntityId(@Param("entityId") UUID entityId);
 }
