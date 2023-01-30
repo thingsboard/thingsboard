@@ -22,7 +22,6 @@ import org.java_websocket.client.WebSocketClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -38,16 +37,18 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
-import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
-import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
+import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
@@ -370,8 +371,11 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     public void testNotificationRequestPreview() throws Exception {
         NotificationTarget target1 = new NotificationTarget();
         target1.setName("Me");
-        UserListNotificationTargetConfig target1Config = new UserListNotificationTargetConfig();
-        target1Config.setUsersIds(DaoUtil.toUUIDs(List.of(tenantAdminUserId)));
+        target1.setType(NotificationTargetType.PLATFORM_USERS);
+        PlatformUsersNotificationTargetConfig target1Config = new PlatformUsersNotificationTargetConfig();
+        UserListFilter userListFilter = new UserListFilter();
+        userListFilter.setUsersIds(DaoUtil.toUUIDs(List.of(tenantAdminUserId)));
+        target1Config.setUsersFilter(userListFilter);
         target1.setConfiguration(target1Config);
         target1 = saveNotificationTarget(target1);
 
@@ -388,9 +392,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         }
         NotificationTarget target2 = new NotificationTarget();
         target2.setName("Other customer users");
-        CustomerUsersNotificationTargetConfig target2Config = new CustomerUsersNotificationTargetConfig();
-        target2Config.setCustomerId(differentCustomerId.getId());
-        target2Config.setGetCustomerIdFromOriginatorEntity(false);
+        target2.setType(NotificationTargetType.PLATFORM_USERS);
+        PlatformUsersNotificationTargetConfig target2Config = new PlatformUsersNotificationTargetConfig();
+        CustomerUsersFilter customerUsersFilter = new CustomerUsersFilter();
+        customerUsersFilter.setCustomerId(differentCustomerId.getId());
+        customerUsersFilter.setGetCustomerIdFromOriginatorEntity(false);
+        target2Config.setUsersFilter(customerUsersFilter);
         target2.setConfiguration(target2Config);
         target2 = saveNotificationTarget(target2);
 
@@ -426,8 +433,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
         slackNotificationTemplate.setEnabled(true);
-        slackNotificationTemplate.setConversationType(SlackConversation.Type.PUBLIC_CHANNEL);
-        slackNotificationTemplate.setConversationId("U1234567");
         slackNotificationTemplate.setBody("Message for SLACK: ${email}");
         templates.put(NotificationDeliveryMethod.SLACK, slackNotificationTemplate);
 
@@ -472,8 +477,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SLACK)).asInstanceOf(type(SlackDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .startsWith("Message for SLACK")
-                            .endsWith(requestorEmail);
+                            .isEqualTo("Message for SLACK: ${email}"); // ${email} should not be processed
                 });
     }
 
@@ -507,6 +511,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
         NotificationRequestStats stats = getStats(notificationRequest.getId());
 
+        System.err.println("STATS: " + stats);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(1);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(1);
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
@@ -529,7 +534,10 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName("All my users");
-        AllUsersNotificationTargetConfig config = new AllUsersNotificationTargetConfig();
+        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
+        PlatformUsersNotificationTargetConfig config = new PlatformUsersNotificationTargetConfig();
+        AllUsersFilter filter = new AllUsersFilter();
+        config.setUsersFilter(filter);
         notificationTarget.setConfiguration(config);
         notificationTarget = saveNotificationTarget(notificationTarget);
         NotificationTargetId notificationTargetId = notificationTarget.getId();
@@ -572,21 +580,28 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationTemplate.setName("Slack notification template");
         notificationTemplate.setNotificationType(NotificationType.GENERAL);
         NotificationTemplateConfig config = new NotificationTemplateConfig();
-        config.setDefaultTextTemplate("To Slack :)");
-
+        config.setDefaultTextTemplate("To Slack :)  ${email}");
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
         slackNotificationTemplate.setEnabled(true);
-        slackNotificationTemplate.setConversationType(SlackConversation.Type.PUBLIC_CHANNEL);
-        String conversationId = "U154475415";
-        slackNotificationTemplate.setConversationId(conversationId);
-
         config.setDeliveryMethodsTemplates(Map.of(
                 NotificationDeliveryMethod.SLACK, slackNotificationTemplate
         ));
         notificationTemplate.setConfiguration(config);
         notificationTemplate = saveNotificationTemplate(notificationTemplate);
 
-        NotificationRequest successfulNotificationRequest = submitNotificationRequest(Collections.emptyList(), notificationTemplate.getId(), 0);
+        String conversationId = "U154475415";
+        String conversationName = "#my-channel";
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setTenantId(tenantId);
+        notificationTarget.setName(conversationName + " in Slack");
+        notificationTarget.setType(NotificationTargetType.SLACK);
+        SlackNotificationTargetConfig targetConfig = new SlackNotificationTargetConfig();
+        targetConfig.setConversationId(conversationId);
+        targetConfig.setConversationName(conversationName);
+        notificationTarget.setConfiguration(targetConfig);
+        notificationTarget = saveNotificationTarget(notificationTarget);
+
+        NotificationRequest successfulNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(successfulNotificationRequest.getId()).isSent());
         verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(config.getDefaultTextTemplate()));
@@ -595,7 +610,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         String errorMessage = "Error!!!";
         doThrow(new RuntimeException(errorMessage)).when(slackService).sendMessage(any(), any(), any(), any());
-        NotificationRequest failedNotificationRequest = submitNotificationRequest(Collections.emptyList(), notificationTemplate.getId(), 0);
+        NotificationRequest failedNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(failedNotificationRequest.getId()).isSent());
         stats = getStats(failedNotificationRequest.getId());

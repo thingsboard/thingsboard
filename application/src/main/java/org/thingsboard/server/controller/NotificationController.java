@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
@@ -59,6 +60,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -198,11 +200,15 @@ public class NotificationController extends BaseController {
                 .settings(null)
                 .template(notificationTemplate)
                 .build();
-        mockProcessingCtx.init();
 
-        Map<String, String> templateContext = mockProcessingCtx.createTemplateContext(user);
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = mockProcessingCtx.getDeliveryMethods().stream()
                 .collect(Collectors.toMap(m -> m, deliveryMethod -> {
+                    Map<String, String> templateContext;
+                    if (NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods().contains(deliveryMethod)) {
+                        templateContext = mockProcessingCtx.createTemplateContext(user);
+                    } else {
+                        templateContext = Collections.emptyMap();
+                    }
                     return mockProcessingCtx.getProcessedTemplate(deliveryMethod, templateContext);
                 }));
         preview.setProcessedTemplates(processedTemplates);
@@ -214,7 +220,12 @@ public class NotificationController extends BaseController {
                 throw new IllegalArgumentException("Notification target with id " + targetId + " not found");
             }
 
-            int recipientsCount = notificationTargetService.countRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration());
+            int recipientsCount;
+            if (notificationTarget.getType() == NotificationTargetType.PLATFORM_USERS) {
+                recipientsCount = notificationTargetService.countRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration());
+            } else {
+                recipientsCount = 1;
+            }
             recipientsCountByTarget.put(notificationTarget.getName(), recipientsCount);
         });
         preview.setRecipientsCountByTarget(recipientsCountByTarget);

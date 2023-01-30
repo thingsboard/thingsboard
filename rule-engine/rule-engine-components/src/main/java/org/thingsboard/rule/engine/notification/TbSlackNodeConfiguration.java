@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.notification;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -31,7 +31,7 @@ public class TbSlackNodeConfiguration implements NodeConfiguration<TbSlackNodeCo
     private String messageTemplate;
 
     @NotNull
-    private SlackConversation.Type conversationType;
+    private SlackConversationType conversationType;
     private String conversationId; // if not set, need to specify conversationNamePattern
     private String conversationNamePattern;
 
@@ -40,7 +40,7 @@ public class TbSlackNodeConfiguration implements NodeConfiguration<TbSlackNodeCo
         TbSlackNodeConfiguration config = new TbSlackNodeConfiguration();
         config.setBotToken("xoxb-");
         config.setMessageTemplate("Device ${deviceId}: temperature is $[temperature]");
-        config.setConversationType(SlackConversation.Type.PUBLIC_CHANNEL);
+        config.setConversationType(SlackConversationType.PUBLIC_CHANNEL);
         return config;
     }
 

@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets;
+package org.thingsboard.server.common.data.notification.targets.platform;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.Data;
-import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @Type(value = PlatformUsersNotificationTargetConfig.class, name = "PLATFORM_USERS"),
-        @Type(value = SlackNotificationTargetConfig.class, name = "SLACK")
+        @Type(value = UserListFilter.class, name = "USER_LIST"),
+        @Type(value = CustomerUsersFilter.class, name = "CUSTOMER_USERS"),
+        @Type(value = AllUsersFilter.class, name = "ALL_USERS")
 })
-@Data
-public abstract class NotificationTargetConfig {
-
-    private String description;
+public interface UsersFilter {
 
     @JsonIgnore
-    public abstract NotificationTargetType getType();
+    UsersFilterType getType();
 
 }

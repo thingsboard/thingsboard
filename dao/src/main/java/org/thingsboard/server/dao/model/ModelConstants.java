@@ -650,6 +650,7 @@ public class ModelConstants {
      * */
 
     public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
+    public static final String NOTIFICATION_TARGET_TYPE_PROPERTY = "type";
     public static final String NOTIFICATION_TARGET_CONFIGURATION_PROPERTY = "configuration";
 
     public static final String NOTIFICATION_TABLE_NAME = "notification";

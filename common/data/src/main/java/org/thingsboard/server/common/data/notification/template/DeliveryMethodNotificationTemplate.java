@@ -44,6 +44,7 @@ public abstract class DeliveryMethodNotificationTemplate {
         this.body = other.body;
     }
 
+    @JsonIgnore
     public abstract NotificationDeliveryMethod getMethod();
 
     @JsonIgnore

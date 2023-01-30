@@ -16,7 +16,8 @@
 package org.thingsboard.rule.engine.api.slack;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 
 import java.util.List;
 
@@ -24,9 +25,9 @@ public interface SlackService {
 
     void sendMessage(TenantId tenantId, String token, String conversationId, String message);
 
-    List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversation.Type conversationType);
+    List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversationType conversationType);
 
-    SlackConversation findConversation(TenantId tenantId, String token, SlackConversation.Type conversationType, String namePattern);
+    SlackConversation findConversation(TenantId tenantId, String token, SlackConversationType conversationType, String namePattern);
 
     String getToken(TenantId tenantId);
 

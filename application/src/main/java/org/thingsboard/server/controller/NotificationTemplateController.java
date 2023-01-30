@@ -35,8 +35,9 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
-import org.thingsboard.server.common.data.notification.template.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -133,7 +134,7 @@ public class NotificationTemplateController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/slack/conversations")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public List<SlackConversation> listSlackConversations(@RequestParam SlackConversation.Type type,
+    public List<SlackConversation> listSlackConversations(@RequestParam SlackConversationType type,
                                                           @AuthenticationPrincipal SecurityUser user) {
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(user.getTenantId());
         SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)

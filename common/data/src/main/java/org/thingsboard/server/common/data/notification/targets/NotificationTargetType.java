@@ -15,23 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import javax.validation.constraints.NotEmpty;
-import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class UserListNotificationTargetConfig extends NotificationTargetConfig {
+@RequiredArgsConstructor
+public enum NotificationTargetType {
 
-    @NotEmpty
-    private List<UUID> usersIds;
+    PLATFORM_USERS(Set.of(NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS)),
+    SLACK(Set.of(NotificationDeliveryMethod.SLACK));
 
-    @Override
-    public NotificationTargetConfigType getType() {
-        return NotificationTargetConfigType.USER_LIST;
-    }
+    @Getter
+    private final Set<NotificationDeliveryMethod> supportedDeliveryMethods;
 
 }
