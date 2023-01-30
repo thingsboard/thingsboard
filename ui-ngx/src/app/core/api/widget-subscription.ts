@@ -1402,6 +1402,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     }));
     if (datasource.latestDataKeys) {
       datasourceDataArray = datasourceDataArray.concat(datasource.latestDataKeys.map((dataKey, latestKeyIndex) => {
+        dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
         const datasourceData: DatasourceData = {
           datasource,
           dataKey,
