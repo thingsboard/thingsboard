@@ -16,6 +16,9 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Epics;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -42,8 +45,10 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Make rule chain root")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Make rule chain root by clicking on the 'Make rule chain root' icon in the right corner")
     public void makeRuleChainRootByRightCornerBtn() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot(0);
@@ -54,8 +59,10 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChain).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Make rule chain root")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Make rule chain root by clicking on the 'Make rule chain root' button in the entity view")
     public void makeRuleChainRootFromView() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot(0);
@@ -68,8 +75,10 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChain).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Make rule chain root")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Make multiple root rule chains (only one rule chain can be root)")
     public void multiplyRoot() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot(0);

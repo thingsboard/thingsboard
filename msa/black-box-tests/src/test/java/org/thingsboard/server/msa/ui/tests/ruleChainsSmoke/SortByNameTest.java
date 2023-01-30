@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -49,8 +51,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by name")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
-    @Description
+    @Description("Sort rule chain 'UP'")
     public void specialCharacterUp(String ruleChainName) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
@@ -62,8 +66,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         Assert.assertEquals(ruleChainsPage.getRuleChainName(), ruleChainName);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by name")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
-    @Description
+    @Description("Sort rule chain 'UP'")
     public void allSortUp(String ruleChain, String ruleChainSymbol, String ruleChainNumber) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol));
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
@@ -87,8 +93,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         Assert.assertEquals(thirdRuleChain, ruleChain);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by name")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
-    @Description
+    @Description("Sort rule chain 'DOWN'")
     public void specialCharacterDown(String ruleChainName) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
@@ -100,8 +108,10 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         Assert.assertEquals(ruleChainsPage.getRuleChainName(), ruleChainName);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by name")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
-    @Description
+    @Description("Sort rule chain 'DOWN'")
     public void allSortDown(String ruleChain, String ruleChainSymbol, String ruleChainNumber) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol));
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));

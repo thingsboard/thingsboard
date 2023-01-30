@@ -56,7 +56,7 @@ import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 @Slf4j
 abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
-    protected WebDriver driver;
+    protected static WebDriver driver;
     private final Dimension dimension = new Dimension(WIDTH, HEIGHT);
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
@@ -98,7 +98,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         return driver.getCurrentUrl();
     }
 
-    public WebDriver getDriver() {
+    public static WebDriver getDriver() {
         return driver;
     }
 
@@ -159,9 +159,9 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     @SneakyThrows
     @Attachment(value = "Page screenshot", type = "image/png")
-    public static byte[] captureScreen(WebDriver driver, String dirPath) {
+    public static byte[] captureScreen(WebDriver driver) {
         File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(screenshot, new File("./target/allure-results/screenshots/" + dirPath + "//" + screenshot.getName()));
+        FileUtils.copyFile(screenshot, new File("./target/allure-results/screenshots//" + screenshot.getName()));
         return Files.toByteArray(screenshot);
     }
 }

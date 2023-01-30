@@ -18,7 +18,7 @@ package org.thingsboard.server.msa.ui.listeners;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;
 import org.testng.internal.ConstructorOrMethod;
-import org.thingsboard.server.msa.DisableUIListeners;
+import org.thingsboard.server.msa.DisableRetry;
 
 public class RetryAnalyzer implements IRetryAnalyzer {
 
@@ -28,7 +28,7 @@ public class RetryAnalyzer implements IRetryAnalyzer {
     @Override
     public boolean retry(ITestResult result) {
         ConstructorOrMethod consOrMethod = result.getMethod().getConstructorOrMethod();
-        DisableUIListeners disable = consOrMethod.getMethod().getDeclaringClass().getAnnotation(DisableUIListeners.class);
+        DisableRetry disable = consOrMethod.getMethod().getDeclaringClass().getAnnotation(DisableRetry.class);
         if (disable != null) {
             return false;
         }

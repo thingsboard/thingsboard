@@ -25,7 +25,6 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.EntityType;
@@ -42,7 +41,6 @@ import java.util.Random;
 
 
 @Slf4j
-@Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
 
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";

@@ -197,12 +197,20 @@
                         <suiteXmlFile>src/test/resources/${suite}.xml</suiteXmlFile>
                     </suiteXmlFiles>
                     <skipTests>${blackBoxTests.skip}</skipTests>
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                    </argLine>
                 </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
                         <artifactId>surefire-testng</artifactId>
                         <version>${surefire.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                        <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -212,8 +220,7 @@
                 <version>${allure-maven.version}</version>
                 <configuration>
                     <reportVersion>${allure-testng.version}</reportVersion>
-                    <allureDownloadUrl>https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/
-                        ${allure-testng.version}/allure-commandline-${allure-testng.version}.zip</allureDownloadUrl>
+                    <propertiesFilePath>src/test/resources/allure.properties</propertiesFilePath>
                 </configuration>
             </plugin>
         </plugins>

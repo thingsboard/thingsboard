@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
-import org.thingsboard.server.msa.DisableUIListeners;
+import org.thingsboard.server.msa.DisableRetry;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
@@ -67,7 +67,7 @@ import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultGatewayPrototype;
 
-@DisableUIListeners
+@DisableRetry
 @Slf4j
 public class MqttGatewayClientTest extends AbstractContainerTest {
     private Device gatewayDevice;

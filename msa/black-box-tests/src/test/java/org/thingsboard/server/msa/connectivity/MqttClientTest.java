@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
-import org.thingsboard.server.msa.DisableUIListeners;
+import org.thingsboard.server.msa.DisableRetry;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.AttributesResponse;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
@@ -69,7 +69,7 @@ import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
-@DisableUIListeners
+@DisableRetry
 @Slf4j
 public class MqttClientTest extends AbstractContainerTest {
 

@@ -28,13 +28,13 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.msa.AbstractContainerTest;
-import org.thingsboard.server.msa.DisableUIListeners;
+import org.thingsboard.server.msa.DisableRetry;
 import org.thingsboard.server.msa.TestCoapClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
-@DisableUIListeners
+@DisableRetry
 public class CoapClientTest  extends AbstractContainerTest {
     private TestCoapClient client;
 
