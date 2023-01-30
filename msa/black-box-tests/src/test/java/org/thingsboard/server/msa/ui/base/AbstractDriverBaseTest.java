@@ -157,6 +157,38 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
+    public static void deleteRuleChain(String ruleChainName) {
+        try {
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteDeviceProfile(String deviseProfileName) {
+        try {
+            testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviseProfileName).getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteCustomer(String customerName) {
+        try {
+            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteAssetProfile(String assetProfileName) {
+        try {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileName).getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @SneakyThrows
     @Attachment(value = "Page screenshot", type = "image/png")
     public static byte[] captureScreen(WebDriver driver, String dirPath) {

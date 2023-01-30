@@ -49,7 +49,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+            deleteAssetProfile(name);
             name = null;
         }
     }

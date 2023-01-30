@@ -49,7 +49,7 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            deleteDeviceProfile(name);
             name = null;
         }
     }

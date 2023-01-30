@@ -43,7 +43,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            deleteDeviceProfile(name);
             name = null;
         }
     }
@@ -77,9 +77,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(2);
         String thirdDeviceProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
+        deleteDeviceProfile(deviceProfile);
+        deleteDeviceProfile(deviceProfileNumber);
+        deleteDeviceProfile(deviceProfileSymbol);
 
         Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
         Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);
@@ -116,9 +116,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(lastIndex - 2);
         String thirdDeviceProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
+        deleteDeviceProfile(deviceProfile);
+        deleteDeviceProfile(deviceProfileNumber);
+        deleteDeviceProfile(deviceProfileSymbol);
 
         Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
         Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);

@@ -43,7 +43,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+            deleteAssetProfile(name);
             name = null;
         }
     }
@@ -77,9 +77,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(2);
         String thirdAssetProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfile).getId());
-        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileNumber).getId());
-        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileSymbol).getId());
+        deleteAssetProfile(assetProfile);
+        deleteAssetProfile(assetProfileNumber);
+        deleteAssetProfile(assetProfileSymbol);
 
         Assert.assertEquals(firstAssetProfile, assetProfileSymbol);
         Assert.assertEquals(secondAssetProfile, assetProfileNumber);
@@ -116,9 +116,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(lastIndex - 2);
         String thirdAssetProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfile).getId());
-        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileNumber).getId());
-        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileSymbol).getId());
+        deleteAssetProfile(assetProfile);
+        deleteAssetProfile(assetProfileNumber);
+        deleteAssetProfile(assetProfileSymbol);
 
         Assert.assertEquals(firstAssetProfile, assetProfileSymbol);
         Assert.assertEquals(secondAssetProfile, assetProfileNumber);

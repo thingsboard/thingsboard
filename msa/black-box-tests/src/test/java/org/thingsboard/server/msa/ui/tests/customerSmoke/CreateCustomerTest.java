@@ -47,7 +47,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (customerName != null) {
-            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
+            deleteCustomer(customerName);
             customerName = null;
         }
     }

@@ -58,7 +58,7 @@ public class SearchCustomerTest extends AbstractDriverBaseTest {
         customerPage.setCustomerName();
         boolean customerNameContainsPath = customerPage.getCustomerName().contains(namePath);
 
-        testRestClient.deleteCustomer(getCustomerByName(name).getId());
+        deleteCustomer(name);
 
         Assert.assertTrue(customerNameContainsPath);
     }

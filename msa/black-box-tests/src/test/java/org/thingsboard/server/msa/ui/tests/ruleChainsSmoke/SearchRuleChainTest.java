@@ -59,7 +59,7 @@ public class SearchRuleChainTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(0);
         boolean ruleChainContainsNamePath = ruleChainsPage.getRuleChainName().contains(namePath);
 
-        testRestClient.deleteRuleChain(getRuleChainByName(name).getId());
+        deleteRuleChain(name);
 
         Assert.assertTrue(ruleChainContainsNamePath);
     }

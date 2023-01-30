@@ -44,7 +44,7 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void makeProfileDefault() {
         testRestClient.setDefaultAssetProfile(getAssetProfileByName("default").getId());
-        testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+        deleteAssetProfile(name);
     }
 
     @Test(priority = 10, groups = "smoke")

@@ -44,7 +44,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (ruleChainName != null) {
-            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+            deleteRuleChain(ruleChainName);
             ruleChainName = null;
         }
     }
@@ -78,9 +78,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChain).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainNumber).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainSymbol).getId());
+        deleteRuleChain(ruleChain);
+        deleteRuleChain(ruleChainNumber);
+        deleteRuleChain(ruleChainSymbol);
 
         Assert.assertEquals(firstRuleChain, ruleChainSymbol);
         Assert.assertEquals(secondRuleChain, ruleChainNumber);
@@ -117,9 +117,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(lastIndex - 2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChain).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainNumber).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainSymbol).getId());
+        deleteRuleChain(ruleChain);
+        deleteRuleChain(ruleChainNumber);
+        deleteRuleChain(ruleChainSymbol);
 
         Assert.assertEquals(firstRuleChain, ruleChainSymbol);
         Assert.assertEquals(secondRuleChain, ruleChainNumber);
