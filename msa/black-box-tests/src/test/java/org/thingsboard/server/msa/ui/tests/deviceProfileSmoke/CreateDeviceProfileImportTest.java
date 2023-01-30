@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -55,6 +57,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 10, groups = "smoke")
     @Description("Import device profile")
     public void importDeviceProfile() {
@@ -69,6 +73,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entity(IMPORT_DEVICE_PROFILE_NAME).isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
     @Description("Import txt file")
     public void importTxtFile() {
@@ -80,6 +86,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
     @Description("Drop json file and delete it")
     public void addFileToImportAndRemove() {
@@ -93,6 +101,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entityIsNotPresent(IMPORT_DEVICE_PROFILE_NAME));
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
     @Description("Import device profile with same name")
     public void importDeviceProfileWithSameName() {
@@ -111,6 +121,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
         Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE);
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 30, groups = "smoke")
     @Description("*CHANGE TESTCASE*")
     public void importDeviceProfileWithoutRefresh() {
