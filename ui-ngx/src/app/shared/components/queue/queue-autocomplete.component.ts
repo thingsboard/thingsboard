@@ -54,6 +54,9 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
   @Input()
   requiredText: string;
 
+  @Input()
+  autocompleteHint: string;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
