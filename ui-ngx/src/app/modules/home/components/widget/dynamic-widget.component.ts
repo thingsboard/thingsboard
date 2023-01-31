@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TbInject } from '@shared/decorators/tb-inject';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 
 @Directive()
 // tslint:disable-next-line:directive-class-suffix
@@ -83,6 +84,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.resourceService = $injector.get(ResourceService);
     this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
     this.ctx.date = $injector.get(DatePipe);
+    this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);
     this.ctx.translate = $injector.get(TranslateService);
     this.ctx.http = $injector.get(HttpClient);
     this.ctx.sanitizer = $injector.get(DomSanitizer);

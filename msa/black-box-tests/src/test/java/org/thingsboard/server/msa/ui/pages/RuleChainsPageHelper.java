@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
     }
 
     private String ruleChainName;
+    private String description;
 
     public void setRuleChainNameWithoutRoot() {
         this.ruleChainName = notRootRuleChainsNames().get(getRandomNumberFromRuleChainsCount()).getText();
@@ -56,12 +57,21 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
         this.ruleChainName = notRootRuleChainsNames().get(number).getText();
     }
 
+    public void setDescription() {
+        scrollToElement(descriptionEntityView());
+        this.description = descriptionEntityView().getAttribute("value");
+    }
+
     public void setRuleChainName(int number) {
         this.ruleChainName = allNames().get(number).getText();
     }
 
     public String getRuleChainName() {
         return this.ruleChainName;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public String deleteRuleChainFromView(String ruleChainName) {
@@ -99,10 +109,6 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
 
     public boolean ruleChainsIsNotPresent(String ruleChainName) {
         return elementsIsNotPresent(getEntity(ruleChainName));
-    }
-
-    public void doubleClickOnRuleChain(String ruleChainName) {
-        doubleClick(entity(ruleChainName));
     }
 
     public void sortByNameDown() {

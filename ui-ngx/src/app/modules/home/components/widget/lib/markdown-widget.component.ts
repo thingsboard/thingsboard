@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ interface MarkdownWidgetSettings {
   markdownCss: string;
 }
 
-type MarkdownTextFunction = (data: FormattedData[]) => string;
+type MarkdownTextFunction = (data: FormattedData[], ctx: WidgetContext) => string;
 
 @Component({
   selector: 'tb-markdown-widget ',
@@ -72,7 +72,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   ngOnInit(): void {
     this.ctx.$scope.markdownWidget = this;
     this.settings = this.ctx.settings;
-    this.markdownTextFunction = this.settings.useMarkdownTextFunction ? parseFunction(this.settings.markdownTextFunction, ['data']) : null;
+    this.markdownTextFunction = this.settings.useMarkdownTextFunction ?
+      parseFunction(this.settings.markdownTextFunction, ['data', 'ctx']) : null;
     this.markdownClass = 'markdown-widget';
     const cssString = this.settings.markdownCss;
     if (isNotEmptyStr(cssString)) {
@@ -117,7 +118,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     }
     const data = formattedDataFormDatasourceData(initialData);
     let markdownText = this.settings.useMarkdownTextFunction ?
-      safeExecute(this.markdownTextFunction, [data]) : this.settings.markdownTextPattern;
+      safeExecute(this.markdownTextFunction, [data, this.ctx]) : this.settings.markdownTextPattern;
     const allData: FormattedData = flatDataWithoutOverride(data);
     markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {

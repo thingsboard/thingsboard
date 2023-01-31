@@ -3,7 +3,7 @@
     "additionalInfo": {
       "description": ""
     },
-    "name": "Rule Chain from Import",
+    "name": "Rule Chain For Import",
     "type": "CORE",
     "firstRuleNodeId": null,
     "root": false,
