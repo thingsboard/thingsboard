@@ -23,6 +23,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
@@ -64,6 +65,10 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NOTIFICATION_RULE_RECIPIENTS_CONFIG_PROPERTY, nullable = false)
     private JsonNode recipientsConfig;
 
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_RULE_ADDITIONAL_CONFIG_PROPERTY)
+    private JsonNode additionalConfig;
+
     public NotificationRuleEntity() {}
 
     public NotificationRuleEntity(NotificationRule notificationRule) {
@@ -75,6 +80,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setTriggerType(notificationRule.getTriggerType());
         setTriggerConfig(toJson(notificationRule.getTriggerConfig()));
         setRecipientsConfig(toJson(notificationRule.getRecipientsConfig()));
+        setAdditionalConfig(toJson(notificationRule.getAdditionalConfig()));
     }
 
     public NotificationRuleEntity(NotificationRuleEntity other) {
@@ -86,6 +92,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         this.triggerType = other.triggerType;
         this.triggerConfig = other.triggerConfig;
         this.recipientsConfig = other.recipientsConfig;
+        this.additionalConfig = other.additionalConfig;
     }
 
     @Override
@@ -99,6 +106,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         notificationRule.setTriggerType(triggerType);
         notificationRule.setTriggerConfig(fromJson(triggerConfig, NotificationRuleTriggerConfig.class));
         notificationRule.setRecipientsConfig(fromJson(recipientsConfig, NotificationRuleRecipientsConfig.class));
+        notificationRule.setAdditionalConfig(fromJson(additionalConfig, NotificationRuleConfig.class));
         return notificationRule;
     }
 

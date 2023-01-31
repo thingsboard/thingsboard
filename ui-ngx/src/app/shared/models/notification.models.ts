@@ -131,13 +131,21 @@ export interface NonConfirmedNotificationEscalation {
 
 export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>{
   tenantId: TenantId;
+  type: NotificationTargetType;
   configuration: NotificationTargetConfig;
 }
 
-export interface NotificationTargetConfig extends
+export interface NotificationTargetConfig extends Partial<PlatformUsersNotificationTargetConfig & SlackNotificationTargetConfig> {
+  description?: string;
+  type: NotificationTargetType;
+}
+export interface PlatformUsersNotificationTargetConfig {
+  usersFilter: UsersFilter;
+}
+
+export interface UsersFilter extends
   Partial<UserListNotificationTargetConfig & CustomerUsersNotificationTargetConfig>{
   type: NotificationTargetConfigType;
-  description?: string;
 }
 
 interface UserListNotificationTargetConfig {
@@ -148,6 +156,21 @@ interface CustomerUsersNotificationTargetConfig {
   customerId: string;
   getCustomerIdFromOriginatorEntity: boolean;
 }
+
+export interface SlackNotificationTargetConfig {
+  conversationType: SlackConversation;
+  conversationId: string;
+  conversationName: string;
+}
+export enum NotificationTargetType {
+  PLATFORM_USERS = 'PLATFORM_USERS',
+  SLACK = 'SLACK'
+}
+
+export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetType, string>([
+  [NotificationTargetType.PLATFORM_USERS, 'notification.platform-users'],
+  [NotificationTargetType.SLACK, 'notification.slack']
+]);
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
   tenantId: TenantId;

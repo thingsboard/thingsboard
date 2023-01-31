@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets.slack;
+@import "../../../../../../theme";
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
+:host ::ng-deep {
+  .mat-radio-group {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 8px;
 
-import javax.validation.constraints.NotEmpty;
+    .mat-radio-button {
+      flex: 1 1 100%;
+      padding: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SlackConversation implements NotificationRecipient {
+      &:not(:last-child){
+        margin-right: 8px;
+      }
 
-    @NotEmpty
-    private String id;
-    @NotEmpty
-    private String name;
-
+      &.mat-radio-checked {
+        border-color: map_get($tb-accent, 500);
+      }
+    }
+  }
 }

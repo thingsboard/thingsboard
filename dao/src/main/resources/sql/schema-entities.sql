@@ -808,6 +808,7 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     trigger_type VARCHAR(50) NOT NULL,
     trigger_config VARCHAR(1000) NOT NULL,
     recipients_config VARCHAR(10000) NOT NULL,
+    additional_config VARCHAR(255),
     CONSTRAINT uq_notification_rule_name UNIQUE (tenant_id, name)
 );
 

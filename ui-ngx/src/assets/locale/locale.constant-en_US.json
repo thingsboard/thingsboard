@@ -2745,6 +2745,7 @@
         "no-rules-notification": "No rules notification",
         "rule": "Rule",
         "rules": "Rules",
+        "platform-users": "Platform users",
         "search-notification": "Search notification",
         "search-targets": "Search recipients",
         "search-templates": "Search templates",
@@ -2753,6 +2754,7 @@
         "send-test-notification": "Send test notification",
         "sent": "Sent",
         "settings": "Notification settings",
+        "slack": "Slack",
         "slack-chanel-type": "Slack chanel type",
         "slack-chanel-types": {
             "direct": "Direct message",

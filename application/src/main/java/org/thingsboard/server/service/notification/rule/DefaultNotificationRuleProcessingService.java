@@ -151,7 +151,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
             notificationExecutor.submit(() -> {
                 try {
-                    log.debug("Submitting notification request for rule '{}' with delay of {} ms to targets {}", rule.getName(), delay, targets);
+                    log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delay, targets);
                     submitNotificationRequest(targets, rule, originatorEntityId, notificationInfo, delay);
                 } catch (Exception e) {
                     log.error("Failed to submit notification request for rule {}", rule.getId(), e);
