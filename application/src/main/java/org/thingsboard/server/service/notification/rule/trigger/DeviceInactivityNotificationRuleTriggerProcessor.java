@@ -38,10 +38,10 @@ public class DeviceInactivityNotificationRuleTriggerProcessor implements Notific
     public boolean matchesFilter(TbMsg ruleEngineMsg, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
         DeviceId deviceId = (DeviceId) ruleEngineMsg.getOriginator();
         if (CollectionUtils.isNotEmpty(triggerConfig.getDevices())) {
-            return triggerConfig.getDevices().contains(deviceId);
+            return triggerConfig.getDevices().contains(deviceId.getId());
         } else if (CollectionUtils.isNotEmpty(triggerConfig.getDeviceProfiles())) {
             DeviceProfile deviceProfile = deviceProfileCache.get(TenantId.SYS_TENANT_ID, deviceId);
-            return deviceProfile != null && triggerConfig.getDeviceProfiles().contains(deviceProfile.getId());
+            return deviceProfile != null && triggerConfig.getDeviceProfiles().contains(deviceProfile.getUuidId());
         } else {
             return true;
         }

@@ -15,11 +15,18 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public enum NotificationDeliveryMethod {
 
-    PUSH,
-    EMAIL,
-    SMS,
-    SLACK
+    PUSH("push-notification"),
+    EMAIL("email"),
+    SMS("SMS"),
+    SLACK("Slack");
+
+    @Getter
+    private final String name;
 
 }

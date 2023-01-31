@@ -113,17 +113,13 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
-            if (settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod) &&
-                    !settings.getDeliveryMethodsConfigs().get(deliveryMethod).isEnabled()) {
-                throw new IllegalArgumentException("Delivery method " + deliveryMethod + " is disabled");
-            }
             if (deliveryMethod == NotificationDeliveryMethod.SLACK) {
                 if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod)) {
                     throw new IllegalArgumentException("Slack must be configured in the settings");
                 }
             }
             if (targets.stream().noneMatch(target -> target.getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
-                throw new IllegalArgumentException("Target for " + deliveryMethod + " delivery method is missing");
+                throw new IllegalArgumentException("Target for " + deliveryMethod.getName() + " delivery method is missing");
             }
         });
 

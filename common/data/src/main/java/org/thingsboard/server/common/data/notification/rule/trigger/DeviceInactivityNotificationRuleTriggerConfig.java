@@ -16,16 +16,15 @@
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 public class DeviceInactivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private Set<DeviceId> devices;
-    private Set<DeviceProfileId> deviceProfiles;
+    private Set<UUID> devices;
+    private Set<UUID> deviceProfiles;
     // set either devices or profiles
 
     @Override

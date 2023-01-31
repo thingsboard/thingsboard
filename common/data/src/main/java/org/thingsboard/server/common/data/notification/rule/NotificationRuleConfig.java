@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.settings;
+package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-
-import javax.validation.constraints.NotEmpty;
 
 @Data
-public class SlackNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
+public class NotificationRuleConfig {
 
-    @NotEmpty
-    private String botToken;
-
-    @Override
-    public NotificationDeliveryMethod getMethod() {
-        return NotificationDeliveryMethod.SLACK;
-    }
+    private String description;
 
 }

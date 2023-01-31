@@ -92,4 +92,9 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
         return status == NotificationRequestStatus.SENT;
     }
 
+    @JsonIgnore
+    public boolean isScheduled() {
+        return status == NotificationRequestStatus.SCHEDULED;
+    }
+
 }

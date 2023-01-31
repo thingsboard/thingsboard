@@ -58,11 +58,9 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,8 +105,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         wsClient.subscribeForUnreadNotificationsCount();
         wsClient.waitForReply(true);
 
-        UnreadNotificationsCountUpdate update = wsClient.getLastCountUpdate();
-        assertThat(update.getTotalUnreadCount()).isEqualTo(2);
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> wsClient.getLastCountUpdate().getTotalUnreadCount() == 2);
     }
 
     @Test
@@ -567,8 +565,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     public void testSlackNotifications() throws Exception {
         NotificationSettings settings = new NotificationSettings();
         SlackNotificationDeliveryMethodConfig slackConfig = new SlackNotificationDeliveryMethodConfig();
-        slackConfig.setMethod(NotificationDeliveryMethod.SLACK);
-        slackConfig.setEnabled(true);
         String slackToken = "xoxb-123123123";
         slackConfig.setBotToken(slackToken);
         settings.setDeliveryMethodsConfigs(Map.of(
