@@ -29,7 +29,7 @@ import org.thingsboard.server.service.sms.SmsExecutorService;
 
 @Component
 @RequiredArgsConstructor
-public class SmsNotificationChannel implements NotificationChannel<SmsDeliveryMethodNotificationTemplate> {
+public class SmsNotificationChannel implements NotificationChannel<User, SmsDeliveryMethodNotificationTemplate> {
 
     private final SmsService smsService;
     private final SmsExecutorService executor;

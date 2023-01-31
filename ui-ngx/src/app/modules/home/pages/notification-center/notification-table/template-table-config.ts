@@ -21,7 +21,7 @@ import {
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
-import { NotificationTemplate } from '@shared/models/notification.models';
+import { NotificationTemplate, NotificationTemplateTypeTranslateMap } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
@@ -61,7 +61,8 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
     this.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
 
     this.columns.push(
-      new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%'),
+      new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%',
+        (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
       new EntityTableColumn<NotificationTemplate>('configuration.notificationSubject', 'notification.subject', '25%',
         (template) => template.configuration.notificationSubject, () => ({}), false),
@@ -71,10 +72,22 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationTemplate>> {
-    return [];
+    return [
+      {
+        name: this.translate.instant('notification.copy-template'),
+        icon: 'content_copy',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.editTemplate($event, entity, false, true)
+      }, {
+        name: this.translate.instant('notification.edit-template'),
+        icon: 'edit',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.editTemplate($event, entity)
+      }
+    ];
   }
 
-  private editTemplate($event: Event, template: NotificationTemplate, isAdd = false) {
+  private editTemplate($event: Event, template: NotificationTemplate, isAdd = false, isCopy = false) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -84,6 +97,7 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
+        isCopy,
         template
       }
     }).afterClosed()

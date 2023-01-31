@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets;
+package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+
+import java.util.List;
 
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class AllUsersNotificationTargetConfig extends NotificationTargetConfig {
+public class NotificationRuleInfo extends NotificationRule {
 
-    @Override
-    public NotificationTargetConfigType getType() {
-        return NotificationTargetConfigType.ALL_USERS;
+    private String templateName;
+    private List<NotificationDeliveryMethod> deliveryMethods;
+
+    public NotificationRuleInfo(NotificationRule rule, String templateName, List<NotificationDeliveryMethod> deliveryMethods) {
+        super(rule);
+        this.templateName = templateName;
+        this.deliveryMethods = deliveryMethods;
     }
 
 }

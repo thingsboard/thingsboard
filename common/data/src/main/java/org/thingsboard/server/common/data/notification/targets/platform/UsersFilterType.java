@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.targets.platform;
 
-public enum NotificationDeliveryMethod {
+public enum UsersFilterType {
+    USER_LIST,
+    CUSTOMER_USERS,
+    ALL_USERS
 
-    PUSH,
-    EMAIL,
-    SMS,
-    SLACK
-
+//    USER_GROUP,
+//    USERS_WITH_ROLE,
+//    QUERY // ?
 }

@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.targets;
 
-public enum NotificationDeliveryMethod {
+public interface NotificationRecipient {
 
-    PUSH,
-    EMAIL,
-    SMS,
-    SLACK
+    Object getId();
 
 }

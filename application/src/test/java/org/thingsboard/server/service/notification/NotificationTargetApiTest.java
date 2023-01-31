@@ -23,10 +23,12 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.targets.AllUsersNotificationTargetConfig;
-import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
+import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.notification.NotificationTargetDao;
@@ -51,21 +53,25 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
 
     @Test
     public void givenInvalidNotificationTarget_whenSaving_returnValidationError() throws Exception {
-        NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setTenantId(null);
-        notificationTarget.setName(null);
-        notificationTarget.setConfiguration(null);
+        NotificationTarget target = new NotificationTarget();
+        target.setTenantId(null);
+        target.setName(null);
+        target.setType(null);
+        target.setConfiguration(null);
 
-        String validationError = saveAndGetError(notificationTarget, status().isBadRequest());
+        String validationError = saveAndGetError(target, status().isBadRequest());
         assertThat(validationError)
                 .contains("name must not be")
+                .contains("type must not be")
                 .contains("configuration must not be");
 
-        UserListNotificationTargetConfig userListConfig = new UserListNotificationTargetConfig();
-        userListConfig.setUsersIds(Collections.emptyList());
-        notificationTarget.setConfiguration(userListConfig);
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        UserListFilter userListFilter = new UserListFilter();
+        userListFilter.setUsersIds(Collections.emptyList());
+        targetConfig.setUsersFilter(userListFilter);
+        target.setConfiguration(targetConfig);
 
-        validationError = saveAndGetError(notificationTarget, status().isBadRequest());
+        validationError = saveAndGetError(target, status().isBadRequest());
         assertThat(validationError)
                 .contains("usersIds must not be");
     }
@@ -76,16 +82,18 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(differentTenantId);
         notificationTarget.setName("Target 1");
+        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
 
-        UserListNotificationTargetConfig userListConfig = new UserListNotificationTargetConfig();
-        userListConfig.setUsersIds(List.of(customerUserId.getId(), tenantAdminUserId.getId()));
-        notificationTarget.setConfiguration(userListConfig);
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        UserListFilter userListFilter = new UserListFilter();
+        userListFilter.setUsersIds(List.of(customerUserId.getId(), tenantAdminUserId.getId()));
+        targetConfig.setUsersFilter(userListFilter);
+        notificationTarget.setConfiguration(targetConfig);
 
         saveAndGetError(notificationTarget, status().isForbidden());
 
         loginSysAdmin();
         notificationTarget.setTenantId(TenantId.SYS_TENANT_ID);
-        notificationTarget.setConfiguration(userListConfig);
         save(notificationTarget, status().isOk());
     }
 
@@ -94,9 +102,13 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName("Test target");
-        CustomerUsersNotificationTargetConfig customerUsersConfig = new CustomerUsersNotificationTargetConfig();
-        customerUsersConfig.setCustomerId(customerId.getId());
-        notificationTarget.setConfiguration(customerUsersConfig);
+        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
+
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        CustomerUsersFilter customerUsersFilter = new CustomerUsersFilter();
+        customerUsersFilter.setCustomerId(customerId.getId());
+        targetConfig.setUsersFilter(customerUsersFilter);
+        notificationTarget.setConfiguration(targetConfig);
 
         List<User> recipients = getRecipients(notificationTarget);
         assertThat(recipients).size().isNotZero();
@@ -104,8 +116,8 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
             assertThat(recipient.getCustomerId()).isEqualTo(customerId);
         });
 
-        AllUsersNotificationTargetConfig allUsersConfig = new AllUsersNotificationTargetConfig();
-        notificationTarget.setConfiguration(allUsersConfig);
+        AllUsersFilter allUsersFilter = new AllUsersFilter();
+        targetConfig.setUsersFilter(allUsersFilter);
         recipients = getRecipients(notificationTarget);
         assertThat(recipients).size().isGreaterThanOrEqualTo(2);
         assertThat(recipients).allSatisfy(recipient -> {
@@ -129,8 +141,11 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         createDifferentTenant();
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setName("Test 1");
+        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
         notificationTarget.setTenantId(differentTenantId);
-        notificationTarget.setConfiguration(new AllUsersNotificationTargetConfig());
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        targetConfig.setUsersFilter(new AllUsersFilter());
+        notificationTarget.setConfiguration(targetConfig);
         save(notificationTarget, status().isOk());
         assertThat(notificationTargetDao.find(TenantId.SYS_TENANT_ID)).isNotEmpty();
 

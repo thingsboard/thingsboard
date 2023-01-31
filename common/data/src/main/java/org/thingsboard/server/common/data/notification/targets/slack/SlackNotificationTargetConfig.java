@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.template;
+package org.thingsboard.server.common.data.notification.targets.slack;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
+
+import javax.validation.constraints.NotEmpty;
 
 @Data
-@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
-public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
+public class SlackNotificationTargetConfig extends NotificationTargetConfig {
 
-    public SlackDeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {
-        super(other);
-    }
-
-    @Override
-    public NotificationDeliveryMethod getMethod() {
-        return NotificationDeliveryMethod.SLACK;
-    }
+    private SlackConversationType conversationType;
+    @NotEmpty
+    private String conversationId;
+    @NotEmpty
+    private String conversationName;
 
     @Override
-    public SlackDeliveryMethodNotificationTemplate copy() {
-        return new SlackDeliveryMethodNotificationTemplate(this);
+    public NotificationTargetType getType() {
+        return NotificationTargetType.SLACK;
     }
 
 }

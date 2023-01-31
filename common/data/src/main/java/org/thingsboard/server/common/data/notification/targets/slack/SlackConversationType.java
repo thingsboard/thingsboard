@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.template;
+package org.thingsboard.server.common.data.notification.targets.slack;
 
-import lombok.Data;
-
-@Data
-public class SlackConversation {
-
-    private String id;
-    private String name;
-
-    public enum Type {
-        DIRECT,
-        PUBLIC_CHANNEL,
-        PRIVATE_CHANNEL
-    }
-
+public enum SlackConversationType {
+    DIRECT,
+    PUBLIC_CHANNEL,
+    PRIVATE_CHANNEL
 }

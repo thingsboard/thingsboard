@@ -251,6 +251,9 @@ export class EntityService {
           (id) => this.widgetService.getWidgetsBundle(id, config),
           entityIds);
         break;
+      case EntityType.NOTIFICATION_TARGET:
+        observable = of([]);
+        break;
     }
     return observable;
   }

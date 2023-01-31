@@ -20,13 +20,10 @@
   height: 100%;
   display: block;
   .tb-notification-center {
+    padding: 8px;
     width: 100%;
     height: 100%;
     display: block;
-
-    .tb-notification-draw-container {
-      margin: 8px;
-    }
 
     .tb-notification-center-content {
       width: 100%;
@@ -58,33 +55,51 @@
         flex-direction: column;
         flex: 1 1 100%;
       }
-    }
 
-    .notification-settings {
-      width: 100%;
-      padding: 24px;
-
-      .title {
-        margin: 0;
-        line-height: 1.4rem;
-      }
-
-      .fields-group {
-        padding: 8px 16px 0;
-        margin: 10px 0;
-        border: 1px groove rgba(0, 0, 0, .25);
-        border-radius: 4px;
-
-        legend {
-          color: rgba(0, 0, 0, .7);
-        }
-
-        .delivery-method {
-          margin-bottom: 8px;
-        }
-      }
+      //.mat-toolbar-tools{
+      //  min-height: auto;
+      //}
+      //
+      //.title-container{
+      //  overflow: hidden;
+      //}
+      //
+      //.tb-entity-table-title {
+      //  padding-right: 20px;
+      //  white-space: nowrap;
+      //  overflow: hidden;
+      //  text-overflow: ellipsis;
+      //}
+      //
+      //.table-container {
+      //  overflow: auto;
+      //}
+      //
+      //.tb-entity-table-info{
+      //  white-space: nowrap;
+      //  overflow: hidden;
+      //  text-overflow: ellipsis;
+      //}
+      //
+      //.button-widget-action{
+      //  margin-left: auto;
+      //  overflow: hidden;
+      //  text-overflow: ellipsis;
+      //}
     }
   }
+
+  //@media #{$mat-xs} {
+  //  .mat-toolbar {
+  //    height: auto;
+  //    min-height: 100px;
+  //
+  //    .tb-entity-table-title{
+  //      padding-bottom: 5px;
+  //      width: 100%;
+  //    }
+  //  }
+  //}
 
   @media #{$mat-xs} {
     .tb-notification-center {

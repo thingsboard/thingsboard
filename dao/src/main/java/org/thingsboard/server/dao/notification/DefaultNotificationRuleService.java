@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -61,6 +62,16 @@ public class DefaultNotificationRuleService extends AbstractCachedEntityService<
     @Override
     public NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
         return notificationRuleDao.findById(tenantId, id.getId());
+    }
+
+    @Override
+    public NotificationRuleInfo findNotificationRuleInfoById(TenantId tenantId, NotificationRuleId id) {
+        return notificationRuleDao.findInfoById(tenantId, id);
+    }
+
+    @Override
+    public PageData<NotificationRuleInfo> findNotificationRulesInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        return notificationRuleDao.findInfosByTenantIdAndPageLink(tenantId, pageLink);
     }
 
     @Override

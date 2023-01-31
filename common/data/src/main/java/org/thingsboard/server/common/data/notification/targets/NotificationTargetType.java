@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.targets;
 
-public enum NotificationDeliveryMethod {
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-    PUSH,
-    EMAIL,
-    SMS,
-    SLACK
+import java.util.Set;
+
+@RequiredArgsConstructor
+public enum NotificationTargetType {
+
+    PLATFORM_USERS(Set.of(NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS)),
+    SLACK(Set.of(NotificationDeliveryMethod.SLACK));
+
+    @Getter
+    private final Set<NotificationDeliveryMethod> supportedDeliveryMethods;
 
 }

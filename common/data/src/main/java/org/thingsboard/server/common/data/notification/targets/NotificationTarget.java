@@ -37,6 +37,8 @@ public class NotificationTarget extends BaseData<NotificationTargetId> implement
     @NoXss
     private String name;
     @NotNull
+    private NotificationTargetType type;
+    @NotNull
     @Valid
     private NotificationTargetConfig configuration;
 

@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.notification.rule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -33,6 +34,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName {
 
@@ -49,6 +51,16 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     @NotNull
     @Valid
     private NotificationRuleRecipientsConfig recipientsConfig; // todo: add pg_tgrm index (but index is 2.5x size of the column)
+
+    public NotificationRule(NotificationRule other) {
+        super(other);
+        this.tenantId = other.tenantId;
+        this.name = other.name;
+        this.templateId = other.templateId;
+        this.triggerType = other.triggerType;
+        this.triggerConfig = other.triggerConfig;
+        this.recipientsConfig = other.recipientsConfig;
+    }
 
     @JsonIgnore
     @AssertTrue(message = "trigger type not matching")

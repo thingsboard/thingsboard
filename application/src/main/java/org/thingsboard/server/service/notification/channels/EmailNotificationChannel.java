@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.notification.NotificationProcessingCon
 
 @Component
 @RequiredArgsConstructor
-public class EmailNotificationChannel implements NotificationChannel<EmailDeliveryMethodNotificationTemplate> {
+public class EmailNotificationChannel implements NotificationChannel<User, EmailDeliveryMethodNotificationTemplate> {
 
     private final MailService mailService;
     private final MailExecutorService executor;

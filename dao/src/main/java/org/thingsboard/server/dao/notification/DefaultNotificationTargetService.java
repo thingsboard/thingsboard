@@ -24,10 +24,12 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
-import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -71,6 +73,11 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     }
 
     @Override
+    public List<NotificationTarget> findNotificationTargetsByTenantIdAndIds(TenantId tenantId, List<NotificationTargetId> ids) {
+        return notificationTargetDao.findByTenantIdAndIds(tenantId, ids);
+    }
+
+    @Override
     public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId targetId, PageLink pageLink) {
         NotificationTarget notificationTarget = findNotificationTargetById(tenantId, targetId);
         Objects.requireNonNull(notificationTarget, "Notification target [" + targetId + "] not found");
@@ -85,9 +92,13 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
 
     @Override
     public PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, CustomerId customerId, NotificationTargetConfig targetConfig, PageLink pageLink) {
-        switch (targetConfig.getType()) {
+        if (!(targetConfig instanceof PlatformUsersNotificationTargetConfig)) {
+            throw new IllegalArgumentException("Unsupported target type " + targetConfig.getType());
+        }
+        UsersFilter usersFilter = ((PlatformUsersNotificationTargetConfig) targetConfig).getUsersFilter();
+        switch (usersFilter.getType()) {
             case USER_LIST: {
-                List<User> users = ((UserListNotificationTargetConfig) targetConfig).getUsersIds().stream()
+                List<User> users = ((UserListFilter) usersFilter).getUsersIds().stream()
                         .map(UserId::new).map(userId -> userService.findUserById(tenantId, userId))
                         .collect(Collectors.toList());
                 return new PageData<>(users, 1, users.size(), false);
@@ -96,7 +107,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                 if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
                     throw new IllegalArgumentException("Customer users target is not supported for system administrator");
                 }
-                CustomerUsersNotificationTargetConfig customerUsersConfig = (CustomerUsersNotificationTargetConfig) targetConfig;
+                CustomerUsersFilter customerUsersConfig = (CustomerUsersFilter) usersFilter;
                 if (!customerUsersConfig.isGetCustomerIdFromOriginatorEntity()) {
                     customerId = new CustomerId(customerUsersConfig.getCustomerId());
                 }
