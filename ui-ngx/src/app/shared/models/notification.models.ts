@@ -147,9 +147,8 @@ interface CustomerUsersNotificationTargetConfig {
 }
 
 export interface SlackNotificationTargetConfig {
-  conversationType: SlackConversation;
-  conversationId: string;
-  conversationName: string;
+  conversationType: SlackChanelType;
+  conversation: SlackConversation;
 }
 export enum NotificationTargetType {
   PLATFORM_USERS = 'PLATFORM_USERS',
@@ -242,9 +241,9 @@ export enum NotificationRequestStatus {
 }
 
 export const NotificationRequestStatusTranslateMap = new Map<NotificationRequestStatus, string>([
-  [NotificationRequestStatus.PROCESSING, 'notification.requet-status.processing'],
-  [NotificationRequestStatus.SCHEDULED, 'notification.requet-status.scheduled'],
-  [NotificationRequestStatus.SENT, 'notification.requet-status.sent']
+  [NotificationRequestStatus.PROCESSING, 'notification.request-status.processing'],
+  [NotificationRequestStatus.SCHEDULED, 'notification.request-status.scheduled'],
+  [NotificationRequestStatus.SENT, 'notification.request-status.sent']
 ]);
 
 export enum SlackChanelType {

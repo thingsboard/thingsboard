@@ -19,9 +19,7 @@ import {
   NotificationDeliveryMethodTranslateMap,
   NotificationTemplate,
   NotificationTemplateTypeTranslateMap,
-  NotificationType,
-  SlackChanelType,
-  SlackChanelTypesTranslateMap
+  NotificationType
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -66,11 +64,9 @@ export class TemplateNotificationDialogComponent
   dialogTitle = 'notification.edit-notification-template';
 
   notificationTypes = Object.keys(NotificationType) as NotificationType[];
-  slackChanelTypes = Object.keys(SlackChanelType) as SlackChanelType[];
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
-  slackChanelTypesTranslateMap = SlackChanelTypesTranslateMap;
 
   selectedIndex = 0;
 
@@ -168,9 +164,7 @@ export class TemplateNotificationDialogComponent
     });
 
     this.slackTemplateForm = this.fb.group({
-      body: [''],
-      conversationId: ['', Validators.required],
-      conversationType: [SlackChanelType.DIRECT]
+      body: ['']
     });
 
     this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([

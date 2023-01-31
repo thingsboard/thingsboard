@@ -2725,8 +2725,9 @@
         "notification-center": "Notification center",
         "notification-target": "Notification recipient",
         "notify-again": "Notify again",
+        "recipient-type": "Recipient type",
         "recipients-count": "{ count, plural, 1 {1 Recipient} other {# Recipients} }",
-        "requet-status": {
+        "request-status": {
             "processing": "Processing",
             "scheduled": "Scheduled",
             "sent": "Sent"
@@ -2759,7 +2760,7 @@
         "target-type": {
             "all-users": "All users",
             "customer-users": "Customer users",
-            "type": "Type",
+            "user-filters": "User filter",
             "user-list": "User list"
         },
         "targets": "Recipients",

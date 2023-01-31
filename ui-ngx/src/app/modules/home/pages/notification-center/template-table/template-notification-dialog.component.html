@@ -93,7 +93,11 @@
         </mat-form-field>
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.message</mat-label>
-          <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+          <textarea matInput
+                    cdkTextareaAutosize
+                    formControlName="body"
+                    [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+          </textarea>
         </mat-form-field>
         <section formGroupName="additionalConfig">
           <section formGroupName="icon" class="additional-config-group">
@@ -155,7 +159,11 @@
       <form [formGroup]="smsTemplateForm">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.message</mat-label>
-          <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+          <textarea matInput
+                    cdkTextareaAutosize
+                    formControlName="body"
+                    [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+          </textarea>
         </mat-form-field>
       </form>
     </mat-step>
@@ -165,20 +173,12 @@
       <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.message</mat-label>
-          <input matInput formControlName="body" [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+          <textarea matInput
+                    cdkTextareaAutosize
+                    formControlName="body"
+                    [placeholder]="templateNotificationForm.get('configuration.defaultTextTemplate').value">
+          </textarea>
         </mat-form-field>
-        <label>{{ 'Recipient type' | translate }}</label>
-        <mat-radio-group formControlName="conversationType">
-          <mat-radio-button *ngFor="let slackChanelType of slackChanelTypes" [value]="slackChanelType">
-            <div fxLayout="column">
-              <div>{{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}</div>
-            </div>
-          </mat-radio-button>
-        </mat-radio-group>
-        <tb-slack-conversation-autocomplete
-          formControlName="conversationId" required
-          [slackChanelType]="slackTemplateForm.get('conversationType').value">
-        </tb-slack-conversation-autocomplete>
       </form>
     </mat-step>
   </mat-horizontal-stepper>
