@@ -25,8 +25,6 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardResolver } from '@app/modules/home/pages/dashboard/dashboard-routing.module';
 import { UtilsService } from '@core/services/utils.service';
 import { Widget } from '@app/shared/models/widget.models';
-import { MODULES_MAP } from '../../shared/models/constants';
-import { modulesMap } from '../common/modules-map';
 
 @Injectable()
 export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
@@ -97,11 +95,7 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     WidgetEditorDashboardResolver,
-    DashboardResolver,
-    {
-      provide: MODULES_MAP,
-      useValue: modulesMap
-    }
+    DashboardResolver
   ]
 })
 export class DashboardPagesRoutingModule { }
