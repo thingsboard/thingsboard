@@ -30,7 +30,8 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatStepper } from '@angular/material/stepper';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { map } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
+import { getCurrentTime } from '@shared/models/time/time.models';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -73,7 +74,24 @@ export class RequestNotificationDialogComponent extends
 
     this.notificationRequestForm = this.fb.group({
       templateId: [null, Validators.required],
-      targets: [null, Validators.required]
+      targets: [null, Validators.required],
+      additionalConfig: this.fb.group({
+        enabled: [false],
+        timezone: [{value: '', disabled: true}, Validators.required],
+        time: [{value: 0, disabled: true}, Validators.required]
+      })
+    });
+
+    this.notificationRequestForm.get('additionalConfig.enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.notificationRequestForm.get('additionalConfig.timezone').enable({emitEvent: false});
+        this.notificationRequestForm.get('additionalConfig.time').enable({emitEvent: false});
+      } else {
+        this.notificationRequestForm.get('additionalConfig.timezone').disable({emitEvent: false});
+        this.notificationRequestForm.get('additionalConfig.time').disable({emitEvent: false});
+      }
     });
 
     if (data.isAdd) {
@@ -149,8 +167,14 @@ export class RequestNotificationDialogComponent extends
   }
 
   private get notificationFormValue(): NotificationRequest {
-    const formValue: NotificationRequest = deepTrim(this.notificationRequestForm.value);
-    formValue.additionalConfig = {sendingDelayInSec: 0};
+    const formValue = deepTrim(this.notificationRequestForm.value);
+    let delay = 0;
+    if (formValue.additionalConfig.enabled) {
+      delay = (this.notificationRequestForm.value.additionalConfig.time.valueOf() - this.minDate().valueOf()) / 1000;
+    }
+    formValue.additionalConfig = {
+      sendingDelayInSec: delay > 0 ? delay : 0
+    };
     return formValue;
   }
 
@@ -164,5 +188,9 @@ export class RequestNotificationDialogComponent extends
         return false;
       }
     });
+  }
+
+  minDate(): Date {
+    return new Date(getCurrentTime(this.notificationRequestForm.get('additionalConfig.timezone').value).format('lll'));
   }
 }
