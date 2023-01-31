@@ -14,6 +14,18 @@
 -- limitations under the License.
 --
 
+CREATE TABLE IF NOT EXISTS alarm_comment (
+    id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    alarm_id uuid NOT NULL,
+    user_id uuid,
+    type varchar(255) NOT NULL,
+    comment varchar(10000),
+    CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
+) PARTITION BY RANGE (created_time);
+CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
+
+
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
