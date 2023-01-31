@@ -61,6 +61,15 @@ public class AlarmInfo extends Alarm {
         super(alarm);
     }
 
+    public AlarmInfo(AlarmInfo alarmInfo) {
+        super(alarmInfo);
+        this.originatorName = alarmInfo.originatorName;
+        this.originatorLabel = alarmInfo.originatorLabel;
+        this.assigneeFirstName = alarmInfo.assigneeFirstName;
+        this.assigneeLastName = alarmInfo.assigneeLastName;
+        this.assigneeEmail = alarmInfo.assigneeEmail;
+    }
+
     public AlarmInfo(Alarm alarm, String originatorName, String originatorLabel, String assigneeFirstName, String assigneeLastName, String assigneeEmail) {
         super(alarm);
         this.originatorName = originatorName;
@@ -68,15 +77,6 @@ public class AlarmInfo extends Alarm {
         this.assigneeFirstName = assigneeFirstName;
         this.assigneeLastName = assigneeLastName;
         this.assigneeEmail = assigneeEmail;
-    }
-
-    public AlarmInfo(Alarm alarm, AlarmInfo alarmInfo) {
-        super(alarm);
-        originatorName = alarmInfo.originatorName;
-        originatorLabel = alarmInfo.originatorLabel;
-        assigneeFirstName = alarmInfo.assigneeFirstName;
-        assigneeLastName = alarmInfo.assigneeLastName;
-        assigneeEmail = alarmInfo.assigneeEmail;
     }
 
     @Override

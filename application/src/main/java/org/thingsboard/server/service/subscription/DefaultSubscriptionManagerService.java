@@ -302,7 +302,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                         return null;
                     }
                 },
-                s -> alarmInfo.getCreatedTime() >= s.getTs(),
+                s -> alarmInfo.getCreatedTime() >= s.getTs() || alarmInfo.getAssignTs() >= s.getTs(),
                 s -> alarmInfo,
                 false
         );

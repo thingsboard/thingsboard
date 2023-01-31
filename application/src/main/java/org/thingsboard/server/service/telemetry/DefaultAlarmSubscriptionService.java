@@ -94,7 +94,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public Alarm createOrUpdateAlarm(Alarm alarm) {
+    public AlarmInfo createOrUpdateAlarm(Alarm alarm) {
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm, apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled());
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
@@ -111,7 +111,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         if (result.isCreated()) {
             apiUsageClient.report(alarm.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
         }
-        return new Alarm(result.getAlarmInfo());
+        return result.getAlarmInfo();
     }
 
     @Override
@@ -142,7 +142,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public Alarm assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
+    public AlarmInfo assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
         AlarmOperationResult result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
@@ -153,7 +153,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public Alarm unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
+    public AlarmInfo unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
         AlarmOperationResult result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
         if (result.isSuccessful()) {
             onAlarmUpdated(result);

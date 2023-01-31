@@ -82,7 +82,7 @@ public class DefaultTbAlarmServiceTest {
     @Test
     public void testSave() throws ThingsboardException {
         var alarm = new Alarm();
-        when(alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
+        when((Alarm) alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
         service.save(alarm, new User());
 
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());

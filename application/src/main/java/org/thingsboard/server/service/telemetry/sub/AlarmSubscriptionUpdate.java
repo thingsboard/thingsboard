@@ -69,4 +69,3 @@ public class AlarmSubscriptionUpdate {
                 ", alarm=" + alarm + "]";
     }
 }
-// TODO imbeacon Alarm instead of alarm info
