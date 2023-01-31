@@ -24,9 +24,10 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.OriginatorEntityOwnerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
@@ -107,20 +108,22 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                 if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
                     throw new IllegalArgumentException("Customer users target is not supported for system administrator");
                 }
-                CustomerUsersFilter customerUsersConfig = (CustomerUsersFilter) usersFilter;
-                if (!customerUsersConfig.isGetCustomerIdFromOriginatorEntity()) {
-                    customerId = new CustomerId(customerUsersConfig.getCustomerId());
-                }
-                if (customerId != null && !customerId.isNullUid()) {
-                    return userService.findCustomerUsers(tenantId, customerId, pageLink);
-                }
-                break;
+                CustomerUsersFilter filter = (CustomerUsersFilter) usersFilter;
+                return userService.findCustomerUsers(tenantId, new CustomerId(filter.getCustomerId()), pageLink);
             }
             case ALL_USERS: {
                 if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
                     return userService.findUsersByTenantId(tenantId, pageLink);
                 } else {
                     return userService.findUsers(TenantId.SYS_TENANT_ID, pageLink);
+                }
+            }
+            case ORIGINATOR_ENTITY_OWNER_USERS: {
+                OriginatorEntityOwnerUsersFilter filter = (OriginatorEntityOwnerUsersFilter) usersFilter;
+                if (customerId != null && !customerId.isNullUid()) {
+                    return userService.findCustomerUsers(tenantId, customerId, pageLink);
+                } else {
+                    return userService.findTenantAdmins(tenantId, pageLink); // TODO: or should we send to all users within tenant?
                 }
             }
         }

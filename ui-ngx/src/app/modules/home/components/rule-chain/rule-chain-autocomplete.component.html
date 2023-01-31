@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field [formGroup]="selectRuleChainFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ ruleChainLabel | translate }}"
+  <input matInput type="text" placeholder="{{ labelText | translate }}"
          #ruleChainInput
          formControlName="ruleChainId"
          (focusin)="onFocus()"
@@ -54,4 +54,7 @@
   <mat-error *ngIf="selectRuleChainFormGroup.get('ruleChainId').hasError('required')">
     {{ 'rulechain.rulechain-required' | translate }}
   </mat-error>
+  <mat-hint>
+    <ng-content select="[tb-hint]"></ng-content>
+  </mat-hint>
 </mat-form-field>

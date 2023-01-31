@@ -81,7 +81,7 @@
         }
       }
       .mat-horizontal-content-container {
-        height: 500px;
+        height: 600px;
         max-height: 100%;
         width: 100%;;
         overflow-y: auto;
@@ -108,8 +108,13 @@
       border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 6px;
 
+      .mat-radio-label {
+        white-space: break-spaces;
+        align-items: start;
+      }
+
       &:not(:last-child){
-        margin-right: 8px;
+        margin-bottom: 8px;
       }
 
       &.mat-radio-checked {

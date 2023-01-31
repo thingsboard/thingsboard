@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.util.Map;
 import java.util.UUID;
@@ -28,15 +28,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DeviceInactivityNotificationInfo implements NotificationInfo {
+public class DeviceInactivityNotificationInfo implements RuleOriginatedNotificationInfo {
 
     private UUID deviceId;
     private String deviceName;
     private String deviceType;
+    private CustomerId deviceCustomerId;
 
     @Override
-    public EntityType getOriginatorType() {
-        return EntityType.DEVICE;
+    public CustomerId getOriginatorEntityCustomerId() {
+        return deviceCustomerId;
     }
 
     @Override

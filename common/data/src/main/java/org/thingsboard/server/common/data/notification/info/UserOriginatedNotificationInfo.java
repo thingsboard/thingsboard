@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.notification.info;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 
 import java.util.Collections;
 import java.util.Map;
@@ -25,11 +24,6 @@ import java.util.Map;
 public class UserOriginatedNotificationInfo implements NotificationInfo {
 
     private String description;
-
-    @Override
-    public EntityType getOriginatorType() {
-        return EntityType.USER;
-    }
 
     @Override
     public Map<String, String> getTemplateData() {

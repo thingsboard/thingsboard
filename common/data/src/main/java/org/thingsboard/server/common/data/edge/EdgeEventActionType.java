@@ -34,5 +34,5 @@ public enum EdgeEventActionType {
     ASSIGNED_TO_EDGE,
     UNASSIGNED_FROM_EDGE,
     CREDENTIALS_REQUEST,
-    ENTITY_MERGE_REQUEST
+    ENTITY_MERGE_REQUEST // deprecated
 }

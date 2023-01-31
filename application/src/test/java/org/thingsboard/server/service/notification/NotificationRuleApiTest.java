@@ -100,7 +100,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRuleProcessing_entityActionTrigger() throws Exception {
         String notificationSubject = "${actionType}: ${entityType} [${entityId}]";
-        String notificationText = "User: ${userName}";
+        String notificationText = "User: ${originatorUserName}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.GENERAL, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
 
         NotificationRule notificationRule = new NotificationRule();

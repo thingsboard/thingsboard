@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -70,6 +71,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -202,6 +204,8 @@ public interface TbContext {
      *
      */
 
+    void schedule(Runnable runnable, long delay, TimeUnit timeUnit);
+
     void checkTenantEntity(EntityId entityId);
 
     boolean isLocalEntity(EntityId entityId);
@@ -237,6 +241,8 @@ public interface TbContext {
     DashboardService getDashboardService();
 
     RuleEngineAlarmService getAlarmService();
+
+    AlarmCommentService getAlarmCommentService();
 
     RuleChainService getRuleChainService();
 

@@ -326,7 +326,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         loginTenantAdmin();
 
         sessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
-        NotificationRequest notificationRequest = submitNotificationRequest(targets, "Hello, ${email}", 0,
+        NotificationRequest notificationRequest = submitNotificationRequest(targets, "Hello, ${recipientEmail}", 0,
                 NotificationDeliveryMethod.PUSH);
         await().atMost(10, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
@@ -370,7 +370,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     public void testNotificationRequestPreview() throws Exception {
         NotificationTarget target1 = new NotificationTarget();
         target1.setName("Me");
-        target1.setType(NotificationTargetType.PLATFORM_USERS);
         PlatformUsersNotificationTargetConfig target1Config = new PlatformUsersNotificationTargetConfig();
         UserListFilter userListFilter = new UserListFilter();
         userListFilter.setUsersIds(DaoUtil.toUUIDs(List.of(tenantAdminUserId)));
@@ -391,11 +390,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         }
         NotificationTarget target2 = new NotificationTarget();
         target2.setName("Other customer users");
-        target2.setType(NotificationTargetType.PLATFORM_USERS);
         PlatformUsersNotificationTargetConfig target2Config = new PlatformUsersNotificationTargetConfig();
         CustomerUsersFilter customerUsersFilter = new CustomerUsersFilter();
         customerUsersFilter.setCustomerId(differentCustomerId.getId());
-        customerUsersFilter.setGetCustomerIdFromOriginatorEntity(false);
         target2Config.setUsersFilter(customerUsersFilter);
         target2.setConfiguration(target2Config);
         target2 = saveNotificationTarget(target2);
@@ -407,8 +404,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         String requestorEmail = TENANT_ADMIN_EMAIL;
         NotificationTemplateConfig templateConfig = new NotificationTemplateConfig();
-        templateConfig.setDefaultTextTemplate("Default message for SMS and PUSH: ${email}");
-        templateConfig.setNotificationSubject("Default subject for EMAIL: ${email}");
+        templateConfig.setDefaultTextTemplate("Default message for SMS and PUSH: ${recipientEmail}");
+        templateConfig.setNotificationSubject("Default subject for EMAIL: ${recipientEmail}");
         HashMap<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates = new HashMap<>();
         templateConfig.setDeliveryMethodsTemplates(templates);
         notificationTemplate.setConfiguration(templateConfig);
@@ -416,7 +413,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         PushDeliveryMethodNotificationTemplate pushNotificationTemplate = new PushDeliveryMethodNotificationTemplate();
         pushNotificationTemplate.setEnabled(true);
         // using default message for push
-        pushNotificationTemplate.setSubject("Subject for PUSH: ${email}");
+        pushNotificationTemplate.setSubject("Subject for PUSH: ${recipientEmail}");
         templates.put(NotificationDeliveryMethod.PUSH, pushNotificationTemplate);
 
         SmsDeliveryMethodNotificationTemplate smsNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
@@ -426,13 +423,13 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
         emailNotificationTemplate.setEnabled(true);
-        emailNotificationTemplate.setBody("Message for EMAIL: ${email}");
+        emailNotificationTemplate.setBody("Message for EMAIL: ${recipientEmail}");
         // using default subject for email
         templates.put(NotificationDeliveryMethod.EMAIL, emailNotificationTemplate);
 
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
         slackNotificationTemplate.setEnabled(true);
-        slackNotificationTemplate.setBody("Message for SLACK: ${email}");
+        slackNotificationTemplate.setBody("Message for SLACK: ${recipientEmail}");
         templates.put(NotificationDeliveryMethod.SLACK, slackNotificationTemplate);
 
         notificationTemplate = saveNotificationTemplate(notificationTemplate);
@@ -476,7 +473,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SLACK)).asInstanceOf(type(SlackDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .isEqualTo("Message for SLACK: ${email}"); // ${email} should not be processed
+                            .isEqualTo("Message for SLACK: ${recipientEmail}"); // ${recipientEmail} should not be processed
                 });
     }
 
@@ -510,7 +507,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
         NotificationRequestStats stats = getStats(notificationRequest.getId());
 
-        System.err.println("STATS: " + stats);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(1);
         assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(1);
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
@@ -533,7 +529,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName("All my users");
-        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
         PlatformUsersNotificationTargetConfig config = new PlatformUsersNotificationTargetConfig();
         AllUsersFilter filter = new AllUsersFilter();
         config.setUsersFilter(filter);
@@ -542,7 +537,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationTargetId notificationTargetId = notificationTarget.getId();
 
         ListenableFuture<NotificationRequest> request = executor.submit(() -> {
-            return submitNotificationRequest(notificationTargetId, "Hello, ${email}", 0, NotificationDeliveryMethod.PUSH);
+            return submitNotificationRequest(notificationTargetId, "Hello, ${recipientEmail}", 0, NotificationDeliveryMethod.PUSH);
         });
         await().atMost(10, TimeUnit.SECONDS).until(request::isDone);
         NotificationRequest notificationRequest = request.get();
@@ -577,7 +572,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationTemplate.setName("Slack notification template");
         notificationTemplate.setNotificationType(NotificationType.GENERAL);
         NotificationTemplateConfig config = new NotificationTemplateConfig();
-        config.setDefaultTextTemplate("To Slack :)  ${email}");
+        config.setDefaultTextTemplate("To Slack :)  ${recipientEmail}");
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
         slackNotificationTemplate.setEnabled(true);
         config.setDeliveryMethodsTemplates(Map.of(
@@ -591,7 +586,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName(conversationName + " in Slack");
-        notificationTarget.setType(NotificationTargetType.SLACK);
         SlackNotificationTargetConfig targetConfig = new SlackNotificationTargetConfig();
         targetConfig.setConversation(new SlackConversation(conversationId, conversationName));
         notificationTarget.setConfiguration(targetConfig);

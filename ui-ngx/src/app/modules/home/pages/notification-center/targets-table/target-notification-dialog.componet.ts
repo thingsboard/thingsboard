@@ -83,8 +83,7 @@ export class TargetNotificationDialogComponent extends
         usersFilter: this.fb.group({
           type: [NotificationTargetConfigType.ALL_USERS],
           usersIds: [{value: null, disabled: true}, Validators.required],
-          customerId: [{value: null, disabled: true}, Validators.required],
-          getCustomerIdFromOriginatorEntity: [{value: false, disabled: true}]
+          customerId: [{value: null, disabled: true}, Validators.required]
         }),
         conversationType: [{value: SlackChanelType.DIRECT, disabled: true}],
         conversation: [{value: '', disabled: true}, Validators.required],
@@ -119,19 +118,10 @@ export class TargetNotificationDialogComponent extends
           this.targetNotificationForm.get('configuration.usersFilter.usersIds').enable({emitEvent: false});
           break;
         case NotificationTargetConfigType.CUSTOMER_USERS:
-          this.targetNotificationForm.get('configuration.usersFilter.getCustomerIdFromOriginatorEntity').enable({onlySelf: true});
+          this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
           break;
       }
       this.targetNotificationForm.get('configuration.usersFilter.type').enable({emitEvent: false});
-    });
-    this.targetNotificationForm.get('configuration.usersFilter.getCustomerIdFromOriginatorEntity').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value: boolean) => {
-      if (value) {
-        this.targetNotificationForm.get('configuration.usersFilter.customerId').disable({emitEvent: false});
-      } else {
-        this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
-      }
     });
 
     if (isDefined(data.target)) {

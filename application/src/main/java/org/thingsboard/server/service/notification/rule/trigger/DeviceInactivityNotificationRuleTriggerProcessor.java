@@ -53,6 +53,7 @@ public class DeviceInactivityNotificationRuleTriggerProcessor implements Notific
                 .deviceId(ruleEngineMsg.getOriginator().getId())
                 .deviceName(ruleEngineMsg.getMetaData().getValue("deviceName"))
                 .deviceType(ruleEngineMsg.getMetaData().getValue("deviceType"))
+                .deviceCustomerId(ruleEngineMsg.getCustomerId())
                 .build();
     }
 

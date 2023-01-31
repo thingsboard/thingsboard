@@ -61,9 +61,11 @@ public class EntityActionNotificationRuleTriggerProcessor implements Notificatio
         return EntityActionNotificationInfo.builder()
                 .entityType(entityId.getEntityType())
                 .entityId(entityId.getId())
+                .entityName(ruleEngineMsg.getMetaData().getValue("entityName"))
                 .actionType(actionType)
-                .userId(UUID.fromString(ruleEngineMsg.getMetaData().getValue("userId")))
-                .userName(ruleEngineMsg.getMetaData().getValue("userName"))
+                .originatorUserId(UUID.fromString(ruleEngineMsg.getMetaData().getValue("userId")))
+                .originatorUserName(ruleEngineMsg.getMetaData().getValue("userName"))
+                .entityCustomerId(ruleEngineMsg.getCustomerId())
                 .build();
     }
 

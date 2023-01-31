@@ -15,32 +15,20 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
 
-import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Data
 public class CustomerUsersFilter implements UsersFilter {
 
-    private UUID customerId; // might not be set if using with notification rule
-    private boolean getCustomerIdFromOriginatorEntity; // e.g. from alarm
+    @NotNull
+    private UUID customerId;
 
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.CUSTOMER_USERS;
-    }
-
-    @AssertTrue(message = "customerId is required")
-    @JsonIgnore
-    public boolean isValid() {
-        if (!getCustomerIdFromOriginatorEntity) {
-            return customerId != null && !customerId.equals(EntityId.NULL_UUID);
-        } else {
-            return true;
-        }
     }
 
 }
