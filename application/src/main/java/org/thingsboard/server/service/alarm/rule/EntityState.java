@@ -65,8 +65,8 @@ class EntityState {
     private final EntityId entityId;
     private final TbAlarmRuleContext ctx;
     private final EntityRulesState entityRulesState;
-    private AlarmRuleEntityState state;
-    private PersistedEntityState pes;
+    private final AlarmRuleEntityState state;
+    private final PersistedEntityState pes;
     private DataSnapshot latestValues;
     private final ConcurrentMap<AlarmRuleId, AlarmState> alarmStates = new ConcurrentHashMap<>();
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
@@ -81,12 +81,12 @@ class EntityState {
 
         if (state != null) {
             this.state = state;
-        } else {
-            //TODO: maybe we should search by id here
-        }
-        if (this.state != null) {
-            this.state = state;
-            pes = JacksonUtil.fromString(this.state.getData(), PersistedEntityState.class);
+            this.pes = JacksonUtil.fromString(this.state.getData(), PersistedEntityState.class);
+
+            for (AlarmRule alarmRule : entityRulesState.getAlarmRules().values()) {
+                alarmStates.computeIfAbsent(alarmRule.getId(),
+                        a -> new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
+            }
         } else {
             this.state = new AlarmRuleEntityState();
             this.state.setTenantId(tenantId);
@@ -94,12 +94,6 @@ class EntityState {
 
             pes = new PersistedEntityState();
             pes.setAlarmStates(new HashMap<>());
-        }
-        if (pes != null) {
-            for (AlarmRule alarmRule : entityRulesState.getAlarmRules().values()) {
-                alarmStates.computeIfAbsent(alarmRule.getId(),
-                        a -> new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
-            }
         }
     }
 
@@ -133,7 +127,12 @@ class EntityState {
     }
 
     public void removeAlarmRule(AlarmRuleId alarmRuleId) {
-        //TODO: remove states and persisted states
+        entityRulesState.removeAlarmRule(alarmRuleId);
+        alarmStates.remove(alarmRuleId);
+    }
+
+    public boolean isEmpty() {
+        return alarmStates.isEmpty();
     }
 
     public void harvestAlarms(long ts) throws ExecutionException, InterruptedException {
