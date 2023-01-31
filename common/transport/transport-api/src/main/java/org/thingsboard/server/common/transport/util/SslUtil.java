@@ -27,7 +27,6 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 
 /**
  * @author Valerii Sosliuk
@@ -49,7 +48,7 @@ public class SslUtil {
         String end = "-----END CERTIFICATE-----";
         StringBuilder stringBuilder = new StringBuilder();
         for (Certificate cert: chain) {
-            stringBuilder.append(begin).append(EncryptionUtil.certTrimNewLinesWithoutBeginEnd(Base64Utils.encodeToString(cert.getEncoded()))).append(end).append("\n");
+            stringBuilder.append(begin).append(EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()))).append(end).append("\n");
         }
         return stringBuilder.toString();
     }

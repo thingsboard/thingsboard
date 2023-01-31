@@ -107,11 +107,9 @@ import org.thingsboard.server.service.resource.TbResourceService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -243,41 +241,44 @@ public class DefaultTransportApiService implements TransportApiService {
         }
     }
 
-    private ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certChain, DeviceCredentialsType credentialsType) {
+    protected ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certChain, DeviceCredentialsType credentialsType) {
+        List<String> chain = convertX509CertificateChainToList(certChain);
+        String updateDeviceCertificateValue = chain.get(0);
+        String updateDeviceCertificateHash = EncryptionUtil.getSha3Hash(updateDeviceCertificateValue);
+        String deviceCommonName = "";
         try {
-            List<X509Certificate> chain = getX509CertificateChainFromString(certChain);
-            String updateDeviceCertificateValue = SslUtil.getCertificateString(chain.get(0));
-            String updateDeviceCertificateHash = EncryptionUtil.getSha3Hash(updateDeviceCertificateValue);
-
-            for (X509Certificate cert: chain) {
-                String certificateValue = SslUtil.getCertificateString(cert);
-                String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
-                DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
-                if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-                    return getDeviceInfo(credentials);
+            deviceCommonName = SslUtil.parseCommonName(readCertFile(chain.get(0)));
+        } catch (Exception ignored) {
+        }
+        for (String certificateValue : chain) {
+            String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
+            DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
+            if (credentials != null && credentials.getCredentialsType() == credentialsType) {
+                return getDeviceInfo(credentials);
+            }
+            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(certificateHash);
+            if (deviceProfile != null) {
+                String deviceName = extractDeviceNameFromCNByRegEx(deviceCommonName, deviceProfile.getCertificateRegexPattern());
+                if (deviceName == null) {
+                    log.error("Device name cannot be unmatched from CN!");
+                    return getEmptyTransportApiResponseFuture();
                 }
-                DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(certificateHash);
-                if (deviceProfile != null) {
-                    String deviceName = extractDeviceNameFromCNByRegEx(SslUtil.parseCommonName(chain.get(0)), deviceProfile.getCertificateRegexPattern());
-                    Device device = deviceService.findDeviceByTenantIdAndName(deviceProfile.getTenantId(), deviceName);
-                    if (device != null) {
-                        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
-                        if (deviceCredentials != null && deviceCredentials.getCredentialsType() == credentialsType) {
-                            deviceCredentials = updateDeviceCredentials(device.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
-                        } else if (deviceCredentials == null) {
-                            deviceCredentials = createDeviceCredentials(device.getTenantId(), device.getId(), updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
-                        }
-                        return getDeviceInfo(deviceCredentials);
-                    } else if (deviceProfile.getProvisionType() == DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE && deviceProfile.isAllowCreateNewDevicesByX509Strategy()) {
-                        Device savedDevice = createDevice(deviceProfile.getTenantId(), deviceProfile.getId(), deviceName, deviceProfile.getName());
-                        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
-                        deviceCredentials = updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
-                        return getDeviceInfo(deviceCredentials);
+                Device device = deviceService.findDeviceByTenantIdAndName(deviceProfile.getTenantId(), deviceName);
+                if (device != null) {
+                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
+                    if (deviceCredentials != null && deviceCredentials.getCredentialsType() == credentialsType) {
+                        deviceCredentials = updateDeviceCredentials(device.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
+                    } else if (deviceCredentials == null) {
+                        deviceCredentials = createDeviceCredentials(device.getTenantId(), device.getId(), updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
                     }
+                    return getDeviceInfo(deviceCredentials);
+                } else if (deviceProfile.getProvisionType() == DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE && deviceProfile.isAllowCreateNewDevicesByX509Strategy()) {
+                    Device savedDevice = createDevice(deviceProfile.getTenantId(), deviceProfile.getId(), deviceName, deviceProfile.getName());
+                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
+                    deviceCredentials = updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
+                    return getDeviceInfo(deviceCredentials);
                 }
             }
-        } catch (CertificateEncodingException e) {
-            throw new RuntimeException(e);
         }
         return getEmptyTransportApiResponseFuture();
     }
@@ -727,19 +728,17 @@ public class DefaultTransportApiService implements TransportApiService {
         if (matcher.find()) {
             return matcher.group(0);
         }
-        return commonName;
+        return null;
     }
 
-    private List<X509Certificate> getX509CertificateChainFromString(String certificateChain) {
-        List<X509Certificate> chain = new ArrayList<>();
-        String[] test = Arrays.stream(certificateChain.split("-----BEGIN CERTIFICATE-----")).filter(e -> e.trim().length() > 0).map(EncryptionUtil::certTrimNewLines).toArray(String[]::new);
-        Arrays.stream(test).forEach(s -> {
-            try {
-                chain.add(readCertFile(s));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+    private List<String> convertX509CertificateChainToList(String certificateChain) {
+        List<String> chain = new ArrayList<>();
+        String regex = "-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(certificateChain);
+        while (matcher.find()) {
+            chain.add(EncryptionUtil.certTrimNewLines(matcher.group()));
+        }
         return chain;
     }
 

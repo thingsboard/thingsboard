@@ -48,6 +48,10 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -342,17 +346,15 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     private void formatDeviceProfileCertificate(DeviceProfile deviceProfile) {
-        String certificateValue = deviceProfile.getCertificateValue();
+        String certificateValue = formatCertificateValue(deviceProfile.getCertificateValue());
         String cert = regexCertificateChain(certificateValue);
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
+        deviceProfile.setCertificateValue(certificateValue);
         deviceProfile.setCertificateHash(sha3Hash);
-        if (!isCertificateChain(certificateValue)) {
-            deviceProfile.setCertificateValue(EncryptionUtil.certTrimNewLines(certificateValue));
-        }
     }
 
     private String regexCertificateChain(String chain) {
-        String regex = "-----BEGIN CERTIFICATE-----\\s*((.+\\s+)*?)-----END CERTIFICATE-----";
+        String regex = "-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(chain);
         if (matcher.find()) {
@@ -361,9 +363,18 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         return chain;
     }
 
-    private boolean isCertificateChain(String certificateValue) {
-        int count = certificateValue.split("-----BEGIN CERTIFICATE", -1).length - 1;
-        return count > 1;
+    private String formatCertificateValue(String certificateValue) {
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(certificateValue.getBytes());
+            Certificate[] certificates = cf.generateCertificates(inputStream).toArray(new Certificate[0]);
+            if (certificates.length > 1) {
+                return EncryptionUtil.certTrimNewLinesForChainInDeviceProfile(certificateValue);
+            }
+            return EncryptionUtil.certTrimNewLines(certificateValue);
+        } catch (CertificateException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

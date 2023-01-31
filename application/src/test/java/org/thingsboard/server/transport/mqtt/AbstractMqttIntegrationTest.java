@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.AllowCreatingNewDevicesByX509CertificateProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -94,6 +95,9 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             deviceProfile.setProvisionType(provisionType);
             deviceProfile.setProvisionDeviceKey(config.getProvisionKey());
             deviceProfile.setDescription(transportPayloadType.name() + " Test");
+            deviceProfile.setAllowCreateNewDevicesByX509Strategy(config.allowCreatingNewDeviceByX509Strategy);
+            deviceProfile.setCertificateValue("Device Profile certificate value");
+            deviceProfile.setCertificateRegexPattern(config.getRegEx());
             DeviceProfileData deviceProfileData = new DeviceProfileData();
             DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
             MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
@@ -143,6 +147,9 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                     break;
                 case CHECK_PRE_PROVISIONED_DEVICES:
                     provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(config.getProvisionSecret());
+                    break;
+                case ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE:
+                    provisionConfiguration = new AllowCreatingNewDevicesByX509CertificateProvisionConfiguration(config.getProvisionSecret());
                     break;
                 case DISABLED:
                 default:
