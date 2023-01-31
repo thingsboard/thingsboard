@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.notification.targets.platform.AllUsers
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
@@ -592,8 +593,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationTarget.setName(conversationName + " in Slack");
         notificationTarget.setType(NotificationTargetType.SLACK);
         SlackNotificationTargetConfig targetConfig = new SlackNotificationTargetConfig();
-        targetConfig.setConversationId(conversationId);
-        targetConfig.setConversationName(conversationName);
+        targetConfig.setConversation(new SlackConversation(conversationId, conversationName));
         notificationTarget.setConfiguration(targetConfig);
         notificationTarget = saveNotificationTarget(notificationTarget);
 

@@ -191,8 +191,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
             case SLACK: {
                 SlackNotificationTargetConfig slackTargetConfig = (SlackNotificationTargetConfig) target.getConfiguration();
-                SlackConversation conversation = new SlackConversation(slackTargetConfig.getConversationId(), slackTargetConfig.getConversationName());
-                recipients = List.of(conversation);
+                recipients = List.of(slackTargetConfig.getConversation());
                 break;
             }
             default: {

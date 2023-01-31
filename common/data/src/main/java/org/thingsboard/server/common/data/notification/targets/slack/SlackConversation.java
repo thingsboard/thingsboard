@@ -20,10 +20,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
+import javax.validation.constraints.NotEmpty;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class SlackConversation implements NotificationRecipient {
+
+    @NotEmpty
     private String id;
+    @NotEmpty
     private String name;
+
 }
