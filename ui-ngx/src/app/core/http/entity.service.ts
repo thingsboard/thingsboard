@@ -252,7 +252,7 @@ export class EntityService {
           entityIds);
         break;
       case EntityType.NOTIFICATION_TARGET:
-        observable = of([]);
+        observable = this.notificationService.getNotificationTargetsByIds(entityIds, config);
         break;
     }
     return observable;
