@@ -75,27 +75,9 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
     }
 
     public String deleteRuleChainFromView(String ruleChainName) {
-        String s = "";
-        if (deleteBtnFromView() != null) {
-            deleteBtnFromView().click();
-            warningPopUpYesBtn().click();
-            if (elementIsNotPresent(getWarningMessage())) {
-                return getEntity(ruleChainName);
-            }
-        } else {
-            for (int i = 0; i < notRootRuleChainsNames().size(); i++) {
-                notRootRuleChainsNames().get(i).click();
-                if (deleteBtnFromView() != null) {
-                    deleteBtnFromView().click();
-                    warningPopUpYesBtn().click();
-                    if (elementIsNotPresent(getWarningMessage())) {
-                        s = notRootRuleChainsNames().get(i).getText();
-                        break;
-                    }
-                }
-            }
-        }
-        return s;
+        deleteBtnFromView().click();
+        warningPopUpYesBtn().click();
+        return ruleChainName;
     }
 
     public void assertCheckBoxIsNotDisplayed(String entityName) {
@@ -108,7 +90,7 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
     }
 
     public boolean ruleChainsIsNotPresent(String ruleChainName) {
-        return elementsIsNotPresent(getEntity(ruleChainName));
+        return elementIsNotPresent(getEntity(ruleChainName));
     }
 
     public void sortByNameDown() {

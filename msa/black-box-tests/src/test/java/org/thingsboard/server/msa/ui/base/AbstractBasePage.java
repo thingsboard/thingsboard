@@ -33,6 +33,8 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static org.junit.Assert.fail;
+
 @Slf4j
 abstract public class AbstractBasePage {
     protected WebDriver driver;
@@ -58,6 +60,7 @@ abstract public class AbstractBasePage {
             return wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator)));
         } catch (WebDriverException e) {
             log.error("No visibility element: " + locator);
+            fail("No visibility element: " + locator);
             return null;
         }
     }
@@ -67,6 +70,7 @@ abstract public class AbstractBasePage {
             return wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(locator)));
         } catch (WebDriverException e) {
             log.error("No presence element: " + locator);
+            fail("No presence element: " + locator);
             return null;
         }
     }
@@ -76,6 +80,7 @@ abstract public class AbstractBasePage {
             return wait.until(ExpectedConditions.elementToBeClickable(By.xpath(locator)));
         } catch (WebDriverException e) {
             log.error("No clickable element: " + locator);
+            fail("No clickable element: " + locator);
             return null;
         }
     }
@@ -86,6 +91,7 @@ abstract public class AbstractBasePage {
             return driver.findElements(By.xpath(locator));
         } catch (WebDriverException e) {
             log.error("No visibility elements: " + locator);
+            fail("No visibility elements: " + locator);
             return null;
         }
     }
@@ -96,6 +102,7 @@ abstract public class AbstractBasePage {
             return driver.findElements(By.xpath(locator));
         } catch (WebDriverException e) {
             log.error("No clickable elements: " + locator);
+            fail("No clickable elements: " + locator);
             return null;
         }
     }
@@ -104,7 +111,8 @@ abstract public class AbstractBasePage {
         try {
             wait.until(ExpectedConditions.urlContains(urlPath));
         } catch (WebDriverException e) {
-            log.error("This URL path is missing");
+            log.error("This URL path is missing: " + urlPath);
+            fail("This URL path is missing: " + urlPath);
         }
     }
 
@@ -118,17 +126,13 @@ abstract public class AbstractBasePage {
 
     public boolean elementIsNotPresent(String locator) {
         try {
-            return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator))));
+            wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator))));
+            driver.findElement(By.xpath(locator));
+            log.error("Element is present: " + locator);
+            fail("Element is present: " + locator);
+            return false;
         } catch (WebDriverException e) {
-            throw new AssertionError("Element is present");
-        }
-    }
-
-    public boolean elementsIsNotPresent(String locator) {
-        try {
-            return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath(locator))));
-        } catch (WebDriverException e) {
-            throw new AssertionError("Elements is present");
+            return true;
         }
     }
 
@@ -136,7 +140,8 @@ abstract public class AbstractBasePage {
         try {
             wait.until(ExpectedConditions.numberOfWindowsToBe(tabNumber));
         } catch (WebDriverException e) {
-            log.error("No tabs with this number");
+            log.error("No tabs with this number: " + tabNumber);
+            fail("No tabs with this number: " + tabNumber);
         }
     }
 
@@ -157,7 +162,14 @@ abstract public class AbstractBasePage {
     }
 
     public void waitUntilAttributeContains(WebElement element, String attribute, String value) {
-        wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+        try {
+            wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+        } catch (WebDriverException e) {
+            log.error("Attribute " + attribute + " of element " + element.toString().split(":")[2] + " not contains " + value + "."
+            + " Or element " + element.toString().split(":")[2] + "/attribute " + attribute + " isn't present");
+            fail("Attribute " + attribute + " of element " + element.toString().split(":")[2] + " not contains " + value + "."
+                    + " Or element " + element.toString().split(":")[2] + "/attribute " + attribute + " isn't present");
+        }
     }
 
     public void goToNextTab(int tabNumber) {

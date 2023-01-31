@@ -146,7 +146,7 @@ public class CustomerPageHelper extends CustomerPageElements {
     }
 
     public boolean customerIsNotPresent(String title) {
-        return elementsIsNotPresent(getEntity(title));
+        return elementIsNotPresent(getEntity(title));
     }
 
     public void sortByNameDown() {

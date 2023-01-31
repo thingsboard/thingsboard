@@ -49,6 +49,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.fail;
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
@@ -107,7 +108,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             wait.until(ExpectedConditions.urlContains(urlPath));
         } catch (WebDriverException e) {
-            log.error("This URL path is missing");
+            log.error("This URL path is missing: " + urlPath);
+            fail("This URL path is missing: " + urlPath);
         }
         return driver.getCurrentUrl().contains(urlPath);
     }
@@ -123,6 +125,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                     .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
         } catch (Exception e) {
             log.error("No such rule chain with name: " + name);
+            fail("No such rule chain with name: " + name);
             return null;
         }
     }
@@ -133,6 +136,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
         } catch (Exception e) {
             log.error("No such customer with name: " + name);
+            fail("No such customer with name: " + name);
             return null;
         }
     }
@@ -143,6 +147,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
         } catch (Exception e) {
             log.error("No such device profile with name: " + name);
+            fail("No such device profile with name: " + name);
             return null;
         }
     }
@@ -153,6 +158,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
         } catch (Exception e) {
             log.error("No such asset profile with name: " + name);
+            fail("No such asset profile with name: " + name);
             return null;
         }
     }

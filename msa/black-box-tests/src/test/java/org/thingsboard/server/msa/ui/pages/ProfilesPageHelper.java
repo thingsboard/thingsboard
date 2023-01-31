@@ -171,7 +171,7 @@ public class ProfilesPageHelper extends ProfilesPageElements {
     }
 
     public boolean profileIsNotPresent(String name) {
-        return elementsIsNotPresent(getEntity(name));
+        return elementIsNotPresent(getEntity(name));
     }
 
     public boolean checkBoxIsDisplayed(String name) {
