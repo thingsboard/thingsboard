@@ -122,6 +122,11 @@ export class NotificationService {
     return this.http.delete<void>(`/api/notification/target/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getNotificationTargetsByIds(ids: string[], config?: RequestConfig): Observable<Array<NotificationTarget>> {
+    return this.http.get<Array<NotificationTarget>>(`/api/notification/targets?ids=${ids.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getNotificationTargets(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationTarget>> {
     return this.http.get<PageData<NotificationTarget>>(`/api/notification/targets${pageLink.toQuery()}`,
                                                         defaultHttpOptionsFromConfig(config));

@@ -21,7 +21,7 @@ import {
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
-import { NotificationTarget, NotificationTargetConfigTypeTranslateMap } from '@shared/models/notification.models';
+import { NotificationTarget, NotificationTargetTypeTranslationMap } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -62,9 +62,8 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
 
     this.columns.push(
       new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
-      new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '40%',
-        (target) => this.translate.instant(NotificationTargetConfigTypeTranslateMap.get(target.configuration.type)),
-        () => ({}), false),
+      new EntityTableColumn<NotificationTarget>('type', 'notification.type', '40%',
+        (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.type))),
     new EntityTableColumn<NotificationTarget>('configuration.description', 'notification.description', '40%',
       (target) => target.configuration.description || '',
       () => ({}), false)
