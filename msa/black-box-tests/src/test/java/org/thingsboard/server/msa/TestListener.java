@@ -49,6 +49,12 @@ public class TestListener implements TestLifecycleListener {
                     captureScreen(driver);
                 }
                 break;
+            case BROKEN:
+                log.info("<<<=== Test broken: " + result.getName());
+                if (driver != null) {
+                    captureScreen(driver);
+                }
+                break;
             case SKIPPED:
                 log.info("<<<=== Test skipped: " + result.getName());
                 if (driver != null) {
