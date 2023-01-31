@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpe
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
@@ -60,6 +62,7 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -67,16 +70,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -84,6 +86,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
     private AlarmSubscriptionService alarmSubscriptionService;
+    @Autowired
+    private NotificationRequestService notificationRequestService;
 
     @SpyBean
     private AlarmService alarmService;
@@ -234,15 +238,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             wsClient.close();
         });
 
-        // TODO: test clear rule + alarm not escalated
         // TODO: test severity changes
     }
 
     @Test
     public void testNotificationRuleProcessing_alarmTrigger_clearRule() throws Exception {
-/*
-        String notificationSubject = "New alarm '${alarmType}'";
-        String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
+        String notificationSubject = "${alarmSeverity} alarm '${alarmType}' is ${alarmStatus}";
+        String notificationText = "${alarmId}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
 
         NotificationRule notificationRule = new NotificationRule();
@@ -250,42 +252,59 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
+        String alarmType = "myBoolIsTrue";
+        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(notificationRule.getId(), alarmType);
+        Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
+
         AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
-        triggerConfig.setAlarmTypes(null);
+        triggerConfig.setAlarmTypes(Set.of(alarmType));
         triggerConfig.setAlarmSeverities(null);
+
+        AlarmNotificationRuleTriggerConfig.ClearRule clearRule = new AlarmNotificationRuleTriggerConfig.ClearRule();
+        clearRule.setAlarmStatus(AlarmStatus.CLEARED_UNACK);
+        triggerConfig.setClearRule(clearRule);
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
         recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         recipientsConfig.setEscalationTable(escalationTable);
-        Map<Integer, NotificationApiWsClient> clients = new HashMap<>();
-        for (int delay = 0; delay <= 5; delay++) {
-            Pair<User, NotificationApiWsClient> userAndClient = createUserAndConnectWsClient(Authority.TENANT_ADMIN);
-            NotificationTarget notificationTarget = createNotificationTarget(userAndClient.getFirst().getId());
-            escalationTable.put(delay, List.of(notificationTarget.getUuidId()));
-            clients.put(delay, userAndClient.getSecond());
-        }
+
+        escalationTable.put(0, List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
+        escalationTable.put(1000, List.of(createNotificationTarget(customerUserId).getUuidId()));
+
         notificationRule.setRecipientsConfig(recipientsConfig);
         notificationRule = saveNotificationRule(notificationRule);
 
-
-        String alarmType = "myBoolIsTrue";
-        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(notificationRule.getId(), alarmType);
-        Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
-
-        clients.values().forEach(wsClient -> {
-            wsClient.subscribeForUnreadNotifications(10).waitForReply(true);
-            wsClient.registerWaitForUpdate();
-        });
-
+        getWsClient().subscribeForUnreadNotifications(10).waitForReply(true);
+        getWsClient().registerWaitForUpdate();
         JsonNode attr = JacksonUtil.newObjectNode()
                 .set("bool", BooleanNode.TRUE);
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
-        verify(alarmSubscriptionService, timeout(2000)).createOrUpdateAlarm(argThat(alarm -> alarm.getType().equals(alarmType)));
-        Alarm alarm = alarmSubscri
-*/
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
+        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
+        getWsClient().waitForUpdate(true);
+
+        Notification notification = getWsClient().getLastDataUpdate().getUpdate();
+        assertThat(notification.getSubject()).isEqualTo("CRITICAL alarm '" + alarmType + "' is ACTIVE_UNACK");
+        assertThat(notification.getInfo()).asInstanceOf(type(AlarmNotificationInfo.class))
+                .extracting(AlarmNotificationInfo::getAlarmId).isEqualTo(alarm.getUuidId());
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
+        NotificationRequestInfo scheduledNotificationRequest = findNotificationRequests(EntityType.ALARM).getData().stream()
+                .filter(NotificationRequest::isScheduled)
+                .findFirst().orElse(null);
+        assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
+
+        getWsClient().registerWaitForUpdate();
+        alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), null, System.currentTimeMillis());
+        getWsClient().waitForUpdate(true);
+        notification = getWsClient().getLastDataUpdate().getNotifications().iterator().next();
+        assertThat(notification.getSubject()).isEqualTo("CRITICAL alarm '" + alarmType + "' is CLEARED_UNACK");
+
+        assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
     }
 
     @Test
@@ -357,4 +376,9 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         PageLink pageLink = new PageLink(10);
         return doGetTypedWithPageLink("/api/notification/rules?", new TypeReference<PageData<NotificationRuleInfo>>() {}, pageLink);
     }
+
+    private PageData<NotificationRequestInfo> findNotificationRequests(EntityType originatorType) {
+        return notificationRequestService.findNotificationRequestsInfosByTenantIdAndOriginatorType(tenantId, originatorType, new PageLink(100));
+    }
+
 }

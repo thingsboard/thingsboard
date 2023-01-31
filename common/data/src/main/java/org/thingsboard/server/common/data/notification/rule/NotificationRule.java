@@ -52,6 +52,8 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     @Valid
     private NotificationRuleRecipientsConfig recipientsConfig; // todo: add pg_tgrm index (but index is 2.5x size of the column)
 
+    private NotificationRuleConfig additionalConfig;
+
     public NotificationRule(NotificationRule other) {
         super(other);
         this.tenantId = other.tenantId;
@@ -60,6 +62,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
         this.triggerType = other.triggerType;
         this.triggerConfig = other.triggerConfig;
         this.recipientsConfig = other.recipientsConfig;
+        this.additionalConfig = other.additionalConfig;
     }
 
     @JsonIgnore

@@ -16,12 +16,19 @@
 package org.thingsboard.server.common.data.notification.settings;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+
+import javax.validation.constraints.NotEmpty;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SlackNotificationDeliveryMethodConfig extends NotificationDeliveryMethodConfig {
+public class SlackNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
 
+    @NotEmpty
     private String botToken;
+
+    @Override
+    public NotificationDeliveryMethod getMethod() {
+        return NotificationDeliveryMethod.SLACK;
+    }
 
 }

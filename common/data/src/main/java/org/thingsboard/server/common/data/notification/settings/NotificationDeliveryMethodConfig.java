@@ -15,26 +15,21 @@
  */
 package org.thingsboard.server.common.data.notification.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import javax.validation.constraints.NotNull;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method", include = JsonTypeInfo.As.EXISTING_PROPERTY,
-        visible = true, defaultImpl = NotificationDeliveryMethodConfig.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method")
 @JsonSubTypes({
-        @Type(name = "SLACK", value = SlackNotificationDeliveryMethodConfig.class),
+        @Type(name = "SLACK", value = SlackNotificationDeliveryMethodConfig.class)
 })
-@Data
-public class NotificationDeliveryMethodConfig {
+public interface NotificationDeliveryMethodConfig {
 
-    private boolean enabled;
-    @NotNull
-    private NotificationDeliveryMethod method;
+    @JsonIgnore
+    NotificationDeliveryMethod getMethod();
 
 }
