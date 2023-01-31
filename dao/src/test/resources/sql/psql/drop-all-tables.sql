@@ -41,3 +41,4 @@ DROP TABLE IF EXISTS edge;
 DROP TABLE IF EXISTS edge_event;
 DROP TABLE IF EXISTS rpc;
 DROP TABLE IF EXISTS queue;
+DROP TABLE IF EXISTS alarm_rule_entity_state;

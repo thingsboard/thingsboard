@@ -22,15 +22,15 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface AlarmRuleEntityStateService {
+public interface AlarmRuleEntityStateDao {
+
+    AlarmRuleEntityState saveAlarmRuleEntityState(TenantId tenantId, AlarmRuleEntityState alarmComment);
 
     PageData<AlarmRuleEntityState> findAll(PageLink pageLink);
 
     List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds);
 
-    AlarmRuleEntityState save(TenantId tenantId, AlarmRuleEntityState entityState);
-
-    void deleteByEntityId(TenantId tenantId, EntityId entityId);
-
+    void deleteByEntityId(TenantId tenantId, UUID id);
 }
