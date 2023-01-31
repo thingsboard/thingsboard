@@ -131,6 +131,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.ack_ts as ack_ts," +
             " a.clear_ts as clear_ts," +
             " a.assign_ts as assign_ts," +
+            " a.assignee_id as assignee_id," +
             " a.additional_info as additional_info," +
             " a.end_ts as end_ts," +
             " a.originator_id as originator_id," +

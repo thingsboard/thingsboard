@@ -89,9 +89,9 @@ public class AlarmDataAdapter {
         String assigneeEmail = null;
         if (assigneeIdObj != null) {
             alarm.setAssigneeId(new UserId((UUID) row.get(ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY)));
-            assigneeFirstName = row.get(ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY).toString();
-            assigneeLastName = row.get(ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY).toString();
-            assigneeEmail = row.get(ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY).toString();
+            assigneeFirstName = (String) row.get(ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
+            assigneeLastName = (String) row.get(ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
+            assigneeEmail = (String) row.get(ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
         }
         alarm.setPropagate((boolean) row.get(ModelConstants.ALARM_PROPAGATE_PROPERTY));
         alarm.setPropagateToOwner((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_PROPERTY));
