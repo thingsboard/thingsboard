@@ -176,7 +176,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         profilesPage.addDeviceProfileAddBtn().click();
         this.name = name;
 
-        Assert.assertNotNull(profilesPage.entity(name));
+        Assert.assertNotNull(profilesPage.entity(name + "s"));
         Assert.assertTrue(profilesPage.entity(name).isDisplayed());
     }
 
