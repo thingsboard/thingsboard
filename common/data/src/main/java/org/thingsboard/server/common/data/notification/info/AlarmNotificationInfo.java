@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -32,18 +31,18 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AlarmNotificationInfo implements NotificationInfo {
+public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
 
     private String alarmType;
     private UUID alarmId;
     private EntityId alarmOriginator;
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
-    private CustomerId customerId;
+    private CustomerId alarmCustomerId;
 
     @Override
-    public EntityType getOriginatorType() {
-        return EntityType.ALARM;
+    public CustomerId getOriginatorEntityCustomerId() {
+        return alarmCustomerId;
     }
 
     @Override

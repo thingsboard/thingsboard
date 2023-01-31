@@ -170,6 +170,7 @@ public class EntityActionService {
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }
+                    metaData.putValue("entityName", entity.getName());
                 } else {
                     entityNode = json.createObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {

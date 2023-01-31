@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.notification.targets.platform;
 
 import lombok.Data;
 
-import java.util.Collections;
-import java.util.Map;
-
 @Data
-public class UserOriginatedNotificationInfo implements NotificationInfo {
-
-    private String description;
+public class OriginatorEntityOwnerUsersFilter implements UsersFilter {
 
     @Override
-    public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
+    public UsersFilterType getType() {
+        return UsersFilterType.ORIGINATOR_ENTITY_OWNER_USERS;
     }
 
 }

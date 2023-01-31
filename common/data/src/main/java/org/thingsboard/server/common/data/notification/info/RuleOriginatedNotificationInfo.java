@@ -15,19 +15,10 @@
  */
 package org.thingsboard.server.common.data.notification.info;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.CustomerId;
 
-import java.util.Collections;
-import java.util.Map;
+public interface RuleOriginatedNotificationInfo extends NotificationInfo {
 
-@Data
-public class UserOriginatedNotificationInfo implements NotificationInfo {
-
-    private String description;
-
-    @Override
-    public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
-    }
+    CustomerId getOriginatorEntityCustomerId();
 
 }

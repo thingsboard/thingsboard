@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.HashMap;
@@ -34,11 +33,6 @@ public class RuleEngineOriginatedNotificationInfo implements NotificationInfo {
     private EntityId msgOriginator;
     private String msgType;
     private Map<String, String> msgMetadata;
-
-    @Override
-    public EntityType getOriginatorType() {
-        return EntityType.RULE_CHAIN;
-    }
 
     @Override
     public Map<String, String> getTemplateData() {

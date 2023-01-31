@@ -118,7 +118,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     throw new IllegalArgumentException("Slack must be configured in the settings");
                 }
             }
-            if (targets.stream().noneMatch(target -> target.getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
+            if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
                 throw new IllegalArgumentException("Target for " + deliveryMethod.getName() + " delivery method is missing");
             }
         });
@@ -182,7 +182,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     private List<ListenableFuture<Void>> processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
         Iterable<? extends NotificationRecipient> recipients;
-        switch (target.getType()) {
+        switch (target.getConfiguration().getType()) {
             case PLATFORM_USERS: {
                 recipients = new PageDataIterable<>(pageLink -> {
                     return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), ctx.getCustomerId(), target.getConfiguration(), pageLink);
@@ -200,8 +200,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
 
         Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>(ctx.getDeliveryMethods());
-        deliveryMethods.removeIf(deliveryMethod -> !target.getType().getSupportedDeliveryMethods().contains(deliveryMethod));
-        log.debug("[{}] Processing notification request for {} target ({}) for delivery methods {}", ctx.getRequest().getId(), target.getType(), target.getId(), deliveryMethods);
+        deliveryMethods.removeIf(deliveryMethod -> !target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod));
+        log.debug("[{}] Processing notification request for {} target ({}) for delivery methods {}", ctx.getRequest().getId(), target.getConfiguration().getType(), target.getId(), deliveryMethods);
 
         List<ListenableFuture<Void>> results = new ArrayList<>();
         for (NotificationRecipient recipient : recipients) {

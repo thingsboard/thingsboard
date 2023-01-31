@@ -2713,7 +2713,6 @@
         "edit-notification-template": "Edit notification template",
         "edit-template": "Edit template",
         "email-settings": "Email settings",
-        "get-customer-id-from-originator": "Get Customer id from originator",
         "inbox": "Inbox",
         "link": "Link",
         "link-required": "Link is required",
@@ -2734,7 +2733,7 @@
         "notification-target": "Notification recipient",
         "notify-again": "Notify again",
         "recipients-count": "{ count, plural, 1 {1 Recipient} other {# Recipients} }",
-        "requet-status": {
+        "request-status": {
             "processing": "Processing",
             "scheduled": "Scheduled",
             "sent": "Sent"
@@ -2768,7 +2767,8 @@
             "all-users": "All users",
             "customer-users": "Customer users",
             "type": "Type",
-            "user-list": "User list"
+            "user-list": "User list",
+            "originator-entity-owner-users": "Users of originator entity owner"
         },
         "targets": "Recipients",
         "targets-required": "Recipients is required",
@@ -2776,7 +2776,15 @@
         "template-required": "Template is required",
         "template-type": {
             "alarm": "Alarm",
-            "general": "General"
+            "general": "General",
+            "device-inactivity": "Device inactivity",
+            "entity-action": "Entity action"
+        },
+        "template-hint": {
+            "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}",
+            "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}",
+            "device-inactivity": "Available params: ${deviceName}, ${deviceType}, ${deviceId}",
+            "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}"
         },
         "templates": "Templates",
         "text": "Text",

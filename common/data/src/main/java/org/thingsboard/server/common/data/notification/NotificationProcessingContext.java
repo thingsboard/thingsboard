@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
@@ -120,22 +121,18 @@ public class NotificationProcessingContext {
 
     public Map<String, String> createTemplateContext(User recipient) {
         Map<String, String> templateContext = new HashMap<>();
-        templateContext.put("email", recipient.getEmail());
-        templateContext.put("firstName", Strings.nullToEmpty(recipient.getFirstName()));
-        templateContext.put("lastName", Strings.nullToEmpty(recipient.getLastName()));
+        templateContext.put("recipientEmail", recipient.getEmail());
+        templateContext.put("recipientFirstName", Strings.nullToEmpty(recipient.getFirstName()));
+        templateContext.put("recipientLastName", Strings.nullToEmpty(recipient.getLastName()));
         return templateContext;
     }
 
     public CustomerId getCustomerId() {
-        CustomerId customerId;
-        switch (request.getOriginatorEntityId().getEntityType()) {
-            case ALARM:
-                customerId = ((AlarmNotificationInfo) request.getInfo()).getCustomerId();
-                break;
-            default:
-                customerId = null;
+        if (request.getInfo() instanceof RuleOriginatedNotificationInfo) {
+            return ((RuleOriginatedNotificationInfo) request.getInfo()).getOriginatorEntityCustomerId();
+        } else {
+            return null;
         }
-        return customerId;
     }
 
 }

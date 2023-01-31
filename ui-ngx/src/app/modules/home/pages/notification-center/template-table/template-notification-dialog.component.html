@@ -48,7 +48,7 @@
           <mat-radio-button *ngFor="let notificationType of notificationTypes" [value]="notificationType">
             <div fxLayout="column">
               <div>{{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}</div>
-              <div class="tb-hint">{{ notificationTemplateTypeTranslateMap.get(notificationType).hint }}</div>
+              <div class="tb-hint">{{ notificationTemplateTypeTranslateMap.get(notificationType).hint | translate }}</div>
             </div>
           </mat-radio-button>
         </mat-radio-group>
