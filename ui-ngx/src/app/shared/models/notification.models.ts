@@ -24,6 +24,8 @@ import { NotificationTargetId } from '@shared/models/id/notification-target-id';
 import { NotificationTemplateId } from '@shared/models/id/notification-template-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
+import { AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -100,18 +102,26 @@ export interface SlackConversation {
 export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{
   tenantId: TenantId;
   templateId: NotificationTemplateId;
-  // deliveryMethods: Array<NotificationDeliveryMethod>;
-  configuration: NotificationRuleConfig;
+  triggerType: TriggerType;
+  triggerConfig: NotificationRuleTriggerConfig;
+  recipientConfig: NotificationRuleRecipientConfig;
 }
 
-export interface NotificationRuleConfig {
-  initialNotificationTargetId: NotificationTargetId;
-  escalationConfig: NotificationEscalationConfig;
-  description?: string;
+export interface NotificationRuleTriggerConfig {
+  alarmTypes?: Array<string>;
+  alarmSeverities?: Array<AlarmSeverity>;
+  clearRule?: AlarmStatus;
+  devices?: Array<string>;
+  devicesProfiles?: Array<string>;
+  entityType?: EntityType;
+  created?: boolean;
+  updated?: boolean;
+  deleted?: boolean;
 }
 
-export interface NotificationEscalationConfig {
-  escalations: Array<NonConfirmedNotificationEscalation>;
+export interface NotificationRuleRecipientConfig {
+  targets?: Array<string>;
+  escalationTable?: {[key: string]: Array<string>};
 }
 
 export interface NonConfirmedNotificationEscalation {

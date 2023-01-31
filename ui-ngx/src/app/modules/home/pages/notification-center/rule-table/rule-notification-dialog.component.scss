@@ -17,9 +17,9 @@
 
 :host {
   ::ng-deep{
-    width: 100%;
-    min-width: 800px !important;
-    max-width: 100%;
+    //width: 100%;
+    //min-width: 800px;
+    //max-width: 100%;
 
     .mat-button-toggle-group.tb-notification-unread-toggle-group {
       &.mat-button-toggle-group-appearance-standard {

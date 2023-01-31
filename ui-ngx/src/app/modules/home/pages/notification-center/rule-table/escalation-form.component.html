@@ -17,22 +17,23 @@
 -->
 
 <form [formGroup]="escalationFormGroup" fxLayout="column">
-  <div fxLayout="row" style="align-items: center; min-height: 74px; border-radius: 8px; background: rgba(0,0,0,0.04);">
-    <div fxFlex fxLayout="row">
-        <div fxFlex *ngIf="systemEscalation" style="padding: 0 10px;" translate>notification.first-recipient</div>
-        <div fxFlex *ngIf="!systemEscalation" fxLayout="row" style="align-items: center;">
-          <span style="padding: 0 10px;">After</span>
+  <div class="escalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start">
+    <div fxFlex fxLayout="row" ngStyle.xs="padding-top: 10px">
+        <div fxFlex [fxShow]="systemEscalation" class="escalation-padding" translate>notification.first-recipient</div>
+        <div fxFlex [fxShow]="!systemEscalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
+          <span class="escalation-padding">After</span>
           <tb-timeinterval
+            style="min-width: 100px;"
+            ngStyle.xs="padding: 0 10px;"
             formControlName="delayInSec"
-            [disabledAdvanced]="true"
-            style="padding-top: 8px; width: 150px; min-width: 150px;"></tb-timeinterval>
-          <span fxFlex style="text-align: end; padding: 0 10px;" translate>notification.notify</span>
+            [disabledAdvanced]="true"></tb-timeinterval>
+          <span fxFlex class="escalation-notify" translate>notification.notify</span>
         </div>
     </div>
-    <div fxFlex style="padding: 0 10px;">
+    <div fxFlex class="escalation-padding">
       <tb-entity-list
         required
-        formControlName="notificationTargetId"
+        formControlName="targets"
         [entityType]="entityType.NOTIFICATION_TARGET"
         placeholderText="notification.add-target">
       </tb-entity-list>

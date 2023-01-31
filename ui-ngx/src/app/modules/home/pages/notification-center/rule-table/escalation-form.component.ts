@@ -22,18 +22,20 @@ import {
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator, Validators
+  Validator,
+  Validators
 } from '@angular/forms';
 import { UtilsService } from '@core/services/utils.service';
 import { isDefinedAndNotNull } from '@core/utils';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-escalation-form',
   templateUrl: './escalation-form.component.html',
-  styleUrls: [],
+  styleUrls: ['./escalation-form.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -59,10 +61,10 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
 
   entityType = EntityType;
 
-  private modelValue: NonConfirmedNotificationEscalation;
+  private modelValue;
   private propagateChange = null;
   private propagateChangePending = false;
-  private valueChange$: Subscription = null;
+  private destroy$ = new Subject();
 
   constructor(private utils: UtilsService,
               private fb: FormBuilder) {
@@ -84,19 +86,17 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
   ngOnInit() {
     this.escalationFormGroup = this.fb.group(
       {
-        delayInSec: [null],
-        notificationTargetId: [null, Validators.required],
+        delayInSec: [0],
+        targets: [null, Validators.required],
       });
-    this.valueChange$ = this.escalationFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
+    this.escalationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
   ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-      this.valueChange$ = null;
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {

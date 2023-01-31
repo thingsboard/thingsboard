@@ -30,11 +30,10 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Subscription } from 'rxjs';
-import { QueueInfo } from '@shared/models/queue.models';
+import { Subject } from 'rxjs';
 import { UtilsService } from '@core/services/utils.service';
-import { guid } from '@core/utils';
 import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-escalations-component',
@@ -71,11 +70,11 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   disabled: boolean;
 
   private mainEscalaion = {
-    delayInSec: null,
-    notificationTargetId: null
+    delayInSec: 0,
+    targets: null
   };
 
-  private valueChangeSubscription$: Subscription = null;
+  private destroy$ = new Subject();
 
   private propagateChange = (v: any) => { };
 
@@ -89,9 +88,8 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   }
 
   ngOnDestroy() {
-    if (this.valueChangeSubscription$) {
-      this.valueChangeSubscription$.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   registerOnTouched(fn: any): void {
@@ -101,6 +99,10 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
     this.escalationsFormGroup = this.fb.group({
       escalations: this.fb.array([])
     });
+
+    this.escalationsFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
   get escalationsFormArray(): FormArray {
@@ -117,26 +119,24 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   }
 
   writeValue(escalations: Array<NonConfirmedNotificationEscalation> | null): void {
-    if (this.valueChangeSubscription$) {
-      this.valueChangeSubscription$.unsubscribe();
-    }
-    const escalationsControls: Array<AbstractControl> = [];
-    if (escalations) {
-      escalations.forEach((escalation, index) => {
-        escalationsControls.push(this.fb.control(escalation, [Validators.required]));
-      });
+    if (escalations?.length === this.escalationsFormArray.length) {
+      this.escalationsFormArray.patchValue(escalations, {emitEvent: false});
     } else {
-      escalationsControls.push(this.fb.control(this.mainEscalaion, [Validators.required]));
+      const escalationsControls: Array<AbstractControl> = [];
+      if (escalations) {
+        escalations.forEach((escalation, index) => {
+          escalationsControls.push(this.fb.control(escalation, [Validators.required]));
+        });
+      } else {
+        escalationsControls.push(this.fb.control(this.mainEscalaion, [Validators.required]));
+      }
+      this.escalationsFormGroup.setControl('escalations', this.fb.array(escalationsControls), {emitEvent: false});
+      if (this.disabled) {
+        this.escalationsFormGroup.disable({emitEvent: false});
+      } else {
+        this.escalationsFormGroup.enable({emitEvent: false});
+      }
     }
-    this.escalationsFormGroup.setControl('escalations', this.fb.array(escalationsControls));
-    if (this.disabled) {
-      this.escalationsFormGroup.disable({emitEvent: false});
-    } else {
-      this.escalationsFormGroup.enable({emitEvent: false});
-    }
-    this.valueChangeSubscription$ = this.escalationsFormGroup.valueChanges.subscribe(() =>
-      this.updateModel()
-    );
   }
 
   public removeEscalation(index: number) {
@@ -144,9 +144,9 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   }
 
   public addEscalation() {
-    const escalation: NonConfirmedNotificationEscalation = {
-      delayInSec: null,
-      notificationTargetId: null
+    const escalation = {
+      delayInSec: 0,
+      targets: null
     };
     this.newEscalation = true;
     const escalationArray = this.escalationsFormGroup.get('escalations') as FormArray;
@@ -166,7 +166,7 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   }
 
   private updateModel() {
-    const escalations: Array<NonConfirmedNotificationEscalation> = this.escalationsFormGroup.get('escalations').value;
+    const escalations = this.escalationsFormGroup.get('escalations').value;
     this.propagateChange(escalations);
   }
 }

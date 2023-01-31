@@ -24,7 +24,7 @@ import { Direction } from '@shared/models/page/sort-order';
 import {
   NotificationRule,
   NotificationTarget,
-  NotificationTargetConfigTypeTranslateMap
+  NotificationTargetConfigTypeTranslateMap, TriggerTypeTranslationMap
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -62,8 +62,7 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
     this.deleteEntityContent = () => this.translate.instant('notification.delete-rule-text');
     this.deleteEntity = id => this.notificationService.deleteNotificationRule(id.id);
 
-    this.cellActionDescriptors = this.configureCellActions();
-
+    // this.cellActionDescriptors = this.configureCellActions();
     this.headerComponent = RuleTableHeaderComponent;
     this.onEntityAction = action => this.onTargetAction(action);
 
@@ -71,12 +70,12 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
 
     this.columns.push(
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),
-      new EntityTableColumn<NotificationRule>('templateId', 'notification.template', '30%',
-        (rule) => `${rule.templateId}`,
+      new EntityTableColumn<NotificationRule>('templateId', 'notification.template', '15%',
+        (rule) => `${rule.templateId.id}`,
         () => ({}), false),
-      new EntityTableColumn<NotificationRule>('configuration.description', 'notification.description', '40%',
-        (rule) => rule.configuration.description || '',
-        () => ({}), false)
+      new EntityTableColumn<NotificationRule>('triggerType', 'notification.trigger.trigger', '15%',
+        (rule) => this.translate.instant(TriggerTypeTranslationMap.get(rule.triggerType)) || '',
+        () => ({}), true)
     );
   }
 
