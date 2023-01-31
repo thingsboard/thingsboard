@@ -17,27 +17,20 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.TypeDef;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
-import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
+import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENTITY_STATE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENTITY_STATE_DATA_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENTITY_STATE_ENTITY_ID_PROPERTY;
@@ -45,15 +38,15 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENTITY_
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENTITY_STATE_TENANT_ID_PROPERTY;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@EqualsAndHashCode
 @Table(name = ALARM_RULE_ENTITY_STATE_COLUMN_FAMILY_NAME)
 @Entity
-public class AlarmRuleEntityStateEntity extends BaseSqlEntity<AlarmRuleEntityState> {
+public class AlarmRuleEntityStateEntity implements ToData<AlarmRuleEntityState> {
 
     @Column(name = ALARM_RULE_ENTITY_STATE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
+    @Id
     @Column(name = ALARM_RULE_ENTITY_STATE_ENTITY_ID_PROPERTY)
     private UUID entityId;
 
@@ -71,6 +64,7 @@ public class AlarmRuleEntityStateEntity extends BaseSqlEntity<AlarmRuleEntitySta
     public AlarmRuleEntityStateEntity(AlarmRuleEntityState alarmRuleEntityState) {
         this.tenantId = alarmRuleEntityState.getTenantId().getId();
         this.entityId = alarmRuleEntityState.getEntityId().getId();
+        this.entityType = alarmRuleEntityState.getEntityId().getEntityType();
         this.data = alarmRuleEntityState.getData();
     }
 

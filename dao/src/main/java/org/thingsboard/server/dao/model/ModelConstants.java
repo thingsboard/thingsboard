@@ -659,8 +659,8 @@ public class ModelConstants {
      */
     public static final String ALARM_RULE_ENTITY_STATE_COLUMN_FAMILY_NAME = "alarm_rule_entity_state";
     public static final String ALARM_RULE_ENTITY_STATE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String ALARM_RULE_ENTITY_STATE_ENTITY_ID_PROPERTY = "entityId";
-    public static final String ALARM_RULE_ENTITY_STATE_ENTITY_TYPE_PROPERTY = "entityType";
+    public static final String ALARM_RULE_ENTITY_STATE_ENTITY_ID_PROPERTY = "entity_id";
+    public static final String ALARM_RULE_ENTITY_STATE_ENTITY_TYPE_PROPERTY = "entity_type";
     public static final String ALARM_RULE_ENTITY_STATE_DATA_PROPERTY = "data";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};

@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule;
+package org.thingsboard.server.dao.service.sql;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.service.BaseAlarmRuleEntityStateServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Data
-public class AlarmRuleEntityState {
-    private TenantId tenantId;
-    private EntityId entityId;
-    private String data;
+@DaoSqlTest
+public class AlarmRuleServiceEntityStateSqlTest extends BaseAlarmRuleEntityStateServiceTest {
 }

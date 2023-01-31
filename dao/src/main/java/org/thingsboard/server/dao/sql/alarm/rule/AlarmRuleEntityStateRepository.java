@@ -15,19 +15,28 @@
  */
 package org.thingsboard.server.dao.sql.alarm.rule;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.AlarmRuleEntityStateEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface AlarmRuleEntityStateRepository extends JpaRepository<AlarmRuleEntityStateEntity, UUID> {
+public interface AlarmRuleEntityStateRepository extends JpaRepository<AlarmRuleEntityStateEntity, UUID>{
 
     @Query("SELECT ares FROM AlarmRuleEntityStateEntity ares WHERE ares.entityId in (:entityIds)")
-    List<AlarmRuleEntityStateEntity> findAllByIds(@Param("entityIds") List<EntityId> entityIds);
+    List<AlarmRuleEntityStateEntity> findAllByIds(@Param("entityIds") List<UUID> entityIds);
 
-    boolean removeByEntityId(@Param("entityId") UUID entityId);
+    @Query(value = "SELECT ares FROM AlarmRuleEntityStateEntity ares")
+    Page<AlarmRuleEntityStateEntity> findAll(Pageable pageable);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM AlarmRuleEntityStateEntity ares where ares.entityId = :entityId")
+    void deleteByEntityId(@Param("entityId") UUID entityId);
 }

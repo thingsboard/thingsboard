@@ -307,7 +307,7 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         if (state != null) {
             myEntityStateIds.values().forEach(ids -> ids.remove(entityId));
             if (isLocalEntity(state.getTenantId(), entityId)) {
-                alarmRuleEntityStateService.removeByEntityId(state.getTenantId(), entityId);
+                alarmRuleEntityStateService.deleteByEntityId(state.getTenantId(), entityId);
             }
         }
     }

@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -186,6 +188,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected AlarmRuleService alarmRuleService;
+
+    @Autowired
+    protected AlarmRuleEntityStateService alarmRuleEntityStateService;
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override

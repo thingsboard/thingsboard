@@ -20,16 +20,17 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface AlarmRuleEntityStateDao extends Dao<AlarmRuleEntityState> {
+public interface AlarmRuleEntityStateDao {
+
+    AlarmRuleEntityState saveAlarmRuleEntityState(TenantId tenantId, AlarmRuleEntityState alarmComment);
 
     PageData<AlarmRuleEntityState> findAll(PageLink pageLink);
 
     List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds);
 
-    boolean removeByEntityId(TenantId tenantId, UUID id);
+    void deleteByEntityId(TenantId tenantId, UUID id);
 }

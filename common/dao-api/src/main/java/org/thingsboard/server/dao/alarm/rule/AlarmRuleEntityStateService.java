@@ -31,6 +31,6 @@ public interface AlarmRuleEntityStateService {
 
     AlarmRuleEntityState save(TenantId tenantId, AlarmRuleEntityState entityState);
 
-    boolean removeByEntityId(TenantId tenantId, EntityId entityId);
+    void deleteByEntityId(TenantId tenantId, EntityId entityId);
 
 }

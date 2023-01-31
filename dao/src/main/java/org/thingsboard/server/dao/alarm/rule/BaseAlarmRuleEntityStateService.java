@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 
@@ -36,10 +36,6 @@ public class BaseAlarmRuleEntityStateService extends AbstractEntityService imple
 
     @Autowired
     private AlarmRuleEntityStateDao alarmRuleEntityStateDao;
-
-    @Autowired
-    private DataValidator<AlarmRuleEntityState> alarmRuleEntityStateDataValidator;
-
 
     @Override
     public PageData<AlarmRuleEntityState> findAll(PageLink pageLink) {
@@ -53,14 +49,16 @@ public class BaseAlarmRuleEntityStateService extends AbstractEntityService imple
 
     @Override
     public AlarmRuleEntityState save(TenantId tenantId, AlarmRuleEntityState entityState) {
-        alarmRuleEntityStateDataValidator.validate(entityState, AlarmRuleEntityState::getTenantId);
-        return alarmRuleEntityStateDao.save(tenantId, entityState);
+        Validator.validateId(entityState.getTenantId(), "Incorrect tenant id.");
+        Validator.validateEntityId(entityState.getEntityId(), "Incorrect entity id.");
+
+        return alarmRuleEntityStateDao.saveAlarmRuleEntityState(tenantId, entityState);
     }
 
     @Override
-    public boolean removeByEntityId(TenantId tenantId, EntityId entityId) {
+    public void deleteByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing removeByEntityId [{}]", entityId);
         validateId(entityId.getId(), "Incorrect entityId " + entityId);
-        return alarmRuleEntityStateDao.removeByEntityId(tenantId, entityId.getId());
+        alarmRuleEntityStateDao.deleteByEntityId(tenantId, entityId.getId());
     }
 }

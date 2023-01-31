@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.alarm.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -27,28 +26,26 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateDao;
 import org.thingsboard.server.dao.model.sql.AlarmRuleEntityStateEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 
 @Slf4j
 @Component
 @SqlDao
-public class JpaAlarmRuleEntityStateDao extends JpaAbstractDao<AlarmRuleEntityStateEntity, AlarmRuleEntityState> implements AlarmRuleEntityStateDao {
+public class JpaAlarmRuleEntityStateDao implements AlarmRuleEntityStateDao {
 
     @Autowired
     private AlarmRuleEntityStateRepository alarmRuleEntityStateRepository;
 
     @Override
-    protected Class<AlarmRuleEntityStateEntity> getEntityClass() {
-        return AlarmRuleEntityStateEntity.class;
-    }
-
-    @Override
-    protected JpaRepository<AlarmRuleEntityStateEntity, UUID> getRepository() {
-        return alarmRuleEntityStateRepository;
+    public AlarmRuleEntityState saveAlarmRuleEntityState(TenantId tenantId, AlarmRuleEntityState alarmRuleEntityState){
+        log.trace("Saving entity {}", alarmRuleEntityState);
+        AlarmRuleEntityStateEntity saved = alarmRuleEntityStateRepository.save(new AlarmRuleEntityStateEntity(alarmRuleEntityState));
+        return DaoUtil.getData(saved);
     }
 
     @Override
@@ -58,11 +55,12 @@ public class JpaAlarmRuleEntityStateDao extends JpaAbstractDao<AlarmRuleEntitySt
 
     @Override
     public List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds) {
-        return DaoUtil.convertDataList(alarmRuleEntityStateRepository.findAllByIds(entityIds));
+        List<UUID> uuidList = entityIds.stream().map(EntityId::getId).collect(Collectors.toList());
+        return DaoUtil.convertDataList(alarmRuleEntityStateRepository.findAllByIds(uuidList));
     }
 
     @Override
-    public boolean removeByEntityId(TenantId tenantId, UUID id) {
-        return alarmRuleEntityStateRepository.removeByEntityId(id);
+    public void deleteByEntityId(TenantId tenantId, UUID id) {
+        alarmRuleEntityStateRepository.deleteByEntityId(id);
     }
 }
