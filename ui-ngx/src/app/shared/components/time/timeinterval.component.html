@@ -51,7 +51,7 @@
       </mat-select>
     </mat-form-field>
   </section>
-  <section fxLayout="column" fxLayoutAlign="center center" [fxShow]="(isEdit || !hideFlag)">
+  <section fxLayout="column" fxLayoutAlign="center center" [fxShow]="(isEdit || !hideFlag) && !disabledAdvanced">
     <label class="tb-small advanced-label" translate>timeinterval.advanced</label>
     <mat-slide-toggle [disabled]="hideFlag || disabled" class="advanced-switch" [(ngModel)]="advanced" (ngModelChange)="onAdvancedChange()"></mat-slide-toggle>
   </section>

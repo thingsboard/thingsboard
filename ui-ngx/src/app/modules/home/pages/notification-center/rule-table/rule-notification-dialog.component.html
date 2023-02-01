@@ -1,0 +1,245 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section style="width: 800px; min-width: 100%; max-width: 100%">
+  <mat-toolbar color="primary">
+    <h2>{{ dialogTitle | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content ngStyle.xs="padding: 0;">
+    <mat-horizontal-stepper [linear]="true" labelPosition="end" #addNotificationRule [orientation]="(stepperOrientation | async)"
+                            (selectionChange)="changeStep($event)">
+      <ng-template matStepperIcon="edit">
+        <mat-icon>check</mat-icon>
+      </ng-template>
+      <mat-step optional [stepControl]="ruleNotificationForm">
+        <ng-template matStepLabel>{{ 'notification.basic-settings' | translate }}</ng-template>
+        <form [formGroup]="ruleNotificationForm" style="padding-bottom: 16px;">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.rule-name</mat-label>
+            <input matInput formControlName="name" required>
+            <mat-error *ngIf="ruleNotificationForm.get('name').hasError('required')">
+              {{ 'notification.rule-name-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <tb-template-autocomplete
+            required
+            formControlName="templateId"
+            labelText="notification.template-name"
+            placeholderText="notification.template-name"
+            requiredText="notification.template-required">
+          </tb-template-autocomplete>
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.trigger.trigger</mat-label>
+            <mat-select formControlName="triggerType" required>
+              <mat-option *ngFor="let trigger of triggerTypes" [value]="trigger">
+                {{ triggerTypeTranslationMap.get(trigger) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="ruleNotificationForm.get('triggerType').hasError('required')">
+              {{ 'notification.trigger.trigger-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </form>
+      </mat-step>
+      <mat-step optional [stepControl]="alarmTemplateForm"
+                *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM">
+        <ng-template matStepLabel>{{ 'notification.type-settings' | translate }}</ng-template>
+        <form [formGroup]="alarmTemplateForm">
+          <fieldset class="fields-group">
+            <span class="fields-group-title" translate>notification.filter</span>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-type-list</mat-label>
+              <mat-chip-list #alarmTypeChipList formControlName="alarmTypes">
+                <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
+                          [removable]="true" (removed)="removeAlarmType(type)">
+                  {{type}}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input placeholder="{{ !alarmTemplateForm.get('alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
+                       [matChipInputFor]="alarmTypeChipList"
+                       [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                       matChipInputAddOnBlur
+                       (matChipInputTokenEnd)="addAlarmType($event)">
+              </mat-chip-list>
+            </mat-form-field>
+
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>alarm.alarm-severity-list</mat-label>
+              <mat-chip-list #severitiesChipList formControlName="alarmSeverities"
+                             required>
+                <mat-chip *ngFor="let severity of alarmTemplateForm.get('alarmSeverities').value"
+                          [removable]="true" (removed)="onSeverityRemoved(severity)">
+                  {{ alarmSeverityTranslationMap.get(severity) | translate }}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input matInput
+                       type="text"
+                       placeholder="{{ !alarmTemplateForm.get('alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}"
+                       style="max-width: 200px;"
+                       #severityInput
+                       (focusin)="onSeverityInputFocus()"
+                       matAutocompleteOrigin
+                       #origin="matAutocompleteOrigin"
+                       (input)="severityInputChange.next(severityInput.value)"
+                       [matAutocompleteConnectedTo]="origin"
+                       [matAutocomplete]="severityAutocomplete"
+                       [matChipInputFor]="severitiesChipList"
+                       [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                       (matChipInputTokenEnd)="addSeverityFromChipInput($event)">
+              </mat-chip-list>
+              <mat-autocomplete #severityAutocomplete="matAutocomplete"
+                                class="tb-autocomplete"
+                                (optionSelected)="severitySelected($event)"
+                                [displayWith]="displaySeverityFn.bind(this)">
+                <mat-option *ngFor="let severity of filteredDisplaySeverities | async" [value]="severity">
+                  <span [innerHTML]="alarmSeverityTranslationMap.get(alarmSeverityEnum[severity]) | translate | highlight:severitySearchText"></span>
+                </mat-option>
+                <mat-option *ngIf="(filteredDisplaySeverities | async)?.length === 0" [value]="null" class="tb-not-found">
+                  <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+                    <div *ngIf="!textIsNotEmpty(severitySearchText); else searchNotEmpty">
+                      <span translate>notification.no-severity-found</span>
+                    </div>
+                    <ng-template #searchNotEmpty>
+                      <span>
+                        {{ translate.get('notification.no-severity-matching',
+                        {severity: truncate.transform(severitySearchText, true, 6, &apos;...&apos;)}) | async }}
+                      </span>
+                    </ng-template>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </fieldset>
+
+          <fieldset class="fields-group" formGroupName="clearRule">
+            <span class="fields-group-title" translate>notification.clear-rule</span>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-status-list</mat-label>
+              <mat-select formControlName="alarmStatus"
+                          placeholder="{{ !alarmTemplateForm.get('clearRule.alarmStatus').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                  {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+
+          <fieldset class="fields-group">
+            <span class="fields-group-title" translate>notification.hierarchy-of-receiving</span>
+            <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
+          </fieldset>
+
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </form>
+      </mat-step>
+
+      <mat-step optional *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.DEVICE_INACTIVITY"
+                [stepControl]="deviceInactivityTemplateForm">
+        <ng-template matStepLabel>{{ 'notification.type-settings' | translate }}</ng-template>
+        <form [formGroup]="deviceInactivityTemplateForm">
+          <span translate>notification.filter-by</span>
+          <div fxFlex fxLayoutAlign="center center">
+            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
+                                     style="width: 250px;"
+                                     formControlName="filterByDevice">
+              <mat-button-toggle fxFlex [value]=true>{{ 'notification.device' | translate }}</mat-button-toggle>
+              <mat-button-toggle fxFlex [value]=false>{{ 'notification.device-profile' | translate }}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+          <tb-entity-list
+            *ngIf="deviceInactivityTemplateForm.get('filterByDevice').value"
+            required
+            formControlName="devices"
+            [labelText]="'notification.devices'"
+            [placeholderText]="'notification.device'"
+            [entityType]="entityType.DEVICE">
+          </tb-entity-list>
+          <tb-entity-list
+            *ngIf="!deviceInactivityTemplateForm.get('filterByDevice').value"
+            required
+            formControlName="deviceProfiles"
+            [labelText]="'notification.device-profiles'"
+            [placeholderText]="'notification.device-profile'"
+            [entityType]="entityType.DEVICE_PROFILE">
+          </tb-entity-list>
+          <tb-entity-list
+            required
+            formControlName="targets"
+            [entityType]="entityType.NOTIFICATION_TARGET"
+            placeholderText="notification.target">
+          </tb-entity-list>
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </form>
+      </mat-step>
+
+      <mat-step optional *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ENTITY_ACTION"
+                [stepControl]="entityActionTemplateForm">
+        <ng-template matStepLabel>{{ 'notification.type-settings' | translate }}</ng-template>
+        <form [formGroup]="entityActionTemplateForm">
+          <fieldset class="fields-group">
+            <span class="fields-group-title" translate>notification.filter</span>
+            <tb-entity-type-select required
+                                   showLabel
+                                   [allowedEntityTypes]="entityTypes"
+                                   formControlName="entityType">
+            </tb-entity-type-select>
+            <section fxLayout="column" fxLayoutGap="10px">
+              <span fxFlex translate>notification.status</span>
+              <mat-checkbox fxFlex formControlName="created" translate>{{ 'notification.created' | translate }}</mat-checkbox>
+              <mat-checkbox fxFlex formControlName="updated" translate>{{ 'notification.updated' | translate }}</mat-checkbox>
+              <mat-checkbox fxFlex formControlName="deleted" translate>{{ 'notification.deleted' | translate }}</mat-checkbox>
+            </section>
+          </fieldset>
+          <tb-entity-list
+            required
+            formControlName="targets"
+            [entityType]="entityType.NOTIFICATION_TARGET"
+            placeholderText="notification.target">
+          </tb-entity-list>
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </form>
+      </mat-step>
+    </mat-horizontal-stepper>
+  </div>
+  <mat-divider></mat-divider>
+  <div mat-dialog-actions fxLayout="row">
+    <button mat-stroked-button *ngIf="selectedIndex > 0"
+            (click)="backStep()">{{ 'action.back' | translate }}</button>
+    <span fxFlex></span>
+    <button mat-raised-button
+            color="primary"
+            (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  </div>
+</section>

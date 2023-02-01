@@ -23,6 +23,8 @@ import { NotificationTargetId } from '@shared/models/id/notification-target-id';
 import { NotificationTemplateId } from '@shared/models/id/notification-template-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
+import { AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -96,17 +98,27 @@ export interface SlackConversation {
 export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{
   tenantId: TenantId;
   templateId: NotificationTemplateId;
-  deliveryMethods: Array<NotificationDeliveryMethod>;
-  configuration: NotificationRuleConfig;
+  triggerType: TriggerType;
+  triggerConfig: NotificationRuleTriggerConfig;
+  recipientsConfig: NotificationRuleRecipientConfig;
+  additionalConfig: {description: string};
 }
 
-export interface NotificationRuleConfig {
-  initialNotificationTargetId: NotificationTargetId;
-  escalationConfig: NotificationEscalationConfig;
+export interface NotificationRuleTriggerConfig {
+  alarmTypes?: Array<string>;
+  alarmSeverities?: Array<AlarmSeverity>;
+  clearRule?: AlarmStatus;
+  devices?: Array<string>;
+  devicesProfiles?: Array<string>;
+  entityType?: EntityType;
+  created?: boolean;
+  updated?: boolean;
+  deleted?: boolean;
 }
 
-export interface NotificationEscalationConfig {
-  escalations: Array<NonConfirmedNotificationEscalation>;
+export interface NotificationRuleRecipientConfig {
+  targets?: Array<string>;
+  escalationTable?: {[key: string]: Array<string>};
 }
 
 export interface NonConfirmedNotificationEscalation {
@@ -299,4 +311,16 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       hint: 'notification.template-hint.entity-action'
     }
   ]
+]);
+
+export enum TriggerType {
+  ALARM = 'ALARM',
+  DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
+  ENTITY_ACTION = 'ENTITY_ACTION'
+}
+
+export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
+  [TriggerType.ALARM, 'notification.trigger.alarm'],
+  [TriggerType.DEVICE_INACTIVITY, 'notification.trigger.device-inactivity'],
+  [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action']
 ]);

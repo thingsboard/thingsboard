@@ -41,9 +41,9 @@
           </tb-notification-table>
         </mat-tab>
         <mat-tab label="{{ 'notification.rules' | translate }}">
-          <ng-template matTabContent>
-            Content 1 - Loaded
-          </ng-template>
+          <tb-notification-table
+            [notificationType]="entityType.NOTIFICATION_RULE">
+          </tb-notification-table>
         </mat-tab>
         <mat-tab disabled>
           <ng-template mat-tab-label>
