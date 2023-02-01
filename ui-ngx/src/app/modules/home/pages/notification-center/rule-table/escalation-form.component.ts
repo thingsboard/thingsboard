@@ -111,6 +111,7 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
   writeValue(value: NonConfirmedNotificationEscalation): void {
     this.propagateChangePending = false;
     this.modelValue = value;
+    this.modelValue.delayInSec = +value.delayInSec;
     if (isDefinedAndNotNull(this.modelValue)) {
       this.escalationFormGroup.patchValue(this.modelValue, {emitEvent: false});
     }

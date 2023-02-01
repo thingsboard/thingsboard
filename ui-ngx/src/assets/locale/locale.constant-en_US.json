@@ -2690,6 +2690,8 @@
         "conversation": "Conversation",
         "conversation-required": "Conversation is required",
         "add-rule": "Add rule",
+        "edit-rule": "Edit rule",
+        "copy-rule": "Copy rule",
         "copy-notification-template": "Copy notification template",
         "copy-template": "Copy template",
         "create-target": "Create recipient",

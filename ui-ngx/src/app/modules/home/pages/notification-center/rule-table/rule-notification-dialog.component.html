@@ -17,7 +17,7 @@
 -->
 <section style="width: 800px; min-width: 100%; max-width: 100%">
   <mat-toolbar color="primary">
-    <h2>{{'notification.add-rule' | translate }}</h2>
+    <h2>{{ dialogTitle | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -176,16 +176,16 @@
             *ngIf="deviceInactivityTemplateForm.get('filterByDevice').value"
             required
             formControlName="devices"
-            [labelText]="translate.instant('notification.devices')"
-            [placeholderText]="translate.instant('notification.device')"
+            [labelText]="'notification.devices'"
+            [placeholderText]="'notification.device'"
             [entityType]="entityType.DEVICE">
           </tb-entity-list>
           <tb-entity-list
             *ngIf="!deviceInactivityTemplateForm.get('filterByDevice').value"
             required
             formControlName="deviceProfiles"
-            [labelText]="translate.instant('notification.device-profiles')"
-            [placeholderText]="translate.instant('notification.device-profile')"
+            [labelText]="'notification.device-profiles'"
+            [placeholderText]="'notification.device-profile'"
             [entityType]="entityType.DEVICE_PROFILE">
           </tb-entity-list>
           <tb-entity-list

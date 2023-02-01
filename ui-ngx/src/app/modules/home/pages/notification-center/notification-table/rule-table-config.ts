@@ -62,7 +62,7 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
     this.deleteEntityContent = () => this.translate.instant('notification.delete-rule-text');
     this.deleteEntity = id => this.notificationService.deleteNotificationRule(id.id);
 
-    // this.cellActionDescriptors = this.configureCellActions();
+    this.cellActionDescriptors = this.configureCellActions();
     this.headerComponent = RuleTableHeaderComponent;
     this.onEntityAction = action => this.onTargetAction(action);
 
@@ -70,25 +70,31 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
 
     this.columns.push(
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),
-      new EntityTableColumn<NotificationRule>('templateId', 'notification.template', '15%',
-        (rule) => `${rule.templateId.id}`,
-        () => ({}), false),
-      new EntityTableColumn<NotificationRule>('triggerType', 'notification.trigger.trigger', '15%',
+      new EntityTableColumn<NotificationRule>('templateName', 'notification.template', '20%'),
+      new EntityTableColumn<NotificationRule>('triggerType', 'notification.trigger.trigger', '20%',
         (rule) => this.translate.instant(TriggerTypeTranslationMap.get(rule.triggerType)) || '',
-        () => ({}), true)
+        () => ({}), true),
+      new EntityTableColumn<NotificationRule>('additionalConfig.description', 'notification.description', '30%',
+        (target) => target.additionalConfig.description || '',
+        () => ({}), false)
     );
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationRule>> {
     return [{
-      name: this.translate.instant('device.make-public'),
+      name: this.translate.instant('notification.copy-rule'),
+      icon: 'content_copy',
+      isEnabled: () => true,
+      onAction: ($event, entity) => this.editRule($event, entity, false, true)
+    }, {
+      name: this.translate.instant('notification.edit-rule'),
       icon: 'edit',
       isEnabled: () => true,
-      onAction: ($event, entity) => this.editTarget($event, entity)
+      onAction: ($event, entity) => this.editRule($event, entity)
     }];
   }
 
-  private editTarget($event: Event, rule: NotificationRule, isAdd = false) {
+  private editRule($event: Event, rule: NotificationRule, isAdd = false, isCopy = false) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -98,6 +104,7 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
+        isCopy,
         rule
       }
     }).afterClosed()
@@ -111,7 +118,7 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
   private onTargetAction(action: EntityAction<NotificationRule>): boolean {
     switch (action.action) {
       case 'add':
-        this.editTarget(action.event, action.entity, true);
+        this.editRule(action.event, action.entity, true);
         return true;
     }
     return false;

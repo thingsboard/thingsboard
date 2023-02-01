@@ -24,7 +24,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepTrim, isDefined } from '@core/utils';
+import { deepClone, deepTrim, isDefined } from '@core/utils';
 import { Observable, of, Subject } from 'rxjs';
 import { map, mergeMap, share, startWith, takeUntil } from 'rxjs/operators';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
@@ -46,6 +46,7 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 export interface RuleNotificationDialogData {
   rule?: NotificationRule;
   isAdd?: boolean;
+  isCopy?: boolean;
 }
 
 @Component({
@@ -91,9 +92,13 @@ export class RuleNotificationDialogComponent extends
   filteredDisplaySeverities: Observable<Array<string>>;
   severitySearchText = '';
 
+  dialogTitle = 'notification.edit-rule';
+
   severityInputChange = new Subject<string>();
 
   private destroy$ = new Subject();
+
+  private readonly ruleNotification: NotificationRule;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -122,6 +127,9 @@ export class RuleNotificationDialogComponent extends
       }),
       triggerConfig: this.fb.group({
         triggerType: []
+      }),
+      additionalConfig: this.fb.group({
+        description: []
       })
     });
 
@@ -174,6 +182,49 @@ export class RuleNotificationDialogComponent extends
         mergeMap(name => this.fetchSeverities(name) ),
         share()
       );
+
+    if (data.isAdd || data.isCopy) {
+      this.dialogTitle = 'notification.add-rule';
+    }
+    this.ruleNotification = deepClone(this.data.rule);
+
+    if (this.ruleNotification) {
+      if (this.data.isCopy) {
+        this.ruleNotification.name += ` (${this.translate.instant('action.copy')})`;
+      }
+      this.ruleNotificationForm.reset({}, {emitEvent: false});
+      this.ruleNotificationForm.patchValue(this.ruleNotification, {emitEvent: false});
+      if (this.ruleNotification.triggerType === TriggerType.ALARM) {
+        const parsedEscalationTable = [];
+        const escalationTable = this.ruleNotification.recipientsConfig.escalationTable;
+        for (const escalation in escalationTable) {
+          parsedEscalationTable.push({delayInSec: escalation, targets: escalationTable[escalation]});
+        }
+        this.alarmTemplateForm.patchValue({
+          escalationTable: parsedEscalationTable,
+          alarmTypes: this.ruleNotification.triggerConfig.alarmTypes,
+          alarmSeverities: this.ruleNotification.triggerConfig.alarmSeverities,
+          clearRule: this.ruleNotification.triggerConfig.clearRule,
+          description: this.ruleNotification.additionalConfig.description
+        }, {emitEvent: false});
+      } else if (this.ruleNotification.triggerType === TriggerType.DEVICE_INACTIVITY) {
+        this.deviceInactivityTemplateForm.patchValue({
+          filterByDevice: !!this.ruleNotification.triggerConfig.devices,
+          deviceProfiles: this.ruleNotification.triggerConfig.devicesProfiles,
+          devices: this.ruleNotification.triggerConfig.devices,
+          targets: this.ruleNotification.recipientsConfig.targets,
+          description: this.ruleNotification.additionalConfig.description
+        }, {emitEvent: false});
+      } else {
+        this.entityActionTemplateForm.patchValue({
+          entityType: this.ruleNotification.triggerConfig.entityType,
+          created: this.ruleNotification.triggerConfig.created,
+          updated: this.ruleNotification.triggerConfig.updated,
+          deleted: this.ruleNotification.triggerConfig.deleted,
+          targets: this.ruleNotification.recipientsConfig.targets
+        }, {emitEvent: false});
+      }
+    }
   }
 
   onSeverityRemoved(severity: string): void {
@@ -318,7 +369,7 @@ export class RuleNotificationDialogComponent extends
 
   private add(): void {
     if (this.allValid()) {
-      const formValue = this.ruleNotificationForm.value;
+      let formValue = this.ruleNotificationForm.value;
       const triggerType = this.ruleNotificationForm.get('triggerType').value;
       if (triggerType === TriggerType.ALARM) {
         Object.assign(formValue.triggerConfig, this.alarmTemplateForm.value);
@@ -327,16 +378,23 @@ export class RuleNotificationDialogComponent extends
           escalation => parsedEscalationTable[escalation.delayInSec] = escalation.targets
         );
         formValue.recipientsConfig.escalationTable = parsedEscalationTable;
+        formValue.additionalConfig.description = this.alarmTemplateForm.get('description').value;
         delete formValue.triggerConfig.escalationTable;
       } else if (triggerType === TriggerType.DEVICE_INACTIVITY) {
         Object.assign(formValue.triggerConfig, this.deviceInactivityTemplateForm.value);
+        formValue.recipientsConfig.targets = this.deviceInactivityTemplateForm.get('targets').value;
+        formValue.additionalConfig.description = this.deviceInactivityTemplateForm.get('description').value;
         delete formValue.triggerConfig.filterByDevice;
       } else {
         Object.assign(formValue.triggerConfig, this.entityActionTemplateForm.value);
+        formValue.recipientsConfig.targets = this.entityActionTemplateForm.get('targets').value;
+        formValue.additionalConfig.description = this.entityActionTemplateForm.get('description').value;
       }
       if (triggerType === TriggerType.DEVICE_INACTIVITY || triggerType === TriggerType.ENTITY_ACTION) {
-        formValue.recipientsConfig.targets = this.entityActionTemplateForm.get('targets').value;
         delete formValue.triggerConfig.trigger;
+      }
+      if (this.ruleNotification) {
+        formValue = {...this.ruleNotification, ...formValue};
       }
       this.notificationService.saveNotificationRule(deepTrim(formValue)).subscribe(
         (target) => this.dialogRef.close(target)

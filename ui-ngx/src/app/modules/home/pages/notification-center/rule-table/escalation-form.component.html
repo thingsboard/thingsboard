@@ -19,8 +19,8 @@
 <form [formGroup]="escalationFormGroup" fxLayout="column">
   <div class="escalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start">
     <div fxFlex fxLayout="row" ngStyle.xs="padding-top: 10px">
-        <div fxFlex [fxShow]="systemEscalation" class="escalation-padding" translate>notification.first-recipient</div>
-        <div fxFlex [fxShow]="!systemEscalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
+        <div fxFlex *ngIf="systemEscalation" class="escalation-padding" translate>notification.first-recipient</div>
+        <div fxFlex *ngIf="!systemEscalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
           <span class="escalation-padding">After</span>
           <tb-timeinterval
             style="min-width: 100px;"
