@@ -768,16 +768,16 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }, MoreExecutors.directExecutor());
     }
 
-    private static void updateFilterIfRequired(JsonNode filter, String filterType, String oldParameterName, String newParameterName) {
+    private static void updateFilterIfRequired(JsonNode filter, String filterType, String singleTypeParamName, String multipleTypesParamName) {
         if (filter == null || filter.get("type") == null) {
             return;
         }
         if (filterType.equals(filter.get("type").asText())) {
-            if (filter.get(oldParameterName) != null) {
+            if (filter.get(singleTypeParamName) != null) {
                 ArrayNode arrayNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
-                arrayNode.add(filter.get(oldParameterName).asText());
-                ((ObjectNode) filter).set(newParameterName, arrayNode);
-                ((ObjectNode) filter).remove(oldParameterName);
+                arrayNode.add(filter.get(singleTypeParamName).asText());
+                ((ObjectNode) filter).set(multipleTypesParamName, arrayNode);
+                ((ObjectNode) filter).remove(singleTypeParamName);
             }
         }
     }
