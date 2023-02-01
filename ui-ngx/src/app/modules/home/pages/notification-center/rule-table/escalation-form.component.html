@@ -1,0 +1,42 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<form [formGroup]="escalationFormGroup" fxLayout="column">
+  <div class="escalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start">
+    <div fxFlex fxLayout="row" ngStyle.xs="padding-top: 10px">
+        <div fxFlex *ngIf="systemEscalation" class="escalation-padding" translate>notification.first-recipient</div>
+        <div fxFlex *ngIf="!systemEscalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
+          <span class="escalation-padding">After</span>
+          <tb-timeinterval
+            style="min-width: 100px;"
+            ngStyle.xs="padding: 0 10px;"
+            formControlName="delayInSec"
+            [disabledAdvanced]="true"></tb-timeinterval>
+          <span fxFlex class="escalation-notify" translate>notification.notify</span>
+        </div>
+    </div>
+    <div fxFlex class="escalation-padding">
+      <tb-entity-list
+        required
+        formControlName="targets"
+        [entityType]="entityType.NOTIFICATION_TARGET"
+        placeholderText="notification.add-target">
+      </tb-entity-list>
+    </div>
+  </div>
+</form>

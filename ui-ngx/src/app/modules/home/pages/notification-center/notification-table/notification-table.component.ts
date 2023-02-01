@@ -26,6 +26,7 @@ import { InboxTableConfig } from '@home/pages/notification-center/notification-t
 import { DatePipe } from '@angular/common';
 import { TemplateTableConfig } from '@home/pages/notification-center/notification-table/template-table-config';
 import { RequestTableConfig } from '@home/pages/notification-center/notification-table/request-table-config';
+import { RuleTableConfig } from '@home/pages/notification-center/notification-table/rule-table-config';
 
 @Component({
   selector: 'tb-notification-table',
@@ -84,6 +85,12 @@ export class NotificationTableComponent implements OnInit {
           this.translate,
           this.dialog,
           this.datePipe
+        );
+      case EntityType.NOTIFICATION_RULE:
+        return new RuleTableConfig(
+          this.notificationService,
+          this.translate,
+          this.dialog
         );
     }
   }

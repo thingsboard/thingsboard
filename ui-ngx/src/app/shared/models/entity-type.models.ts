@@ -332,12 +332,49 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.RPC,
+      {
+        type: 'entity.type-rpc'
+      }
+    ],
+    [
       EntityType.QUEUE,
       {
+        type: 'entity.type-queue',
         add: 'queue.add',
         search: 'queue.search',
         details: 'queue.details',
         selectedEntities: 'queue.selected-queues'
+      }
+    ],
+    [
+      EntityType.NOTIFICATION,
+      {
+        type: 'entity.type-notification'
+      }
+    ],
+    [
+      EntityType.NOTIFICATION_REQUEST,
+      {
+        type: 'entity.type-notification-request'
+      }
+    ],
+    [
+      EntityType.NOTIFICATION_RULE,
+      {
+        type: 'entity.type-notification-rule'
+      }
+    ],
+    [
+      EntityType.NOTIFICATION_TARGET,
+      {
+        type: 'entity.type-notification-target'
+      }
+    ],
+    [
+      EntityType.NOTIFICATION_TEMPLATE,
+      {
+        type: 'entity.type-notification-template'
       }
     ]
   ]
