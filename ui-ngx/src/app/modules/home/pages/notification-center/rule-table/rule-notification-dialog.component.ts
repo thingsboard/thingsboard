@@ -71,6 +71,7 @@ export class RuleNotificationDialogComponent extends
   alarmTemplateForm: FormGroup;
   deviceInactivityTemplateForm: FormGroup;
   entityActionTemplateForm: FormGroup;
+  alarmCommentTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[] = Object.values(TriggerType);
@@ -181,6 +182,11 @@ export class RuleNotificationDialogComponent extends
       description: ['']
     });
 
+    this.alarmCommentTemplateForm = this.fb.group({
+      targets: [[], Validators.required],
+      description: ['']
+    });
+
     this.filteredDisplaySeverities = this.severityInputChange
       .pipe(
         startWith(''),
@@ -220,8 +226,14 @@ export class RuleNotificationDialogComponent extends
           description: this.ruleNotification.additionalConfig.description
         }, {emitEvent: false});
         this.deviceInactivityTemplateForm.get('filterByDevice').updateValueAndValidity({onlySelf: true});
-      } else {
+      } else if (this.ruleNotification.triggerType === TriggerType.ENTITY_ACTION) {
         this.entityActionTemplateForm.patchValue({
+          targets: this.ruleNotification.recipientsConfig.targets,
+          description: this.ruleNotification.additionalConfig.description,
+          ...this.ruleNotification.triggerConfig
+        }, {emitEvent: false});
+      } else if (this.ruleNotification.triggerType === TriggerType.ALARM_COMMENT) {
+        this.alarmCommentTemplateForm.patchValue({
           targets: this.ruleNotification.recipientsConfig.targets,
           description: this.ruleNotification.additionalConfig.description,
           ...this.ruleNotification.triggerConfig
@@ -365,6 +377,9 @@ export class RuleNotificationDialogComponent extends
     if (this.selectedIndex === 3 && this.selectedIndex < this.maxStepperIndex && this.entityActionTemplateForm.pristine) {
       return 'action.skip';
     }
+    if (this.selectedIndex === 4 && this.selectedIndex < this.maxStepperIndex && this.alarmCommentTemplateForm.pristine) {
+      return 'action.skip';
+    }
     if (this.selectedIndex !== 0 && this.selectedIndex >= this.maxStepperIndex) {
       return (this.data.isAdd || this.data.isCopy) ? 'action.add' : 'action.save';
     }
@@ -393,12 +408,17 @@ export class RuleNotificationDialogComponent extends
         formValue.recipientsConfig.targets = this.deviceInactivityTemplateForm.get('targets').value;
         formValue.additionalConfig.description = this.deviceInactivityTemplateForm.get('description').value;
         delete formValue.triggerConfig.filterByDevice;
-      } else {
+      } else if (triggerType === TriggerType.ENTITY_ACTION) {
         Object.assign(formValue.triggerConfig, this.entityActionTemplateForm.value);
         formValue.recipientsConfig.targets = this.entityActionTemplateForm.get('targets').value;
         formValue.additionalConfig.description = this.entityActionTemplateForm.get('description').value;
+      } else if (triggerType === TriggerType.ALARM_COMMENT) {
+        Object.assign(formValue.triggerConfig, this.alarmCommentTemplateForm.value);
+        formValue.recipientsConfig.targets = this.alarmCommentTemplateForm.get('targets').value;
+        formValue.additionalConfig.description = this.alarmCommentTemplateForm.get('description').value;
       }
-      if (triggerType === TriggerType.DEVICE_INACTIVITY || triggerType === TriggerType.ENTITY_ACTION) {
+      if (triggerType === TriggerType.DEVICE_INACTIVITY || triggerType === TriggerType.ENTITY_ACTION
+        || triggerType === TriggerType.ALARM_COMMENT) {
         delete formValue.triggerConfig.trigger;
       }
       if (this.ruleNotification) {

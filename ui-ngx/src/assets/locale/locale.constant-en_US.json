@@ -2796,13 +2796,15 @@
             "alarm": "Alarm",
             "general": "General",
             "device-inactivity": "Device inactivity",
-            "entity-action": "Entity action"
+            "entity-action": "Entity action",
+            "alarm-comment": "Alarm comment"
         },
         "template-hint": {
             "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}",
             "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}",
             "device-inactivity": "Available params: ${deviceName}, ${deviceType}, ${deviceId}",
-            "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}"
+            "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}",
+            "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}"
         },
         "templates": "Templates",
         "text": "Text",
@@ -2820,11 +2822,13 @@
             "trigger-required": "Trigger is required",
             "alarm": "Alarm",
             "device-inactivity": "Device inactivity",
-            "entity-action": "Entity action"
+            "entity-action": "Entity action",
+            "alarm-comment": "Alarm comment"
         },
         "alarm-trigger-settings": "Alarm trigger settings",
         "device-inactivity-trigger-settings": "Device inactive trigger settings",
         "entity-action-trigger-settings": "Entity action trigger settings",
+        "alarm-comment-trigger-settings": "Alarm comment trigger settings",
         "filter": "Filter",
         "clear-rule": "Clear rule",
         "no-severity-matching": "'{{severity}}' not found.",
