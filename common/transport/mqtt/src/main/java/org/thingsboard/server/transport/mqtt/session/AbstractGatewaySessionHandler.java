@@ -186,7 +186,7 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    ChannelFuture writeAndFlush(MqttMessage mqttMessage) {
+    public ChannelFuture writeAndFlush(MqttMessage mqttMessage) {
         return channel.writeAndFlush(mqttMessage);
     }
 
@@ -215,7 +215,7 @@ public abstract class AbstractGatewaySessionHandler {
         }, context.getExecutor());
     }
 
-    private ListenableFuture<MqttDeviceAwareSessionContext> onDeviceConnect(String deviceName, String deviceType) {
+    ListenableFuture<MqttDeviceAwareSessionContext> onDeviceConnect(String deviceName, String deviceType) {
         MqttDeviceAwareSessionContext result = devices.get(deviceName);
         if (result == null) {
             Lock deviceCreationLock = deviceCreationLockMap.computeIfAbsent(deviceName, s -> new ReentrantLock());
@@ -252,7 +252,7 @@ public abstract class AbstractGatewaySessionHandler {
                         new TransportServiceCallback<>() {
                             @Override
                             public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                                AbstractGatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg) ;
+                                GatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg) ;
                                 if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                     log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
@@ -282,8 +282,8 @@ public abstract class AbstractGatewaySessionHandler {
             }
     }
 
-    private AbstractGatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
-        return this.deviceSessionCtx.isSparkplug() ? new SparkplugSessionCtx(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService) :
+    private GatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
+        return this.deviceSessionCtx.isSparkplug() ? new SparkplugDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService) :
          new GatewayDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
     }
 
@@ -324,7 +324,7 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    private void processOnDisconnect(MqttPublishMessage msg, String deviceName) {
+    void processOnDisconnect(MqttPublishMessage msg, String deviceName) {
         deregisterSession(deviceName);
         ack(msg, ReturnCode.SUCCESS);
     }
@@ -716,6 +716,7 @@ public abstract class AbstractGatewaySessionHandler {
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
         transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+        System.out.println("Removed device " + deviceName + " from the gateway session");
         log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
     }
 

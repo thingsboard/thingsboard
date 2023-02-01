@@ -64,6 +64,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataTyp
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8Array;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -74,30 +75,28 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     protected ThreadLocalRandom random = ThreadLocalRandom.current();
 
     protected void processClientWithCorrectAccessTokenPublishNBIRTH() throws Exception {
-        processClientWithCorrectNodeAccess();
+        clientWithCorrectNodeAccessTokenWithNDEATH();
         List<String> listKeys = new ArrayList<>();
         SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(calendar.getTimeInMillis());
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long valueBdSec = getBdSeqNum();
         MetricDataType metricDataType = Int64;
-        TsKvEntry tsKvEntryBdSecOriginal = new BasicTsKvEntry(ts, new LongDataEntry(keysBdSeq, valueBdSec));
-        payloadBirthNode.addMetrics(createMetric(valueBdSec, tsKvEntryBdSecOriginal, metricDataType));
+        String key = keysBdSeq;
+        payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, key, metricDataType));
         listKeys.add(SparkplugMessageType.NBIRTH.name() + " " + keysBdSeq);
 
-        String keys = "Node Control/Rebirth";
+        key = "Node Control/Rebirth";
         boolean valueRebirth = false;
         metricDataType = MetricDataType.Boolean;
-        TsKvEntry expectedSsKvEntryRebirth = new BasicTsKvEntry(ts, new BooleanDataEntry(keys, valueRebirth));
-        payloadBirthNode.addMetrics(createMetric(valueRebirth, expectedSsKvEntryRebirth, metricDataType));
-        listKeys.add(keys);
+        payloadBirthNode.addMetrics(createMetric(valueRebirth, ts, key, metricDataType));
+        listKeys.add(key);
 
-        keys = "Node Metric int32";
+        key = "Node Metric int32";
         int valueNodeInt32 = 1024;
         metricDataType = Int32;
-        TsKvEntry expectedSsKvEntryNodeInt32 = new BasicTsKvEntry(ts, new LongDataEntry(keys, Integer.toUnsignedLong(valueNodeInt32)));
-        payloadBirthNode.addMetrics(createMetric(valueNodeInt32, expectedSsKvEntryNodeInt32, metricDataType));
-        listKeys.add(keys);
+        payloadBirthNode.addMetrics(createMetric(valueNodeInt32, ts, key, metricDataType));
+        listKeys.add(key);
 
         client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
                 payloadBirthNode.build().toByteArray(), 0, false);
@@ -113,23 +112,22 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     }
 
     protected void processClientWithCorrectAccessTokenPublishNCMDReBirth() throws Exception {
-        processClientWithCorrectNodeAccess();
+        clientWithCorrectNodeAccessTokenWithNDEATH();
         SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(calendar.getTimeInMillis());
         List<String> listKeys = new ArrayList<>();
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long valueBdSec = getBdSeqNum();
         MetricDataType metricDataType = Int64;
-        TsKvEntry tsKvEntryBdSecOriginal = new BasicTsKvEntry(ts, new LongDataEntry(keysBdSeq, valueBdSec));
-        payloadBirthNode.addMetrics(createMetric(valueBdSec, tsKvEntryBdSecOriginal, metricDataType));
+        String key = keysBdSeq;
+        payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, key, metricDataType));
         listKeys.add(SparkplugMessageType.NCMD.name() + " " + keysBdSeq);
 
-        String keys = "Node Control/Rebirth";
+        key = "Node Control/Rebirth";
         boolean valueRebirth = true;
         metricDataType = MetricDataType.Boolean;
-        TsKvEntry expectedSsKvEntryRebirth = new BasicTsKvEntry(ts, new BooleanDataEntry(keys, valueRebirth));
-        payloadBirthNode.addMetrics(createMetric(valueRebirth, expectedSsKvEntryRebirth, metricDataType));
-        listKeys.add(keys);
+        payloadBirthNode.addMetrics(createMetric(valueRebirth, ts, key, metricDataType));
+        listKeys.add(key);
 
         client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NCMD.name() + "/" + edgeNode,
                 payloadBirthNode.build().toByteArray(), 0, false);
@@ -145,7 +143,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     }
 
     protected void processClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple() throws Exception {
-        processClientWithCorrectNodeAccess();
+        clientWithCorrectNodeAccessTokenWithNDEATH();;
 
         String messageTypeName = SparkplugMessageType.NDATA.name();
         List<String> listKeys = new ArrayList<>();
@@ -175,7 +173,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     }
 
     protected void processClientWithCorrectAccessTokenPushNodeMetricBuildArraysSimple() throws Exception {
-        processClientWithCorrectNodeAccess();
+        clientWithCorrectNodeAccessTokenWithNDEATH();;
 
         String messageTypeName = SparkplugMessageType.NDATA.name();
         List<String> listKeys = new ArrayList<>();
@@ -332,45 +330,44 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         createdAddMetricTsKvJson(dataPayload, keys, strings, ts, StringArray, listTsKvEntry, listKeys);
     }
 
-    private TsKvEntry createdAddMetricTsKvLong(SparkplugBProto.Payload.Builder dataPayload, String keys, Object value,
+    private TsKvEntry createdAddMetricTsKvLong(SparkplugBProto.Payload.Builder dataPayload, String key, Object value,
                                                long ts, MetricDataType metricDataType) throws ThingsboardException {
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(keys, Long.valueOf(String.valueOf(value))));
-
-        dataPayload.addMetrics(createMetric(value, tsKvEntry, metricDataType));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(key, Long.valueOf(String.valueOf(value))));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
 
-    private TsKvEntry createdAddMetricTsKvFloat(SparkplugBProto.Payload.Builder dataPayload, String keys, Object value,
+    private TsKvEntry createdAddMetricTsKvFloat(SparkplugBProto.Payload.Builder dataPayload, String key, Object value,
                                                 long ts, MetricDataType metricDataType) throws ThingsboardException {
         var f = new BigDecimal(String.valueOf(value));
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new DoubleDataEntry(keys, f.doubleValue()));
-        dataPayload.addMetrics(createMetric(value, tsKvEntry, metricDataType));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new DoubleDataEntry(key, f.doubleValue()));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
 
-    private TsKvEntry createdAddMetricTsKvDouble(SparkplugBProto.Payload.Builder dataPayload, String keys, double value,
+    private TsKvEntry createdAddMetricTsKvDouble(SparkplugBProto.Payload.Builder dataPayload, String key, double value,
                                                  long ts, MetricDataType metricDataType) throws ThingsboardException {
         var d = new BigDecimal(String.valueOf(value));
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(keys, d.longValueExact()));
-        dataPayload.addMetrics(createMetric(value, tsKvEntry, metricDataType));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(key, d.longValueExact()));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
 
-    private TsKvEntry createdAddMetricTsKvBoolean(SparkplugBProto.Payload.Builder dataPayload, String keys, boolean value,
+    private TsKvEntry createdAddMetricTsKvBoolean(SparkplugBProto.Payload.Builder dataPayload, String key, boolean value,
                                                   long ts, MetricDataType metricDataType) throws ThingsboardException {
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new BooleanDataEntry(keys, value));
-        dataPayload.addMetrics(createMetric(value, tsKvEntry, metricDataType));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new BooleanDataEntry(key, value));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
 
-    private TsKvEntry createdAddMetricTsKvString(SparkplugBProto.Payload.Builder dataPayload, String keys, String value,
+    private TsKvEntry createdAddMetricTsKvString(SparkplugBProto.Payload.Builder dataPayload, String key, String value,
                                                  long ts, MetricDataType metricDataType) throws ThingsboardException {
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(keys, value));
-        dataPayload.addMetrics(createMetric(value, tsKvEntry, metricDataType));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(key, value));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
 
-    private void createdAddMetricTsKvJson(SparkplugBProto.Payload.Builder dataPayload, String keys,
+    private void createdAddMetricTsKvJson(SparkplugBProto.Payload.Builder dataPayload, String key,
                                                         Object values, long ts, MetricDataType metricDataType,
                                                          List<TsKvEntry> listTsKvEntry,
                                                          List<String> listKeys) throws ThingsboardException {
@@ -428,11 +425,11 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                 throw new IllegalStateException("Unexpected value: " + metricDataType);
         }
         if (nodeArray.size() > 0) {
-            Optional<TsKvEntry> tsKvEntryOptional = Optional.of(new BasicTsKvEntry(ts, new JsonDataEntry(keys, nodeArray.toString())));
+            Optional<TsKvEntry> tsKvEntryOptional = Optional.of(new BasicTsKvEntry(ts, new JsonDataEntry(key, nodeArray.toString())));
             if (tsKvEntryOptional.isPresent()) {
-                dataPayload.addMetrics(createMetric(values, tsKvEntryOptional.get(), metricDataType));
+                dataPayload.addMetrics(createMetric(values, ts, key, metricDataType));
                 listTsKvEntry.add(tsKvEntryOptional.get());
-                listKeys.add(keys);
+                listKeys.add(key);
             }
         }
     }

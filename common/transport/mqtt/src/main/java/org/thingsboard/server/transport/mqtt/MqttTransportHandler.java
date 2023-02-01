@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -107,6 +108,7 @@ import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NDEATH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicPublish;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicSubscribe;
 
@@ -390,12 +392,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         // TODO
                         break;
                     case NBIRTH:
+                        sparkplugSessionHandler.setMetricsBirthNode (sparkplugBProtoNode.getMetricsList());
+                        sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
+                        break;
                     case NCMD:
                     case NDATA:
                         sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
-                        break;
-                    case NDEATH:
-                        sparkplugSessionHandler.onDeviceDisconnect(mqttMsg);
                         break;
                     case NRECORD:
                         // TODO
@@ -410,16 +412,27 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         // TODO
                         break;
                     case DBIRTH:
-
                         sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);
+
                         System.out.println();
                         break;
                     case DCMD:
                     case DDATA:
                         sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);
                         break;
+                    /**
+                     * TODO
+                     *  7.3.2. Device Death Certificate (DDEATH)
+                     * The Sparkplug™ Topic Namespace for a device Death Certificate is:
+                     * namespace/group_id/DDEATH/edge_node_id/device_id
+                     * It is the responsibility of the MQTT EoN node to indicate the real-time state of either physical legacy device using
+                     * poll/response protocols and/or local logical devices. If the device becomes unavailable for any reason (no
+                     * response, CRC error, etc.) it is the responsibility of the EoN node to publish a DDEATH on behalf of the end device.
+                     * Immediately upon reception of a DDEATH, any MQTT client subscribed to this device should set the data quality of
+                     * all metrics to “STALE” and should note the time stamp when the DDEATH message was received.
+                     */
                     case DDEATH:
-                        sparkplugSessionHandler.onDeviceDisconnect(mqttMsg);
+                        sparkplugSessionHandler.onDeviceDisconnect(mqttMsg, deviceName);
                         break;
                     case DRECORD:
                         // TODO
@@ -434,6 +447,62 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (AdaptorException | ThingsboardException | InvalidProtocolBufferException e) {
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendAckOrCloseSession(ctx, topicName, msgId);
+        }
+    }
+
+    private void handleSparkplugSubscribeMsg(List<Integer> grantedQoSList, MqttTopicSubscription subscription, MqttQoS reqQoS) throws ThingsboardException {
+        SparkplugTopic sparkplugTopic = parseTopicSubscribe(subscription.topicName());
+        if (sparkplugTopic.getGroupId() == null) {
+            // TODO SUBSCRIBE NameSpace
+        } else if (sparkplugTopic.getType() == null) {
+            // TODO SUBSCRIBE GroupId
+        } else if (sparkplugTopic.isNode()) {
+            // A node topic
+            processAttributesSubscribe(grantedQoSList, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, reqQoS, TopicType.V1);
+            switch (sparkplugTopic.getType()) {
+                case STATE:
+                    // TODO
+                    break;
+                case NBIRTH:
+                    // TODO
+                    break;
+                case NCMD:
+                    // TODO
+                    break;
+                case NDATA:
+                    // TODO
+                    break;
+                case NDEATH:
+                    // TODO
+                    break;
+                case NRECORD:
+                    // TODO
+                    break;
+                default:
+            }
+        } else {
+            // A device topic
+            switch (sparkplugTopic.getType()) {
+                case STATE:
+                    // TODO
+                    break;
+                case DBIRTH:
+                    // TODO
+                    break;
+                case DCMD:
+                    // TODO
+                    break;
+                case DDATA:
+                    // TODO
+                    break;
+                case DDEATH:
+                    // TODO
+                    break;
+                case DRECORD:
+                    // TODO
+                    break;
+                default:
+            }
         }
     }
 
@@ -698,8 +767,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             MqttQoS reqQoS = subscription.qualityOfService();
             try {
                 if (sparkplugSessionHandler != null) {
-                    SparkplugTopic sparkplugTopic = parseTopicSubscribe(mqttMsg.payload().topicSubscriptions().get(0).topicName());
-                    sparkplugSessionHandler.handleSparkplugSubscribeMsg(grantedQoSList, sparkplugTopic, reqQoS);
+                    handleSparkplugSubscribeMsg(grantedQoSList, subscription, reqQoS);
+                    activityReported = true;
                 } else {
                     switch (topic) {
                         case MqttTopics.DEVICE_ATTRIBUTES_TOPIC: {
@@ -1060,24 +1129,47 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void checkSparkplugSession(MqttConnectMessage connectMessage) {
+    /**
+     * Sparkplug™ Specification Version 2.2
+     * 7.1.1. EoN Node Death Certificate (NDEATH)
+     * The Death Certificate topic for an MQTT EoN node is:
+     * namespace/group_id/NDEATH/edge_node_id
+     * The Death Certificate topic and payload described here are not “published” as an MQTT message by a client, but
+     * provided as parameters within the MQTT CONNECT control packet when this MQTT EoN node first establishes the
+     * MQTT Client session.
+     */
+
+    private void checkSparkplugNodeSession(MqttConnectMessage connectMessage, ChannelHandlerContext ctx) {
         try {
-            if (sparkplugSessionHandler == null && validatedSparkplugTopic(connectMessage)) {
-                    SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
-                    SparkplugTopic sparkplugTopicNode = parseTopicPublish(connectMessage.payload().willTopic());
-                    sparkplugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopicNode);
-                    sparkplugSessionHandler.onTelemetryProto(0, sparkplugBProtoNode,
-                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopicNode);
+            if (sparkplugSessionHandler == null) {
+                SparkplugTopic sparkplugTopicNode = validatedSparkplugTopicConnectedNode(connectMessage);
+                if (sparkplugTopicNode != null) {
+                        SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
+                        sparkplugSessionHandler = new SparkplugNodeSessionHandler(deviceSessionCtx, sessionId, sparkplugTopicNode);
+                        sparkplugSessionHandler.onTelemetryProto(0, sparkplugBProtoNode,
+                                deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopicNode);
+                } else {
+                    log.trace("[{}][{}] Failed to fetch sparkplugDevice connect:  sparkplugTopicName without SparkplugMessageType.NDEATH.", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName());
+                    throw new ThingsboardException("Invalid request body", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
             }
         } catch (Exception e) {
-            log.trace("[{}][{}] Failed to fetch sparkplugDevice additional info or sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);
+            log.trace("[{}][{}] Failed to fetch sparkplugDevice connect, sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);
+            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
+            ctx.close();
         }
     }
 
-    private boolean validatedSparkplugTopic (MqttConnectMessage connectMessage) {
-        return StringUtils.isNotBlank(connectMessage.payload().willTopic())
+    private SparkplugTopic validatedSparkplugTopicConnectedNode (MqttConnectMessage connectMessage) throws ThingsboardException {
+        if(StringUtils.isNotBlank(connectMessage.payload().willTopic())
                 && connectMessage.payload().willMessageInBytes() != null
-                && connectMessage.payload().willMessageInBytes().length > 0;
+                && connectMessage.payload().willMessageInBytes().length > 0) {
+            SparkplugTopic  sparkplugTopicNode = parseTopicPublish(connectMessage.payload().willTopic());
+            if(NDEATH.equals(sparkplugTopicNode.getType())){
+                return  sparkplugTopicNode;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -1127,7 +1219,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     if (deviceSessionCtx.isSparkplug()) {
-                        checkSparkplugSession(connectMessage);
+                        checkSparkplugNodeSession(connectMessage, ctx);
                     } else {
                         checkGatewaySession(sessionMetaData);
                     }
@@ -1169,7 +1261,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         String topic = attrSubTopicType.getAttributesSubTopic();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrSubTopicType);
         try {
-            adaptor.convertToPublish(deviceSessionCtx, notification, topic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            if (sparkplugSessionHandler != null) {
+                log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
+                sparkplugSessionHandler.createMqttPublishMsg(deviceSessionCtx, notification).ifPresent(sparkplugSessionHandler::writeAndFlush);
+            } else {
+                adaptor.convertToPublish(deviceSessionCtx, notification, topic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            }
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes update to MQTT msg", sessionId, e);
         }
