@@ -237,7 +237,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         String awaitAlias = "await Json Test Subscribe To AttributesUpdates (client.getObserveRelation)";
         await(awaitAlias)
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         0 == callbackCoap.getObserve().intValue());
@@ -251,7 +251,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         awaitAlias = "await Json Test Subscribe To AttributesUpdates (add attributes)";
         await(awaitAlias)
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         expectedObserveForAttributesUpdate == callbackCoap.getObserve().intValue());
@@ -261,7 +261,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=sharedJson", String.class);
         awaitAlias = "await Json Test Subscribe To AttributesUpdates (deleted attributes)";
         await(awaitAlias)
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         expectedObserveForAttributesDelete == callbackCoap.getObserve().intValue());
@@ -284,7 +284,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String awaitAlias = "await Proto Test Subscribe To Attributes Updates (add attributes)";
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         await(awaitAlias)
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         0 == callbackCoap.getObserve().intValue());
@@ -299,7 +299,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         awaitAlias = "await Proto Test Subscribe To Attributes Updates (add attributes)";
         await(awaitAlias)
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         expectedObserveForAttributesUpdate == callbackCoap.getObserve().intValue());
@@ -309,7 +309,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=sharedJson", String.class);
         awaitAlias = "await Proto Test Subscribe To Attributes Updates (deleted attributes)";
         await(awaitAlias)
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         expectedObserveForAttributesDelete == callbackCoap.getObserve().intValue());
@@ -404,7 +404,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
     private void awaitClientAfterCancelObserve() {
         Awaitility.await("awaitClientAfterCancelObserve")
                 .pollInterval(10, TimeUnit.MILLISECONDS)
-                .atMost(5, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> {
                     log.trace("awaiting defaultTransportService.sessions is empty");
                     return defaultTransportService.sessions.isEmpty();
