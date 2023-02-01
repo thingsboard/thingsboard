@@ -83,10 +83,10 @@
       </div>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.assetType">
-      <tb-entity-subtype-autocomplete required
-                                      formControlName="assetType"
-                                      [entityType]="entityType.ASSET">
-      </tb-entity-subtype-autocomplete>
+      <tb-entity-subtype-list required
+                              [entityType]="entityType.ASSET"
+                              formControlName="assetTypes">
+      </tb-entity-subtype-list>
       <mat-form-field class="mat-block">
         <mat-label translate>asset.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
@@ -95,10 +95,10 @@
       </mat-form-field>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.deviceType">
-      <tb-entity-subtype-autocomplete required
-                                      formControlName="deviceType"
-                                      [entityType]="entityType.DEVICE">
-      </tb-entity-subtype-autocomplete>
+      <tb-entity-subtype-list required
+                              [entityType]="entityType.DEVICE"
+                              formControlName="deviceTypes">
+      </tb-entity-subtype-list>
       <mat-form-field class="mat-block">
         <mat-label translate>device.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
@@ -107,10 +107,10 @@
       </mat-form-field>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityViewType">
-      <tb-entity-subtype-autocomplete required
-                                      formControlName="entityViewType"
-                                      [entityType]="entityType.ENTITY_VIEW">
-      </tb-entity-subtype-autocomplete>
+      <tb-entity-subtype-list required
+                              [entityType]="entityType.ENTITY_VIEW"
+                              formControlName="entityViewTypes">
+      </tb-entity-subtype-list>
       <mat-form-field class="mat-block">
         <mat-label translate>entity-view.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
@@ -119,10 +119,10 @@
       </mat-form-field>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.edgeType">
-      <tb-entity-subtype-autocomplete required
-                                      formControlName="edgeType"
-                                      [entityType]="entityType.EDGE">
-      </tb-entity-subtype-autocomplete>
+      <tb-entity-subtype-list required
+                              [entityType]="entityType.EDGE"
+                              formControlName="edgeTypes">
+      </tb-entity-subtype-list>
       <mat-form-field class="mat-block">
         <mat-label translate>edge.name-starts-with</mat-label>
         <input matInput formControlName="edgeNameFilter">

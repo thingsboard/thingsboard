@@ -351,7 +351,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     protected void processProtoTestRequestAttributesValuesFromTheServer(String attrPubTopic, String attrSubTopic, String attrReqTopicPrefix) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
-        DeviceTypeFilter dtf = new DeviceTypeFilter(savedDevice.getType(), savedDevice.getName());
+        DeviceTypeFilter dtf = new DeviceTypeFilter(List.of(savedDevice.getType()), savedDevice.getName());
         String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
         String sharedKeysStr = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
         List<String> clientKeysList = List.of(clientKeysStr.split(","));

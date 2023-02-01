@@ -19,6 +19,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -29,7 +31,7 @@ public class DeviceTypeFilter implements EntityFilter {
         return EntityFilterType.DEVICE_TYPE;
     }
 
-    private String deviceType;
+    private List<String> deviceTypes;
 
     private String deviceNameFilter;
 

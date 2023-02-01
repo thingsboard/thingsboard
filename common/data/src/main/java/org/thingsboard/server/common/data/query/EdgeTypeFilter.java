@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class EdgeTypeFilter implements EntityFilter {
 
@@ -25,7 +27,7 @@ public class EdgeTypeFilter implements EntityFilter {
         return EntityFilterType.EDGE_TYPE;
     }
 
-    private String edgeType;
+    private List<String> edgeTypes;
 
     private String edgeNameFilter;
 

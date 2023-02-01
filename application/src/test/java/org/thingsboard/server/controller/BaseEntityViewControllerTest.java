@@ -584,7 +584,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testGetTelemetryWhenEntityViewTimeRangeInsideTimestampRange() throws Exception {
-        DeviceTypeFilter dtf = new DeviceTypeFilter(testDevice.getType(), testDevice.getName());
+        DeviceTypeFilter dtf = new DeviceTypeFilter(List.of(testDevice.getType()), testDevice.getName());
         List<String> tsKeys = List.of("tsKey1", "tsKey2", "tsKey3");
 
         DeviceCredentials deviceCredentials = doGet("/api/device/" + testDevice.getId().getId() + "/credentials", DeviceCredentials.class);
@@ -683,7 +683,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     }
 
     private Set<String> putAttributesAndWait(String stringKV, Set<String> expectedKeySet) throws Exception {
-        DeviceTypeFilter dtf = new DeviceTypeFilter(testDevice.getType(), testDevice.getName());
+        DeviceTypeFilter dtf = new DeviceTypeFilter(List.of(testDevice.getType()), testDevice.getName());
         List<EntityKey> keysToSubscribe = expectedKeySet.stream()
                 .map(key -> new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, key))
                 .collect(Collectors.toList());

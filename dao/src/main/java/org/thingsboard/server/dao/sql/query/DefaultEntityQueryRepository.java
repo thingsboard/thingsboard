@@ -809,31 +809,31 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
-        String type;
+        List<String> types;
         String name;
         switch (filter.getType()) {
             case ASSET_TYPE:
-                type = ((AssetTypeFilter) filter).getAssetType();
+                types = ((AssetTypeFilter) filter).getAssetTypes();
                 name = ((AssetTypeFilter) filter).getAssetNameFilter();
                 break;
             case DEVICE_TYPE:
-                type = ((DeviceTypeFilter) filter).getDeviceType();
+                types = ((DeviceTypeFilter) filter).getDeviceTypes();
                 name = ((DeviceTypeFilter) filter).getDeviceNameFilter();
                 break;
             case ENTITY_VIEW_TYPE:
-                type = ((EntityViewTypeFilter) filter).getEntityViewType();
+                types = ((EntityViewTypeFilter) filter).getEntityViewTypes();
                 name = ((EntityViewTypeFilter) filter).getEntityViewNameFilter();
                 break;
             case EDGE_TYPE:
-                type = ((EdgeTypeFilter) filter).getEdgeType();
+                types = ((EdgeTypeFilter) filter).getEdgeTypes();
                 name = ((EdgeTypeFilter) filter).getEdgeNameFilter();
                 break;
             default:
                 throw new RuntimeException("Not supported!");
         }
-        ctx.addStringParameter("entity_filter_type_query_type", type);
+        ctx.addStringListParameter("entity_filter_type_query_types", types);
         ctx.addStringParameter("entity_filter_type_query_name", name);
-        return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
+        return "e.type in (:entity_filter_type_query_types) and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
     }
 
     public static EntityType resolveEntityType(EntityFilter entityFilter) {

@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class EntityViewTypeFilter implements EntityFilter {
 
@@ -25,7 +27,7 @@ public class EntityViewTypeFilter implements EntityFilter {
         return EntityFilterType.ENTITY_VIEW_TYPE;
     }
 
-    private String entityViewType;
+    private List<String> entityViewTypes;
 
     private String entityViewNameFilter;
 

@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class AssetTypeFilter implements EntityFilter {
 
@@ -25,7 +27,7 @@ public class AssetTypeFilter implements EntityFilter {
         return EntityFilterType.ASSET_TYPE;
     }
 
-    private String assetType;
+    private List<String> assetTypes;
 
     private String assetNameFilter;
 

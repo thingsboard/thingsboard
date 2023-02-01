@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.install.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,6 +31,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
@@ -38,6 +40,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -65,6 +68,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -109,6 +113,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private EntityViewService entityViewService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     @Autowired
     private TimeseriesService tsService;
@@ -202,6 +209,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 } else {
                     log.info("Skipping edge events migration");
                 }
+                break;
+            case "3.4.3":
+                log.info("Updating data from version 3.4.3 to 3.5.0 ...");
+                tenantsDashboardsFiltersUpdater.updateEntities();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -681,4 +692,93 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }
     }
 
+    private final PaginatedUpdater<String, Tenant> tenantsDashboardsFiltersUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Tenants dashboards filters updater";
+                }
+
+                @Override
+                protected boolean forceReportTotal() {
+                    return true;
+                }
+
+                @Override
+                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant tenant) {
+                    updateTenantDashboardsFilters(tenant.getId());
+                }
+            };
+
+    private void updateTenantDashboardsFilters(TenantId tenantId) {
+        PageLink pageLink = new PageLink(100);
+        PageData<DashboardInfo> pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
+        boolean hasNext = true;
+        while (hasNext) {
+            List<ListenableFuture<List<Void>>> updateFutures = new ArrayList<>();
+            for (DashboardInfo dashboardInfo : pageData.getData()) {
+                updateFutures.add(updateDashboardFilters(tenantId, dashboardInfo));
+            }
+
+            try {
+                Futures.allAsList(updateFutures).get();
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Failed to update dashboards filters", e);
+            }
+
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+                pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
+            } else {
+                hasNext = false;
+            }
+        }
+    }
+
+    private ListenableFuture<List<Void>> updateDashboardFilters(TenantId tenantId, DashboardInfo dashboardInfo) {
+        DashboardId dashboardId = dashboardInfo.getId();
+        return Futures.transform(dashboardService.findDashboardByIdAsync(tenantId, dashboardId), dashboard -> {
+            if (dashboard == null || dashboard.getConfiguration() == null) {
+                return null;
+            }
+            try {
+                JsonNode configuration = dashboard.getConfiguration();
+                JsonNode entityAliases = configuration.get("entityAliases");
+                if (entityAliases == null) {
+                    return null;
+                }
+                for (JsonNode entityAlias : entityAliases) {
+                    JsonNode filter = entityAlias.get("filter");
+                    updateFilterIfRequired(filter, "assetType", "assetType", "assetTypes");
+                    updateFilterIfRequired(filter, "deviceType", "deviceType", "deviceTypes");
+                    updateFilterIfRequired(filter, "entityViewType", "entityViewType", "entityViewTypes");
+                    updateFilterIfRequired(filter, "edgeType", "edgeType", "edgeTypes");
+                }
+                dashboardService.saveDashboard(dashboard);
+            } catch (Exception e) {
+                log.warn("Failed to update dashboard filters. Dashboard {} ", dashboard, e);
+            }
+            return null;
+        }, MoreExecutors.directExecutor());
+    }
+
+    private static void updateFilterIfRequired(JsonNode filter, String filterType, String oldParameterName, String newParameterName) {
+        if (filter == null || filter.get("type") == null) {
+            return;
+        }
+        if (filterType.equals(filter.get("type").asText())) {
+            if (filter.get(oldParameterName) != null) {
+                ArrayNode arrayNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+                arrayNode.add(filter.get(oldParameterName).asText());
+                ((ObjectNode) filter).set(newParameterName, arrayNode);
+                ((ObjectNode) filter).remove(oldParameterName);
+            }
+        }
+    }
 }
