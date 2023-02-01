@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-version: '2.2'
+version: '3.0'
 
 services:
   # Redis cluster
@@ -39,20 +39,20 @@ services:
 
 volumes:
   redis-cluster-data-0:
-    external: true
-    name: ${REDIS_CLUSTER_DATA_VOLUME_0}
+    external:
+      name: ${REDIS_CLUSTER_DATA_VOLUME_0}
   redis-cluster-data-1:
-    external: true
-    name: ${REDIS_CLUSTER_DATA_VOLUME_1}
+    external:
+      name: ${REDIS_CLUSTER_DATA_VOLUME_1}
   redis-cluster-data-2:
-    external: true
-    name: ${REDIS_CLUSTER_DATA_VOLUME_2}
+    external:
+      name: ${REDIS_CLUSTER_DATA_VOLUME_2}
   redis-cluster-data-3:
-    external: true
-    name: ${REDIS_CLUSTER_DATA_VOLUME_3}
+    external:
+      name: ${REDIS_CLUSTER_DATA_VOLUME_3}
   redis-cluster-data-4:
-    external: true
-    name: ${REDIS_CLUSTER_DATA_VOLUME_4}
+    external:
+      name: ${REDIS_CLUSTER_DATA_VOLUME_4}
   redis-cluster-data-5:
-    external: true
-    name: ${REDIS_CLUSTER_DATA_VOLUME_5}
+    external:
+      name: ${REDIS_CLUSTER_DATA_VOLUME_5}

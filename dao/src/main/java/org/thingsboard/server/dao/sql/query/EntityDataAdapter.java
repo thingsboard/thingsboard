@@ -54,8 +54,8 @@ public class EntityDataAdapter {
         EntityType entityType = EntityType.valueOf((String) row.get("entity_type"));
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, id);
         Map<EntityKeyType, Map<String, TsValue>> latest = new HashMap<>();
-        Map<String, TsValue[]> timeseries = new HashMap<>();
-        EntityData entityData = new EntityData(entityId, latest, timeseries);
+        //Maybe avoid empty hashmaps?
+        EntityData entityData = new EntityData(entityId, latest, new HashMap<>(), new HashMap<>());
         for (EntityKeyMapping mapping : selectionMapping) {
             if (!mapping.isIgnore()) {
                 EntityKey entityKey = mapping.getEntityKey();

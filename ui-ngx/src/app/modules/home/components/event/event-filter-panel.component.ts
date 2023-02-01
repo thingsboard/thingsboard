@@ -108,7 +108,7 @@ export class EventFilterPanelComponent {
 
   changeIsError(value: boolean | string) {
     if (this.conditionError && value === '') {
-      this.eventFilterFormGroup.get('error').reset('', {emitEvent: false});
+      this.eventFilterFormGroup.get('errorStr').reset('', {emitEvent: false});
     }
   }
 }

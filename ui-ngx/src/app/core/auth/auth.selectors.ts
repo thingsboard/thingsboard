@@ -60,6 +60,11 @@ export const selectHasRepository = createSelector(
   (state: AuthState) => state.hasRepository
 );
 
+export const selectTbelEnabled = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.tbelEnabled
+);
+
 export function getCurrentAuthState(store: Store<AppState>): AuthState {
   let state: AuthState;
   store.pipe(select(selectAuth), take(1)).subscribe(

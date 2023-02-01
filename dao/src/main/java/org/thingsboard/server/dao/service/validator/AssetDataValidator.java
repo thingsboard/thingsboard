@@ -73,9 +73,6 @@ public class AssetDataValidator extends DataValidator<Asset> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Asset asset) {
-        if (StringUtils.isEmpty(asset.getType())) {
-            throw new DataValidationException("Asset type should be specified!");
-        }
         if (StringUtils.isEmpty(asset.getName())) {
             throw new DataValidationException("Asset name should be specified!");
         }

@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.query.AlarmQueryRepository;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -55,6 +56,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
+@SqlDao
 public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements AlarmDao {
 
     @Autowired
@@ -77,19 +79,22 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public Boolean deleteAlarm(TenantId tenantId, Alarm alarm) {
-        return removeById(tenantId, alarm.getUuidId());
+    public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+        List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
+                originator.getId(),
+                type,
+                PageRequest.of(0, 1));
+        return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
     }
 
     @Override
-    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return service.submit(() -> {
-            List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
-                    originator.getId(),
-                    type,
-                    PageRequest.of(0, 1));
-            return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
-        });
+    public ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return service.submit(() -> findLatestByOriginatorAndType(tenantId, originator, type));
+    }
+
+    @Override
+    public Alarm findAlarmById(TenantId tenantId, UUID key) {
+        return findById(tenantId, key);
     }
 
     @Override

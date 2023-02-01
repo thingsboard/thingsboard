@@ -31,7 +31,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 
 /**
  * @author Andrew Shvayka
@@ -40,7 +40,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     private final String ruleChainName;
     private final TbActorRef self;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private RuleNode ruleNode;
     private TbNode tbNode;
     private DefaultTbContext defaultCtx;

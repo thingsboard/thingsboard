@@ -15,21 +15,23 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, of } from 'rxjs';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
-  RepositorySettings,
+  AutoCommitSettings,
+  JwtSettings,
   MailServerSettings,
+  RepositorySettings,
+  RepositorySettingsInfo,
   SecuritySettings,
   TestSmsRequest,
-  UpdateMessage, AutoCommitSettings
+  UpdateMessage
 } from '@shared/models/settings.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { tap } from 'rxjs/operators';
-import { AuthUser } from '@shared/models/user.model';
-import { Authority } from '@shared/models/authority.enum';
+import { LoginResponse } from '@shared/models/login.models';
 
 @Injectable({
   providedIn: 'root'
@@ -70,6 +72,14 @@ export class AdminService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getJwtSettings(config?: RequestConfig): Observable<JwtSettings> {
+    return this.http.get<JwtSettings>(`/api/admin/jwtSettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveJwtSettings(jwtSettings: JwtSettings, config?: RequestConfig): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/admin/jwtSettings', jwtSettings, defaultHttpOptionsFromConfig(config));
+  }
+
   public getRepositorySettings(config?: RequestConfig): Observable<RepositorySettings> {
     return this.http.get<RepositorySettings>(`/api/admin/repositorySettings`, defaultHttpOptionsFromConfig(config));
   }
@@ -95,6 +105,10 @@ export class AdminService {
   public checkRepositoryAccess(repositorySettings: RepositorySettings,
                                config?: RequestConfig): Observable<void> {
     return this.http.post<void>('/api/admin/repositorySettings/checkAccess', repositorySettings, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getRepositorySettingsInfo(config?: RequestConfig): Observable<RepositorySettingsInfo> {
+    return this.http.get<RepositorySettingsInfo>('/api/admin/repositorySettings/info', defaultHttpOptionsFromConfig(config));
   }
 
   public getAutoCommitSettings(config?: RequestConfig): Observable<AutoCommitSettings> {

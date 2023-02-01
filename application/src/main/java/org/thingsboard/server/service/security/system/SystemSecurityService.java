@@ -44,4 +44,5 @@ public interface SystemSecurityService {
 
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e);
 
+    void logLoginAction(User user, Object authenticationDetails, ActionType actionType, String provider, Exception e);
 }

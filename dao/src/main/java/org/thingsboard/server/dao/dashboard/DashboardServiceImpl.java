@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -158,6 +159,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    @Transactional
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);

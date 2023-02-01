@@ -106,6 +106,9 @@ transport:
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
+    dtls:
+      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+      retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"

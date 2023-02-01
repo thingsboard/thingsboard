@@ -328,6 +328,8 @@
         "repository-url": "Repository URL",
         "repository-url-required": "Repository URL is required.",
         "default-branch": "Default branch name",
+        "repository-read-only": "Read-only",
+        "show-merge-commits": "Show merge commits",
         "authentication-settings": "Authentication settings",
         "auth-method": "Authentication method",
         "auth-method-username-password": "Password / access token",
@@ -380,6 +382,28 @@
             "within-time": "Within time (sec)",
             "within-time-pattern": "Time must be a positive integer.",
             "within-time-required": "Time is required."
+        },
+        "jwt": {
+            "security-settings": "JWT security settings",
+            "issuer-name": "Issuer name",
+            "issuer-name-required": "Issuer name is required.",
+            "signings-key": "Signing key",
+            "signings-key-hint": "Base64 encoded string representing at least 256 bits of data.",
+            "signings-key-required": "Signing key is required.",
+            "signings-key-min-length": "Signing key must be at least 256 bits of data.",
+            "signings-key-base64": "Signing key must be base64 format.",
+            "expiration-time": "Token expiration time (sec)",
+            "expiration-time-required": "Token expiration time is required.",
+            "expiration-time-pattern": "Token expiration time be a positive integer.",
+            "expiration-time-min": "Minimum time is 60 seconds (1 minute).",
+            "refresh-expiration-time": "Refresh token expiration time (sec)",
+            "refresh-expiration-time-required": "Refresh token expiration time is required.",
+            "refresh-expiration-time-pattern": "Refresh token expiration time be a positive integer.",
+            "refresh-expiration-time-min": "Minimum time is 900 seconds (15 minute).",
+            "refresh-expiration-time-less-token": "Refresh token time must be greater token time.",
+            "generate-key": "Generate key",
+            "info-header": "All users will be to re-logined",
+            "info-message": "Change of the JWT Signing Key will cause all issued tokens to be invalid. All users will need to re-login. This will also affect scripts that use Rest API/Websockets."
         }
       },
     "alarm": {
@@ -1039,7 +1063,22 @@
         "value-description": "the current value;",
         "prev-value-description": "result of the previous function call;",
         "time-prev-description": "timestamp of the previous value;",
-        "prev-orig-value-description": "original previous value;"
+        "prev-orig-value-description": "original previous value;",
+        "aggregation": "Aggregation",
+        "aggregation-type-hint-common": "For performance reasons, the aggregated values calculation is available only for fixed time intervals like \"current day\", \"current month\", etc, and is not available for sliding window intervals like 'last 30 minutes' or 'last 24 hours'.",
+        "aggregation-type-none-hint": "Take latest value.",
+        "aggregation-type-min-hint": "Find minimum value among data points within a selected time window.",
+        "aggregation-type-max-hint": "Find maximum value among data points within a selected time window.",
+        "aggregation-type-avg-hint": "Calculate an average value among data points within a selected time window.",
+        "aggregation-type-sum-hint": "Sum all values of the data points within a selected time window.",
+        "aggregation-type-count-hint": "Total number of the data points within a selected time window.",
+        "delta-calculation": "Delta calculation",
+        "enable-delta-calculation": "Enable delta calculation",
+        "enable-delta-calculation-hint": "When enabled, the data key value is calculated based on the aggregated values for a selected time window and a specified comparison period. For performance reasons, the delta calculation is available only for history time windows and not for real-time values. For example, you may calculate the delta between the energy consumption for yesterday compared to the energy consumption for the day before yesterday.",
+        "delta-calculation-result": "Delta calculation result",
+        "delta-calculation-result-previous-value": "Previous value",
+        "delta-calculation-result-delta-absolute": "Delta (absolute)",
+        "delta-calculation-result-delta-percent": "Delta (percent)"
     },
     "datasource": {
         "type": "Datasource type",
@@ -1215,6 +1254,49 @@
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 device} other {# devices} }?",
         "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
+    },
+    "asset-profile": {
+        "asset-profile": "Asset profile",
+        "asset-profiles": "Asset profiles",
+        "all-asset-profiles": "All",
+        "add": "Add asset profile",
+        "edit": "Edit asset profile",
+        "asset-profile-details": "Asset profile details",
+        "no-asset-profiles-text": "No asset profiles found",
+        "search": "Search asset profiles",
+        "selected-asset-profiles": "{ count, plural, 1 {1 asset profile} other {# asset profiles} } selected",
+        "no-asset-profiles-matching": "No asset profile matching '{{entity}}' were found.",
+        "asset-profile-required": "Asset profile is required",
+        "idCopiedMessage": "Asset profile Id has been copied to clipboard",
+        "set-default": "Make asset profile default",
+        "delete": "Delete asset profile",
+        "copyId": "Copy asset profile Id",
+        "name-max-length": "Name should be less than 256",
+        "new-device-profile-name": "Asset profile name",
+        "new-device-profile-name-required": "Asset profile name is required.",
+        "name": "Name",
+        "name-required": "Name is required.",
+        "image": "Asset profile image",
+        "description": "Description",
+        "default": "Default",
+        "default-rule-chain": "Default rule chain",
+        "mobile-dashboard": "Mobile dashboard",
+        "mobile-dashboard-hint": "Used by mobile application as a asset details dashboard",
+        "select-queue-hint": "Select from a drop-down list.",
+        "delete-asset-profile-title": "Are you sure you want to delete the asset profile '{{assetProfileName}}'?",
+        "delete-asset-profile-text": "Be careful, after the confirmation the asset profile and all related data will become unrecoverable.",
+        "delete-asset-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 asset profile} other {# asset profiles} }?",
+        "delete-asset-profiles-text": "Be careful, after the confirmation all selected asset profiles will be removed and all related data will become unrecoverable.",
+        "set-default-asset-profile-title": "Are you sure you want to make the asset profile '{{assetProfileName}}' default?",
+        "set-default-asset-profile-text": "After the confirmation the asset profile will be marked as default and will be used for new assets with no profile specified.",
+        "no-asset-profiles-found": "No asset profiles found.",
+        "create-new-asset-profile": "Create a new one!",
+        "create-asset-profile": "Create new asset profile",
+        "import": "Import asset profile",
+        "export": "Export asset profile",
+        "export-failed-error": "Unable to export asset profile: {{error}}",
+        "asset-profile-file": "Asset profile file",
+        "invalid-asset-profile-file-error": "Unable to import asset profile: Invalid asset profile data structure."
     },
     "device-profile": {
         "device-profile": "Device profile",
@@ -1707,6 +1789,7 @@
         "type-asset": "Asset",
         "type-device": "Device",
         "type-device-profile": "Device Profile",
+        "type-asset-profile": "Asset Profile",
         "type-entity-view": "Entity View",
         "type-alarm": "Alarm",
         "type-rule-chain": "Rule Chain",
@@ -1793,6 +1876,10 @@
         "type-device-profiles": "Device profiles",
         "list-of-device-profiles": "{ count, plural, 1 {One device profile} other {List of # device profiles} }",
         "device-profile-name-starts-with": "Device profiles whose names start with '{{prefix}}'",
+        "type-asset-profile": "Asset profile",
+        "type-asset-profiles": "Asset profiles",
+        "list-of-asset-profiles": "{ count, plural, 1 {One asset profile} other {List of # asset profiles} }",
+        "asset-profile-name-starts-with": "Asset profiles whose names start with '{{prefix}}'",
         "type-asset": "Asset",
         "type-assets": "Assets",
         "list-of-assets": "{ count, plural, 1 {One asset} other {List of # assets} }",
@@ -2496,7 +2583,22 @@
         "color": "Color",
         "main": "Main",
         "right": "Right",
-        "select": "Select target layout"
+        "left": "Left",
+        "select": "Select target layout",
+        "percentage-width": "Percentage width (%)",
+        "fixed-width": "Fixed width (px)",
+        "left-width": "Left column (%)",
+        "right-width": "Right column (%)",
+        "pick-fixed-side": "Fixed side: ",
+        "layout-fixed-width": "Fixed width (px)",
+        "value-min-error": "Value must be more then {{min}}{{unit}}",
+        "value-max-error": "Value must be less then {{max}}{{unit}}",
+        "layout-fixed-width-required": "Fixed width is required",
+        "right-width-percentage-required": "Right percentage is required",
+        "left-width-percentage-required": "Left percentage is required",
+        "divider": "Divider",
+        "right-side": "Right side layout",
+        "left-side": "Left side layout"
     },
     "legend": {
         "direction": "Legend direction",
@@ -2644,6 +2746,9 @@
         "token-valid-till": "Token is valid till",
         "tokenCopiedSuccessMessage": "JWT token has been copied to clipboard",
         "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
+    },
+    "profiles": {
+        "profiles": "Profiles"
     },
     "security": {
         "security": "Security",
@@ -2908,6 +3013,8 @@
         "ui-resources-load-error": "Failed to load configuration ui resources.",
         "invalid-target-rulechain": "Unable to resolve target rule chain!",
         "test-script-function": "Test script function",
+        "script-lang-java-script": "Java Script",
+        "script-lang-tbel": "TBEL",
         "message": "Message",
         "message-type": "Message type",
         "select-message-type": "Select message type",
@@ -3421,7 +3528,8 @@
         "sync-strategy-overwrite-hint": "Creates or updates selected entities in the repository. All other repository entities are <b>deleted</b>.",
         "device-credentials-conflict": "Failed to load the device with external id <b>{{entityId}}</b><br/>due to the same credentials are already present in the database for another device.<br/>Please consider disabling the <b>load credentials</b> setting in the restore form.",
         "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>.",
-        "runtime-failed": "<b>Failed:</b> {{message}}"
+        "runtime-failed": "<b>Failed:</b> {{message}}",
+        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings."
     },
     "widget": {
         "widget-library": "Widgets Library",
@@ -3600,6 +3708,7 @@
         "order": "Order",
         "height": "Height",
         "mobile-hide": "Hide widget in mobile mode",
+        "desktop-hide": "Hide widget in desktop mode",
         "units": "Special symbol to show next to value",
         "decimals": "Number of digits after floating point",
         "timewindow": "Timewindow",
@@ -3609,6 +3718,7 @@
         "display-legend": "Display legend",
         "datasources": "Datasources",
         "maximum-datasources": "Maximum { count, plural, 1 {1 datasource is allowed.} other {# datasources are allowed} }",
+        "timeseries-key-error": "At least one timeseries data key should be specified",
         "datasource-type": "Type",
         "datasource-parameters": "Parameters",
         "remove-datasource": "Remove datasource",
@@ -4190,6 +4300,7 @@
         "qr-code": {
             "use-qr-code-text-function": "Use QR code text function",
             "qr-code-text-pattern": "QR code text pattern (for ex. '${entityName} | ${keyName} - some text.')",
+            "qr-code-text-pattern-hint": "QR code text pattern use the value of the first found key in the entities in the entity alias.",
             "qr-code-text-pattern-required": "QR code text pattern is required.",
             "qr-code-text-function": "QR code text function"
         },
@@ -4378,6 +4489,7 @@
             "openstreet-provider-hot": "OpenStreetMap.HOT",
             "openstreet-provider-esri-street": "Esri.WorldStreetMap",
             "openstreet-provider-esri-topo": "Esri.WorldTopoMap",
+            "openstreet-provider-esri-imagery": "Esri.WorldImagery",
             "openstreet-provider-cartodb-positron": "CartoDB.Positron",
             "openstreet-provider-cartodb-dark-matter": "CartoDB.DarkMatter",
             "use-custom-provider": "Use custom provider",
@@ -4543,7 +4655,10 @@
             "point-color-function": "Point color function",
             "use-point-as-anchor": "Use point as anchor",
             "point-as-anchor-function": "Point as anchor function",
-            "independent-point-tooltip": "Independent point tooltip"
+            "independent-point-tooltip": "Independent point tooltip",
+            "clustering-markers": "Clustering markers",
+            "use-icon-create-function": "Use markers colour function",
+            "marker-color-function": "Marker color function"
         },
         "markdown": {
             "use-markdown-text-function": "Use markdown/HTML value function",
@@ -4589,10 +4704,12 @@
             "entity-label-column-title": "Entity label column title",
             "display-entity-type": "Display entity type column",
             "default-sort-order": "Default sort order",
+            "custom-title": "Custom header title",
             "column-width": "Column width (px or %)",
             "default-column-visibility": "Default column visibility",
             "column-visibility-visible": "Visible",
             "column-visibility-hidden": "Hidden",
+            "column-visibility-hidden-mobile": "Hidden in mobile mode",
             "column-selection-to-display": "Column selection in 'Columns to Display'",
             "column-selection-to-display-enabled": "Enabled",
             "column-selection-to-display-disabled": "Disabled",
@@ -4656,6 +4773,14 @@
             "row-double-click": "On row double click"
         }
     },
+    "paginator" : {
+        "items-per-page": "Items per page:",
+        "first-page-label": "First page",
+        "last-page-label": "Last page",
+        "next-page-label": "Next page",
+        "previous-page-label": "Previous page",
+        "items-per-page-separator": "of"
+    },
     "language": {
         "language": "Language",
         "locales": {
@@ -4668,6 +4793,7 @@
             "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
+            "ca_ES": "Catalan",
             "ja_JP": "日本語",
             "tr_TR": "Türkçe",
             "fa_IR": "فارسي",
@@ -4678,7 +4804,8 @@
             "lv_LV": "Latviešu",
             "ka_GE": "ქართული",
             "pt_BR": "Português do Brasil",
-            "sl_SI": "Slovenščina"
+            "sl_SI": "Slovenščina",
+            "da_DK": "Dansk"
         }
     }
 }

@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -121,7 +122,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             new EntityKey(EntityKeyType.TIME_SERIES, INACTIVITY_TIMEOUT),
             new EntityKey(EntityKeyType.TIME_SERIES, ACTIVITY_STATE),
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_CONNECT_TIME),
-            new EntityKey(EntityKeyType.TIME_SERIES, LAST_DISCONNECT_TIME));
+            new EntityKey(EntityKeyType.TIME_SERIES, LAST_DISCONNECT_TIME),
+            new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT));
 
     private static final List<EntityKey> PERSISTENT_ATTRIBUTE_KEYS = Arrays.asList(
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_ACTIVITY_TIME),
@@ -152,7 +154,13 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     @Value("${state.defaultInactivityTimeoutInSec}")
     @Getter
+    @Setter
     private long defaultInactivityTimeoutInSec;
+
+    @Value("#{${state.defaultInactivityTimeoutInSec} * 1000}")
+    @Getter
+    @Setter
+    private long defaultInactivityTimeoutMs;
 
     @Value("${state.defaultStateCheckIntervalInSec}")
     @Getter
@@ -160,6 +168,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
+    @Setter
     private boolean persistToTelemetry;
 
     @Value("${state.initFetchPackSize:50000}")
@@ -540,7 +549,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private ListenableFuture<DeviceStateData> transformInactivityTimeout(ListenableFuture<DeviceStateData> future) {
         return Futures.transformAsync(future, deviceStateData -> {
-            if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
+            if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != defaultInactivityTimeoutMs) {
                 return future; //fail fast
             }
             var attributesFuture = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), SERVER_SCOPE, INACTIVITY_TIMEOUT);
@@ -563,7 +572,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 try {
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
-                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
                     //Actual active state by wall-clock will updated outside this method. This method is only for fetch persistent state
                     final boolean active = getEntryValue(data, ACTIVITY_STATE, false);
                     DeviceState deviceState = DeviceState.builder()
@@ -634,10 +643,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     }
 
-    private DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
+    DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
         long lastActivityTime = getEntryValue(ed, getKeyType(), LAST_ACTIVITY_TIME, 0L);
         long inactivityAlarmTime = getEntryValue(ed, getKeyType(), INACTIVITY_ALARM_TIME, 0L);
-        long inactivityTimeout = getEntryValue(ed, getKeyType(), INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+        long inactivityTimeout = getEntryValue(ed, getKeyType(), INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
+        if (persistToTelemetry && inactivityTimeout == defaultInactivityTimeoutMs) {
+            log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
+                    deviceIdInfo.getDeviceId(), inactivityTimeout);
+            inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
+        }
         //Actual active state by wall-clock will updated outside this method. This method is only for fetch persistent state
         final boolean active = getEntryValue(ed, getKeyType(), ACTIVITY_STATE, false);
         DeviceState deviceState = DeviceState.builder()

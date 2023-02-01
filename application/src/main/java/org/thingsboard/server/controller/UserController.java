@@ -43,12 +43,10 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
-import org.thingsboard.server.common.data.security.model.JwtToken;
+import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -95,7 +93,6 @@ public class UserController extends BaseController {
 
     private final MailService mailService;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
     private final TbUserService tbUserService;
@@ -148,7 +145,7 @@ public class UserController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/user/{userId}/token", method = RequestMethod.GET)
     @ResponseBody
-    public JwtTokenPair getUserToken(
+    public JwtPair getUserToken(
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
@@ -163,9 +160,7 @@ public class UserController extends BaseController {
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
             UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-            return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+            return tokenFactory.createTokenPair(securityUser);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -187,7 +182,7 @@ public class UserController extends BaseController {
             @RequestBody User user,
             @ApiParam(value = "Send activation email (or use activation link)", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail, HttpServletRequest request) throws ThingsboardException {
-        if (Authority.TENANT_ADMIN.equals(getCurrentUser().getAuthority())) {
+        if (!Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
@@ -376,7 +371,7 @@ public class UserController extends BaseController {
             userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
 
             if (!userCredentialsEnabled) {
-                eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
+                eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
             }
         } catch (Exception e) {
             throw handleException(e);

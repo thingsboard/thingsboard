@@ -18,6 +18,7 @@ package org.thingsboard.server.service.subscription;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AbstractDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -86,7 +87,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         } else {
             oldDataMap = Collections.emptyMap();
         }
-        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity(), (a,b)-> a));
+        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity(), (a, b) -> a));
         if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
             log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
         } else {
@@ -122,8 +123,17 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         createSubscriptions(keys, true, 0, 0);
     }
 
-    public void createTimeseriesSubscriptions(List<EntityKey> keys, long startTs, long endTs) {
-        createSubscriptions(keys, false, startTs, endTs);
+    public void createTimeSeriesSubscriptions(Map<EntityData, Map<String, Long>> entityKeyStates, long startTs, long endTs) {
+        createTimeSeriesSubscriptions(entityKeyStates, startTs, endTs, false);
+    }
+
+    public void createTimeSeriesSubscriptions(Map<EntityData, Map<String, Long>> entityKeyStates, long startTs, long endTs, boolean resultToLatestValues) {
+        entityKeyStates.forEach((entityData, keyStates) -> {
+            int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
+            subToEntityIdMap.put(subIdx, entityData.getEntityId());
+            localSubscriptionService.addSubscription(
+                    createTsSub(entityData, subIdx, false, startTs, endTs, keyStates, resultToLatestValues));
+        });
     }
 
     private void createSubscriptions(List<EntityKey> keys, boolean latestValues, long startTs, long endTs) {
@@ -188,9 +198,20 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
             entityData.getTimeseries().forEach((k, v) -> {
                 long ts = Arrays.stream(v).map(TsValue::getTs).max(Long::compareTo).orElse(0L);
                 log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, ts);
+                if (!Aggregation.NONE.equals(getCurrentAggregation()) && ts < endTs) {
+                    ts = endTs;
+                }
                 keyStates.put(k, ts);
             });
         }
+        return createTsSub(entityData, subIdx, latestValues, startTs, endTs, keyStates);
+    }
+
+    private TbTimeseriesSubscription createTsSub(EntityData entityData, int subIdx, boolean latestValues, long startTs, long endTs, Map<String, Long> keyStates) {
+        return createTsSub(entityData, subIdx, latestValues, startTs, endTs, keyStates, latestValues);
+    }
+
+    private TbTimeseriesSubscription createTsSub(EntityData entityData, int subIdx, boolean latestValues, long startTs, long endTs, Map<String, Long> keyStates, boolean resultToLatestValues) {
         log.trace("[{}][{}][{}] Creating time-series subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
         return TbTimeseriesSubscription.builder()
                 .serviceId(serviceId)
@@ -198,7 +219,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
                 .subscriptionId(subIdx)
                 .tenantId(sessionRef.getSecurityCtx().getTenantId())
                 .entityId(entityData.getEntityId())
-                .updateConsumer((sessionId, subscriptionUpdate) -> sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES, latestValues))
+                .updateConsumer((sessionId, subscriptionUpdate) -> sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES, resultToLatestValues))
                 .allKeys(false)
                 .keyStates(keyStates)
                 .latestValues(latestValues)
@@ -230,4 +251,5 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
 
     abstract void sendWsMsg(String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType, boolean resultToLatestValues);
 
+    protected abstract Aggregation getCurrentAggregation();
 }

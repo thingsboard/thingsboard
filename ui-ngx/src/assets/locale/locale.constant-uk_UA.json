@@ -2479,6 +2479,14 @@
             "row-double-click": "Дії при подвійному натисканні на рядок"
         }
     },
+    "paginator" : {
+        "items-per-page": "Елементів на сторінці:",
+        "first-page-label": "Перша сторінка",
+        "last-page-label": "Остання сторінка",
+        "next-page-label": "Наступна сторінка",
+        "previous-page-label": "Попередня сторінка",
+        "items-per-page-separator": "з"
+    },
     "language": {
         "language": "Мова"
     }

@@ -17,8 +17,15 @@
 
   .tb-multiple-input {
     height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+
+    .tb-multiple-input-container {
+      padding: 0 8px;
+      flex: 1 1 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
 
     .fields-group {
       padding: 0 8px;

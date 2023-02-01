@@ -23,12 +23,14 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2MobileEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2MobileDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@SqlDao
 public class JpaOAuth2MobileDao extends JpaAbstractDao<OAuth2MobileEntity, OAuth2Mobile> implements OAuth2MobileDao {
 
     private final OAuth2MobileRepository repository;

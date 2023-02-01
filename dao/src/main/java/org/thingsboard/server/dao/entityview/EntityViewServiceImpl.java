@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -294,6 +295,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    @Transactional
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);

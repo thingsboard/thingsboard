@@ -191,7 +191,7 @@ public class DeviceProfileController extends BaseController {
                     "Specify existing device profile id to update the device profile. " +
                     "Referencing non-existing device profile Id will cause 'Not Found' error. " + NEW_LINE +
                     "Device profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + DEVICE_PROFILE_DATA +
-                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device Profile entity. " +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Device Profile entity. " +
                     TENANT_AUTHORITY_PARAGRAPH,
             produces = "application/json",
             consumes = "application/json")

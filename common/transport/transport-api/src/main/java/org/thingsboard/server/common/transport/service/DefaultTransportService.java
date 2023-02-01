@@ -32,6 +32,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -57,6 +58,7 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.transport.DeviceDeletedEvent;
 import org.thingsboard.server.common.transport.DeviceProfileUpdatedEvent;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
@@ -94,7 +96,6 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
@@ -157,7 +158,7 @@ public class DefaultTransportService implements TransportService {
 
     @Autowired
     @Lazy
-    private TbApiUsageClient apiUsageClient;
+    private TbApiUsageReportClient apiUsageClient;
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
     private final Gson gson = new Gson();
@@ -585,7 +586,7 @@ public class DefaultTransportService implements TransportService {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
-            metaData.putValue("notifyDevice", "false");
+            metaData.putValue(DataConstants.NOTIFY_DEVICE_METADATA_KEY, "false");
             CustomerId customerId = getCustomerId(sessionInfo);
             sendToRuleEngine(tenantId, deviceId, customerId, sessionInfo, json, metaData, SessionMsgType.POST_ATTRIBUTES_REQUEST,
                     new TransportTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, customerId, msg.getKvList().size(), callback)));

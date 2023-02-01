@@ -20,32 +20,56 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
+import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleChainDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseRuleChainControllerTest.Config.class})
 public abstract class BaseRuleChainControllerTest extends AbstractControllerTest {
 
     private IdComparator<RuleChain> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private RuleChainDao ruleChainDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public RuleChainDao ruleChainDao(RuleChainDao ruleChainDao) {
+            return Mockito.mock(RuleChainDao.class, AdditionalAnswers.delegatesTo(ruleChainDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -221,6 +245,49 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
+    }
+
+    @Test
+    public void testDeleteRuleChainWithDeleteRelationsOk() throws Exception {
+        RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
+    }
+
+    @Test
+    public void testDeleteRuleChainExceptionWithRelationsTransactional() throws Exception {
+        RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(ruleChainDao, savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
+    }
+
+    @Test
+    public void givenRuleNodeWithInvalidConfiguration_thenReturnError() throws Exception {
+        RuleChain ruleChain = createRuleChain("Rule chain with invalid nodes");
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(ruleChain.getId());
+
+        RuleNode createAlarmNode = new RuleNode();
+        createAlarmNode.setName("Create alarm");
+        createAlarmNode.setType(TbCreateAlarmNode.class.getName());
+        TbCreateAlarmNodeConfiguration invalidCreateAlarmNodeConfiguration = new TbCreateAlarmNodeConfiguration();
+        invalidCreateAlarmNodeConfiguration.setSeverity("<script/>");
+        invalidCreateAlarmNodeConfiguration.setAlarmType("<script/>");
+        createAlarmNode.setConfiguration(mapper.valueToTree(invalidCreateAlarmNodeConfiguration));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(createAlarmNode);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+
+        String error = getErrorMessage(doPost("/api/ruleChain/metadata", ruleChainMetaData)
+                .andExpect(status().isBadRequest()));
+        assertThat(error).contains("severity is malformed");
+        assertThat(error).contains("alarmType is malformed");
+    }
+
+    private RuleChain createRuleChain(String name) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(name);
+        return doPost("/api/ruleChain", ruleChain, RuleChain.class);
     }
 
 }

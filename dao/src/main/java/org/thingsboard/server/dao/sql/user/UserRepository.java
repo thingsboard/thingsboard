@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
@@ -31,6 +32,8 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     UserEntity findByEmail(String email);
+
+    UserEntity findByTenantIdAndEmail(UUID tenantId, String email);
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
             "AND u.customerId = :customerId AND u.authority = :authority " +
@@ -48,4 +51,5 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
                                     Pageable pageable);
 
     Long countByTenantId(UUID tenantId);
+
 }

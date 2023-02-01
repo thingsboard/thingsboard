@@ -15,15 +15,27 @@
  */
 package org.thingsboard.rule.engine.rpc;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -65,13 +77,46 @@ public class TbSendRPCReplyNode implements TbNode {
         } else if (StringUtils.isEmpty(msg.getData())) {
             ctx.tellFailure(msg, new RuntimeException("Request body is empty!"));
         } else {
-            ctx.getRpcService().sendRpcReplyToDevice(serviceIdStr, UUID.fromString(sessionIdStr), Integer.parseInt(requestIdStr), msg.getData());
-            ctx.tellSuccess(msg);
+            if (StringUtils.isNotBlank(msg.getMetaData().getValue(DataConstants.EDGE_ID))) {
+                saveRpcResponseToEdgeQueue(ctx, msg, serviceIdStr, sessionIdStr, requestIdStr);
+            } else {
+                ctx.getRpcService().sendRpcReplyToDevice(serviceIdStr, UUID.fromString(sessionIdStr), Integer.parseInt(requestIdStr), msg.getData());
+                ctx.tellSuccess(msg);
+            }
         }
     }
 
-    @Override
-    public void destroy() {
-    }
+    private void saveRpcResponseToEdgeQueue(TbContext ctx, TbMsg msg, String serviceIdStr, String sessionIdStr, String requestIdStr) {
+        EdgeId edgeId;
+        DeviceId deviceId;
+        try {
+            edgeId = new EdgeId(UUID.fromString(msg.getMetaData().getValue(DataConstants.EDGE_ID)));
+            deviceId = new DeviceId(UUID.fromString(msg.getMetaData().getValue(DataConstants.DEVICE_ID)));
+        } catch (Exception e) {
+            String errMsg = String.format("[%s] Failed to parse edgeId or deviceId from metadata %s!", ctx.getTenantId(), msg.getMetaData());
+            ctx.tellFailure(msg, new RuntimeException(errMsg));
+            return;
+        }
 
+        ObjectNode body = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        body.put("serviceId", serviceIdStr);
+        body.put("sessionId", sessionIdStr);
+        body.put("requestId", requestIdStr);
+        body.put("response", msg.getData());
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
+                        EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree(body));
+        ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
+                ctx.tellSuccess(msg);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                ctx.tellFailure(msg, t);
+            }
+        }, ctx.getDbCallbackExecutor());
+    }
 }

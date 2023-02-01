@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.controller;
 
+import org.junit.Test;
+import org.thingsboard.server.common.data.security.Authority;
+
+import java.util.concurrent.TimeUnit;
+
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.thingsboard.server.common.data.security.Authority;
-import org.junit.Test;
 
 public abstract class BaseAuthControllerTest extends AbstractControllerTest {
 
@@ -57,9 +59,13 @@ public abstract class BaseAuthControllerTest extends AbstractControllerTest {
         .andExpect(jsonPath("$.authority",is(Authority.SYS_ADMIN.name())))
         .andExpect(jsonPath("$.email",is(SYS_ADMIN_EMAIL)));
 
+        TimeUnit.SECONDS.sleep(1); //We need to make sure that event for invalidating token was successfully processed
+
         logout();
         doGet("/api/auth/user")
         .andExpect(status().isUnauthorized());
+
+        resetTokens();
     }
 
     @Test
