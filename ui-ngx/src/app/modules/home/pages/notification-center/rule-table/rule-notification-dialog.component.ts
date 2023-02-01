@@ -143,8 +143,8 @@ export class RuleNotificationDialogComponent extends
     );
 
     this.alarmTemplateForm = this.fb.group({
-      alarmTypes: [[], Validators.required],
-      alarmSeverities: [[], Validators.required],
+      alarmTypes: [null],
+      alarmSeverities: [null, Validators.required],
       clearRule: this.fb.group({
         alarmStatus: []
       }),

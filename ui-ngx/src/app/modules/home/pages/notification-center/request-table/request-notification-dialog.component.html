@@ -63,7 +63,7 @@
               <mat-label translate>notification.time</mat-label>
               <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
               <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-              <input required matInput fxFlex formControlName="time" [min]="minDate()" [matDatetimepicker]="startTimePicker">
+              <input required matInput fxFlex formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
             </mat-form-field>
           </div>
         </section>

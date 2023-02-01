@@ -26,7 +26,9 @@
             style="min-width: 100px;"
             ngStyle.xs="padding: 0 10px;"
             formControlName="delayInSec"
-            [disabledAdvanced]="true"></tb-timeinterval>
+            min="{{ 0 }}"
+            max="{{ 604800000 }}"
+            disabledAdvanced></tb-timeinterval>
           <span fxFlex class="escalation-notify" translate>notification.notify</span>
         </div>
     </div>

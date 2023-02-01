@@ -193,4 +193,10 @@ export class RequestNotificationDialogComponent extends
   minDate(): Date {
     return new Date(getCurrentTime(this.notificationRequestForm.get('additionalConfig.timezone').value).format('lll'));
   }
+
+  maxDate(): Date {
+    const date = this.minDate();
+    date.setDate(date.getDate() + 7);
+    return date;
+  }
 }
