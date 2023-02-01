@@ -30,7 +30,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 @Service
 @RequiredArgsConstructor
-public class DeviceInactivityNotificationRuleTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, DeviceInactivityNotificationRuleTriggerConfig> {
+public class DeviceInactivityTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, DeviceInactivityNotificationRuleTriggerConfig> {
 
     private final TbDeviceProfileCache deviceProfileCache;
 

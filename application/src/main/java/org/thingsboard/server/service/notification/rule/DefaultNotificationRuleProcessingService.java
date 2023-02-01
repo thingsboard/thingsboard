@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
@@ -45,7 +46,9 @@ import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
+import org.thingsboard.server.service.notification.rule.trigger.AlarmTriggerProcessor.AlarmTriggerObject;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
+import org.thingsboard.server.service.notification.rule.trigger.RuleEngineComponentLifecycleEventTriggerProcessor.RuleEngineComponentLifecycleEventTriggerObject;
 
 import java.util.Collection;
 import java.util.List;
@@ -71,7 +74,9 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             DataConstants.INACTIVITY_EVENT, NotificationRuleTriggerType.DEVICE_INACTIVITY,
             DataConstants.ENTITY_CREATED, NotificationRuleTriggerType.ENTITY_ACTION,
             DataConstants.ENTITY_UPDATED, NotificationRuleTriggerType.ENTITY_ACTION,
-            DataConstants.ENTITY_DELETED, NotificationRuleTriggerType.ENTITY_ACTION
+            DataConstants.ENTITY_DELETED, NotificationRuleTriggerType.ENTITY_ACTION,
+            DataConstants.COMMENT_CREATED, NotificationRuleTriggerType.ALARM_COMMENT,
+            DataConstants.COMMENT_UPDATED, NotificationRuleTriggerType.ALARM_COMMENT
     );
 
     @Override
@@ -82,37 +87,51 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
             return;
         }
 
-        processTrigger(tenantId, triggerType, ruleEngineMsg.getOriginator(), ruleEngineMsg, false);
+        processTrigger(tenantId, triggerType, ruleEngineMsg.getOriginator(), ruleEngineMsg);
     }
 
     @Override
     public void process(TenantId tenantId, Alarm alarm, boolean deleted) {
-        processTrigger(tenantId, NotificationRuleTriggerType.ALARM, alarm.getId(), alarm, deleted);
+        AlarmTriggerObject triggerObject = AlarmTriggerObject.builder()
+                .alarm(alarm)
+                .deleted(deleted)
+                .build();
+        processTrigger(tenantId, NotificationRuleTriggerType.ALARM, alarm.getId(), triggerObject);
     }
 
-    private void processTrigger(TenantId tenantId, NotificationRuleTriggerType triggerType, EntityId originatorEntityId,
-                                Object triggerObject, boolean triggerRemoved) {
+    @Override
+    public void process(TenantId tenantId, RuleChainId ruleChainId, EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error) {
+        RuleEngineComponentLifecycleEventTriggerObject triggerObject = RuleEngineComponentLifecycleEventTriggerObject.builder()
+                .ruleChainId(ruleChainId)
+                .componentId(componentId)
+                .componentName(componentName)
+                .eventType(eventType)
+                .error(error)
+                .build();
+        processTrigger(tenantId, NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, componentId, triggerObject);
+    }
+
+    private void processTrigger(TenantId tenantId, NotificationRuleTriggerType triggerType, EntityId originatorEntityId, Object triggerObject) {
         ListenableFuture<List<NotificationRule>> rulesFuture = dbCallbackExecutor.submit(() -> {
             return notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
         });
         DonAsynchron.withCallback(rulesFuture, rules -> {
             for (NotificationRule rule : rules) {
                 notificationExecutor.submit(() -> {
-                    processNotificationRule(rule, originatorEntityId, triggerObject, triggerRemoved);
+                    processNotificationRule(rule, originatorEntityId, triggerObject);
                 });
             }
         }, e -> {});
     }
 
-    private <T> void processNotificationRule(NotificationRule rule, EntityId originatorEntityId,
-                                             T triggerObject, boolean triggerRemoved) {
+    private void processNotificationRule(NotificationRule rule, EntityId originatorEntityId, Object triggerObject) {
         NotificationRuleTriggerConfig triggerConfig = rule.getTriggerConfig();
         log.debug("Processing notification rule '{}' for trigger type {}", rule.getName(), rule.getTriggerType());
 
         if (triggerConfig.getTriggerType().isUpdatable()) {
             List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(rule.getTenantId(), rule.getId(), originatorEntityId);
             if (!notificationRequests.isEmpty()) {
-                if (triggerRemoved || matchesClearRule(triggerObject, triggerConfig)) {
+                if (matchesClearRule(triggerObject, triggerConfig)) {
                     notificationRequests = notificationRequests.stream()
                             .filter(notificationRequest -> {
                                 if (!notificationRequest.isSent()) {
@@ -133,7 +152,6 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                     NotificationInfo previousNotificationInfo = notificationRequest.getInfo();
                     if (!notificationInfo.equals(previousNotificationInfo)) {
                         notificationRequest.setInfo(notificationInfo);
-                        // and make notifications unread ?
                         dbCallbackExecutor.submit(() -> {
                             notificationCenter.updateNotificationRequest(rule.getTenantId(), notificationRequest);
                         });

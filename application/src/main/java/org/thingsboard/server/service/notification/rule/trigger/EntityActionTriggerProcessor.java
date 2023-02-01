@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.UUID;
 
 @Service
-public class EntityActionNotificationRuleTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, EntityActionNotificationRuleTriggerConfig> {
+public class EntityActionTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, EntityActionNotificationRuleTriggerConfig> {
 
     @Override
     public boolean matchesFilter(TbMsg ruleEngineMsg, EntityActionNotificationRuleTriggerConfig triggerConfig) {

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import lombok.Builder;
+import lombok.Data;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -23,18 +25,24 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.service.notification.rule.trigger.AlarmTriggerProcessor.AlarmTriggerObject;
 
 @Service
-public class AlarmNotificationRuleTriggerProcessor implements NotificationRuleTriggerProcessor<Alarm, AlarmNotificationRuleTriggerConfig> {
+public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmTriggerObject, AlarmNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
+    public boolean matchesFilter(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        Alarm alarm = triggerObject.getAlarm();
         return (CollectionUtils.isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
                 (CollectionUtils.isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity()));
     }
 
     @Override
-    public boolean matchesClearRule(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
+    public boolean matchesClearRule(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        if (triggerObject.isDeleted()) {
+            return true;
+        }
+        Alarm alarm = triggerObject.getAlarm();
         ClearRule clearRule = triggerConfig.getClearRule();
         if (clearRule != null) {
             if (clearRule.getAlarmStatus() != null) {
@@ -45,7 +53,8 @@ public class AlarmNotificationRuleTriggerProcessor implements NotificationRuleTr
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
+    public NotificationInfo constructNotificationInfo(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        Alarm alarm = triggerObject.getAlarm();
         return AlarmNotificationInfo.builder()
                 .alarmId(alarm.getUuidId())
                 .alarmType(alarm.getType())
@@ -59,6 +68,13 @@ public class AlarmNotificationRuleTriggerProcessor implements NotificationRuleTr
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM;
+    }
+
+    @Data
+    @Builder
+    public static class AlarmTriggerObject {
+        private final Alarm alarm;
+        private final boolean deleted;
     }
 
 }

@@ -42,7 +42,6 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -118,8 +117,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     throw new IllegalArgumentException("Slack must be configured in the settings");
                 }
             }
-            if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
-                throw new IllegalArgumentException("Target for " + deliveryMethod.getName() + " delivery method is missing");
+            if (notificationRequest.getRuleId() == null) {
+                if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
+                    throw new IllegalArgumentException("Target for " + deliveryMethod.getName() + " delivery method is missing");
+                }
             }
         });
 
@@ -204,15 +205,17 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         log.debug("[{}] Processing notification request for {} target ({}) for delivery methods {}", ctx.getRequest().getId(), target.getConfiguration().getType(), target.getId(), deliveryMethods);
 
         List<ListenableFuture<Void>> results = new ArrayList<>();
-        for (NotificationRecipient recipient : recipients) {
-            for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-                ListenableFuture<Void> resultFuture = processForRecipient(deliveryMethod, recipient, ctx);
-                DonAsynchron.withCallback(resultFuture, result -> {
-                    ctx.getStats().reportSent(deliveryMethod, recipient);
-                }, error -> {
-                    ctx.getStats().reportError(deliveryMethod, error, recipient);
-                });
-                results.add(resultFuture);
+        if (!deliveryMethods.isEmpty()) {
+            for (NotificationRecipient recipient : recipients) {
+                for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+                    ListenableFuture<Void> resultFuture = processForRecipient(deliveryMethod, recipient, ctx);
+                    DonAsynchron.withCallback(resultFuture, result -> {
+                        ctx.getStats().reportSent(deliveryMethod, recipient);
+                    }, error -> {
+                        ctx.getStats().reportError(deliveryMethod, error, recipient);
+                    });
+                    results.add(resultFuture);
+                }
             }
         }
         return results;
@@ -333,6 +336,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         // marking related notifications as unread: FIXME: causes each subscription to fetch notifications on each request update
         notificationService.updateNotificationsStatusByRequestId(tenantId, notificationRequest.getId(), NotificationStatus.SENT);
 
+        // TODO: no need to update request with other than PLATFORM_USERS target type
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequest.getId())
                 .notificationInfo(notificationRequest.getInfo())

@@ -16,7 +16,10 @@
 package org.thingsboard.server.service.notification.rule;
 
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 
 public interface NotificationRuleProcessingService {
@@ -24,5 +27,7 @@ public interface NotificationRuleProcessingService {
     void process(TenantId tenantId, TbMsg ruleEngineMsg);
 
     void process(TenantId tenantId, Alarm alarm, boolean deleted);
+
+    void process(TenantId tenantId, RuleChainId ruleChainId, EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error);
 
 }

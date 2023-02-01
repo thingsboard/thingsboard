@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.alarm;
 
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -24,11 +25,16 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 @Service
 @AllArgsConstructor
 public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService{
+
+    @Autowired
+    private AlarmCommentService alarmCommentService;
+
     @Override
     public AlarmComment saveAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException {
         ActionType actionType = alarmComment.getId() == null ? ActionType.ADDED_COMMENT : ActionType.UPDATED_COMMENT;

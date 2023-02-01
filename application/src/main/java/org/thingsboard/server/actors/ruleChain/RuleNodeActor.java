@@ -134,6 +134,11 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     }
 
     @Override
+    protected RuleChainId getRuleChainId() {
+        return ruleChainId;
+    }
+
+    @Override
     protected long getErrorPersistFrequency() {
         return systemContext.getRuleNodeErrorPersistFrequency();
     }
