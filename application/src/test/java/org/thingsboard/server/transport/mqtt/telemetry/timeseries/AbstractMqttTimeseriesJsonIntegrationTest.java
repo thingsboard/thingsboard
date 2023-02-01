@@ -126,7 +126,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue(callback.isPubAckReceived());
         client.disconnect();
     }
@@ -144,7 +144,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertFalse(callback.isPubAckReceived());
     }
 
@@ -163,7 +163,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue(callback.isPubAckReceived());
         client.disconnect();
     }
@@ -182,7 +182,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertFalse(callback.isPubAckReceived());
     }
 
