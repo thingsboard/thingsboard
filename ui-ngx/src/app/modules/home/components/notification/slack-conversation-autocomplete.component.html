@@ -31,7 +31,7 @@
   </button>
   <mat-autocomplete class="tb-autocomplete"
                     #slackAutocomplete="matAutocomplete"
-                    [displayWith]="displayTemplateFn"
+                    [displayWith]="displaySlackConversationFn"
                     >
     <mat-option *ngFor="let template of slackConversation$ | async" [value]="template" class="template-option">
       <span [innerHTML]="template.name | highlight:slackSearchText"></span>

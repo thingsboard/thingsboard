@@ -17,21 +17,11 @@
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  publishReplay,
-  refCount,
-  share,
-  switchMap,
-  tap
-} from 'rxjs/operators';
+import { debounceTime, map, publishReplay, refCount, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import {
@@ -84,7 +74,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
 
   slackSearchText = '';
 
-  private modelValue: string | null;
+  private modelValue: SlackConversation | null;
   private dirty = false;
   private latestSearchConversetionResult: Array<SlackConversation> = null;
   private slackConversetionFetchObservable$: Observable<Array<SlackConversation>> = null;
@@ -122,7 +112,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
           if (typeof value === 'string' || !value) {
             modelValue = null;
           } else {
-            modelValue = value.id;
+            modelValue = value;
           }
           this.updateView(modelValue);
           if (value === null) {
@@ -160,22 +150,11 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     return (text && text.length > 0);
   }
 
-  writeValue(value: EntityId | null): void {
+  writeValue(value: SlackConversation | null): void {
     this.slackSearchText = '';
     if (value != null) {
-      // this.notificationService.getNotificationTemplateById(value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-      //   (entity) => {
-      //     this.modelValue = entity.id;
-      //     this.conversationSlackFormGroup.get('conversation').patchValue(entity, {emitEvent: false});
-      //   },
-      //   () => {
-      //     this.modelValue = null;
-      //     this.conversationSlackFormGroup.get('conversation').patchValue('', {emitEvent: false});
-      //     if (value !== null) {
-      //       this.propagateChange(this.modelValue);
-      //     }
-      //   }
-      // );
+      this.modelValue = value;
+      this.conversationSlackFormGroup.get('conversation').patchValue(value, {emitEvent: false});
     } else {
       this.modelValue = null;
       this.conversationSlackFormGroup.get('conversation').patchValue('', {emitEvent: false});
@@ -190,14 +169,14 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     }
   }
 
-  updateView(value: string | null) {
+  updateView(value: SlackConversation | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
     }
   }
 
-  displayTemplateFn(slackConversation?: SlackConversation): string | undefined {
+  displaySlackConversationFn(slackConversation?: SlackConversation): string | undefined {
     return slackConversation ? slackConversation.name : undefined;
   }
 

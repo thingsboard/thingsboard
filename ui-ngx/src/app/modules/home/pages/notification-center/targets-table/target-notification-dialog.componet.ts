@@ -19,7 +19,9 @@ import {
   NotificationTargetConfigType,
   NotificationTargetConfigTypeTranslateMap,
   NotificationTargetType,
-  NotificationTargetTypeTranslationMap
+  NotificationTargetTypeTranslationMap,
+  SlackChanelType,
+  SlackChanelTypesTranslateMap
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -54,6 +56,9 @@ export class TargetNotificationDialogComponent extends
   notificationTargetConfigType = NotificationTargetConfigType;
   notificationTargetConfigTypes: NotificationTargetConfigType[] = Object.values(NotificationTargetConfigType);
   notificationTargetConfigTypeTranslateMap = NotificationTargetConfigTypeTranslateMap;
+  slackChanelTypes = Object.keys(SlackChanelType) as SlackChanelType[];
+  slackChanelTypesTranslateMap = SlackChanelTypesTranslateMap;
+
   entityType = EntityType;
   isAdd = true;
 
@@ -73,16 +78,35 @@ export class TargetNotificationDialogComponent extends
 
     this.targetNotificationForm = this.fb.group({
       name: [null, Validators.required],
-      type: [NotificationTargetType.PLATFORM_USERS],
       configuration: this.fb.group({
-        description: [null],
+        type: [NotificationTargetType.PLATFORM_USERS],
         usersFilter: this.fb.group({
           type: [NotificationTargetConfigType.ALL_USERS],
           usersIds: [{value: null, disabled: true}, Validators.required],
-          customerId: [{value: null, disabled: true}, Validators.required],
-          getCustomerIdFromOriginatorEntity: [{value: false, disabled: true}]
-        })
+          customerId: [{value: null, disabled: true}, Validators.required]
+        }),
+        conversationType: [{value: SlackChanelType.DIRECT, disabled: true}],
+        conversation: [{value: '', disabled: true}, Validators.required],
+        description: [null]
       })
+    });
+
+    this.targetNotificationForm.get('configuration.type').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((type: NotificationTargetType) => {
+      this.targetNotificationForm.get('configuration').disable({emitEvent: false});
+      switch (type) {
+        case NotificationTargetType.PLATFORM_USERS:
+          this.targetNotificationForm.get('configuration.usersFilter').enable({emitEvent: false});
+          this.targetNotificationForm.get('configuration.usersFilter.type').updateValueAndValidity({onlySelf: true});
+          break;
+        case NotificationTargetType.SLACK:
+          this.targetNotificationForm.get('configuration.conversationType').enable({emitEvent: false});
+          this.targetNotificationForm.get('configuration.conversation').enable({emitEvent: false});
+          break;
+      }
+      this.targetNotificationForm.get('configuration.type').enable({emitEvent: false});
+      this.targetNotificationForm.get('configuration.description').enable({emitEvent: false});
     });
 
     this.targetNotificationForm.get('configuration.usersFilter.type').valueChanges.pipe(
@@ -94,25 +118,15 @@ export class TargetNotificationDialogComponent extends
           this.targetNotificationForm.get('configuration.usersFilter.usersIds').enable({emitEvent: false});
           break;
         case NotificationTargetConfigType.CUSTOMER_USERS:
-          this.targetNotificationForm.get('configuration.usersFilter.getCustomerIdFromOriginatorEntity').enable({onlySelf: true});
+          this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
           break;
       }
       this.targetNotificationForm.get('configuration.usersFilter.type').enable({emitEvent: false});
     });
-    this.targetNotificationForm.get('configuration.usersFilter.getCustomerIdFromOriginatorEntity').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value: boolean) => {
-      if (value) {
-        this.targetNotificationForm.get('configuration.usersFilter.customerId').disable({emitEvent: false});
-      } else {
-        this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
-      }
-    });
 
     if (isDefined(data.target)) {
       this.targetNotificationForm.patchValue(data.target, {emitEvent: false});
-      this.targetNotificationForm.get('type').updateValueAndValidity({onlySelf: true});
-      this.targetNotificationForm.get('configuration.usersFilter.type').updateValueAndValidity({onlySelf: true});
+      this.targetNotificationForm.get('configuration.type').updateValueAndValidity({onlySelf: true});
     }
   }
 
@@ -131,7 +145,7 @@ export class TargetNotificationDialogComponent extends
     if (isDefined(this.data.target)) {
       formValue = Object.assign({}, this.data.target, formValue);
     }
-    formValue.configuration.type = formValue.type;
+    formValue.type = formValue.configuration.type;
     this.notificationService.saveNotificationTarget(formValue).subscribe(
       (target) => this.dialogRef.close(target)
     );

@@ -15,11 +15,18 @@
  */
 @import "../../../../../../theme";
 
+:host {
+  .tb-title {
+    display: block;
+    padding-bottom: 6px;
+  }
+}
+
 :host ::ng-deep {
   .mat-radio-group {
     display: flex;
     flex-direction: row;
-    margin-bottom: 8px;
+    margin-bottom: 14px;
 
     .mat-radio-button {
       flex: 1 1 100%;

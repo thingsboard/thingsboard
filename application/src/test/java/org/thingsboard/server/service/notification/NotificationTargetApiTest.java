@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -56,13 +55,11 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         NotificationTarget target = new NotificationTarget();
         target.setTenantId(null);
         target.setName(null);
-        target.setType(null);
         target.setConfiguration(null);
 
         String validationError = saveAndGetError(target, status().isBadRequest());
         assertThat(validationError)
                 .contains("name must not be")
-                .contains("type must not be")
                 .contains("configuration must not be");
 
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
@@ -82,7 +79,6 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(differentTenantId);
         notificationTarget.setName("Target 1");
-        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
 
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         UserListFilter userListFilter = new UserListFilter();
@@ -102,7 +98,6 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName("Test target");
-        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
 
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         CustomerUsersFilter customerUsersFilter = new CustomerUsersFilter();
@@ -141,7 +136,6 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         createDifferentTenant();
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setName("Test 1");
-        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
         notificationTarget.setTenantId(differentTenantId);
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         targetConfig.setUsersFilter(new AllUsersFilter());

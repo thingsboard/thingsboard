@@ -38,10 +38,8 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -81,7 +79,6 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName("Users " + List.of(usersIds));
-        notificationTarget.setType(NotificationTargetType.PLATFORM_USERS);
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         UserListFilter filter = new UserListFilter();
         filter.setUsersIds(DaoUtil.toUUIDs(List.of(usersIds)));

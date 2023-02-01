@@ -731,6 +731,9 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
+        "type-added-comment": "Added comment",
+        "type-updated-comment": "Updated comment",
+        "type-deleted-comment": "Deleted comment",
         "type-login": "Login",
         "type-logout": "Logout",
         "type-lockout": "Lockout",
@@ -1283,6 +1286,8 @@
         "description": "Description",
         "default": "Default",
         "default-rule-chain": "Default rule chain",
+        "default-edge-rule-chain": "Default edge rule chain",
+        "default-edge-rule-chain-hint": "Used on edge as rule chain to process incoming data for assets of this asset profile",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a asset details dashboard",
         "select-queue-hint": "Select from a drop-down list.",
@@ -1343,6 +1348,8 @@
         "profile-configuration": "Profile configuration",
         "transport-configuration": "Transport configuration",
         "default-rule-chain": "Default rule chain",
+        "default-edge-rule-chain": "Default edge rule chain",
+        "default-edge-rule-chain-hint": "Used on edge as rule chain to process incoming data for devices of this device profile",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a device details dashboard",
         "select-queue-hint": "Select from a drop-down list.",
@@ -1749,6 +1756,7 @@
         "make-private-edge-title": "Are you sure you want to make the edge '{{edgeName}}' private?",
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
+        "install-connect-instructions": "Install & Connect Instructions",
         "label": "Label",
         "load-entity-error": "Failed to load data. Entity has been deleted.",
         "assign-new-edge": "Assign new edge",
@@ -2717,7 +2725,6 @@
         "edit-notification-template": "Edit notification template",
         "edit-template": "Edit template",
         "email-settings": "Email settings",
-        "get-customer-id-from-originator": "Get Customer id from originator",
         "inbox": "Inbox",
         "link": "Link",
         "link-required": "Link is required",
@@ -2737,8 +2744,9 @@
         "notification-center": "Notification center",
         "notification-target": "Notification recipient",
         "notify-again": "Notify again",
+        "recipient-type": "Recipient type",
         "recipients-count": "{ count, plural, 1 {1 Recipient} other {# Recipients} }",
-        "requet-status": {
+        "request-status": {
             "processing": "Processing",
             "scheduled": "Scheduled",
             "sent": "Sent"
@@ -2748,6 +2756,7 @@
         "rule": "Rule",
         "rules": "Rules",
         "platform-users": "Platform users",
+        "scheduler-later": "Schedule for later",
         "search-notification": "Search notification",
         "search-targets": "Search recipients",
         "search-templates": "Search templates",
@@ -2774,8 +2783,9 @@
         "target-type": {
             "all-users": "All users",
             "customer-users": "Customer users",
-            "type": "Type",
-            "user-list": "User list"
+            "user-filters": "User filter",
+            "user-list": "User list",
+            "originator-entity-owner-users": "Users of originator entity owner"
         },
         "targets": "Recipients",
         "targets-required": "Recipients is required",
@@ -2784,10 +2794,19 @@
         "template-required": "Template is required",
         "template-type": {
             "alarm": "Alarm",
-            "general": "General"
+            "general": "General",
+            "device-inactivity": "Device inactivity",
+            "entity-action": "Entity action"
+        },
+        "template-hint": {
+            "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}",
+            "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}",
+            "device-inactivity": "Available params: ${deviceName}, ${deviceType}, ${deviceId}",
+            "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}"
         },
         "templates": "Templates",
         "text": "Text",
+        "time": "Time",
         "type": "Type",
         "unread": "Unread",
         "view-all": "View all",

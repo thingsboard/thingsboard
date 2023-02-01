@@ -367,7 +367,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.verify(tbClusterService, times(cntTime)).pushMsgToCore(Mockito.any(ToDeviceActorNotificationMsg.class), Mockito.isNull());
     }
 
-    private void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
+    protected void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
                                      CustomerId customerId, UserId userId, String userName,
                                      ActionType actionType, int cntTime, Object... additionalInfo) {
         ArgumentMatcher<HasName> matcherEntityEquals = entity == null ? Objects::isNull : argument -> argument.toString().equals(entity.toString());

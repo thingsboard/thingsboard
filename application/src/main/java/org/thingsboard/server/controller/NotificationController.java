@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.notification.NotificationProcessingCon
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
+import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
@@ -176,7 +177,7 @@ public class NotificationController extends BaseController {
         checkEntity(notificationRequest.getId(), notificationRequest, Resource.NOTIFICATION_REQUEST);
 
         notificationRequest.setOriginatorEntityId(user.getId());
-        if (notificationRequest.getInfo() != null && notificationRequest.getInfo().getOriginatorType() != EntityType.USER) {
+        if (notificationRequest.getInfo() != null && !(notificationRequest.getInfo() instanceof UserOriginatedNotificationInfo)) {
             throw new IllegalArgumentException("Unsupported notification info type");
         }
         notificationRequest.setRuleId(null);
@@ -221,7 +222,7 @@ public class NotificationController extends BaseController {
             }
 
             int recipientsCount;
-            if (notificationTarget.getType() == NotificationTargetType.PLATFORM_USERS) {
+            if (notificationTarget.getConfiguration().getType() == NotificationTargetType.PLATFORM_USERS) {
                 recipientsCount = notificationTargetService.countRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration());
             } else {
                 recipientsCount = 1;

@@ -18,7 +18,8 @@ package org.thingsboard.server.common.data.notification.targets.platform;
 public enum UsersFilterType {
     USER_LIST,
     CUSTOMER_USERS,
-    ALL_USERS
+    ALL_USERS,
+    ORIGINATOR_ENTITY_OWNER_USERS
 
 //    USER_GROUP,
 //    USERS_WITH_ROLE,

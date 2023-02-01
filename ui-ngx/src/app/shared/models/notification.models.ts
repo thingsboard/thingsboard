@@ -17,7 +17,6 @@
 import { NotificationId } from '@shared/models/id/notification-id';
 import { NotificationRequestId } from '@shared/models/id/notification-request-id';
 import { UserId } from '@shared/models/id/user-id';
-import { DashboardId } from '@shared/models/id/dashboard-id';
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { NotificationTargetId } from '@shared/models/id/notification-target-id';
@@ -35,7 +34,6 @@ export interface Notification {
   readonly subject: string;
   readonly text: string;
   readonly info: NotificationInfo;
-  readonly originatorType: NotificationOriginatorType;
   readonly status: NotificationStatus;
   readonly createdTime: number;
   readonly additionalConfig?: PushDeliveryMethodAdditionalConfig;
@@ -43,8 +41,7 @@ export interface Notification {
 
 export interface NotificationInfo {
   description: string;
-  dashboardId: DashboardId;
-  originatorType: NotificationOriginatorType;
+  type: string;
 }
 
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
@@ -54,7 +51,6 @@ export interface NotificationRequest extends Omit<BaseData<NotificationRequestId
   info?: NotificationInfo;
   deliveryMethods: Array<NotificationDeliveryMethod>;
   originatorEntityId: EntityId;
-  originatorType: NotificationOriginatorType;
   status: NotificationRequestStatus;
   stats: NotificationRequestStats;
   additionalConfig: NotificationRequestConfig;
@@ -155,13 +151,11 @@ interface UserListNotificationTargetConfig {
 
 interface CustomerUsersNotificationTargetConfig {
   customerId: string;
-  getCustomerIdFromOriginatorEntity: boolean;
 }
 
 export interface SlackNotificationTargetConfig {
-  conversationType: SlackConversation;
-  conversationId: string;
-  conversationName: string;
+  conversationType: SlackChanelType;
+  conversation: SlackConversation;
 }
 export enum NotificationTargetType {
   PLATFORM_USERS = 'PLATFORM_USERS',
@@ -222,12 +216,6 @@ interface SlackDeliveryMethodNotificationTemplate {
   conversationId: string;
 }
 
-export enum NotificationOriginatorType {
-  ADMIN = 'ADMIN',
-  ALARM = 'ALARM',
-  RULE_NODE = 'RULE_NODE'
-}
-
 export enum NotificationStatus {
   SENT = 'SENT',
   READ = 'READ'
@@ -254,9 +242,9 @@ export enum NotificationRequestStatus {
 }
 
 export const NotificationRequestStatusTranslateMap = new Map<NotificationRequestStatus, string>([
-  [NotificationRequestStatus.PROCESSING, 'notification.requet-status.processing'],
-  [NotificationRequestStatus.SCHEDULED, 'notification.requet-status.scheduled'],
-  [NotificationRequestStatus.SENT, 'notification.requet-status.sent']
+  [NotificationRequestStatus.PROCESSING, 'notification.request-status.processing'],
+  [NotificationRequestStatus.SCHEDULED, 'notification.request-status.scheduled'],
+  [NotificationRequestStatus.SENT, 'notification.request-status.sent']
 ]);
 
 export enum SlackChanelType {
@@ -272,20 +260,24 @@ export const SlackChanelTypesTranslateMap = new Map<SlackChanelType, string>([
 ]);
 
 export enum NotificationTargetConfigType {
+  ALL_USERS = 'ALL_USERS',
   USER_LIST = 'USER_LIST',
   CUSTOMER_USERS = 'CUSTOMER_USERS',
-  ALL_USERS = 'ALL_USERS'
+  ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS'
 }
 
 export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTargetConfigType, string>([
   [NotificationTargetConfigType.ALL_USERS, 'notification.target-type.all-users'],
   [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
   [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
+  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS, 'notification.target-type.originator-entity-owner-users']
 ]);
 
 export enum NotificationType {
   GENERAL = 'GENERAL',
-  ALARM = 'ALARM'
+  ALARM = 'ALARM',
+  DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
+  ENTITY_ACTION = 'ENTITY_ACTION'
 }
 
 interface NotificationTemplateTypeTranslate {
@@ -297,14 +289,27 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
   [NotificationType.GENERAL,
     {
       name: 'notification.template-type.general',
-      hint: 'hint'
+      hint: 'notification.template-hint.general'
     }
   ],
   [NotificationType.ALARM,
     {
       name: 'notification.template-type.alarm',
-      hint: 'hint'
-    }]
+      hint: 'notification.template-hint.alarm'
+    }
+  ],
+  [NotificationType.DEVICE_INACTIVITY,
+    {
+      name: 'notification.template-type.device-inactivity',
+      hint: 'notification.template-hint.device-inactivity'
+    }
+  ],
+  [NotificationType.ENTITY_ACTION,
+    {
+      name: 'notification.template-type.entity-action',
+      hint: 'notification.template-hint.entity-action'
+    }
+  ]
 ]);
 
 export enum TriggerType {

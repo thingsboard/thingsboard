@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 @Service
@@ -34,7 +35,7 @@ public class AlarmNotificationRuleTriggerProcessor implements NotificationRuleTr
 
     @Override
     public boolean matchesClearRule(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
-        AlarmNotificationRuleTriggerConfig.ClearRule clearRule = triggerConfig.getClearRule();
+        ClearRule clearRule = triggerConfig.getClearRule();
         if (clearRule != null) {
             if (clearRule.getAlarmStatus() != null) {
                 return clearRule.getAlarmStatus().equals(alarm.getStatus());
@@ -51,7 +52,7 @@ public class AlarmNotificationRuleTriggerProcessor implements NotificationRuleTr
                 .alarmOriginator(alarm.getOriginator())
                 .alarmSeverity(alarm.getSeverity())
                 .alarmStatus(alarm.getStatus())
-                .customerId(alarm.getCustomerId())
+                .alarmCustomerId(alarm.getCustomerId())
                 .build();
     }
 

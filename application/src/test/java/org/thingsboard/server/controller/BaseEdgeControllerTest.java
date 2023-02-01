@@ -17,6 +17,10 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -50,6 +55,7 @@ import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
@@ -60,6 +66,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -81,6 +88,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private TenantId tenantId;
     private User tenantAdmin;
 
+    ListeningExecutorService executor;
+
+    List<ListenableFuture<Edge>> futures;
+
     @Autowired
     private EdgeDao edgeDao;
 
@@ -92,8 +103,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         }
     }
 
-   @Before
+    @Before
     public void beforeTest() throws Exception {
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
+
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -114,6 +127,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @After
     public void afterTest() throws Exception {
+        executor.shutdownNow();
+
         loginSysAdmin();
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
@@ -327,7 +342,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String customerIdStr = customerId.getId().toString();
 
         String msgError = msgErrorNoFound("Customer", customerIdStr);
-        doPost("/api/customer/" + customerIdStr+ "/edge/" + savedEdge.getId().getId().toString())
+        doPost("/api/customer/" + customerIdStr + "/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgError)));
 
@@ -380,11 +395,14 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantEdges() throws Exception {
-        List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < 178; i++) {
+        int cntEntity = 178;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             Edge edge = constructEdge("Edge" + i, "default");
-            edges.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edges = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
         List<Edge> loadedEdges = new ArrayList<>();
         PageLink pageLink = new PageLink(23);
         PageData<Edge> pageData = null;
@@ -407,23 +425,30 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     @Test
     public void testFindTenantEdgesByName() throws Exception {
         String title1 = "Edge title 1";
-        List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        int cntEntity = 143;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edgesTitle1.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesTitle1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
         String title2 = "Edge title 2";
-        List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 75; i++) {
+        cntEntity = 75;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edgesTitle2.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesTitle2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -489,24 +514,31 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     public void testFindTenantEdgesByType() throws Exception {
         String title1 = "Edge title 1";
         String type1 = "typeA";
-        List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        int cntEntity = 143;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type1);
-            edgesType1.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesType1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
         String title2 = "Edge title 2";
         String type2 = "typeB";
-        List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 75; i++) {
+        cntEntity = 75;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type2);
-            edgesType2.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesType2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15);
@@ -577,14 +609,17 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        List<Edge> edges = new ArrayList<>();
         int cntEntity = 128;
+        futures = new ArrayList<>(cntEntity);
         for (int i = 0; i < cntEntity; i++) {
             Edge edge = constructEdge("Edge" + i, "default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edges.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edges = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Edge(), new Edge(),
                 savedTenant.getId(), customerId, tenantAdmin.getId(), tenantAdmin.getEmail(),
@@ -617,28 +652,37 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         customer = doPost("/api/customer", customer, Customer.class);
         CustomerId customerId = customer.getId();
 
+        int cntEntity = 125;
         String title1 = "Edge title 1";
-        List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesTitle1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesTitle1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
+        cntEntity = 143;
         String title2 = "Edge title 2";
-        List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesTitle2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesTitle2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -682,7 +726,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        int cntEntity = loadedEdgesTitle1.size();
+        cntEntity = loadedEdgesTitle1.size();
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Edge(), new Edge(),
                 savedTenant.getId(), customerId, tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
@@ -714,30 +758,39 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         customer = doPost("/api/customer", customer, Customer.class);
         CustomerId customerId = customer.getId();
 
+        int cntEntity = 125;
         String title1 = "Edge title 1";
         String type1 = "typeC";
-        List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type1);
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesType1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesType1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
+        cntEntity = 143;
         String title2 = "Edge title 2";
         String type2 = "typeD";
-        List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type2);
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesType2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesType2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -820,31 +873,37 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(19);
+        edgeImitator.expectMessageAmount(20);
         edgeImitator.connect();
         assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
 
         assertThat(edgeImitator.findAllMessagesByType(QueueUpdateMsg.class)).as("one msg during sync process").hasSize(1);
-        assertThat(edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class)).as("one msg during sync process, another from edge creation").hasSize(2);
+        List<RuleChainUpdateMsg> ruleChainUpdateMsgs = edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class);
+        assertThat(ruleChainUpdateMsgs).as("one msg during sync process, another from edge creation").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class)).as("one msg during sync process for 'default' device profile").hasSize(3);
         assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("one msg once device assigned to edge").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(AssetProfileUpdateMsg.class)).as("two msgs during sync process for 'default' and 'test' asset profiles").hasSize(4);
         assertThat(edgeImitator.findAllMessagesByType(AssetUpdateMsg.class)).as("two msgs - one during sync process, and one more once asset assigned to edge").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("one msg during sync process for tenant admin user").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update").hasSize(4);
+        assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
+        verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
-        edgeImitator.expectMessageAmount(14);
+        edgeImitator.expectMessageAmount(15);
         doPost("/api/edge/sync/" + edge.getId());
         assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
 
         assertThat(edgeImitator.findAllMessagesByType(QueueUpdateMsg.class)).as("queue msg").hasSize(1);
-        assertThat(edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class)).as("rule chain msg").hasSize(1);
+        ruleChainUpdateMsgs = edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class);
+        assertThat(ruleChainUpdateMsgs).as("rule chain msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class)).as("device profile msg").hasSize(2);
         assertThat(edgeImitator.findAllMessagesByType(AssetProfileUpdateMsg.class)).as("asset profile msg").hasSize(3);
         assertThat(edgeImitator.findAllMessagesByType(AssetUpdateMsg.class)).as("asset update msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("user update msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update msg").hasSize(4);
         assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("asset update msg").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
+        verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
         edgeImitator.allowIgnoredTypes();
         try {
@@ -858,6 +917,12 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         doDelete("/api/edge/" + edge.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    private void verifyRuleChainMsgsAreRoot(List<RuleChainUpdateMsg> ruleChainUpdateMsgs) {
+        for (RuleChainUpdateMsg ruleChainUpdateMsg : ruleChainUpdateMsgs) {
+            Assert.assertTrue(ruleChainUpdateMsg.getRoot());
+        }
     }
 
     @Test
@@ -875,5 +940,14 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private Edge savedEdge(String name) {
         Edge edge = constructEdge(name, "default");
         return doPost("/api/edge", edge, Edge.class);
+    }
+
+    @Test
+    public void testGetEdgeInstallInstructions() throws Exception {
+        Edge edge = constructEdge(tenantId, "Edge for Test Docker Install Instructions", "default", "7390c3a6-69b0-9910-d155-b90aca4b772e", "l7q4zsjplzwhk16geqxy");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+        String installInstructions = doGet("/api/edge/instructions/" + savedEdge.getId().getId().toString(), String.class);
+        Assert.assertTrue(installInstructions.contains("l7q4zsjplzwhk16geqxy"));
+        Assert.assertTrue(installInstructions.contains("7390c3a6-69b0-9910-d155-b90aca4b772e"));
     }
 }

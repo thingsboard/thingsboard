@@ -36,18 +36,19 @@
         {{ 'notification.target-name-required' | translate }}
       </mat-error>
     </mat-form-field>
-    <mat-radio-group formControlName="type">
-      <mat-radio-button *ngFor="let notificationTargetType of notificationTargetTypes" [value]="notificationTargetType">
-        <div fxLayout="column">
-          <div>{{ notificationTargetTypeTranslationMap.get(notificationTargetType) | translate }}</div>
-        </div>
-      </mat-radio-button>
-    </mat-radio-group>
     <section formGroupName="configuration">
+      <label class="tb-title">{{ 'notification.type' | translate }}</label>
+      <mat-radio-group formControlName="type">
+        <mat-radio-button *ngFor="let notificationTargetType of notificationTargetTypes" [value]="notificationTargetType">
+          <div fxLayout="column">
+            <div>{{ notificationTargetTypeTranslationMap.get(notificationTargetType) | translate }}</div>
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
       <section formGroupName="usersFilter"
-               *ngIf="targetNotificationForm.get('type').value === notificationTargetType.PLATFORM_USERS">
+               *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.PLATFORM_USERS">
         <mat-form-field class="mat-block">
-          <mat-label translate>notification.target-type.type</mat-label>
+          <mat-label translate>notification.target-type.user-filters</mat-label>
           <mat-select formControlName="type">
             <mat-option *ngFor="let type of notificationTargetConfigTypes" [value]="type">
               {{ notificationTargetConfigTypeTranslateMap.get(type) | translate }}
@@ -65,16 +66,26 @@
         </tb-entity-list>
         <section
           *ngIf="targetNotificationForm.get('configuration.usersFilter.type').value === notificationTargetConfigType.CUSTOMER_USERS">
-          <mat-slide-toggle formControlName="getCustomerIdFromOriginatorEntity">
-            {{ 'notification.get-customer-id-from-originator' | translate }}
-          </mat-slide-toggle>
           <tb-entity-autocomplete
             required
             formControlName="customerId"
-            [entityType]="entityType.CUSTOMER"
-            *ngIf="!targetNotificationForm.get('configuration.usersFilter.getCustomerIdFromOriginatorEntity').value">
+            [entityType]="entityType.CUSTOMER">
           </tb-entity-autocomplete>
         </section>
+      </section>
+      <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.SLACK">
+        <label class="tb-title">{{ 'notification.recipient-type' | translate }}</label>
+        <mat-radio-group formControlName="conversationType">
+          <mat-radio-button *ngFor="let slackChanelType of slackChanelTypes" [value]="slackChanelType">
+            <div fxLayout="column">
+              <div>{{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}</div>
+            </div>
+          </mat-radio-button>
+        </mat-radio-group>
+        <tb-slack-conversation-autocomplete
+          formControlName="conversation" required
+          [slackChanelType]="targetNotificationForm.get('configuration.conversationType').value">
+        </tb-slack-conversation-autocomplete>
       </section>
       <mat-form-field class="mat-block">
         <mat-label translate>notification.description</mat-label>

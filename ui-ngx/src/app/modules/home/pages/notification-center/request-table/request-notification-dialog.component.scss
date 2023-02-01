@@ -19,6 +19,19 @@
 :host-context(.tb-fullscreen-dialog .mat-dialog-container) {
   width: 640px;
 
+  .additional-config-group {
+    padding: 16px 16px 4px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    width: 100%;
+    height: 100%;
+
+    .toggle {
+      margin-bottom: 12px;
+    }
+  }
+
   .preview-group {
     padding: 16px;
     margin-bottom: 10px;
