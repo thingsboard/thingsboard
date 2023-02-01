@@ -21,22 +21,11 @@ import {
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
-import {
-  NotificationRule,
-  NotificationTarget,
-  NotificationTargetConfigTypeTranslateMap, TriggerTypeTranslationMap
-} from '@shared/models/notification.models';
+import { NotificationRule, TriggerTypeTranslationMap } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  TargetNotificationDialogComponent,
-  TargetsNotificationDialogData
-} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import {
-  TargetTableHeaderComponent
-} from '@home/pages/notification-center/targets-table/target-table-header.component';
 import { RuleTableHeaderComponent } from '@home/pages/notification-center/rule-table/rule-table-header.component';
 import {
   RuleNotificationDialogComponent,

@@ -43,7 +43,9 @@ import {
 } from '@home/pages/notification-center/template-table/template-autocomplete.component';
 import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
 import { RuleTableHeaderComponent } from '@home/pages/notification-center/rule-table/rule-table-header.component';
-import { RuleNotificationDialogComponent } from '@home/pages/notification-center/rule-table/rule-notification-dialog.component';
+import {
+  RuleNotificationDialogComponent
+} from '@home/pages/notification-center/rule-table/rule-notification-dialog.component';
 import { EscalationsComponent } from '@home/pages/notification-center/rule-table/escalations.component';
 import { EscalationFormComponent } from '@home/pages/notification-center/rule-table/escalation-form.component';
 

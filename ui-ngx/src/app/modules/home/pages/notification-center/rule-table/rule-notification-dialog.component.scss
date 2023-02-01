@@ -16,7 +16,55 @@
 @import "../../../../../../theme";
 
 :host {
-  ::ng-deep{
+  width: 800px;
+
+  @media #{$mat-gt-xs} {
+    .mat-dialog-content {
+      max-height: 75vh;
+    }
+  }
+
+  ::ng-deep {
+
+    .mat-dialog-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 !important;
+
+      .mat-stepper-horizontal {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        @media #{$mat-lt-sm} {
+          .mat-step-label {
+            white-space: normal;
+            overflow: visible;
+
+            .mat-step-text-label {
+              overflow: visible;
+            }
+          }
+        }
+
+        .mat-horizontal-content-container {
+          height: 600px;
+          max-height: 100%;
+          width: 100%;;
+          overflow-y: auto;
+          scrollbar-gutter: stable;
+          @media #{$mat-gt-sm} {
+            min-width: 500px;
+          }
+        }
+
+        .mat-horizontal-stepper-content[aria-expanded=true] {
+          height: 100%;
+          position: relative;
+        }
+      }
+    }
 
     .mat-button-toggle-group.tb-notification-unread-toggle-group {
       &.mat-button-toggle-group-appearance-standard {
@@ -71,15 +119,17 @@
       }
     }
   }
+
   .fields-group {
     padding: 0 16px 8px;
     margin-bottom: 10px;
     border: 1px groove rgba(0, 0, 0, .25);
     border-radius: 4px;
-    .fields-group-title {
-      display: inline-block;
-      font-weight: 500;
-      padding: 12px 0;
+
+    legend {
+      margin-bottom: 8px;
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
     }
   }
 }

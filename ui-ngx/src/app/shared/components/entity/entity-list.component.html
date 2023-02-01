@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field appearance="standard" [formGroup]="entityListFormGroup" class="mat-block" floatLabel="always">
-  <mat-label *ngIf="labelText">{{ labelText | translate }}</mat-label>
+  <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
   <mat-chip-list #chipList formControlName="entities" [required]="required">
     <mat-chip
       *ngFor="let entity of entities"
@@ -26,7 +26,7 @@
       {{entity.name}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip>
-    <input matInput type="text" placeholder="{{ !disabled ? (placeholderText | translate) : '' }}"
+    <input matInput type="text" placeholder="{{ !disabled ? placeholderText : '' }}"
            style="max-width: 200px;"
            #entityInput
            (focusin)="onFocus()"
@@ -50,6 +50,6 @@
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="entityListFormGroup.get('entities').hasError('required')">
-    {{ requiredText | translate }}
+    {{ requiredText }}
   </mat-error>
 </mat-form-field>

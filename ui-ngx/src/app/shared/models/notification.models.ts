@@ -109,7 +109,7 @@ export interface NotificationRuleTriggerConfig {
   alarmSeverities?: Array<AlarmSeverity>;
   clearRule?: AlarmStatus;
   devices?: Array<string>;
-  devicesProfiles?: Array<string>;
+  deviceProfiles?: Array<string>;
   entityType?: EntityType;
   created?: boolean;
   updated?: boolean;

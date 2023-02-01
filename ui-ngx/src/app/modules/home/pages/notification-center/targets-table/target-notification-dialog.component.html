@@ -59,9 +59,9 @@
           required
           formControlName="usersIds"
           [entityType]="entityType.USER"
-          labelText="user.user-list"
-          placeholderText="user.user"
-          requiredText="user.user-list-required"
+          labelText="{{ 'user.user-list' | translate }}"
+          placeholderText="{{ 'user.user' | translate }}"
+          requiredText="{{ 'user.user-list-required' | translate }}"
           *ngIf="targetNotificationForm.get('configuration.usersFilter.type').value === notificationTargetConfigType.USER_LIST">
         </tb-entity-list>
         <section

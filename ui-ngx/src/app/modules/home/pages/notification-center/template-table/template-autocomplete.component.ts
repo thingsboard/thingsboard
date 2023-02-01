@@ -69,8 +69,17 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   @Input()
   disabled: boolean;
 
+  private notificationTypeValue: NotificationType;
+  get notificationTypes(): NotificationType {
+    return this.notificationTypeValue;
+  }
   @Input()
-  notificationTypes: NotificationType;
+  set notificationTypes(type) {
+    if (type !== this.notificationTypeValue) {
+      this.notificationTypeValue = type;
+      this.reset();
+    }
+  }
 
   @ViewChild('templateInput', {static: true}) templateInput: ElementRef;
 
@@ -128,8 +137,6 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
       );
   }
 
-  ngAfterViewInit(): void {}
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
@@ -173,18 +180,26 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     }
   }
 
-  updateView(value: EntityId | null) {
+  displayTemplateFn(template?: NotificationTemplate): string | undefined {
+    return template ? template.name : undefined;
+  }
+
+  clear() {
+    this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: true});
+    setTimeout(() => {
+      this.templateInput.nativeElement.blur();
+      this.templateInput.nativeElement.focus();
+    }, 0);
+  }
+
+  private updateView(value: EntityId | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
     }
   }
 
-  displayTemplateFn(template?: NotificationTemplate): string | undefined {
-    return template ? template.name : undefined;
-  }
-
-  fetchTemplate(searchText?: string): Observable<Array<NotificationTemplate>> {
+  private fetchTemplate(searchText?: string): Observable<Array<NotificationTemplate>> {
     this.searchText = searchText;
     const pageLink = new PageLink(10, 0, searchText, {
       property: 'name',
@@ -198,11 +213,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     );
   }
 
-  clear() {
-    this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: true});
-    setTimeout(() => {
-      this.templateInput.nativeElement.blur();
-      this.templateInput.nativeElement.focus();
-    }, 0);
+  private reset() {
+    this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
   }
 }

@@ -45,9 +45,9 @@
         <tb-entity-list
           required
           formControlName="targets"
-          labelText="notification.targets"
-          placeholderText="notification.target"
-          requiredText="notification.targets-required"
+          labelText="{{ 'notification.targets' | translate }}"
+          placeholderText="{{ 'notification.target' | translate }}"
+          requiredText="{{ 'notification.targets-required' | translate }}"
           [entityType]="entityType.NOTIFICATION_TARGET">
         </tb-entity-list>
         <section formGroupName="additionalConfig" class="additional-config-group">

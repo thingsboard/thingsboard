@@ -2736,7 +2736,7 @@
         "new-notification": "New notification",
         "no-inbox-notification": "No notification found",
         "no-notification-request": "No notification request",
-        "no-notification-templates": "No notification templates",
+        "no-notification-templates": "Not found notification templates",
         "no-notifications-yet": "No notifications yet",
         "no-targets-notification": "No recipients notification",
         "not-found-slack-recipient": "Not found slack recipient",
@@ -2822,7 +2822,9 @@
             "device-inactivity": "Device inactivity",
             "entity-action": "Entity action"
         },
-        "trigger-settings": "Trigger settings",
+        "alarm-trigger-settings": "Alarm trigger settings",
+        "device-inactivity-trigger-settings": "Device inactive trigger settings",
+        "entity-action-trigger-settings": "Entity action trigger settings",
         "filter": "Filter",
         "clear-rule": "Clear rule",
         "no-severity-matching": "'{{severity}}' not found.",
@@ -2838,8 +2840,7 @@
         "entity-type": "Entity type",
         "created": "Created",
         "updated": "Updated",
-        "deleted": "Deleted",
-        "type-settings": "Type settings"
+        "deleted": "Deleted"
     },
     "ota-update": {
       "add": "Add package",

@@ -80,11 +80,11 @@ export class RuleNotificationDialogComponent extends
   alarmSeverityEnum = AlarmSeverity;
   alarmSeverityTranslationMap = alarmSeverityTranslations;
 
-  alarmSearchStatuses = Object.values(AlarmStatus);
+  alarmSearchStatuses: AlarmStatus[] = Object.values(AlarmStatus);
   alarmSearchStatusTranslationMap = alarmStatusTranslations;
 
   entityType = EntityType;
-  entityTypes = Object.values(EntityType);
+  entityTypes: EntityType[] = Object.values(EntityType);
   isAdd = true;
 
   selectedIndex = 0;
@@ -121,7 +121,7 @@ export class RuleNotificationDialogComponent extends
     this.ruleNotificationForm = this.fb.group({
       name: [null, Validators.required],
       templateId: [null, Validators.required],
-      triggerType: [null, Validators.required],
+      triggerType: [TriggerType.ALARM, Validators.required],
       recipientsConfig: this.fb.group({
         triggerType: [],
       }),
@@ -154,20 +154,26 @@ export class RuleNotificationDialogComponent extends
 
     this.deviceInactivityTemplateForm = this.fb.group({
       filterByDevice: [true],
-      devices: [],
-      deviceProfiles: [],
+      devices: [null, Validators.required],
+      deviceProfiles: [{value: null, disabled: true}, Validators.required],
       targets: [[], Validators.required],
       description: ['']
     });
 
     this.deviceInactivityTemplateForm.get('filterByDevice').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(
-      value => this.deviceInactivityTemplateForm.get(value ? 'deviceProfiles' : 'devices').patchValue(null, {emitEvent: false})
-    );
+    ).subscribe(value => {
+        if (value) {
+          this.deviceInactivityTemplateForm.get('devices').enable({emitEvent: false});
+          this.deviceInactivityTemplateForm.get('deviceProfiles').disable({emitEvent: false});
+        } else {
+          this.deviceInactivityTemplateForm.get('deviceProfiles').enable({emitEvent: false});
+          this.deviceInactivityTemplateForm.get('devices').disable({emitEvent: false});
+        }
+    });
 
     this.entityActionTemplateForm = this.fb.group({
-      entityType: [],
+      entityType: [EntityType.DEVICE],
       created: [false],
       updated: [false],
       deleted: [false],
@@ -202,26 +208,23 @@ export class RuleNotificationDialogComponent extends
         }
         this.alarmTemplateForm.patchValue({
           escalationTable: parsedEscalationTable,
-          alarmTypes: this.ruleNotification.triggerConfig.alarmTypes,
-          alarmSeverities: this.ruleNotification.triggerConfig.alarmSeverities,
-          clearRule: this.ruleNotification.triggerConfig.clearRule,
-          description: this.ruleNotification.additionalConfig.description
+          description: this.ruleNotification.additionalConfig.description,
+          ...this.ruleNotification.triggerConfig
         }, {emitEvent: false});
       } else if (this.ruleNotification.triggerType === TriggerType.DEVICE_INACTIVITY) {
         this.deviceInactivityTemplateForm.patchValue({
           filterByDevice: !!this.ruleNotification.triggerConfig.devices,
-          deviceProfiles: this.ruleNotification.triggerConfig.devicesProfiles,
+          deviceProfiles: this.ruleNotification.triggerConfig.deviceProfiles,
           devices: this.ruleNotification.triggerConfig.devices,
           targets: this.ruleNotification.recipientsConfig.targets,
           description: this.ruleNotification.additionalConfig.description
         }, {emitEvent: false});
+        this.deviceInactivityTemplateForm.get('filterByDevice').updateValueAndValidity({onlySelf: true});
       } else {
         this.entityActionTemplateForm.patchValue({
-          entityType: this.ruleNotification.triggerConfig.entityType,
-          created: this.ruleNotification.triggerConfig.created,
-          updated: this.ruleNotification.triggerConfig.updated,
-          deleted: this.ruleNotification.triggerConfig.deleted,
-          targets: this.ruleNotification.recipientsConfig.targets
+          targets: this.ruleNotification.recipientsConfig.targets,
+          description: this.ruleNotification.additionalConfig.description,
+          ...this.ruleNotification.triggerConfig
         }, {emitEvent: false});
       }
     }
@@ -315,15 +318,20 @@ export class RuleNotificationDialogComponent extends
   }
 
   public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
-    const value = event.value;
+    const input = event.chipInput.inputElement;
+    let value = event.value || '';
 
-    const types: string[] = this.alarmTemplateForm.get('alarmTypes').value;
-
-    if ((value || '').trim()) {
-      types.push(value.trim());
-      this.alarmTemplateForm.get('alarmTypes').setValue(types);
-      this.alarmTemplateForm.get('alarmTypes').markAsDirty();
+    if (value.trim()) {
+      value = value.trim();
+      let types: string[] = this.alarmTemplateForm.get('alarmTypes').value;
+      if (!types || types.indexOf(value) === -1) {
+        if (!types) {
+          types = [];
+        }
+        types.push(value);
+        this.alarmTemplateForm.get('alarmTypes').setValue(types);
+        this.alarmTemplateForm.get('alarmTypes').markAsDirty();
+      }
     }
 
     if (input) {
@@ -358,7 +366,7 @@ export class RuleNotificationDialogComponent extends
       return 'action.skip';
     }
     if (this.selectedIndex !== 0 && this.selectedIndex >= this.maxStepperIndex) {
-      return 'action.add';
+      return (this.data.isAdd || this.data.isCopy) ? 'action.add' : 'action.save';
     }
     return 'action.next';
   }
@@ -422,15 +430,5 @@ export class RuleNotificationDialogComponent extends
 
   cancel(): void {
     this.dialogRef.close(null);
-  }
-
-  save() {
-    let formValue = deepTrim(this.ruleNotificationForm.value);
-    if (isDefined(this.data.rule)) {
-      formValue = Object.assign({}, this.data.rule, formValue);
-    }
-    this.notificationService.saveNotificationRule(formValue).subscribe(
-      (rule) => this.dialogRef.close(rule)
-    );
   }
 }
