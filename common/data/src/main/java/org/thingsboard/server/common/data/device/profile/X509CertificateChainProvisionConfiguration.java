@@ -17,16 +17,21 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 @Data
-public class AllowCreatingNewDevicesByX509CertificateProvisionConfiguration implements DeviceProfileProvisionConfiguration {
+@NoArgsConstructor
+public class X509CertificateChainProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
-    private final String provisionDeviceSecret;
+    private String provisionDeviceSecret;
+    private String certificateValue;
+    private String certificateRegExPattern;
+    private boolean allowCreateNewDevicesByX509Certificate;
 
     @Override
     public DeviceProfileProvisionType getType() {
-        return DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE;
+        return DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
     }
 
 }

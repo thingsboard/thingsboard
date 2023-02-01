@@ -40,14 +40,9 @@ public class MqttTestConfigProperties {
     boolean enableCompatibilityWithJsonPayloadFormat;
     boolean useJsonPayloadFormatForDefaultDownlinkTopics;
     boolean sendAckOnValidationException;
-    boolean allowCreatingNewDeviceByX509Strategy;
 
     DeviceProfileProvisionType provisionType;
     String provisionKey;
     String provisionSecret;
-    String x509DeviceCertificate;
-    String x509DeviceProfileCertificate;
-    String commonName;
-    String regEx;
 
 }

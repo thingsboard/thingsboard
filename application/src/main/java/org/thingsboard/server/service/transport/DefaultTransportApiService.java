@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfig
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
+import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -173,7 +174,7 @@ public class DefaultTransportApiService implements TransportApiService {
             result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
             TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
-            result = validateOrCreateDeviceX509Certificate(msg.getCertificate(), DeviceCredentialsType.X509_CERTIFICATE);
+            result = validateOrCreateDeviceX509Certificate(msg.getCertificateChain(), DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
@@ -258,7 +259,11 @@ public class DefaultTransportApiService implements TransportApiService {
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(certificateHash);
             if (deviceProfile != null) {
-                String deviceName = extractDeviceNameFromCNByRegEx(deviceCommonName, deviceProfile.getCertificateRegexPattern());
+                X509CertificateChainProvisionConfiguration x509Configuration = new X509CertificateChainProvisionConfiguration();
+                if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+                    x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+                }
+                String deviceName = extractDeviceNameFromCNByRegEx(deviceCommonName, x509Configuration.getCertificateRegExPattern());
                 if (deviceName == null) {
                     log.error("Device name cannot be unmatched from CN!");
                     return getEmptyTransportApiResponseFuture();
@@ -272,7 +277,7 @@ public class DefaultTransportApiService implements TransportApiService {
                         deviceCredentials = createDeviceCredentials(device.getTenantId(), device.getId(), updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);
                     }
                     return getDeviceInfo(deviceCredentials);
-                } else if (deviceProfile.getProvisionType() == DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE && deviceProfile.isAllowCreateNewDevicesByX509Strategy()) {
+                } else if (deviceProfile.getProvisionType() == DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN && x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
                     Device savedDevice = createDevice(deviceProfile.getTenantId(), deviceProfile.getId(), deviceName, deviceProfile.getName());
                     DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
                     deviceCredentials = updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials, updateDeviceCertificateValue, updateDeviceCertificateHash, credentialsType);

@@ -147,7 +147,7 @@ public class MqttSslHandlerProvider {
             try {
                 String certificateChain = SslUtil.getCertificateChainString(chain);
                 transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg
-                                .newBuilder().setCertificate(certificateChain).build(),
+                                .newBuilder().setCertificateChain(certificateChain).build(),
                         new TransportServiceCallback<>() {
                             @Override
                             public void onSuccess(ValidateDeviceCredentialsResponse msg) {

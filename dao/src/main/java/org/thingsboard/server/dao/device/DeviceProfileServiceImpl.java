@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -134,8 +135,12 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
-        if (deviceProfile.getCertificateValue() != null) {
-            formatDeviceProfileCertificate(deviceProfile);
+        X509CertificateChainProvisionConfiguration x509Configuration = new X509CertificateChainProvisionConfiguration();
+        if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+            x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+        }
+        if (x509Configuration.getCertificateValue() != null) {
+            formatDeviceProfileCertificate(deviceProfile, x509Configuration);
         }
         DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         DeviceProfile savedDeviceProfile;
@@ -345,11 +350,14 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 profile.getDefaultDashboardId(), profile.getType(), profile.getTransportType());
     }
 
-    private void formatDeviceProfileCertificate(DeviceProfile deviceProfile) {
-        String certificateValue = formatCertificateValue(deviceProfile.getCertificateValue());
+    private void formatDeviceProfileCertificate(DeviceProfile deviceProfile, X509CertificateChainProvisionConfiguration x509Configuration) {
+        String certificateValue = formatCertificateValue(x509Configuration.getCertificateValue());
         String cert = regexCertificateChain(certificateValue);
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
-        deviceProfile.setCertificateValue(certificateValue);
+        DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
+        x509Configuration.setCertificateValue(certificateValue);
+        deviceProfileData.setProvisionConfiguration(x509Configuration);
+        deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setCertificateHash(sha3Hash);
     }
 
@@ -372,9 +380,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 return EncryptionUtil.certTrimNewLinesForChainInDeviceProfile(certificateValue);
             }
             return EncryptionUtil.certTrimNewLines(certificateValue);
-        } catch (CertificateException e) {
-            throw new RuntimeException(e);
-        }
+        } catch (CertificateException ignored) {}
+        return certificateValue;
     }
 
 }

@@ -29,6 +29,9 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -158,11 +161,15 @@ public class DefaultTransportApiServiceTest {
 
     private DeviceProfile createDeviceProfile(String certificateValue) {
         DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setCertificateValue(certificateValue);
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        X509CertificateChainProvisionConfiguration provision = new X509CertificateChainProvisionConfiguration();
+        provision.setCertificateValue(certificateValue);
+        provision.setCertificateRegExPattern("^$");
+        provision.setAllowCreateNewDevicesByX509Certificate(true);
+        deviceProfileData.setProvisionConfiguration(provision);
+        deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setCertificateHash(EncryptionUtil.getSha3Hash(certificateValue));
-        deviceProfile.setCertificateRegexPattern("^$");
-        deviceProfile.setAllowCreateNewDevicesByX509Strategy(true);
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.ALLOW_CREATING_NEW_DEVICES_BY_X509_CERTIFICATE);
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN);
         return deviceProfile;
     }
 
