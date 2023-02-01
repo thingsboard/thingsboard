@@ -64,7 +64,7 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
     }
 
     public WebElement importDeviceProfileBtn() {
-        return waitUntilElementToBeClickable(IMPORT_DEVICE_PROFILE_BTN + "s");
+        return waitUntilElementToBeClickable(IMPORT_DEVICE_PROFILE_BTN);
     }
 
     public WebElement importAssetProfileBtn() {

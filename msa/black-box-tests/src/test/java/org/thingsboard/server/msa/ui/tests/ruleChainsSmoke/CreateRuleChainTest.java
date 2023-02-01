@@ -169,7 +169,7 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
     }
 
     @Epic("Rule chains smoke tests")
-    @Feature("Add rule chain after specifying the name (text/numbers /special characters) without refresh")
+    @Feature("Create rule chain")
     @Test(priority = 40, groups = "smoke")
     @Description("Go to rule chain documentation page")
     public void documentation() {

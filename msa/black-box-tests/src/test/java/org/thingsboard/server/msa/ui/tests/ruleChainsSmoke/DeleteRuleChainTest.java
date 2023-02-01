@@ -117,7 +117,6 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
     public void removeFromRootRuleChainView() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ROOT_RULE_CHAIN_NAME).click();
-        ruleChainsPage.deleteBtnFromView();
 
         Assert.assertTrue(ruleChainsPage.deleteBtnInRootRuleChainIsNotDisplayed());
     }

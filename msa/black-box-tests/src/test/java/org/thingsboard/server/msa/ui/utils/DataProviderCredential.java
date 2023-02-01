@@ -145,8 +145,8 @@ public class DataProviderCredential {
         String newDescription = "Description" + getRandomNumber();
         String description = "Description";
         return new Object[][]{
-                {"", newDescription, newDescription},
-                {description, newDescription, description + newDescription},
-                {description, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
+                {"Write the description and save the changes", "", newDescription, newDescription},
+                {"Change the description and save the changes", description, newDescription, description + newDescription},
+                {"Delete the description and save the changes", description, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
     }
 }

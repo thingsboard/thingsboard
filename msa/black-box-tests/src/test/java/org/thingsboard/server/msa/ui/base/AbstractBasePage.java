@@ -166,7 +166,7 @@ abstract public class AbstractBasePage {
             wait.until(ExpectedConditions.attributeContains(element, attribute, value));
         } catch (WebDriverException e) {
             log.error("Attribute " + attribute + " of element " + element.toString().split(":")[2] + " not contains " + value + "."
-            + " Or element " + element.toString().split(":")[2] + "/attribute " + attribute + " isn't present");
+                    + " Or element " + element.toString().split(":")[2] + "/attribute " + attribute + " isn't present");
             fail("Attribute " + attribute + " of element " + element.toString().split(":")[2] + " not contains " + value + "."
                     + " Or element " + element.toString().split(":")[2] + "/attribute " + attribute + " isn't present");
         }

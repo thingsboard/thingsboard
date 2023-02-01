@@ -30,6 +30,7 @@ import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static io.qameta.allure.Allure.step;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_CUSTOMER_MESSAGE;
@@ -119,7 +120,8 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
     @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
     @Description("Write the description and save the changes/Change the description and save the changes/Delete the description and save the changes")
-    public void editDescription(String description, String newDescription, String finalDescription) {
+    public void editDescription(String stepName, String description, String newDescription, String finalDescription) {
+        step(stepName);
         String name = ENTITY_NAME + random();
         testRestClient.postCustomer(EntityPrototypes.defaultCustomerPrototype(name, description));
         customerName = name;
