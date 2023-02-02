@@ -100,9 +100,10 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     }
 
     @Override
-    public void process(TenantId tenantId, RuleChainId ruleChainId, EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error) {
+    public void process(TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error) {
         RuleEngineComponentLifecycleEventTriggerObject triggerObject = RuleEngineComponentLifecycleEventTriggerObject.builder()
                 .ruleChainId(ruleChainId)
+                .ruleChainName(ruleChainName)
                 .componentId(componentId)
                 .componentName(componentName)
                 .eventType(eventType)

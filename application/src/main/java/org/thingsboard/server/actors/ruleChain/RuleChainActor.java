@@ -20,7 +20,6 @@ import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbEntityActorId;
-import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -30,7 +29,7 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 
-public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMessageProcessor> {
+public class RuleChainActor extends RuleEngineComponentActor<RuleChainId, RuleChainActorMessageProcessor> {
 
     private final RuleChain ruleChain;
 
@@ -104,6 +103,11 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
     @Override
     protected RuleChainId getRuleChainId() {
         return ruleChain.getId();
+    }
+
+    @Override
+    protected String getRuleChainName() {
+        return ruleChain.getName();
     }
 
     @Override

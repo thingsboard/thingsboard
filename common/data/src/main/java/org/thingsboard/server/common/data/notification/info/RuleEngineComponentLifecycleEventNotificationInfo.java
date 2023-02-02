@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -33,21 +34,22 @@ import java.util.Map;
 public class RuleEngineComponentLifecycleEventNotificationInfo implements NotificationInfo {
 
     private RuleChainId ruleChainId;
+    private String ruleChainName;
     private EntityId componentId;
     private String componentName;
     private ComponentLifecycleEvent eventType;
     private String error;
-    // TODO: add rule chain name
 
     @Override
     public Map<String, String> getTemplateData() {
         return Map.of(
                 "ruleChainId", ruleChainId.toString(),
+                "ruleChainName", ruleChainName,
                 "componentId", componentId.toString(),
                 "componentType", componentId.getEntityType().name(),
                 "componentName", componentName,
                 "eventType", eventType.name(),
-                "error", Strings.nullToEmpty(error)
+                "error", error
         );
     }
 

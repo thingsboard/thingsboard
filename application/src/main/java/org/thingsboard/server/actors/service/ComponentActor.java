@@ -23,7 +23,6 @@ import org.thingsboard.server.actors.TbRuleNodeUpdateException;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.actors.stats.StatsPersistMsg;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -181,12 +180,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         logLifecycleEvent(event, null);
     }
 
-    private void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
+    protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         systemContext.persistLifecycleEvent(tenantId, id, event, e);
-        systemContext.getNotificationRuleProcessingService().process(tenantId, getRuleChainId(), id, processor.getComponentName(), event, e);
     }
-
-    protected abstract RuleChainId getRuleChainId();
 
     protected abstract long getErrorPersistFrequency();
 

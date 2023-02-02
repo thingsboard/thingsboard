@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -29,7 +31,6 @@ import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineCo
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineComponentLifecycleEventTriggerProcessor.RuleEngineComponentLifecycleEventTriggerObject;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -72,11 +73,22 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
     public NotificationInfo constructNotificationInfo(RuleEngineComponentLifecycleEventTriggerObject triggerObject, RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig triggerConfig) {
         return RuleEngineComponentLifecycleEventNotificationInfo.builder()
                 .ruleChainId(triggerObject.getRuleChainId())
+                .ruleChainName(triggerObject.getRuleChainName())
                 .componentId(triggerObject.getComponentId())
                 .componentName(triggerObject.getComponentName())
                 .eventType(triggerObject.getEventType())
-                .error(Optional.ofNullable(triggerObject.getError()).map(Throwable::getMessage).orElse(null))
+                .error(getErrorMsg(triggerObject.getError()))
                 .build();
+    }
+
+    private String getErrorMsg(Exception error) {
+        String errorMsg = error != null ? error.getMessage() : null;
+        errorMsg = Strings.nullToEmpty(errorMsg);
+        int lengthLimit = 150;
+        if (errorMsg.length() > lengthLimit) {
+            errorMsg = StringUtils.substring(errorMsg, 0, lengthLimit + 1).trim() + "[...]";
+        }
+        return errorMsg;
     }
 
     @Override
@@ -88,6 +100,7 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
     @Builder
     public static class RuleEngineComponentLifecycleEventTriggerObject {
         private final RuleChainId ruleChainId;
+        private final String ruleChainName;
         private final EntityId componentId;
         private final String componentName;
         private final ComponentLifecycleEvent eventType;

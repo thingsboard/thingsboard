@@ -28,6 +28,7 @@ public interface NotificationRuleProcessingService {
 
     void process(TenantId tenantId, Alarm alarm, boolean deleted);
 
-    void process(TenantId tenantId, RuleChainId ruleChainId, EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error);
+    void process(TenantId tenantId, RuleChainId ruleChainId, String ruleChainName,
+                 EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error);
 
 }

@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,9 +95,10 @@ public class NotificationProcessingContext {
     }
 
     public <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
-        if (request.getInfo() != null && deliveryMethod != NotificationDeliveryMethod.PUSH) { // for push notifications we are processing template from info on each serialization
+        NotificationInfo info = request.getInfo();
+        if (info != null && deliveryMethod != NotificationDeliveryMethod.PUSH) { // for push notifications we are processing template from info on each serialization
             templateContext = new HashMap<>(templateContext);
-            templateContext.putAll(request.getInfo().getTemplateData());
+            templateContext.putAll(info.getTemplateData());
         }
 
         T template = (T) templates.get(deliveryMethod).copy();
@@ -114,7 +116,7 @@ public class NotificationProcessingContext {
             if (buttonConfig.isPresent()) {
                 JsonNode link = buttonConfig.get().get("link");
                 if (link != null && link.isTextual()) {
-                    link = new TextNode(processTemplate(link.asText(), templateContext, request.getInfo().getTemplateData()));
+                    link = new TextNode(processTemplate(link.asText(), templateContext, info != null ? info.getTemplateData() : Collections.emptyMap()));
                     buttonConfig.get().set("link", link);
                 }
             }
