@@ -344,12 +344,12 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/flex-layout@^12.0.0-beta.35":
-  version "12.0.0-beta.35"
-  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-12.0.0-beta.35.tgz#b52c3c82608cbb92a119f8dcde2a5b98186fe558"
-  integrity sha512-nPi2MGDFuCacwWHqxF/G7lUJd2X99HbLjjUvKXnyLwyCIVgH1sfS52su2wYbVYWJRqAVAB2/VMlrtW8Khr8hDA==
+"@angular/flex-layout@^13.0.0-beta.38":
+  version "13.0.0-beta.38"
+  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-13.0.0-beta.38.tgz#b0993a255ba51d2cfd16537ba8a8d88c3adf6587"
+  integrity sha512-kcWb7CcoHbvw7fjo/knizWVmSSmvaTnr8v1ML6zOdxu1PK9UPPOcOS8RTm6fy61zoC2LABivP1/6Z2jF5XfpdQ==
   dependencies:
-    tslib "^2.1.0"
+    tslib "^2.3.0"
 
 "@angular/forms@^13.3.12":
   version "13.3.12"
@@ -2175,10 +2175,10 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.3.1.tgz#b50a781709c81e10701004214340f25475a171a0"
   integrity sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==
 
-"@mat-datetimepicker/core@~7.0.1":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-7.0.1.tgz#dac547195f25d448cfeaa11e0384f59639065c5f"
-  integrity sha512-lTYFJYstVb5l5JuNwVVZeyMaDtkZIq+eKycUa+5aJBAPhjapwdJx6lHiaZODgydRNtzdw79pQcB00mufguv3ew==
+"@mat-datetimepicker/core@~9.0.68":
+  version "9.0.68"
+  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-9.0.68.tgz#b3cd3922ff1681120c31d7db09003f0819217467"
+  integrity sha512-c9X/YDrDvlPZ6073G3oRyz1GJTQlP42LS+umaFzmKjM+lu+zfg+fKQCW/EbaKXQqov26hgbKS6N1D9qET3W9Rw==
   dependencies:
     tslib "^2.3.0"
 
