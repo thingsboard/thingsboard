@@ -186,10 +186,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
     public static final String DEVICE_PROFILE_CERTIFICATE_HASH_PROPERTY = "certificate_hash";
-    public static final String DEVICE_PROFILE_CERTIFICATE_VALUE_PROPERTY = "certificate_value";
-    public static final String DEVICE_PROFILE_CERTIFICATE_REGEX_PATTERN_PROPERTY = "certificate_regex_pattern";
     public static final String DEVICE_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY = "default_edge_rule_chain_id";
-    public static final String ALLOW_CREATE_NEW_DEVICES_BY_X509_PROVISION = "allow_create_device_by_x509";
 
     /**
      * Asset profile constants.

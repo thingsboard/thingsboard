@@ -379,9 +379,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             if (certificates.length > 1) {
                 return EncryptionUtil.certTrimNewLinesForChainInDeviceProfile(certificateValue);
             }
-            return EncryptionUtil.certTrimNewLines(certificateValue);
         } catch (CertificateException ignored) {}
-        return certificateValue;
+        return EncryptionUtil.certTrimNewLines(certificateValue);
     }
 
 }
