@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,7 @@ public class DeviceTypeFilter implements EntityFilter {
     @Deprecated(since = "3.5", forRemoval = true)
     private String deviceType;
 
+    @JsonIgnore
     private List<String> deviceTypes;
 
     private String deviceNameFilter;

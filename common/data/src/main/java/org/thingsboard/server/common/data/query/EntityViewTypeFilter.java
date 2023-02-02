@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class EntityViewTypeFilter implements EntityFilter {
     @Deprecated(since = "3.5", forRemoval = true)
     private String entityViewType;
 
+    @JsonIgnore
     private List<String> entityViewTypes;
 
     private String entityViewNameFilter;
