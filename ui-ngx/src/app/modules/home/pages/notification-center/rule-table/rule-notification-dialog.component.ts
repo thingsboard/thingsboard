@@ -56,6 +56,7 @@ export class RuleNotificationDialogComponent extends
   alarmTemplateForm: FormGroup;
   deviceInactivityTemplateForm: FormGroup;
   entityActionTemplateForm: FormGroup;
+  alarmCommentTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[] = Object.values(TriggerType);
@@ -154,8 +155,15 @@ export class RuleNotificationDialogComponent extends
       })
     });
 
+    this.alarmCommentTemplateForm = this.fb.group({
+      recipientsConfig: this.fb.group({
+        targets: [[], Validators.required]
+      })
+    });
+
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],
+      [TriggerType.ALARM_COMMENT, this.alarmCommentTemplateForm],
       [TriggerType.DEVICE_INACTIVITY, this.deviceInactivityTemplateForm],
       [TriggerType.ENTITY_ACTION, this.entityActionTemplateForm]
     ]);

@@ -2690,6 +2690,7 @@
         "add-rule": "Add rule",
         "add-target": "Add recipient",
         "add-template": "Add template",
+        "alarm-comment-trigger-settings": "Alarm comment trigger settings",
         "alarm-trigger-settings": "Alarm trigger settings",
         "all": "All",
         "at-least-one-should-be-selected": "At least one should be selected",
@@ -2816,6 +2817,7 @@
         "template": "Template",
         "template-hint": {
             "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}",
+            "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}",
             "device-inactivity": "Available params: ${deviceName}, ${deviceType}, ${deviceId}",
             "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}",
             "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}"
@@ -2824,6 +2826,7 @@
         "template-required": "Template is required",
         "template-type": {
             "alarm": "Alarm",
+            "alarm-comment": "Alarm comment",
             "device-inactivity": "Device inactivity",
             "entity-action": "Entity action",
             "general": "General"
@@ -2833,6 +2836,7 @@
         "time": "Time",
         "trigger": {
             "alarm": "Alarm",
+            "alarm-comment": "Alarm comment",
             "device-inactivity": "Device inactivity",
             "entity-action": "Entity action",
             "trigger": "Trigger",

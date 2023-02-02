@@ -19,41 +19,26 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class EntityActionNotificationInfo implements RuleOriginatedNotificationInfo {
+public class AlarmCommentNotificationInfo implements NotificationInfo {
 
-    private EntityType entityType;
-    private UUID entityId;
-    private String entityName;
-    private ActionType actionType;
-    private UUID originatorUserId;
-    private String originatorUserName;
-    private CustomerId entityCustomerId;
-
-    @Override
-    public CustomerId getOriginatorEntityCustomerId() {
-        return entityCustomerId;
-    }
+    private String comment;
+    private String alarmType;
+    private UUID alarmId;
 
     @Override
     public Map<String, String> getTemplateData() {
         return Map.of(
-                "entityType", entityType.name(),
-                "entityId", entityId.toString(),
-                "entityName", entityName,
-                "actionType", actionType.name().toLowerCase(),
-                "originatorUserId", originatorUserId.toString(),
-                "originatorUserName", originatorUserName
+                "comment", comment,
+                "alarmType", alarmType,
+                "alarmId", alarmId.toString()
         );
     }
 

@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
+import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -40,6 +42,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -53,13 +56,19 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -130,7 +139,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().waitForUpdate(true);
 
         Notification notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("ADDED: DEVICE [" + device.getId() + "]");
+        assertThat(notification.getSubject()).isEqualTo("added: DEVICE [" + device.getId() + "]");
         assertThat(notification.getText()).isEqualTo("User: " + TENANT_ADMIN_EMAIL);
 
 
@@ -140,7 +149,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().waitForUpdate(true);
 
         notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("UPDATED: DEVICE [" + device.getId() + "]");
+        assertThat(notification.getSubject()).isEqualTo("updated: DEVICE [" + device.getId() + "]");
 
 
         getWsClient().registerWaitForUpdate();
@@ -148,7 +157,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().waitForUpdate(true);
 
         notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("DELETED: DEVICE [" + device.getId() + "]");
+        assertThat(notification.getSubject()).isEqualTo("deleted: DEVICE [" + device.getId() + "]");
     }
 
     @Test
@@ -308,6 +317,48 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    public void testNotificationRuleProcessing_ruleEngineComponentLifecycleEvent_ruleNodeStartError() {
+        String subject = "Rule Node '${componentName}' in Rule Chain '${ruleChainName}' failed to start";
+        String text = "The error: ${error}";
+        NotificationTemplate template = createNotificationTemplate(NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, subject, text, NotificationDeliveryMethod.PUSH);
+
+        NotificationRule rule = new NotificationRule();
+        rule.setName("Rule node start-up failures in my rule chain");
+        rule.setTemplateId(template.getId());
+        rule.setTriggerType(NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT);
+
+        RuleChain ruleChain = createEmptyRuleChain("My Rule Chain");
+        var triggerConfig = new RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig();
+        triggerConfig.setRuleChains(Set.of(ruleChain.getUuidId()));
+        triggerConfig.setRuleChainEvents(Set.of(ComponentLifecycleEvent.STARTED));
+        triggerConfig.setOnlyRuleChainLifecycleFailures(true);
+
+        triggerConfig.setTrackRuleNodeEvents(true);
+        triggerConfig.setRuleNodeEvents(Set.of(ComponentLifecycleEvent.STARTED));
+        triggerConfig.setOnlyRuleNodeLifecycleFailures(true);
+        rule.setTriggerConfig(triggerConfig);
+
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT);
+        recipientsConfig.setTargets(List.of(target.getUuidId()));
+        rule.setRecipientsConfig(recipientsConfig);
+        rule = saveNotificationRule(rule);
+
+        getWsClient().subscribeForUnreadNotifications(10).waitForReply(true);
+        getWsClient().registerWaitForUpdate();
+
+        addRuleNodeWithError(ruleChain.getId(), "My generator");
+
+        getWsClient().waitForUpdate(10000, true);
+        Notification notification = getWsClient().getLastDataUpdate().getUpdate();
+
+        assertThat(notification.getType()).isEqualTo(NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT);
+        assertThat(notification.getSubject()).isEqualTo("Rule Node 'My generator' in Rule Chain 'My Rule Chain' failed to start");
+        assertThat(notification.getText()).startsWith("The error: Can't compile script");
+    }
+
+    @Test
     public void testNotificationRuleInfo() throws Exception {
         NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL};
         NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Subject", "Text", deliveryMethods);
@@ -366,6 +417,41 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         deviceProfile.getProfileData().setAlarms(alarms);
         deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         return deviceProfile;
+    }
+
+    private RuleChain createEmptyRuleChain(String name) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(name);
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setRoot(false);
+        ruleChain.setDebugMode(false);
+        ruleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+
+        RuleChainMetaData metaData = new RuleChainMetaData();
+        metaData.setRuleChainId(ruleChain.getId());
+        metaData.setNodes(List.of());
+        metaData = doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
+        return ruleChain;
+    }
+
+    private RuleNode addRuleNodeWithError(RuleChainId ruleChainId, String name) {
+        RuleChainMetaData metaData = new RuleChainMetaData();
+        metaData.setRuleChainId(ruleChainId);
+
+        RuleNode generatorNodeWithError = new RuleNode();
+        generatorNodeWithError.setName(name);
+        generatorNodeWithError.setType(TbMsgGeneratorNode.class.getName());
+        TbMsgGeneratorNodeConfiguration generatorNodeConfiguration = new TbMsgGeneratorNodeConfiguration();
+        generatorNodeConfiguration.setScriptLang(ScriptLanguage.JS);
+        generatorNodeConfiguration.setPeriodInSeconds(1000);
+        generatorNodeConfiguration.setMsgCount(1);
+        generatorNodeConfiguration.setJsScript("[return");
+        generatorNodeWithError.setConfiguration(mapper.valueToTree(generatorNodeConfiguration));
+
+        metaData.setNodes(List.of(generatorNodeWithError));
+        metaData.setFirstNodeIndex(0);
+        metaData = doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
+        return metaData.getNodes().get(0);
     }
 
     private NotificationRule saveNotificationRule(NotificationRule notificationRule) {

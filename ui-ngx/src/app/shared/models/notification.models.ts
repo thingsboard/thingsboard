@@ -277,7 +277,8 @@ export enum NotificationType {
   GENERAL = 'GENERAL',
   ALARM = 'ALARM',
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
-  ENTITY_ACTION = 'ENTITY_ACTION'
+  ENTITY_ACTION = 'ENTITY_ACTION',
+  ALARM_COMMENT = 'ALARM_COMMENT'
 }
 
 interface NotificationTemplateTypeTranslate {
@@ -309,17 +310,25 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       name: 'notification.template-type.entity-action',
       hint: 'notification.template-hint.entity-action'
     }
-  ]
+  ],
+  [NotificationType.ALARM_COMMENT,
+    {
+      name: 'notification.template-type.alarm-comment',
+      hint: 'notification.template-hint.alarm-comment'
+    }
+  ],
 ]);
 
 export enum TriggerType {
   ALARM = 'ALARM',
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
-  ENTITY_ACTION = 'ENTITY_ACTION'
+  ENTITY_ACTION = 'ENTITY_ACTION',
+  ALARM_COMMENT = 'ALARM_COMMENT'
 }
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.ALARM, 'notification.trigger.alarm'],
   [TriggerType.DEVICE_INACTIVITY, 'notification.trigger.device-inactivity'],
-  [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action']
+  [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action'],
+  [TriggerType.ALARM_COMMENT, 'notification.trigger.alarm-comment']
 ]);

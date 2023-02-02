@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
@@ -37,7 +39,11 @@ import java.util.List;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DefaultTbAlarmService extends AbstractTbEntityService implements TbAlarmService {
+
+    @Autowired
+    protected TbAlarmCommentService alarmCommentService;
 
     @Override
     public Alarm save(Alarm alarm, User user) throws ThingsboardException {
@@ -65,7 +71,11 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                                             (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
                             .put("userId", user.getId().toString()))
                     .build();
-            alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
+            try {
+                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
+            } catch (ThingsboardException e) {
+                log.error("Failed to save alarm comment", e);
+            }
             alarm.setAckTs(ackTs);
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_ACK, user);
@@ -85,7 +95,11 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                                     (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
                             .put("userId", user.getId().toString()))
                     .build();
-            alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
+            try {
+                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
+            } catch (ThingsboardException e) {
+                log.error("Failed to save alarm comment", e);
+            }
             alarm.setClearTs(clearTs);
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_CLEAR, user);

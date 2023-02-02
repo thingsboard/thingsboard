@@ -198,6 +198,29 @@
         </section>
       </form>
     </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM_COMMENT"
+              [stepControl]="alarmCommentTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.alarm-comment-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="alarmCommentTemplateForm">
+        <section formGroupName="recipientsConfig">
+          <tb-entity-list
+            required
+            formControlName="targets"
+            [entityType]="entityType.NOTIFICATION_TARGET"
+            placeholderText="notification.target">
+          </tb-entity-list>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>
