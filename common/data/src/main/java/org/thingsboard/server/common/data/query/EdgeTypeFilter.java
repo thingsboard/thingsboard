@@ -22,13 +22,19 @@ import java.util.List;
 @Data
 public class EdgeTypeFilter implements EntityFilter {
 
-    @Override
-    public EntityFilterType getType() {
-        return EntityFilterType.EDGE_TYPE;
-    }
+    /**
+     * Replaced by {@link EdgeTypeFilter#getEdgeTypes()} instead.
+     */
+    @Deprecated(since = "3.5", forRemoval = true)
+    private String edgeType;
 
     private List<String> edgeTypes;
 
     private String edgeNameFilter;
+
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.EDGE_TYPE;
+    }
 
 }

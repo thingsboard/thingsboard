@@ -22,13 +22,19 @@ import java.util.List;
 @Data
 public class AssetTypeFilter implements EntityFilter {
 
-    @Override
-    public EntityFilterType getType() {
-        return EntityFilterType.ASSET_TYPE;
-    }
+    /**
+     * Replaced by {@link AssetTypeFilter#getAssetTypes()} instead.
+     */
+    @Deprecated(since = "3.5", forRemoval = true)
+    private String assetType;
 
     private List<String> assetTypes;
 
     private String assetNameFilter;
+
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.ASSET_TYPE;
+    }
 
 }

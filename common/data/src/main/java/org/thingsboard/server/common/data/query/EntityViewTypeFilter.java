@@ -22,13 +22,19 @@ import java.util.List;
 @Data
 public class EntityViewTypeFilter implements EntityFilter {
 
-    @Override
-    public EntityFilterType getType() {
-        return EntityFilterType.ENTITY_VIEW_TYPE;
-    }
+    /**
+     * Replaced by {@link EntityViewTypeFilter#getEntityViewTypes()} instead.
+     */
+    @Deprecated(since = "3.5", forRemoval = true)
+    private String entityViewType;
 
     private List<String> entityViewTypes;
 
     private String entityViewNameFilter;
+
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.ENTITY_VIEW_TYPE;
+    }
 
 }

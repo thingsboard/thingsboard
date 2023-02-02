@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.install.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -84,6 +83,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TbRuleEngineQueueConfigService;
+import org.thingsboard.server.utils.MiscUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -748,17 +748,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 return null;
             }
             try {
-                JsonNode configuration = dashboard.getConfiguration();
-                JsonNode entityAliases = configuration.get("entityAliases");
+                List<ObjectNode> entityAliases = dashboard.getEntityAliasesConfig();
                 if (entityAliases == null) {
                     return null;
                 }
                 for (JsonNode entityAlias : entityAliases) {
-                    JsonNode filter = entityAlias.get("filter");
-                    updateFilterIfRequired(filter, "assetType", "assetType", "assetTypes");
-                    updateFilterIfRequired(filter, "deviceType", "deviceType", "deviceTypes");
-                    updateFilterIfRequired(filter, "entityViewType", "entityViewType", "entityViewTypes");
-                    updateFilterIfRequired(filter, "edgeType", "edgeType", "edgeTypes");
+                    MiscUtils.updateDashboardFilterIfRequired(entityAlias);
                 }
                 dashboardService.saveDashboard(dashboard);
             } catch (Exception e) {
@@ -768,17 +763,5 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }, MoreExecutors.directExecutor());
     }
 
-    private static void updateFilterIfRequired(JsonNode filter, String filterType, String singleTypeParamName, String multipleTypesParamName) {
-        if (filter == null || filter.get("type") == null) {
-            return;
-        }
-        if (filterType.equals(filter.get("type").asText())) {
-            if (filter.get(singleTypeParamName) != null) {
-                ArrayNode arrayNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
-                arrayNode.add(filter.get(singleTypeParamName).asText());
-                ((ObjectNode) filter).set(multipleTypesParamName, arrayNode);
-                ((ObjectNode) filter).remove(singleTypeParamName);
-            }
-        }
-    }
+
 }

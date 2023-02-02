@@ -26,13 +26,23 @@ import java.util.List;
 @Data
 public class DeviceTypeFilter implements EntityFilter {
 
-    @Override
-    public EntityFilterType getType() {
-        return EntityFilterType.DEVICE_TYPE;
-    }
+    /**
+     * Replaced by {@link DeviceTypeFilter#getDeviceTypes()} instead.
+     */
+    @Deprecated(since = "3.5", forRemoval = true)
+    private String deviceType;
 
     private List<String> deviceTypes;
 
     private String deviceNameFilter;
 
+    public DeviceTypeFilter(List<String> deviceTypes, String deviceNameFilter) {
+        this.deviceTypes = deviceTypes;
+        this.deviceNameFilter = deviceNameFilter;
+    }
+
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.DEVICE_TYPE;
+    }
 }
