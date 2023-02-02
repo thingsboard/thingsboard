@@ -51,7 +51,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteDeviceProfile(getDeviceProfileByName(name).getId());
             name = null;
         }
     }
@@ -115,7 +115,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
     @Description("Create a device profile with the same name")
-    public void createDeviseProfileWithSameName() {
+    public void createDeviceProfileWithSameName() {
         String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
         this.name = name;
@@ -150,7 +150,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
     @Description("Create device profile only with spase in name")
-    public void createDeviseProfileWithOnlySpaceInName() {
+    public void createDeviceProfileWithOnlySpaceInName() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openCreateDeviceProfileView();
         profilesPage.createDeviceProfileEnterName(Keys.SPACE);
