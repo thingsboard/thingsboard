@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import {
   Resource,
@@ -48,7 +48,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: Resource,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Resource>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -87,7 +87,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     }
   }
 
-  buildForm(entity: Resource): FormGroup {
+  buildForm(entity: Resource): UntypedFormGroup {
     const form = this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],

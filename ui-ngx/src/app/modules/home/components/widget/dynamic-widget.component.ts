@@ -26,7 +26,7 @@ import {
   NotificationType,
   NotificationVerticalPosition
 } from '@core/notification/notification.models';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
@@ -63,7 +63,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   constructor(@TbInject(RafService) public raf: RafService,
               @TbInject(Store) protected store: Store<AppState>,
-              @TbInject(FormBuilder) public fb: FormBuilder,
+              @TbInject(UntypedFormBuilder) public fb: UntypedFormBuilder,
               @TbInject(Injector) public readonly $injector: Injector,
               @TbInject('widgetContext') public readonly ctx: WidgetContext,
               @TbInject('errorMessages') public readonly errorMessages: string[]) {

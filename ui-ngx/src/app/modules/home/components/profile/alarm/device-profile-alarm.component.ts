@@ -17,9 +17,9 @@
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -67,14 +67,14 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   private modelValue: DeviceProfileAlarm;
 
-  alarmFormGroup: FormGroup;
+  alarmFormGroup: UntypedFormGroup;
 
   private propagateChange = null;
   private propagateChangePending = false;
 
   constructor(private dialog: MatDialog,
               private utils: UtilsService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
@@ -140,7 +140,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
     this.alarmFormGroup.patchValue({clearRule: null});
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     if (c.parent) {
       const alarmType = c.value.alarmType;
       const profileAlarmsType = [];

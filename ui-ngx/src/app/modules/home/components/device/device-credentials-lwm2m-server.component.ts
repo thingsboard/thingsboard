@@ -17,8 +17,8 @@
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -55,7 +55,7 @@ import { Subject } from 'rxjs';
 
 export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, ControlValueAccessor, Validator {
 
-  serverFormGroup: FormGroup;
+  serverFormGroup: UntypedFormGroup;
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.values(Lwm2mSecurityType);
   lwm2mSecurityTypeTranslationMap = Lwm2mSecurityTypeTranslationMap;
@@ -65,7 +65,7 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
     this.serverFormGroup = this.fb.group({
       securityMode: [Lwm2mSecurityType.NO_SEC],
       clientPublicKeyOrId: [''],

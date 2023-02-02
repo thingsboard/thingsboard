@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { forkJoin, Observable } from 'rxjs';
@@ -44,7 +44,7 @@ export interface AddEntitiesToCustomerDialogData {
 export class AddEntitiesToCustomerDialogComponent extends
   DialogComponent<AddEntitiesToCustomerDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
-  addEntitiesToCustomerFormGroup: FormGroup;
+  addEntitiesToCustomerFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -63,7 +63,7 @@ export class AddEntitiesToCustomerDialogComponent extends
               private dashboardService: DashboardService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddEntitiesToCustomerDialogComponent, boolean>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.entityType = data.entityType;
   }
@@ -96,7 +96,7 @@ export class AddEntitiesToCustomerDialogComponent extends
     }
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

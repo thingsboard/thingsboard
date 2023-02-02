@@ -18,7 +18,7 @@ import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, Renderer2, Vie
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -84,9 +84,9 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
 
   selectedIndex = 0;
 
-  selectFileFormGroup: FormGroup;
-  importParametersFormGroup: FormGroup;
-  columnTypesFormGroup: FormGroup;
+  selectFileFormGroup: UntypedFormGroup;
+  importParametersFormGroup: UntypedFormGroup;
+  columnTypesFormGroup: UntypedFormGroup;
 
   isImportData = false;
   statistical: BulkImportResult;
@@ -103,7 +103,7 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
               public dialogRef: MatDialogRef<ImportDialogCsvComponent, boolean>,
               public translate: TranslateService,
               private importExport: ImportExportService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private renderer: Renderer2) {
     super(store, router, dialogRef);
     this.entityType = data.entityType;

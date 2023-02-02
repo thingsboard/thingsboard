@@ -27,7 +27,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
@@ -84,13 +84,13 @@ export class AddDeviceProfileDialogComponent extends
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
-  deviceProfileDetailsFormGroup: FormGroup;
+  deviceProfileDetailsFormGroup: UntypedFormGroup;
 
-  transportConfigFormGroup: FormGroup;
+  transportConfigFormGroup: UntypedFormGroup;
 
-  alarmRulesFormGroup: FormGroup;
+  alarmRulesFormGroup: UntypedFormGroup;
 
-  provisionConfigFormGroup: FormGroup;
+  provisionConfigFormGroup: UntypedFormGroup;
 
   serviceType = ServiceType.TB_RULE_ENGINE;
 
@@ -104,7 +104,7 @@ export class AddDeviceProfileDialogComponent extends
               private injector: Injector,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private deviceProfileService: DeviceProfileService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.deviceProfileDetailsFormGroup = this.fb.group(
       {
@@ -169,7 +169,7 @@ export class AddDeviceProfileDialogComponent extends
     }
   }
 
-  selectedForm(): FormGroup {
+  selectedForm(): UntypedFormGroup {
     switch (this.selectedIndex) {
       case 0:
         return this.deviceProfileDetailsFormGroup;

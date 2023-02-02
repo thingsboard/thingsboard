@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -84,7 +84,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   allCountries: Array<Country> = this.countryCodeData.allCountries;
   phonePlaceholder = '+12015550123';
   flagIcon: string;
-  phoneFormGroup: FormGroup;
+  phoneFormGroup: UntypedFormGroup;
 
   private isLoading = true;
   get isLoad(): boolean {
@@ -116,7 +116,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   private propagateChange = (v: any) => { };
 
   constructor(private translate: TranslateService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private countryCodeData: CountryData) {
     import('libphonenumber-js/max').then((libphonenubmer) => {
       this.parsePhoneNumberFromString = libphonenubmer.parsePhoneNumberFromString;
@@ -194,7 +194,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   }
 
   validatePhoneNumber(): ValidatorFn {
-    return (c: FormControl) => {
+    return (c: UntypedFormControl) => {
       const phoneNumber = c.value;
       if (phoneNumber && this.parsePhoneNumberFromString) {
         const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);

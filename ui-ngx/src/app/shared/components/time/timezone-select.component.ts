@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, forwardRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatFormFieldAppearance } from '@angular/material/form-field/form-field';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, share, tap } from 'rxjs/operators';
@@ -39,7 +39,7 @@ import { deepClone } from '@core/utils';
 })
 export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  selectTimezoneFormGroup: FormGroup;
+  selectTimezoneFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
 
@@ -104,7 +104,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private ngZone: NgZone,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.selectTimezoneFormGroup = this.fb.group({
       timezone: [null]
     });

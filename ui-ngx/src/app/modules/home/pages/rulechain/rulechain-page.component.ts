@@ -31,7 +31,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorStateMatcher } from '@angular/material/core';
@@ -258,7 +258,7 @@ export class RuleChainPageComponent extends PageComponent
               private viewContainerRef: ViewContainerRef,
               public dialog: MatDialog,
               public dialogService: DialogService,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
     this.rxSubscription = this.route.data.subscribe(
       () => {
@@ -1674,7 +1674,7 @@ export interface AddRuleNodeLinkDialogData {
 export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeLinkDialogComponent, FcRuleEdge>
   implements OnInit, ErrorStateMatcher {
 
-  ruleNodeLinkFormGroup: FormGroup;
+  ruleNodeLinkFormGroup: UntypedFormGroup;
 
   link: FcRuleEdge;
   labels: {[label: string]: LinkLabel};
@@ -1688,7 +1688,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
               @Inject(MAT_DIALOG_DATA) public data: AddRuleNodeLinkDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddRuleNodeLinkDialogComponent, FcRuleEdge>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.link = this.data.link;
@@ -1705,7 +1705,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -1761,7 +1761,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -1798,7 +1798,7 @@ export interface CreateNestedRuleChainDialogData {
 export class CreateNestedRuleChainDialogComponent extends DialogComponent<CreateNestedRuleChainDialogComponent, RuleChain>
   implements OnInit, ErrorStateMatcher {
 
-  createNestedRuleChainFormGroup: FormGroup;
+  createNestedRuleChainFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -1806,7 +1806,7 @@ export class CreateNestedRuleChainDialogComponent extends DialogComponent<Create
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CreateNestedRuleChainDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private ruleChainService: RuleChainService,
               public dialogRef: MatDialogRef<CreateNestedRuleChainDialogComponent, RuleChain>) {
     super(store, router, dialogRef);
@@ -1826,7 +1826,7 @@ export class CreateNestedRuleChainDialogComponent extends DialogComponent<Create
     );
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

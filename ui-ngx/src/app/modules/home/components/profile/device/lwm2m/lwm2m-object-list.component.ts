@@ -17,8 +17,8 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -56,7 +56,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   private requiredValue: boolean;
   private dirty = false;
 
-  lwm2mListFormGroup: FormGroup;
+  lwm2mListFormGroup: UntypedFormGroup;
   objectsList: Array<ObjectLwM2M> = [];
   filteredObjectsList: Observable<Array<ObjectLwM2M>>;
   disabled = false;
@@ -85,7 +85,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
 
   constructor(public truncate: TruncatePipe,
               private deviceProfileService: DeviceProfileService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.lwm2mListFormGroup = this.fb.group({
       objectsList: [this.objectsList],
       objectLwm2m: ['']

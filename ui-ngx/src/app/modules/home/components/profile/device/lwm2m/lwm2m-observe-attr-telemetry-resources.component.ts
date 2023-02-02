@@ -18,9 +18,9 @@ import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -52,7 +52,7 @@ import { startWith, takeUntil } from 'rxjs/operators';
 
 export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValueAccessor, OnDestroy, Validator {
 
-  resourcesFormGroup: FormGroup;
+  resourcesFormGroup: UntypedFormGroup;
 
   @Input()
   disabled = false;
@@ -74,7 +74,7 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
   private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
     this.resourcesFormGroup = this.fb.group({
       resources: this.fb.array([])
     });
@@ -121,8 +121,8 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
     };
   }
 
-  get resourcesFormArray(): FormArray {
-    return this.resourcesFormGroup.get('resources') as FormArray;
+  get resourcesFormArray(): UntypedFormArray {
+    return this.resourcesFormGroup.get('resources') as UntypedFormArray;
   }
 
   getNameResourceLwm2m(resourceLwM2M: ResourceLwM2M): string {
@@ -152,7 +152,7 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
     }
   }
 
-  private createdResourceFormGroup(resource: ResourceLwM2M): FormGroup {
+  private createdResourceFormGroup(resource: ResourceLwM2M): UntypedFormGroup {
     const form = this.fb.group( {
       id: [resource.id],
       name: [resource.name],

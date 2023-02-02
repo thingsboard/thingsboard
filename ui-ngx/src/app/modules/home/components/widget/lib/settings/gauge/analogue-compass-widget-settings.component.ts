@@ -15,7 +15,7 @@
 ///
 
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Component } from '@angular/core';
@@ -32,14 +32,14 @@ export class AnalogueCompassWidgetSettingsComponent extends WidgetSettingsCompon
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
-  analogueCompassWidgetSettingsForm: FormGroup;
+  analogueCompassWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              protected fb: FormBuilder) {
+              protected fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.analogueCompassWidgetSettingsForm;
   }
 

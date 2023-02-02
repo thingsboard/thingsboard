@@ -243,7 +243,6 @@
       }
     }
   },
-  "defaultProject": "thingsboard",
   "cli": {
     "packageManager": "yarn",
     "analytics": false

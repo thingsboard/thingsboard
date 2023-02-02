@@ -27,7 +27,7 @@ import {
   ViewChild, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -149,7 +149,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   setDisabledState(isDisabled: boolean): void {
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.isModelValid ? null : {
       modelValid: false
     };

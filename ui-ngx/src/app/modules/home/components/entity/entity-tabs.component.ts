@@ -30,7 +30,7 @@ import { AuditLogMode } from '@shared/models/audit-log.models';
 import { DebugEventType, EventType } from '@shared/models/event.models';
 import { AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { PageLink } from '@shared/models/page/page-link';
 
 @Directive()
@@ -94,7 +94,7 @@ export abstract class EntityTabsComponent<T extends BaseData<HasId>,
   }
 
   @Input()
-  detailsForm: FormGroup;
+  detailsForm: UntypedFormGroup;
 
   private entityTabsSubject = new BehaviorSubject<Array<MatTab>>(null);
 

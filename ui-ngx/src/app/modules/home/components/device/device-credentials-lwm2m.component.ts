@@ -17,8 +17,8 @@
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -56,7 +56,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 
 export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Validator, OnDestroy {
 
-  lwm2mConfigFormGroup: FormGroup;
+  lwm2mConfigFormGroup: UntypedFormGroup;
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
@@ -65,7 +65,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
     this.lwm2mConfigFormGroup = this.initLwm2mConfigForm();
   }
 
@@ -161,7 +161,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
     this.lwm2mConfigFormGroup.get('client.cert').disable({emitEvent: false});
   }
 
-  private initLwm2mConfigForm = (): FormGroup => {
+  private initLwm2mConfigForm = (): UntypedFormGroup => {
     const formGroup =  this.fb.group({
       client: this.fb.group({
         endpoint: ['', Validators.required],

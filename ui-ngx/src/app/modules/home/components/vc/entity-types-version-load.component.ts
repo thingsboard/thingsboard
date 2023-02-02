@@ -18,10 +18,10 @@ import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } fro
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -64,7 +64,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
 
   private propagateChange = null;
 
-  public entityTypesVersionLoadFormGroup: FormGroup;
+  public entityTypesVersionLoadFormGroup: UntypedFormGroup;
 
   entityTypes = EntityType;
 
@@ -75,7 +75,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -110,7 +110,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
       this.prepareEntityTypesFormArray(value), {emitEvent: false});
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.entityTypesVersionLoadFormGroup.valid && this.entityTypesFormGroupArray().length ? null : {
       entityTypes: {
         valid: false,
@@ -118,7 +118,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
     };
   }
 
-  private prepareEntityTypesFormArray(entityTypes: {[entityType: string]: EntityTypeVersionLoadConfig} | undefined): FormArray {
+  private prepareEntityTypesFormArray(entityTypes: {[entityType: string]: EntityTypeVersionLoadConfig} | undefined): UntypedFormArray {
     const entityTypesControls: Array<AbstractControl> = [];
     if (entityTypes) {
       for (const entityType of Object.keys(entityTypes)) {
@@ -145,8 +145,8 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
     return entityTypeControl;
   }
 
-  entityTypesFormGroupArray(): FormGroup[] {
-    return (this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray).controls as FormGroup[];
+  entityTypesFormGroupArray(): UntypedFormGroup[] {
+    return (this.entityTypesVersionLoadFormGroup.get('entityTypes') as UntypedFormArray).controls as UntypedFormGroup[];
   }
 
   entityTypesFormGroupExpanded(entityTypeControl: AbstractControl): boolean {
@@ -158,16 +158,16 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   }
 
   public removeEntityType(index: number) {
-    (this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray).removeAt(index);
+    (this.entityTypesVersionLoadFormGroup.get('entityTypes') as UntypedFormArray).removeAt(index);
   }
 
   public addEnabled(): boolean {
-    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as UntypedFormArray;
     return entityTypesArray.length < exportableEntityTypes.length;
   }
 
   public addEntityType() {
-    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as UntypedFormArray;
     const config: EntityTypeVersionLoadConfig = {
       loadAttributes: true,
       loadRelations: true,
@@ -187,7 +187,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   }
 
   public removeAll() {
-    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as UntypedFormArray;
     entityTypesArray.clear();
     this.entityTypesVersionLoadFormGroup.updateValueAndValidity();
   }

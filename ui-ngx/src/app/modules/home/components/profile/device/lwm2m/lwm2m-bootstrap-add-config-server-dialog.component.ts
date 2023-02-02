@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
@@ -32,14 +32,14 @@ import {
 })
 export class Lwm2mBootstrapAddConfigServerDialogComponent extends DialogComponent<Lwm2mBootstrapAddConfigServerDialogComponent> {
 
-  addConfigServerFormGroup: FormGroup;
+  addConfigServerFormGroup: UntypedFormGroup;
 
   serverTypes = Object.values(ServerConfigType);
   serverConfigTypeNamesMap = ServerConfigTypeTranslationMap;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               public dialogRef: MatDialogRef<Lwm2mBootstrapAddConfigServerDialogComponent, boolean>,
   ) {
     super(store, router, dialogRef);

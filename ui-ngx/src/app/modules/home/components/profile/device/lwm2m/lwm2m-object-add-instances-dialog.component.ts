@@ -16,7 +16,7 @@
 
 import { Component, Inject, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
@@ -35,14 +35,14 @@ export interface Lwm2mObjectAddInstancesData {
 export class Lwm2mObjectAddInstancesDialogComponent extends DialogComponent<Lwm2mObjectAddInstancesDialogComponent, object>
   implements OnInit {
 
-  instancesFormGroup: FormGroup;
+  instancesFormGroup: UntypedFormGroup;
   submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: Lwm2mObjectAddInstancesData,
               public dialogRef: MatDialogRef<Lwm2mObjectAddInstancesDialogComponent, object>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
 

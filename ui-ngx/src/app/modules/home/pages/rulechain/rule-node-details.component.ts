@@ -18,7 +18,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subscription } from 'rxjs';
@@ -57,12 +57,12 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
 
-  ruleNodeFormGroup: FormGroup;
+  ruleNodeFormGroup: UntypedFormGroup;
 
   private ruleNodeFormSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private ruleChainService: RuleChainService,
               private router: Router) {
     super(store);
