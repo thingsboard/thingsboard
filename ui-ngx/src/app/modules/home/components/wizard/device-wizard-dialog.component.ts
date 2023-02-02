@@ -33,7 +33,7 @@ import {
   deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
-import { MatHorizontalStepper } from '@angular/material/stepper';
+import { MatStepper } from '@angular/material/stepper';
 import { AddEntityDialogData } from '@home/models/entity/entity-component.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -59,7 +59,7 @@ import { deepTrim } from '@core/utils';
 export class DeviceWizardDialogComponent extends
   DialogComponent<DeviceWizardDialogComponent, boolean> implements OnDestroy, ErrorStateMatcher {
 
-  @ViewChild('addDeviceWizardStepper', {static: true}) addDeviceWizardStepper: MatHorizontalStepper;
+  @ViewChild('addDeviceWizardStepper', {static: true}) addDeviceWizardStepper: MatStepper;
 
   selectedIndex = 0;
 
@@ -87,7 +87,7 @@ export class DeviceWizardDialogComponent extends
 
   customerFormGroup: UntypedFormGroup;
 
-  labelPosition: MatHorizontalStepper['labelPosition'] = 'end';
+  labelPosition: MatStepper['labelPosition'] = 'end';
 
   serviceType = ServiceType.TB_RULE_ENGINE;
 

@@ -717,7 +717,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const types: string[] = this.dataSettings.get('alarmTypeList').value;

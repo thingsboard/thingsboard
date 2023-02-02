@@ -44,7 +44,7 @@ import {
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { MatHorizontalStepper } from '@angular/material/stepper';
+import { MatStepper } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
@@ -66,7 +66,7 @@ export interface AddDeviceProfileDialogData {
 export class AddDeviceProfileDialogComponent extends
   DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> implements AfterViewInit {
 
-  @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatHorizontalStepper;
+  @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatStepper;
 
   selectedIndex = 0;
 

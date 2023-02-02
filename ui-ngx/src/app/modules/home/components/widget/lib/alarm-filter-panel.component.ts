@@ -87,7 +87,7 @@ export class AlarmFilterPanelComponent {
   }
 
   public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const types: string[] = this.alarmFilterFormGroup.get('alarmTypeList').value;

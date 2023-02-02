@@ -171,7 +171,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   }
 
   addRelationType(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     let value = event.value;
     if ((value || '').trim()) {
       value = value.trim();

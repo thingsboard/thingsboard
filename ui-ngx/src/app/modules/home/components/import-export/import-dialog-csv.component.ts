@@ -24,7 +24,7 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { MatVerticalStepper } from '@angular/material/stepper';
+import { MatStepper } from '@angular/material/stepper';
 import {
   BulkImportRequest,
   BulkImportResult,
@@ -56,7 +56,7 @@ export interface ImportDialogCsvData {
 export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvComponent, boolean>
   implements AfterViewInit, OnDestroy {
 
-  @ViewChild('importStepper', {static: true}) importStepper: MatVerticalStepper;
+  @ViewChild('importStepper', {static: true}) importStepper: MatStepper;
 
   @ViewChild('columnsAssignmentComponent', {static: true})
   columnsAssignmentComponent: TableColumnsAssignmentComponent;

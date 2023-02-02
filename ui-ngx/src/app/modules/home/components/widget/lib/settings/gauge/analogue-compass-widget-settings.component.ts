@@ -146,7 +146,7 @@ export class AnalogueCompassWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   addMajorTickName(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const tickNames: string[] = this.analogueCompassWidgetSettingsForm.get('majorTicks').value;

@@ -415,7 +415,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   addScope(event: MatChipInputEvent, control: AbstractControl): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
     const controller = control.get('scope') as UntypedFormArray;
     if ((value.trim() !== '')) {
