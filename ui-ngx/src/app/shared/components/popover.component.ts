@@ -70,7 +70,7 @@ export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 })
 export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
 
-  // tslint:disable:no-input-rename
+  /* eslint-disable @angular-eslint/no-input-rename */
   @Input('tbPopoverContent') content?: string | TemplateRef<void>;
   @Input('tbPopoverTrigger') trigger?: TbPopoverTrigger = 'hover';
   @Input('tbPopoverPlacement') placement?: string | string[] = 'top';
@@ -82,7 +82,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   @Input('tbPopoverOverlayStyle') overlayStyle?: { [klass: string]: any };
   @Input() tbPopoverBackdrop = false;
 
-  // tslint:disable-next-line:no-output-rename
+  // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('tbPopoverVisibleChange') readonly visibleChange = new EventEmitter<boolean>();
 
   componentFactory: ComponentFactory<TbPopoverComponent> = this.resolver.resolveComponentFactory(TbPopoverComponent);

@@ -32,7 +32,7 @@ export interface CustomDialogData {
 }
 
 @Directive()
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export class CustomDialogComponent extends PageComponent {
 
   [key: string]: any;

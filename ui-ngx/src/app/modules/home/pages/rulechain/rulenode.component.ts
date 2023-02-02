@@ -23,7 +23,7 @@ import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  // tslint:disable-next-line:component-selector
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'rule-node',
   templateUrl: './rulenode.component.html',
   styleUrls: ['./rulenode.component.scss']
