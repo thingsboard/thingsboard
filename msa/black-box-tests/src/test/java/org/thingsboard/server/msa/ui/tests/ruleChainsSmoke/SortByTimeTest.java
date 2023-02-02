@@ -54,7 +54,7 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
     @Epic("Rule chains smoke tests")
     @Feature("Sort rule chain by time")
     @Test(priority = 10, groups = "smoke")
-    @Description("*CHANGE TESTCASE*")
+    @Description("Sort rule chain 'DOWN'")
     public void sortByTimeDown() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
@@ -72,7 +72,7 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
     @Epic("Rule chains smoke tests")
     @Feature("Sort rule chain by time")
     @Test(priority = 10, groups = "smoke")
-    @Description("*CHANGE TESTCASE*")
+    @Description("Sort rule chain 'UP'")
     public void sortByTimeUp() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));

@@ -149,4 +149,11 @@ public class DataProviderCredential {
                 {"Change the description and save the changes", description, newDescription, description + newDescription},
                 {"Delete the description and save the changes", description, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
     }
+
+    @DataProvider
+    public static Object[][] debugMode() {
+        return new Object[][]{
+                {"Enable debug mode", true, false},
+                {"Disable debug mode", false, true}};
+    }
 }

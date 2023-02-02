@@ -141,11 +141,12 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
 
     @Epic("Rule chains smoke tests")
     @Feature("Edit rule chain")
-    @Test(priority = 20, groups = "smoke")
-    @Description("*CHANGE TESTCASE*")
-    public void debugMode() {
+    @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "debugMode")
+    @Description("Enable debug mode/Disable debug mode")
+    public void debugMode(String stepName, boolean debugMode, boolean debugModeAfter) {
+        step(stepName);
         String ruleChainName = ENTITY_NAME + random();
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName, debugMode));
         this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
@@ -153,12 +154,7 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.debugCheckboxEdit().click();
         ruleChainsPage.doneBtnEditView().click();
-        boolean debugMode = Boolean.parseBoolean(ruleChainsPage.debugCheckboxView().getAttribute("aria-checked"));
-        ruleChainsPage.editPencilBtn().click();
-        ruleChainsPage.debugCheckboxEdit().click();
-        ruleChainsPage.doneBtnEditView().click();
 
-        Assert.assertFalse(Boolean.parseBoolean(ruleChainsPage.debugCheckboxView().getAttribute("aria-checked")));
-        Assert.assertTrue(debugMode);
+        Assert.assertEquals(Boolean.parseBoolean(ruleChainsPage.debugCheckboxView().getAttribute("aria-checked")), debugModeAfter);
     }
 }
