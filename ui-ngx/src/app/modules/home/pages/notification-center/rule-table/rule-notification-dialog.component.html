@@ -67,94 +67,46 @@
               *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM">
       <ng-template matStepLabel>{{ 'notification.alarm-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="alarmTemplateForm">
-        <fieldset class="fields-group">
-          <legend translate>notification.filter</legend>
-          <mat-form-field fxFlex class="mat-block" floatLabel="always">
-            <mat-label translate>alarm.alarm-type-list</mat-label>
-            <mat-chip-list #alarmTypeChipList formControlName="alarmTypes">
-              <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
-                        [removable]="true" (removed)="removeAlarmType(type)">
-                {{type}}
-                <mat-icon matChipRemove>cancel</mat-icon>
-              </mat-chip>
-              <input placeholder="{{ !alarmTemplateForm.get('alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
-                     [matChipInputFor]="alarmTypeChipList"
-                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     matChipInputAddOnBlur
-                     (matChipInputTokenEnd)="addAlarmType($event)">
-            </mat-chip-list>
-          </mat-form-field>
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group">
+            <legend translate>notification.filter</legend>
+            <tb-alarm-type-list
+              formControlName="alarmTypes">
+            </tb-alarm-type-list>
 
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>alarm.alarm-severity-list</mat-label>
-            <mat-chip-list #severitiesChipList formControlName="alarmSeverities"
-                           required>
-              <mat-chip *ngFor="let severity of alarmTemplateForm.get('alarmSeverities').value"
-                        [removable]="true" (removed)="onSeverityRemoved(severity)">
-                {{ alarmSeverityTranslationMap.get(severity) | translate }}
-                <mat-icon matChipRemove>cancel</mat-icon>
-              </mat-chip>
-              <input matInput
-                     type="text"
-                     placeholder="{{ !alarmTemplateForm.get('alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}"
-                     style="max-width: 200px;"
-                     #severityInput
-                     (focusin)="onSeverityInputFocus()"
-                     matAutocompleteOrigin
-                     #origin="matAutocompleteOrigin"
-                     (input)="severityInputChange.next(severityInput.value)"
-                     [matAutocompleteConnectedTo]="origin"
-                     [matAutocomplete]="severityAutocomplete"
-                     [matChipInputFor]="severitiesChipList"
-                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     (matChipInputTokenEnd)="addSeverityFromChipInput($event)">
-            </mat-chip-list>
-            <mat-autocomplete #severityAutocomplete="matAutocomplete"
-                              class="tb-autocomplete"
-                              (optionSelected)="severitySelected($event)"
-                              [displayWith]="displaySeverityFn.bind(this)">
-              <mat-option *ngFor="let severity of filteredDisplaySeverities | async" [value]="severity">
-                <span [innerHTML]="alarmSeverityTranslationMap.get(alarmSeverityEnum[severity]) | translate | highlight:severitySearchText"></span>
-              </mat-option>
-              <mat-option *ngIf="(filteredDisplaySeverities | async)?.length === 0" [value]="null" class="tb-not-found">
-                <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-                  <div *ngIf="!textIsNotEmpty(severitySearchText); else searchNotEmpty">
-                    <span translate>notification.no-severity-found</span>
-                  </div>
-                  <ng-template #searchNotEmpty>
-                    <span>
-                      {{ translate.get('notification.no-severity-matching',
-                      {severity: truncate.transform(severitySearchText, true, 6, &apos;...&apos;)}) | async }}
-                    </span>
-                  </ng-template>
-                </div>
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-        </fieldset>
+            <tb-alarm-severities-list formControlName="alarmSeverities"
+                                      flotLabel="always"
+                                      required>
+            </tb-alarm-severities-list>
+          </fieldset>
 
-        <fieldset class="fields-group" formGroupName="clearRule">
-          <legend translate>notification.clear-rule</legend>
-          <mat-form-field fxFlex class="mat-block" floatLabel="always">
-            <mat-label translate>alarm.alarm-status-list</mat-label>
-            <mat-select formControlName="alarmStatus"
-                        placeholder="{{ !alarmTemplateForm.get('clearRule.alarmStatus').value?.length ? ('alarm.any-status' | translate) : '' }}">
-              <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-                {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </fieldset>
+          <fieldset class="fields-group" formGroupName="clearRule">
+            <legend translate>notification.clear-rule</legend>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-status-list</mat-label>
+              <mat-select formControlName="alarmStatus"
+                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatus').value ? ('alarm.any-status' | translate) : '' }}">
+                <mat-option [value]="null">{{ 'alarm.any-status' | translate }}</mat-option>
+                <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                  {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+        </section>
 
-        <fieldset class="fields-group">
+        <fieldset class="fields-group" formGroupName="recipientsConfig">
           <legend translate>notification.hierarchy-of-receiving</legend>
           <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
         </fieldset>
-
-        <mat-form-field class="mat-block">
-          <mat-label translate>notification.description</mat-label>
-          <input matInput formControlName="description">
-        </mat-form-field>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
       </form>
     </mat-step>
 
@@ -162,42 +114,51 @@
               [stepControl]="deviceInactivityTemplateForm">
       <ng-template matStepLabel>{{ 'notification.device-inactivity-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="deviceInactivityTemplateForm">
-        <span translate>notification.filter-by</span>
-        <div fxFlex fxLayoutAlign="center center">
-          <mat-button-toggle-group class="tb-notification-unread-toggle-group"
-                                   style="width: 250px;"
-                                   formControlName="filterByDevice">
-            <mat-button-toggle fxFlex [value]=true>{{ 'notification.device' | translate }}</mat-button-toggle>
-            <mat-button-toggle fxFlex [value]=false>{{ 'notification.device-profile' | translate }}</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-        <tb-entity-list
-          *ngIf="deviceInactivityTemplateForm.get('filterByDevice').value; else deviceProfile"
-          required
-          formControlName="devices"
-          labelText="{{ 'notification.devices' | translate }}"
-          placeholderText="{{ 'notification.device' | translate }}"
-          [entityType]="entityType.DEVICE">
-        </tb-entity-list>
-        <ng-template #deviceProfile>
+        <section formGroupName="triggerConfig">
+          <span translate>notification.filter-by</span>
+          <div fxFlex fxLayoutAlign="center center">
+            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
+                                     style="width: 250px;"
+                                     formControlName="filterByDevice">
+              <mat-button-toggle fxFlex [value]=true>{{ 'notification.device' | translate }}</mat-button-toggle>
+              <mat-button-toggle fxFlex [value]=false>{{ 'notification.device-profile' | translate }}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+          <ng-container *ngIf="deviceInactivityTemplateForm.get('triggerConfig.filterByDevice').value; else deviceProfile">
+            <tb-entity-list
+              formControlName="devices"
+              labelText="{{ 'notification.devices' | translate }}"
+              placeholderText="{{ 'notification.devices' | translate }}"
+              [entityType]="entityType.DEVICE">
+            </tb-entity-list>
+            <div class="tb-hint" translate>notification.device-list-rule-hint</div>
+          </ng-container>
+          <ng-template #deviceProfile>
+            <tb-entity-list
+              formControlName="deviceProfiles"
+              labelText="{{ 'notification.device-profiles' | translate }}"
+              placeholderText="{{ 'notification.device-profiles' | translate }}"
+              [entityType]="entityType.DEVICE_PROFILE">
+            </tb-entity-list>
+            <div class="tb-hint" translate>notification.device-profiles-list-rule-hint</div>
+          </ng-template>
+        </section>
+        <section formGroupName="recipientsConfig">
           <tb-entity-list
             required
-            formControlName="deviceProfiles"
-            labelText="{{ 'notification.device-profiles' | translate }}"
-            placeholderText="{{ 'notification.device-profile' | translate }}"
-            [entityType]="entityType.DEVICE_PROFILE">
+            formControlName="targets"
+            [entityType]="entityType.NOTIFICATION_TARGET"
+            placeholderText="{{ 'notification.target' | translate }}">
           </tb-entity-list>
-        </ng-template>
-        <tb-entity-list
-          required
-          formControlName="targets"
-          [entityType]="entityType.NOTIFICATION_TARGET"
-          placeholderText="{{ 'notification.target' | translate }}">
-        </tb-entity-list>
-        <mat-form-field class="mat-block">
-          <mat-label translate>notification.description</mat-label>
-          <input matInput formControlName="description">
-        </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
       </form>
     </mat-step>
 
@@ -205,7 +166,7 @@
               [stepControl]="entityActionTemplateForm">
       <ng-template matStepLabel>{{ 'notification.entity-action-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="entityActionTemplateForm">
-        <fieldset class="fields-group">
+        <fieldset class="fields-group" formGroupName="triggerConfig">
           <legend translate>notification.filter</legend>
           <tb-entity-type-select required
                                  showLabel
@@ -219,16 +180,22 @@
             <mat-slide-toggle formControlName="deleted">{{ 'notification.deleted' | translate }}</mat-slide-toggle>
           </section>
         </fieldset>
-        <tb-entity-list
-          required
-          formControlName="targets"
-          [entityType]="entityType.NOTIFICATION_TARGET"
-          placeholderText="notification.target">
-        </tb-entity-list>
-        <mat-form-field class="mat-block">
-          <mat-label translate>notification.description</mat-label>
-          <input matInput formControlName="description">
-        </mat-form-field>
+        <section formGroupName="recipientsConfig">
+          <tb-entity-list
+            required
+            formControlName="targets"
+            [entityType]="entityType.NOTIFICATION_TARGET"
+            placeholderText="notification.target">
+          </tb-entity-list>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
       </form>
     </mat-step>
   </mat-horizontal-stepper>

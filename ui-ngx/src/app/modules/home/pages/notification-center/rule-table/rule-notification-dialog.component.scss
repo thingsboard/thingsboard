@@ -24,6 +24,24 @@
     }
   }
 
+  .tb-hint {
+    margin-top: -1.25em;
+    padding: 0;
+  }
+
+  .fields-group {
+    padding: 0 16px 8px;
+    margin-bottom: 10px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+
+    legend {
+      margin-bottom: 8px;
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
+    }
+  }
+
   ::ng-deep {
 
     .mat-dialog-content {
@@ -117,19 +135,6 @@
       .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
         opacity: .01;
       }
-    }
-  }
-
-  .fields-group {
-    padding: 0 16px 8px;
-    margin-bottom: 10px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
-
-    legend {
-      margin-bottom: 8px;
-      color: rgba(0, 0, 0, .7);
-      width: fit-content;
     }
   }
 }

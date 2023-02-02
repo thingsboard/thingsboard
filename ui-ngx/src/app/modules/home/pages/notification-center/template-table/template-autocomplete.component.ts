@@ -215,5 +215,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
 
   private reset() {
     this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
+    this.updateView(null);
+    this.dirty = true;
   }
 }

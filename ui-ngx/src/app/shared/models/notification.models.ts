@@ -118,12 +118,12 @@ export interface NotificationRuleTriggerConfig {
 
 export interface NotificationRuleRecipientConfig {
   targets?: Array<string>;
-  escalationTable?: {[key: string]: Array<string>};
+  escalationTable?: {[key: number]: Array<string>};
 }
 
 export interface NonConfirmedNotificationEscalation {
   delayInSec: number;
-  notificationTargetId: NotificationTargetId;
+  targets: Array<string>;
 }
 
 export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>{

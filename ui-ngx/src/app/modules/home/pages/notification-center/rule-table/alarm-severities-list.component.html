@@ -1,0 +1,64 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="alarmSeveritiesForm">
+  <mat-form-field fxFlex class="mat-block" [floatLabel]="flotLabel">
+    <mat-label translate>alarm.alarm-severity-list</mat-label>
+    <mat-chip-list #severitiesChipList formControlName="alarmSeverities" [required]="required">
+      <mat-chip *ngFor="let severity of alarmSeveritiesForm.get('alarmSeverities').value"
+                [selectable]="!disabled"
+                [removable]="!disabled"
+                (removed)="onSeverityRemoved(severity)">
+        {{ alarmSeverityTranslationMap.get(severity) | translate }}
+        <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
+      </mat-chip>
+      <input matInput
+             type="text"
+             formControlName="alarmSeverity"
+             placeholder="{{ !alarmSeveritiesForm.get('alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}"
+             #severityInput
+             (focusin)="onFocus()"
+             matAutocompleteOrigin
+             #origin="matAutocompleteOrigin"
+             [matAutocompleteConnectedTo]="origin"
+             [matAutocomplete]="severityAutocomplete"
+             [matChipInputFor]="severitiesChipList"
+             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+             (matChipInputTokenEnd)="addSeverityFromChipInput($event)">
+    </mat-chip-list>
+    <mat-autocomplete #severityAutocomplete="matAutocomplete"
+                      class="tb-autocomplete"
+                      (optionSelected)="addSeverityFromAutocomplete($event)"
+                      [displayWith]="displaySeverityFn.bind(this)">
+      <mat-option *ngFor="let severity of filteredDisplaySeverities | async" [value]="severity">
+        <span [innerHTML]="alarmSeverityTranslationMap.get(alarmSeverity[severity]) | translate | highlight:searchText"></span>
+      </mat-option>
+      <mat-option *ngIf="(filteredDisplaySeverities | async)?.length === 0" [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+            <span translate>notification.no-severity-found</span>
+          </div>
+          <ng-template #searchNotEmpty>
+            <span>
+              {{ 'notification.no-severity-matching' | translate :{severity: truncate.transform(searchText, true, 6, &apos;...&apos;)} }}
+            </span>
+          </ng-template>
+        </div>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+</section>

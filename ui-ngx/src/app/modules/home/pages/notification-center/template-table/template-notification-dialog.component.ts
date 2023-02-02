@@ -243,7 +243,7 @@ export class TemplateNotificationDialogComponent
           delete template.configuration.deliveryMethodsTemplates[method];
         }
       });
-      if (this.templateNotification) {
+      if (this.templateNotification && !this.data.isCopy) {
         template = {...this.templateNotification, ...template};
       }
       this.notificationService.saveNotificationTemplate(deepTrim(template)).subscribe(
