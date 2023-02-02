@@ -2370,24 +2370,24 @@
     prop-types "^15.7.2"
     react-is "^16.8.0 || ^17.0.0"
 
-"@ngrx/effects@^12.5.1":
-  version "12.5.1"
-  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-12.5.1.tgz#acd0ff86d8db514e47337508dde83cc98f7a3416"
-  integrity sha512-fVNGIIntYLRWW1XWe0os2XOv03L22S4WTkX0OPZ9O6ztwuaNq0yzxWN7UeAC6H385F+g0k76KwRV78zHyP0bfQ==
+"@ngrx/effects@^14.3.3":
+  version "14.3.3"
+  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-14.3.3.tgz#5c9e43e4dc5e1d544f4604fc6a32feec2380c413"
+  integrity sha512-bP7rIHlu1KAj5Wm0TWR7Q8VlOQOBu8uiN/fDP3Lqi8FwVW6HOq9eBGcFwJGyqwVAmulsvLFB68MhpMYg2W78+w==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/store-devtools@^12.5.1":
-  version "12.5.1"
-  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-12.5.1.tgz#75f8ef9a4bf4a40d5343ff437651f0f3092914b5"
-  integrity sha512-SXMxVO3KzQUfB9G20gdNT5t/RcbtbaUySXLuH+b69z/eb34wH9AOYifdSdcEi8oqPjDrWYBq6a8Uh+yDHf9IfA==
+"@ngrx/store-devtools@^14.3.3":
+  version "14.3.3"
+  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-14.3.3.tgz#ffffb154a63d468331e20c90e486c9b0de008d5d"
+  integrity sha512-YQFFKYRnmREHCUb0aAaAgSXWKjZqV+5pmzsjW6HZ0GTKoy9R3JI7Miw0gplwkJpLO7Z3AFCuLQIpTs5ryAOwPQ==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/store@^12.5.1":
-  version "12.5.1"
-  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-12.5.1.tgz#a7c21d7df1d017d2cb7e77804b210cc14bcf8786"
-  integrity sha512-NLVkHLVeZc7IboXSDZlFoq1QrupmwYTYKRHS6se7ZasAv/lrIjHWsVVdICKSVRBsHZYu3+dmCXmu+YgulP7iHw==
+"@ngrx/store@^14.3.3":
+  version "14.3.3"
+  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-14.3.3.tgz#397d7fe54fb6c580282240c149f76f6f48ebf2a3"
+  integrity sha512-VhPDR2a5OQJfrVRah3vdJgL/F6UC8NU/X7lxKFqBW3NC+pmlIeFO/y8jLrZOKBXwG45tY9wrg15S70nEGoZtHA==
   dependencies:
     tslib "^2.0.0"
 
