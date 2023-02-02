@@ -17,9 +17,7 @@ package org.thingsboard.server.transport.mqtt.sparkplug.connection;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.mqttv5.client.IMqttToken;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
-import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
 import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
@@ -34,16 +32,16 @@ import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSpark
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -51,21 +49,10 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataTyp
 @Slf4j
 public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends AbstractMqttV5ClientSparkplugTest {
 
-    protected void processClientWithCorrectNodeAccessTokenTest() throws Exception {
-        processClientWithCorrectNodeAccess();
-    }
-
-    protected void processClientWithCorrectNodeAccessTokenWithNdeathTest() throws Exception {
+    protected void processClientWithCorrectNodeAccessTokenWithNDEATH_Test() throws Exception {
         long ts = calendar.getTimeInMillis()-PUBLISH_TS_DELTA_MS;
         long value = bdSeq = 0;
-        MetricDataType metricDataType = Int64;
-        TsKvEntry tsKvEntryBdSecOriginal = new BasicTsKvEntry(ts, new LongDataEntry(keysBdSeq, value));
-
-        SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
-                .setTimestamp(calendar.getTimeInMillis());
-        deathPayload.addMetrics(createMetric(value, tsKvEntryBdSecOriginal, metricDataType));
-
-        MqttWireMessage response = clientWithCorrectNodeAccessTokenWithNDEATH(deathPayload.build().toByteArray());
+        MqttWireMessage response = clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
 
         Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
 
@@ -86,15 +73,23 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
         Assert.assertEquals(expectedTsKvEntry, actualTsKvEntry);
     }
 
-    protected void processClientWithCorrectAccessTokenCreatedDevices(int cntDevices) throws Exception {
-        processClientWithCorrectNodeAccess();
+    protected void processClientWithCorrectNodeAccessTokenWithoutNDEATH_Test() throws Exception {
+        this.client = new MqttV5TestClient();
+        MqttException actualException = Assert.assertThrows(MqttException.class, () -> client.connectAndWait(gatewayAccessToken));
+        String expectedMessage = "Server unavailable.";
+        int expectedReasonCode = 136;
+        Assert.assertEquals(expectedMessage, actualException.getMessage());
+        Assert.assertEquals( expectedReasonCode, actualException.getReasonCode());
+    }
+
+    protected void processClientWithCorrectAccessTokenWithNDEATHCreatedDevices(int cntDevices) throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
         long ts = calendar.getTimeInMillis();
         MetricDataType metricDataType = Int32;
         Set<String> deviceIds = new HashSet<>();
-        String keys = "Device Metric int32";
+        String key = "Device Metric int32";
         int valueDeviceInt32 = 1024;
-        TsKvEntry expectedTsKvEntryDeviceInt32 = new BasicTsKvEntry(ts, new LongDataEntry(keys, Integer.toUnsignedLong(valueDeviceInt32)));
-        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, expectedTsKvEntryDeviceInt32, metricDataType);
+        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType);
         for (int i=0; i < cntDevices; i++ ) {
             SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(calendar.getTimeInMillis())
@@ -105,36 +100,18 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
             if (client.isConnected()) {
                 client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
-                deviceIds.add(deviceName);
+                AtomicReference<Device> device = new AtomicReference<>();
+                await(alias + "find device [" + deviceName + "] after created")
+                        .atMost(200, TimeUnit.SECONDS)
+                        .until(() -> {
+                            device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
+                            return device.get() != null;
+                        });
             }
+            deviceIds.add(deviceName);
         }
-
         Assert.assertEquals(cntDevices, deviceIds.size());
-
-        for (String deviceName: deviceIds) {
-            AtomicReference<Device> device = new AtomicReference<>();
-            await(alias + "find device [" + deviceName + "] after crete")
-                    .atMost(40, TimeUnit.SECONDS)
-                    .until(() -> {
-                        device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
-                        return device.get() != null;
-                    });
-         }
     }
 
-    private MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH(byte[] deathBytes) throws Exception {
-        this.client = new MqttV5TestClient();
-        MqttConnectionOptions options = new MqttConnectionOptions();
-        options.setUserName(gatewayAccessToken);
-        if (deathBytes != null) {
-            String topic = NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
-            MqttMessage msg = new MqttMessage();
-            msg.setId(0);
-            msg.setPayload(deathBytes);
-            options.setWill(topic, msg);
-        }
-        IMqttToken connectionResult = client.connect(options);
-        return connectionResult.getResponse();
-    }
 
 }

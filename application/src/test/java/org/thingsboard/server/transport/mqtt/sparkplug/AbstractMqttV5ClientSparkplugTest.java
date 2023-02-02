@@ -15,32 +15,23 @@
  */
 package org.thingsboard.server.transport.mqtt.sparkplug;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
-import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
-import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
-import org.junit.Assert;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
 import java.util.Calendar;
 
-import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -71,171 +62,28 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         processBeforeTest(configProperties);
     }
 
-    public void processClientWithCorrectNodeAccess() throws Exception {
+    public MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH() throws Exception {
+        long ts = calendar.getTimeInMillis();
+        long value = bdSeq = 0;
+        return clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
+    }
+
+    public MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
+        String key = keysBdSeq;
+        MetricDataType metricDataType = Int64;
+        SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(calendar.getTimeInMillis());
+        deathPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        byte[] deathBytes = deathPayload.build().toByteArray();
         this.client = new MqttV5TestClient();
-        MqttWireMessage response = clientWithCorrectNodeAccessToken(client);
-        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
-        MqttConnAck connAckMsg = (MqttConnAck) response;
-        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
-    }
-
-    protected SparkplugBProto.Payload.Metric createMetric(Object value, TsKvEntry tsKvEntry, MetricDataType metricDataType) throws ThingsboardException {
-        SparkplugBProto.Payload.Metric metric = SparkplugBProto.Payload.Metric.newBuilder()
-                .setTimestamp(tsKvEntry.getTs())
-                .setName(tsKvEntry.getKey())
-                .setDatatype(metricDataType.toIntValue())
-                .build();
-        switch (metricDataType) {
-            case Int8:
-            case Int16:
-            case UInt8:
-            case UInt16:
-                int valueMetric = Integer.valueOf(String.valueOf(value));
-                return metric.toBuilder().setIntValue(valueMetric).build();
-            case Int32:
-            case UInt32:
-                if (value instanceof Long) {
-                    return metric.toBuilder().setLongValue((long) value).build();
-                } else {
-                    return metric.toBuilder().setIntValue((int)value).build();
-                }
-            case Int64:
-            case UInt64:
-            case DateTime:
-                return metric.toBuilder().setLongValue((long) value).build();
-            case Float:
-                return metric.toBuilder().setFloatValue((float) value).build();
-            case Double:
-                return metric.toBuilder().setDoubleValue((double) value).build();
-            case Boolean:
-                return metric.toBuilder().setBooleanValue((boolean) value).build();
-            case String:
-            case Text:
-            case UUID:
-                return metric.toBuilder().setStringValue((String) value).build();
-            case DataSet:
-                return metric.toBuilder().setDatasetValue((SparkplugBProto.Payload.DataSet) value).build();
-            case Bytes:
-            case Int8Array:
-                ByteString byteString = ByteString.copyFrom((byte[]) value);
-                return metric.toBuilder().setBytesValue(byteString).build();
-            case Int16Array:
-            case UInt8Array:
-                byte[] int16Array = shortArrayToByteArray((short[]) value);
-                ByteString byteInt16Array = ByteString.copyFrom((int16Array));
-                return metric.toBuilder().setBytesValue(byteInt16Array).build();
-            case Int32Array:
-            case UInt16Array:
-            case Int64Array:
-            case UInt32Array:
-            case UInt64Array:
-            case DateTimeArray:
-                if (value instanceof int[]) {
-                    byte[] int32Array = integerArrayToByteArray((int[]) value);
-                    ByteString byteInt32Array = ByteString.copyFrom((int32Array));
-                    return metric.toBuilder().setBytesValue(byteInt32Array).build();
-                } else {
-                    byte[] int64Array = longArrayToByteArray((long[]) value);
-                    ByteString byteInt64Array = ByteString.copyFrom((int64Array));
-                    return metric.toBuilder().setBytesValue(byteInt64Array).build();
-                }
-            case DoubleArray:
-                byte[] doubleArray = doublArrayToByteArray((double[]) value);
-                ByteString byteDoubleArray = ByteString.copyFrom(doubleArray);
-                return metric.toBuilder().setBytesValue(byteDoubleArray).build();
-            case FloatArray:
-                byte[] floatArray = floatArrayToByteArray((float[]) value);
-                ByteString byteFloatArray = ByteString.copyFrom(floatArray);
-                return metric.toBuilder().setBytesValue(byteFloatArray).build();
-            case BooleanArray:
-                byte[] booleanArray = booleanArrayToByteArray((boolean[]) value);
-                ByteString byteBooleanArray = ByteString.copyFrom(booleanArray);
-                return metric.toBuilder().setBytesValue(byteBooleanArray).build();
-            case StringArray:
-                byte[] stringArray = stringArrayToByteArray((String[]) value);
-                ByteString byteStringArray = ByteString.copyFrom(stringArray);
-                return metric.toBuilder().setBytesValue(byteStringArray).build();
-            case File:
-                SparkplugMetricUtil.File file = (SparkplugMetricUtil.File) value;
-                ByteString byteFileString = ByteString.copyFrom(file.getBytes());
-                return metric.toBuilder().setBytesValue(byteFileString).build();
-            case Template:
-                return metric.toBuilder().setTemplateValue((SparkplugBProto.Payload.Template) value).build();
-            case Unknown:
-                throw new ThingsboardException("Invalid value for MetricDataType " + metricDataType.name(), ThingsboardErrorCode.INVALID_ARGUMENTS);
-        }
-        return metric;
-    }
-
-    private byte[] shortArrayToByteArray(short[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 2);
-        for (short d : inputs) {
-            bb.putShort(d);
-        }
-        return bb.array();
-    }
-
-    private byte[] integerArrayToByteArray(int[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 4);
-        for (int d : inputs) {
-            bb.putInt(d);
-        }
-        return bb.array();
-    }
-
-    private byte[] longArrayToByteArray(long[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
-        for (long d : inputs) {
-            bb.putLong(d);
-        }
-        return bb.array();
-    }
-
-    private byte[] doublArrayToByteArray(double[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
-        for (double d : inputs) {
-            bb.putDouble(d);
-        }
-        return bb.array();
-    }
-
-    private byte[] floatArrayToByteArray(float[] inputs) throws ThingsboardException {
-        ByteArrayOutputStream bas = new ByteArrayOutputStream();
-        DataOutputStream ds = new DataOutputStream(bas);
-        for (float f : inputs) {
-            try {
-                ds.writeFloat(f);
-            } catch (IOException e) {
-                throw new ThingsboardException("Invalid value float ", ThingsboardErrorCode.INVALID_ARGUMENTS);
-            }
-        }
-        return bas.toByteArray();
-    }
-
-    private byte[] booleanArrayToByteArray(boolean[] inputs) {
-        byte[] toReturn = new byte[inputs.length];
-        for (int entry = 0; entry < toReturn.length; entry++) {
-            toReturn[entry] = (byte) (inputs[entry]?1:0);
-        }
-        return toReturn;
-    }
-
-    private byte[] stringArrayToByteArray(String[] inputs) throws ThingsboardException {
-        final ByteArrayOutputStream bas = new ByteArrayOutputStream();
-        try {
-            final ObjectOutputStream os = new ObjectOutputStream(bas);
-            os.writeObject(inputs);
-            os.flush();
-            os.close();
-        } catch (Exception e) {
-            throw new ThingsboardException("Invalid value float ", ThingsboardErrorCode.INVALID_ARGUMENTS);
-        }
-        return bas.toByteArray();
-    }
-
-
-    private MqttWireMessage clientWithCorrectNodeAccessToken(MqttV5TestClient client) throws Exception {
-        IMqttToken connectionResult = client.connectAndWait(gatewayAccessToken);
+        MqttConnectionOptions options = new MqttConnectionOptions();
+        options.setUserName(gatewayAccessToken);
+        String topic = NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
+        MqttMessage msg = new MqttMessage();
+        msg.setId(0);
+        msg.setPayload(deathBytes);
+        options.setWill(topic, msg);
+        IMqttToken connectionResult = client.connect(options);
         return connectionResult.getResponse();
     }
 

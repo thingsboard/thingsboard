@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 @Slf4j
 public abstract class AbstractGatewayDeviceSessionContext extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
-    private final AbstractGatewaySessionHandler parent;
+    protected final AbstractGatewaySessionHandler parent;
     private final TransportService transportService;
 
     public AbstractGatewayDeviceSessionContext(AbstractGatewaySessionHandler parent, TransportDeviceInfo deviceInfo,

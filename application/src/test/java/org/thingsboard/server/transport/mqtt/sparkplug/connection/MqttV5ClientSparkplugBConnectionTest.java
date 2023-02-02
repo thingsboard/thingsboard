@@ -40,23 +40,24 @@ public class MqttV5ClientSparkplugBConnectionTest extends AbstractMqttV5ClientSp
     }
 
     @Test
-    public void testClientWithCorrectAccessToken() throws Exception {
-        processClientWithCorrectNodeAccessTokenTest();
-    }
-
-    @Test
     public void testClientWithCorrectAccessTokenWithNDEATH() throws Exception {
-        processClientWithCorrectNodeAccessTokenWithNdeathTest();
+        processClientWithCorrectNodeAccessTokenWithNDEATH_Test();
     }
 
     @Test
-    public void testClientWithCorrectAccessTokenCreatedOneDevice() throws Exception {
-        processClientWithCorrectAccessTokenCreatedDevices(1);
+    public void testClientWithCorrectNodeAccessTokenWithoutNDEATH() throws Exception {
+        processClientWithCorrectNodeAccessTokenWithoutNDEATH_Test();
+    }
+
+
+    @Test
+    public void testClientWithCorrectAccessTokenWithNDEATHCreatedOneDevice() throws Exception {
+        processClientWithCorrectAccessTokenWithNDEATHCreatedDevices(1);
     }
 
     @Test
-    public void testClientWithCorrectAccessTokenCreatedTwoDevice() throws Exception {
-        processClientWithCorrectAccessTokenCreatedDevices(2);
+    public void testClientWithCorrectAccessTokenWithNDEATHCreatedTwoDevice() throws Exception {
+        processClientWithCorrectAccessTokenWithNDEATHCreatedDevices(2);
     }
 
 }
