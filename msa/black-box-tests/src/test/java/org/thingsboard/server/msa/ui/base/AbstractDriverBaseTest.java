@@ -17,6 +17,7 @@ package org.thingsboard.server.msa.ui.base;
 
 import com.google.common.io.Files;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ContainerTestSuite;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
 import java.time.Duration;
@@ -163,11 +165,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    @SneakyThrows
-    @Attachment(value = "Page screenshot", type = "image/png")
-    public static byte[] captureScreen(WebDriver driver) {
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(screenshot, new File("./target/allure-results/screenshots//" + screenshot.getName()));
-        return Files.toByteArray(screenshot);
+    public static void captureScreen(WebDriver driver) {
+        Allure.addAttachment("Page screenshot", new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
     }
 }
