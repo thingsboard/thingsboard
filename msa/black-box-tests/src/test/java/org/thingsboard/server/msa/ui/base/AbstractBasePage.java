@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.base;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -29,17 +30,22 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 abstract public class AbstractBasePage {
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected Actions actions;
+    protected JavascriptExecutor js;
+
 
     public AbstractBasePage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofMillis(5000));
+        this.wait = new WebDriverWait(driver, Duration.ofMillis(8000));
         this.actions = new Actions(driver);
+        this.js = (JavascriptExecutor) driver;
     }
 
     @SneakyThrows
@@ -52,6 +58,15 @@ abstract public class AbstractBasePage {
             return wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator)));
         } catch (WebDriverException e) {
             log.error("No visibility element: " + locator);
+            return null;
+        }
+    }
+
+    protected WebElement waitUntilPresenceOfElementLocated(String locator) {
+        try {
+            return wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(locator)));
+        } catch (WebDriverException e) {
+            log.error("No presence element: " + locator);
             return null;
         }
     }
@@ -125,14 +140,47 @@ abstract public class AbstractBasePage {
         }
     }
 
+    public void jsClick(WebElement element) {
+        js.executeScript("arguments[0].click();", element);
+    }
+
+    public void enterText(WebElement element, CharSequence keysToEnter) {
+        element.click();
+        element.sendKeys(keysToEnter);
+        if (element.getAttribute("value").isEmpty()) {
+            element.sendKeys(keysToEnter);
+        }
+    }
+
+    public void scrollToElement(WebElement element) {
+        js.executeScript("arguments[0].scrollIntoView(true);", element);
+    }
+
+    public void waitUntilAttributeContains(WebElement element, String attribute, String value) {
+        wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+    }
+
     public void goToNextTab(int tabNumber) {
         waitUntilNumberOfTabToBe(tabNumber);
         ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
         driver.switchTo().window(tabs.get(tabNumber - 1));
     }
 
-    public static long getRandomNumber() {
-        return System.currentTimeMillis();
+    public static String getRandomNumber() {
+        StringBuilder random = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            random.append(ThreadLocalRandom.current().nextInt(0, 100));
+        }
+        return random.toString();
+    }
+
+    public static String randomUUID() {
+        UUID randomUUID = UUID.randomUUID();
+        return randomUUID.toString().replaceAll("_", "");
+    }
+
+    public static String random() {
+        return getRandomNumber() + randomUUID().substring(0, 6);
     }
 
     public static char getRandomSymbol() {
