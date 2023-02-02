@@ -87,6 +87,23 @@ public class SparkplugTopic {
         this.type = type;
     }
 
+    public SparkplugTopic(SparkplugTopic sparkplugTopic,  SparkplugMessageType type) {
+        super();
+        this.namespace = sparkplugTopic.namespace;
+        this.groupId = sparkplugTopic.groupId;
+        this.edgeNodeId = sparkplugTopic.edgeNodeId;
+        this.deviceId = null;
+        this.type = type;
+    }
+    public SparkplugTopic(SparkplugTopic sparkplugTopic,  SparkplugMessageType type, String deviceId) {
+        super();
+        this.namespace = sparkplugTopic.namespace;
+        this.groupId = sparkplugTopic.groupId;
+        this.edgeNodeId = sparkplugTopic.edgeNodeId;
+        this.deviceId = deviceId;
+        this.type = type;
+    }
+
     /**
      * Returns the Sparkplug namespace version.
      *

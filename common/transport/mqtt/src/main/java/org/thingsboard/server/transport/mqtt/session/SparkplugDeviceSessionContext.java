@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
@@ -39,7 +41,16 @@ public class SparkplugDeviceSessionContext extends GatewayDeviceSessionContext{
     @Override
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
         log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
-        ((SparkplugNodeSessionHandler)parent).createMqttPublishMsg(this, notification).ifPresent(parent::writeAndFlush);
+        notification.getSharedUpdatedList().forEach(tsKvProto -> {
+            if (getMetricsBirthDevice().containsKey(tsKvProto.getKv().getKey())) {
+                SparkplugTopic sparkplugTopic = new SparkplugTopic(((SparkplugNodeSessionHandler)parent).getSparkplugTopicNode(),
+                        SparkplugMessageType.DCMD, deviceInfo.getDeviceName());
+                ((SparkplugNodeSessionHandler)parent).createSparkplugMqttPublishMsg(tsKvProto,
+                        sparkplugTopic.toString(),
+                        getMetricsBirthDevice().get(tsKvProto.getKv().getKey()))
+                        .ifPresent(parent::writeAndFlush);
+            }
+        });
     }
 
 }

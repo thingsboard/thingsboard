@@ -81,6 +81,7 @@ import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
 import org.thingsboard.server.transport.mqtt.util.ReturnCode;
 import org.thingsboard.server.transport.mqtt.util.ReturnCodeResolver;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -1263,7 +1264,16 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             if (sparkplugSessionHandler != null) {
                 log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
-                sparkplugSessionHandler.createMqttPublishMsg(deviceSessionCtx, notification).ifPresent(sparkplugSessionHandler::writeAndFlush);
+                notification.getSharedUpdatedList().forEach(tsKvProto -> {
+                    if (sparkplugSessionHandler.getMetricsBirthNode().containsKey(tsKvProto.getKv().getKey())) {
+                        SparkplugTopic sparkplugTopic = new SparkplugTopic(sparkplugSessionHandler.getSparkplugTopicNode(),
+                                SparkplugMessageType.NCMD);
+                        sparkplugSessionHandler.createSparkplugMqttPublishMsg(tsKvProto,
+                                sparkplugTopic.toString(),
+                                sparkplugSessionHandler.getMetricsBirthNode().get(tsKvProto.getKv().getKey()))
+                                .ifPresent(sparkplugSessionHandler::writeAndFlush);
+                    }
+                });
             } else {
                 adaptor.convertToPublish(deviceSessionCtx, notification, topic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
             }

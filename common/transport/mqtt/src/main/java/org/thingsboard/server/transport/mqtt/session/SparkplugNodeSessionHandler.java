@@ -86,10 +86,10 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    public void onTelemetryProto (int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
+    public void onTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
         checkDeviceName(deviceName);
         ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = topic.isNode() ?
-                    Futures.immediateFuture(this.deviceSessionCtx) : onDeviceConnectProto(deviceName);
+                Futures.immediateFuture(this.deviceSessionCtx) : onDeviceConnectProto(deviceName);
         List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto, topic.getType().name());
         if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
             try {
@@ -139,7 +139,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
 
     private ListenableFuture<MqttDeviceAwareSessionContext> onDeviceConnectProto(String deviceName) throws ThingsboardException {
         try {
-            String deviceType =  this.gateway.getDeviceType() + "-node";
+            String deviceType = this.gateway.getDeviceType() + "-node";
             return onDeviceConnect(deviceName, deviceType);
         } catch (RuntimeException e) {
             log.error("Failed Sparkplug Device connect proto!", e);
@@ -152,9 +152,9 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
             List<TransportProtos.PostTelemetryMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
                 long ts = protoMetric.getTimestamp();
-                String keys = "bdSeq".equals(protoMetric.getName()) ?
+                String key = "bdSeq".equals(protoMetric.getName()) ?
                         topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
-                Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(keys, protoMetric);
+                Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(key, protoMetric);
                 if (keyValueProtoOpt.isPresent()) {
                     List<TransportProtos.KeyValueProto> result = new ArrayList<>();
                     result.add(keyValueProtoOpt.get());
@@ -166,6 +166,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                     msgs.add(request.build());
                 }
             }
+
             if (DBIRTH.name().equals(topicTypeName)) {
                 List<TransportProtos.KeyValueProto> result = new ArrayList<>();
                 TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
@@ -192,29 +193,22 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
     }
 
 
-    public Optional<MqttPublishMessage> createMqttPublishMsg (MqttDeviceAwareSessionContext ctx,
-                                                              TransportProtos.AttributeUpdateNotificationMsg notification,
-                                                              String... deviceName) {
+    public Optional<MqttPublishMessage> createSparkplugMqttPublishMsg(TransportProtos.TsKvProto tsKvProto,
+                                                                      String sparkplugTopic,
+                                                                      SparkplugBProto.Payload.Metric metricBirth) {
         try {
-            long ts = notification.getSharedUpdated(0).getTs();
-            String key = notification.getSharedUpdated(0).getKv().getKey();
-            if (metricsBirthNode.containsKey(key)) {
-                SparkplugBProto.Payload.Metric metricBirth = metricsBirthNode.get(key);
-                MetricDataType metricDataType = MetricDataType.fromInteger(metricBirth.getDatatype());
-                Optional value = validatedValueByTypeMetric(notification.getSharedUpdated(0).getKv(), metricDataType);
-                if (value.isPresent()) {
-                    SparkplugBProto.Payload.Builder cmdPayload = SparkplugBProto.Payload.newBuilder()
-                            .setTimestamp(ts);
-                    cmdPayload.addMetrics(createMetric(value, ts, key, metricDataType));
-                    byte[] payloadInBytes = cmdPayload.build().toByteArray();
-                    String topic = deviceName == null ? sparkplugTopicNode.toString() : sparkplugTopicNode.toString()
-                            + "/" + deviceName;
-                    return Optional.of(getPayloadAdaptor().createMqttPublishMsg(ctx, topic, payloadInBytes));
-                }
-            } else {
-                return Optional.empty();
+            long ts = tsKvProto.getTs();
+            MetricDataType metricDataType = MetricDataType.fromInteger(metricBirth.getDatatype());
+            Optional value = validatedValueByTypeMetric(tsKvProto.getKv(), metricDataType);
+            if (value.isPresent()) {
+                SparkplugBProto.Payload.Builder cmdPayload = SparkplugBProto.Payload.newBuilder()
+                        .setTimestamp(ts);
+                cmdPayload.addMetrics(createMetric(value.get(), ts, tsKvProto.getKv().getKey(), metricDataType));
+                byte[] payloadInBytes = cmdPayload.build().toByteArray();
+                return Optional.of(getPayloadAdaptor().createMqttPublishMsg(deviceSessionCtx, sparkplugTopic, payloadInBytes));
             }
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT sparkplug  msg", sessionId, e);
             return Optional.empty();
         }
