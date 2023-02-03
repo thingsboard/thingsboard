@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -329,6 +330,8 @@ public interface TbContext {
     WidgetTypeService getWidgetTypeService();
 
     RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
+
+    AlarmRuleService getAlarmRuleService();
 
     TbAlarmRuleStateService getAlarmRuleStateService();
 }
