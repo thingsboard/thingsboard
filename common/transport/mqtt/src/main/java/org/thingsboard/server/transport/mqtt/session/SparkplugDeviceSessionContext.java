@@ -42,12 +42,12 @@ public class SparkplugDeviceSessionContext extends GatewayDeviceSessionContext{
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
         log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
         notification.getSharedUpdatedList().forEach(tsKvProto -> {
-            if (getMetricsBirthDevice().containsKey(tsKvProto.getKv().getKey())) {
+            if (getDeviceBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
                 SparkplugTopic sparkplugTopic = new SparkplugTopic(((SparkplugNodeSessionHandler)parent).getSparkplugTopicNode(),
                         SparkplugMessageType.DCMD, deviceInfo.getDeviceName());
                 ((SparkplugNodeSessionHandler)parent).createSparkplugMqttPublishMsg(tsKvProto,
                         sparkplugTopic.toString(),
-                        getMetricsBirthDevice().get(tsKvProto.getKv().getKey()))
+                        getDeviceBirthMetrics().get(tsKvProto.getKv().getKey()))
                         .ifPresent(parent::writeAndFlush);
             }
         });

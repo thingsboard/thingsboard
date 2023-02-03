@@ -56,22 +56,22 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetr
 public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
 
     private final SparkplugTopic sparkplugTopicNode;
-    private final Map<String, SparkplugBProto.Payload.Metric> metricsBirthNode;
+    private final Map<String, SparkplugBProto.Payload.Metric> nodeBirthMetrics;
 
     public SparkplugNodeSessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId,
                                        SparkplugTopic sparkplugTopicNode) {
         super(deviceSessionCtx, sessionId);
         this.sparkplugTopicNode = sparkplugTopicNode;
-        this.metricsBirthNode = new ConcurrentHashMap<>();
+        this.nodeBirthMetrics = new ConcurrentHashMap<>();
     }
 
-    public void setMetricsBirthNode(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
-        this.metricsBirthNode.putAll(metrics.stream()
+    public void setNodeBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
+        this.nodeBirthMetrics.putAll(metrics.stream()
                 .collect(Collectors.toMap(metric -> metric.getName(), metric -> metric)));
     }
 
-    public Map<String, SparkplugBProto.Payload.Metric> getMetricsBirthNode() {
-        return this.metricsBirthNode;
+    public Map<String, SparkplugBProto.Payload.Metric> getNodeBirthMetrics() {
+        return this.nodeBirthMetrics;
     }
 
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
@@ -93,7 +93,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto, topic.getType().name());
         if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
             try {
-                contextListenableFuture.get().setMetricsBirthDevice(sparkplugBProto.getMetricsList());
+                contextListenableFuture.get().setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
             } catch (InterruptedException | ExecutionException e) {
                 log.error("Failed add Metrics. MessageType *BIRTH.", e);
             }
@@ -206,10 +206,13 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                 cmdPayload.addMetrics(createMetric(value.get(), ts, tsKvProto.getKv().getKey(), metricDataType));
                 byte[] payloadInBytes = cmdPayload.build().toByteArray();
                 return Optional.of(getPayloadAdaptor().createMqttPublishMsg(deviceSessionCtx, sparkplugTopic, payloadInBytes));
+            } else {
+                log.trace("DeviceId: [{}] tenantId: [{}] sessionId:[{}] Failed to convert device attributes [{}] response to MQTT sparkplug  msg",
+                        deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(),  sessionId, tsKvProto.getKv());
             }
-        } catch (
-                Exception e) {
-            log.trace("[{}] Failed to convert device attributes response to MQTT sparkplug  msg", sessionId, e);
+        } catch (Exception e) {
+            log.trace("DeviceId: [{}] tenantId: [{}] sessionId:[{}] Failed to convert device attributes response to MQTT sparkplug  msg",
+                    deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(),  sessionId, e);
             return Optional.empty();
         }
         return Optional.empty();

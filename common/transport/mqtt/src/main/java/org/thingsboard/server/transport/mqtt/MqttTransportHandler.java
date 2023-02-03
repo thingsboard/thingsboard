@@ -393,7 +393,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         // TODO
                         break;
                     case NBIRTH:
-                        sparkplugSessionHandler.setMetricsBirthNode (sparkplugBProtoNode.getMetricsList());
+                        sparkplugSessionHandler.setNodeBirthMetrics(sparkplugBProtoNode.getMetricsList());
                         sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
                         break;
                     case NCMD:
@@ -1265,12 +1265,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (sparkplugSessionHandler != null) {
                 log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
                 notification.getSharedUpdatedList().forEach(tsKvProto -> {
-                    if (sparkplugSessionHandler.getMetricsBirthNode().containsKey(tsKvProto.getKv().getKey())) {
+                    if (sparkplugSessionHandler.getNodeBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
                         SparkplugTopic sparkplugTopic = new SparkplugTopic(sparkplugSessionHandler.getSparkplugTopicNode(),
                                 SparkplugMessageType.NCMD);
                         sparkplugSessionHandler.createSparkplugMqttPublishMsg(tsKvProto,
                                 sparkplugTopic.toString(),
-                                sparkplugSessionHandler.getMetricsBirthNode().get(tsKvProto.getKv().getKey()))
+                                sparkplugSessionHandler.getNodeBirthMetrics().get(tsKvProto.getKv().getKey()))
                                 .ifPresent(sparkplugSessionHandler::writeAndFlush);
                     }
                 });

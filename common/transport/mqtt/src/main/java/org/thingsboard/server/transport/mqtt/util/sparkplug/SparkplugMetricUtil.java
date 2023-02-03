@@ -232,25 +232,19 @@ public class SparkplugMetricUtil {
             case Int16:
             case UInt8:
             case UInt16:
-                int valueMetric = Integer.valueOf(String.valueOf(value));
-                return metric.toBuilder().setIntValue(valueMetric).build();
             case Int32:
+                return metric.toBuilder().setIntValue(((Integer) value).intValue()).build();
             case UInt32:
-                if (value instanceof Long) {
-                    return metric.toBuilder().setLongValue((long) value).build();
-                } else {
-                    return metric.toBuilder().setIntValue((int) value).build();
-                }
             case Int64:
             case UInt64:
             case DateTime:
-                return metric.toBuilder().setLongValue((long) value).build();
+                return metric.toBuilder().setLongValue(((Long) value).longValue()).build();
             case Float:
-                return metric.toBuilder().setFloatValue((float) value).build();
+                return metric.toBuilder().setFloatValue(((Float) value).floatValue()).build();
             case Double:
-                return metric.toBuilder().setDoubleValue((double) value).build();
+                return metric.toBuilder().setDoubleValue(((Double) value).doubleValue()).build();
             case Boolean:
-                return metric.toBuilder().setBooleanValue((boolean) value).build();
+                return metric.toBuilder().setBooleanValue(((Boolean) value).booleanValue()).build();
             case String:
             case Text:
             case UUID:
@@ -309,17 +303,17 @@ public class SparkplugMetricUtil {
         return metric;
     }
 
-    public static Optional<Object> validatedValueByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) {
+    public static Optional<Object> validatedValueByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) throws ThingsboardException {
         if (kv.getTypeValue() <= 3) {
             return validatedValuePrimitiveByTypeMetric(kv, metricDataType);
         } else if (kv.getTypeValue() == 4) {
             return validatedValueJsonByTypeMetric(kv, metricDataType);
         } else {
-            return Optional.empty();
+            throw new ThingsboardException("Invalid type KeyValueProto " + kv.toString() + " for MetricDataType " + metricDataType.name(), ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
     }
 
-    public static Optional<Object> validatedValuePrimitiveByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) {
+    public static Optional<Object> validatedValuePrimitiveByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) throws ThingsboardException {
         Optional<String> valueOpt = getValueKvProtoPrimitive(kv);
         if (valueOpt.isPresent()) {
             try {
@@ -329,26 +323,47 @@ public class SparkplugMetricUtil {
                     case Int16:
                     case UInt8:
                     case UInt16:
-                        return  Optional.of(Integer.valueOf(valueOpt.get()));
-                    // int/long
                     case Int32:
-                    case UInt32:
+                        Optional <Integer> boolInt8 = booleanStringToInt (valueOpt.get());
+                        if(boolInt8.isPresent()) {
+                            return Optional.of(boolInt8.get());
+                        }
                         try {
                             return Optional.of(Integer.valueOf(valueOpt.get()));
-                        } catch (NumberFormatException e) {
-                            return Optional.of(Long.valueOf(valueOpt.get()));
+                        } catch (NumberFormatException eInt) {
+                            var i = new BigDecimal(valueOpt.get());
+                            if (i.longValue() <= Integer.MAX_VALUE) {
+                                return Optional.of(i.intValue());
+                            }
+                            throw new ThingsboardException("Invalid type value " + kv.toString() + " for MetricDataType "
+                                    + metricDataType.name(), eInt, ThingsboardErrorCode.INVALID_ARGUMENTS);
                         }
                         // long
+                    case UInt32:
                     case Int64:
                     case UInt64:
                     case DateTime:
-                        return Optional.of(Long.valueOf(valueOpt.get()));
+                        Optional <Integer> boolInt64 = booleanStringToInt (valueOpt.get());
+                        if(boolInt64.isPresent()) {
+                            return Optional.of(Long.valueOf(boolInt64.get()));
+                        }
+                        var l = new BigDecimal(valueOpt.get());
+                        return Optional.of(l.longValue());
                         // float
                     case Float:
+                        Optional <Integer> boolFloat = booleanStringToInt (valueOpt.get());
+                        if(boolFloat.isPresent()) {
+                            var fb = new BigDecimal(boolFloat.get());
+                            return Optional.of(fb.floatValue());
+                        }
                         var f = new BigDecimal(valueOpt.get());
                         return Optional.of(f.floatValue());
                         // double
                     case Double:
+                        Optional <Integer> boolDouble = booleanStringToInt (valueOpt.get());
+                        if(boolDouble.isPresent()) {
+                            return Optional.of(Double.valueOf(boolDouble.get()));
+                        }
                         var dd = new BigDecimal(valueOpt.get());
                         return Optional.of(dd.doubleValue());
                     case Boolean:
@@ -367,14 +382,11 @@ public class SparkplugMetricUtil {
                     case String:
                     case Text:
                     case UUID:
-                        if (kv.getTypeValue() == 4) {
-                            return  Optional.of(valueOpt.get());
-                        }
-                        break;
+                        return  Optional.of(valueOpt.get());
                 }
             } catch (Exception e) {
-                log.error("Invalid type value [{}] for MetricDataType [{}] [{}]", kv, metricDataType.name(), e.getMessage());
-                return Optional.empty();
+                log.trace("Invalid type value [{}] for MetricDataType [{}] [{}]", kv, metricDataType.name(), e.getMessage());
+                throw new ThingsboardException("Invalid type value " + kv.toString() + " for MetricDataType " + metricDataType.name(), e, ThingsboardErrorCode.INVALID_ARGUMENTS);
             }
         }
         return Optional.empty();
@@ -597,10 +609,20 @@ public class SparkplugMetricUtil {
             return Optional.of(String.valueOf(kv.getBoolV()));
         } else if (kv.getTypeValue() == 1) {   // kvLong
             return Optional.of(String.valueOf(kv.getLongV()));
-        } else if (kv.getTypeValue() == 2) {   // kvString
-            return Optional.of(kv.getStringV());
-        } else if (kv.getTypeValue() == 3) {   // kvDouble
+        } else if (kv.getTypeValue() == 2) {   // kvDouble/float
             return Optional.of(String.valueOf(kv.getDoubleV()));
+        } else if (kv.getTypeValue() == 3) {   // kvString
+            return Optional.of(kv.getStringV());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<Integer> booleanStringToInt (String booleanStr) {
+        if ("true".equals(booleanStr)) {
+            return Optional.of(1);
+        } else if ("false".equals(booleanStr)) {
+            return Optional.of(0);
         } else {
             return Optional.empty();
         }

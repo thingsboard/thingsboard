@@ -32,24 +32,27 @@ import java.util.stream.Collectors;
 public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionContext {
 
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
-    private final Map<String, SparkplugBProto.Payload.Metric> metricsBirthDevice;
+    private Map<String, SparkplugBProto.Payload.Metric> deviceBirthMetrics;
 
     public MqttDeviceAwareSessionContext(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(sessionId);
         this.mqttQoSMap = mqttQoSMap;
-        this.metricsBirthDevice = new ConcurrentHashMap<>();
+        this.deviceBirthMetrics = null;
     }
 
     public ConcurrentMap<MqttTopicMatcher, Integer> getMqttQoSMap() {
         return mqttQoSMap;
     }
 
-    public  Map<String, SparkplugBProto.Payload.Metric> getMetricsBirthDevice() {
-        return metricsBirthDevice;
+    public  Map<String, SparkplugBProto.Payload.Metric> getDeviceBirthMetrics() {
+        return deviceBirthMetrics;
     }
 
-    public void setMetricsBirthDevice(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
-        this.metricsBirthDevice.putAll(metrics.stream()
+    public void setDeviceBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
+        if  (this.deviceBirthMetrics == null) {
+            this.deviceBirthMetrics = new ConcurrentHashMap<>();
+        }
+        this.deviceBirthMetrics.putAll(metrics.stream()
                 .collect(Collectors.toMap(metric -> metric.getName(), metric -> metric)));
     }
 
