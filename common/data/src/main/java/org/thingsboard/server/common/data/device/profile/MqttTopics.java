@@ -51,6 +51,7 @@ public class MqttTopics {
     private static final String DEVICE_RPC_REQUEST_SHORT = RPC_SHORT + REQUEST_SHORT + "/";
     private static final String DEVICE_ATTRIBUTES_RESPONSE = ATTRIBUTES_RESPONSE + "/";
     private static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
+    private static final String DEVICE_BROADCAST_NOTIFICATION = "/broadcast";
     // v1 topics
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String DEVICE_RPC_RESPONSE_TOPIC = BASE_DEVICE_API_TOPIC + DEVICE_RPC_RESPONSE;
@@ -65,6 +66,7 @@ public class MqttTopics {
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + ATTRIBUTES;
     public static final String DEVICE_PROVISION_REQUEST_TOPIC = PROVISION + REQUEST;
     public static final String DEVICE_PROVISION_RESPONSE_TOPIC = PROVISION + RESPONSE;
+    public static final String DEVICE_BROADCAST_NOTIFICATION_TOPIC = BASE_DEVICE_API_TOPIC + DEVICE_BROADCAST_NOTIFICATION;
     // v1 gateway topics
     public static final String BASE_GATEWAY_API_TOPIC = "v1/gateway";
     public static final String GATEWAY_CONNECT_TOPIC = BASE_GATEWAY_API_TOPIC + CONNECT;

@@ -339,7 +339,7 @@ actors:
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
-    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:1}"
+    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:2}"
     sync:
       # Default timeout for processing request using synchronous session (HTTP, CoAP) in milliseconds
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
@@ -565,7 +565,7 @@ spring:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:123456}"
     hikari:
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
 

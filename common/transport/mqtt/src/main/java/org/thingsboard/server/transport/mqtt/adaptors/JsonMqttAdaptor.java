@@ -89,6 +89,17 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public TransportProtos.BroadcastNotificationMsg convertToBroadcastNotification(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
+        try {
+            return JsonConverter.convertToBroadcastNotificationProto(new JsonParser().parse(payload));
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            log.debug("Failed to decode broadcast notification", ex);
+            throw new AdaptorException(ex);
+        }
+    }
+
+    @Override
     public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
         try {
@@ -116,6 +127,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg, String topicBase) throws AdaptorException {
         return processConvertFromAttributeResponseMsg(ctx, responseMsg, topicBase);
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.BroadcastNotificationMsg notificationMsg, String topicBase) throws AdaptorException {
+        return processBroadcastNotificationMsg(ctx, notificationMsg);
     }
 
     @Override
@@ -227,6 +243,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             }
             return Optional.empty();
         }
+    }
+
+    private Optional<MqttMessage> processBroadcastNotificationMsg(MqttDeviceAwareSessionContext ctx, TransportProtos.BroadcastNotificationMsg responseMsg) throws AdaptorException {
+        // todo: 添加判断 error
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_BROADCAST_NOTIFICATION_TOPIC, JsonConverter.toJson(responseMsg)));
     }
 
     private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {

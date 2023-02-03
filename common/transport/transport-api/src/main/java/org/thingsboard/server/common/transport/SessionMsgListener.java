@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.BroadcastNotificationMsg;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -46,6 +47,8 @@ public interface SessionMsgListener {
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 
     void onDeviceDeleted(DeviceId deviceId);
+
+    default void onBroadcastNotification(UUID sessionId, BroadcastNotificationMsg broadcastNotificationMsg) {};
 
     default void onUplinkNotification(UplinkNotificationMsg notificationMsg){};
 

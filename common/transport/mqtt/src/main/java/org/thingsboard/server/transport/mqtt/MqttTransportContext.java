@@ -23,12 +23,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 
 import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -77,10 +84,33 @@ public class MqttTransportContext extends TransportContext {
 
     private final AtomicInteger connectionsCounter = new AtomicInteger();
 
+    private final ConcurrentMap<CustomerId, Set<UUID>> customerIdMap = new ConcurrentHashMap<>();
+    @Getter
+    private final ConcurrentMap<UUID, DeviceSessionCtx> sessionIdMap = new ConcurrentHashMap<>();
+
     @PostConstruct
     public void init() {
         super.init();
         transportService.createGaugeStats("openConnections", connectionsCounter);
+    }
+
+    public synchronized void registerBroadcastNotification(UUID sessionId, DeviceSessionCtx ctx) {
+        CustomerId customerId = ctx.getDeviceInfo().getCustomerId();
+        customerIdMap.computeIfAbsent(customerId, k -> new HashSet<>()).add(sessionId);
+        sessionIdMap.put(sessionId, ctx);
+    }
+
+    public synchronized void cancelBroadcastNotification(UUID sessionId) {
+        DeviceSessionCtx deviceSessionCtx = sessionIdMap.get(sessionId);
+        if (deviceSessionCtx != null) {
+            CustomerId customerId = deviceSessionCtx.getDeviceInfo().getCustomerId();
+            Set<UUID> sessionIdSet = customerIdMap.get(customerId);
+            sessionIdSet.remove(sessionId);
+            if (sessionIdSet.isEmpty()) {
+                customerIdMap.remove(customerId);
+            }
+            sessionIdMap.remove(sessionId);
+        }
     }
 
     public void channelRegistered() {

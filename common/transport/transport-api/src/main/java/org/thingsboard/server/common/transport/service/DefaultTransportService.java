@@ -594,6 +594,16 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.BroadcastNotificationMsg msg, TransportServiceCallback<Void> callback) {
+        // TODO: 把 sendToDeviceActor() 改为 sendToRuleEngine()，以方便在 rule chain 中可以修改消息格式
+        if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setBroadcastNotificationMsg(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+        }
+    }
+
+    @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
@@ -890,6 +900,9 @@ public class DefaultTransportService implements TransportService {
                     String requestId = sessionId + "-" + toSessionMsg.getToServerResponse().getRequestId();
                     toServerRpcPendingMap.remove(requestId);
                     listener.onToServerRpcResponse(toSessionMsg.getToServerResponse());
+                }
+                if (toSessionMsg.hasBroadcastNotificationMsg()) {
+                    listener.onBroadcastNotification(sessionId, toSessionMsg.getBroadcastNotificationMsg());
                 }
             });
             if (md.getSessionType() == TransportProtos.SessionType.SYNC) {

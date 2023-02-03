@@ -140,6 +140,10 @@ message PostAttributeMsg {
   repeated KeyValueProto kv = 1;
 }
 
+message BroadcastNotificationMsg {
+  repeated KeyValueProto kv = 1;
+}
+
 message GetAttributeRequestMsg {
   int32 requestId = 1;
   repeated string clientAttributeNames = 2;
@@ -501,6 +505,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseStatusMsg rpcResponseStatusMsg = 10;
   SendPendingRPCMsg sendPendingRPC = 11;
   UplinkNotificationMsg uplinkNotificationMsg = 12;
+  BroadcastNotificationMsg broadcastNotificationMsg = 13;
 }
 
 message TransportToRuleEngineMsg {
@@ -971,6 +976,7 @@ message ToTransportMsg {
   UplinkNotificationMsg uplinkNotificationMsg = 14;
   QueueUpdateMsg queueUpdateMsg = 15;
   QueueDeleteMsg queueDeleteMsg = 16;
+  BroadcastNotificationMsg broadcastNotificationMsg = 17;
 }
 
 message UsageStatsKVProto{

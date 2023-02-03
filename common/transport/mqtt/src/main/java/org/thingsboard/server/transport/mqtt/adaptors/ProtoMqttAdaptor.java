@@ -82,6 +82,19 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public TransportProtos.BroadcastNotificationMsg convertToBroadcastNotification(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
+        byte[] bytes = toBytes(inbound.payload());
+        Descriptors.Descriptor broadcastNotificationDynamicMessageDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getBroadcastNotificationDynamicMessageDescriptor());
+        try {
+            return JsonConverter.convertToBroadcastNotificationProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(bytes, broadcastNotificationDynamicMessageDescriptor)));
+        } catch (Exception e) {
+            log.debug("Failed to decode post broadcast notification", e);
+            throw new AdaptorException(e);
+        }
+    }
+
+    @Override
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound, String topicBase) throws AdaptorException {
         byte[] bytes = toBytes(inbound.payload());
         String topicName = inbound.variableHeader().topicName();
@@ -145,6 +158,12 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
             }
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.BroadcastNotificationMsg responseMsg, String topicBase) throws AdaptorException {
+        // todo: 添加判断 error
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_BROADCAST_NOTIFICATION_TOPIC, responseMsg.toByteArray()));
     }
 
     @Override
