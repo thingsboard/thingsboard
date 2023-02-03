@@ -27,6 +27,17 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.concurrent.ExecutionException;
 
+import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.ALARM_ACK;
+import static org.thingsboard.server.common.data.DataConstants.ALARM_CLEAR;
+import static org.thingsboard.server.common.data.DataConstants.ALARM_DELETE;
+import static org.thingsboard.server.common.data.DataConstants.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.DataConstants.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.DataConstants.ENTITY_ASSIGNED;
+import static org.thingsboard.server.common.data.DataConstants.ENTITY_DELETED;
+import static org.thingsboard.server.common.data.DataConstants.ENTITY_UNASSIGNED;
+import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
@@ -53,22 +64,28 @@ public class TbDeviceProfileNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         try {
-            ctx.getAlarmRuleStateService().process(ctx, msg);
+            switch (msg.getType()) {
+                case "POST_TELEMETRY_REQUEST":
+                case "POST_ATTRIBUTES_REQUEST":
+                case ACTIVITY_EVENT:
+                case INACTIVITY_EVENT:
+                case ATTRIBUTES_UPDATED:
+                case ATTRIBUTES_DELETED:
+                case ALARM_CLEAR:
+                case ALARM_ACK:
+                case ALARM_DELETE:
+                case ENTITY_ASSIGNED:
+                case ENTITY_UNASSIGNED:
+                    ctx.getAlarmRuleStateService().process(ctx, msg);
+                    break;
+                case ENTITY_DELETED:
+                    ctx.getAlarmRuleStateService().processRemove(msg);
+                    break;
+            }
             ctx.tellSuccess(msg);
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }
-//                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
-//                    if (deviceState != null) {
-//                        deviceState.process(ctx, msg);
-//                    } else {
-//                        log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
-//                        ctx.ack(msg);
-//                    }
-//                }
-//            } else {
-//                ctx.tellSuccess(msg);
-//            }
-//        }
+
     }
 }

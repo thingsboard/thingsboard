@@ -23,7 +23,7 @@ public class AlarmRuleSpecifiedTargetEntity implements AlarmRuleTargetEntity {
 
     private static final long serialVersionUID = 6318827753310450654L;
 
-    private EntityId entityId;
+    private final EntityId entityId;
 
     @Override
     public AlarmRuleTargetEntityType getType() {

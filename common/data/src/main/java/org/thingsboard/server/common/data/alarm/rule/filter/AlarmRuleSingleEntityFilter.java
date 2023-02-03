@@ -23,7 +23,7 @@ public class AlarmRuleSingleEntityFilter implements AlarmRuleEntityFilter {
 
     private static final long serialVersionUID = -4352815652957849106L;
 
-    private EntityId entityId;
+    private final EntityId entityId;
 
     @Override
     public AlarmRuleEntityFilterType getType() {

@@ -24,7 +24,7 @@ public class AlarmRuleAssetTypeEntityFilter implements AlarmRuleEntityFilter {
 
     private static final long serialVersionUID = -1606652279198083665L;
 
-    private AssetProfileId assetProfileId;
+    private final AssetProfileId assetProfileId;
 
     @Override
     public AlarmRuleEntityFilterType getType() {

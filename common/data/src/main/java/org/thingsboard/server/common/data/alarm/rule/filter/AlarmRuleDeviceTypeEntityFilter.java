@@ -24,7 +24,7 @@ public class AlarmRuleDeviceTypeEntityFilter implements AlarmRuleEntityFilter {
 
     private static final long serialVersionUID = -5790520144535260365L;
 
-    private DeviceProfileId deviceProfileId;
+    private final DeviceProfileId deviceProfileId;
 
     @Override
     public AlarmRuleEntityFilterType getType() {
