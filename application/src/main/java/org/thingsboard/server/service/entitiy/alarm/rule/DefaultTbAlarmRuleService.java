@@ -30,12 +30,14 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
 
     @Override
     public AlarmRule save(AlarmRule alarmRule, User user) throws Exception {
-        ActionType actionType = alarmRule.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        boolean isCreated = alarmRule.getId() == null;
+        ActionType actionType = isCreated ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = alarmRule.getTenantId();
         try {
             AlarmRule savedAlarmRule = checkNotNull(alarmRuleService.saveAlarmRule(tenantId, alarmRule));
-            autoCommit(user, savedAlarmRule.getId());
+//            autoCommit(user, savedAlarmRule.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, user);
+            tbClusterService.onAlarmRuleChange(alarmRule, isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedAlarmRule;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), alarmRule, actionType, user, e);
@@ -51,7 +53,7 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
             alarmRuleService.deleteAlarmRule(tenantId, alarmRuleId);
             notificationEntityService.notifyDeleteEntity(tenantId, alarmRuleId, alarmRule, null,
                     ActionType.DELETED, null, user, alarmRuleId.toString());
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, alarmRuleId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.onAlarmRuleChange(alarmRule, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), ActionType.DELETED,
                     user, e, alarmRuleId.toString());

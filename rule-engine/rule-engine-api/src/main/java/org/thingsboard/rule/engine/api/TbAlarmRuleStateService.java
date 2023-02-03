@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -23,7 +23,13 @@ public interface TbAlarmRuleStateService {
 
     void process(TbContext tbContext, TbMsg msg) throws Exception;
 
-    void processRemove(TbMsg msg);
+    void processEntityDeleted(TbMsg msg);
 
-    void createAlarmRule(TenantId tenantId, AlarmRule alarmRule);
+    void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
+
+    void updateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
+
+    void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
+
+    void deleteTenant(TenantId tenantId);
 }

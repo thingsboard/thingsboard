@@ -126,7 +126,7 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
     }
 
     @Override
-    public void processRemove(TbMsg msg) {
+    public void processEntityDeleted(TbMsg msg) {
         EntityId entityId = msg.getOriginator();
         EntityState state = entityStates.remove(entityId);
         if (state != null) {
@@ -169,7 +169,8 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
     }
 
     @Override
-    public void createAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
+    public void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
+        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
         Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
         if (tenantRules != null) {
             tenantRules.put(alarmRule.getId(), alarmRule);
@@ -177,7 +178,9 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         }
     }
 
-    public void updateAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
+    @Override
+    public void updateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
+        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
         Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
         if (tenantRules != null) {
             tenantRules.put(alarmRule.getId(), alarmRule);
@@ -196,8 +199,15 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         }
     }
 
+    @Override
     public void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
         Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+
+        Set<EntityId> otherIds = otherEntityStateIds.get(tenantId);
+
+        if (otherIds != null) {
+            otherIds.remove(alarmRuleId);
+        }
 
         if (tenantRules == null) {
             return;
@@ -216,6 +226,16 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
                     entityStates.remove(entityState.getEntityId());
                 }
             });
+        }
+    }
+
+    @Override
+    public void deleteTenant(TenantId tenantId) {
+        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+        if (tenantRules != null) {
+            tenantRules.keySet().forEach(alarmRuleId -> deleteAlarmRule(tenantId, alarmRuleId));
+            rules.remove(tenantId);
+            otherEntityStateIds.remove(tenantId);
         }
     }
 

@@ -79,7 +79,7 @@ public class TbDeviceProfileNode implements TbNode {
                     ctx.getAlarmRuleStateService().process(ctx, msg);
                     break;
                 case ENTITY_DELETED:
-                    ctx.getAlarmRuleStateService().processRemove(msg);
+                    ctx.getAlarmRuleStateService().processEntityDeleted(msg);
                     break;
             }
             ctx.tellSuccess(msg);
