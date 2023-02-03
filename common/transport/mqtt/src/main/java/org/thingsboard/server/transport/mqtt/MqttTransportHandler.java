@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -298,7 +299,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
                 break;
             case DISCONNECT:
-                context.removeBroadcastNotificationMap(deviceSessionCtx.getSessionId());
+                context.cancelBroadcastNotification(deviceSessionCtx.getSessionId());
                 ctx.close();
                 break;
             case PUBACK:
@@ -719,7 +720,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processBroadcastNotification(List<Integer> grantedQoSList, String topic, MqttQoS reqQoS) {
-        context.putBroadcastNotificationMap(deviceSessionCtx.getSessionId(), deviceSessionCtx.getChannel());
+        context.registerBroadcastNotification(deviceSessionCtx.getSessionId(), deviceSessionCtx);
         registerSubQoS(topic, grantedQoSList, reqQoS);
     }
 
@@ -777,7 +778,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     }
                     case MqttTopics.DEVICE_BROADCAST_NOTIFICATION_TOPIC: {
                         activityReported = true;
-                        context.removeBroadcastNotificationMap(deviceSessionCtx.getSessionId());
+                        context.cancelBroadcastNotification(deviceSessionCtx.getSessionId());
                         break;
                     }
                 }
@@ -1043,14 +1044,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Received broadcast notification", sessionId);
         String topicBase = attrReqTopicType.getAttributesResponseTopicBase();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrReqTopicType);
-        // todo: 不广播给发送者
-        ConcurrentMap<UUID, ChannelHandlerContext> notificationMap = context.getBroadcastNotificationMap();
+        CustomerId customerId = deviceSessionCtx.getDeviceInfo().getCustomerId();
+        ConcurrentMap<UUID, DeviceSessionCtx> notificationMap = context.getSessionIdMap();
         notificationMap.forEach((k, v)-> {
-            if (v != null && v.channel() != null && v.channel().isActive()) {
+            ChannelHandlerContext channelHandlerContext = v.getChannel();
+            if (channelHandlerContext != null && channelHandlerContext.channel().isActive() && v.getDeviceInfo().getCustomerId().equals(customerId)) {
                 try {
                     adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent((msg) -> {
                         log.debug("session [{}] Received broadcast notification [{}]", k, msg);
-                        v.channel().writeAndFlush(msg);
+                        channelHandlerContext.channel().writeAndFlush(msg);
                     });
                 } catch (Exception e) {
                     log.trace("[{}] Failed to convert broadcast notification to MQTT msg", sessionId, e);
