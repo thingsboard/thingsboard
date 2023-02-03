@@ -35,7 +35,6 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -49,6 +48,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
@@ -81,14 +81,14 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
     protected final Optional<JwtSettingsService> jwtSettingsService;
 
-    protected final TbAlarmRuleStateService alarmRuleStateService;
+    protected final Optional<TbAlarmRuleStateService> alarmRuleStateService;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
                                    TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
                                    PartitionService partitionService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer,
                                    Optional<JwtSettingsService> jwtSettingsService,
-                                   TbAlarmRuleStateService alarmRuleStateService) {
+                                   Optional<TbAlarmRuleStateService> alarmRuleStateService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
@@ -184,7 +184,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                 } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
                         jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
-                        alarmRuleStateService.deleteTenant(new TenantId(componentLifecycleMsg.getEntityId().getId()));
+                        alarmRuleStateService.ifPresent(s -> s.deleteTenant(new TenantId(componentLifecycleMsg.getEntityId().getId())));
                         return;
                     } else {
                         tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
@@ -212,15 +212,17 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
                     }
                 } else if (EntityType.ALARM_RULE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    TenantId tenantId = componentLifecycleMsg.getTenantId();
-                    AlarmRuleId alarmRuleId = new AlarmRuleId(componentLifecycleMsg.getEntityId().getId());
-                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
-                        alarmRuleStateService.createAlarmRule(tenantId, alarmRuleId);
-                    } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                        alarmRuleStateService.updateAlarmRule(tenantId, alarmRuleId);
-                    } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                        alarmRuleStateService.deleteAlarmRule(tenantId, alarmRuleId);
-                    }
+                    alarmRuleStateService.ifPresent(s -> {
+                        TenantId tenantId = componentLifecycleMsg.getTenantId();
+                        AlarmRuleId alarmRuleId = new AlarmRuleId(componentLifecycleMsg.getEntityId().getId());
+                        if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
+                            s.createAlarmRule(tenantId, alarmRuleId);
+                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                            s.updateAlarmRule(tenantId, alarmRuleId);
+                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                            s.deleteAlarmRule(tenantId, alarmRuleId);
+                        }
+                    });
                 }
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
