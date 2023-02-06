@@ -92,10 +92,18 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   excludeEntityIds: Array<string>;
 
   @Input()
-  labelText: string;
+  set labelText(labelText: string) {
+    if (labelText && labelText.length) {
+      this.entityText = labelText;
+    }
+  }
 
   @Input()
-  requiredText: string;
+  set requiredText(requiredText: string) {
+    if (requiredText && requiredText.length) {
+      this.entityRequiredText = requiredText;
+    }
+  }
 
   @Input()
   appearance: MatFormFieldAppearance = 'legacy';
@@ -248,12 +256,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           }
           break;
       }
-    }
-    if (this.labelText && this.labelText.length) {
-      this.entityText = this.labelText;
-    }
-    if (this.requiredText && this.requiredText.length) {
-      this.entityRequiredText = this.requiredText;
     }
     const currentEntity = this.getCurrentEntity();
     if (currentEntity) {
