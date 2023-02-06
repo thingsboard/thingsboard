@@ -48,9 +48,8 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteDeviceProfile(name);
-            name = null;
+        if (getDeviceProfileByName(name) != null) {
+            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
         }
     }
 
@@ -59,7 +58,7 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     public void changeName() {
         String name = ENTITY_NAME + random();
         String newName = "Changed" + getRandomNumber();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();
@@ -81,7 +80,7 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void deleteName() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();
@@ -96,7 +95,7 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void saveWithOnlySpaceInName() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();
@@ -114,7 +113,7 @@ public class DeviceProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void editDescription(String description, String newDescription, String finalDescription) {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name, description));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name, description));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();

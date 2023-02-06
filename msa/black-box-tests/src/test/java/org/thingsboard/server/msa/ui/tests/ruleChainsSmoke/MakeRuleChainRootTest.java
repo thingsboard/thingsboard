@@ -24,11 +24,16 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
+
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
+import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
 public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
     private RuleChainsPageHelper ruleChainsPage;
+    private String ruleChainName;
 
     @BeforeMethod
     public void login() {
@@ -39,42 +44,53 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeRoot() {
-        testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
+        if (!getRuleChainByName("Root Rule Chain").isRoot()) {
+            testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
+            if (getRuleChainByName(ruleChainName) != null) {
+                testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+            }
+        }
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void makeRuleChainRootByRightCornerBtn() {
+        String ruleChainName = ENTITY_NAME + random();
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
+
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.setRuleChainNameWithoutRoot(0);
-        String ruleChain = ruleChainsPage.getRuleChainName();
-        ruleChainsPage.makeRootBtn(ruleChain).click();
+        ruleChainsPage.makeRootBtn(ruleChainName).click();
         ruleChainsPage.warningPopUpYesBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChain).isDisplayed());
+        Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChainName).isDisplayed());
     }
 
     @Test(priority = 20, groups = "smoke")
     @Description
     public void makeRuleChainRootFromView() {
+        String ruleChainName = ENTITY_NAME + random();
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
+
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.setRuleChainNameWithoutRoot(0);
-        String ruleChain = ruleChainsPage.getRuleChainName();
-        ruleChainsPage.detailsBtn(ruleChain).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.makeRootFromViewBtn().click();
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.closeEntityViewBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChain).isDisplayed());
+        Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChainName).isDisplayed());
     }
 
     @Test(priority = 30, groups = "smoke")
     @Description
     public void multiplyRoot() {
+        String ruleChainName = ENTITY_NAME + random();
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
+        this.ruleChainName = ruleChainName;
+
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.setRuleChainNameWithoutRoot(0);
-        String ruleChain = ruleChainsPage.getRuleChainName();
-        ruleChainsPage.detailsBtn(ruleChain).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.makeRootFromViewBtn().click();
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.closeEntityViewBtn().click();

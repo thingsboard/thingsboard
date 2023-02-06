@@ -42,9 +42,8 @@ public class SortByNameTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (customerName != null) {
-            deleteCustomer(customerName);
-            customerName = null;
+        if (getCustomerByName(customerName) != null) {
+            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
         }
     }
 
@@ -77,9 +76,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         customerPage.setCustomerName(2);
         String thirdCustomer = customerPage.getCustomerName();
 
-        deleteCustomer(customer);
-        deleteCustomer(customerNumber);
-        deleteCustomer(customerSymbol);
+        testRestClient.deleteCustomer(getCustomerByName(customer).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerNumber).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerSymbol).getId());
 
         Assert.assertEquals(firstCustomer, customerSymbol);
         Assert.assertEquals(secondCustomer, customerNumber);
@@ -116,9 +115,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         customerPage.setCustomerName(lastIndex - 2);
         String thirdCustomer = customerPage.getCustomerName();
 
-        deleteCustomer(customer);
-        deleteCustomer(customerNumber);
-        deleteCustomer(customerSymbol);
+        testRestClient.deleteCustomer(getCustomerByName(customer).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerNumber).getId());
+        testRestClient.deleteCustomer(getCustomerByName(customerSymbol).getId());
 
         Assert.assertEquals(firstCustomer, customerSymbol);
         Assert.assertEquals(secondCustomer, customerNumber);

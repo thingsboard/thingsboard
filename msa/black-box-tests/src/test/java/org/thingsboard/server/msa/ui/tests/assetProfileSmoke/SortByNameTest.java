@@ -25,8 +25,9 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultAssetProfile;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultAssetProfilePrototype;
 
 public class SortByNameTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
@@ -42,16 +43,15 @@ public class SortByNameTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteAssetProfile(name);
-            name = null;
+        if (getAssetProfileByName(name) != null) {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
         }
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterUp(String name) {
-        testRestClient.postAssetProfile(defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();
@@ -64,9 +64,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
     public void allSortUp(String assetProfile, String assetProfileSymbol, String assetProfileNumber) {
-        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileSymbol));
-        testRestClient.postAssetProfile(defaultAssetProfile(assetProfile));
-        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileNumber));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(assetProfileSymbol));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(assetProfile));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(assetProfileNumber));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.sortByNameBtn().click();
@@ -77,9 +77,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(2);
         String thirdAssetProfile = profilesPage.getProfileName();
 
-        deleteAssetProfile(assetProfile);
-        deleteAssetProfile(assetProfileNumber);
-        deleteAssetProfile(assetProfileSymbol);
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfile).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileNumber).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileSymbol).getId());
 
         Assert.assertEquals(firstAssetProfile, assetProfileSymbol);
         Assert.assertEquals(secondAssetProfile, assetProfileNumber);
@@ -89,7 +89,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterDown(String name) {
-        testRestClient.postAssetProfile(defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();
@@ -102,9 +102,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
     public void allSortDown(String assetProfile, String assetProfileSymbol, String assetProfileNumber) {
-        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileSymbol));
-        testRestClient.postAssetProfile(defaultAssetProfile(assetProfile));
-        testRestClient.postAssetProfile(defaultAssetProfile(assetProfileNumber));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(assetProfileSymbol));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(assetProfile));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(assetProfileNumber));
 
         sideBarMenuView.openAssetProfiles();
         int lastIndex = profilesPage.allEntity().size() - 1;
@@ -116,9 +116,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(lastIndex - 2);
         String thirdAssetProfile = profilesPage.getProfileName();
 
-        deleteAssetProfile(assetProfile);
-        deleteAssetProfile(assetProfileNumber);
-        deleteAssetProfile(assetProfileSymbol);
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfile).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileNumber).getId());
+        testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileSymbol).getId());
 
         Assert.assertEquals(firstAssetProfile, assetProfileSymbol);
         Assert.assertEquals(secondAssetProfile, assetProfileNumber);

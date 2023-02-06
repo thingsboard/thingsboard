@@ -25,8 +25,9 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfilePrototype;
 
 public class SortByNameTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
@@ -42,16 +43,15 @@ public class SortByNameTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteDeviceProfile(name);
-            name = null;
+        if (getDeviceProfileByName(name) != null) {
+            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
         }
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterUp(String name) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();
@@ -64,9 +64,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
     public void allSortUp(String deviceProfile, String deviceProfileSymbol, String deviceProfileNumber) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileSymbol));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfile));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileNumber));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(deviceProfileSymbol));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(deviceProfile));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(deviceProfileNumber));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.sortByNameBtn().click();
@@ -77,9 +77,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(2);
         String thirdDeviceProfile = profilesPage.getProfileName();
 
-        deleteDeviceProfile(deviceProfile);
-        deleteDeviceProfile(deviceProfileNumber);
-        deleteDeviceProfile(deviceProfileSymbol);
+        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
+        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
+        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
 
         Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
         Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);
@@ -89,7 +89,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description
     public void specialCharacterDown(String name) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();
@@ -102,9 +102,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description
     public void allSortDown(String deviceProfile, String deviceProfileSymbol, String deviceProfileNumber) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileSymbol));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfile));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(deviceProfileNumber));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(deviceProfileSymbol));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(deviceProfile));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(deviceProfileNumber));
 
         sideBarMenuView.openDeviceProfiles();
         int lastIndex = profilesPage.allEntity().size() - 1;
@@ -116,9 +116,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(lastIndex - 2);
         String thirdDeviceProfile = profilesPage.getProfileName();
 
-        deleteDeviceProfile(deviceProfile);
-        deleteDeviceProfile(deviceProfileNumber);
-        deleteDeviceProfile(deviceProfileSymbol);
+        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
+        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
+        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
 
         Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
         Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);

@@ -43,9 +43,8 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (ruleChainName != null) {
-            deleteRuleChain(ruleChainName);
-            ruleChainName = null;
+        if (getRuleChainByName(ruleChainName) != null) {
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
         }
     }
 
@@ -57,8 +56,8 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
         ruleChainName = ruleChain;
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.setSort();
-        String firstListElement = ruleChainsPage.getSort().get(ruleChainsPage.getSort().size() - 1);
+        ruleChainsPage.setSortByTime();
+        String firstListElement = ruleChainsPage.getSortByTime().get(ruleChainsPage.getSortByTime().size() - 1);
         String lastCreated = ruleChainsPage.createdTime().get(0).getText();
 
         Assert.assertEquals(firstListElement, lastCreated);
@@ -74,8 +73,8 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByTimeBtn().click();
-        ruleChainsPage.setSort();
-        String firstListElement = ruleChainsPage.getSort().get(ruleChainsPage.getSort().size() - 1);
+        ruleChainsPage.setSortByTime();
+        String firstListElement = ruleChainsPage.getSortByTime().get(ruleChainsPage.getSortByTime().size() - 1);
         String lastCreated = ruleChainsPage.createdTime().get(ruleChainsPage.createdTime().size() - 1).getText();
 
         Assert.assertEquals(firstListElement, lastCreated);

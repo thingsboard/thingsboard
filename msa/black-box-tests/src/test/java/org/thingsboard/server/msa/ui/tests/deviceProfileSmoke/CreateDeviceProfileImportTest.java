@@ -49,9 +49,8 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteDeviceProfile(name);
-            name = null;
+        if (getDeviceProfileByName(name) != null) {
+            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
         }
     }
 
@@ -97,7 +96,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     @Description
     public void importDeviceProfileWithSameName() {
         String name = IMPORT_DEVICE_PROFILE_NAME;
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();

@@ -44,8 +44,8 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     public void canDeleteSeveralAssetProfilesByTopBtn() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() + "2";
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name1));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name2));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.clickOnCheckBoxes(2);
@@ -62,8 +62,8 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     public void selectAllDAssetProfiles() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() +"2";
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name1));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name2));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.selectAllCheckBox().click();
@@ -90,8 +90,8 @@ public class DeleteSeveralAssetProfilesTest extends AbstractDriverBaseTest {
     public void deleteSeveralAssetProfilesByTopBtnWithoutRefresh() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() + "2";
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name1));
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name2));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name1));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name2));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.clickOnCheckBoxes(2);

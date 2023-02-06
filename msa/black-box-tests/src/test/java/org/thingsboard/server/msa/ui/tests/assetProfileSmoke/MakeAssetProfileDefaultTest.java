@@ -43,15 +43,19 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeProfileDefault() {
-        testRestClient.setDefaultAssetProfile(getAssetProfileByName("default").getId());
-        deleteAssetProfile(name);
+        if (!getAssetProfileByName("default").isDefault()) {
+            testRestClient.setDefaultAssetProfile(getAssetProfileByName("default").getId());
+            if (getAssetProfileByName(name) != null) {
+                testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+            }
+        }
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void makeDeviceProfileDefaultByRightCornerBtn() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();
@@ -65,7 +69,7 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
     @Description
     public void makeDeviceProfileDefaultFromView() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();

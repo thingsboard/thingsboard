@@ -30,9 +30,8 @@ public class DataProviderCredential {
     private static final String NUMBER = "1";
     private static final String LONG_PHONE_NUMBER = "20155501231";
     private static final String SHORT_PHONE_NUMBER = "201555011";
-    private static final String RULE_CHAIN_SECOND_WORD_NAME_PATH = "Rule";
+    private static final String SEARCH_RULE_CHAIN = "Rule Chain";
     private static final String CUSTOMER_SECOND_WORD_NAME_PATH = "Customer";
-    private static final String RULE_CHAIN_FIRST_WORD_NAME_PATH = "Root";
     private static final String CUSTOMER_FIRST_WORD_NAME_PATH = "A";
     private static final String DEFAULT_DEVICE_PROFILE_NAME = "Device Profile";
     private static final String DEFAULT_ASSET_PROFILE_NAME = "Asset Profile";
@@ -40,8 +39,8 @@ public class DataProviderCredential {
     @DataProvider
     public static Object[][] ruleChainNameForSearchByFirstAndSecondWord() {
         return new Object[][]{
-                {RULE_CHAIN_SECOND_WORD_NAME_PATH},
-                {RULE_CHAIN_FIRST_WORD_NAME_PATH}};
+                {SEARCH_RULE_CHAIN, SEARCH_RULE_CHAIN.split(" ")[0]},
+                {SEARCH_RULE_CHAIN, SEARCH_RULE_CHAIN.split(" ")[1]}};
     }
 
     @DataProvider

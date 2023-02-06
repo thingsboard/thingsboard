@@ -46,9 +46,8 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteAssetProfile(name);
-            name = null;
+        if (getAssetProfileByName(name) != null) {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
         }
     }
 
@@ -107,7 +106,7 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
     @Description
     public void createAssetProfileWithSameName() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();

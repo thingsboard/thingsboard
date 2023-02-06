@@ -44,7 +44,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeAssetProfile() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.deleteBtn(name).click();
@@ -58,7 +58,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeAssetProfileFromView() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
@@ -73,7 +73,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeSelectedAssetProfile() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.checkBox(name).click();
@@ -114,7 +114,7 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeAssetProfileWithoutRefresh() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.deleteBtn(name).click();

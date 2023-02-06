@@ -48,9 +48,8 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (ruleChainName != null) {
-            deleteRuleChain(ruleChainName);
-            ruleChainName = null;
+        if (getRuleChainByName(ruleChainName) != null) {
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
         }
     }
 
@@ -95,7 +94,7 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description
     public void saveOnlyWithSpace() {
-        String ruleChainName = ENTITY_NAME +random();
+        String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 

@@ -52,9 +52,8 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (customerName != null) {
-            deleteCustomer(customerName);
-            customerName = null;
+        if (getCustomerByName(customerName) != null) {
+            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
         }
     }
 

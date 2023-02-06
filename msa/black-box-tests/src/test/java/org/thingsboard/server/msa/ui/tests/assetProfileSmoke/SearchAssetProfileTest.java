@@ -42,16 +42,15 @@ public class SearchAssetProfileTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteAssetProfile(name);
-            name = null;
+        if (getAssetProfileByName(name) != null) {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
         }
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "assetProfileSearch")
     @Description
     public void searchFirstWord(String name, String namePath) {
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();

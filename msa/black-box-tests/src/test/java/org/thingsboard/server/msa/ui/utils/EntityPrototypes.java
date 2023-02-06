@@ -56,7 +56,7 @@ public class EntityPrototypes {
         return ruleChain;
     }
 
-    public static DeviceProfile defaultDeviceProfile(String entityName) {
+    public static DeviceProfile defaultDeviceProfilePrototype(String entityName) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(entityName);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -70,7 +70,7 @@ public class EntityPrototypes {
         return deviceProfile;
     }
 
-    public static DeviceProfile defaultDeviceProfile(String entityName, String description) {
+    public static DeviceProfile defaultDeviceProfilePrototype(String entityName, String description) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(entityName);
         deviceProfile.setDescription(description);
@@ -85,13 +85,13 @@ public class EntityPrototypes {
         return deviceProfile;
     }
 
-    public static AssetProfile defaultAssetProfile(String entityName) {
+    public static AssetProfile defaultAssetProfilePrototype(String entityName) {
         AssetProfile assetProfile = new AssetProfile();
         assetProfile.setName(entityName);
         return assetProfile;
     }
 
-    public static AssetProfile defaultAssetProfile(String entityName, String description) {
+    public static AssetProfile defaultAssetProfilePrototype(String entityName, String description) {
         AssetProfile assetProfile = new AssetProfile();
         assetProfile.setName(entityName);
         assetProfile.setDescription(description);

@@ -121,7 +121,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             return testRestClient.getRuleChains(pageLink).getData().stream()
                     .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             log.error("No such rule chain with name: " + name);
             return null;
         }
@@ -131,7 +131,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             return testRestClient.getCustomers(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             log.error("No such customer with name: " + name);
             return null;
         }
@@ -141,7 +141,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             return testRestClient.getDeviceProfiles(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             log.error("No such device profile with name: " + name);
             return null;
         }
@@ -151,41 +151,9 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             return testRestClient.getAssetProfiles(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             log.error("No such asset profile with name: " + name);
             return null;
-        }
-    }
-
-    public static void deleteRuleChain(String ruleChainName) {
-        try {
-            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void deleteDeviceProfile(String deviseProfileName) {
-        try {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviseProfileName).getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void deleteCustomer(String customerName) {
-        try {
-            testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void deleteAssetProfile(String assetProfileName) {
-        try {
-            testRestClient.deleteAssetProfile(getAssetProfileByName(assetProfileName).getId());
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

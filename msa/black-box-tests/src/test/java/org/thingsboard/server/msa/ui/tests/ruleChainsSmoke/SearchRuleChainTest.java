@@ -17,6 +17,7 @@ package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
@@ -31,6 +32,7 @@ public class SearchRuleChainTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
     private RuleChainsPageHelper ruleChainsPage;
+    private String ruleChainName;
 
     @BeforeMethod
     public void login() {
@@ -39,28 +41,35 @@ public class SearchRuleChainTest extends AbstractDriverBaseTest {
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
+    @AfterMethod
+    public void delete() {
+        if (getRuleChainByName(ruleChainName) != null) {
+            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+        }
+    }
+
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "ruleChainNameForSearchByFirstAndSecondWord")
     @Description
-    public void searchFirstWord(String namePath) {
+    public void searchFirstWord(String name, String namePath) {
+        testRestClient.postRuleChain(defaultRuleChainPrototype(name));
+        this.ruleChainName = name;
+
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.searchEntity(namePath);
-        ruleChainsPage.setRuleChainName(0);
 
-        Assert.assertTrue(ruleChainsPage.getRuleChainName().contains(namePath));
+
+        ruleChainsPage.allNames().forEach(x -> Assert.assertTrue(x.getText().contains(namePath)));
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSearchBySymbolAndNumber")
     @Description
     public void searchNumber(String name, String namePath) {
         testRestClient.postRuleChain(defaultRuleChainPrototype(name));
+        this.ruleChainName = name;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.searchEntity(namePath);
-        ruleChainsPage.setRuleChainName(0);
-        boolean ruleChainContainsNamePath = ruleChainsPage.getRuleChainName().contains(namePath);
 
-        deleteRuleChain(name);
-
-        Assert.assertTrue(ruleChainContainsNamePath);
+        ruleChainsPage.allNames().forEach(x -> Assert.assertTrue(x.getText().contains(namePath)));
     }
 }

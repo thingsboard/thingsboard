@@ -25,8 +25,9 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfilePrototype;
 
 public class SearchDeviceProfileTest extends AbstractDriverBaseTest {
 
@@ -43,16 +44,15 @@ public class SearchDeviceProfileTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteDeviceProfile(name);
-            name = null;
+        if (getDeviceProfileByName(name) != null) {
+            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
         }
     }
 
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "deviceProfileSearch")
     @Description
     public void searchFirstWord(String name, String namePath) {
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();

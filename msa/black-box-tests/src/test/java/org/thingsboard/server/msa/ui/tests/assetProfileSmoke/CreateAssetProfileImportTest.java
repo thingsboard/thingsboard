@@ -49,9 +49,8 @@ public class CreateAssetProfileImportTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteAssetProfile(name);
-            name = null;
+        if (getAssetProfileByName(name) != null) {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
         }
     }
 
@@ -97,7 +96,7 @@ public class CreateAssetProfileImportTest extends AbstractDriverBaseTest {
     @Description
     public void importAssetProfileWithSameName() {
         String name = IMPORT_ASSET_PROFILE_NAME;
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();

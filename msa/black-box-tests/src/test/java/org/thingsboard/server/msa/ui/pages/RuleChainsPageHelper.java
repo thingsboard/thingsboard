@@ -115,16 +115,16 @@ public class RuleChainsPageHelper extends RuleChainsPageElements {
         doubleClick(sortByNameBtn());
     }
 
-    ArrayList<String> sort;
+    ArrayList<String> sortByTime;
 
-    public void setSort() {
+    public void setSortByTime() {
         ArrayList<String> createdTime = new ArrayList<>();
         createdTime().forEach(x -> createdTime.add(x.getText()));
         Collections.sort(createdTime);
-        sort = createdTime;
+        sortByTime = createdTime;
     }
 
-    public ArrayList<String> getSort() {
-        return sort;
+    public ArrayList<String> getSortByTime() {
+        return sortByTime;
     }
 }

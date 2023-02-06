@@ -48,9 +48,8 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteAssetProfile(name);
-            name = null;
+        if (getAssetProfileByName(name) != null) {
+            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
         }
     }
 
@@ -59,7 +58,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     public void changeName() {
         String name = ENTITY_NAME + random();
         String newName = "Changed" + getRandomNumber();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();
@@ -81,7 +80,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void deleteName() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();
@@ -96,7 +95,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void saveWithOnlySpaceInName() {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();
@@ -114,7 +113,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     @Description
     public void editDescription(String description, String newDescription, String finalDescription) {
         String name = ENTITY_NAME + random();
-        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name, description));
+        testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfilePrototype(name, description));
         this.name = name;
 
         sideBarMenuView.openAssetProfiles();

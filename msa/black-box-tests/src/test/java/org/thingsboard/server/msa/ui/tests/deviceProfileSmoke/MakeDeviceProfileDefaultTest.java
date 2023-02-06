@@ -24,10 +24,15 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
+
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
+import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
 public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
+    private String name;
 
     @BeforeMethod
     public void login() {
@@ -38,32 +43,41 @@ public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeProfileDefault() {
-        testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
+        if (!getDeviceProfileByName("default").isDefault()) {
+            testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
+            if (getDeviceProfileByName(name) != null) {
+                testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            }
+        }
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void makeDeviceProfileDefaultByRightCornerBtn() {
+        String name = ENTITY_NAME + random();
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
+        this.name = name;
+
         sideBarMenuView.openDeviceProfiles();
-        profilesPage.setProfileName();
-        String profile = profilesPage.getProfileName();
-        profilesPage.makeProfileDefaultBtn(profile).click();
+        profilesPage.makeProfileDefaultBtn(name).click();
         profilesPage.warningPopUpYesBtn().click();
 
-        Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
+        Assert.assertTrue(profilesPage.defaultCheckbox(name).isDisplayed());
     }
 
     @Test(priority = 10, groups = "smoke")
     @Description
     public void makeDeviceProfileDefaultFromView() {
+        String name = ENTITY_NAME + random();
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
+        this.name = name;
+
         sideBarMenuView.openDeviceProfiles();
-        profilesPage.setProfileName();
-        String profile = profilesPage.getProfileName();
-        profilesPage.entity(profile).click();
+        profilesPage.entity(name).click();
         profilesPage.deviceProfileViewMakeDefaultBtn().click();
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.closeEntityViewBtn().click();
 
-        Assert.assertTrue(profilesPage.defaultCheckbox(profile).isDisplayed());
+        Assert.assertTrue(profilesPage.defaultCheckbox(name).isDisplayed());
     }
 }

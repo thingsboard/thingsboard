@@ -48,9 +48,8 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (name != null) {
-            deleteDeviceProfile(name);
-            name = null;
+        if (getDeviceProfileByName(name) != null) {
+            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
         }
     }
 
@@ -109,7 +108,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Description
     public void createDeviseProfileWithSameName() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
         this.name = name;
 
         sideBarMenuView.openDeviceProfiles();

@@ -23,10 +23,11 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
+import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfilePrototype;
 
 public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
@@ -44,8 +45,8 @@ public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
     public void canDeleteSeveralDeviceProfilesByTopBtn() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() + "2";
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name1));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name2));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name1));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name2));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.clickOnCheckBoxes(2);
@@ -84,8 +85,8 @@ public class DeleteSeveralDeviceProfilesTest extends AbstractDriverBaseTest {
     public void deleteSeveralDeviceProfilesByTopBtnWithoutRefresh() {
         String name1 = ENTITY_NAME + random() + "1";
         String name2 = ENTITY_NAME + random() + "2";
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name1));
-        testRestClient.postDeviceProfile(defaultDeviceProfile(name2));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name1));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name2));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.clickOnCheckBoxes(2);

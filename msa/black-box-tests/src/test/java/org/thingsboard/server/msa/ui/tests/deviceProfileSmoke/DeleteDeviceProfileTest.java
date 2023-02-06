@@ -44,7 +44,7 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeDeviceProfile() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.deleteBtn(name).click();
@@ -58,7 +58,7 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeDeviceProfileFromView() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.entity(name).click();
@@ -73,7 +73,7 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeSelectedDeviceProfile() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.checkBox(name).click();
@@ -114,7 +114,7 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
     @Description
     public void removeDeviceProfileWithoutRefresh() {
         String name = ENTITY_NAME + random();
-        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
+        testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfilePrototype(name));
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.deleteBtn(name).click();
