@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 :host {
-  padding: 10px;
-  display: block;
+
+  .notification {
+    padding: 10px;
+    display: block;
+    border: 1px solid;
+    border-radius: 8px;
+  }
+
+  .alarm-severity-border {
+    padding: 5px;
+    border-radius: 8px;
+  }
 
   .icon {
     margin-right: 14px;
@@ -52,7 +62,7 @@
     .time {
       font-size: 12px;
       letter-spacing: 0.25px;
-      margin-right: 2px;
+      margin: 2px 2px 5px;
     }
   }
 }

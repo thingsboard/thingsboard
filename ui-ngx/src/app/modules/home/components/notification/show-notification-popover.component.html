@@ -25,10 +25,11 @@
 </section>
 <mat-divider></mat-divider>
 <div *ngIf="(notifications$ | async).length; else emptyNotification">
-  <section style="min-height: 100px; overflow: auto">
+  <section style="min-height: 100px; overflow: auto; padding: 10px 0;">
    <div *ngFor="let notification of (notifications$ | async); let last = last">
      <tb-notification [notification]="notification"
                       [onClose]="onClose"
+                      [preview]="true"
                       (markAsRead)="markAsRead($event)">
      </tb-notification>
      <mat-divider *ngIf="!last" style="margin-bottom: 4px"></mat-divider>

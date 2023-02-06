@@ -15,10 +15,18 @@
     limitations under the License.
 
 -->
-<section fxLayout="row" fxLayoutAlign="space-between start">
-  <mat-icon class="icon" *ngIf="showIcon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
-    {{ notification.additionalConfig.icon.icon }}
-  </mat-icon>
+<section fxLayout="row" fxLayoutAlign="space-between start" class="notification"
+         [ngStyle]="{borderColor: notificationColor()}">
+  <div *ngIf="showIcon; else defaultIcon">
+    <mat-icon class="icon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
+      {{ notification.additionalConfig.icon.icon }}
+    </mat-icon>
+  </div>
+  <ng-template #defaultIcon>
+    <mat-icon class="icon" [fxShow]="notificationTypeIcons.get(notification.type)" [ngStyle]="{color: notificationColor()}">
+      {{ notificationTypeIcons.get(notification.type) }}
+    </mat-icon>
+  </ng-template>
   <div class="content" fxFlex>
     <div class="title">{{ notification.subject }}</div>
     <div class="message">{{ notification.text }}</div>
@@ -33,5 +41,12 @@
       <mat-icon>check_circle_outline</mat-icon>
     </button>
     <span class="time" *ngIf="preview">{{ notification.createdTime | dateAgo }}</span>
+    <div class="alarm-severity-border" *ngIf="notification.type === notificationType.ALARM"
+         [ngStyle]="{backgroundColor: alarmColorSeverity(0.08)}">
+      <span class="alarm-severity-text"
+            [ngStyle]="{color: alarmColorSeverity(0.78)}">
+        {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}
+      </span>
+    </div>
   </div>
 </section>

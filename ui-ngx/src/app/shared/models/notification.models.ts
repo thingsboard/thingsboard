@@ -42,6 +42,9 @@ export interface Notification {
 export interface NotificationInfo {
   description: string;
   type: string;
+  alarmSeverity?: AlarmSeverity;
+  alarmStatus?: AlarmStatus;
+  alarmType?: string;
 }
 
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
@@ -280,6 +283,21 @@ export enum NotificationType {
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT'
 }
+
+export const NotificationTypeColors = new Map<NotificationType, string>([
+  [NotificationType.GENERAL, 'transparent'],
+  [NotificationType.ALARM, '#D12730'],
+  [NotificationType.DEVICE_INACTIVITY, '#305680'],
+  [NotificationType.ENTITY_ACTION, '#305680'],
+  [NotificationType.ALARM_COMMENT, '#D12730']
+]);
+
+export const NotificationTypeIcons = new Map<NotificationType, string | null>([
+  [NotificationType.ALARM, 'warning'],
+  [NotificationType.DEVICE_INACTIVITY, 'phonelink_off'],
+  [NotificationType.ENTITY_ACTION, 'devices'],
+  [NotificationType.ALARM_COMMENT, 'warning']
+]);
 
 interface NotificationTemplateTypeTranslate {
   name: string;
