@@ -54,8 +54,8 @@ public class MqttV5ClientSparkplugBTelemetryTest extends AbstractMqttV5ClientSpa
     }
 
     @Test
-    public void testClientWithCorrectAccessTokenPushNodeMetricBuildPArraysSimple() throws Exception {
-        processClientWithCorrectAccessTokenPushNodeMetricBuildArraysSimple();
+    public void testClientWithCorrectAccessTokenPushNodeMetricBuildPArraysPrimitiveSimple() throws Exception {
+        processClientWithCorrectAccessTokenPushNodeMetricBuildArraysPrimitiveSimple();
     }
 
 }

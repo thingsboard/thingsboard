@@ -32,7 +32,6 @@ import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSpark
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -143,10 +142,11 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     }
 
     protected void processClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple() throws Exception {
-        clientWithCorrectNodeAccessTokenWithNDEATH();;
+        List<String> listKeys = new ArrayList<>();
+        clientWithCorrectNodeAccessTokenWithNDEATH();
 
         String messageTypeName = SparkplugMessageType.NDATA.name();
-        List<String> listKeys = new ArrayList<>();
+
         List<TsKvEntry> listTsKvEntry = new ArrayList<>();
 
         SparkplugBProto.Payload.Builder ndataPayload = SparkplugBProto.Payload.newBuilder()
@@ -166,14 +166,13 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
-                    return finalFuture.get().get().size() == listTsKvEntry.size();
+                    return finalFuture.get().get().size() == (listTsKvEntry.size() + 1);
                 });
-        Assert.assertTrue("Expected tsKvEntrys is not equal Actual tsKvEntrys", listTsKvEntry.containsAll(finalFuture.get().get()));
-        Assert.assertTrue("Actual tsKvEntrys is not equal Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
+        Assert.assertTrue("Actual tsKvEntrys is not containsAll Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
     }
 
-    protected void processClientWithCorrectAccessTokenPushNodeMetricBuildArraysSimple() throws Exception {
-        clientWithCorrectNodeAccessTokenWithNDEATH();;
+    protected void processClientWithCorrectAccessTokenPushNodeMetricBuildArraysPrimitiveSimple() throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
 
         String messageTypeName = SparkplugMessageType.NDATA.name();
         List<String> listKeys = new ArrayList<>();
@@ -184,7 +183,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                 .setSeq(getSeqNum());
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
 
-        createdAddMetricValueArraysTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
+        createdAddMetricValueArraysPrimitiveTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
 
         if (client.isConnected()) {
             client.publish(NAMESPACE + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
@@ -196,10 +195,9 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
-                    return finalFuture.get().get().size() == listTsKvEntry.size();
+                    return finalFuture.get().get().size() == (listTsKvEntry.size() + 1);
                 });
-        Assert.assertTrue("Expected tsKvEntrys is not equal Actual tsKvEntrys", listTsKvEntry.containsAll(finalFuture.get().get()));
-        Assert.assertTrue("Actual tsKvEntrys is not equal Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
+        Assert.assertTrue("Actual tsKvEntrys is not containsAll Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
     }
 
     private void createdAddMetricValuePrimitiveTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
@@ -229,12 +227,8 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, nextUInt16(), ts, UInt16));
         listKeys.add(keys);
 
-        keys = "MyUInt32I";
-        listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, nextUInt32I(), ts, UInt32));
-        listKeys.add(keys);
-
-        keys = "MyUInt32L";
-        listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, nextUInt32L(), ts, UInt32));
+        keys = "MyUInt32";
+        listTsKvEntry.add(createdAddMetricTsKvLong(dataPayload, keys, nextUInt32(), ts, UInt32));
         listKeys.add(keys);
 
         keys = "MyUInt64";
@@ -271,62 +265,62 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
 
     }
 
-   private void createdAddMetricValueArraysTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
-                                                SparkplugBProto.Payload.Builder dataPayload, long ts) throws ThingsboardException {
+    private void createdAddMetricValueArraysPrimitiveTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
+                                                          SparkplugBProto.Payload.Builder dataPayload, long ts) throws ThingsboardException {
         String keys = "MyBytesArray";
-        byte[] bytes =  {nextInt8(), nextInt8(), nextInt8()};
+        byte[] bytes = {nextInt8(), nextInt8(), nextInt8()};
         createdAddMetricTsKvJson(dataPayload, keys, bytes, ts, Bytes, listTsKvEntry, listKeys);
 
         keys = "MyInt8Array";
-        byte[] int8s =  {nextInt8(), nextInt8(), nextInt8()};
+        Byte[] int8s = {nextInt8(), nextInt8(), nextInt8()};
         createdAddMetricTsKvJson(dataPayload, keys, int8s, ts, Int8Array, listTsKvEntry, listKeys);
 
         keys = "MyInt16Array";
-        short[] int16s =  {nextInt16(), nextInt16(), nextInt16()};
+        Short[] int16s = {nextInt16(), nextInt16(), nextInt16()};
         createdAddMetricTsKvJson(dataPayload, keys, int16s, ts, Int16Array, listTsKvEntry, listKeys);
 
-        keys = "MyInt32Array";
-        int[] int32s =  {nextInt32(), nextInt32(), nextInt32()};
-        createdAddMetricTsKvJson(dataPayload, keys, int32s, ts, Int32Array, listTsKvEntry, listKeys);
-
-        keys = "MyInt64Array";
-        long[] int64s =  {nextInt64(), nextInt64(), nextInt64()};
-        createdAddMetricTsKvJson(dataPayload, keys, int64s, ts, Int64Array, listTsKvEntry, listKeys);
-
         keys = "MyUInt8Array";
-        short[] uInt8s =  {nextUInt16(), nextUInt16(), nextUInt16()};
+        Short[] uInt8s = {nextUInt8(), nextUInt8(), nextUInt8()};
         createdAddMetricTsKvJson(dataPayload, keys, uInt8s, ts, UInt8Array, listTsKvEntry, listKeys);
 
+        keys = "MyInt32Array";
+        Integer[] int32s = {nextInt32(), nextInt32(), nextInt32()};
+        createdAddMetricTsKvJson(dataPayload, keys, int32s, ts, Int32Array, listTsKvEntry, listKeys);
+
         keys = "MyUInt16Array";
-        int[] uInt16s =  {nextUInt16(), nextUInt16(), nextUInt16()};
+        Integer[] uInt16s = {nextUInt16(), nextUInt16(), nextUInt16()};
         createdAddMetricTsKvJson(dataPayload, keys, uInt16s, ts, UInt16Array, listTsKvEntry, listKeys);
 
+        keys = "MyInt64Array";
+        Long[] int64s = {nextInt64(), nextInt64(), nextInt64()};
+        createdAddMetricTsKvJson(dataPayload, keys, int64s, ts, Int64Array, listTsKvEntry, listKeys);
+
         keys = "MyUInt32LArray";
-        long[] uInt32Ls =  {nextUInt32L(), nextUInt32L(), nextUInt32L()};
+        Long[] uInt32Ls = {nextUInt32(), nextUInt32(), nextUInt32()};
         createdAddMetricTsKvJson(dataPayload, keys, uInt32Ls, ts, UInt32Array, listTsKvEntry, listKeys);
 
+        keys = "MyDateTimeArray";
+        Long[] dateTimes = {nextDateTime(), nextDateTime(), nextDateTime()};
+        createdAddMetricTsKvJson(dataPayload, keys, dateTimes, ts, DateTimeArray, listTsKvEntry, listKeys);
+
         keys = "MyUInt64Array";
-        long[] uInt64s =  {nextUInt64(), nextUInt64(), nextUInt64()};
+        Long[] uInt64s = {nextUInt64(), nextUInt64(), nextUInt64()};
         createdAddMetricTsKvJson(dataPayload, keys, uInt64s, ts, UInt64Array, listTsKvEntry, listKeys);
 
         keys = "MyFloatArray";
-        float[] floats =  {nextFloat(0,300), nextFloat(0,4000), nextFloat(10,10000)};
+        Float[] floats = {nextFloat(0, 300), nextFloat(0, 4000), nextFloat(10, 10000)};
         createdAddMetricTsKvJson(dataPayload, keys, floats, ts, FloatArray, listTsKvEntry, listKeys);
 
-        keys = "MyDateTimeArray";
-        long[] dateTimes =  {nextDateTime(), nextDateTime(), nextDateTime()};
-        createdAddMetricTsKvJson(dataPayload, keys, dateTimes, ts, DateTimeArray, listTsKvEntry, listKeys);
-
         keys = "MyDoubleArray";
-        double [] doubles =  {nextDouble(), nextDouble(), nextDouble()};
+        Double[] doubles = {nextDouble(), nextDouble(), nextDouble()};
         createdAddMetricTsKvJson(dataPayload, keys, doubles, ts, DoubleArray, listTsKvEntry, listKeys);
 
         keys = "MyBooleanArray";
-        boolean [] booleans =  {nextBoolean(), nextBoolean(), nextBoolean()};
+        Boolean[] booleans = {nextBoolean(), nextBoolean(), nextBoolean()};
         createdAddMetricTsKvJson(dataPayload, keys, booleans, ts, BooleanArray, listTsKvEntry, listKeys);
 
         keys = "MyStringArray";
-        String [] strings =  {nexString(), nexString(), nexString()};
+        String[] strings = {nexString(), nexString(), nexString()};
         createdAddMetricTsKvJson(dataPayload, keys, strings, ts, StringArray, listTsKvEntry, listKeys);
     }
 
@@ -337,18 +331,18 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         return tsKvEntry;
     }
 
-    private TsKvEntry createdAddMetricTsKvFloat(SparkplugBProto.Payload.Builder dataPayload, String key, Object value,
+    private TsKvEntry createdAddMetricTsKvFloat(SparkplugBProto.Payload.Builder dataPayload, String key, float value,
                                                 long ts, MetricDataType metricDataType) throws ThingsboardException {
-        var f = new BigDecimal(String.valueOf(value));
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new DoubleDataEntry(key, f.doubleValue()));
+        Double dd = Double.parseDouble(Float.toString(value));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new DoubleDataEntry(key, dd));
         dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
 
     private TsKvEntry createdAddMetricTsKvDouble(SparkplugBProto.Payload.Builder dataPayload, String key, double value,
                                                  long ts, MetricDataType metricDataType) throws ThingsboardException {
-        var d = new BigDecimal(String.valueOf(value));
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(key, d.longValueExact()));
+        Long l = Double.valueOf(value).longValue();
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(key, l));
         dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
         return tsKvEntry;
     }
@@ -368,20 +362,24 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
     }
 
     private void createdAddMetricTsKvJson(SparkplugBProto.Payload.Builder dataPayload, String key,
-                                                        Object values, long ts, MetricDataType metricDataType,
-                                                         List<TsKvEntry> listTsKvEntry,
-                                                         List<String> listKeys) throws ThingsboardException {
+                                          Object values, long ts, MetricDataType metricDataType,
+                                          List<TsKvEntry> listTsKvEntry,
+                                          List<String> listKeys) throws ThingsboardException {
         ArrayNode nodeArray = newArrayNode();
         switch (metricDataType) {
             case Bytes:
+                for (byte b : (byte[]) values) {
+                    nodeArray.add(b);
+                }
+                break;
             case Int8Array:
-                for (byte b : (byte[])values) {
+                for (Byte b : (Byte[]) values) {
                     nodeArray.add(b);
                 }
                 break;
             case Int16Array:
             case UInt8Array:
-                for (short b : (short[])values) {
+                for (Short b : (Short[]) values) {
                     nodeArray.add(b);
                 }
                 break;
@@ -391,33 +389,33 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
             case UInt32Array:
             case UInt64Array:
             case DateTimeArray:
-                if (values instanceof int[]) {
-                    for (int b : (int[])values) {
+                if (values instanceof Integer[]) {
+                    for (Integer b : (Integer[]) values) {
                         nodeArray.add(b);
                     }
                 } else {
-                    for (long b : (long[])values) {
+                    for (Long b : (Long[]) values) {
                         nodeArray.add(b);
                     }
                 }
                 break;
             case DoubleArray:
-                for (double b : (double[])values) {
+                for (Double b : (Double[]) values) {
                     nodeArray.add(b);
                 }
                 break;
             case FloatArray:
-                for (float b : (float[])values) {
+                for (Float b : (Float[]) values) {
                     nodeArray.add(b);
                 }
                 break;
             case BooleanArray:
-                for (boolean b : (boolean[])values) {
+                for (Boolean b : (Boolean[]) values) {
                     nodeArray.add(b);
                 }
                 break;
             case StringArray:
-                for (String b : (String[])values) {
+                for (String b : (String[]) values) {
                     nodeArray.add(b);
                 }
                 break;
@@ -446,19 +444,15 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         return (short) random.nextInt(Short.MIN_VALUE, Short.MAX_VALUE);
     }
 
-    private short nextUInt16() {
-        return (short) random.nextInt(0, Short.MAX_VALUE * 2 + 1);
+    private int nextUInt16() {
+        return random.nextInt(0, Short.MAX_VALUE * 2 + 1);
     }
 
     private int nextInt32() {
         return random.nextInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
-    private int nextUInt32I() {
-        return random.nextInt(0, Integer.MAX_VALUE);
-    }
-
-    private long nextUInt32L() {
+    private long nextUInt32() {
         long l = Integer.MAX_VALUE;
         return random.nextLong(0, l * 2 + 1);
     }

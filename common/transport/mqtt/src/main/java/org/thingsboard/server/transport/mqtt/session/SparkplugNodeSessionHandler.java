@@ -22,7 +22,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -30,6 +33,8 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
+import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
+import org.thingsboard.server.transport.mqtt.TopicType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
@@ -48,6 +53,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMess
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.fromSparkplugBMetricToKeyValueProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.validatedValueByTypeMetric;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicSubscribe;
 
 /**
  * Created by nickAS21 on 12.12.22
@@ -57,10 +63,12 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
 
     private final SparkplugTopic sparkplugTopicNode;
     private final Map<String, SparkplugBProto.Payload.Metric> nodeBirthMetrics;
+    private final MqttTransportHandler parent;
 
-    public SparkplugNodeSessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId,
+    public SparkplugNodeSessionHandler(MqttTransportHandler parent, DeviceSessionCtx deviceSessionCtx, UUID sessionId,
                                        SparkplugTopic sparkplugTopicNode) {
         super(deviceSessionCtx, sessionId);
+        this.parent = parent;
         this.sparkplugTopicNode = sparkplugTopicNode;
         this.nodeBirthMetrics = new ConcurrentHashMap<>();
     }
@@ -127,6 +135,34 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         } catch (RuntimeException e) {
             throw new AdaptorException(e);
         }
+    }
+
+    public void handleSparkplugSubscribeMsg(List<Integer> grantedQoSList, MqttTopicSubscription subscription,
+                                            MqttQoS reqQoS) throws ThingsboardException, AdaptorException,
+            ExecutionException, InterruptedException {
+        SparkplugTopic sparkplugTopic = parseTopicSubscribe(subscription.topicName());
+        if (sparkplugTopic.getGroupId() == null) {
+            // TODO SUBSCRIBE NameSpace
+        } else if (sparkplugTopic.getType() == null) {
+            // TODO SUBSCRIBE GroupId
+        } else if (sparkplugTopic.isNode()) {
+            // SUBSCRIBE Node
+            parent.processAttributesSubscribe(grantedQoSList, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, reqQoS, TopicType.V1);
+        } else {
+            // SUBSCRIBE Device
+            onSparkplugDeviceSubscribe(grantedQoSList, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, reqQoS, TopicType.V1, sparkplugTopic.getDeviceId());
+        }
+    }
+
+    public void onSparkplugDeviceSubscribe(List<Integer> grantedQoSList, String topic,
+                                           MqttQoS reqQoS, TopicType topicType,  String deviceName)
+            throws AdaptorException, ThingsboardException, ExecutionException, InterruptedException {
+        checkDeviceName(deviceName);
+        ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = onDeviceConnectProto(deviceName);
+        parent.transportService.process(contextListenableFuture.get().getSessionInfo(),
+                TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
+        parent.attrSubTopicType = topicType;
+        parent.registerSubQoS(topic, grantedQoSList, reqQoS);
     }
 
     public void onDeviceDisconnect(MqttPublishMessage mqttMsg, String deviceName) throws AdaptorException {

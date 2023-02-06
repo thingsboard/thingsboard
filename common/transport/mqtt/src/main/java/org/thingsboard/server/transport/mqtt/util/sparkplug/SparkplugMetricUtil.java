@@ -16,11 +16,14 @@
 package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.ser.std.FileSerializer;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -42,6 +45,7 @@ import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
@@ -228,34 +232,39 @@ public class SparkplugMetricUtil {
                 .setDatatype(metricDataType.toIntValue())
                 .build();
         switch (metricDataType) {
-            case Int8:
-            case Int16:
+            case Int8:      //  (byte)
+                return metric.toBuilder().setIntValue(((Byte) value).intValue()).build();
+            case Int16:     // (short)
             case UInt8:
-            case UInt16:
+                return metric.toBuilder().setIntValue(((Short) value).intValue()).build();
+            case UInt16:     //  (int)
             case Int32:
                 return metric.toBuilder().setIntValue(((Integer) value).intValue()).build();
-            case UInt32:
+            case UInt32:     // (long)
             case Int64:
             case UInt64:
             case DateTime:
                 return metric.toBuilder().setLongValue(((Long) value).longValue()).build();
-            case Float:
+            case Float:     // (float)
                 return metric.toBuilder().setFloatValue(((Float) value).floatValue()).build();
-            case Double:
+            case Double:     // (double)
                 return metric.toBuilder().setDoubleValue(((Double) value).doubleValue()).build();
-            case Boolean:
+            case Boolean:      // (boolean)
                 return metric.toBuilder().setBooleanValue(((Boolean) value).booleanValue()).build();
-            case String:
+            case String:        // String)
             case Text:
             case UUID:
                 return metric.toBuilder().setStringValue((String) value).build();
             case Bytes:
-            case Int8Array:
                 ByteString byteString = ByteString.copyFrom((byte[]) value);
                 return metric.toBuilder().setBytesValue(byteString).build();
+            case Int8Array:
+                byte [] int8Array = byteArrayToByteArray((Byte[]) value);
+                ByteString byteInt8Array = ByteString.copyFrom((int8Array));
+                return metric.toBuilder().setBytesValue(byteInt8Array).build();
             case Int16Array:
             case UInt8Array:
-                byte[] int16Array = shortArrayToByteArray((short[]) value);
+                byte[] int16Array = shortArrayToByteArray((Short[]) value);
                 ByteString byteInt16Array = ByteString.copyFrom((int16Array));
                 return metric.toBuilder().setBytesValue(byteInt16Array).build();
             case Int32Array:
@@ -264,25 +273,25 @@ public class SparkplugMetricUtil {
             case UInt32Array:
             case UInt64Array:
             case DateTimeArray:
-                if (value instanceof int[]) {
-                    byte[] int32Array = integerArrayToByteArray((int[]) value);
+                if (value instanceof Integer[]) {
+                    byte[] int32Array = integerArrayToByteArray((Integer[]) value);
                     ByteString byteInt32Array = ByteString.copyFrom((int32Array));
                     return metric.toBuilder().setBytesValue(byteInt32Array).build();
                 } else {
-                    byte[] int64Array = longArrayToByteArray((long[]) value);
+                    byte[] int64Array = longArrayToByteArray((Long[]) value);
                     ByteString byteInt64Array = ByteString.copyFrom((int64Array));
                     return metric.toBuilder().setBytesValue(byteInt64Array).build();
                 }
             case DoubleArray:
-                byte[] doubleArray = doublArrayToByteArray((double[]) value);
+                byte[] doubleArray = doublArrayToByteArray((Double[]) value);
                 ByteString byteDoubleArray = ByteString.copyFrom(doubleArray);
                 return metric.toBuilder().setBytesValue(byteDoubleArray).build();
             case FloatArray:
-                byte[] floatArray = floatArrayToByteArray((float[]) value);
+                byte[] floatArray = floatArrayToByteArray((Float[]) value);
                 ByteString byteFloatArray = ByteString.copyFrom(floatArray);
                 return metric.toBuilder().setBytesValue(byteFloatArray).build();
             case BooleanArray:
-                byte[] booleanArray = booleanArrayToByteArray((boolean[]) value);
+                byte[] booleanArray = booleanArrayToByteArray((Boolean[]) value);
                 ByteString byteBooleanArray = ByteString.copyFrom(booleanArray);
                 return metric.toBuilder().setBytesValue(byteBooleanArray).build();
             case StringArray:
@@ -307,10 +316,14 @@ public class SparkplugMetricUtil {
         if (kv.getTypeValue() <= 3) {
             return validatedValuePrimitiveByTypeMetric(kv, metricDataType);
         } else if (kv.getTypeValue() == 4) {
-            return validatedValueJsonByTypeMetric(kv, metricDataType);
+            JsonNode arrayNode = JacksonUtil.fromString(kv.getJsonV(), JsonNode.class);
+            if (arrayNode.isArray()) {
+                return validatedValueJsonByTypeMetric(kv.getJsonV(), metricDataType);
+            }
         } else {
             throw new ThingsboardException("Invalid type KeyValueProto " + kv.toString() + " for MetricDataType " + metricDataType.name(), ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
+        return Optional.empty();
     }
 
     public static Optional<Object> validatedValuePrimitiveByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) throws ThingsboardException {
@@ -392,188 +405,115 @@ public class SparkplugMetricUtil {
         return Optional.empty();
     }
 
-
-    public static Optional<Object> validatedValueJsonByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) {
-//        try {
-//            Optional<Object> valueOpt;
-//            switch (metricDataType) {
-//                // int
-//                case Int8:
-//                case Int16:
-//                case UInt8:
-//                case UInt16:
-//                    valueOpt = getValueKvProtoPrimitive(kv);
-//                    return valueOpt.isPresent() ? Optional.of(Integer.valueOf(String.valueOf(valueOpt.get()))) : valueOpt;
-//                // int/long
-//                case Int32:
-//                case UInt32:
-//                    valueOpt = getValueKvProtoPrimitive(kv);
-//                    try {
-//                        return Optional.of(Integer.valueOf(String.valueOf(valueOpt.get())));
-//                    } catch (NumberFormatException e) {
-//                        return Optional.of(Long.valueOf(String.valueOf(valueOpt.get())));
-//                    }
-//                    // long
-//                case Int64:
-//                case UInt64:
-//                case DateTime:
-//                    valueOpt = getValueKvProtoPrimitive(kv);
-//                    return Optional.of(Long.valueOf(String.valueOf(valueOpt.get())));
-//                // float
-//                case Float:
-//                    valueOpt = getValueKvProtoPrimitive(kv);
-//                    var f = new BigDecimal(String.valueOf(kv.getDoubleV()));
-//                    return Optional.of(f.floatValue());
-//            }
-//            break;
-//            // double
-//            case Double:
-//                if (kv.getTypeValue() == 1) {
-//                    return Optional.of(kv.getLongV());
-//                }
-//                break;
-//            case Boolean:
-//                if (kv.getTypeValue() == 0) { // ok 0
-//                    return Optional.of(kv.getBoolV());
-//                }
-//                break;
-//            case String:
-//            case Text:
-//            case UUID:
-//                if (kv.getTypeValue() == 4) {
-//                    return Optional.of(kv.getStringV());
-//                }
-//                break;
-//            // byte[]
-//            case Bytes:
-//            case Int8Array:
-//                if (kv.getTypeValue() == 5) {
-////                        ByteString byteString = ByteString.copyFrom((byte[]) value);
-////                        return metric.toBuilder().setBytesValue(byteString).build();
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            // short[]
-//            case Int16Array:
-//            case UInt8Array:
-//                if (kv.getTypeValue() == 5) {
-////                        byte[] int16Array = shortArrayToByteArray((short[]) value);
-////                        ByteString byteInt16Array = ByteString.copyFrom((int16Array));
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            // int []
-//            case UInt16Array:
-//            case Int32Array:
-//
-//                // int[] / long[]
-//            case UInt32Array:
-//
-//                // long[]
-//            case Int64Array:
-//            case UInt64Array:
-//            case DateTimeArray:
-//                if (kv.getTypeValue() == 5) {
-////                        if (value instanceof int[]) {
-////                            byte[] int32Array = integerArrayToByteArray((int[]) value);
-////                            ByteString byteInt32Array = ByteString.copyFrom((int32Array));
-////                            return metric.toBuilder().setBytesValue(byteInt32Array).build();
-////                        } else {
-////                            byte[] int64Array = longArrayToByteArray((long[]) value);
-////                            ByteString byteInt64Array = ByteString.copyFrom((int64Array));
-////                            return metric.toBuilder().setBytesValue(byteInt64Array).build();
-////                        }
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            // double []
-//            case DoubleArray:
-//                if (kv.getTypeValue() == 5) {
-////                        byte[] doubleArray = doublArrayToByteArray((double[]) value);
-////                        ByteString byteDoubleArray = ByteString.copyFrom(doubleArray);
-////                        return metric.toBuilder().setBytesValue(byteDoubleArray).build();
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            // float[]
-//            case FloatArray:
-//                if (kv.getTypeValue() == 5) {
-////                        byte[] floatArray = floatArrayToByteArray((float[]) value);
-////                        ByteString byteFloatArray = ByteString.copyFrom(floatArray);
-////                        return metric.toBuilder().setBytesValue(byteFloatArray).build();
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            // boolean[]
-//            case BooleanArray:
-//                if (kv.getTypeValue() == 5) {
-////                        byte[] booleanArray = booleanArrayToByteArray((boolean[]) value);
-////                        ByteString byteBooleanArray = ByteString.copyFrom(booleanArray);
-////                        return metric.toBuilder().setBytesValue(byteBooleanArray).build();
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            // String []
-//            case StringArray:
-//                if (kv.getTypeValue() == 5) {
-////                        byte[] stringArray = stringArrayToByteArray((String[]) value);
-////                        ByteString byteStringArray = ByteString.copyFrom(stringArray);
-////                        return metric.toBuilder().setBytesValue(byteStringArray).build();
-//                    return Optional.of(kv.getJsonV());
-//                }
-//                break;
-//            case DataSet:
-//            case File:
-//            case Template:
-//                log.error("Invalid type value [{}] for MetricDataType [{}]", kv, metricDataType.name());
-//                return Optional.empty();
-//            case Unknown:
-//                log.error("Invalid MetricDataType [{}] type,  value [{}]", kv, metricDataType.name());
-//                return Optional.empty();
-//        } catch (Exception e) {
-//            log.error("Invalid type value [{}] for MetricDataType [{}] [{}]", kv, metricDataType.name(), e.getMessage());
-//            return Optional.empty();
-//        }
-        return Optional.empty();
+    public static Optional<Object> validatedValueJsonByTypeMetric(String arrayNodeStr,  MetricDataType metricDataType) {
+        try {
+            Optional<Object> valueOpt;
+            switch (metricDataType) {
+                // byte[]
+                case Bytes:
+                    List<Byte> listBytes = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    byte[] bytes = new byte[listBytes.size()];
+                    for(int i = 0; i < listBytes.size(); i++) {
+                        bytes[i] = listBytes.get(i).byteValue();
+                    }
+                    return Optional.of(bytes);
+                    // Byte []
+                case Int8Array:
+                    List<Byte> listInt8Array = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    Byte[] int8Arrays = listInt8Array.toArray(Byte[]::new) ;
+                    return Optional.of(int8Arrays);
+                // Short[]
+                case Int16Array:
+                case UInt8Array:
+                    List<Short> listShorts = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listShorts.toArray(Short[]::new));
+                // Integer []
+                case UInt16Array:
+                case Int32Array:
+                    List<Integer> listIntegers = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listIntegers.toArray(Integer[]::new));
+                // Long[]
+                case UInt32Array:
+                case Int64Array:
+                case UInt64Array:
+                case DateTimeArray:
+                    List<Long> listLongs = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listLongs.toArray(Long[]::new));
+                // Double []
+                case DoubleArray:
+                    List<Double> listDoubles = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listDoubles.toArray(Double[]::new));
+                // Float[]
+                case FloatArray:
+                    List<Float> listFloats = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listFloats.toArray(Float[]::new));
+                // Boolean[]
+                case BooleanArray:
+                    List<Boolean> listBooleans = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listBooleans.toArray(Boolean[]::new));
+                case StringArray:
+                    List<String> listStrings = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    return Optional.of(listStrings.toArray(String[]::new));
+                case DataSet:
+                case File:
+                case Template:
+                    log.error("Invalid type value [{}] for MetricDataType [{}]", arrayNodeStr, metricDataType.name());
+                    return Optional.empty();
+                case Unknown:
+                default:
+                    log.error("Invalid MetricDataType [{}] type,  value [{}]", arrayNodeStr, metricDataType.name());
+                    return Optional.empty();
+            }
+        } catch (Exception e) {
+            log.error("Invalid type value [{}] for MetricDataType [{}] [{}]", arrayNodeStr, metricDataType.name(), e.getMessage());
+            return Optional.empty();
+        }
     }
 
+    private static byte[] byteArrayToByteArray(Byte[] inputs) {
+        ByteBuffer bb = ByteBuffer.allocate(inputs.length);
+        for (Byte d : inputs) {
+            bb.put(d);
+        }
+        return bb.array();
+    }
 
-    private static byte[] shortArrayToByteArray(short[] inputs) {
+    private static byte[] shortArrayToByteArray(Short[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 2);
-        for (short d : inputs) {
+        for (Short d : inputs) {
             bb.putShort(d);
         }
         return bb.array();
     }
 
-    private static byte[] integerArrayToByteArray(int[] inputs) {
+    private static byte[] integerArrayToByteArray(Integer[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 4);
-        for (int d : inputs) {
+        for (Integer d : inputs) {
             bb.putInt(d);
         }
         return bb.array();
     }
 
-    private static byte[] longArrayToByteArray(long[] inputs) {
+    private static byte[] longArrayToByteArray(Long[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
-        for (long d : inputs) {
+        for (Long d : inputs) {
             bb.putLong(d);
         }
         return bb.array();
     }
 
-    private static byte[] doublArrayToByteArray(double[] inputs) {
+    private static byte[] doublArrayToByteArray(Double[] inputs) {
         ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
-        for (double d : inputs) {
+        for (Double d : inputs) {
             bb.putDouble(d);
         }
         return bb.array();
     }
 
-    private static byte[] floatArrayToByteArray(float[] inputs) throws ThingsboardException {
+    private static byte[] floatArrayToByteArray(Float[] inputs) throws ThingsboardException {
         ByteArrayOutputStream bas = new ByteArrayOutputStream();
         DataOutputStream ds = new DataOutputStream(bas);
-        for (float f : inputs) {
+        for (Float f : inputs) {
             try {
                 ds.writeFloat(f);
             } catch (IOException e) {
@@ -583,7 +523,7 @@ public class SparkplugMetricUtil {
         return bas.toByteArray();
     }
 
-    private static byte[] booleanArrayToByteArray(boolean[] inputs) {
+    private static byte[] booleanArrayToByteArray(Boolean[] inputs) {
         byte[] toReturn = new byte[inputs.length];
         for (int entry = 0; entry < toReturn.length; entry++) {
             toReturn[entry] = (byte) (inputs[entry] ? 1 : 0);

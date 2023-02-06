@@ -18,9 +18,6 @@ package org.thingsboard.server.transport.mqtt.sparkplug.connection;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.mqttv5.common.MqttException;
-import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
-import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
-import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -39,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
-import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
@@ -52,13 +48,7 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
     protected void processClientWithCorrectNodeAccessTokenWithNDEATH_Test() throws Exception {
         long ts = calendar.getTimeInMillis()-PUBLISH_TS_DELTA_MS;
         long value = bdSeq = 0;
-        MqttWireMessage response = clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
-
-        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
-
-        MqttConnAck connAckMsg = (MqttConnAck) response;
-
-        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
+        clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
 
         String keys = SparkplugMessageType.NDEATH.name() + " " + keysBdSeq;
         TsKvEntry expectedTsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(keys, value));
@@ -112,6 +102,5 @@ public  abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstr
         }
         Assert.assertEquals(cntDevices, deviceIds.size());
     }
-
 
 }

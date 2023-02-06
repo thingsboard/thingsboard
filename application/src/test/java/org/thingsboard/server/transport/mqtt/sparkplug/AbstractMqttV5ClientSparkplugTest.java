@@ -19,7 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.packet.MqttConnAck;
+import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
+import org.junit.Assert;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
@@ -30,6 +33,7 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType
 
 import java.util.Calendar;
 
+import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
@@ -52,7 +56,6 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected int seq = 0;
     protected static final long PUBLISH_TS_DELTA_MS = 86400000;// Publish start TS <-> 24h
 
-
     public void beforeSparkplugTest() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName("Test Connect Sparkplug client node")
@@ -62,13 +65,13 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         processBeforeTest(configProperties);
     }
 
-    public MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH() throws Exception {
+    public void clientWithCorrectNodeAccessTokenWithNDEATH() throws Exception {
         long ts = calendar.getTimeInMillis();
         long value = bdSeq = 0;
-        return clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
+        clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
     }
 
-    public MqttWireMessage clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
+    public void clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
         String key = keysBdSeq;
         MetricDataType metricDataType = Int64;
         SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
@@ -84,7 +87,11 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         msg.setPayload(deathBytes);
         options.setWill(topic, msg);
         IMqttToken connectionResult = client.connect(options);
-        return connectionResult.getResponse();
+
+        MqttWireMessage response = connectionResult.getResponse();
+        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
+        MqttConnAck connAckMsg = (MqttConnAck) response;
+        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
 
     protected long getBdSeqNum() throws Exception {
