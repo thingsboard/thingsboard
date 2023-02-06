@@ -29,4 +29,6 @@ public interface AlarmRuleDao extends Dao<AlarmRule> {
 
     PageData<AlarmRule> findAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
 
+    PageData<AlarmRule> findEnabledAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
+
 }

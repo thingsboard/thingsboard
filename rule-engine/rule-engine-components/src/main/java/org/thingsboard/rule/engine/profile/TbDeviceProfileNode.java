@@ -65,6 +65,7 @@ public class TbDeviceProfileNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         try {
             switch (msg.getType()) {
+                //TODO: use attr/alarm notification
                 case "POST_TELEMETRY_REQUEST":
                 case "POST_ATTRIBUTES_REQUEST":
                 case ACTIVITY_EVENT:

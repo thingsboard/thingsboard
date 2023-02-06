@@ -68,4 +68,9 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
         return alarmRuleDao.findAlarmRulesByTenantId(tenantId.getId(), pageLink);
     }
 
+    @Override
+    public PageData<AlarmRule> findEnabledAlarmRules(TenantId tenantId, PageLink pageLink) {
+        return alarmRuleDao.findEnabledAlarmRulesByTenantId(tenantId.getId(), pageLink);
+    }
+
 }

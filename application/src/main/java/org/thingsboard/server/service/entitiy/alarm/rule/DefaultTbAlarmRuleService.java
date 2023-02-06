@@ -37,7 +37,7 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
             AlarmRule savedAlarmRule = checkNotNull(alarmRuleService.saveAlarmRule(tenantId, alarmRule));
 //            autoCommit(user, savedAlarmRule.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, user);
-            tbClusterService.onAlarmRuleChange(alarmRule, isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            tbClusterService.onAlarmRuleChange(savedAlarmRule, isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedAlarmRule;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), alarmRule, actionType, user, e);

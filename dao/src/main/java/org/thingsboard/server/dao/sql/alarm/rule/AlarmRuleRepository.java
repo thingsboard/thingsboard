@@ -38,4 +38,11 @@ public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID
     Page<AlarmRuleEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                                   @Param("searchText") String searchText,
                                                   Pageable pageable);
+
+    @Query("SELECT ai FROM AlarmRuleEntity ai WHERE ai.tenantId = :tenantId " +
+            "AND ai.enabled = true " +
+            "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    Page<AlarmRuleEntity> findByTenantIdAndEnabled(@Param("tenantId") UUID tenantId,
+                                         @Param("searchText") String searchText,
+                                         Pageable pageable);
 }

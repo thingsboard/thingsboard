@@ -73,4 +73,13 @@ public class JpaAlarmRuleDao extends JpaAbstractDao<AlarmRuleEntity, AlarmRule> 
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
+
+    @Override
+    public PageData<AlarmRule> findEnabledAlarmRulesByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(alarmRuleRepository
+                .findByTenantIdAndEnabled(
+                        tenantId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
 }
