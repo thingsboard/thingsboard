@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
@@ -67,6 +68,8 @@ public class DefaultTbAlarmServiceTest {
     protected CustomerService customerService;
     @MockBean
     protected TbClusterService tbClusterService;
+    @MockBean
+    protected AlarmRuleService alarmRuleService;
     @MockBean
     private EntitiesVersionControlService vcService;
 

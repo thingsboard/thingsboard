@@ -35,14 +35,6 @@ public class AlarmRuleConfiguration implements Serializable {
 
     private static final long serialVersionUID = 4050882336403853271L;
 
-//    @ApiModelProperty(position = 1, value = "String value representing the alarm rule id", example = "highTemperatureAlarmID")
-//    private String id;
-
-//    @Length(fieldName = "alarm type")
-//    @NoXss
-//    @ApiModelProperty(position = 2, value = "String value representing type of the alarm", example = "High Temperature Alarm")
-//    private String alarmType;
-
     @ApiModelProperty(position = 3, value = "List of JSON objects representing source entity filters. These filters select a certain entity on which the specific Alarm Rule condition will be applied.")
     private List<AlarmRuleEntityFilter> sourceEntityFilters;
 
