@@ -71,7 +71,7 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
 
   private propagateChange = null;
   private valueChange$: Subscription = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private usedAttributesName: AttributeName[] = [];
 
   constructor(protected store: Store<AppState>,

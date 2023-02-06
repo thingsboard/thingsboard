@@ -40,7 +40,7 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
 
   deviceProfileConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   private requiredValue: boolean;
   get required(): boolean {

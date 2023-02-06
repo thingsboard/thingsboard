@@ -60,7 +60,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   mqttDeviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private requiredValue: boolean;
 
   get required(): boolean {

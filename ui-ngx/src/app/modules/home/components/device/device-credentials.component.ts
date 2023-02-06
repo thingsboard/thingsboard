@@ -73,7 +73,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     }
   }
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   deviceCredentialsFormGroup: UntypedFormGroup;
 

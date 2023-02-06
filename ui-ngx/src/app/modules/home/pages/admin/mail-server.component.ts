@@ -43,7 +43,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
               private router: Router,

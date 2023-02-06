@@ -59,7 +59,7 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
 
   private usedSpecType: SnmpSpecType[] = [];
   private valueChange$: Subscription = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder) { }

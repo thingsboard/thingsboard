@@ -60,13 +60,13 @@ export enum TelemetryFeature {
 
 export type TelemetryType = LatestTelemetry | AttributeScope;
 
-export function toTelemetryType(val: string): TelemetryType {
+export const toTelemetryType = (val: string): TelemetryType => {
   if (LatestTelemetry[val]) {
     return LatestTelemetry[val];
   } else {
     return AttributeScope[val];
   }
-}
+};
 
 export const telemetryTypeTranslations = new Map<TelemetryType, string>(
   [
@@ -367,20 +367,20 @@ export interface EntityCountUpdateMsg extends CmdUpdateMsg {
 
 export type WebsocketDataMsg = AlarmDataUpdateMsg | EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg;
 
-export function isEntityDataUpdateMsg(message: WebsocketDataMsg): message is EntityDataUpdateMsg {
+export const isEntityDataUpdateMsg = (message: WebsocketDataMsg): message is EntityDataUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.ENTITY_DATA;
-}
+};
 
-export function isAlarmDataUpdateMsg(message: WebsocketDataMsg): message is AlarmDataUpdateMsg {
+export const isAlarmDataUpdateMsg = (message: WebsocketDataMsg): message is AlarmDataUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.ALARM_DATA;
-}
+};
 
-export function isEntityCountUpdateMsg(message: WebsocketDataMsg): message is EntityCountUpdateMsg {
+export const isEntityCountUpdateMsg = (message: WebsocketDataMsg): message is EntityCountUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.COUNT_DATA;
-}
+};
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
   subscriptionId: number;
@@ -574,7 +574,7 @@ export class TelemetrySubscriber {
   private entityDataSubject = new ReplaySubject<EntityDataUpdate>(1);
   private alarmDataSubject = new ReplaySubject<AlarmDataUpdate>(1);
   private entityCountSubject = new ReplaySubject<EntityCountUpdate>(1);
-  private reconnectSubject = new Subject();
+  private reconnectSubject = new Subject<void>();
 
   private tsOffset = undefined;
 

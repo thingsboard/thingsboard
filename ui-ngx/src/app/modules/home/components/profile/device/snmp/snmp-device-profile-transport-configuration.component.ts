@@ -63,7 +63,7 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements OnInit,
 
   snmpDeviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private requiredValue: boolean;
 
   get required(): boolean {

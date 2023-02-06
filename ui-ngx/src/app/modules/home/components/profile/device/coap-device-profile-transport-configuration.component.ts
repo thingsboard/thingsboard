@@ -57,7 +57,7 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
 
   coapTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private requiredValue: boolean;
 
   private transportPayloadTypeConfiguration = this.fb.group({

@@ -62,7 +62,7 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
   publicKeyOrIdTooltipNamesMap = Lwm2mPublicKeyOrIdTooltipTranslationsMap;
   clientSecretKeyTooltipNamesMap = Lwm2mClientSecretKeyTooltipTranslationsMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
   constructor(private fb: UntypedFormBuilder) {
@@ -148,5 +148,5 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
 
     this.serverFormGroup.get('clientPublicKeyOrId').enable({emitEvent: false});
     this.serverFormGroup.get('clientSecretKey').enable();
-  }
+  };
 }

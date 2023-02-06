@@ -38,7 +38,7 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor, OnDestroy
   attributesFormGroup: UntypedFormGroup;
 
   private requiredValue: boolean;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   @Input()
   isAttributeTelemetry: boolean;

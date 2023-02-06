@@ -57,7 +57,7 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
   rateLimitsArray: Array<RateLimits>;
 
   private valueChangeSubscription: Subscription = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder) {}

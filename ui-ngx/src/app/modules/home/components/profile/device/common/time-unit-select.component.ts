@@ -67,7 +67,7 @@ export class TimeUnitSelectComponent implements OnInit, OnDestroy, ControlValueA
   timeUnits = Object.values({...TimeUnitMilli, ...TimeUnit}).filter(item => item !== TimeUnit.DAYS);
   timeUnitTranslations = timeUnitTranslationMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   private timeUnitToTimeMap = new Map<FullTimeUnit, number>(
     [

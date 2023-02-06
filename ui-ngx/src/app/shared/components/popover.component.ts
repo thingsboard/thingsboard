@@ -149,7 +149,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       this.renderer.parentNode(this.elementRef.nativeElement),
       componentRef.location.nativeElement
     );
-    this.component.setOverlayOrigin({ elementRef: this.origin || this.elementRef });
+    this.component.setOverlayOrigin(new CdkOverlayOrigin(this.origin || this.elementRef));
 
     this.initProperties();
 

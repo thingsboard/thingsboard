@@ -35,7 +35,7 @@ export class PowerModeSettingComponent implements OnInit, OnDestroy {
   powerMods = Object.values(PowerMode);
   powerModeTranslationMap = PowerModeTranslationMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   @Input()
   parentForm: UntypedFormGroup;

@@ -54,7 +54,7 @@ export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor
 
   deviceCredentialsMqttFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
   constructor(public fb: UntypedFormBuilder) {

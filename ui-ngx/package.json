@@ -26,8 +26,8 @@
     "@angular/platform-browser-dynamic": "^14.2.12",
     "@angular/router": "^14.2.12",
     "@auth0/angular-jwt": "^5.1.2",
-    "@date-io/core": "1.3.6",
-    "@date-io/date-fns": "1.3.6",
+    "@date-io/core": "1.3.7",
+    "@date-io/date-fns": "1.3.7",
     "@flowjs/flow.js": "^2.14.1",
     "@flowjs/ngx-flow": "~0.6.0",
     "@geoman-io/leaflet-geoman-free": "^2.13.0",
@@ -94,7 +94,7 @@
     "screenfull": "^6.0.2",
     "split.js": "^1.6.5",
     "systemjs": "6.11.0",
-    "tinycolor2": "^1.5.2",
+    "tinycolor2": "~1.4.2",
     "tooltipster": "^4.2.8",
     "ts-transformer-keys": "^0.4.4",
     "tslib": "^2.4.1",
@@ -117,6 +117,7 @@
     "@types/ace-diff": "^2.1.1",
     "@types/canvas-gauges": "^2.1.4",
     "@types/flot": "^0.0.32",
+    "@types/flowjs": "^2.13.9",
     "@types/jasmine": "~3.10.2",
     "@types/jasminewd2": "^2.0.10",
     "@types/jquery": "^3.5.9",
@@ -142,6 +143,9 @@
     "compression-webpack-plugin": "^10.0.0",
     "directory-tree": "^3.5.1",
     "eslint": "^8.28.0",
+    "eslint-plugin-import": "latest",
+    "eslint-plugin-jsdoc": "latest",
+    "eslint-plugin-prefer-arrow": "latest",
     "jasmine-core": "~3.10.1",
     "jasmine-spec-reporter": "~7.0.0",
     "karma": "~6.3.9",
@@ -160,6 +164,7 @@
   },
   "resolutions": {
     "@types/react": "17.0.37",
-    "ace-builds": "1.4.13"
+    "ace-builds": "1.4.13",
+    "@date-io/core": "1.3.7"
   }
 }

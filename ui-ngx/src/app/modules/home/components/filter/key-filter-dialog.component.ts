@@ -63,7 +63,7 @@ export class KeyFilterDialogComponent extends
 
   private dirty = false;
   private entityKeysName: Observable<Array<string>>;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   keyFilterFormGroup: UntypedFormGroup;
 

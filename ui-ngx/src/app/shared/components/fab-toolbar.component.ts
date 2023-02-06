@@ -28,7 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
-import { CanColorCtor, mixinColor } from '@angular/material/core';
+import { _Constructor, CanColor, mixinColor, ThemePalette } from '@angular/material/core';
 import { ResizeObserver } from '@juggle/resize-observer';
 
 export declare type FabToolbarDirection = 'left' | 'right';
@@ -37,7 +37,7 @@ class MatFabToolbarBase {
   // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle, id-blacklist, id-match
   constructor(public _elementRef: ElementRef) {}
 }
-const MatFabToolbarMixinBase: CanColorCtor & typeof MatFabToolbarBase = mixinColor(MatFabToolbarBase);
+const MatFabToolbarMixinBase: _Constructor<CanColor> & typeof MatFabToolbarBase = mixinColor(MatFabToolbarBase);
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
@@ -73,7 +73,6 @@ export class FabActionsDirective implements OnInit {
   selector: 'mat-fab-toolbar',
   templateUrl: './fab-toolbar.component.html',
   styleUrls: ['./fab-toolbar.component.scss'],
-  inputs: ['color'],
   encapsulation: ViewEncapsulation.None
 })
 export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnInit, OnDestroy, AfterViewInit, OnChanges {
@@ -85,6 +84,9 @@ export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnIni
 
   @Input()
   direction: FabToolbarDirection;
+
+  @Input()
+  color: ThemePalette;
 
   constructor(private el: ElementRef<HTMLElement>,
               @Inject(WINDOW) private window: Window) {

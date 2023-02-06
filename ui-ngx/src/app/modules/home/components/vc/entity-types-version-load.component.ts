@@ -33,9 +33,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { MatCheckbox } from '@angular/material/checkbox/checkbox';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
 import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-other-entities-confirm.component';
 
 @Component({
@@ -204,7 +203,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   allowedEntityTypes(entityTypeControl?: AbstractControl): Array<EntityType> {
     let res = [...exportableEntityTypes];
     const currentEntityType: EntityType = entityTypeControl?.get('entityType')?.value;
-    const value: [{entityType: string, config: EntityTypeVersionLoadConfig}] =
+    const value: [{entityType: string; config: EntityTypeVersionLoadConfig}] =
       this.entityTypesVersionLoadFormGroup.get('entityTypes').value || [];
     const usedEntityTypes = value.map(val => val.entityType).filter(val => val);
     res = res.filter(entityType => !usedEntityTypes.includes(entityType) || entityType === currentEntityType);
@@ -235,7 +234,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   }
 
   private updateModel() {
-    const value: [{entityType: string, config: EntityTypeVersionLoadConfig}] =
+    const value: [{entityType: string; config: EntityTypeVersionLoadConfig}] =
       this.entityTypesVersionLoadFormGroup.get('entityTypes').value || [];
     let modelValue: {[entityType: string]: EntityTypeVersionLoadConfig} = null;
     if (value && value.length) {

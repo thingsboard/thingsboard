@@ -54,7 +54,7 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
   @Input()
   disabled: boolean;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,

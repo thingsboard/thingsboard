@@ -134,7 +134,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private datasources: Array<Datasource>;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   public sources: Array<MultipleInputWidgetSource> = [];
   private isSavingInProgress = false;
 

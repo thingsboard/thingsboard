@@ -62,7 +62,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
   clientKeyTooltipNamesMap = Lwm2mClientKeyTooltipTranslationsMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
   constructor(private fb: UntypedFormBuilder) {

@@ -39,7 +39,7 @@ import { isNotEmptyStr } from '@core/utils';
 })
 export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements OnInit, OnDestroy {
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   checksumAlgorithms = Object.values(ChecksumAlgorithm);
   checksumAlgorithmTranslationMap = ChecksumAlgorithmTranslationMap;

@@ -70,7 +70,7 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
     }
   }
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 

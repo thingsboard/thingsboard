@@ -132,7 +132,15 @@
               "qrcode",
               "wcwidth",
               "leaflet-polylinedecorator",
-              "ace-diff"
+              "ace-diff",
+              "messageformat-parser",
+              "html2canvas",
+              "jszip",
+              "moment",
+              "ace",
+              "ace-builds",
+              "diff-match-patch",
+              "tv4"
             ]
           },
           "configurations": {
