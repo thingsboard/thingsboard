@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
@@ -33,11 +35,15 @@ import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpe
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
+import org.thingsboard.server.common.data.query.DynamicValue;
+import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -121,33 +127,43 @@ public abstract class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
     private AlarmRule createAlarmRule(TenantId tenantId, String name) {
         AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setName(name);
         alarmRule.setTenantId(tenantId);
-        alarmRule.setAlarmType("High Temperature");
-        alarmRule.setEnabled(true);
-        alarmRule.setDescription("test rule");
+        alarmRule.setAlarmType(name + "Alarm");
+        alarmRule.setName(name);
 
-        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
-//        alarmRuleConfiguration.setAlarmType("High Temperature");
-        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setAlarmDetails("Alarm Details");
+        AlarmConditionFilter alarmEnabledFilter = new AlarmConditionFilter();
+        alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
+        alarmEnabledFilter.setValue(Boolean.TRUE);
+        alarmEnabledFilter.setValueType(EntityKeyValueType.BOOLEAN);
+        BooleanFilterPredicate alarmEnabledPredicate = new BooleanFilterPredicate();
+        alarmEnabledPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
+        alarmEnabledPredicate.setValue(new FilterPredicateValue<>(
+                Boolean.FALSE,
+                null,
+                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarmEnabled")
+        ));
+        alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
+
+        AlarmConditionFilter temperatureFilter = new AlarmConditionFilter();
+        temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
+        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
+        temperatureFilter.setPredicate(temperaturePredicate);
+
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setSpec(new SimpleAlarmConditionSpec());
-        List<AlarmConditionFilter> condition = new ArrayList<>();
-        AlarmConditionFilter alarmConditionFilter = new AlarmConditionFilter();
-        alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperature"));
-        NumericFilterPredicate predicate = new NumericFilterPredicate();
-        predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        predicate.setValue(new FilterPredicateValue<>(55.0));
-        alarmConditionFilter.setPredicate(predicate);
-        alarmConditionFilter.setValueType(EntityKeyValueType.NUMERIC);
-        condition.add(alarmConditionFilter);
-        alarmCondition.setCondition(condition);
+        alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
-        alarmRuleConfiguration.setClearRule(alarmRuleCondition);
-        TreeMap<AlarmSeverity, AlarmRuleCondition> createRules = new TreeMap<>();
-        createRules.put(AlarmSeverity.CRITICAL, alarmRuleCondition);
-        alarmRuleConfiguration.setCreateRules(createRules);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(null);
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
         alarmRule.setConfiguration(alarmRuleConfiguration);
         return alarmRule;
     }
