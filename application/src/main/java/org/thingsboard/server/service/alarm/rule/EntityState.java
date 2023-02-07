@@ -54,6 +54,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -70,6 +74,7 @@ class EntityState {
     private DataSnapshot latestValues;
     private final ConcurrentMap<AlarmRuleId, AlarmState> alarmStates = new ConcurrentHashMap<>();
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
+    private final Lock lock = new ReentrantLock();
 
     EntityState(TenantId tenantId, EntityId entityId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, AlarmRuleEntityState state) {
         this.tenantId = tenantId;
@@ -97,14 +102,12 @@ class EntityState {
         }
     }
 
-    public boolean addAlarmRule(AlarmRule alarmRule) {
+    public void addAlarmRule(AlarmRule alarmRule) {
         if (!alarmStates.containsKey(alarmRule.getId())) {
             entityRulesState.addAlarmRule(alarmRule);
             alarmStates.put(alarmRule.getId(),
                     new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
-            return true;
         }
-        return false;
     }
 
     //TODO: check if we need to recalculate all keys
@@ -136,7 +139,7 @@ class EntityState {
     }
 
     public void harvestAlarms(long ts) throws ExecutionException, InterruptedException {
-//        log.debug("[{}] Going to harvest alarms: {}", ctx.getSelfId(), ts);
+        log.debug("[{}] Going to harvest alarms: {}", entityId, ts);
         boolean stateChanged = false;
         for (AlarmState state : alarmStates.values()) {
             stateChanged |= state.process(ctx, ts);

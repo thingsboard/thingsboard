@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,8 +53,8 @@ class EntityRulesState {
     private final Map<AlarmRuleId, Map<AlarmSeverity, Set<AlarmConditionFilterKey>>> alarmCreateKeys = new HashMap<>();
     private final Map<AlarmRuleId, Set<AlarmConditionFilterKey>> alarmClearKeys = new HashMap<>();
 
-    EntityRulesState(AlarmRule alarmRule) {
-        addAlarmRule(alarmRule);
+    EntityRulesState(List<AlarmRule> alarmRules) {
+        alarmRules.forEach(this::addAlarmRule);
     }
 
     void addAlarmRule(AlarmRule alarmRule) {

@@ -80,10 +80,10 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     public void deleteAlarmRulesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAlarmRulesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        tenantAssetsRemover.removeEntities(tenantId, tenantId);
+        tenantAlarmRulesRemover.removeEntities(tenantId, tenantId);
     }
 
-    private PaginatedRemover<TenantId, AlarmRuleInfo> tenantAssetsRemover =
+    private PaginatedRemover<TenantId, AlarmRuleInfo> tenantAlarmRulesRemover =
             new PaginatedRemover<>() {
 
                 @Override

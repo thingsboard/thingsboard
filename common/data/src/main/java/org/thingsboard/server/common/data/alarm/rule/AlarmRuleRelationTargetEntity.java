@@ -24,9 +24,9 @@ public class AlarmRuleRelationTargetEntity implements AlarmRuleTargetEntity {
 
     private static final long serialVersionUID = 6279050141475715964L;
 
-    private EntitySearchDirection direction;
+    private final EntitySearchDirection direction;
 
-    private String relationType;
+    private final String relationType;
 
     @Override
     public AlarmRuleTargetEntityType getType() {
