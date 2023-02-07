@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -50,7 +50,7 @@ import { isUndefinedOrNull } from '@core/utils';
 })
 export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
-  mappingsConfigForm: FormGroup;
+  mappingsConfigForm: UntypedFormGroup;
 
   dataTypes = Object.values(DataType);
   dataTypesTranslationMap = DataTypeTranslationMap;
@@ -63,7 +63,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
   private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: UntypedFormBuilder) { }
 
   ngOnInit() {
     this.mappingsConfigForm = this.fb.group({
@@ -125,8 +125,8 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
     }
   }
 
-  get mappingsConfigFormArray(): FormArray {
-    return this.mappingsConfigForm.get('mappings') as FormArray;
+  get mappingsConfigFormArray(): UntypedFormArray {
+    return this.mappingsConfigForm.get('mappings') as UntypedFormArray;
   }
 
   public addMappingConfig() {
@@ -141,7 +141,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
     this.mappingsConfigFormArray.removeAt(index);
   }
 
-  private createdFormGroup(value?: SnmpMapping): FormGroup {
+  private createdFormGroup(value?: SnmpMapping): UntypedFormGroup {
     if (isUndefinedOrNull(value)) {
       value = {
         dataType: DataType.STRING,

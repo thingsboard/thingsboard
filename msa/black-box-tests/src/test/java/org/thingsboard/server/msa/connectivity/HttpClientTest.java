@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
+import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
@@ -37,6 +38,7 @@ import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
+@DisableUIListeners
 public class HttpClientTest extends AbstractContainerTest {
     private Device device;
     @BeforeMethod

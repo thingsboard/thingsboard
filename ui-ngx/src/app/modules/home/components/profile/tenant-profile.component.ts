@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { createTenantProfileConfiguration, TenantProfile, TenantProfileType } from '@shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,7 +39,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: TenantProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
-              protected fb: FormBuilder,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -52,7 +52,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     }
   }
 
-  buildForm(entity: TenantProfile): FormGroup {
+  buildForm(entity: TenantProfile): UntypedFormGroup {
     const mainQueue = [
       {
         id: guid(),

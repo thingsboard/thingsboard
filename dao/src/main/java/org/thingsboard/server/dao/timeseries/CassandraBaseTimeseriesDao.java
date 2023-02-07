@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private PreparedStatement[] fetchStmtsAsc;
     private PreparedStatement[] fetchStmtsDesc;
     private PreparedStatement deleteStmt;
-    private PreparedStatement deletePartitionStmt;
     private final Lock stmtCreationLock = new ReentrantLock();
 
     private boolean isInstall() {
@@ -582,51 +581,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             }
         }
         return deleteStmt;
-    }
-
-    private void deletePartitionAsync(TenantId tenantId, final QueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
-        if (!cursor.hasNextPartition()) {
-            resultFuture.set(null);
-        } else {
-            PreparedStatement proto = getDeletePartitionStmt();
-            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(proto.bind());
-            stmtBuilder.setString(0, cursor.getEntityType());
-            stmtBuilder.setUuid(1, cursor.getEntityId());
-            stmtBuilder.setLong(2, cursor.getNextPartition());
-            stmtBuilder.setString(3, cursor.getKey());
-
-            BoundStatement stmt = stmtBuilder.build();
-
-            Futures.addCallback(executeAsyncWrite(tenantId, stmt), new FutureCallback<AsyncResultSet>() {
-                @Override
-                public void onSuccess(@Nullable AsyncResultSet result) {
-                    deletePartitionAsync(tenantId, cursor, resultFuture);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to delete data for query {}-{}", stmt, t);
-                }
-            }, readResultsProcessingExecutor);
-        }
-    }
-
-    private PreparedStatement getDeletePartitionStmt() {
-        if (deletePartitionStmt == null) {
-            stmtCreationLock.lock();
-            try {
-                if (deletePartitionStmt == null) {
-                    deletePartitionStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_PARTITIONS_CF +
-                            " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM);
-                }
-            } finally {
-                stmtCreationLock.unlock();
-            }
-        }
-        return deletePartitionStmt;
     }
 
     private PreparedStatement getSaveStmt(DataType dataType) {

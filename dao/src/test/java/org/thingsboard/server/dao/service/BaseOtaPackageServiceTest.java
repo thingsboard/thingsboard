@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -674,7 +674,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setTenantId(tenantId);
 
         thrown.expect(DataValidationException.class);
-        thrown.expectMessage("length of title must be equal or less than 255");
+        thrown.expectMessage("title length must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }
@@ -689,7 +689,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setTitle(TITLE);
 
         firmwareInfo.setVersion(StringUtils.random(257));
-        thrown.expectMessage("length of version must be equal or less than 255");
+        thrown.expectMessage("version length must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }

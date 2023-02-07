@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.subscription;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AbstractDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -197,6 +198,9 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
             entityData.getTimeseries().forEach((k, v) -> {
                 long ts = Arrays.stream(v).map(TsValue::getTs).max(Long::compareTo).orElse(0L);
                 log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, ts);
+                if (!Aggregation.NONE.equals(getCurrentAggregation()) && ts < endTs) {
+                    ts = endTs;
+                }
                 keyStates.put(k, ts);
             });
         }
@@ -247,4 +251,5 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
 
     abstract void sendWsMsg(String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType, boolean resultToLatestValues);
 
+    protected abstract Aggregation getCurrentAggregation();
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -67,14 +67,14 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   @Input()
   isResource = false;
 
-  attributesValueFormGroup: FormGroup;
+  attributesValueFormGroup: UntypedFormGroup;
 
   private propagateChange = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private usedAttributesName: AttributeName[] = [];
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
     this.attributesValueFormGroup = this.fb.group({
       attributesValue: this.fb.array([])
@@ -130,8 +130,8 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
     this.updateUsedAttributesName();
   }
 
-  attributesValueFormArray(): FormArray {
-    return this.attributesValueFormGroup.get('attributesValue') as FormArray;
+  attributesValueFormArray(): UntypedFormArray {
+    return this.attributesValueFormGroup.get('attributesValue') as UntypedFormArray;
   }
 
   public removeKeyVal(index: number) {
@@ -146,7 +146,7 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
     }
   }
 
-  private createdFormGroup(value?: AttributesNameValue): FormGroup {
+  private createdFormGroup(value?: AttributesNameValue): UntypedFormGroup {
     if (isUndefinedOrNull(value)) {
       value = {
         name: this.getFirstUnusedAttributesName(),

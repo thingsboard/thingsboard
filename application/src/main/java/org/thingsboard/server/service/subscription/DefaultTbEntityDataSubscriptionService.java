@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -562,8 +563,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     if (queryResults != null) {
                         for (ReadTsKvQueryResult queryResult : queryResults) {
                             String queryKey = queriesKeys.get(queryResult.getQueryId());
-                            entityData.getTimeseries().put(queryKey, queryResult.toTsValues());
-                            lastTsMap.put(queryKey, queryResult.getLastEntryTs());
+                            if (queryKey != null) {
+                                entityData.getTimeseries().merge(queryKey, queryResult.toTsValues(), ArrayUtils::addAll);
+                                lastTsMap.merge(queryKey, queryResult.getLastEntryTs(), Math::max);
+                            } else {
+                                log.warn("ReadTsKvQueryResult for {} {} has queryId not matching the initial query",
+                                        entityData.getEntityId().getEntityType(), entityData.getEntityId());
+                            }
                         }
                     }
                     // Populate with empty values if no data found.

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardResolver } from '@app/modules/home/pages/dashboard/dashboard-routing.module';
 import { UtilsService } from '@core/services/utils.service';
 import { Widget } from '@app/shared/models/widget.models';
-import { MODULES_MAP } from '../../shared/models/constants';
-import { modulesMap } from '../common/modules-map';
 
 @Injectable()
 export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
@@ -97,11 +95,7 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     WidgetEditorDashboardResolver,
-    DashboardResolver,
-    {
-      provide: MODULES_MAP,
-      useValue: modulesMap
-    }
+    DashboardResolver
   ]
 })
 export class DashboardPagesRoutingModule { }

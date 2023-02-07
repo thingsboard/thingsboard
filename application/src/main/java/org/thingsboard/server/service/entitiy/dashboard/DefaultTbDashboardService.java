@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customerId, savedDashboard,
-                    actionType, user, true, dashboardId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, dashboardId.toString(), customerId.toString(), customer.getName());
             return savedDashboard;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DASHBOARD), actionType,
@@ -102,7 +102,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, publicCustomer.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, publicCustomer.getId(), savedDashboard,
-                    actionType, user, false, dashboardId.toString(),
+                    actionType, user, dashboardId.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
             return savedDashboard;
         } catch (Exception e) {
@@ -120,7 +120,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
             Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(tenantId, dashboardId, publicCustomer.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, publicCustomer.getId(), dashboard,
-                    actionType, user, false, dashboardId.toString(),
+                    actionType, user, dashboardId.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
             return savedDashboard;
         } catch (Exception e) {
@@ -160,14 +160,14 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
                     savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, customerId));
                     ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
                     notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, savedDashboard.getId(), customerId, savedDashboard,
-                            actionType, user, true, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
+                            actionType, user, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
                 }
                 actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
                 for (CustomerId customerId : removedCustomerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
                     savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(tenantId, dashboardId, customerId));
                     notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, savedDashboard.getId(), customerId, savedDashboard,
-                            ActionType.UNASSIGNED_FROM_CUSTOMER, user, true, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
+                            ActionType.UNASSIGNED_FROM_CUSTOMER, user, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
                 }
                 return savedDashboard;
             }
@@ -197,7 +197,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
                     savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, customerId));
                     ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
                     notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customerId, savedDashboard,
-                            actionType, user, true, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
+                            actionType, user, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
                 }
                 return savedDashboard;
             }
@@ -227,7 +227,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
                     savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(tenantId, dashboardId, customerId));
                     notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customerId, savedDashboard,
-                            actionType, user, true, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
+                            actionType, user, dashboardId.toString(), customerId.toString(), customerInfo.getTitle());
                 }
                 return savedDashboard;
             }
@@ -282,7 +282,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(tenantId, dashboardId, customer.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customer.getId(), savedDashboard,
-                    actionType, user, true, dashboardId.toString(), customer.getId().toString(), customer.getName());
+                    actionType, user, dashboardId.toString(), customer.getId().toString(), customer.getName());
             return savedDashboard;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DASHBOARD), actionType, user, e, dashboardId.toString());

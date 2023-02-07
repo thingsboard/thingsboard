@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -23,11 +24,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
@@ -41,12 +46,14 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,6 +61,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -78,6 +87,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
 
     @After
     public void tearDown() throws Exception {
+        loginTenantAdmin();
         doDelete("/api/device/" + device.getId().getId())
                 .andExpect(status().isOk());
     }
@@ -532,6 +542,28 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
     }
 
+    @Test
+    public void testAttributesSubscription_sysAdmin() throws Exception {
+        loginSysAdmin();
+        SingleEntityFilter entityFilter = new SingleEntityFilter();
+        entityFilter.setSingleEntity(tenantId);
+
+        assertThatNoException().isThrownBy(() -> {
+            JsonNode update = getWsClient().subscribeForAttributes(tenantId, TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
+            assertThat(update.get("errorMsg").isNull()).isTrue();
+            assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
+        });
+
+        getWsClient().registerWaitForUpdate();
+        String expectedAttrValue = "42";
+        sendAttributes(TenantId.SYS_TENANT_ID, tenantId, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(
+                new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", expectedAttrValue))
+        ));
+        JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
+        assertThat(update).isNotNull();
+        assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         tsService.saveAndNotify(device.getTenantId(), null, device.getId(), tsData, 0, new FutureCallback<Void>() {
@@ -549,8 +581,12 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
     }
 
     private void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
+        sendAttributes(device.getTenantId(), device.getId(), scope, attrData);
+    }
+
+    private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(device.getTenantId(), device.getId(), scope.name(), attrData, new FutureCallback<Void>() {
+        tsService.saveAndNotify(tenantId, entityId, scope.name(), attrData, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 latch.countDown();

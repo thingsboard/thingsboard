@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { AssetId } from '@shared/models/id/asset-id';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
@@ -140,7 +140,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     });
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.detailsForm;
   }
 

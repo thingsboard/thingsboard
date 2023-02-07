@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,8 @@ public class ContainerTestSuite {
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
                     new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.yml" : "docker-compose.redis.yml")),
-                    new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.volumes.yml" : "docker-compose.redis.volumes.yml"))
+                    new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.volumes.yml" : "docker-compose.redis.volumes.yml")),
+                    new File(targetDir + ("docker-selenium.yml"))
             ));
 
             Map<String, String> queueEnv = new HashMap<>();
@@ -229,5 +230,9 @@ public class ContainerTestSuite {
             log.error("failed to update file " + sourceFilename, e);
             fail("failed to update file");
         }
+    }
+
+    public DockerComposeContainer<?> getTestContainer() {
+        return testContainer;
     }
 }
