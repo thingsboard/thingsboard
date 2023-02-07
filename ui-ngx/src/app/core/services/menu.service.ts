@@ -115,7 +115,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '320px',
+        height: '360px',
         icon: 'settings',
         pages: [
           {
@@ -138,6 +138,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/sms-provider',
             icon: 'sms'
+          },
+          {
+            id: guid(),
+            name: 'notification.notification',
+            type: 'link',
+            path: '/settings/notification',
+            icon: 'notifications'
           },
           {
             id: guid(),
@@ -237,6 +244,11 @@ export class MenuService {
             name: 'admin.sms-provider',
             icon: 'sms',
             path: '/settings/sms-provider'
+          },
+          {
+            name: 'notification.notification',
+            icon: 'notifications',
+            path: '/settings/notification'
           },
           {
             name: 'admin.security-settings',
@@ -425,7 +437,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '160px',
+        height: '200px',
         icon: 'settings',
         pages: [
           {
@@ -434,6 +446,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
+          },
+          {
+            id: guid(),
+            name: 'notification.notification',
+            type: 'link',
+            path: '/settings/notification',
+            icon: 'notifications'
           },
           {
             id: guid(),
@@ -610,6 +629,11 @@ export class MenuService {
             name: 'admin.home-settings',
             icon: 'settings_applications',
             path: '/settings/home'
+          },
+          {
+            name: 'notification.notification',
+            icon: 'notifications',
+            path: '/settings/notification'
           },
           {
             name: 'resource.resources-library',

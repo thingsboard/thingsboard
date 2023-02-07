@@ -208,12 +208,12 @@
             required
             formControlName="targets"
             [entityType]="entityType.NOTIFICATION_TARGET"
-            placeholderText="notification.target">
+            placeholderText="{{ 'notification.target' | translate }}">
           </tb-entity-list>
         </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
-        <section formGroupName="additionalConfig">
+        <section formGroupName="additionalConfig">;
           <mat-form-field class="mat-block">
             <mat-label translate>notification.description</mat-label>
             <input matInput formControlName="description">

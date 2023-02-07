@@ -407,6 +407,11 @@
             "generate-key": "Generate key",
             "info-header": "All users will be to re-logined",
             "info-message": "Change of the JWT Signing Key will cause all issued tokens to be invalid. All users will need to re-login. This will also affect scripts that use Rest API/Websockets."
+        },
+        "notification": {
+            "notification-settings": "Notification settings",
+            "slack-api-token": "Slack api token",
+            "slack": "Slack"
         }
       },
     "alarm": {
