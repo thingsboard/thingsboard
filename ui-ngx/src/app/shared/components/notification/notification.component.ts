@@ -15,10 +15,17 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Notification } from '@shared/models/notification.models';
+import {
+  Notification,
+  NotificationType,
+  NotificationTypeColors,
+  NotificationTypeIcons
+} from '@shared/models/notification.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { AlarmSeverity, alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import * as tinycolor_ from 'tinycolor2';
 
 @Component({
   selector: 'tb-notification',
@@ -48,6 +55,15 @@ export class NotificationComponent implements OnInit {
   showIcon = false;
   showButton = false;
   buttonLabel = '';
+
+  tinycolor = tinycolor_;
+
+  notificationType = NotificationType;
+  notificationTypeColors = NotificationTypeColors;
+  notificationTypeIcons = NotificationTypeIcons;
+  alarmSeverity = AlarmSeverity;
+  alarmSeverityColors = alarmSeverityColors;
+  alarmSeverityTranslations = alarmSeverityTranslations;
 
   constructor(
     private utils: UtilsService,
@@ -83,6 +99,18 @@ export class NotificationComponent implements OnInit {
       if (this.onClose) {
         this.onClose();
       }
+    }
+  }
+
+  alarmColorSeverity(alpha: number) {
+    return this.tinycolor(this.alarmSeverityColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
+  }
+
+  notificationColor() {
+    if (this.notification.type === this.notificationType.ALARM) {
+      return this.alarmSeverityColors.get(this.notification.info.alarmSeverity);
+    } else {
+      return this.notificationTypeColors.get(this.notification.type);
     }
   }
 }
