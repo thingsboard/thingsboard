@@ -30,19 +30,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -107,82 +96,10 @@ public class SparkplugMetricUtil {
                     return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.STRING_V)
                             .setStringV(protoMetric.getStringValue()).build());
                 // byte[]
-                case BooleanArray:
-                    ByteBuffer booleanByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
-                    while (booleanByteBuffer.hasRemaining()) {
-                        nodeArray.add(booleanByteBuffer.get() == (byte) 0 ? false : true);
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                // byte[]
                 case Bytes:
-                case Int8Array:
                     ByteBuffer byteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
                     while (byteBuffer.hasRemaining()) {
                         nodeArray.add(byteBuffer.get());
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                // short[]
-                case Int16Array:
-                case UInt8Array:
-                    ShortBuffer shortByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
-                            .asShortBuffer();
-                    while (shortByteBuffer.hasRemaining()) {
-                        nodeArray.add(shortByteBuffer.get());
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                // int[]
-                case Int32Array:
-                case UInt16Array:
-                    IntBuffer intByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
-                            .asIntBuffer();
-                    while (intByteBuffer.hasRemaining()) {
-                        nodeArray.add(intByteBuffer.get());
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                // float[]
-                case FloatArray:
-                    FloatBuffer floatByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
-                            .asFloatBuffer();
-                    while (floatByteBuffer.hasRemaining()) {
-                        nodeArray.add(floatByteBuffer.get());
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                // double[]
-                case DoubleArray:
-                    DoubleBuffer doubleByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
-                            .asDoubleBuffer();
-                    while (doubleByteBuffer.hasRemaining()) {
-                        nodeArray.add(doubleByteBuffer.get());
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                // long[]
-                case DateTimeArray:
-                case Int64Array:
-                case UInt64Array:
-                case UInt32Array:
-                    LongBuffer longByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray())
-                            .asLongBuffer();
-                    while (longByteBuffer.hasRemaining()) {
-                        nodeArray.add(longByteBuffer.get());
-                    }
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
-                            .setJsonV(nodeArray.toString()).build());
-                case StringArray:
-                    ByteBuffer stringByteBuffer = ByteBuffer.wrap(protoMetric.getBytesValue().toByteArray());
-                    final ByteArrayInputStream byteArrayInputStream =
-                            new ByteArrayInputStream(stringByteBuffer.array());
-                    final ObjectInputStream objectInputStream =
-                            new ObjectInputStream(byteArrayInputStream);
-                    final String[] stringArray = (String[]) objectInputStream.readObject();
-                    objectInputStream.close();
-                    for (String s : stringArray) {
-                        nodeArray.add(s);
                     }
                     return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.JSON_V)
                             .setJsonV(nodeArray.toString()).build());
@@ -258,46 +175,6 @@ public class SparkplugMetricUtil {
             case Bytes:
                 ByteString byteString = ByteString.copyFrom((byte[]) value);
                 return metric.toBuilder().setBytesValue(byteString).build();
-            case Int8Array:
-                byte [] int8Array = byteArrayToByteArray((Byte[]) value);
-                ByteString byteInt8Array = ByteString.copyFrom((int8Array));
-                return metric.toBuilder().setBytesValue(byteInt8Array).build();
-            case Int16Array:
-            case UInt8Array:
-                byte[] int16Array = shortArrayToByteArray((Short[]) value);
-                ByteString byteInt16Array = ByteString.copyFrom((int16Array));
-                return metric.toBuilder().setBytesValue(byteInt16Array).build();
-            case Int32Array:
-            case UInt16Array:
-            case Int64Array:
-            case UInt32Array:
-            case UInt64Array:
-            case DateTimeArray:
-                if (value instanceof Integer[]) {
-                    byte[] int32Array = integerArrayToByteArray((Integer[]) value);
-                    ByteString byteInt32Array = ByteString.copyFrom((int32Array));
-                    return metric.toBuilder().setBytesValue(byteInt32Array).build();
-                } else {
-                    byte[] int64Array = longArrayToByteArray((Long[]) value);
-                    ByteString byteInt64Array = ByteString.copyFrom((int64Array));
-                    return metric.toBuilder().setBytesValue(byteInt64Array).build();
-                }
-            case DoubleArray:
-                byte[] doubleArray = doublArrayToByteArray((Double[]) value);
-                ByteString byteDoubleArray = ByteString.copyFrom(doubleArray);
-                return metric.toBuilder().setBytesValue(byteDoubleArray).build();
-            case FloatArray:
-                byte[] floatArray = floatArrayToByteArray((Float[]) value);
-                ByteString byteFloatArray = ByteString.copyFrom(floatArray);
-                return metric.toBuilder().setBytesValue(byteFloatArray).build();
-            case BooleanArray:
-                byte[] booleanArray = booleanArrayToByteArray((Boolean[]) value);
-                ByteString byteBooleanArray = ByteString.copyFrom(booleanArray);
-                return metric.toBuilder().setBytesValue(byteBooleanArray).build();
-            case StringArray:
-                byte[] stringArray = stringArrayToByteArray((String[]) value);
-                ByteString byteStringArray = ByteString.copyFrom(stringArray);
-                return metric.toBuilder().setBytesValue(byteStringArray).build();
             case DataSet:
                 return metric.toBuilder().setDatasetValue((SparkplugBProto.Payload.DataSet) value).build();
             case File:
@@ -417,43 +294,6 @@ public class SparkplugMetricUtil {
                         bytes[i] = listBytes.get(i).byteValue();
                     }
                     return Optional.of(bytes);
-                    // Byte []
-                case Int8Array:
-                    List<Byte> listInt8Array = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    Byte[] int8Arrays = listInt8Array.toArray(Byte[]::new) ;
-                    return Optional.of(int8Arrays);
-                // Short[]
-                case Int16Array:
-                case UInt8Array:
-                    List<Short> listShorts = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listShorts.toArray(Short[]::new));
-                // Integer []
-                case UInt16Array:
-                case Int32Array:
-                    List<Integer> listIntegers = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listIntegers.toArray(Integer[]::new));
-                // Long[]
-                case UInt32Array:
-                case Int64Array:
-                case UInt64Array:
-                case DateTimeArray:
-                    List<Long> listLongs = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listLongs.toArray(Long[]::new));
-                // Double []
-                case DoubleArray:
-                    List<Double> listDoubles = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listDoubles.toArray(Double[]::new));
-                // Float[]
-                case FloatArray:
-                    List<Float> listFloats = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listFloats.toArray(Float[]::new));
-                // Boolean[]
-                case BooleanArray:
-                    List<Boolean> listBooleans = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listBooleans.toArray(Boolean[]::new));
-                case StringArray:
-                    List<String> listStrings = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
-                    return Optional.of(listStrings.toArray(String[]::new));
                 case DataSet:
                 case File:
                 case Template:
@@ -468,80 +308,6 @@ public class SparkplugMetricUtil {
             log.error("Invalid type value [{}] for MetricDataType [{}] [{}]", arrayNodeStr, metricDataType.name(), e.getMessage());
             return Optional.empty();
         }
-    }
-
-    private static byte[] byteArrayToByteArray(Byte[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length);
-        for (Byte d : inputs) {
-            bb.put(d);
-        }
-        return bb.array();
-    }
-
-    private static byte[] shortArrayToByteArray(Short[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 2);
-        for (Short d : inputs) {
-            bb.putShort(d);
-        }
-        return bb.array();
-    }
-
-    private static byte[] integerArrayToByteArray(Integer[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 4);
-        for (Integer d : inputs) {
-            bb.putInt(d);
-        }
-        return bb.array();
-    }
-
-    private static byte[] longArrayToByteArray(Long[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
-        for (Long d : inputs) {
-            bb.putLong(d);
-        }
-        return bb.array();
-    }
-
-    private static byte[] doublArrayToByteArray(Double[] inputs) {
-        ByteBuffer bb = ByteBuffer.allocate(inputs.length * 8);
-        for (Double d : inputs) {
-            bb.putDouble(d);
-        }
-        return bb.array();
-    }
-
-    private static byte[] floatArrayToByteArray(Float[] inputs) throws ThingsboardException {
-        ByteArrayOutputStream bas = new ByteArrayOutputStream();
-        DataOutputStream ds = new DataOutputStream(bas);
-        for (Float f : inputs) {
-            try {
-                ds.writeFloat(f);
-            } catch (IOException e) {
-                throw new ThingsboardException("Invalid value float ", ThingsboardErrorCode.INVALID_ARGUMENTS);
-            }
-        }
-        return bas.toByteArray();
-    }
-
-    private static byte[] booleanArrayToByteArray(Boolean[] inputs) {
-        byte[] toReturn = new byte[inputs.length];
-        for (int entry = 0; entry < toReturn.length; entry++) {
-            toReturn[entry] = (byte) (inputs[entry] ? 1 : 0);
-        }
-        return toReturn;
-    }
-
-    private static byte[] stringArrayToByteArray(String[] inputs) throws ThingsboardException {
-        final ByteArrayOutputStream bas = new ByteArrayOutputStream();
-        try {
-            final ObjectOutputStream os = new ObjectOutputStream(bas);
-            os.writeObject(inputs);
-            os.flush();
-            os.close();
-        } catch (Exception e) {
-            throw new ThingsboardException("Invalid value float ", ThingsboardErrorCode.INVALID_ARGUMENTS);
-        }
-        return bas.toByteArray();
     }
 
     private static Optional<String> getValueKvProtoPrimitive(TransportProtos.KeyValueProto kv) {

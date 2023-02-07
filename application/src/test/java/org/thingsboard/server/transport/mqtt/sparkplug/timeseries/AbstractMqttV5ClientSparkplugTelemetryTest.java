@@ -41,28 +41,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.BooleanArray;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.DateTimeArray;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.DoubleArray;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.FloatArray;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int16;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int16Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int64Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int8;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int8Array;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.StringArray;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt16;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt16Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8Array;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
 /**
@@ -270,58 +257,6 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         String keys = "MyBytesArray";
         byte[] bytes = {nextInt8(), nextInt8(), nextInt8()};
         createdAddMetricTsKvJson(dataPayload, keys, bytes, ts, Bytes, listTsKvEntry, listKeys);
-
-        keys = "MyInt8Array";
-        Byte[] int8s = {nextInt8(), nextInt8(), nextInt8()};
-        createdAddMetricTsKvJson(dataPayload, keys, int8s, ts, Int8Array, listTsKvEntry, listKeys);
-
-        keys = "MyInt16Array";
-        Short[] int16s = {nextInt16(), nextInt16(), nextInt16()};
-        createdAddMetricTsKvJson(dataPayload, keys, int16s, ts, Int16Array, listTsKvEntry, listKeys);
-
-        keys = "MyUInt8Array";
-        Short[] uInt8s = {nextUInt8(), nextUInt8(), nextUInt8()};
-        createdAddMetricTsKvJson(dataPayload, keys, uInt8s, ts, UInt8Array, listTsKvEntry, listKeys);
-
-        keys = "MyInt32Array";
-        Integer[] int32s = {nextInt32(), nextInt32(), nextInt32()};
-        createdAddMetricTsKvJson(dataPayload, keys, int32s, ts, Int32Array, listTsKvEntry, listKeys);
-
-        keys = "MyUInt16Array";
-        Integer[] uInt16s = {nextUInt16(), nextUInt16(), nextUInt16()};
-        createdAddMetricTsKvJson(dataPayload, keys, uInt16s, ts, UInt16Array, listTsKvEntry, listKeys);
-
-        keys = "MyInt64Array";
-        Long[] int64s = {nextInt64(), nextInt64(), nextInt64()};
-        createdAddMetricTsKvJson(dataPayload, keys, int64s, ts, Int64Array, listTsKvEntry, listKeys);
-
-        keys = "MyUInt32LArray";
-        Long[] uInt32Ls = {nextUInt32(), nextUInt32(), nextUInt32()};
-        createdAddMetricTsKvJson(dataPayload, keys, uInt32Ls, ts, UInt32Array, listTsKvEntry, listKeys);
-
-        keys = "MyDateTimeArray";
-        Long[] dateTimes = {nextDateTime(), nextDateTime(), nextDateTime()};
-        createdAddMetricTsKvJson(dataPayload, keys, dateTimes, ts, DateTimeArray, listTsKvEntry, listKeys);
-
-        keys = "MyUInt64Array";
-        Long[] uInt64s = {nextUInt64(), nextUInt64(), nextUInt64()};
-        createdAddMetricTsKvJson(dataPayload, keys, uInt64s, ts, UInt64Array, listTsKvEntry, listKeys);
-
-        keys = "MyFloatArray";
-        Float[] floats = {nextFloat(0, 300), nextFloat(0, 4000), nextFloat(10, 10000)};
-        createdAddMetricTsKvJson(dataPayload, keys, floats, ts, FloatArray, listTsKvEntry, listKeys);
-
-        keys = "MyDoubleArray";
-        Double[] doubles = {nextDouble(), nextDouble(), nextDouble()};
-        createdAddMetricTsKvJson(dataPayload, keys, doubles, ts, DoubleArray, listTsKvEntry, listKeys);
-
-        keys = "MyBooleanArray";
-        Boolean[] booleans = {nextBoolean(), nextBoolean(), nextBoolean()};
-        createdAddMetricTsKvJson(dataPayload, keys, booleans, ts, BooleanArray, listTsKvEntry, listKeys);
-
-        keys = "MyStringArray";
-        String[] strings = {nexString(), nexString(), nexString()};
-        createdAddMetricTsKvJson(dataPayload, keys, strings, ts, StringArray, listTsKvEntry, listKeys);
     }
 
     private TsKvEntry createdAddMetricTsKvLong(SparkplugBProto.Payload.Builder dataPayload, String key, Object value,
@@ -372,54 +307,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                     nodeArray.add(b);
                 }
                 break;
-            case Int8Array:
-                for (Byte b : (Byte[]) values) {
-                    nodeArray.add(b);
-                }
-                break;
-            case Int16Array:
-            case UInt8Array:
-                for (Short b : (Short[]) values) {
-                    nodeArray.add(b);
-                }
-                break;
-            case Int32Array:
-            case UInt16Array:
-            case Int64Array:
-            case UInt32Array:
-            case UInt64Array:
-            case DateTimeArray:
-                if (values instanceof Integer[]) {
-                    for (Integer b : (Integer[]) values) {
-                        nodeArray.add(b);
-                    }
-                } else {
-                    for (Long b : (Long[]) values) {
-                        nodeArray.add(b);
-                    }
-                }
-                break;
-            case DoubleArray:
-                for (Double b : (Double[]) values) {
-                    nodeArray.add(b);
-                }
-                break;
-            case FloatArray:
-                for (Float b : (Float[]) values) {
-                    nodeArray.add(b);
-                }
-                break;
-            case BooleanArray:
-                for (Boolean b : (Boolean[]) values) {
-                    nodeArray.add(b);
-                }
-                break;
-            case StringArray:
-                for (String b : (String[]) values) {
-                    nodeArray.add(b);
-                }
-                break;
-            default:
+             default:
                 throw new IllegalStateException("Unexpected value: " + metricDataType);
         }
         if (nodeArray.size() > 0) {
