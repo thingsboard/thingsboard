@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -804,7 +803,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private UserSettings createUserSettings() {
         UserSettings userSettings = new UserSettings();
-        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
+        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", StringUtils.randomAlphanumeric(10)));
         return userSettings;
     }
 }
