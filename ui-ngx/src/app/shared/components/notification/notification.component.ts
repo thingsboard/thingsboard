@@ -15,16 +15,11 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import {
-  Notification,
-  NotificationType,
-  NotificationTypeColors,
-  NotificationTypeIcons
-} from '@shared/models/notification.models';
+import { Notification, NotificationType, NotificationTypeIcons } from '@shared/models/notification.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { AlarmSeverity, alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
 
 @Component({
@@ -59,10 +54,7 @@ export class NotificationComponent implements OnInit {
   tinycolor = tinycolor_;
 
   notificationType = NotificationType;
-  notificationTypeColors = NotificationTypeColors;
   notificationTypeIcons = NotificationTypeIcons;
-  alarmSeverity = AlarmSeverity;
-  alarmSeverityColors = alarmSeverityColors;
   alarmSeverityTranslations = alarmSeverityTranslations;
 
   constructor(
@@ -103,14 +95,20 @@ export class NotificationComponent implements OnInit {
   }
 
   alarmColorSeverity(alpha: number) {
-    return this.tinycolor(this.alarmSeverityColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
+    return this.tinycolor(alarmSeverityColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
   }
 
-  notificationColor() {
+  notificationColor(): string {
     if (this.notification.type === this.notificationType.ALARM) {
-      return this.alarmSeverityColors.get(this.notification.info.alarmSeverity);
-    } else {
-      return this.notificationTypeColors.get(this.notification.type);
+      return alarmSeverityColors.get(this.notification.info.alarmSeverity);
     }
+    return 'transparent';
+  }
+
+  notificationIconColor(): object {
+    if (this.notification.type === this.notificationType.ALARM) {
+      return {color: alarmSeverityColors.get(this.notification.info.alarmSeverity)};
+    }
+    return null;
   }
 }

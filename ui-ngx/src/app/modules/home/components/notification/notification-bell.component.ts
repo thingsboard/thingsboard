@@ -78,7 +78,7 @@ export class NotificationBellComponent implements OnInit {
             showNotificationPopover.hide();
           }
         },
-        {maxHeight: '100vh', height: '100%', padding: '10px'},
+        {maxHeight: '90vh', height: '100%', padding: '10px'},
         {width: '400px', minWidth: '100%', maxWidth: '100%'},
         {height: '100%', flexDirection: 'column', boxSizing: 'border-box', display: 'flex'}, false);
       showNotificationPopover.tbComponentRef.instance.popoverComponent = showNotificationPopover;

@@ -19,12 +19,7 @@
     padding: 10px;
     display: block;
     border: 1px solid;
-    border-radius: 8px;
-  }
-
-  .alarm-severity-border {
-    padding: 5px;
-    border-radius: 8px;
+    border-radius: 4px;
   }
 
   .icon {
@@ -45,7 +40,7 @@
     }
 
     .button {
-      margin-top: 8px;
+      margin-top: 12px;
       border-color: initial;
     }
   }
@@ -62,7 +57,12 @@
     .time {
       font-size: 12px;
       letter-spacing: 0.25px;
-      margin: 2px 2px 5px;
+      margin: 0 4px;
+    }
+
+    .alarm-severity {
+      padding: 5px;
+      border-radius: 8px;
     }
   }
 }

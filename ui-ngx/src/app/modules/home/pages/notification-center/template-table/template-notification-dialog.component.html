@@ -43,15 +43,15 @@
             {{ 'notification.target-name-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <label class="tb-title no-padding" style="margin-bottom: 8px">{{ 'notification.type' | translate }}</label>
-        <mat-radio-group formControlName="notificationType" fxLayout="column">
-          <mat-radio-button *ngFor="let notificationType of notificationTypes" [value]="notificationType" fxFlex>
-            <div fxLayout="column">
-              <div>{{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}</div>
-              <div class="tb-hint">{{ notificationTemplateTypeTranslateMap.get(notificationType).hint | translate }}</div>
-            </div>
-          </mat-radio-button>
-        </mat-radio-group>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>notification.type</mat-label>
+          <mat-select formControlName="notificationType">
+            <mat-option *ngFor="let notificationType of notificationTypes" [value]="notificationType">
+              {{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}</mat-hint>
+        </mat-form-field>
         <section formGroupName="configuration">
           <mat-form-field class="mat-block">
             <mat-label translate>notification.subject</mat-label>

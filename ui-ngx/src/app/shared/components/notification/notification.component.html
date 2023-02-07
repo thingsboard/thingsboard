@@ -23,7 +23,7 @@
     </mat-icon>
   </div>
   <ng-template #defaultIcon>
-    <mat-icon class="icon" [fxShow]="notificationTypeIcons.get(notification.type)" [ngStyle]="{color: notificationColor()}">
+    <mat-icon class="icon" *ngIf="notificationTypeIcons.get(notification.type)" [ngStyle]="notificationIconColor()">
       {{ notificationTypeIcons.get(notification.type) }}
     </mat-icon>
   </ng-template>
@@ -37,14 +37,15 @@
     </button>
   </div>
   <div class="description" fxLayout="column" fxLayoutAlign="start end">
-    <button mat-icon-button class="tb-mat-28 mark-read" (click)="markRead($event)">
-      <mat-icon>check_circle_outline</mat-icon>
-    </button>
-    <span class="time" *ngIf="preview">{{ notification.createdTime | dateAgo }}</span>
-    <div class="alarm-severity-border" *ngIf="notification.type === notificationType.ALARM"
+    <div fxLayout="row" fxLayoutAlign="end center" class="mark-read">
+      <span class="time" *ngIf="!preview">{{ notification.createdTime | dateAgo }}</span>
+      <button mat-icon-button class="tb-mat-28" (click)="markRead($event)">
+        <mat-icon>check_circle_outline</mat-icon>
+      </button>
+    </div>
+    <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM"
          [ngStyle]="{backgroundColor: alarmColorSeverity(0.08)}">
-      <span class="alarm-severity-text"
-            [ngStyle]="{color: alarmColorSeverity(0.78)}">
+      <span [ngStyle]="{color: alarmColorSeverity(0.78)}">
         {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}
       </span>
     </div>
