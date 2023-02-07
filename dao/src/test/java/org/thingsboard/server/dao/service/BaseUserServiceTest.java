@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -70,7 +71,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         customerUser.setEmail("customer@thingsboard.org");
         customerUser = userService.saveUser(customerUser);
 
-        userSettings = createUserSettings();
+        userSettings = createUserSettings(customerUser.getId());
         userSettings = userService.saveUserSettings(TenantId.SYS_TENANT_ID, customerUser.getId(), userSettings);
     }
 
@@ -488,8 +489,9 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         tenantService.deleteTenant(tenantId);
     }
 
-    private UserSettings createUserSettings() {
+    private UserSettings createUserSettings(UserId userId) {
         UserSettings userSettings = new UserSettings();
+        userSettings.setUserId(userId);
         userSettings.setSettings(JacksonUtil.newObjectNode().put("text", StringUtils.randomAlphanumeric(10)));
         return userSettings;
     }
