@@ -26,12 +26,15 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
 public class BaseAlarmRuleService extends AbstractEntityService implements AlarmRuleService {
+
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     private AlarmRuleDao alarmRuleDao;
@@ -72,5 +75,26 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     public PageData<AlarmRule> findEnabledAlarmRules(TenantId tenantId, PageLink pageLink) {
         return alarmRuleDao.findEnabledAlarmRulesByTenantId(tenantId.getId(), pageLink);
     }
+
+    @Override
+    public void deleteAlarmRulesByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteAlarmRulesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        tenantAssetsRemover.removeEntities(tenantId, tenantId);
+    }
+
+    private PaginatedRemover<TenantId, AlarmRuleInfo> tenantAssetsRemover =
+            new PaginatedRemover<>() {
+
+                @Override
+                protected PageData<AlarmRuleInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return alarmRuleDao.findAlarmRuleInfosByTenantId(id.getId(), pageLink);
+                }
+
+                @Override
+                protected void removeEntity(TenantId tenantId, AlarmRuleInfo entity) {
+                    deleteAlarmRule(tenantId, new AlarmRuleId(entity.getId().getId()));
+                }
+            };
 
 }

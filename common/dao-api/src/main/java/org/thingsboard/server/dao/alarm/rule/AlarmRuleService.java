@@ -36,4 +36,6 @@ public interface AlarmRuleService {
 
     PageData<AlarmRule> findEnabledAlarmRules(TenantId tenantId, PageLink pageLink);
 
+    void deleteAlarmRulesByTenantId(TenantId tenantId);
+
 }
