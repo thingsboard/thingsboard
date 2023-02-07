@@ -48,17 +48,17 @@ public class JpaUserSettingsDao extends JpaAbstractDaoListeningExecutorService i
     private UserSettingsRepository userSettingsRepository;
 
     @Override
-    public UserSettings saveSettings(TenantId tenantId, UserSettings userSettings) {
+    public UserSettings save(TenantId tenantId, UserSettings userSettings) {
         return DaoUtil.getData(userSettingsRepository.save(new UserSettingsEntity(userSettings)));
     }
 
     @Override
-    public UserSettings findByUserId(TenantId tenantId, UserId userId) {
+    public UserSettings findById(TenantId tenantId, UserId userId) {
         return DaoUtil.getData(userSettingsRepository.findById(userId.getId()));
     }
 
     @Override
-    public void removeByUserId(TenantId tenantId, UserId userId) {
+    public void removeById(TenantId tenantId, UserId userId) {
         userSettingsRepository.deleteById(userId.getId());
     }
 

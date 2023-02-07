@@ -326,23 +326,23 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     @Override
     public UserSettings saveUserSettings(TenantId tenantId, UserId userId, UserSettings userSettings) {
-        log.trace("Executing saveUserSettings [{}], [{}]", userId, userSettings);
+        log.trace("Executing saveUserSettings for user [{}], [{}]", userId, userSettings);
         validateId(userId, INCORRECT_USER_ID + userId);
-        return userSettingsDao.saveSettings(tenantId, userSettings);
+        return userSettingsDao.save(tenantId, userSettings);
     }
 
     @Override
     public UserSettings findUserSettings(TenantId tenantId, UserId userId) {
-        log.trace("Executing findUserSettings [{}]", userId);
+        log.trace("Executing findUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
-        return userSettingsDao.findByUserId(tenantId, userId);
+        return userSettingsDao.findById(tenantId, userId);
     }
 
     @Override
     public void deleteUserSettings(TenantId tenantId, UserId userId) {
         log.trace("Executing deleteUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
-        userSettingsDao.removeByUserId(tenantId, userId);
+        userSettingsDao.removeById(tenantId, userId);
     }
 
     private int increaseFailedLoginAttempts(User user) {

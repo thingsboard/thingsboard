@@ -67,15 +67,15 @@ public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void testFindSettingsByTenantAdminUserId() {
+    public void testFindSettingsByUserId() {
         UserSettings userSettings = createUserSettings(user.getId());
 
-        UserSettings retrievedUserSettings = userSettingsDao.findByUserId(SYSTEM_TENANT_ID, user.getId());
+        UserSettings retrievedUserSettings = userSettingsDao.findById(SYSTEM_TENANT_ID, user.getId());
         assertEquals(retrievedUserSettings.getSettings(), userSettings.getSettings());
 
-        userSettingsDao.removeByUserId(SYSTEM_TENANT_ID, user.getId());
+        userSettingsDao.removeById(SYSTEM_TENANT_ID, user.getId());
 
-        UserSettings retrievedUserSettings2 = userSettingsDao.findByUserId(SYSTEM_TENANT_ID, user.getId());
+        UserSettings retrievedUserSettings2 = userSettingsDao.findById(SYSTEM_TENANT_ID, user.getId());
         assertNull(retrievedUserSettings2);
     }
 
@@ -83,7 +83,7 @@ public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
         UserSettings userSettings = new UserSettings();
         userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
         userSettings.setUserId(userId);
-        return userSettingsDao.saveSettings(SYSTEM_TENANT_ID, userSettings);
+        return userSettingsDao.save(SYSTEM_TENANT_ID, userSettings);
     }
 
     private User saveUser(UUID tenantId, UUID customerId) {

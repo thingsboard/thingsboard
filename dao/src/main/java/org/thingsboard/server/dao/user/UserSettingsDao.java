@@ -17,16 +17,14 @@ package org.thingsboard.server.dao.user;
 
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.UserAuthSettings;
 import org.thingsboard.server.common.data.security.UserSettings;
-import org.thingsboard.server.dao.Dao;
 
 public interface UserSettingsDao {
 
-    UserSettings saveSettings(TenantId tenantId, UserSettings userSettings);
+    UserSettings save(TenantId tenantId, UserSettings userSettings);
 
-    UserSettings findByUserId(TenantId tenantId, UserId userId);
+    UserSettings findById(TenantId tenantId, UserId userId);
 
-    void removeByUserId(TenantId tenantId, UserId userId);
+    void removeById(TenantId tenantId, UserId userId);
 
 }

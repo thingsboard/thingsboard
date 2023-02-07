@@ -42,7 +42,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.UUID;
 
-@EqualsAndHashCode
 @Data
 @NoArgsConstructor
 @TypeDef(name = "json", typeClass = JsonStringType.class)
