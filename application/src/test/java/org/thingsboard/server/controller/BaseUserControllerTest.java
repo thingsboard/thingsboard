@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -40,6 +42,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.service.mail.TestMailService;
@@ -741,6 +744,52 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         assertThat(getErrorMessage(result)).containsIgnoringCase("invalid sort property");
     }
 
+    @Test
+    public void testSaveUserSettings() throws Exception {
+        loginSysAdmin();
+
+        User user = createUser();
+        User savedUser = doPost("/api/user", user, User.class);
+
+        UserSettings userSettings = createUserSettings();
+        UserSettings savedSettings = doPost("/api/user/" + savedUser.getId() + "/settings", userSettings, UserSettings.class);
+        Assert.assertEquals(savedSettings.getSettings(), savedSettings.getSettings());
+
+        UserSettings retrievedSettings = doGet("/api/user/" + savedUser.getId() + "/settings", UserSettings.class);
+        Assert.assertEquals(retrievedSettings.getSettings(), retrievedSettings.getSettings());
+
+        doDelete("/api/user/" + savedUser.getId() + "/settings");
+        doGet("/api/user/" + savedUser.getId() + "/settings").andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testShouldNotSaveSettingsForOtherUser() throws Exception {
+        loginSysAdmin();
+
+        User user = createUser();
+        User savedUser = doPost("/api/user", user, User.class);
+
+        loginCustomerUser();
+        UserSettings userSettings = createUserSettings();
+        doPost("/api/user/" + savedUser.getId() + "/settings", userSettings)
+                .andExpect(status().isForbidden());
+    }
+    @Test
+    public void testShouldDeleteSettingsAfterUserDeletion() throws Exception {
+        loginSysAdmin();
+
+        User user = createUser();
+        User savedUser = doPost("/api/user", user, User.class);
+
+        UserSettings userSettings = createUserSettings();
+        UserSettings savedSettings = doPost("/api/user/" + savedUser.getId() + "/settings", userSettings, UserSettings.class);
+        Assert.assertEquals(savedSettings.getSettings(), savedSettings.getSettings());
+
+        doDelete("/api/user/" + savedUser.getId())
+                .andExpect(status().isOk());
+        doGet("/api/user/" + savedUser.getId() + "/settings").andExpect(status().isNotFound());
+    }
+
     private User createUser() throws Exception {
         loginSysAdmin();
         String email = "tenant2@thingsboard.org";
@@ -751,5 +800,11 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setFirstName("Joe");
         user.setLastName("Downs");
         return doPost("/api/user", user, User.class);
+    }
+
+    private UserSettings createUserSettings() {
+        UserSettings userSettings = new UserSettings();
+        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
+        return userSettings;
     }
 }
