@@ -21,7 +21,7 @@ import { AuthState } from './auth.models';
 import { take } from 'rxjs/operators';
 import { AuthUser } from '@shared/models/user.model';
 
-export const selectAuthState = createFeatureSelector<AppState, AuthState>(
+export const selectAuthState = createFeatureSelector< AuthState>(
   'auth'
 );
 

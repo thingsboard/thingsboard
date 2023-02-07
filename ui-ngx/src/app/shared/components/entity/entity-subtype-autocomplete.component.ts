@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, Subscription, throwError } from 'rxjs';
 import {
   catchError,
@@ -50,7 +50,7 @@ import { EdgeService } from '@core/http/edge.service';
 })
 export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  subTypeFormGroup: FormGroup;
+  subTypeFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
 
@@ -97,7 +97,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
               private assetService: AssetService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.subTypeFormGroup = this.fb.group({
       subType: [null, Validators.maxLength(255)]
     });
