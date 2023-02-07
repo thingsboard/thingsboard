@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.mockito.Mockito;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
@@ -427,7 +428,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile.setProfileData(tenantProfileData);
         tenantProfile.setIsolatedTbRuleEngine(true);
-        addQueueConfig(tenantProfile, "Main");
+        addQueueConfig(tenantProfile, DataConstants.MAIN_QUEUE_NAME);
         addQueueConfig(tenantProfile, "Test");
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
@@ -456,7 +457,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         tenantProfileData2.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile2.setProfileData(tenantProfileData2);
         tenantProfile2.setIsolatedTbRuleEngine(true);
-        addQueueConfig(tenantProfile2, "Main");
+        addQueueConfig(tenantProfile2, DataConstants.MAIN_QUEUE_NAME);
         addQueueConfig(tenantProfile2, "Test");
         addQueueConfig(tenantProfile2, "Test2");
         tenantProfile2 = doPost("/api/tenantProfile", tenantProfile2, TenantProfile.class);

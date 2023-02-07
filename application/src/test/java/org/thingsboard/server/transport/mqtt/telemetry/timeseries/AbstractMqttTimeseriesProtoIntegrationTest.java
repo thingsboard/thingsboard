@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,7 +361,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue(callback.isPubAckReceived());
         client.disconnect();
     }
@@ -379,7 +379,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertFalse(callback.isPubAckReceived());
     }
 
@@ -398,7 +398,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue(callback.isPubAckReceived());
         client.disconnect();
     }
@@ -417,7 +417,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertFalse(callback.isPubAckReceived());
     }
 
@@ -436,7 +436,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue(callback.isPubAckReceived());
         client.disconnect();
     }
@@ -455,7 +455,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
-        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertFalse(callback.isPubAckReceived());
     }
 
