@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -64,6 +65,8 @@ public abstract class AbstractTbEntityService {
     protected AlarmService alarmService;
     @Autowired
     protected AlarmSubscriptionService alarmSubscriptionService;
+    @Autowired
+    protected AlarmCommentService alarmCommentService;
     @Autowired
     protected CustomerService customerService;
     @Autowired

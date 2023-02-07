@@ -702,16 +702,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Edge constructEdge(String name, String type) {
-        return constructEdge(tenantId, name, type);
+        return constructEdge(tenantId, name, type, StringUtils.randomAlphanumeric(20), StringUtils.randomAlphanumeric(20));
     }
 
-    protected Edge constructEdge(TenantId tenantId, String name, String type) {
+    protected Edge constructEdge(TenantId tenantId, String name, String type, String routingKey, String secret) {
         Edge edge = new Edge();
         edge.setTenantId(tenantId);
         edge.setName(name);
         edge.setType(type);
-        edge.setSecret(StringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(routingKey);
+        edge.setSecret(secret);
         return edge;
     }
 

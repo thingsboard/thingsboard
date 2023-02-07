@@ -23,8 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -41,6 +44,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -61,6 +65,7 @@ import java.util.Optional;
 public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService implements AlarmSubscriptionService {
 
     private final AlarmService alarmService;
+    private final AlarmCommentService alarmCommentService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
@@ -68,11 +73,13 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                                            PartitionService partitionService,
                                            AlarmService alarmService,
                                            TbApiUsageReportClient apiUsageClient,
-                                           TbApiUsageStateService apiUsageStateService) {
+                                           TbApiUsageStateService apiUsageStateService,
+                                           AlarmCommentService alarmCommentService) {
         super(clusterService, partitionService);
         this.alarmService = alarmService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
+        this.alarmCommentService = alarmCommentService;
     }
 
     @Autowired(required = false)
@@ -90,6 +97,15 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm, apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled());
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
+            AlarmSeverity oldSeverity = result.getOldSeverity();
+            if (oldSeverity != null && !oldSeverity.equals(result.getAlarm().getSeverity())) {
+                AlarmComment alarmComment = AlarmComment.builder()
+                        .alarmId(alarm.getId())
+                        .type(AlarmCommentType.SYSTEM)
+                        .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarm().getSeverity())))
+                        .build();
+                alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
+            }
         }
         if (result.isCreated()) {
             apiUsageClient.report(alarm.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);

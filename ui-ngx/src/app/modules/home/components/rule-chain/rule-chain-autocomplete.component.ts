@@ -45,15 +45,16 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   selectRuleChainFormGroup: FormGroup;
 
-  ruleChainLabel = 'rulechain.rulechain';
-
   modelValue: string | null;
 
   @Input()
-  labelText: string;
+  labelText: string = 'rulechain.rulechain';
 
   @Input()
   requiredText: string;
+
+  @Input()
+  ruleChainType: RuleChainType = RuleChainType.CORE;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -191,9 +192,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
-    // @voba: at the moment device profiles are not supported by edge, so 'core' hardcoded
     return this.entityService.getEntitiesByNameFilter(EntityType.RULE_CHAIN, searchText,
-      50, RuleChainType.CORE, {ignoreLoading: true}).pipe(
+      50, this.ruleChainType, {ignoreLoading: true}).pipe(
         catchError(() => of([]))
     );
   }
