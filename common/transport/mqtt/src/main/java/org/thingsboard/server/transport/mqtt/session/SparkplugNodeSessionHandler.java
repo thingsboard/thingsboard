@@ -228,7 +228,6 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         return this.sparkplugTopicNode;
     }
 
-
     public Optional<MqttPublishMessage> createSparkplugMqttPublishMsg(TransportProtos.TsKvProto tsKvProto,
                                                                       String sparkplugTopic,
                                                                       SparkplugBProto.Payload.Metric metricBirth) {
