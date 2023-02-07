@@ -77,6 +77,12 @@
         [queueType]="serviceType"
         formControlName="defaultQueueName">
       </tb-queue-autocomplete>
+      <tb-rule-chain-autocomplete
+        labelText="asset-profile.default-edge-rule-chain"
+        formControlName="defaultEdgeRuleChainId"
+        [ruleChainType]="edgeRuleChainType">
+        <div tb-hint>{{'asset-profile.default-edge-rule-chain-hint' | translate}}</div>
+      </tb-rule-chain-autocomplete>
       <tb-image-input fxFlex
                       label="{{'asset-profile.image' | translate}}"
                       maxSizeByte="524288"

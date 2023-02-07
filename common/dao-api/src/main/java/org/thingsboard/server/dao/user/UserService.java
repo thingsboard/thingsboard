@@ -25,8 +25,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.UserSettings;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface UserService {
+public interface UserService extends EntityDaoService {
 	
 	User findUserById(TenantId tenantId, UserId userId);
 
