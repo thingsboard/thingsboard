@@ -36,14 +36,10 @@ import org.thingsboard.server.dao.user.UserSettingsDao;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.AbstractServiceTest.SYSTEM_TENANT_ID;
 
-/**
- * Created by Valerii Sosliuk on 4/22/2017.
- */
 public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
 
     private UUID tenantId;

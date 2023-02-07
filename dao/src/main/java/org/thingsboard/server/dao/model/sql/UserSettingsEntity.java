@@ -16,22 +16,12 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.id.UserAuthSettingsId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.UserAuthSettings;
 import org.thingsboard.server.common.data.security.UserSettings;
-import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
-import org.thingsboard.server.common.data.validation.Length;
-import org.thingsboard.server.common.data.validation.NoXss;
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
@@ -55,7 +45,6 @@ public class UserSettingsEntity implements ToData<UserSettings> {
     @Type(type = "json")
     @Column(name = ModelConstants.USER_SETTINGS_SETTINGS)
     private JsonNode settings;
-
 
     public UserSettingsEntity(UserSettings userSettings) {
         this.userId = userSettings.getUserId().getId();

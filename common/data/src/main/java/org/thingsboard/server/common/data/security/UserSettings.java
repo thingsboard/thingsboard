@@ -18,10 +18,7 @@ package org.thingsboard.server.common.data.security;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -30,7 +27,6 @@ import java.io.Serializable;
 
 @ApiModel
 @Data
-@EqualsAndHashCode
 public class UserSettings implements Serializable {
 
     private static final long serialVersionUID = 2628320657987010348L;
