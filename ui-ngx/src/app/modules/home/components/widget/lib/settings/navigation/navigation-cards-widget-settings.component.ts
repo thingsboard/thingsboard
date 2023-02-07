@@ -36,7 +36,7 @@ export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsCompon
   @ViewChild('filterItemAutocomplete') filterItemAutocomplete: MatAutocomplete;
   @ViewChild('filterItemInput') filterItemInput: ElementRef<HTMLInputElement>;
 
-  filterItems: Array<string> = ['/devices', '/assets', '/deviceProfiles'];
+  filterItems: Array<string> = ['/devices', '/assets', '/profiles/deviceProfiles'];
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
