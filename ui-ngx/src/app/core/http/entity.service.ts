@@ -876,7 +876,7 @@ export class EntityService {
               if (result.entityParamName && result.entityParamName.length) {
                 targetParams = stateParams[result.entityParamName];
               }
-              if (targetParams && targetParams.entityId) {
+              if (targetParams && targetParams.entityId && targetParams.entityName) {
                 currentEntity = {
                   id: targetParams.entityId.id,
                   entityType: targetParams.entityId.entityType as EntityType,
