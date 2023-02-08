@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-/* tslint:disable:adjacent-overload-signatures unified-signatures */
+/* eslint-disable @typescript-eslint/adjacent-overload-signatures, @typescript-eslint/unified-signatures */
 
 import * as L from 'leaflet';
 

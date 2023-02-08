@@ -16,7 +16,7 @@
 
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
   ComplexVersionCreateRequest,
   createDefaultEntityTypesVersionCreate,
@@ -52,7 +52,7 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
   @Input()
   popoverComponent: TbPopoverComponent;
 
-  createVersionFormGroup: FormGroup;
+  createVersionFormGroup: UntypedFormGroup;
 
   syncStrategies = Object.values(SyncStrategy);
 
@@ -77,7 +77,7 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
               private cd: ChangeDetectorRef,
               private sanitizer: DomSanitizer,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

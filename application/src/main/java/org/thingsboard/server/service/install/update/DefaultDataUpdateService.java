@@ -210,8 +210,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     log.info("Skipping edge events migration");
                 }
                 break;
-            case "3.4.3":
-                log.info("Updating data from version 3.4.3 to 3.5.0 ...");
+            case "3.4.4":
+                log.info("Updating data from version 3.4.4 to 3.5.0 ...");
                 tenantsDashboardsFiltersUpdater.updateEntities();
                 break;
             default:

@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
@@ -32,7 +32,7 @@ export class RemoveOtherEntitiesConfirmComponent extends PageComponent implement
   @Input()
   onClose: (result: boolean | null) => void;
 
-  confirmFormGroup: FormGroup;
+  confirmFormGroup: UntypedFormGroup;
 
   removeOtherEntitiesConfirmText: SafeHtml;
 
@@ -41,7 +41,7 @@ export class RemoveOtherEntitiesConfirmComponent extends PageComponent implement
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
     this.removeOtherEntitiesConfirmText = this.sanitizer.bypassSecurityTrustHtml(this.translate.instant('version-control.remove-other-entities-confirm-text'));
   }

@@ -677,11 +677,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
-            case "3.4.3":
+            case "3.4.4":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
                     if (isOldSchema(conn, 3004002)) {
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.3", SCHEMA_UPDATE_SQL);
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.4", SCHEMA_UPDATE_SQL);
                         loadSql(schemaUpdateFile, conn);
 
                         try {

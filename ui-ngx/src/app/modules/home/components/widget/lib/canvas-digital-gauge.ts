@@ -651,10 +651,10 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     }
     let dashCount = Math.floor(circumference / (options.dashThickness * bd.fontSizeFactor));
     if (options.gaugeType === 'donut') {
-      // tslint:disable-next-line:no-bitwise
+      // eslint-disable-next-line no-bitwise
       dashCount = (dashCount | 1) - 1;
     } else {
-      // tslint:disable-next-line:no-bitwise
+      // eslint-disable-next-line no-bitwise
       dashCount = (dashCount - 1) | 1;
     }
     bd.dashLength = Math.ceil(circumference / dashCount);
