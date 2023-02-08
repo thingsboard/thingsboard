@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -303,11 +302,7 @@ public class UserController extends BaseController {
             } else {
                 userPageData = checkNotNull(userService.findCustomerUsers(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink));
             }
-            userPageData.getData().forEach(user -> {
-                if (user.getAdditionalInfo().isObject()) {
-                    ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
-                }
-            });
+            hidePasswordHistory(userPageData);
             return userPageData;
 
         } catch (Exception e) {
@@ -338,11 +333,7 @@ public class UserController extends BaseController {
             TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             PageData<User> userPageData = checkNotNull(userService.findTenantAdmins(tenantId, pageLink));
-            userPageData.getData().forEach(user -> {
-                if (user.getAdditionalInfo().isObject()) {
-                    ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
-                }
-            });
+            hidePasswordHistory(userPageData);
             return userPageData;
         } catch (Exception e) {
             throw handleException(e);
@@ -374,11 +365,7 @@ public class UserController extends BaseController {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             TenantId tenantId = getCurrentUser().getTenantId();
             PageData<User> userPageData = checkNotNull(userService.findCustomerUsers(tenantId, customerId, pageLink));
-            userPageData.getData().forEach(user -> {
-                if (user.getAdditionalInfo().isObject()) {
-                    ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
-                }
-            });
+            hidePasswordHistory(userPageData);
             return userPageData;
         } catch (Exception e) {
             throw handleException(e);
@@ -408,6 +395,14 @@ public class UserController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private void hidePasswordHistory(PageData<User> userPageData) {
+        userPageData.getData().forEach(user -> {
+            if (user.getAdditionalInfo().isObject()) {
+                ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
+            }
+        });
     }
 
 }
