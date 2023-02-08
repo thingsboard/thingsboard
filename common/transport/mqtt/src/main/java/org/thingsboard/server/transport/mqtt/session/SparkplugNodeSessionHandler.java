@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
+import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
@@ -149,20 +150,9 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
             // SUBSCRIBE Node
             parent.processAttributesSubscribe(grantedQoSList, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, reqQoS, TopicType.V1);
         } else {
-            // SUBSCRIBE Device
-            onSparkplugDeviceSubscribe(grantedQoSList, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, reqQoS, TopicType.V1, sparkplugTopic.getDeviceId());
+            // SUBSCRIBE Device - DO NOTHING, WE HAVE ALREADY SUBSCRIBED.
+            // TODO: track that node subscribed to # or to particular device.
         }
-    }
-
-    public void onSparkplugDeviceSubscribe(List<Integer> grantedQoSList, String topic,
-                                           MqttQoS reqQoS, TopicType topicType,  String deviceName)
-            throws AdaptorException, ThingsboardException, ExecutionException, InterruptedException {
-        checkDeviceName(deviceName);
-        ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = onDeviceConnectProto(deviceName);
-        parent.transportService.process(contextListenableFuture.get().getSessionInfo(),
-                TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
-        parent.attrSubTopicType = topicType;
-        parent.registerSubQoS(topic, grantedQoSList, reqQoS);
     }
 
     public void onDeviceDisconnect(MqttPublishMessage mqttMsg, String deviceName) throws AdaptorException {
@@ -251,6 +241,11 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
             return Optional.empty();
         }
         return Optional.empty();
+    }
+
+    @Override
+    protected SparkplugDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
+        return new SparkplugDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
     }
 
 }

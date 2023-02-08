@@ -128,7 +128,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private final UUID sessionId;
     protected final MqttTransportContext context;
-    public final TransportService transportService;
+    private final TransportService transportService;
     private final SchedulerComponent scheduler;
     private final SslHandler sslHandler;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
@@ -142,7 +142,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final ConcurrentHashMap<String, Integer> chunkSizes;
     private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck;
 
-    public TopicType attrSubTopicType;
+    private TopicType attrSubTopicType;
     private TopicType rpcSubTopicType;
     private TopicType attrReqTopicType;
     private TopicType toServerRpcSubTopicType;

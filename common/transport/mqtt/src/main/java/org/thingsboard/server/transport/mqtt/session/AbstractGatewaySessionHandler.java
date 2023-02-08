@@ -84,13 +84,13 @@ public abstract class AbstractGatewaySessionHandler {
     private static final String DEVICE_PROPERTY = "device";
 
     protected final MqttTransportContext context;
-    private final TransportService transportService;
+    protected final TransportService transportService;
     protected final TransportDeviceInfo gateway;
     protected final UUID sessionId;
     private final ConcurrentMap<String, Lock> deviceCreationLockMap;
     private final ConcurrentMap<String, MqttDeviceAwareSessionContext> devices;
     private final ConcurrentMap<String, ListenableFuture<MqttDeviceAwareSessionContext>> deviceFutures;
-    private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
+    protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
 
@@ -252,7 +252,7 @@ public abstract class AbstractGatewaySessionHandler {
                         new TransportServiceCallback<>() {
                             @Override
                             public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                                GatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg) ;
+                                AbstractGatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg);
                                 if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                     log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
@@ -282,10 +282,7 @@ public abstract class AbstractGatewaySessionHandler {
             }
     }
 
-    private GatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
-        return this.deviceSessionCtx.isSparkplug() ? new SparkplugDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService) :
-         new GatewayDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
-    }
+    protected abstract AbstractGatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg);
 
     protected int getMsgId(MqttPublishMessage mqttMsg) {
         return mqttMsg.variableHeader().packetId();

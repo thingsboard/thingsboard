@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.mqtt.session;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 
 import java.util.UUID;
 
@@ -46,6 +47,11 @@ public class GatewaySessionHandler extends AbstractGatewaySessionHandler {
         } else {
             onDeviceTelemetryProto(msgId, payload);
         }
+    }
+
+    @Override
+    protected GatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
+         return new GatewayDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
     }
 
 }

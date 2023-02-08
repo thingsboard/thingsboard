@@ -27,13 +27,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
-public class SparkplugDeviceSessionContext extends GatewayDeviceSessionContext{
+public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionContext<SparkplugNodeSessionHandler> {
 
-    public SparkplugDeviceSessionContext(AbstractGatewaySessionHandler parent,
+    public SparkplugDeviceSessionContext(SparkplugNodeSessionHandler parent,
                                          TransportDeviceInfo deviceInfo,
                                          DeviceProfile deviceProfile,
                                          ConcurrentMap<MqttTopicMatcher,
-                                         Integer> mqttQoSMap,
+                                                 Integer> mqttQoSMap,
                                          TransportService transportService) {
         super(parent, deviceInfo, deviceProfile, mqttQoSMap, transportService);
     }
@@ -43,12 +43,12 @@ public class SparkplugDeviceSessionContext extends GatewayDeviceSessionContext{
         log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
         notification.getSharedUpdatedList().forEach(tsKvProto -> {
             if (getDeviceBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
-                SparkplugTopic sparkplugTopic = new SparkplugTopic(((SparkplugNodeSessionHandler)parent).getSparkplugTopicNode(),
+                SparkplugTopic sparkplugTopic = new SparkplugTopic(parent.getSparkplugTopicNode(),
                         SparkplugMessageType.DCMD, deviceInfo.getDeviceName());
-                ((SparkplugNodeSessionHandler)parent).createSparkplugMqttPublishMsg(tsKvProto,
+                parent.createSparkplugMqttPublishMsg(tsKvProto,
                         sparkplugTopic.toString(),
                         getDeviceBirthMetrics().get(tsKvProto.getKv().getKey()))
-                        .ifPresent(parent::writeAndFlush);
+                        .ifPresent(this.parent::writeAndFlush);
             }
         });
     }

@@ -35,12 +35,12 @@ import java.util.concurrent.ConcurrentMap;
  * Created by ashvayka on 19.01.17.
  */
 @Slf4j
-public abstract class AbstractGatewayDeviceSessionContext extends MqttDeviceAwareSessionContext implements SessionMsgListener {
+public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGatewaySessionHandler> extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
-    protected final AbstractGatewaySessionHandler parent;
+    protected final T parent;
     private final TransportService transportService;
 
-    public AbstractGatewayDeviceSessionContext(AbstractGatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
+    public AbstractGatewayDeviceSessionContext(T parent, TransportDeviceInfo deviceInfo,
                                                DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap,
                                                TransportService transportService) {
         super(UUID.randomUUID(), mqttQoSMap);
