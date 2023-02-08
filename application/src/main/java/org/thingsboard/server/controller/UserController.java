@@ -297,11 +297,19 @@ public class UserController extends BaseController {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             SecurityUser currentUser = getCurrentUser();
+            PageData<User> userPageData;
             if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
-                return checkNotNull(userService.findUsersByTenantId(currentUser.getTenantId(), pageLink));
+                userPageData = checkNotNull(userService.findUsersByTenantId(currentUser.getTenantId(), pageLink));
             } else {
-                return checkNotNull(userService.findCustomerUsers(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink));
+                userPageData = checkNotNull(userService.findCustomerUsers(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink));
             }
+            userPageData.getData().forEach(user -> {
+                if (user.getAdditionalInfo().isObject()) {
+                    ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
+                }
+            });
+            return userPageData;
+
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -329,7 +337,13 @@ public class UserController extends BaseController {
         try {
             TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(userService.findTenantAdmins(tenantId, pageLink));
+            PageData<User> userPageData = checkNotNull(userService.findTenantAdmins(tenantId, pageLink));
+            userPageData.getData().forEach(user -> {
+                if (user.getAdditionalInfo().isObject()) {
+                    ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
+                }
+            });
+            return userPageData;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -359,7 +373,13 @@ public class UserController extends BaseController {
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(userService.findCustomerUsers(tenantId, customerId, pageLink));
+            PageData<User> userPageData = checkNotNull(userService.findCustomerUsers(tenantId, customerId, pageLink));
+            userPageData.getData().forEach(user -> {
+                if (user.getAdditionalInfo().isObject()) {
+                    ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
+                }
+            });
+            return userPageData;
         } catch (Exception e) {
             throw handleException(e);
         }
