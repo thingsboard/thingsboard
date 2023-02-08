@@ -18,19 +18,20 @@ import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
   UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
 import { SnmpMapping } from '@shared/models/device.models';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { DataType, DataTypeTranslationMap } from '@shared/models/constants';
 import { isUndefinedOrNull } from '@core/utils';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-snmp-device-profile-mapping',
@@ -60,7 +61,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
 
   private readonly oidPattern: RegExp  = /^\.?([0-2])((\.0)|(\.[1-9][0-9]*))*$/;
 
-  private valueChange$: Subscription = null;
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder) { }
@@ -69,13 +70,14 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
     this.mappingsConfigForm = this.fb.group({
       mappings: this.fb.array([])
     });
-    this.valueChange$ = this.mappingsConfigForm.valueChanges.subscribe(() => this.updateModel());
+    this.mappingsConfigForm.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
   ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   registerOnChange(fn: any) {
