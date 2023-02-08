@@ -836,9 +836,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             default:
                 throw new RuntimeException("Not supported!");
         }
+        String typesFilter = "e.type in (:entity_filter_type_query_types)";
         ctx.addStringListParameter("entity_filter_type_query_types", types);
-        ctx.addStringParameter("entity_filter_type_query_name", name);
-        return "e.type in (:entity_filter_type_query_types) and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
+        if (!StringUtils.isEmpty(name)) {
+            ctx.addStringParameter("entity_filter_type_query_name", name);
+            return typesFilter + " and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
+        } else {
+            return typesFilter;
+        }
     }
 
     private List<String> checkTypeListForBackwardCompatibility(List<String> types, String subType) {
