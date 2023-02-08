@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   DynamicValueSourceType,
   dynamicValueSourceTypeTranslationMap,
@@ -68,7 +68,7 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
 
   dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
 
-  alarmDurationPredicateValueFormGroup: FormGroup;
+  alarmDurationPredicateValueFormGroup: UntypedFormGroup;
 
   dynamicMode = false;
 
@@ -76,7 +76,7 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
 
   private propagateChange = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

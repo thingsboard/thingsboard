@@ -132,7 +132,15 @@
               "qrcode",
               "wcwidth",
               "leaflet-polylinedecorator",
-              "ace-diff"
+              "ace-diff",
+              "messageformat-parser",
+              "html2canvas",
+              "jszip",
+              "moment",
+              "ace",
+              "ace-builds",
+              "diff-match-patch",
+              "tv4"
             ]
           },
           "configurations": {
@@ -222,14 +230,11 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "src/tsconfig.app.json",
-              "src/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
             ]
           }
         }
@@ -251,22 +256,15 @@
               "devServerTarget": "thingsboard:serve:production"
             }
           }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": "e2e/tsconfig.e2e.json",
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
         }
       }
     }
   },
-  "defaultProject": "thingsboard",
   "cli": {
     "packageManager": "yarn",
-    "analytics": false
+    "analytics": false,
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

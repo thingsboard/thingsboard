@@ -28,7 +28,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
 import { isDefined } from '@core/utils';
 
@@ -66,7 +66,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   timewindow: Timewindow;
 
-  timewindowForm: FormGroup;
+  timewindowForm: UntypedFormGroup;
 
   historyTypes = HistoryWindowType;
 
@@ -83,7 +83,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   private result: Timewindow;
 
   constructor(protected store: Store<AppState>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               private timeService: TimeService,
               public viewContainerRef: ViewContainerRef) {
     super(store);

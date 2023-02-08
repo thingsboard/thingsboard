@@ -68,6 +68,11 @@ public class AssetProfile extends SearchTextBased<AssetProfileId> implements Has
             "Otherwise, the 'Main' queue will be used to store those messages.")
     private String defaultQueueName;
 
+    @ApiModelProperty(position = 13, value = "Reference to the edge rule chain. " +
+            "If present, the specified edge rule chain will be used on the edge to process all messages related to asset, including asset updates, telemetry, attribute updates, etc. " +
+            "Otherwise, the edge root rule chain will be used to process those messages.")
+    private RuleChainId defaultEdgeRuleChainId;
+
     private AssetProfileId externalId;
 
     public AssetProfile() {
@@ -88,6 +93,7 @@ public class AssetProfile extends SearchTextBased<AssetProfileId> implements Has
         this.defaultRuleChainId = assetProfile.getDefaultRuleChainId();
         this.defaultDashboardId = assetProfile.getDefaultDashboardId();
         this.defaultQueueName = assetProfile.getDefaultQueueName();
+        this.defaultEdgeRuleChainId = assetProfile.getDefaultEdgeRuleChainId();
         this.externalId = assetProfile.getExternalId();
     }
 

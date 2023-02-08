@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator
@@ -81,11 +81,11 @@ export class UpdateAttributeGeneralSettingsComponent extends PageComponent imple
 
   private propagateChange = null;
 
-  public updateAttributeGeneralSettingsFormGroup: FormGroup;
+  public updateAttributeGeneralSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -136,7 +136,7 @@ export class UpdateAttributeGeneralSettingsComponent extends PageComponent imple
     this.updateValidators(false);
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.updateAttributeGeneralSettingsFormGroup.valid ? null : {
       updateAttributeGeneralSettings: {
         valid: false,
