@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,20 @@ package org.thingsboard.rule.engine.deduplication;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class TbMsgDeduplicationNodeConfiguration implements NodeConfiguration<TbMsgDeduplicationNodeConfiguration> {
 
     private int interval;
     private DeduplicationStrategy strategy;
 
+    // only for DeduplicationStrategy.ALL:
+    private String outMsgType;
+    private String queueName;
+
     // Advanced settings:
     private int maxPendingMsgs;
     private int maxRetries;
-    private String queueName;
-
-    // only for DeduplicationStrategy.ALL:
-    private String outMsgType;
 
     @Override
     public TbMsgDeduplicationNodeConfiguration defaultConfiguration() {

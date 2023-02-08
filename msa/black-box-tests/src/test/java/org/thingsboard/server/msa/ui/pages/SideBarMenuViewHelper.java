@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.deduplication;
+package org.thingsboard.server.msa.ui.pages;
 
-public enum DeduplicationId {
+import org.openqa.selenium.WebDriver;
 
-    ORIGINATOR, TENANT, CUSTOMER
+public class SideBarMenuViewHelper extends SideBarMenuViewElements {
+    public SideBarMenuViewHelper(WebDriver driver) {
+        super(driver);
+    }
 
+    public void openDeviceProfiles() {
+        profilesBtn().click();
+        deviceProfileBtn().click();
+    }
+
+    public void openAssetProfiles() {
+        profilesBtn().click();
+        assetProfileBtn().click();
+    }
 }

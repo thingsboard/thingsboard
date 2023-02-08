@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsCompon
   @ViewChild('filterItemAutocomplete') filterItemAutocomplete: MatAutocomplete;
   @ViewChild('filterItemInput') filterItemInput: ElementRef<HTMLInputElement>;
 
-  filterItems: Array<string> = ['/devices', '/assets', '/deviceProfiles'];
+  filterItems: Array<string> = ['/devices', '/assets', '/profiles/deviceProfiles'];
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 

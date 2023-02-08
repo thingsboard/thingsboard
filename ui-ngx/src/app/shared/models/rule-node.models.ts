@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -422,6 +422,9 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.geo.TbGpsGeofencingFilterNode': 'ruleNodeGpsGeofencingFilter',
   'org.thingsboard.rule.engine.filter.TbJsFilterNode': 'ruleNodeJsFilter',
   'org.thingsboard.rule.engine.filter.TbJsSwitchNode': 'ruleNodeJsSwitch',
+  'org.thingsboard.rule.engine.filter.TbAssetTypeSwitchNode': 'ruleNodeAssetProfileSwitch',
+  'org.thingsboard.rule.engine.filter.TbDeviceTypeSwitchNode': 'ruleNodeDeviceProfileSwitch',
+  'org.thingsboard.rule.engine.filter.TbCheckAlarmStatusNode': 'ruleNodeCheckAlarmStatus',
   'org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode': 'ruleNodeMessageTypeFilter',
   'org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode': 'ruleNodeMessageTypeSwitch',
   'org.thingsboard.rule.engine.filter.TbOriginatorTypeFilterNode': 'ruleNodeOriginatorTypeFilter',

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,16 +68,18 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private TbMsgDeduplicationNodeConfiguration config;
 
-    private Map<EntityId, DeduplicationData> deduplicationMap;
+    private final Map<EntityId, DeduplicationData> deduplicationMap;
     private long deduplicationInterval;
+
+    public TbMsgDeduplicationNode() {
+        this.deduplicationMap = new HashMap<>();
+    }
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
-        this.deduplicationMap = new HashMap<>();
         getDeduplicationDataFromCacheAndSchedule(ctx);
-
     }
 
     @Override
