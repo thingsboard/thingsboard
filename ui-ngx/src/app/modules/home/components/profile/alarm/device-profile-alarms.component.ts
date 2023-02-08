@@ -72,12 +72,11 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
   @Input()
   deviceProfileId: EntityId;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder,
-              private dialog: MatDialog) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {

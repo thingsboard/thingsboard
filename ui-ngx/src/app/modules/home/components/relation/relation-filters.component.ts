@@ -51,7 +51,7 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
 
   relationFiltersFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,

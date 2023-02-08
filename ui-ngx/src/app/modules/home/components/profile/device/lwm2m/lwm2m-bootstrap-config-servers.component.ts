@@ -72,7 +72,7 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     }
   }
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(public translate: TranslateService,

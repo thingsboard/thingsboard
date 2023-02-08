@@ -68,7 +68,7 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
 
   private usedSeverities: AlarmSeverity[] = [];
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,

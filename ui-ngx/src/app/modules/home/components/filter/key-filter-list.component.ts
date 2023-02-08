@@ -76,7 +76,7 @@ export class KeyFilterListComponent implements ControlValueAccessor, Validator, 
 
   keyFiltersControl: UntypedFormControl;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = null;
 
   constructor(private fb: UntypedFormBuilder,
