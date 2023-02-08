@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -120,6 +121,7 @@ public class UserController extends BaseController {
                 if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
                     additionalInfo.put("userCredentialsEnabled", true);
                 }
+                additionalInfo.remove("userPasswordHistory");
             }
             return user;
         } catch (Exception e) {
@@ -186,7 +188,15 @@ public class UserController extends BaseController {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
-        return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
+        if (user.getId() != null) {
+            User retrieved = userService.findUserById(getCurrentUser().getTenantId(), user.getId());
+            ((ObjectNode) user.getAdditionalInfo()).set("userPasswordHistory", retrieved.getAdditionalInfo().get("userPasswordHistory"));
+        }
+        User savedUser = tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
+        if (savedUser.getAdditionalInfo().isObject()) {
+            ((ObjectNode) savedUser.getAdditionalInfo()).remove("userPasswordHistory");
+        }
+        return savedUser;
     }
 
     @ApiOperation(value = "Send or re-send the activation email",
