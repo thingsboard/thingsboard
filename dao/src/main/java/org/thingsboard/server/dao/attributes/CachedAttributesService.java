@@ -123,6 +123,7 @@ public class CachedAttributesService implements AttributesService {
                     return result;
                 } catch (Throwable e) {
                     cacheTransaction.rollback();
+                    log.error("Could not find attribute from cache", e);
                     throw e;
                 }
             });
@@ -132,20 +133,21 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        Set<String> uniqAttributeKeys = new HashSet<>(attributeKeys);
+        uniqAttributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
-        Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
+        Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, uniqAttributeKeys);
 
         List<AttributeKvEntry> cachedAttributes = wrappedCachedAttributes.values().stream()
                 .map(TbCacheValueWrapper::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        if (wrappedCachedAttributes.size() == attributeKeys.size()) {
-            log.trace("[{}][{}] Found all attributes from cache: {}", entityId, scope, attributeKeys);
+        if (wrappedCachedAttributes.size() == uniqAttributeKeys.size()) {
+            log.trace("[{}][{}] Found all attributes from cache: {}", entityId, scope, uniqAttributeKeys);
             return Futures.immediateFuture(cachedAttributes);
         }
 
-        Set<String> notFoundAttributeKeys = new HashSet<>(attributeKeys);
+        Set<String> notFoundAttributeKeys = new HashSet<>(uniqAttributeKeys);
         notFoundAttributeKeys.removeAll(wrappedCachedAttributes.keySet());
 
         List<AttributeCacheKey> notFoundKeys = notFoundAttributeKeys.stream().map(k -> new AttributeCacheKey(scope, entityId, k)).collect(Collectors.toList());
@@ -170,6 +172,7 @@ public class CachedAttributesService implements AttributesService {
                 return mergedAttributes;
             } catch (Throwable e) {
                 cacheTransaction.rollback();
+                log.error("Could not find attributes from cache", e);
                 throw e;
             }
         });
