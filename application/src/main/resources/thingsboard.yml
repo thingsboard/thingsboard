@@ -548,6 +548,8 @@ spring.servlet.multipart.max-request-size: "50MB"
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
 # Note: as for current Spring JPA version, custom NullHandling for the Sort.Order is ignored and this parameter is used
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}"
+# Load balancing feature for PgPool-II based on comments added to SQL. By default, the feature is disabled. To enable use SPRING_JPA_PROPERTIES_HIBERNATE_SESSION_FACTORY_STATEMENT_INSPECTOR=org.thingsboard.server.dao.loadbalance.LoadBalancerStatementInspector
+spring.jpa.properties.hibernate.session_factory.statement_inspector: "${SPRING_JPA_PROPERTIES_HIBERNATE_SESSION_FACTORY_STATEMENT_INSPECTOR:org.thingsboard.server.dao.loadbalance.NoOpStatementInspector}"
 
 # SQL DAO Configuration
 spring:
