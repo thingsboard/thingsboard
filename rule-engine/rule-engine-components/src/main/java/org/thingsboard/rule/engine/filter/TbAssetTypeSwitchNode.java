@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "asset type switch",
+        name = "asset profile switch",
         customRelations = true,
         relationTypes = {},
         configClazz = EmptyNodeConfiguration.class,

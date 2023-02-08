@@ -16,7 +16,7 @@
 
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, share } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -44,7 +44,7 @@ import { isEqual } from '@core/utils';
 })
 export class EntityKeysListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  keysListFormGroup: FormGroup;
+  keysListFormGroup: UntypedFormGroup;
 
   modelValue: Array<string> | null;
 
@@ -93,7 +93,7 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.keysListFormGroup = this.fb.group({
       key: [null]
     });

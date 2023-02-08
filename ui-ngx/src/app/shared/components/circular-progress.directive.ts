@@ -14,10 +14,11 @@
 /// limitations under the License.
 ///
 
-import { ComponentFactoryResolver, ComponentRef, Directive, ElementRef, Input, ViewContainerRef } from '@angular/core';
-import { MatSpinner } from '@angular/material/progress-spinner';
+import { ComponentRef, Directive, ElementRef, Input, ViewContainerRef } from '@angular/core';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[tb-circular-progress]'
 })
 export class CircularProgressDirective {
@@ -56,18 +57,16 @@ export class CircularProgressDirective {
     }
   }
 
-  spinnerRef: ComponentRef<MatSpinner>;
+  spinnerRef: ComponentRef<MatProgressSpinner>;
 
   constructor(private elementRef: ElementRef,
-              private componentFactoryResolver: ComponentFactoryResolver,
               private viewContainerRef: ViewContainerRef) {
     this.createCircularProgress();
   }
 
   createCircularProgress() {
     this.elementRef.nativeElement.style.position = 'relative';
-    const factory = this.componentFactoryResolver.resolveComponentFactory(MatSpinner);
-    this.spinnerRef = this.viewContainerRef.createComponent(factory, 0);
+    this.spinnerRef = this.viewContainerRef.createComponent(MatProgressSpinner, {index: 0});
     this.spinnerRef.instance.mode = 'indeterminate';
     this.spinnerRef.instance.diameter = 20;
     const el = this.spinnerRef.instance._elementRef.nativeElement;

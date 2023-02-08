@@ -34,10 +34,10 @@ import {
 } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -164,13 +164,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   private propagateChange = null;
 
-  public dataSettings: FormGroup;
-  public targetDeviceSettings: FormGroup;
-  public alarmSourceSettings: FormGroup;
-  public widgetSettings: FormGroup;
-  public layoutSettings: FormGroup;
-  public advancedSettings: FormGroup;
-  public actionsSettings: FormGroup;
+  public dataSettings: UntypedFormGroup;
+  public targetDeviceSettings: UntypedFormGroup;
+  public alarmSourceSettings: UntypedFormGroup;
+  public widgetSettings: UntypedFormGroup;
+  public layoutSettings: UntypedFormGroup;
+  public advancedSettings: UntypedFormGroup;
+  public actionsSettings: UntypedFormGroup;
   public openExtensionPanel = true;
   public timeseriesKeyError = false;
 
@@ -189,7 +189,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               private entityService: EntityService,
               private dialog: MatDialog,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -375,8 +375,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       this.fb.control(null, []));
   }
 
-  datasourcesFormArray(): FormArray {
-    return this.dataSettings.get('datasources') as FormArray;
+  datasourcesFormArray(): UntypedFormArray {
+    return this.dataSettings.get('datasources') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -495,7 +495,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           if (this.widgetType !== widgetType.rpc &&
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
-            const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
+            const datasourcesFormArray = this.dataSettings.get('datasources') as UntypedFormArray;
             datasourcesFormArray.clear();
             if (config.datasources) {
               config.datasources.forEach((datasource) => {
@@ -586,7 +586,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  private buildDatasourceForm(datasource?: Datasource): FormGroup {
+  private buildDatasourceForm(datasource?: Datasource): UntypedFormGroup {
     const dataKeysRequired = !this.dataKeysOptional(datasource);
     const datasourceFormGroup = this.fb.group(
       {
@@ -717,7 +717,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const types: string[] = this.dataSettings.get('alarmTypeList').value;
@@ -908,7 +908,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     this.timeseriesKeyError = false;
     this.datasourceError = [];
     if (!this.dataSettings.valid) {

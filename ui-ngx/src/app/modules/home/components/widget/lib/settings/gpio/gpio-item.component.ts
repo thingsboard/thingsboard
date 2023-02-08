@@ -18,8 +18,8 @@ import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@ang
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALUE_ACCESSOR, ValidationErrors, ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -86,12 +86,12 @@ export class GpioItemComponent extends PageComponent implements OnInit, ControlV
 
   private propagateChange = null;
 
-  public gpioItemFormGroup: FormGroup;
+  public gpioItemFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private domSanitizer: DomSanitizer,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
