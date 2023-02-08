@@ -340,7 +340,7 @@ export class WidgetComponentService {
               factories: modulesWithFactoriesList.map(mf => mf.factories).flat()
             };
             if (modules && modules.length) {
-              resModulesWithFactories.modules.concat(modules);
+              resModulesWithFactories.modules = resModulesWithFactories.modules.concat(modules);
             }
             return resModulesWithFactories;
           }
