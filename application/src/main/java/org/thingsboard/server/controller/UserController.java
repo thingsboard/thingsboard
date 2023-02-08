@@ -190,7 +190,9 @@ public class UserController extends BaseController {
         checkEntity(user.getId(), user, Resource.USER);
         if (user.getId() != null) {
             User retrieved = userService.findUserById(getCurrentUser().getTenantId(), user.getId());
-            ((ObjectNode) user.getAdditionalInfo()).set("userPasswordHistory", retrieved.getAdditionalInfo().get("userPasswordHistory"));
+            if (retrieved.getAdditionalInfo().isObject()) {
+                ((ObjectNode) user.getAdditionalInfo()).set("userPasswordHistory", retrieved.getAdditionalInfo().get("userPasswordHistory"));
+            }
         }
         User savedUser = tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
         if (savedUser.getAdditionalInfo().isObject()) {
