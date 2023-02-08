@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -57,6 +58,7 @@ import { WindowMessage } from '@shared/models/window-message.model';
 import { deepClone, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
 import {
   DashboardContext,
+  DashboardPageInitData,
   DashboardPageLayout,
   DashboardPageLayoutContext,
   DashboardPageLayouts,
@@ -92,7 +94,7 @@ import {
   WidgetContextMenuItem
 } from '../../models/dashboard-component.models';
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -148,6 +150,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 // @dynamic
 @Component({
@@ -157,7 +160,7 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, AfterViewInit, OnDestroy {
 
   authState: AuthState = getCurrentAuthState(this.store);
 
@@ -244,8 +247,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
+  mainLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
+  rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
+
   private dashboardLogoCache: SafeUrl;
   private defaultDashboardLogo = 'assets/logo_title_white.svg';
+
+  private dashboardResize$: ResizeObserver;
 
   dashboardCtx: DashboardContext = {
     instanceId: this.utils.guid(),
@@ -344,7 +352,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private itembuffer: ItemBufferService,
               private importExport: ImportExportService,
               private mobileService: MobileService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private translate: TranslateService,
               private popoverService: TbPopoverService,
@@ -354,7 +362,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
-              private sanitizer: DomSanitizer) {
+              private sanitizer: DomSanitizer,
+              public elRef: ElementRef) {
     super(store);
     if (isDefinedAndNotNull(embeddedValue)) {
       this.embedded = embeddedValue;
@@ -364,15 +373,23 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   ngOnInit() {
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
+        let dashboardPageInitData: DashboardPageInitData;
         if (this.embedded) {
-          data.dashboard = this.dashboardUtils.validateAndUpdateDashboard(this.dashboard);
-          data.currentDashboardId = this.dashboard.id ? this.dashboard.id.id : null;
-          data.widgetEditMode = false;
-          data.singlePageMode = false;
+          dashboardPageInitData = {
+            dashboard: this.dashboardUtils.validateAndUpdateDashboard(this.dashboard),
+            currentDashboardId: this.dashboard.id ? this.dashboard.id.id : null,
+            widgetEditMode: false,
+            singlePageMode: false
+          };
         } else {
-          data.currentDashboardId = this.route.snapshot.params.dashboardId;
+          dashboardPageInitData = {
+            dashboard: data.dashboard,
+            currentDashboardId: this.route.snapshot.params.dashboardId,
+            widgetEditMode: data.widgetEditMode,
+            singlePageMode: data.singlePageMode
+          };
         }
-        this.init(data);
+        this.init(dashboardPageInitData);
         this.runChangeDetection();
       }
     ));
@@ -393,6 +410,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
           this.isMobile = !state.matches;
+          this.updateLayoutSizes();
         }
     ));
     if (this.isMobileApp && this.syncStateWithQueryParam) {
@@ -405,7 +423,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
-  private init(data: any) {
+  ngAfterViewInit() {
+    this.dashboardResize$ = new ResizeObserver(() => {
+      this.updateLayoutSizes();
+    });
+    this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
+  }
+
+  private init(data: DashboardPageInitData) {
 
     this.reset();
 
@@ -528,6 +553,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       subscription.unsubscribe();
     });
     this.rxSubscriptions.length = 0;
+    if (this.dashboardResize$) {
+      this.dashboardResize$.disconnect();
+    }
   }
 
   public runChangeDetection() {
@@ -670,28 +698,48 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
   }
 
-  public mainLayoutWidth(): string {
+  private updateLayoutSizes() {
+    let changeMainLayoutSize = false;
+    let changeRightLayoutSize = false;
+    if (this.dashboardCtx.state) {
+      changeMainLayoutSize = this.updateMainLayoutSize();
+      changeRightLayoutSize = this.updateRightLayoutSize();
+    }
+    if (changeMainLayoutSize || changeRightLayoutSize) {
+      this.cd.markForCheck();
+    }
+  }
+
+  private updateMainLayoutSize(): boolean {
+    const prevMainLayoutWidth = this.mainLayoutSize.width;
+    const prevMainLayoutHeight = this.mainLayoutSize.height;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
-      return '100%';
+      this.mainLayoutSize.width = '100%';
     } else {
-      return this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
+      this.mainLayoutSize.width = this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
     }
-  }
-
-  public mainLayoutHeight(): string {
     if (!this.isEditingWidget || this.editingLayoutCtx.id === 'main') {
-      return '100%';
+      this.mainLayoutSize.height = '100%';
     } else {
-      return '0px';
+      this.mainLayoutSize.height = '0px';
     }
+    return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height;
   }
 
-  public rightLayoutWidth(): string {
+  private updateRightLayoutSize(): boolean {
+    const prevRightLayoutWidth = this.rightLayoutSize.width;
+    const prevRightLayoutHeight = this.rightLayoutSize.height;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
-      return '100%';
+      this.rightLayoutSize.width = '100%';
     } else {
-      return this.isMobile ? '100%' : this.calculateWidth('right');
+      this.rightLayoutSize.width = this.isMobile ? '100%' : this.calculateWidth('right');
     }
+    if (!this.isEditingWidget || this.editingLayoutCtx.id === 'right') {
+      this.rightLayoutSize.height = '100%';
+    } else {
+      this.rightLayoutSize.height = '0px';
+    }
+    return prevRightLayoutWidth !== this.rightLayoutSize.width || prevRightLayoutHeight !== this.rightLayoutSize.height;
   }
 
   private calculateWidth(layout: DashboardLayoutId): string {
@@ -731,14 +779,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       }
     } else {
       return '50%';
-    }
-  }
-
-  public rightLayoutHeight(): string {
-    if (!this.isEditingWidget || this.editingLayoutCtx.id === 'right') {
-      return '100%';
-    } else {
-      return '0px';
     }
   }
 
@@ -968,6 +1008,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       layout.layoutCtx.ctrl.reload();
     }
     layout.layoutCtx.ignoreLoading = true;
+    this.updateLayoutSizes();
   }
 
   private setEditMode(isEdit: boolean, revert: boolean) {
@@ -1182,6 +1223,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.editingLayoutCtx = null;
     this.editingWidgetSubtitle = null;
     this.isEditingWidget = false;
+    this.updateLayoutSizes();
     this.resetHighlight();
     this.forceDashboardMobileMode = false;
   }
@@ -1207,6 +1249,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.editingWidgetSubtitle = this.widgetComponentService.getInstantWidgetInfo(this.editingWidget).widgetName;
       this.forceDashboardMobileMode = true;
       this.isEditingWidget = true;
+      this.updateLayoutSizes();
       if (layoutCtx) {
         const delayOffset = transition ? 350 : 0;
         const delay = transition ? 400 : 300;
@@ -1491,11 +1534,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       versionControlPopover.tbComponentRef.instance.versionRestored.subscribe(() => {
         this.dashboardService.getDashboard(this.currentDashboardId).subscribe((dashboard) => {
           dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
-          const data = {
+          const data: DashboardPageInitData = {
             dashboard,
-            widgetEditMode: false,
-            currentDashboardId: this.currentDashboardId
-          } as any;
+            currentDashboardId: this.currentDashboardId,
+            widgetEditMode: this.widgetEditMode,
+            singlePageMode: this.singlePageMode
+          };
           this.init(data);
           this.dashboardCtx.stateController.cleanupPreservedStates();
           this.dashboardCtx.stateController.resetState();

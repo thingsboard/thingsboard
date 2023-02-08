@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,9 @@ public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> implem
     @Column(name = ModelConstants.ASSET_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY)
     private String defaultQueueName;
 
+    @Column(name = ModelConstants.ASSET_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID defaultEdgeRuleChainId;
+
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
 
@@ -90,6 +93,9 @@ public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> implem
             this.defaultDashboardId = assetProfile.getDefaultDashboardId().getId();
         }
         this.defaultQueueName = assetProfile.getDefaultQueueName();
+        if (assetProfile.getDefaultEdgeRuleChainId() != null) {
+            this.defaultEdgeRuleChainId = assetProfile.getDefaultEdgeRuleChainId().getId();
+        }
         if (assetProfile.getExternalId() != null) {
             this.externalId = assetProfile.getExternalId().getId();
         }
@@ -126,6 +132,9 @@ public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> implem
         }
         if (defaultDashboardId != null) {
             assetProfile.setDefaultDashboardId(new DashboardId(defaultDashboardId));
+        }
+        if (defaultEdgeRuleChainId != null) {
+            assetProfile.setDefaultEdgeRuleChainId(new RuleChainId(defaultEdgeRuleChainId));
         }
         if (externalId != null) {
             assetProfile.setExternalId(new AssetProfileId(externalId));

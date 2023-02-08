@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,20 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
@@ -175,6 +179,21 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
         send(cmd);
         return parseDataReply(waitForReply());
+    }
+
+    public JsonNode subscribeForAttributes(EntityId entityId, String scope, List<String> keys) {
+        AttributesSubscriptionCmd cmd = new AttributesSubscriptionCmd();
+        cmd.setCmdId(1);
+        cmd.setEntityType(entityId.getEntityType().toString());
+        cmd.setEntityId(entityId.getId().toString());
+        cmd.setScope(scope);
+        cmd.setKeys(String.join(",", keys));
+        TelemetryPluginCmdsWrapper cmdsWrapper = new TelemetryPluginCmdsWrapper();
+        cmdsWrapper.setAttrSubCmds(List.of(cmd));
+        JsonNode msg = JacksonUtil.valueToTree(cmdsWrapper);
+        ((ObjectNode) msg.get("attrSubCmds").get(0)).remove("type");
+        send(msg.toString());
+        return JacksonUtil.toJsonNode(waitForReply());
     }
 
     public EntityDataUpdate sendHistoryCmd(List<String> keys, long startTs, long timeWindow) {

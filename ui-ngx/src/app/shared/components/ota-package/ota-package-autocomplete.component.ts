@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -45,7 +45,7 @@ import { getEntityDetailsPageURL } from '@core/utils';
 })
 export class OtaPackageAutocompleteComponent implements ControlValueAccessor, OnInit {
 
-  otaPackageFormGroup: FormGroup;
+  otaPackageFormGroup: UntypedFormGroup;
 
   modelValue: string | EntityId | null;
 
@@ -116,7 +116,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
               public truncate: TruncatePipe,
               private entityService: EntityService,
               private otaPackageService: OtaPackageService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.otaPackageFormGroup = this.fb.group({
       packageId: [null]
     });

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,11 +365,7 @@ public class EdgeImitator {
     }
 
     public AbstractMessage getLatestMessage() {
-        return getMessageFromTail(1);
-    }
-
-    public AbstractMessage getMessageFromTail(int offset) {
-        return downlinkMsgs.get(downlinkMsgs.size() - offset);
+        return downlinkMsgs.get(downlinkMsgs.size() - 1);
     }
 
     public void ignoreType(Class<? extends AbstractMessage> type) {

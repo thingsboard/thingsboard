@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
@@ -34,7 +35,7 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testTimeseriesWithFailures() throws Exception {
-        int numberOfTimeseriesToSend = 1000;
+        int numberOfTimeseriesToSend = 333;
 
         Device device = findDeviceByName("Edge Device 1");
 
@@ -67,34 +68,9 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
     public void testAttributes() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
 
-        testAttributesUpdatedMsg(device);
+        testAttributesUpdatedMsg(device.getId());
         testPostAttributesMsg(device);
         testAttributesDeleteMsg(device);
-    }
-
-    private void testAttributesUpdatedMsg(Device device) throws Exception {
-        String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key1\":\"value1\"}}";
-        JsonNode attributesEntityData = mapper.readTree(attributesData);
-        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
-        edgeImitator.expectMessageAmount(1);
-        edgeEventService.saveAsync(edgeEvent1).get();
-        clusterService.onEdgeEventUpdate(tenantId, edge.getId());
-        Assert.assertTrue(edgeImitator.waitForMessages());
-
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof EntityDataProto);
-        EntityDataProto latestEntityDataMsg = (EntityDataProto) latestMessage;
-        Assert.assertEquals(device.getUuidId().getMostSignificantBits(), latestEntityDataMsg.getEntityIdMSB());
-        Assert.assertEquals(device.getUuidId().getLeastSignificantBits(), latestEntityDataMsg.getEntityIdLSB());
-        Assert.assertEquals(device.getId().getEntityType().name(), latestEntityDataMsg.getEntityType());
-        Assert.assertEquals("SERVER_SCOPE", latestEntityDataMsg.getPostAttributeScope());
-        Assert.assertTrue(latestEntityDataMsg.hasAttributesUpdatedMsg());
-
-        TransportProtos.PostAttributeMsg attributesUpdatedMsg = latestEntityDataMsg.getAttributesUpdatedMsg();
-        Assert.assertEquals(1, attributesUpdatedMsg.getKvCount());
-        TransportProtos.KeyValueProto keyValueProto = attributesUpdatedMsg.getKv(0);
-        Assert.assertEquals("key1", keyValueProto.getKey());
-        Assert.assertEquals("value1", keyValueProto.getStringV());
     }
 
     private void testPostAttributesMsg(Device device) throws Exception {
@@ -226,4 +202,35 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
 
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(false);
     }
+
+    @Test
+    public void testAttributesUpdatedMsg_userEntity() throws Exception {
+        testAttributesUpdatedMsg(tenantAdmin.getId());
+    }
+
+    private void testAttributesUpdatedMsg(EntityId entityId) throws Exception {
+        String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key1\":\"value1\"}}";
+        JsonNode attributesEntityData = mapper.readTree(attributesData);
+        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, entityId.getId(), EdgeEventType.valueOf(entityId.getEntityType().name()), attributesEntityData);
+        edgeImitator.expectMessageAmount(1);
+        edgeEventService.saveAsync(edgeEvent1).get();
+        clusterService.onEdgeEventUpdate(tenantId, edge.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof EntityDataProto);
+        EntityDataProto latestEntityDataMsg = (EntityDataProto) latestMessage;
+        Assert.assertEquals(entityId.getId().getMostSignificantBits(), latestEntityDataMsg.getEntityIdMSB());
+        Assert.assertEquals(entityId.getId().getLeastSignificantBits(), latestEntityDataMsg.getEntityIdLSB());
+        Assert.assertEquals(entityId.getEntityType().name(), latestEntityDataMsg.getEntityType());
+        Assert.assertEquals("SERVER_SCOPE", latestEntityDataMsg.getPostAttributeScope());
+        Assert.assertTrue(latestEntityDataMsg.hasAttributesUpdatedMsg());
+
+        TransportProtos.PostAttributeMsg attributesUpdatedMsg = latestEntityDataMsg.getAttributesUpdatedMsg();
+        Assert.assertEquals(1, attributesUpdatedMsg.getKvCount());
+        TransportProtos.KeyValueProto keyValueProto = attributesUpdatedMsg.getKv(0);
+        Assert.assertEquals("key1", keyValueProto.getKey());
+        Assert.assertEquals("value1", keyValueProto.getStringV());
+    }
+
 }

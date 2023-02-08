@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import { EdgeRoutingModule } from '@home/pages/edge/edge-routing.module';
 import { EdgeComponent } from '@modules/home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
 import { EdgeTabsComponent } from '@home/pages/edge/edge-tabs.component';
+import { EdgeInstructionsDialogComponent } from './edge-instructions-dialog.component';
 
 @NgModule({
   declarations: [
     EdgeComponent,
     EdgeTableHeaderComponent,
-    EdgeTabsComponent
+    EdgeTabsComponent,
+    EdgeInstructionsDialogComponent
   ],
   imports: [
     CommonModule,

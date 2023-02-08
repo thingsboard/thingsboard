@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-dashboard-page mat-content" [ngClass]="{'mobile-app': isMobileApp && !isEdit}"
-     fxFlex tb-fullscreen [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
+     fxFlex tb-fullscreen [fullscreenElement]="elRef.nativeElement" [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-dashboard-toolbar"
            [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened,
@@ -135,7 +135,7 @@
                   (click)="openDashboardSettings($event)">
             <mat-icon>settings</mat-icon>
           </button>
-          <tb-dashboard-select [fxShow]="!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()"
+          <tb-dashboard-select *ngIf="!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()"
                                [(ngModel)]="currentDashboardId"
                                (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
                                [customerId]="currentCustomerId"
@@ -168,9 +168,9 @@
                               [ngClass]="{ 'tb-shrinked' : isEditingWidget }">
           <mat-drawer *ngIf="layouts.right.show"
                       id="tb-right-layout"
-                      [ngStyle]="{minWidth: rightLayoutWidth(),
-                                  maxWidth: rightLayoutWidth(),
-                                  height: rightLayoutHeight(),
+                      [ngStyle]="{minWidth: rightLayoutSize.width,
+                                  maxWidth: rightLayoutSize.width,
+                                  height: rightLayoutSize.height,
                                   borderLeft: 'none'}"
               disableClose="true"
               [@.disabled]="!isMobile"
@@ -191,8 +191,8 @@
           </mat-drawer>
           <mat-drawer-content [fxShow]="layouts.main.show"
                               id="tb-main-layout"
-                              [ngStyle]="{width: mainLayoutWidth(),
-                              height: mainLayoutHeight()}">
+                              [ngStyle]="{width: mainLayoutSize.width,
+                                          height: mainLayoutSize.height}">
             <tb-dashboard-layout
               [dashboardCheatSheet]="cheatSheetComponent"
               [layoutCtx]="layouts.main.layoutCtx"

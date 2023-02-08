@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -104,10 +104,10 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
 
-            JwtTokenPair tokenPair = tokenFactory.createTokenPair(securityUser);
-
             clearAuthenticationAttributes(request, response);
-            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken());
+
+            JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
+            getRedirectStrategy().sendRedirect(request, response, getRedirectUrl(baseUrl, tokenPair));
             systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, registration.getName(), null);
         } catch (Exception e) {
             log.debug("Error occurred during processing authentication success result. " +
@@ -127,5 +127,14 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
         super.clearAuthenticationAttributes(request);
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
+    }
+
+    String getRedirectUrl(String baseUrl, JwtPair tokenPair) {
+        if (baseUrl.indexOf("?") > 0) {
+            baseUrl += "&";
+        } else {
+            baseUrl += "/?";
+        }
+        return baseUrl + "accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken();
     }
 }

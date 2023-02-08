@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@ang
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder, FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder, UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR
 } from '@angular/forms';
@@ -52,7 +52,7 @@ import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 })
 export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValueAccessor {
 
-  bootstrapConfigServersFormGroup: FormGroup;
+  bootstrapConfigServersFormGroup: UntypedFormGroup;
 
   @Input()
   disabled: boolean;
@@ -80,7 +80,7 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
               public matDialog: MatDialog,
               private dialogService: DialogService,
               private deviceProfileService: DeviceProfileService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
@@ -96,8 +96,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     });
   }
 
-  serverConfigsFromArray(): FormArray {
-    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as FormArray;
+  serverConfigsFromArray(): UntypedFormArray {
+    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as UntypedFormArray;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -183,7 +183,7 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     this.isTransportWasRunWithBootstrapChange.emit(this.isTransportWasRunWithBootstrap);
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return (this.bootstrapConfigServersFormGroup.valid) ? null : {
       serverConfigs: {
         valid: false,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -167,6 +168,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Autowired
     private QueueService queueService;
 
+    @Autowired
+    private JwtSettingsService jwtSettingsService;
+
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -199,8 +203,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedRuleEngineTenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
+        mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
         mainQueueConfiguration.setPollInterval(25);
         mainQueueConfiguration.setPartitions(10);
         mainQueueConfiguration.setConsumerPerPartition(true);
@@ -261,6 +265,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("showChangePassword", false);
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
+    }
+
+    @Override
+    public void createRandomJwtSettings() throws Exception {
+        jwtSettingsService.createRandomJwtSettings();
+    }
+
+    @Override
+    public void saveLegacyYmlSettings() throws Exception {
+        jwtSettingsService.saveLegacyYmlSettings();
     }
 
     @Override
@@ -584,12 +598,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createQueues() {
-        Queue mainQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "Main");
+        Queue mainQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, DataConstants.MAIN_QUEUE_NAME);
         if (mainQueue == null) {
             mainQueue = new Queue();
             mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
-            mainQueue.setName("Main");
-            mainQueue.setTopic("tb_rule_engine.main");
+            mainQueue.setName(DataConstants.MAIN_QUEUE_NAME);
+            mainQueue.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
             mainQueue.setPollInterval(25);
             mainQueue.setPartitions(10);
             mainQueue.setConsumerPerPartition(true);
@@ -608,12 +622,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             queueService.saveQueue(mainQueue);
         }
 
-        Queue highPriorityQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "HighPriority");
+        Queue highPriorityQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, DataConstants.HP_QUEUE_NAME);
         if (highPriorityQueue == null) {
             highPriorityQueue = new Queue();
             highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
-            highPriorityQueue.setName("HighPriority");
-            highPriorityQueue.setTopic("tb_rule_engine.hp");
+            highPriorityQueue.setName(DataConstants.HP_QUEUE_NAME);
+            highPriorityQueue.setTopic(DataConstants.HP_QUEUE_TOPIC);
             highPriorityQueue.setPollInterval(25);
             highPriorityQueue.setPartitions(10);
             highPriorityQueue.setConsumerPerPartition(true);
@@ -632,12 +646,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             queueService.saveQueue(highPriorityQueue);
         }
 
-        Queue sequentialByOriginatorQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "SequentialByOriginator");
+        Queue sequentialByOriginatorQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, DataConstants.SQ_QUEUE_NAME);
         if (sequentialByOriginatorQueue == null) {
             sequentialByOriginatorQueue = new Queue();
             sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
-            sequentialByOriginatorQueue.setName("SequentialByOriginator");
-            sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
+            sequentialByOriginatorQueue.setName(DataConstants.SQ_QUEUE_NAME);
+            sequentialByOriginatorQueue.setTopic(DataConstants.SQ_QUEUE_TOPIC);
             sequentialByOriginatorQueue.setPollInterval(25);
             sequentialByOriginatorQueue.setPartitions(10);
             sequentialByOriginatorQueue.setPackProcessingTimeout(2000);
@@ -656,4 +670,5 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             queueService.saveQueue(sequentialByOriginatorQueue);
         }
     }
+
 }

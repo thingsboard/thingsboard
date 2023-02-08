@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,6 +44,11 @@
           <mat-checkbox formControlName="readOnly">
             {{ 'admin.repository-read-only' | translate }}
           </mat-checkbox>
+          <div>
+            <mat-checkbox formControlName="showMergeCommits">
+              {{ 'admin.show-merge-commits' | translate }}
+            </mat-checkbox>
+          </div>
           <fieldset [disabled]="isLoading$ | async" class="fields-group">
             <legend class="group-title" translate>admin.authentication-settings</legend>
             <mat-form-field fxFlex class="mat-block">

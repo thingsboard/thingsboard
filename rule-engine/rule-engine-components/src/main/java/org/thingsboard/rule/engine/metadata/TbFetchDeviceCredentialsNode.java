@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -46,9 +47,7 @@ import java.util.concurrent.ExecutionException;
                 "to the message data. If originator type is not <b>DEVICE</b> or rule node failed to get device credentials " +
                 "- send Message via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig",
-        icon = "functions"
-)
+        configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
 public class TbFetchDeviceCredentialsNode implements TbNode {
 
     private static final String CREDENTIALS = "credentials";
@@ -78,16 +77,20 @@ public class TbFetchDeviceCredentialsNode implements TbNode {
         }
 
         TbMsg transformedMsg;
-        String credentialsType = deviceCredentials.getCredentialsType().name();
+        DeviceCredentialsType credentialsType = deviceCredentials.getCredentialsType();
         JsonNode credentialsInfo = ctx.getDeviceCredentialsService().toCredentialsInfo(deviceCredentials);
         if (fetchToMetadata) {
             TbMsgMetaData metaData = msg.getMetaData();
-            metaData.putValue(CREDENTIALS_TYPE, credentialsType);
-            metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
+            metaData.putValue(CREDENTIALS_TYPE, credentialsType.name());
+            if (credentialsType.equals(DeviceCredentialsType.ACCESS_TOKEN) || credentialsType.equals(DeviceCredentialsType.X509_CERTIFICATE)) {
+                metaData.putValue(CREDENTIALS, credentialsInfo.asText());
+            } else {
+                metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
+            }
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, metaData, msg.getData());
         } else {
             ObjectNode data = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
-            data.put(CREDENTIALS_TYPE, credentialsType);
+            data.put(CREDENTIALS_TYPE, credentialsType.name());
             data.set(CREDENTIALS, credentialsInfo);
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, msg.getMetaData(), JacksonUtil.toString(data));
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 public abstract class TbAbstractAlarmNodeConfiguration {
@@ -33,7 +34,7 @@ public abstract class TbAbstractAlarmNodeConfiguration {
             "\n" +
             "return details;";
 
-    static final String ALARM_DETAILS_BUILD_MVEL_TEMPLATE = "" +
+    static final String ALARM_DETAILS_BUILD_TBEL_TEMPLATE = "" +
             "var details = {};\n" +
             "if (metadata.prevAlarmDetails != null) {\n" +
             "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
@@ -46,9 +47,10 @@ public abstract class TbAbstractAlarmNodeConfiguration {
             "return details;";
 
 
+    @NoXss
     private String alarmType;
     private ScriptLanguage scriptLang;
     private String alarmDetailsBuildJs;
-    private String alarmDetailsBuildMvel;
+    private String alarmDetailsBuildTbel;
 
 }

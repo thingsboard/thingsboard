@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -701,16 +702,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Edge constructEdge(String name, String type) {
-        return constructEdge(tenantId, name, type);
+        return constructEdge(tenantId, name, type, StringUtils.randomAlphanumeric(20), StringUtils.randomAlphanumeric(20));
     }
 
-    protected Edge constructEdge(TenantId tenantId, String name, String type) {
+    protected Edge constructEdge(TenantId tenantId, String name, String type, String routingKey, String secret) {
         Edge edge = new Edge();
         edge.setTenantId(tenantId);
         edge.setName(name);
         edge.setType(type);
-        edge.setSecret(StringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(routingKey);
+        edge.setSecret(secret);
         return edge;
     }
 
@@ -766,6 +767,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 return Collections.emptyList();
         }
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
+    }
+
+    protected <T> T getFieldValue(Object target, String fieldName) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (T) field.get(target);
     }
 
 }
