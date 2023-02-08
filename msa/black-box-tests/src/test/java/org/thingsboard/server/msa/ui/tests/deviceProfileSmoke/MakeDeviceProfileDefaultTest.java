@@ -43,11 +43,14 @@ public class MakeDeviceProfileDefaultTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeProfileDefault() {
-        if (!getDeviceProfileByName("default").isDefault()) {
-            testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
-            if (getDeviceProfileByName(name) != null) {
-                testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+        if (name != null) {
+            if (!getDeviceProfileByName("default").isDefault()) {
+                testRestClient.setDefaultDeviceProfile(getDeviceProfileByName("default").getId());
+                if (getDeviceProfileByName(name) != null) {
+                    testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+                }
             }
+            name = null;
         }
     }
 

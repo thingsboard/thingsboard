@@ -47,8 +47,11 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (getRuleChainByName(ruleChainName) != null) {
-            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+        if (ruleChainName != null) {
+            if (getRuleChainByName(ruleChainName) != null) {
+                testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+            }
+            ruleChainName = null;
         }
     }
 

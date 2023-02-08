@@ -43,11 +43,14 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeProfileDefault() {
-        if (!getAssetProfileByName("default").isDefault()) {
-            testRestClient.setDefaultAssetProfile(getAssetProfileByName("default").getId());
-            if (getAssetProfileByName(name) != null) {
-                testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+        if (name != null) {
+            if (!getAssetProfileByName("default").isDefault()) {
+                testRestClient.setDefaultAssetProfile(getAssetProfileByName("default").getId());
+                if (getAssetProfileByName(name) != null) {
+                    testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+                }
             }
+            name = null;
         }
     }
 

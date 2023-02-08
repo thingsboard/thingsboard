@@ -46,8 +46,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (getAssetProfileByName(name) != null) {
-            testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+        if (name != null) {
+            if (getAssetProfileByName(name) != null) {
+                testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
+            }
         }
     }
 

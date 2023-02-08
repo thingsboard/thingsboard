@@ -44,8 +44,11 @@ public class SearchDeviceProfileTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void delete() {
-        if (getDeviceProfileByName(name) != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+        if (name != null) {
+            if (getDeviceProfileByName(name) != null) {
+                testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            }
+            name = null;
         }
     }
 

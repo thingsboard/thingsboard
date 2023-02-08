@@ -44,11 +44,14 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void makeRoot() {
-        if (!getRuleChainByName("Root Rule Chain").isRoot()) {
-            testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
-            if (getRuleChainByName(ruleChainName) != null) {
-                testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+        if (ruleChainName != null) {
+            if (!getRuleChainByName("Root Rule Chain").isRoot()) {
+                testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
+                if (getRuleChainByName(ruleChainName) != null) {
+                    testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
+                }
             }
+            ruleChainName = null;
         }
     }
 
