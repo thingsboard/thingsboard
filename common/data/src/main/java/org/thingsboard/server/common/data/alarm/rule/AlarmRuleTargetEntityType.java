@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data.alarm.rule;
 
 public enum AlarmRuleTargetEntityType {
-    ORIGINATOR, SPECIFIED_ENTITY, RELATION
+    ORIGINATOR, SINGLE_ENTITY, RELATION
 }

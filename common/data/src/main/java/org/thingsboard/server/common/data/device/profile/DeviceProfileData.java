@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -25,6 +26,7 @@ import java.util.List;
 
 @ApiModel
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DeviceProfileData implements Serializable {
 
     @ApiModelProperty(position = 1, value = "JSON object of device profile configuration")
@@ -34,8 +36,5 @@ public class DeviceProfileData implements Serializable {
     private DeviceProfileTransportConfiguration transportConfiguration;
     @ApiModelProperty(position = 3, value = "JSON object of provisioning strategy type per device profile")
     private DeviceProfileProvisionConfiguration provisionConfiguration;
-    @Valid
-    @ApiModelProperty(position = 4, value = "JSON array of alarm rules configuration per device profile")
-    private List<AlarmRuleConfiguration> alarms;
 
 }

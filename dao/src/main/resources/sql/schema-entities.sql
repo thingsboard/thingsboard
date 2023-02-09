@@ -85,6 +85,14 @@ CREATE TABLE IF NOT EXISTS alarm_rule (
     CONSTRAINT alarm_rule_name_unq_key UNIQUE (tenant_id, name)
 );
 
+CREATE TABLE IF NOT EXISTS alarm_rule_entity_state (
+    tenant_id uuid NOT NULL,
+    entity_id uuid NOT NULL,
+    entity_type varchar(255) NOT NULL,
+    data varchar(16384),
+    CONSTRAINT entity_state_pkey PRIMARY KEY (entity_id)
+);
+
 CREATE TABLE IF NOT EXISTS audit_log (
     id uuid NOT NULL,
     created_time bigint NOT NULL,
@@ -788,10 +796,3 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
     two_fa_settings varchar
 );
-
-CREATE TABLE IF NOT EXISTS alarm_rule_entity_state (
-    tenant_id uuid NOT NULL,
-    entity_id uuid NOT NULL,
-    entity_type varchar(255) NOT NULL,
-    data varchar(10000),
-    CONSTRAINT entity_state_pkey PRIMARY KEY (entity_id));

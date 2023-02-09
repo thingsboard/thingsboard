@@ -153,21 +153,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
         }
 
-        List<AlarmRuleConfiguration> profileAlarms = deviceProfile.getProfileData().getAlarms();
-
-//        if (!CollectionUtils.isEmpty(profileAlarms)) {
-//            Set<String> alarmTypes = new HashSet<>();
-//            for (AlarmRuleConfiguration alarm : profileAlarms) {
-//                String alarmType = alarm.getAlarmType();
-//                if (StringUtils.isEmpty(alarmType)) {
-//                    throw new DataValidationException("Alarm rule type should be specified!");
-//                }
-//                if (!alarmTypes.add(alarmType)) {
-//                    throw new DataValidationException(String.format("Can't create device profile with the same alarm rule types: \"%s\"!", alarmType));
-//                }
-//            }
-//        }
-
         if (deviceProfile.getDefaultRuleChainId() != null) {
             RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, deviceProfile.getDefaultRuleChainId());
             if (ruleChain == null) {

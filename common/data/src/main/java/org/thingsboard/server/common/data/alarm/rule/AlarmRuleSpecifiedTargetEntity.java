@@ -27,7 +27,7 @@ public class AlarmRuleSpecifiedTargetEntity implements AlarmRuleTargetEntity {
 
     @Override
     public AlarmRuleTargetEntityType getType() {
-        return AlarmRuleTargetEntityType.SPECIFIED_ENTITY;
+        return AlarmRuleTargetEntityType.SINGLE_ENTITY;
     }
 
     @Override

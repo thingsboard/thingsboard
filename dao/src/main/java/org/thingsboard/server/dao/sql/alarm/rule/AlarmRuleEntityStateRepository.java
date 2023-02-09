@@ -27,7 +27,7 @@ import org.thingsboard.server.dao.model.sql.AlarmRuleEntityStateEntity;
 import java.util.List;
 import java.util.UUID;
 
-public interface AlarmRuleEntityStateRepository extends JpaRepository<AlarmRuleEntityStateEntity, UUID>{
+public interface AlarmRuleEntityStateRepository extends JpaRepository<AlarmRuleEntityStateEntity, UUID> {
 
     @Query("SELECT ares FROM AlarmRuleEntityStateEntity ares WHERE ares.entityId in (:entityIds)")
     List<AlarmRuleEntityStateEntity> findAllByIds(@Param("entityIds") List<UUID> entityIds);
@@ -39,4 +39,15 @@ public interface AlarmRuleEntityStateRepository extends JpaRepository<AlarmRuleE
     @Modifying
     @Query("DELETE FROM AlarmRuleEntityStateEntity ares where ares.entityId = :entityId")
     void deleteByEntityId(@Param("entityId") UUID entityId);
+
+    @Query(value = "SELECT cast(to_json(r) as varchar) FROM (" +
+            "SELECT rns.entity_id, rns.rule_node_id, rn.debug_mode, rns.state_data FROM rule_node_state rns " +
+            "INNER JOIN rule_node rn ON rns.rule_node_id = rn.id " +
+            "WHERE rn.type = :type " +
+            "AND rn.rule_chain_id = :ruleChainId " +
+            "AND (SELECT d.device_profile_id FROM device d WHERE d.id = rns.entity_id) = :deviceProfileId) r;",
+            nativeQuery = true)
+    List<String> findRuleNodeStatesByRuleChainIdAndRuleNodeType(@Param("deviceProfileId") UUID deviceProfileId,
+                                                                @Param("ruleChainId") UUID ruleChainId,
+                                                                @Param("type") String type);
 }

@@ -443,7 +443,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setClearRule(clearHumidityRule);
 
-        deviceProfileData.setAlarms(Arrays.asList(highTemperature, lowHumidity));
+//        deviceProfileData.setAlarms(Arrays.asList(highTemperature, lowHumidity));
 
         DeviceProfile savedThermostatDeviceProfile = deviceProfileService.saveDeviceProfile(thermostatDeviceProfile);
 

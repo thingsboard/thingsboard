@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
-import org.thingsboard.server.common.data.validation.Length;
-import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 import java.io.Serializable;
@@ -31,6 +30,7 @@ import java.util.TreeMap;
 
 @ApiModel
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AlarmRuleConfiguration implements Serializable {
 
     private static final long serialVersionUID = 4050882336403853271L;

@@ -27,8 +27,9 @@ import java.io.Serializable;
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = AlarmRuleOriginatorTargetEntity.class, name = "ORIGINATOR"),
-        @JsonSubTypes.Type(value = AlarmRuleSpecifiedTargetEntity.class, name = "SPECIFIED_ENTITY"),
-        @JsonSubTypes.Type(value = AlarmRuleRelationTargetEntity.class, name = "RELATION")})
+//        @JsonSubTypes.Type(value = AlarmRuleSpecifiedTargetEntity.class, name = "SINGLE_ENTITY"),
+//        @JsonSubTypes.Type(value = AlarmRuleRelationTargetEntity.class, name = "RELATION")
+})
 public interface AlarmRuleTargetEntity extends Serializable {
 
     @JsonIgnore

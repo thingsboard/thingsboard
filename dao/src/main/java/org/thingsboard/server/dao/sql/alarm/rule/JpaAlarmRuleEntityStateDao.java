@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.alarm.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -63,4 +67,13 @@ public class JpaAlarmRuleEntityStateDao implements AlarmRuleEntityStateDao {
     public void deleteByEntityId(TenantId tenantId, UUID id) {
         alarmRuleEntityStateRepository.deleteByEntityId(id);
     }
+
+    @Override
+    public List<JsonNode> findRuleNodeStatesByRuleChainIdAndType(DeviceProfileId deviceProfileId, RuleChainId ruleChainId, String type) {
+        return alarmRuleEntityStateRepository.findRuleNodeStatesByRuleChainIdAndRuleNodeType(deviceProfileId.getId(), ruleChainId.getId(), type)
+                .stream()
+                .map(JacksonUtil::toJsonNode)
+                .collect(Collectors.toList());
+    }
+
 }

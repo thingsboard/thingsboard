@@ -22,6 +22,8 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 
+import javax.validation.Valid;
+
 @ApiModel
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -29,6 +31,7 @@ public class AlarmRule extends AlarmRuleInfo {
 
     private static final long serialVersionUID = -8491640876881610526L;
 
+    @Valid
     @ApiModelProperty(position = 8, value = "JSON object with Alarm Rule Configuration")
     private AlarmRuleConfiguration configuration;
 

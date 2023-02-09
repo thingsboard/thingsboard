@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.dao.alarm.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -33,4 +36,6 @@ public interface AlarmRuleEntityStateDao {
     List<AlarmRuleEntityState> findAllByIds(List<EntityId> entityIds);
 
     void deleteByEntityId(TenantId tenantId, UUID id);
+
+    List<JsonNode> findRuleNodeStatesByRuleChainIdAndType(DeviceProfileId deviceProfileId, RuleChainId ruleChainId, String type);
 }

@@ -356,19 +356,19 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 
     private List<EntityId> getTargetEntities(TenantId tenantId, EntityId originator, AlarmRuleTargetEntity targetEntity) {
         switch (targetEntity.getType()) {
-            case SPECIFIED_ENTITY:
-                return Collections.singletonList(((AlarmRuleSpecifiedTargetEntity) targetEntity).getEntityId());
             case ORIGINATOR:
                 return Collections.singletonList(originator);
-            case RELATION:
-                AlarmRuleRelationTargetEntity relationTargetEntity = (AlarmRuleRelationTargetEntity) targetEntity;
-                if (EntitySearchDirection.FROM == relationTargetEntity.getDirection()) {
-                    List<EntityRelation> relations = relationService.findByToAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
-                    return relations.stream().map(EntityRelation::getFrom).collect(Collectors.toList());
-                } else {
-                    List<EntityRelation> relations = relationService.findByFromAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
-                    return relations.stream().map(EntityRelation::getTo).collect(Collectors.toList());
-                }
+//            case SINGLE_ENTITY:
+//                return Collections.singletonList(((AlarmRuleSpecifiedTargetEntity) targetEntity).getEntityId());
+//            case RELATION:
+//                AlarmRuleRelationTargetEntity relationTargetEntity = (AlarmRuleRelationTargetEntity) targetEntity;
+//                if (EntitySearchDirection.FROM == relationTargetEntity.getDirection()) {
+//                    List<EntityRelation> relations = relationService.findByToAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
+//                    return relations.stream().map(EntityRelation::getFrom).collect(Collectors.toList());
+//                } else {
+//                    List<EntityRelation> relations = relationService.findByFromAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
+//                    return relations.stream().map(EntityRelation::getTo).collect(Collectors.toList());
+//                }
         }
         return Collections.emptyList();
     }
