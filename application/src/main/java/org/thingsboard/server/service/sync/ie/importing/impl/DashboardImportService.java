@@ -22,9 +22,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,7 +29,6 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-import org.thingsboard.server.utils.MiscUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,9 +69,6 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
         }
         for (JsonNode widgetConfig : dashboard.getWidgetsConfig()) {
             replaceIdsRecursively(ctx, idProvider, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.singleton("id"), HINTS);
-        }
-        for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
-            MiscUtils.updateDashboardFilterIfRequired(entityAlias);
         }
         return dashboard;
     }

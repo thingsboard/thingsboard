@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -34,6 +38,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
@@ -103,10 +108,37 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing saveDashboard [{}]", dashboard);
         dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         try {
+            for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
+                updateDashboardFilterIfRequired(entityAlias);
+            }
             return dashboardDao.save(dashboard.getTenantId(), dashboard);
         } catch (Exception e) {
             checkConstraintViolation(e, "dashboard_external_id_unq_key", "Dashboard with such external id already exists!");
             throw e;
+        }
+    }
+
+    private static void updateDashboardFilterIfRequired(JsonNode entityAlias) {
+        JsonNode filter = entityAlias.get("filter");
+        if (filter == null || filter.get("type") == null) {
+            return;
+        }
+        updateFilterByTypeIfRequired(filter, EntityFilterType.ASSET_TYPE.getLabel());
+        updateFilterByTypeIfRequired(filter, EntityFilterType.DEVICE_TYPE.getLabel());
+        updateFilterByTypeIfRequired(filter, EntityFilterType.ENTITY_VIEW_TYPE.getLabel());
+        updateFilterByTypeIfRequired(filter, EntityFilterType.EDGE_TYPE.getLabel());
+    }
+
+    private static void updateFilterByTypeIfRequired(JsonNode filter, String FILTER_TYPE_SINGULAR_LABEL) {
+        if (filter.get(FILTER_TYPE_SINGULAR_LABEL) == null) {
+            return;
+        }
+        if (FILTER_TYPE_SINGULAR_LABEL.equals(filter.get("type").asText())) {
+            ArrayNode filterTypes = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+            filterTypes.add(filter.get(FILTER_TYPE_SINGULAR_LABEL).asText());
+            final String FILTER_TYPES_PLURAL_LABEL = String.format("%ss", FILTER_TYPE_SINGULAR_LABEL);
+            ((ObjectNode) filter).set(FILTER_TYPES_PLURAL_LABEL, filterTypes);
+            ((ObjectNode) filter).remove(FILTER_TYPE_SINGULAR_LABEL);
         }
     }
 

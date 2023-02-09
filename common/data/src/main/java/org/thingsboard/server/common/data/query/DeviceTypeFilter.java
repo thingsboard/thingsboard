@@ -33,7 +33,6 @@ public class DeviceTypeFilter implements EntityFilter {
     @Deprecated(since = "3.5", forRemoval = true)
     private String deviceType;
 
-    @JsonIgnore
     private List<String> deviceTypes;
 
     private String deviceNameFilter;

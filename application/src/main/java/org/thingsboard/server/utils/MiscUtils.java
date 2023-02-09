@@ -15,13 +15,8 @@
  */
 package org.thingsboard.server.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.query.EntityFilterType;
 
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.Charset;
@@ -110,27 +105,5 @@ public class MiscUtils {
             }
         }
         return serverPort;
-    }
-
-    public static void updateDashboardFilterIfRequired(JsonNode entityAlias) {
-        JsonNode filter = entityAlias.get("filter");
-        updateFilterByTypeIfRequired(filter, EntityFilterType.ASSET_TYPE.getLabel());
-        updateFilterByTypeIfRequired(filter, EntityFilterType.DEVICE_TYPE.getLabel());
-        updateFilterByTypeIfRequired(filter, EntityFilterType.ENTITY_VIEW_TYPE.getLabel());
-        updateFilterByTypeIfRequired(filter, EntityFilterType.EDGE_TYPE.getLabel());
-    }
-
-    private static void updateFilterByTypeIfRequired(JsonNode filter, String filterType) {
-        if (filter == null || filter.get("type") == null) {
-            return;
-        }
-        if (filterType.equals(filter.get("type").asText())) {
-            if (filter.get(filterType) != null) {
-                ArrayNode arrayNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
-                arrayNode.add(filter.get(filterType).asText());
-                ((ObjectNode) filter).set(filterType + "s", arrayNode);
-                ((ObjectNode) filter).remove(filterType);
-            }
-        }
     }
 }

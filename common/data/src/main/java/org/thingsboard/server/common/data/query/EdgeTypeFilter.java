@@ -29,7 +29,6 @@ public class EdgeTypeFilter implements EntityFilter {
     @Deprecated(since = "3.5", forRemoval = true)
     private String edgeType;
 
-    @JsonIgnore
     private List<String> edgeTypes;
 
     private String edgeNameFilter;

@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -562,6 +564,34 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
         assertThat(update).isNotNull();
         assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
+    @Test
+    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
+        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
+        oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
+        oldFormatDeviceTypeFilterSingular.put("deviceNameFilter", "Device");
+
+        ObjectNode query = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        query.set("entityFilter", oldFormatDeviceTypeFilterSingular);
+
+        ObjectNode entityCountCmd = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        entityCountCmd.put("cmdId", 1);
+        entityCountCmd.set("query", query);
+
+        ArrayNode entityCountCmds = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        entityCountCmds.add(entityCountCmd);
+
+        ObjectNode wrapperNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        wrapperNode.set("entityCountCmds", entityCountCmds);
+
+        getWsClient().send(JacksonUtil.toString(wrapperNode));
+
+        EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
     }
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
