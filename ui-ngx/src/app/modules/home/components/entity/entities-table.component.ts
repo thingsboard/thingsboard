@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-co
 import { calculateIntervalStartEndTime, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { isDefined, isEmptyStr, isEqual, isUndefined } from '@core/utils';
+import { isDefined, isEmptyStr, isEqual, isString, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
@@ -282,7 +282,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         distinctUntilChanged(),
         tap(() => {
           const queryParams: PageQueryParam = {
-            textSearch: encodeURI(this.pageLink.textSearch) || null
+            textSearch: isString(this.pageLink.textSearch) && this.pageLink.textSearch !== '' ? encodeURI(this.pageLink.textSearch) : null
           };
           if (this.displayPagination) {
             this.paginator.pageIndex = 0;

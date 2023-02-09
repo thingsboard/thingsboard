@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,6 +110,15 @@
             [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon svgIcon="mdi:sync"></mat-icon>
       <span translate>edge.sync</span>
+    </button>
+  </div>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openInstructions')"
+            [fxShow]="!isEdit">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ 'edge.install-connect-instructions' | translate }}</span>
     </button>
   </div>
 </div>

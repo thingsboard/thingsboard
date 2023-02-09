@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,10 @@ public enum ActionType {
     PROVISION_SUCCESS(false),
     PROVISION_FAILURE(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false);
+    UNASSIGNED_FROM_EDGE(false),
+    ADDED_COMMENT(false),
+    UPDATED_COMMENT(false),
+    DELETED_COMMENT(false);
 
     private final boolean isRead;
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -52,15 +52,15 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
 
   @Input() disabled: boolean;
 
-  rateLimitsListFormGroup: FormGroup;
+  rateLimitsListFormGroup: UntypedFormGroup;
 
   rateLimitsArray: Array<RateLimits>;
 
   private valueChangeSubscription: Subscription = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: UntypedFormBuilder) {}
 
   ngOnInit(): void {
     this.rateLimitsListFormGroup = this.fb.group({
@@ -75,7 +75,7 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
   }
 
   public removeRateLimits(index: number) {
-    (this.rateLimitsListFormGroup.get('rateLimits') as FormArray).removeAt(index);
+    (this.rateLimitsListFormGroup.get('rateLimits') as UntypedFormArray).removeAt(index);
   }
 
   public addRateLimits() {
@@ -85,8 +85,8 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
     }));
   }
 
-  get rateLimitsFormArray(): FormArray {
-    return this.rateLimitsListFormGroup.get('rateLimits') as FormArray;
+  get rateLimitsFormArray(): UntypedFormArray {
+    return this.rateLimitsListFormGroup.get('rateLimits') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -112,7 +112,7 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
   }
 
   writeValue(rateLimits: string) {
-    const rateLimitsControls: Array<FormGroup> = [];
+    const rateLimitsControls: Array<UntypedFormGroup> = [];
     if (rateLimits) {
       const rateLimitsArray = rateLimits.split(',');
       for (let i = 0; i < rateLimitsArray.length; i++) {

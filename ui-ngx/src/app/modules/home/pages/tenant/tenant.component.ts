@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Tenant, TenantInfo } from '@app/shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +36,7 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: TenantInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantInfo>,
-              protected fb: FormBuilder,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -49,7 +49,7 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
     }
   }
 
-  buildEntityForm(entity: TenantInfo): FormGroup {
+  buildEntityForm(entity: TenantInfo): UntypedFormGroup {
     return this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
