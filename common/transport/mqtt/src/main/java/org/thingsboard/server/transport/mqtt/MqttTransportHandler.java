@@ -412,10 +412,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         // TODO
                         break;
                     case DBIRTH:
-                        sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);
-
-                        System.out.println();
-                        break;
                     case DCMD:
                     case DDATA:
                         sparkplugSessionHandler.onTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);

@@ -180,6 +180,14 @@ public abstract class AbstractGatewaySessionHandler {
     void deregisterSession(String deviceName) {
         MqttDeviceAwareSessionContext deviceSessionCtx = devices.remove(deviceName);
         if (deviceSessionCtx != null) {
+            if (deviceSessionCtx.isSparkplug()){
+//                onDeviceTelemetryProto(int msgId, ByteBuf payload)
+                // add Metric name: STATE type: String value: OFFLINE
+//                SparkplugBProto.Payload.Metric metricState = createMetric(SparkplugMessageTypeSate.OFFLINE.name(),
+//                        sparkplugBProtoDevice.getTimestamp(), STATE.name(), MetricDataType.Text);
+//                sparkplugBProtoDevice.getMetricsList().add(metricState);
+//                onTelemetryProto(-1, sparkplugBProtoDevice, deviceName, sparkplugTopic);
+            }
             deregisterSession(deviceName, deviceSessionCtx);
         } else {
             log.debug("[{}] Device [{}] was already removed from the gateway session", sessionId, deviceName);
