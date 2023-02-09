@@ -26,6 +26,7 @@ export interface MenuSection extends HasUUID{
   isMdiIcon?: boolean;
   height?: string;
   pages?: Array<MenuSection>;
+  opened?: boolean;
 }
 
 export interface HomeSection {

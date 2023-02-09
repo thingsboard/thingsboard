@@ -17,7 +17,13 @@
 -->
 <mat-card class="settings-card">
   <mat-toolbar class="details-toolbar">
-    <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center">
+    <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <button mat-icon-button
+              matTooltip="{{ 'action.back' | translate }}"
+              matTooltipPosition="above"
+              (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
       <div class="tb-details-title-header" fxLayout="column" fxLayoutAlign="center start">
         <div class="tb-details-title tb-ellipsis">{{ headerTitle }}</div>
         <div class="tb-details-subtitle tb-ellipsis">{{ headerSubtitle }}</div>

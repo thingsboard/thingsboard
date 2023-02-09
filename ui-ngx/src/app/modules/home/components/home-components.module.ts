@@ -175,10 +175,12 @@ import { AssetProfileDialogComponent } from '@home/components/profile/asset-prof
 import { AssetProfileAutocompleteComponent } from '@home/components/profile/asset-profile-autocomplete.component';
 import { MODULES_MAP } from '@shared/models/constants';
 import { modulesMap } from '@modules/common/modules-map';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
 
 @NgModule({
   declarations:
     [
+      RouterTabsComponent,
       EntitiesTableComponent,
       AddEntityDialogComponent,
       DetailsPanelComponent,
@@ -332,6 +334,7 @@ import { modulesMap } from '@modules/common/modules-map';
     DeviceProfileCommonModule
   ],
   exports: [
+    RouterTabsComponent,
     EntitiesTableComponent,
     AddEntityDialogComponent,
     DetailsPanelComponent,

@@ -123,82 +123,22 @@ export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetE
 export const routes: Routes = [
   {
     path: 'widgets-bundles',
-    data: {
-      breadcrumb: {
-        label: 'widgets-bundle.widgets-bundles',
-        icon: 'now_widgets'
-      }
-    },
-    children: [
-      {
-        path: '',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          title: 'widgets-bundle.widgets-bundles'
-        },
-        resolve: {
-          entitiesTableConfig: WidgetsBundlesTableConfigResolver
-        }
-      },
-      {
-        path: ':widgetsBundleId/widgetTypes',
-        data: {
-          breadcrumb: {
-            labelFunction: widgetTypesBreadcumbLabelFunction,
-            icon: 'now_widgets'
-          } as BreadCrumbConfig<any>
-        },
-        resolve: {
-          widgetsBundle: WidgetsBundleResolver
-        },
-        children: [
-          {
-            path: '',
-            component: WidgetLibraryComponent,
-            data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-              title: 'widget.widget-library'
-            },
-            resolve: {
-              widgetsData: WidgetsTypesDataResolver
-            }
-          },
-          {
-            path: ':widgetTypeId',
-            component: WidgetEditorComponent,
-            canDeactivate: [ConfirmOnExitGuard],
-            data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-              title: 'widget.editor',
-              breadcrumb: {
-                labelFunction: widgetEditorBreadcumbLabelFunction,
-                icon: 'insert_chart'
-              } as BreadCrumbConfig<WidgetEditorComponent>
-            },
-            resolve: {
-              widgetEditorData: WidgetEditorDataResolver
-            }
-          },
-          {
-            path: 'add/:widgetType',
-            component: WidgetEditorComponent,
-            canDeactivate: [ConfirmOnExitGuard],
-            data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-              title: 'widget.editor',
-              breadcrumb: {
-                labelFunction: widgetEditorBreadcumbLabelFunction,
-                icon: 'insert_chart'
-              } as BreadCrumbConfig<WidgetEditorComponent>
-            },
-            resolve: {
-              widgetEditorData: WidgetEditorAddDataResolver
-            }
-          }
-        ]
-      }
-    ]
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-bundles'
+  },
+  {
+    path: 'widgets-bundles/:widgetsBundleId/widgetTypes',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes',
+  },
+  {
+    path: 'widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
+  },
+  {
+    path: 'widgets-bundles/:widgetsBundleId/widgetTypes/add/:widgetType',
+    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/add/:widgetType',
   }
 ];
 
@@ -206,12 +146,6 @@ export const routes: Routes = [
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
-  providers: [
-    WidgetsBundlesTableConfigResolver,
-    WidgetsBundleResolver,
-    WidgetsTypesDataResolver,
-    WidgetEditorDataResolver,
-    WidgetEditorAddDataResolver
-  ]
+  providers: []
 })
 export class WidgetLibraryRoutingModule { }

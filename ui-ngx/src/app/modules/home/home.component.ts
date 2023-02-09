@@ -30,6 +30,8 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { AuthState } from '@core/auth/auth.models';
 import { WINDOW } from '@core/services/window.service';
 import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
+import { ActiveComponentService } from '@core/services/active-component.service';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
 
 @Component({
   selector: 'tb-home',
@@ -65,8 +67,11 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   showSearch = false;
   searchText = '';
 
+  hideLoadingBar = false;
+
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
+              private activeComponentService: ActiveComponentService,
               public breakpointObserver: BreakpointObserver) {
     super(store);
   }
@@ -133,6 +138,8 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     this.showSearch = false;
     this.searchText = '';
     this.activeComponent = activeComponent;
+    this.hideLoadingBar = activeComponent && activeComponent instanceof RouterTabsComponent;
+    this.activeComponentService.setCurrentActiveComponent(activeComponent);
     if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
       this.searchEnabled = true;
       this.searchableComponent = this.activeComponent;

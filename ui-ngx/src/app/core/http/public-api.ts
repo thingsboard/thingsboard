@@ -39,4 +39,5 @@ export * from './tenant.service';
 export * from './tenant-profile.service';
 export * from './ui-settings.service';
 export * from './user.service';
+export * from './user-preferences.service';
 export * from './widget.service';

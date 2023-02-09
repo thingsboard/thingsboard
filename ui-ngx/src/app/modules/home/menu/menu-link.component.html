@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}" routerLink="{{section.path}}">
-  <mat-icon *ngIf="!section.isMdiIcon && section.icon != null" class="material-icons">{{section.icon}}</mat-icon>
-  <mat-icon *ngIf="section.isMdiIcon && section.icon != null" [svgIcon]="section.icon"></mat-icon>
+<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}" routerLink="{{section.path}}">
+  <mat-icon *ngIf="!section.isMdiIcon && section.icon !== null" class="tb-mat-18">{{section.icon}}</mat-icon>
+  <mat-icon *ngIf="section.isMdiIcon && section.icon !== null" [svgIcon]="section.icon" class="tb-mat-18"></mat-icon>
   <span>{{section.name | translate}}</span>
 </a>

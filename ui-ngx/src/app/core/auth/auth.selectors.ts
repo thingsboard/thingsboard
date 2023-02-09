@@ -20,6 +20,7 @@ import { AppState } from '../core.state';
 import { AuthState } from './auth.models';
 import { take } from 'rxjs/operators';
 import { AuthUser } from '@shared/models/user.model';
+import { UserPreferences } from '@shared/models/user-preferences.models';
 
 export const selectAuthState = createFeatureSelector< AuthState>(
   'auth'
@@ -65,18 +66,45 @@ export const selectTbelEnabled = createSelector(
   (state: AuthState) => state.tbelEnabled
 );
 
-export function getCurrentAuthState(store: Store<AppState>): AuthState {
+export const selectUserPreferences = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userPreferences
+);
+
+export const selectOpenedMenuSections = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userPreferences.openedMenuSections
+);
+
+
+export const getCurrentAuthState = (store: Store<AppState>): AuthState => {
   let state: AuthState;
   store.pipe(select(selectAuth), take(1)).subscribe(
     val => state = val
   );
   return state;
-}
+};
 
-export function getCurrentAuthUser(store: Store<AppState>): AuthUser {
+export const getCurrentAuthUser = (store: Store<AppState>): AuthUser => {
   let authUser: AuthUser;
   store.pipe(select(selectAuthUser), take(1)).subscribe(
     val => authUser = val
   );
   return authUser;
-}
+};
+
+export const getCurrentUserPreferences = (store: Store<AppState>): UserPreferences => {
+  let userPreferences: UserPreferences;
+  store.pipe(select(selectUserPreferences), take(1)).subscribe(
+    val => userPreferences = val
+  );
+  return userPreferences;
+};
+
+export const getCurrentOpenedMenuSections = (store: Store<AppState>): string[] => {
+  let openedMenuSections: string[];
+  store.pipe(select(selectOpenedMenuSections), take(1)).subscribe(
+    val => openedMenuSections = val
+  );
+  return openedMenuSections;
+};

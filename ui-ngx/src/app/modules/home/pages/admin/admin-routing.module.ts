@@ -36,6 +36,16 @@ import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
+import { WidgetsBundlesTableConfigResolver } from '@home/pages/widget/widgets-bundles-table-config.resolver';
+import {
+  WidgetEditorAddDataResolver, widgetEditorBreadcumbLabelFunction,
+  WidgetEditorDataResolver,
+  WidgetsBundleResolver,
+  WidgetsTypesDataResolver, widgetTypesBreadcumbLabelFunction
+} from '@home/pages/widget/widget-library-routing.module';
+import { WidgetLibraryComponent } from '@home/pages/widget/widget-library.component';
+import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -50,7 +60,145 @@ export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
 
 const routes: Routes = [
   {
+    path: 'resources',
+    data: {
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      breadcrumb: {
+        label: 'admin.resources',
+        icon: 'folder'
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          redirectTo: '/resources/widgets-bundles'
+        }
+      },
+      {
+        path: 'widgets-bundles',
+        data: {
+          breadcrumb: {
+            label: 'widgets-bundle.widgets-bundles',
+            icon: 'now_widgets'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widgets-bundle.widgets-bundles'
+            },
+            resolve: {
+              entitiesTableConfig: WidgetsBundlesTableConfigResolver
+            }
+          },
+          {
+            path: ':widgetsBundleId/widgetTypes',
+            data: {
+              breadcrumb: {
+                labelFunction: widgetTypesBreadcumbLabelFunction,
+                icon: 'now_widgets'
+              } as BreadCrumbConfig<any>
+            },
+            resolve: {
+              widgetsBundle: WidgetsBundleResolver
+            },
+            children: [
+              {
+                path: '',
+                component: WidgetLibraryComponent,
+                data: {
+                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+                  title: 'widget.widget-library'
+                },
+                resolve: {
+                  widgetsData: WidgetsTypesDataResolver
+                }
+              },
+              {
+                path: ':widgetTypeId',
+                component: WidgetEditorComponent,
+                canDeactivate: [ConfirmOnExitGuard],
+                data: {
+                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+                  title: 'widget.editor',
+                  breadcrumb: {
+                    labelFunction: widgetEditorBreadcumbLabelFunction,
+                    icon: 'insert_chart'
+                  } as BreadCrumbConfig<WidgetEditorComponent>
+                },
+                resolve: {
+                  widgetEditorData: WidgetEditorDataResolver
+                }
+              },
+              {
+                path: 'add/:widgetType',
+                component: WidgetEditorComponent,
+                canDeactivate: [ConfirmOnExitGuard],
+                data: {
+                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+                  title: 'widget.editor',
+                  breadcrumb: {
+                    labelFunction: widgetEditorBreadcumbLabelFunction,
+                    icon: 'insert_chart'
+                  } as BreadCrumbConfig<WidgetEditorComponent>
+                },
+                resolve: {
+                  widgetEditorData: WidgetEditorAddDataResolver
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        path: 'resources-library',
+        data: {
+          breadcrumb: {
+            label: 'resource.resources-library',
+            icon: 'mdi:rhombus-split'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'resource.resources-library',
+            },
+            resolve: {
+              entitiesTableConfig: ResourcesLibraryTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'mdi:rhombus-split'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'resource.resources-library'
+            },
+            resolve: {
+              entitiesTableConfig: ResourcesLibraryTableConfigResolver
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     path: 'settings',
+    component: RouterTabsComponent,
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
@@ -97,97 +245,17 @@ const routes: Routes = [
         }
       },
       {
-        path: 'sms-provider',
+        path: 'notifications',
         component: SmsProviderComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           auth: [Authority.SYS_ADMIN],
-          title: 'admin.sms-provider-settings',
+          title: 'admin.notifications-settings',
           breadcrumb: {
-            label: 'admin.sms-provider',
-            icon: 'sms'
+            label: 'admin.notifications',
+            icon: 'mdi:message-badge'
           }
         }
-      },
-      {
-        path: 'security-settings',
-        component: SecuritySettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.security-settings',
-          breadcrumb: {
-            label: 'admin.security-settings',
-            icon: 'security'
-          }
-        }
-      },
-      {
-        path: 'oauth2',
-        component: OAuth2SettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.oauth2.oauth2',
-          breadcrumb: {
-            label: 'admin.oauth2.oauth2',
-            icon: 'security'
-          }
-        },
-        resolve: {
-          loginProcessingUrl: OAuth2LoginProcessingUrlResolver
-        }
-      },
-      {
-        path: 'home',
-        component: HomeSettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          title: 'admin.home-settings',
-          breadcrumb: {
-            label: 'admin.home-settings',
-            icon: 'settings_applications'
-          }
-        }
-      },
-      {
-        path: 'resources-library',
-        data: {
-          breadcrumb: {
-            label: 'resource.resources-library',
-            icon: 'folder'
-          }
-        },
-        children: [
-          {
-            path: '',
-            component: EntitiesTableComponent,
-            data: {
-              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'resource.resources-library',
-            },
-            resolve: {
-              entitiesTableConfig: ResourcesLibraryTableConfigResolver
-            }
-          },
-          {
-            path: ':entityId',
-            component: EntityDetailsPageComponent,
-            canDeactivate: [ConfirmOnExitGuard],
-            data: {
-              breadcrumb: {
-                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
-                icon: 'folder'
-              } as BreadCrumbConfig<EntityDetailsPageComponent>,
-              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'resource.resources-library'
-            },
-            resolve: {
-              entitiesTableConfig: ResourcesLibraryTableConfigResolver
-            }
-          }
-        ]
       },
       {
         path: 'queues',
@@ -228,16 +296,15 @@ const routes: Routes = [
         ]
       },
       {
-        path: '2fa',
-        component: TwoFactorAuthSettingsComponent,
+        path: 'home',
+        component: HomeSettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.2fa.2fa',
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.home-settings',
           breadcrumb: {
-            label: 'admin.2fa.2fa',
-            icon: 'mdi:two-factor-authentication',
-            isMdiIcon: true
+            label: 'admin.home-settings',
+            icon: 'settings_applications'
           }
         }
       },
@@ -266,6 +333,98 @@ const routes: Routes = [
             icon: 'settings_backup_restore'
           }
         }
+      },
+      {
+        path: 'security-settings',
+        redirectTo: '/security-settings/general'
+      },
+      {
+        path: 'oauth2',
+        redirectTo: '/security-settings/oauth2'
+      },
+      {
+        path: 'resources-library',
+        pathMatch: 'full',
+        redirectTo: '/resources/resources-library'
+      },
+      {
+        path: 'resources-library/:entityId',
+        redirectTo: '/resources/resources-library/:entityId'
+      },
+      {
+        path: '2fa',
+        redirectTo: '/security-settings/2fa'
+      },
+      {
+        path: 'sms-provider',
+        redirectTo: '/settings/notifications'
+      }
+    ]
+  },
+  {
+    path: 'security-settings',
+    component: RouterTabsComponent,
+    data: {
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      breadcrumb: {
+        label: 'security.security',
+        icon: 'security'
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          redirectTo: {
+            SYS_ADMIN: '/security-settings/general',
+            TENANT_ADMIN: '/security-settings/audit-logs'
+          }
+        }
+      },
+      {
+        path: 'general',
+        component: SecuritySettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.general',
+          breadcrumb: {
+            label: 'admin.general',
+            icon: 'settings_applications'
+          }
+        }
+      },
+      {
+        path: '2fa',
+        component: TwoFactorAuthSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.2fa.2fa',
+          breadcrumb: {
+            label: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          }
+        }
+      },
+      {
+        path: 'oauth2',
+        component: OAuth2SettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.oauth2.oauth2',
+          breadcrumb: {
+            label: 'admin.oauth2.oauth2',
+            icon: 'mdi:shield-account'
+          }
+        },
+        resolve: {
+          loginProcessingUrl: OAuth2LoginProcessingUrlResolver
+        }
       }
     ]
   }
@@ -277,7 +436,12 @@ const routes: Routes = [
   providers: [
     OAuth2LoginProcessingUrlResolver,
     ResourcesLibraryTableConfigResolver,
-    QueuesTableConfigResolver
+    QueuesTableConfigResolver,
+    WidgetsBundlesTableConfigResolver,
+    WidgetsBundleResolver,
+    WidgetsTypesDataResolver,
+    WidgetEditorDataResolver,
+    WidgetEditorAddDataResolver
   ]
 })
 export class AdminRoutingModule { }

@@ -14,26 +14,10 @@
 /// limitations under the License.
 ///
 
-import { AuthUser, User } from '@shared/models/user.model';
-import { UserPreferences } from '@shared/models/user-preferences.models';
-
-export interface SysParamsState {
-  userTokenAccessEnabled: boolean;
-  allowedDashboardIds: string[];
-  edgesSupportEnabled: boolean;
-  hasRepository: boolean;
-  tbelEnabled: boolean;
-  userPreferences: UserPreferences;
+export interface UserPreferences {
+  openedMenuSections?: string[];
 }
 
-export interface AuthPayload extends SysParamsState {
-  authUser: AuthUser;
-  userDetails: User;
-  forceFullscreen: boolean;
-}
-
-export interface AuthState extends AuthPayload {
-  isAuthenticated: boolean;
-  isUserLoaded: boolean;
-  lastPublicDashboardId: string;
-}
+export const initialUserPreferences: UserPreferences = {
+  openedMenuSections: []
+};

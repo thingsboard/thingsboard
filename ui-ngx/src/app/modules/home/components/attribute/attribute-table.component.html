@@ -21,9 +21,9 @@
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
-          <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection">
+          <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection && !attributeScopeSelectionReadonly">
             <mat-label translate>attribute.attributes-scope</mat-label>
-            <mat-select [disabled]="(isLoading$ | async) || attributeScopeSelectionReadonly"
+            <mat-select [disabled]="(isLoading$ | async)"
                         [ngModel]="attributeScope"
                         (ngModelChange)="attributeScopeChanged($event)">
               <mat-option *ngFor="let scope of attributeScopes" [value]="scope">

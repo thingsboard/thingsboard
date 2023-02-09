@@ -16,6 +16,7 @@
 
 import { AuthPayload, AuthState } from './auth.models';
 import { AuthActions, AuthActionTypes } from './auth.actions';
+import { initialUserPreferences } from '@shared/models/user-preferences.models';
 
 const emptyUserAuthState: AuthPayload = {
   authUser: null,
@@ -25,7 +26,8 @@ const emptyUserAuthState: AuthPayload = {
   allowedDashboardIds: [],
   edgesSupportEnabled: false,
   hasRepository: false,
-  tbelEnabled: false
+  tbelEnabled: false,
+  userPreferences: initialUserPreferences
 };
 
 export const initialState: AuthState = {
@@ -35,10 +37,10 @@ export const initialState: AuthState = {
   ...emptyUserAuthState
 };
 
-export function authReducer(
+export const authReducer = (
   state: AuthState = initialState,
   action: AuthActions
-): AuthState {
+): AuthState => {
   switch (action.type) {
     case AuthActionTypes.AUTHENTICATED:
       return { ...state, isAuthenticated: true, ...action.payload };
@@ -59,7 +61,19 @@ export function authReducer(
     case AuthActionTypes.UPDATE_HAS_REPOSITORY:
       return { ...state, ...action.payload};
 
+    case AuthActionTypes.UPDATE_OPENED_MENU_SECTION:
+      const openedMenuSections = new Set(state.userPreferences.openedMenuSections);
+      if (action.payload.opened) {
+        if (!openedMenuSections.has(action.payload.path)) {
+          openedMenuSections.add(action.payload.path);
+        }
+      } else {
+        openedMenuSections.delete(action.payload.path);
+      }
+      const userPreferences = {...state.userPreferences, ...{ openedMenuSections: Array.from(openedMenuSections)}};
+      return { ...state, ...{ userPreferences }};
+
     default:
       return state;
   }
-}
+};

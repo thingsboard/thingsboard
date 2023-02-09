@@ -48,6 +48,8 @@ import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isMobileApp } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
+import { UserPreferences } from '@shared/models/user-preferences.models';
+import { UserPreferencesService } from '@core/http/user-preferences.service';
 
 @Injectable({
     providedIn: 'root'
@@ -66,6 +68,7 @@ export class AuthService {
     private dashboardService: DashboardService,
     private adminService: AdminService,
     private translate: TranslateService,
+    private userPreferencesService: UserPreferencesService,
     private dialog: MatDialog
   ) {
   }
@@ -490,12 +493,17 @@ export class AuthService {
     }
   }
 
+  private loadUserPreferences(authUser: AuthUser): Observable<UserPreferences> {
+    return this.userPreferencesService.loadUserPreferences(authUser);
+  }
+
   private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
     const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                      this.fetchAllowedDashboardIds(authPayload),
                      this.loadIsEdgesSupportEnabled(),
                      this.loadHasRepository(authPayload.authUser),
                      this.loadTbelEnabled(authPayload.authUser),
+                     this.loadUserPreferences(authPayload.authUser),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
@@ -504,10 +512,9 @@ export class AuthService {
         const edgesSupportEnabled: boolean = data[2] as boolean;
         const hasRepository: boolean = data[3] as boolean;
         const tbelEnabled: boolean = data[4] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled};
-      }, catchError((err) => {
-        return of({});
-      })));
+        const userPreferences = data[5] as UserPreferences;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled, userPreferences};
+      }, catchError((err) => of({}))));
   }
 
   public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {

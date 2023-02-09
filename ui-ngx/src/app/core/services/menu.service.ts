@@ -18,13 +18,14 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
+import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { guid } from '@core/utils';
 import { AuthState } from '@core/auth/auth.models';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -34,7 +35,9 @@ export class MenuService {
   menuSections$: Subject<Array<MenuSection>> = new BehaviorSubject<Array<MenuSection>>([]);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
 
-  constructor(private store: Store<AppState>, private authService: AuthService) {
+  constructor(private store: Store<AppState>,
+              private authService: AuthService,
+              private router: Router) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
         if (authenticated) {
@@ -64,6 +67,12 @@ export class MenuService {
               homeSections = this.buildCustomerUserHome(authState);
               break;
           }
+          const url = this.router.url;
+          const openedMenuSections = getCurrentOpenedMenuSections(this.store);
+          menuSections.filter(section => section.type === 'toggle' &&
+                              (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
+            section => section.opened = true
+          );
           this.menuSections$.next(menuSections);
           this.homeSections$.next(homeSections);
         }
@@ -98,17 +107,34 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'widget.widget-library',
-        type: 'link',
-        path: '/widgets-bundles',
-        icon: 'now_widgets'
+        name: 'admin.resources',
+        type: 'toggle',
+        path: '/resources',
+        height: '80px',
+        icon: 'folder',
+        pages: [
+          {
+            id: guid(),
+            name: 'widget.widget-library',
+            type: 'link',
+            path: '/resources/widgets-bundles',
+            icon: 'now_widgets'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/resources/resources-library',
+            icon: 'mdi:rhombus-split',
+            isMdiIcon: true
+          }
+        ]
       },
       {
         id: guid(),
         name: 'admin.system-settings',
-        type: 'toggle',
+        type: 'link',
         path: '/settings',
-        height: '320px',
         icon: 'settings',
         pages: [
           {
@@ -127,39 +153,11 @@ export class MenuService {
           },
           {
             id: guid(),
-            name: 'admin.sms-provider',
+            name: 'admin.notifications',
             type: 'link',
-            path: '/settings/sms-provider',
-            icon: 'sms'
-          },
-          {
-            id: guid(),
-            name: 'admin.security-settings',
-            type: 'link',
-            path: '/settings/security-settings',
-            icon: 'security'
-          },
-          {
-            id: guid(),
-            name: 'admin.oauth2.oauth2',
-            type: 'link',
-            path: '/settings/oauth2',
-            icon: 'security'
-          },
-          {
-            id: guid(),
-            name: 'admin.2fa.2fa',
-            type: 'link',
-            path: '/settings/2fa',
-            icon: 'mdi:two-factor-authentication',
+            path: '/settings/notifications',
+            icon: 'mdi:message-badge',
             isMdiIcon: true
-          },
-          {
-            id: guid(),
-            name: 'resource.resources-library',
-            type: 'link',
-            path: '/settings/resources-library',
-            icon: 'folder'
           },
           {
             id: guid(),
@@ -168,6 +166,38 @@ export class MenuService {
             path: '/settings/queues',
             icon: 'swap_calls'
           },
+        ]
+      },
+      {
+        id: guid(),
+        name: 'security.security',
+        type: 'link',
+        path: '/security-settings',
+        icon: 'security',
+        pages: [
+          {
+            id: guid(),
+            name: 'admin.general',
+            type: 'link',
+            path: '/security-settings/general',
+            icon: 'settings_applications'
+          },
+          {
+            id: guid(),
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/security-settings/oauth2',
+            icon: 'mdi:shield-account',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/security-settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          }
         ]
       }
     );
