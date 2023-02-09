@@ -46,7 +46,8 @@ export class MenuToggleComponent implements OnInit {
     }
   }
 
-  toggleSection() {
+  toggleSection(event: MouseEvent) {
+    event.stopPropagation();
     this.section.opened = !this.section.opened;
     this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({path: this.section.path, opened: this.section.opened}));
   }

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<a mat-button class="tb-button-toggle" (click)="toggleSection()">
+<a mat-button class="tb-button-toggle" (click)="toggleSection($event)">
   <mat-icon *ngIf="!section.isMdiIcon && section.icon !== null" class="tb-mat-18">{{section.icon}}</mat-icon>
   <mat-icon *ngIf="section.isMdiIcon && section.icon !== null" [svgIcon]="section.icon" class="tb-mat-18"></mat-icon>
   <span>{{section.name | translate}}</span>

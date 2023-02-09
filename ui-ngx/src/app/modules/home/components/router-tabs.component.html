@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="column">
+<div fxFlex fxLayout="column" style="width: 100%;">
   <nav mat-tab-nav-bar backgroundColor="primary" class="tb-router-tabs">
     <a *ngFor="let tab of tabs$ | async"
        routerLink="{{tab.path}}"
