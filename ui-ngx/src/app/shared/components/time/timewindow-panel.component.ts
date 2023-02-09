@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, ViewContainerRef } from '@angular/core';
+import { Component, Inject, InjectionToken, OnInit, ViewContainerRef } from '@angular/core';
 import {
   aggregationTranslations,
   AggregationType,
@@ -31,6 +31,7 @@ import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
 import { isDefined } from '@core/utils';
+import { OverlayRef } from '@angular/cdk/overlay';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
@@ -41,18 +42,14 @@ export interface TimewindowPanelData {
   isEdit: boolean;
 }
 
+export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelData');
+
 @Component({
   selector: 'tb-timewindow-panel',
   templateUrl: './timewindow-panel.component.html',
   styleUrls: ['./timewindow-panel.component.scss']
 })
 export class TimewindowPanelComponent extends PageComponent implements OnInit {
-
-  @Input()
-  data: any;
-
-  @Input()
-  onClose: (result: Timewindow | null) => void;
 
   historyOnly = false;
 
@@ -80,23 +77,24 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   aggregationTypesTranslations = aggregationTranslations;
 
-  private result: Timewindow;
+  result: Timewindow;
 
-  constructor(protected store: Store<AppState>,
+  constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
+              public overlayRef: OverlayRef,
+              protected store: Store<AppState>,
               public fb: UntypedFormBuilder,
               private timeService: TimeService,
               public viewContainerRef: ViewContainerRef) {
     super(store);
+    this.historyOnly = data.historyOnly;
+    this.quickIntervalOnly = data.quickIntervalOnly;
+    this.timewindow = data.timewindow;
+    this.aggregation = data.aggregation;
+    this.timezone = data.timezone;
+    this.isEdit = data.isEdit;
   }
 
   ngOnInit(): void {
-    this.historyOnly = this.data.historyOnly;
-    this.quickIntervalOnly = this.data.quickIntervalOnly;
-    this.timewindow = this.data.timewindow;
-    this.aggregation = this.data.aggregation;
-    this.timezone = this.data.timezone;
-    this.isEdit = this.data.isEdit;
-
     const hideInterval = this.timewindow.hideInterval || false;
     const hideLastInterval = this.timewindow.hideLastInterval || false;
     const hideQuickInterval = this.timewindow.hideQuickInterval || false;
@@ -111,46 +109,46 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.timewindowForm = this.fb.group({
       realtime: this.fb.group({
         realtimeType: [{
-          value: this.defined(realtime, realtime.realtimeType) ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL,
+          value: isDefined(realtime?.realtimeType) ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL,
           disabled: hideInterval
         }],
         timewindowMs: [{
-          value: this.defined(realtime, realtime.timewindowMs) ? this.timewindow.realtime.timewindowMs : null,
+          value: isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null,
           disabled: hideInterval || hideLastInterval
         }],
-        interval: [this.defined(realtime, realtime.interval) ? this.timewindow.realtime.interval : null],
+        interval: [isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null],
         quickInterval: [{
-          value: this.defined(realtime, realtime.quickInterval) ? this.timewindow.realtime.quickInterval : null,
+          value: isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null,
           disabled: hideInterval || hideQuickInterval
         }]
       }),
       history: this.fb.group({
         historyType: [{
-          value: this.defined(history, history.historyType) ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL,
+          value: isDefined(history?.historyType) ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL,
           disabled: hideInterval
         }],
         timewindowMs: [{
-          value: this.defined(history, history.timewindowMs) ? this.timewindow.history.timewindowMs : null,
+          value: isDefined(history?.timewindowMs) ? this.timewindow.history.timewindowMs : null,
           disabled: hideInterval
         }],
-        interval: [ this.defined(history, history.interval) ? this.timewindow.history.interval : null
+        interval: [ isDefined(history?.interval) ? this.timewindow.history.interval : null
         ],
         fixedTimewindow: [{
-          value: this.defined(history, history.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null,
+          value: isDefined(history?.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null,
           disabled: hideInterval
         }],
         quickInterval: [{
-          value: this.defined(history, history.quickInterval) ? this.timewindow.history.quickInterval : null,
+          value: isDefined(history?.quickInterval) ? this.timewindow.history.quickInterval : null,
           disabled: hideInterval
         }]
       }),
       aggregation: this.fb.group({
         type: [{
-          value: this.defined(aggregation, aggregation.type) ? this.timewindow.aggregation.type : null,
+          value: isDefined(aggregation?.type) ? this.timewindow.aggregation.type : null,
           disabled: hideAggregation
         }],
         limit: [{
-          value: this.defined(aggregation, aggregation.limit) ? this.checkLimit(this.timewindow.aggregation.limit) : null,
+          value: isDefined(aggregation?.limit) ? this.checkLimit(this.timewindow.aggregation.limit) : null,
           disabled: hideAggInterval
         }, []]
       }),
@@ -163,10 +161,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.timewindowForm.get('aggregation.type').valueChanges.subscribe(() => {
       this.updateValidators();
     });
-  }
-
-  private defined(arg1, arg2) {
-    return arg1 && isDefined(arg2);
   }
 
   private checkLimit(limit?: number): number {
@@ -214,13 +208,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       this.timewindow.timezone = timewindowFormValue.timezone;
     }
     this.result = this.timewindow;
-    this.cancel(this.result);
+    this.overlayRef.dispose();
   }
 
-  cancel(result: Timewindow | null = null) {
-    if (this.onClose) {
-      this.onClose(result);
-    }
+  cancel() {
+    this.overlayRef.dispose();
   }
 
   minDatapointsLimit() {

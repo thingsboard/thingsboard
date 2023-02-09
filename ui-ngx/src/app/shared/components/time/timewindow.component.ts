@@ -18,10 +18,11 @@ import {
   ChangeDetectorRef,
   Component,
   forwardRef,
+  Injector,
   Input,
   OnDestroy,
   OnInit,
-  Renderer2,
+  StaticProvider,
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -38,14 +39,15 @@ import {
   TimewindowType
 } from '@shared/models/time/time.models';
 import { DatePipe } from '@angular/common';
-import { TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
+import { TIMEWINDOW_PANEL_DATA, TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { TbPopoverService } from '@shared/components/popover.service';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
 
 // @dynamic
 @Component({
@@ -171,13 +173,12 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   private propagateChange = (_: any) => {};
 
-  constructor(private translate: TranslateService,
+  constructor(private overlay: Overlay,
+              private translate: TranslateService,
               private timeService: TimeService,
               private millisecondsToTimeStringPipe: MillisecondsToTimeStringPipe,
               private datePipe: DatePipe,
               private cd: ChangeDetectorRef,
-              private popoverService: TbPopoverService,
-              private renderer: Renderer2,
               public viewContainerRef: ViewContainerRef,
               public breakpointObserver: BreakpointObserver) {
   }
@@ -192,35 +193,54 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-    } else {
-      const timewindowPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimewindowPanelComponent, 'leftTop', true, null,
-        {
-          data: {
-            timewindow: deepClone(this.innerValue),
-            historyOnly: this.historyOnly,
-            quickIntervalOnly: this.quickIntervalOnly,
-            aggregation: this.aggregation,
-            timezone: this.timezone,
-            isEdit: this.isEdit
-          },
-          onClose: (result: Timewindow) => {
-            timewindowPopover.hide();
-            if (result) {
-              this.innerValue = result;
-              this.timewindowDisabled = this.isTimewindowDisabled();
-              this.updateDisplayValue();
-              this.notifyChanged();
-            }
-          }
-        },
-        {maxHeight: '100vh', height: '100%', padding: '10px'},
-        {minWidth: '100%', maxWidth: '100%'}, {}, false);
-      timewindowPopover.tbComponentRef.instance.popoverComponent = timewindowPopover;
-    }
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+    config.maxHeight = '70vh';
+    config.height = 'min-content';
+
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+    const providers: StaticProvider[] = [
+      {
+        provide: TIMEWINDOW_PANEL_DATA,
+        useValue: {
+          timewindow: deepClone(this.innerValue),
+          historyOnly: this.historyOnly,
+          quickIntervalOnly: this.quickIntervalOnly,
+          aggregation: this.aggregation,
+          timezone: this.timezone,
+          isEdit: this.isEdit
+        }
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    const componentRef = overlayRef.attach(new ComponentPortal(TimewindowPanelComponent,
+      this.viewContainerRef, injector));
+    componentRef.onDestroy(() => {
+      if (componentRef.instance.result) {
+        this.innerValue = componentRef.instance.result;
+        this.timewindowDisabled = this.isTimewindowDisabled();
+        this.updateDisplayValue();
+        this.notifyChanged();
+      }
+    });
+    this.cd.detectChanges();
   }
 
   private onHistoryOnlyChanged(): boolean {
