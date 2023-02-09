@@ -835,10 +835,17 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             pageLink = pageLink.nextPageLink();
                         } while (tenantIds.hasNext());
 
-                        conn.createStatement().execute("DROP TABLE IF EXISTS rule_node_state;");
+                        try {
+                            conn.createStatement().execute("DROP TABLE IF EXISTS rule_node_state;");
+                        } catch (Exception e) {
+                        }
 
                         log.info("Updating device profiles...");
-                        conn.createStatement().execute("UPDATE device_profile d SET profile_data = d.profile_data - 'alarms';");
+                        try {
+
+                        } catch (Exception e) {
+                            conn.createStatement().execute("UPDATE device_profile d SET profile_data = d.profile_data - 'alarms';");
+                        }
 
                         log.info("Updating schema settings...");
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005000;");

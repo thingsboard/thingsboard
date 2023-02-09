@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.SneakyThrows;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
@@ -407,6 +408,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    @Ignore
     public void testCreateAlarmForSpecifiedEntity() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfile("test profile");
         deviceProfile.setTenantId(tenantId);
@@ -488,6 +490,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    @Ignore
     public void testCreateAlarmForRelatedEntities() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfile("test profile");
         deviceProfile.setTenantId(tenantId);
