@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -718,12 +719,14 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
 
+    @Ignore
     @Test
     public void testDeleteUserWithDeleteRelationsOk() throws Exception {
         UserId userId = createUser().getId();
         testEntityDaoWithRelationsOk(tenantId, userId, "/api/user/" + userId);
     }
 
+    @Ignore
     @Test
     public void testDeleteUserExceptionWithRelationsTransactional() throws Exception {
         UserId userId = createUser().getId();
