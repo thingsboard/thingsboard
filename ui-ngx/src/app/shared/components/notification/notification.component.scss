@@ -63,6 +63,11 @@
     .alarm-severity {
       padding: 5px;
       border-radius: 8px;
+
+      .severity {
+        font-weight: 500;
+        letter-spacing: 0.25px;
+      }
     }
   }
 }

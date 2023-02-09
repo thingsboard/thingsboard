@@ -44,8 +44,8 @@
       </button>
     </div>
     <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM"
-         [ngStyle]="{backgroundColor: alarmColorSeverity(0.08)}">
-      <span [ngStyle]="{color: alarmColorSeverity(0.78)}">
+         [ngStyle]="{backgroundColor: alarmColorSeverity(0.06)}">
+      <span [ngStyle]="notificationIconColor()" class="severity">
         {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}
       </span>
     </div>

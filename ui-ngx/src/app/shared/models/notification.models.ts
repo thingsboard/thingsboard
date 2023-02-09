@@ -284,20 +284,22 @@ export enum NotificationType {
   ALARM_COMMENT = 'ALARM_COMMENT'
 }
 
-export const NotificationTypeColors = new Map<NotificationType, string>([
-  [NotificationType.GENERAL, 'transparent'],
-  [NotificationType.ALARM, '#D12730'],
-  [NotificationType.DEVICE_INACTIVITY, '#305680'],
-  [NotificationType.ENTITY_ACTION, '#305680'],
-  [NotificationType.ALARM_COMMENT, '#D12730']
-]);
-
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ALARM, 'warning'],
   [NotificationType.DEVICE_INACTIVITY, 'phonelink_off'],
   [NotificationType.ENTITY_ACTION, 'devices'],
   [NotificationType.ALARM_COMMENT, 'warning']
 ]);
+
+export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
+  [
+    [AlarmSeverity.CRITICAL, '#D12730'],
+    [AlarmSeverity.MAJOR, '#FEAC0C'],
+    [AlarmSeverity.MINOR, '#F2DA05'],
+    [AlarmSeverity.WARNING, '#F66716'],
+    [AlarmSeverity.INDETERMINATE, '#00000061']
+  ]
+);
 
 interface NotificationTemplateTypeTranslate {
   name: string;
