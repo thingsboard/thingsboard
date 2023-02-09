@@ -15,16 +15,17 @@
 ///
 
 import { Inject, Pipe, PipeTransform } from '@angular/core';
+import { DAY, HOUR, MINUTE, SECOND, WEEK, YEAR } from '@shared/models/time/time.models';
 import { TranslateService } from '@ngx-translate/core';
 
 const intervals = {
-  years: 31536000,
-  months: 2592000,
-  weeks: 604800,
-  days: 86400,
-  hr: 3600,
-  min: 60,
-  sec: 1
+  years: YEAR,
+  months: DAY * 30,
+  weeks: WEEK,
+  days: DAY,
+  hr: HOUR,
+  min: MINUTE,
+  sec: SECOND
 };
 
 @Pipe({
