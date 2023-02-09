@@ -83,7 +83,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TbRuleEngineQueueConfigService;
-import org.thingsboard.server.utils.MiscUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
