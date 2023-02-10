@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,15 +19,27 @@
 <div fxFlexFill [formGroup]="alarmCommentFormGroup" class="tb-alarm-comments" fxLayout="column">
   <div *ngIf="commentsHeaderEnabled" class="tb-alarm-comments-header" fxLayout="row" fxLayoutAlign="space-between baseline">
     <span class="tb-alarm-comments-header-title">{{ 'alarm-comment.comments' | translate }}</span>
-    <button mat-icon-button
-            type="button"
-            (click)="loadAlarmComments()"
-            matTooltip="{{ 'alarm-comment.refresh' | translate }}"
-            matTooltipPosition="left">
-      <mat-icon class="material-icons">refresh</mat-icon>
-    </button>
+    <div>
+      <button mat-icon-button
+              type="button"
+              (click)="changeSortDirection()"
+              matTooltip="{{ 'alarm-comment.sort-direction' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon class="material-icons">{{ getSortDirectionIcon() }}</mat-icon>
+      </button>
+      <button mat-icon-button
+              type="button"
+              (click)="loadAlarmComments()"
+              matTooltip="{{ 'alarm-comment.refresh' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon class="material-icons">refresh</mat-icon>
+      </button>
+    </div>
   </div>
   <div fxLayout="column" fxLayoutGap="32px">
+    <ng-container *ngIf="isDirectionDescending()">
+      <ng-container *ngTemplateOutlet="commentInput"></ng-container>
+    </ng-container>
     <div fxFlex *ngFor="let displayDataElement of displayData; let i = index">
       <div style="margin-left: 38px"
            *ngIf="displayDataElement.isSystemComment; else userComment">
@@ -110,15 +122,19 @@
         </ng-template>
       </ng-template>
     </div>
+    <ng-container *ngIf="isDirectionAscending()">
+      <ng-container *ngTemplateOutlet="commentInput"></ng-container>
+    </ng-container>
   </div>
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex>
-    <div fxLayout="row" fxLayoutAlign="center center"
-         class="tb-alarm-comments-user-avatar"
-         *ngIf="userDisplayName$ | async; let userDisplayName"
-         [style.background-color]="getCurrentUserBgColor(userDisplayName)">
-      {{ getUserInitials(userDisplayName) }}
-    </div>
-    <mat-form-field appearance="standard" fxFlex class="mat-block">
+  <ng-template #commentInput>
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex>
+      <div fxLayout="row" fxLayoutAlign="center center"
+           class="tb-alarm-comments-user-avatar"
+           *ngIf="userDisplayName$ | async; let userDisplayName"
+           [style.background-color]="getCurrentUserBgColor(userDisplayName)">
+        {{ getUserInitials(userDisplayName) }}
+      </div>
+      <mat-form-field appearance="standard" fxFlex class="mat-block">
           <textarea matInput
                     type="text"
                     placeholder="{{ 'alarm-comment.add' | translate }}"
@@ -129,16 +145,17 @@
                     (keyup.enter)="saveComment()"
                     (keydown.enter)="$event.preventDefault()">
           </textarea>
-      <button mat-button
-              mat-icon-button
-              type="button"
-              matSuffix
-              *ngIf="getAlarmCommentFormControl().value"
-              (click)="saveComment()">
-        <mat-icon color="primary">
-          send
-        </mat-icon>
-      </button>
-    </mat-form-field>
-  </div>
+        <button mat-button
+                mat-icon-button
+                type="button"
+                matSuffix
+                *ngIf="getAlarmCommentFormControl().value"
+                (click)="saveComment()">
+          <mat-icon color="primary">
+            send
+          </mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+  </ng-template>
 </div>

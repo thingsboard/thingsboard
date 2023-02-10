@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,70 +14,42 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
+import { Inject, Pipe, PipeTransform } from '@angular/core';
 import { DAY, HOUR, MINUTE, SECOND, WEEK, YEAR } from '@shared/models/time/time.models';
 import { TranslateService } from '@ngx-translate/core';
 
-interface DateAgoInterval {
-  singular: string;
-  plural: string;
-  value: number;
-}
+const intervals = {
+  years: YEAR,
+  months: DAY * 30,
+  weeks: WEEK,
+  days: DAY,
+  hr: HOUR,
+  min: MINUTE,
+  sec: SECOND
+};
 
 @Pipe({
   name: 'dateAgo'
 })
 export class DateAgoPipe implements PipeTransform {
 
-  constructor(private translate: TranslateService) {
+  constructor(@Inject(TranslateService) private translate: TranslateService) {
+
   }
 
-  transform(timeStamp: number): string {
-    if (timeStamp) {
-      const secondsPassed = Math.floor((+new Date() - +new Date(timeStamp)) / 1000);
-      if (secondsPassed < 60)
-        return 'recently';
-      const intervalsInSeconds: Array<DateAgoInterval> = [
-        {
-          singular: 'alarm-comment.year',
-          plural: 'alarm-comment.years',
-          value: YEAR / SECOND
-        },
-        {
-          singular: 'alarm-comment.month',
-          plural: 'alarm-comment.months',
-          value: DAY / SECOND * 30
-        },
-        {
-          singular: 'alarm-comment.week',
-          plural: 'alarm-comment.weeks',
-          value: WEEK / SECOND
-        },
-        {
-          singular: 'alarm-comment.day',
-          plural: 'alarm-comment.days',
-          value: DAY / SECOND
-        },
-        {
-          singular: 'alarm-comment.hour',
-          plural: 'alarm-comment.hours',
-          value: HOUR / SECOND
-        },
-        {
-          singular: 'alarm-comment.minute',
-          plural: 'alarm-comment.minutes',
-          value: MINUTE / SECOND
-        },
-      ]
-      let counter: number;
-      for (const interval of intervalsInSeconds) {
-        counter = Math.floor(secondsPassed / interval.value);
-        if (counter > 0)
-          if (counter === 1) {
-            return counter + ' ' + this.translate.instant(interval.singular);
-          } else {
-            return counter + ' ' + this.translate.instant(interval.plural);
-          }
+  transform(value: number): string {
+    if (value) {
+      const ms = Math.floor((+new Date() - +new Date(value)));
+      if (ms < 29 * SECOND) { // less than 30 seconds ago will show as 'Just now'
+        return this.translate.instant('timewindow.just-now');
+      }
+      let counter;
+      // tslint:disable-next-line:forin
+      for (const i in intervals) {
+        counter = Math.floor(ms / intervals[i]);
+        if (counter > 0) {
+          return this.translate.instant(`timewindow.${i}`, {[i]: counter});
+        }
       }
     }
     return '';

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ export class AlarmCommentComponent implements OnInit {
 
   alarmCommentSortOrder: SortOrder = {
     property: 'createdTime',
-    direction: Direction.ASC
+    direction: Direction.DESC
   };
 
   editMode: boolean = false;
@@ -119,7 +119,7 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.displayName = this.getUserDisplayName(alarmComment);
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;
-            displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn);
+            displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn).toLowerCase();
             displayDataElement.showActions = false;
             displayDataElement.isSystemComment = false;
             displayDataElement.avatarBgColor = this.utilsService.stringToHslColor(displayDataElement.displayName,
@@ -129,6 +129,12 @@ export class AlarmCommentComponent implements OnInit {
         }
       }
     )
+  }
+
+  changeSortDirection() {
+    let currentDirection = this.alarmCommentSortOrder.direction;
+    this.alarmCommentSortOrder.direction = currentDirection === Direction.DESC ? Direction.ASC : Direction.DESC;
+    this.loadAlarmComments();
   }
 
   saveComment(): void {
@@ -188,7 +194,7 @@ export class AlarmCommentComponent implements OnInit {
     const alarmCommentInfo: AlarmComment = this.getAlarmCommentById(commentId);
     const commentText: string = alarmCommentInfo.comment.text;
     this.dialogService.confirm(
-      this.translate.instant('alarm-comment.delete-alarm-comment-text'),
+      this.translate.instant('alarm-comment.delete-alarm-comment'),
       commentText,
       this.translate.instant('action.cancel'),
       this.translate.instant('action.delete')).subscribe(
@@ -202,6 +208,18 @@ export class AlarmCommentComponent implements OnInit {
         }
       }
     )
+  }
+
+  getSortDirectionIcon() {
+    return this.alarmCommentSortOrder.direction === Direction.DESC ? 'arrow_downward' : 'arrow_upward'
+  }
+
+  isDirectionAscending() {
+    return this.alarmCommentSortOrder.direction === Direction.ASC;
+  }
+
+  isDirectionDescending() {
+    return this.alarmCommentSortOrder.direction === Direction.DESC;
   }
 
   onCommentMouseEnter(commentId: string, displayDataIndex: number): void {
