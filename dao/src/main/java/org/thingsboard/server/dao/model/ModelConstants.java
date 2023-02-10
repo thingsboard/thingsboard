@@ -449,15 +449,6 @@ public class ModelConstants {
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
-     * Rule node state constants.
-     */
-    public static final String RULE_NODE_STATE_TABLE_NAME = "rule_node_state";
-    public static final String RULE_NODE_STATE_NODE_ID_PROPERTY = "rule_node_id";
-    public static final String RULE_NODE_STATE_ENTITY_TYPE_PROPERTY = "entity_type";
-    public static final String RULE_NODE_STATE_ENTITY_ID_PROPERTY = "entity_id";
-    public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
-
-    /**
      * OAuth2 client registration constants.
      */
 
