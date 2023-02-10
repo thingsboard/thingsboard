@@ -131,7 +131,6 @@ export interface NonConfirmedNotificationEscalation {
 
 export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>{
   tenantId: TenantId;
-  type: NotificationTargetType;
   configuration: NotificationTargetConfig;
 }
 

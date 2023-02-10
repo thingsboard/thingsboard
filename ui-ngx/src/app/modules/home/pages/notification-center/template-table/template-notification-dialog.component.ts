@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
-import { deepClone, deepTrim } from '@core/utils';
+import { deepClone, deepTrim, isDefinedAndNotNull } from '@core/utils';
 import { Observable, Subject } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
@@ -40,6 +40,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 export interface TemplateNotificationDialogData {
   template?: NotificationTemplate;
+  predefinedType?: NotificationType;
   isAdd?: boolean;
   isCopy?: boolean;
 }
@@ -69,6 +70,7 @@ export class TemplateNotificationDialogComponent
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   selectedIndex = 0;
+  hideSelectType = false;
 
   tinyMceOptions: Record<string, any> = {
     base_url: '/assets/tinymce',
@@ -100,9 +102,13 @@ export class TemplateNotificationDialogComponent
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
+    if (isDefinedAndNotNull(this.data?.predefinedType)) {
+      this.hideSelectType = true;
+    }
+
     this.templateNotificationForm = this.fb.group({
       name: ['', Validators.required],
-      notificationType: [NotificationType.GENERAL],
+      notificationType: [this.hideSelectType ? this.data.predefinedType : NotificationType.GENERAL],
       configuration: this.fb.group({
         notificationSubject: ['', Validators.required],
         defaultTextTemplate: ['', Validators.required],

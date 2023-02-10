@@ -14,13 +14,18 @@
 /// limitations under the License.
 ///
 
-import { NotificationRequest, NotificationRequestPreview, NotificationType } from '@shared/models/notification.models';
+import {
+  NotificationRequest,
+  NotificationRequestPreview,
+  NotificationTarget,
+  NotificationType
+} from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { deepTrim } from '@core/utils';
@@ -32,6 +37,11 @@ import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper'
 import { MediaBreakpoints } from '@shared/models/constants';
 import { map, takeUntil } from 'rxjs/operators';
 import { getCurrentTime } from '@shared/models/time/time.models';
+import {
+  TargetNotificationDialogComponent,
+  TargetsNotificationDialogData
+} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+import { MatButton } from '@angular/material/button';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -66,7 +76,8 @@ export class RequestNotificationDialogComponent extends
               @Inject(MAT_DIALOG_DATA) public data: RequestNotificationDialogData,
               private breakpointObserver: BreakpointObserver,
               private fb: FormBuilder,
-              private notificationService: NotificationService) {
+              private notificationService: NotificationService,
+              private dialog: MatDialog) {
     super(store, router, dialogRef);
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
@@ -198,5 +209,28 @@ export class RequestNotificationDialogComponent extends
     const date = this.minDate();
     date.setDate(date.getDate() + 7);
     return date;
+  }
+
+  createTarget($event: Event, button: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    button._elementRef.nativeElement.blur();
+    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
+      NotificationTarget>(TargetNotificationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {}
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          let formValue: string[] = this.notificationRequestForm.get('targets').value;
+          if (!formValue) {
+            formValue = [];
+          }
+          formValue.push(res.id.id);
+          this.notificationRequestForm.get('targets').patchValue(formValue);
+        }
+      });
   }
 }

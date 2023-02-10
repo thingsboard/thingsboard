@@ -32,3 +32,13 @@
     padding: 0 10px;
   }
 }
+
+:host ::ng-deep {
+  tb-timeinterval {
+    min-width: 100px;
+
+    .mat-form-field-infix {
+      width: 100%;
+    }
+  }
+}

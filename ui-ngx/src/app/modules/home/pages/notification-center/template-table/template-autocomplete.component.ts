@@ -35,6 +35,12 @@ import {
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { isEqual } from '@core/utils';
+import {
+  TemplateNotificationDialogComponent,
+  TemplateNotificationDialogData
+} from '@home/pages/notification-center/template-table/template-notification-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'tb-template-autocomplete',
@@ -65,6 +71,16 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
+
+  private allowCreateValue = false;
+  get allowCreate(): boolean {
+    return this.allowCreateValue;
+  }
+  @Input()
+  set allowCreate(value: boolean) {
+    this.allowCreateValue = coerceBooleanProperty(value);
+  }
+
 
   @Input()
   disabled: boolean;
@@ -97,7 +113,8 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
               public truncate: TruncatePipe,
               private entityService: EntityService,
               private notificationService: NotificationService,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private dialog: MatDialog) {
     this.selectTemplateFormGroup = this.fb.group({
       templateName: [null]
     });
@@ -190,6 +207,26 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
       this.templateInput.nativeElement.blur();
       this.templateInput.nativeElement.focus();
     }, 0);
+  }
+
+  createTemplate($event: Event, button: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    button._elementRef.nativeElement.blur();
+    this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
+      NotificationTemplate>(TemplateNotificationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        predefinedType: this.notificationTypes
+      }
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          this.selectTemplateFormGroup.get('templateName').patchValue(res);
+        }
+      });
   }
 
   private updateView(value: EntityId | null) {

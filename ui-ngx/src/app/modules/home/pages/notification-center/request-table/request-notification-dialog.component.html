@@ -49,6 +49,11 @@
           placeholderText="{{ 'notification.target' | translate }}"
           requiredText="{{ 'notification.targets-required' | translate }}"
           [entityType]="entityType.NOTIFICATION_TARGET">
+          <button #createTargetButton
+                  mat-button color="primary" matSuffix
+                  (click)="createTarget($event, createTargetButton)">
+            {{ 'notification.create-new' | translate }}
+          </button>
         </tb-entity-list>
         <section formGroupName="additionalConfig" class="additional-config-group">
           <mat-slide-toggle formControlName="enabled" class="toggle">

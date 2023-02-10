@@ -25,12 +25,17 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { UtilsService } from '@core/services/utils.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
-import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
+import { NonConfirmedNotificationEscalation, NotificationTarget } from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntil } from 'rxjs/operators';
+import {
+  TargetNotificationDialogComponent,
+  TargetsNotificationDialogData
+} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+import { MatDialog } from '@angular/material/dialog';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'tb-escalation-form',
@@ -66,8 +71,8 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
   private propagateChangePending = false;
   private destroy$ = new Subject();
 
-  constructor(private utils: UtilsService,
-              private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private dialog: MatDialog) {
   }
 
   registerOnChange(fn: any): void {
@@ -118,6 +123,29 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
     if (!this.disabled && !this.escalationFormGroup.valid) {
       this.updateModel();
     }
+  }
+
+  createTarget($event: Event, button: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    button._elementRef.nativeElement.blur();
+    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
+      NotificationTarget>(TargetNotificationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {}
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          let formValue: string[] = this.escalationFormGroup.get('targets').value;
+          if (!formValue) {
+            formValue = [];
+          }
+          formValue.push(res.id.id);
+          this.escalationFormGroup.get('targets').patchValue(formValue);
+        }
+      });
   }
 
   public validate(c: FormControl) {

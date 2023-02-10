@@ -43,7 +43,7 @@
             {{ 'notification.target-name-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field fxFlex class="mat-block" *ngIf="!hideSelectType">
           <mat-label translate>notification.type</mat-label>
           <mat-select formControlName="notificationType">
             <mat-option *ngFor="let notificationType of notificationTypes" [value]="notificationType">

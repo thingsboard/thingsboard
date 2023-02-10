@@ -19,8 +19,9 @@
 <form [formGroup]="escalationFormGroup" fxLayout="column">
   <div class="escalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start">
     <div fxFlex fxLayout="row" ngStyle.xs="padding-top: 10px">
-        <div fxFlex *ngIf="systemEscalation" class="escalation-padding" translate>notification.first-recipient</div>
-        <div fxFlex *ngIf="!systemEscalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
+      <div fxFlex *ngIf="systemEscalation; else selectTime" class="escalation-padding" translate>notification.first-recipient</div>
+      <ng-template #selectTime>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
           <span class="escalation-padding">After</span>
           <tb-timeinterval
             style="min-width: 100px;"
@@ -31,13 +32,19 @@
             disabledAdvanced></tb-timeinterval>
           <span fxFlex class="escalation-notify" translate>notification.notify</span>
         </div>
+      </ng-template>
     </div>
-    <div fxFlex class="escalation-padding">
+    <div fxFlex="60" class="escalation-padding">
       <tb-entity-list
         required
         formControlName="targets"
         [entityType]="entityType.NOTIFICATION_TARGET"
         placeholderText="{{ 'notification.add-target' | translate }}">
+        <button #createTargetButton
+                mat-button [fxHide]="disabled" matSuffix
+                (click)="createTarget($event, createTargetButton)">
+          {{ 'notification.create-new' | translate }}
+        </button>
       </tb-entity-list>
     </div>
   </div>

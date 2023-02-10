@@ -145,7 +145,6 @@ export class TargetNotificationDialogComponent extends
     if (isDefined(this.data.target)) {
       formValue = Object.assign({}, this.data.target, formValue);
     }
-    formValue.type = formValue.configuration.type;
     this.notificationService.saveNotificationTarget(formValue).subscribe(
       (target) => this.dialogRef.close(target)
     );

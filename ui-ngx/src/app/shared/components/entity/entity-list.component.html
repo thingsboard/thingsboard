@@ -52,4 +52,7 @@
   <mat-error *ngIf="entityListFormGroup.get('entities').hasError('required')">
     {{ requiredText }}
   </mat-error>
+  <div matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </div>
 </mat-form-field>

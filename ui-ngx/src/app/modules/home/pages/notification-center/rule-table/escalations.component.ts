@@ -31,7 +31,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Subject } from 'rxjs';
-import { UtilsService } from '@core/services/utils.service';
 import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
 import { takeUntil } from 'rxjs/operators';
 
@@ -79,7 +78,6 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private utils: UtilsService,
               private fb: FormBuilder) {
   }
 
@@ -120,15 +118,18 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
 
   writeValue(escalations: {[key: string]: Array<string>} | null): void {
     const escalationParse: Array<NonConfirmedNotificationEscalation> = [];
+    // tslint:disable-next-line:forin
     for (const escalation in escalations) {
       escalationParse.push({delayInSec: Number(escalation), targets: escalations[escalation]});
     }
-    if (escalationParse?.length === this.escalationsFormArray.length) {
+    if (escalationParse.length === 0) {
+      this.addEscalation();
+    } else if (escalationParse?.length === this.escalationsFormArray.length) {
       this.escalationsFormArray.patchValue(escalationParse, {emitEvent: false});
     } else {
       const escalationsControls: Array<AbstractControl> = [];
       if (escalationParse) {
-        escalationParse.forEach((escalation, index) => {
+        escalationParse.forEach(escalation => {
           escalationsControls.push(this.fb.control(escalation, [Validators.required]));
         });
       } else {

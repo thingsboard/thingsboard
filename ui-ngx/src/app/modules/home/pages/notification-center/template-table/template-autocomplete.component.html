@@ -28,6 +28,12 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button #createTemplateButton
+          mat-button color="primary" matSuffix
+          *ngIf="allowCreate && !selectTemplateFormGroup.get('templateName').value && !disabled"
+          (click)="createTemplate($event, createTemplateButton)">
+    {{ 'notification.create-new' | translate }}
+  </button>
   <mat-autocomplete class="tb-autocomplete"
                     #templateAutocomplete="matAutocomplete"
                     [displayWith]="displayTemplateFn"

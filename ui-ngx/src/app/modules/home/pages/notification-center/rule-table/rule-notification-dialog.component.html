@@ -56,11 +56,32 @@
         </mat-form-field>
         <tb-template-autocomplete
           required
+          allowCreate
           formControlName="templateId"
           [notificationTypes]="ruleNotificationForm.get('triggerType').value"
           labelText="notification.template-name"
           requiredText="notification.template-required">
         </tb-template-autocomplete>
+        <section formGroupName="recipientsConfig"
+                 *ngIf="ruleNotificationForm.get('triggerType').value !== triggerType.ALARM; else alarmTargesConfig">
+          <tb-entity-list
+            required
+            formControlName="targets"
+            [entityType]="entityType.NOTIFICATION_TARGET"
+            placeholderText="{{ 'notification.target' | translate }}">
+            <button #createTargetButton
+                    mat-button color="primary" matSuffix
+                    (click)="createTarget($event, createTargetButton)">
+              {{ 'notification.create-new' | translate }}
+            </button>
+          </tb-entity-list>
+        </section>
+        <ng-template #alarmTargesConfig>
+          <fieldset class="fields-group" formGroupName="recipientsConfig">
+            <legend translate>notification.hierarchy-of-receiving</legend>
+            <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
+          </fieldset>
+        </ng-template>
       </form>
     </mat-step>
     <mat-step [stepControl]="alarmTemplateForm"
@@ -94,11 +115,6 @@
             </mat-form-field>
           </fieldset>
         </section>
-
-        <fieldset class="fields-group" formGroupName="recipientsConfig">
-          <legend translate>notification.hierarchy-of-receiving</legend>
-          <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
-        </fieldset>
       </form>
       <form [formGroup]="ruleNotificationForm">
         <section formGroupName="additionalConfig">
@@ -143,14 +159,6 @@
             <div class="tb-hint" translate>notification.device-profiles-list-rule-hint</div>
           </ng-template>
         </section>
-        <section formGroupName="recipientsConfig">
-          <tb-entity-list
-            required
-            formControlName="targets"
-            [entityType]="entityType.NOTIFICATION_TARGET"
-            placeholderText="{{ 'notification.target' | translate }}">
-          </tb-entity-list>
-        </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
         <section formGroupName="additionalConfig">
@@ -180,14 +188,6 @@
             <mat-slide-toggle formControlName="deleted">{{ 'notification.deleted' | translate }}</mat-slide-toggle>
           </section>
         </fieldset>
-        <section formGroupName="recipientsConfig">
-          <tb-entity-list
-            required
-            formControlName="targets"
-            [entityType]="entityType.NOTIFICATION_TARGET"
-            placeholderText="notification.target">
-          </tb-entity-list>
-        </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
         <section formGroupName="additionalConfig">
@@ -203,14 +203,7 @@
               [stepControl]="alarmCommentTemplateForm">
       <ng-template matStepLabel>{{ 'notification.alarm-comment-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="alarmCommentTemplateForm">
-        <section formGroupName="recipientsConfig">
-          <tb-entity-list
-            required
-            formControlName="targets"
-            [entityType]="entityType.NOTIFICATION_TARGET"
-            placeholderText="{{ 'notification.target' | translate }}">
-          </tb-entity-list>
-        </section>
+
       </form>
       <form [formGroup]="ruleNotificationForm">
         <section formGroupName="additionalConfig">;

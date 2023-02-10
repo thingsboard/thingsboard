@@ -21,7 +21,10 @@
        *ngFor="let escalationControl of escalationsFormArray.controls;
        let $index = index; last as isLast;"
        [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-    <tb-escalation-form fxFlex [formControl]="escalationControl" [systemEscalation]="$index === 0"></tb-escalation-form>
+    <tb-escalation-form fxFlex
+                        [formControl]="escalationControl"
+                        [systemEscalation]="$index === 0">
+    </tb-escalation-form>
     <span *ngIf="$index === 0" style="width: 40px;"></span>
     <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
             type="button"

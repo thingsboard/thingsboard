@@ -2710,6 +2710,7 @@
         "copy-rule": "Copy rule",
         "copy-template": "Copy template",
         "create-target": "Create recipient",
+        "create-new": "Create new",
         "created": "Created",
         "created-time": "Created time",
         "delete-request-text": "Be careful, after the confirmation the notification request will become unrecoverable.",

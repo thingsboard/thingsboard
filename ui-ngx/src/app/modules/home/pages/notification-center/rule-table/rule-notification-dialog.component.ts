@@ -14,13 +14,18 @@
 /// limitations under the License.
 ///
 
-import { NotificationRule, TriggerType, TriggerTypeTranslationMap } from '@shared/models/notification.models';
+import {
+  NotificationRule,
+  NotificationTarget,
+  TriggerType,
+  TriggerTypeTranslationMap
+} from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -33,6 +38,11 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { AlarmStatus, alarmStatusTranslations } from '@shared/models/alarm.models';
 import { TranslateService } from '@ngx-translate/core';
+import {
+  TargetNotificationDialogComponent,
+  TargetsNotificationDialogData
+} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+import { MatButton } from '@angular/material/button';
 
 export interface RuleNotificationDialogData {
   rule?: NotificationRule;
@@ -86,7 +96,8 @@ export class RuleNotificationDialogComponent extends
               private breakpointObserver: BreakpointObserver,
               private fb: FormBuilder,
               public translate: TranslateService,
-              private notificationService: NotificationService) {
+              private notificationService: NotificationService,
+              private dialog: MatDialog) {
     super(store, router, dialogRef);
 
     if (isDefined(data.isAdd)) {
@@ -100,11 +111,26 @@ export class RuleNotificationDialogComponent extends
       name: [null, Validators.required],
       templateId: [null, Validators.required],
       triggerType: [TriggerType.ALARM, Validators.required],
-      recipientsConfig: [null],
+      recipientsConfig: this.fb.group({
+        targets: [{value: null, disabled: true}, Validators.required],
+        escalationTable: [null, Validators.required]
+      }),
       triggerConfig: [null],
       additionalConfig: this.fb.group({
         description: ['']
       })
+    });
+
+    this.ruleNotificationForm.get('triggerType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value === TriggerType.ALARM) {
+        this.ruleNotificationForm.get('recipientsConfig.escalationTable').enable({emitEvent: false});
+        this.ruleNotificationForm.get('recipientsConfig.targets').disable({emitEvent: false});
+      } else {
+        this.ruleNotificationForm.get('recipientsConfig.escalationTable').disable({emitEvent: false});
+        this.ruleNotificationForm.get('recipientsConfig.targets').enable({emitEvent: false});
+      }
     });
 
     this.alarmTemplateForm = this.fb.group({
@@ -114,9 +140,6 @@ export class RuleNotificationDialogComponent extends
         clearRule: this.fb.group({
           alarmStatus: [null]
         })
-      }),
-      recipientsConfig: this.fb.group({
-        escalationTable: []
       })
     });
 
@@ -125,9 +148,6 @@ export class RuleNotificationDialogComponent extends
         filterByDevice: [true],
         devices: [null],
         deviceProfiles: [{value: null, disabled: true}]
-      }),
-      recipientsConfig: this.fb.group({
-        targets: [[], Validators.required]
       })
     });
 
@@ -149,17 +169,10 @@ export class RuleNotificationDialogComponent extends
         created: [false],
         updated: [false],
         deleted: [false]
-      }),
-      recipientsConfig: this.fb.group({
-        targets: [[], Validators.required]
       })
     });
 
-    this.alarmCommentTemplateForm = this.fb.group({
-      recipientsConfig: this.fb.group({
-        targets: [[], Validators.required]
-      })
-    });
+    this.alarmCommentTemplateForm = this.fb.group({ });
 
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],
@@ -179,6 +192,7 @@ export class RuleNotificationDialogComponent extends
       }
       this.ruleNotificationForm.reset({}, {emitEvent: false});
       this.ruleNotificationForm.patchValue(this.ruleNotification, {emitEvent: false});
+      this.ruleNotificationForm.get('triggerType').updateValueAndValidity({onlySelf: true});
       const currentForm = this.triggerTypeFormsMap.get(this.ruleNotification.triggerType);
       currentForm.patchValue(this.ruleNotification, {emitEvent: false});
       if (this.ruleNotification.triggerType === TriggerType.DEVICE_INACTIVITY) {
@@ -186,6 +200,12 @@ export class RuleNotificationDialogComponent extends
           .patchValue(!!this.ruleNotification.triggerConfig.devices, {onlySelf: true});
       }
     }
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   changeStep($event: StepperSelectionEvent) {
@@ -247,13 +267,30 @@ export class RuleNotificationDialogComponent extends
     });
   }
 
-  ngOnDestroy() {
-    super.ngOnDestroy();
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   cancel(): void {
     this.dialogRef.close(null);
+  }
+
+  createTarget($event: Event, button: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    button._elementRef.nativeElement.blur();
+    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
+      NotificationTarget>(TargetNotificationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {}
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          let formValue: string[] = this.ruleNotificationForm.get('recipientsConfig.targets').value;
+          if (!formValue) {
+            formValue = [];
+          }
+          formValue.push(res.id.id);
+          this.ruleNotificationForm.get('recipientsConfig.targets').patchValue(formValue);
+        }
+      });
   }
 }
