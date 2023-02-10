@@ -29,7 +29,11 @@ import {
   isDefined,
   isDefinedAndNotNull,
   isString,
-  isUndefined
+  isUndefined,
+  objToBase64,
+  objToBase64URI,
+  base64toString,
+  base64toObj
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -511,4 +515,21 @@ export class UtilsService {
       refCount()
     );
   }
+
+  public objToBase64(obj: any): string {
+    return objToBase64(obj);
+  }
+
+  public base64toString(b64Encoded: string): string {
+    return base64toString(b64Encoded);
+  }
+
+  public objToBase64URI(obj: any): string {
+    return objToBase64URI(obj);
+  }
+
+  public base64toObj(b64Encoded: string): any {
+    return base64toObj(b64Encoded);
+  }
+
 }
