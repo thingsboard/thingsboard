@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,8 +92,9 @@ public class EntityDataAdapter {
                 }
                 try {
                     double dblVal = Double.parseDouble(strVal);
-                    if (!Double.isInfinite(dblVal)) {
-                        return Double.toString(dblVal);
+                    String doubleAsString = Double.toString(dblVal);
+                    if (!Double.isInfinite(dblVal) && isSimpleDouble(doubleAsString)) {
+                        return doubleAsString;
                     }
                 } catch (NumberFormatException ignored) {
                 }
@@ -103,5 +104,10 @@ public class EntityDataAdapter {
             return "";
         }
     }
+
+    private static boolean isSimpleDouble(String valueAsString) {
+        return valueAsString.contains(".") && !valueAsString.contains("E") && !valueAsString.contains("e");
+    }
+
 
 }

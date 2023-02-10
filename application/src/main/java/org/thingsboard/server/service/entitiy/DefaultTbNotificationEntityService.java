@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,13 +131,9 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     public <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                                CustomerId customerId, E entity,
                                                                                                ActionType actionType,
-                                                                                               User user, boolean sendToEdge,
-                                                                                               Object... additionalInfo) {
+                                                                                               User user, Object... additionalInfo) {
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
-
-        if (sendToEdge) {
-            sendEntityNotificationMsg(tenantId, entityId, edgeTypeByActionType(actionType), JacksonUtil.toString(customerId));
-        }
+        sendEntityNotificationMsg(tenantId, entityId, edgeTypeByActionType(actionType), JacksonUtil.toString(customerId));
     }
 
     @Override

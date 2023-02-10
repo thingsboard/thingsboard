@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -49,7 +49,7 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 })
 export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  branchFormGroup: FormGroup;
+  branchFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
 
@@ -109,7 +109,7 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
 
   constructor(private store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private zone: NgZone) {
     this.branchFormGroup = this.fb.group({
       branch: [null, []]

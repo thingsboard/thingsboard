@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         try {
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
-                    actionType, user, true, edgeId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, edgeId.toString(), customerId.toString(), customer.getName());
 
             return savedEdge;
         } catch (Exception e) {
@@ -109,7 +109,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         try {
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(tenantId, edgeId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
-                    actionType, user, true, edgeId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, edgeId.toString(), customerId.toString(), customer.getName());
             return savedEdge;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.EDGE),

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALUE_ACCESSOR,
   ValidatorFn,
   Validators
@@ -58,9 +58,9 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
-  mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
+  mqttDeviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -78,7 +78,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
@@ -165,7 +165,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   private updateTransportPayloadBasedControls(type: TransportPayloadType, forceUpdated = false) {
     const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
-      .get('transportPayloadTypeConfiguration') as FormGroup;
+      .get('transportPayloadTypeConfiguration') as UntypedFormGroup;
     if (forceUpdated) {
       transportPayloadTypeForm.patchValue({
         deviceTelemetryProtoSchema: defaultTelemetrySchema,
@@ -194,7 +194,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   }
 
   private validationMQTTTopic(): ValidatorFn {
-    return (c: FormControl) => {
+    return (c: UntypedFormControl) => {
       const newTopic = c.value;
       const wildcardSymbols = /[#+]/g;
       let findSymbol = wildcardSymbols.exec(newTopic);
@@ -223,7 +223,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     };
   }
 
-  private uniqueDeviceTopicValidator(control: FormGroup): { [key: string]: boolean } | null {
+  private uniqueDeviceTopicValidator(control: UntypedFormGroup): { [key: string]: boolean } | null {
     if (control.getRawValue()) {
       const formValue = control.getRawValue() as MqttDeviceProfileTransportConfiguration;
       if (formValue.deviceAttributesTopic === formValue.deviceTelemetryTopic) {

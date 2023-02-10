@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, user, true, assetId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, assetId.toString(), customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
@@ -115,7 +115,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(tenantId, assetId));
             CustomerId customerId = customer.getId();
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, user, true, assetId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, assetId.toString(), customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
@@ -131,7 +131,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, publicCustomer.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, savedAsset.getCustomerId(), savedAsset,
-                    actionType, user, false, actionType.toString(), publicCustomer.getId().toString(), publicCustomer.getName());
+                    actionType, user, assetId.toString(), publicCustomer.getId().toString(), publicCustomer.getName());
 
             return savedAsset;
         } catch (Exception e) {

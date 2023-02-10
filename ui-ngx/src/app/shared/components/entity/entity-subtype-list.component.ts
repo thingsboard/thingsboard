@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, share } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -46,7 +46,7 @@ import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 })
 export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  entitySubtypeListFormGroup: FormGroup;
+  entitySubtypeListFormGroup: UntypedFormGroup;
 
   modelValue: Array<string> | null;
 
@@ -99,7 +99,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
               private deviceService: DeviceService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.entitySubtypeListFormGroup = this.fb.group({
       entitySubtypeList: [this.entitySubtypeList, this.required ? [Validators.required] : []],
       entitySubtype: [null]
