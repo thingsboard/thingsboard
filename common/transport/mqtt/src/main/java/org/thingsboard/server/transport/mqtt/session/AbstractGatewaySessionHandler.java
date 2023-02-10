@@ -54,9 +54,12 @@ import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.util.ReturnCode;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +75,8 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_RPC_ASYNC_MSG;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate.OFFLINE;
 
 /**
  * Created by ashvayka on 19.01.17.
@@ -157,7 +162,7 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    public void onGatewayDisconnect() {
+    public void onDevicesDisconnect() {
         devices.forEach(this::deregisterSession);
     }
 
@@ -180,14 +185,6 @@ public abstract class AbstractGatewaySessionHandler {
     void deregisterSession(String deviceName) {
         MqttDeviceAwareSessionContext deviceSessionCtx = devices.remove(deviceName);
         if (deviceSessionCtx != null) {
-            if (deviceSessionCtx.isSparkplug()){
-//                onDeviceTelemetryProto(int msgId, ByteBuf payload)
-                // add Metric name: STATE type: String value: OFFLINE
-//                SparkplugBProto.Payload.Metric metricState = createMetric(SparkplugMessageTypeSate.OFFLINE.name(),
-//                        sparkplugBProtoDevice.getTimestamp(), STATE.name(), MetricDataType.Text);
-//                sparkplugBProtoDevice.getMetricsList().add(metricState);
-//                onTelemetryProto(-1, sparkplugBProtoDevice, deviceName, sparkplugTopic);
-            }
             deregisterSession(deviceName, deviceSessionCtx);
         } else {
             log.debug("[{}] Device [{}] was already removed from the gateway session", sessionId, deviceName);
@@ -403,8 +400,19 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    protected void processPostTelemetryMsg(MqttDeviceAwareSessionContext deviceCtx, TransportProtos.PostTelemetryMsg postTelemetryMsg, String deviceName, int msgId) {
+    public void processPostTelemetryMsg(MqttDeviceAwareSessionContext deviceCtx, TransportProtos.PostTelemetryMsg postTelemetryMsg, String deviceName, int msgId) {
         transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+    }
+
+    public TransportProtos.PostTelemetryMsg postTelemetryMsgCreated(TransportProtos.KeyValueProto keyValueProto, long ts) {
+        List<TransportProtos.KeyValueProto> result = new ArrayList<>();
+        result.add(keyValueProto);
+        TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
+        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
+        builder.setTs(ts);
+        builder.addAllKv(result);
+        request.addTsKvList(builder.build());
+        return request.build();
     }
 
     private void onDeviceClaimJson(int msgId, ByteBuf payload) throws AdaptorException {
@@ -719,10 +727,24 @@ public abstract class AbstractGatewaySessionHandler {
     }
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
+        if (this.deviceSessionCtx.isSparkplug()){
+            // add Msg Telemetry: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
+            stateSparkplugtSendOnTelemetry (deviceSessionCtx.getSessionInfo(),
+                    deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
+        }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
         transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
         System.out.println("Removed device " + deviceName + " from the gateway session");
         log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
+    }
+
+    public void stateSparkplugtSendOnTelemetry (TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugMessageTypeSate typeSate, long ts) {
+        TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
+        keyValueProtoBuilder.setKey(STATE.name());
+        keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
+        keyValueProtoBuilder.setStringV(typeSate.name());
+        TransportProtos.PostTelemetryMsg postTelemetryMsg =  postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
+        transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(channel, deviceName, -1, postTelemetryMsg));
     }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final String deviceName, final int msgId, final T msg) {
@@ -742,4 +764,5 @@ public abstract class AbstractGatewaySessionHandler {
             }
         };
     }
+
 }

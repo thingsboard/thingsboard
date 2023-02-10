@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NBIRTH;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.fromSparkplugBMetricToKeyValueProto;
@@ -105,11 +104,8 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
             try {
                 // add Msg Telemetry: key STATE type: String value: ONLINE ts: sparkplugBProto.getTimestamp()
-                TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
-                keyValueProtoBuilder.setKey(STATE.name());
-                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
-                keyValueProtoBuilder.setStringV(ONLINE.name());
-                msgs.add(postTelemetryMsgCreated(keyValueProtoBuilder.build(), sparkplugBProto.getTimestamp()));
+                stateSparkplugtSendOnTelemetry(contextListenableFuture.get().getSessionInfo(), deviceName, ONLINE,
+                        sparkplugBProto.getTimestamp());
                 contextListenableFuture.get().setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
             } catch (InterruptedException | ExecutionException e) {
                 log.error("Failed add Metrics. MessageType *BIRTH.", e);
@@ -240,17 +236,6 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
     @Override
     protected SparkplugDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
         return new SparkplugDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
-    }
-
-    protected TransportProtos.PostTelemetryMsg postTelemetryMsgCreated (TransportProtos.KeyValueProto keyValueProto, long ts) {
-        List<TransportProtos.KeyValueProto> result = new ArrayList<>();
-        result.add(keyValueProto);
-        TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
-        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-        builder.setTs(ts);
-        builder.addAllKv(result);
-        request.addTsKvList(builder.build());
-        return request.build();
     }
 
 }
