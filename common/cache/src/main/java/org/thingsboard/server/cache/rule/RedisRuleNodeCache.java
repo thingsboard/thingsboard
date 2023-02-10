@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void add(RuleNodeId ruleNodeId, String key, TbMsg value) {
-        processAdd(ruleNodeId, key, TbMsg.toByteArray(value));
+    public void add(RuleNodeId ruleNodeId, Integer partition, String key, TbMsg value) {
+        processAdd(ruleNodeId, partition, key, TbMsg.toByteArray(value));
     }
 
     @Override
@@ -64,8 +64,8 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void removeTbMsgList(RuleNodeId ruleNodeId, String key, List<TbMsg> values) {
-        processRemove(ruleNodeId, key, tbMsgListToBytes(values));
+    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, String key, List<TbMsg> values) {
+        processRemove(ruleNodeId, partition, key, tbMsgListToBytes(values));
     }
 
     @Override
@@ -79,35 +79,52 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key) {
-        return toTbMsgSet(processGetMembers(ruleNodeId, key));
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, String key) {
+        return toTbMsgSet(processGetMembers(ruleNodeId, partition, key));
     }
 
     @Override
     public void evict(RuleNodeId ruleNodeId, String key) {
+        evict(ruleNodeId, null, key);
+    }
+
+    @Override
+    public void evict(RuleNodeId ruleNodeId, Integer partition, String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.del(toRuleNodeCacheKey(ruleNodeId, key).getBytes());
+            connection.del(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes());
         }
     }
 
     private void processAdd(RuleNodeId ruleNodeId, String key, byte[] value) {
+        processAdd(ruleNodeId, null, key, value);
+    }
+
+    private void processAdd(RuleNodeId ruleNodeId, Integer partition, String key, byte[] value) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.setCommands().sAdd(toRuleNodeCacheKey(ruleNodeId, key).getBytes(), value);
+            connection.setCommands().sAdd(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), value);
         }
     }
 
     private void processRemove(RuleNodeId ruleNodeId, String key, byte[][] values) {
+        processRemove(ruleNodeId, null, key, values);
+    }
+
+    private void processRemove(RuleNodeId ruleNodeId, Integer partition, String key, byte[][] values) {
         if (values.length == 0) {
             return;
         }
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.setCommands().sRem(toRuleNodeCacheKey(ruleNodeId, key).getBytes(), values);
+            connection.setCommands().sRem(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), values);
         }
     }
 
     private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, String key) {
+        return processGetMembers(ruleNodeId, null, key);
+    }
+
+    private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, Integer partition, String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            Set<byte[]> bytes = connection.setCommands().sMembers(toRuleNodeCacheKey(ruleNodeId, key).getBytes());
+            Set<byte[]> bytes = connection.setCommands().sMembers(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes());
             if (bytes == null) {
                 return Collections.emptySet();
             }
@@ -151,8 +168,10 @@ public class RedisRuleNodeCache implements RuleNodeCache {
                 .collect(Collectors.toSet());
     }
 
-    private String toRuleNodeCacheKey(RuleNodeId ruleNodeId, String key) {
-        return String.format("%s::%s", ruleNodeId.getId().toString(), key);
+    private String toRuleNodeCacheKey(RuleNodeId ruleNodeId, Integer partition, String key) {
+        return partition == null ?
+                String.format("%s::%s", ruleNodeId.getId().toString(), key) :
+                String.format("%s::%s::%s", ruleNodeId.getId().toString(), partition, key);
     }
 
 }

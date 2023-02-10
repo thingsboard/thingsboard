@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void add(RuleNodeId ruleNodeId, String key, TbMsg value) {
+    public void add(RuleNodeId ruleNodeId, Integer partition, String key, TbMsg value) {
     }
 
     @Override
@@ -50,7 +50,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void removeTbMsgList(RuleNodeId ruleNodeId, String key, List<TbMsg> values) {
+    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, String key, List<TbMsg> values) {
     }
 
     @Override
@@ -64,12 +64,17 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key) {
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, String key) {
         return Collections.emptySet();
     }
 
     @Override
     public void evict(RuleNodeId ruleNodeId, String key) {
+    }
+
+    @Override
+    public void evict(RuleNodeId ruleNodeId, Integer partition, String key) {
+
     }
 
 }

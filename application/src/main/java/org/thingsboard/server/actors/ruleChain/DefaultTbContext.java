@@ -301,6 +301,11 @@ class DefaultTbContext implements TbContext {
         return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
     }
 
+    @Override
+    public TopicPartitionInfo getEntityTopicPartition(EntityId entityId) {
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId);
+    }
+
     private void scheduleMsgWithDelay(TbActorMsg msg, long delayInMs, TbActorRef target) {
         mainCtx.scheduleMsgWithDelay(target, msg, delayInMs);
     }

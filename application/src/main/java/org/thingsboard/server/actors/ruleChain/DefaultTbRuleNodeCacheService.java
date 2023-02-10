@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,13 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
     }
 
     @Override
-    public void add(String key, TbMsg value) {
-        cache.add(ruleNodeId, key, value);
+    public void add(String key, Integer partition, TbMsg value) {
+        cache.add(ruleNodeId, partition, key, value);
     }
 
     @Override
-    public void removeTbMsgList(String key, List<TbMsg> values) {
-        cache.removeTbMsgList(ruleNodeId, key, values);
+    public void removeTbMsgList(String key, Integer partition, List<TbMsg> values) {
+        cache.removeTbMsgList(ruleNodeId, partition, key, values);
     }
 
     @Override
@@ -74,8 +74,13 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgs(String key) {
-        return cache.getTbMsgSetByKey(ruleNodeId, key);
+    public Set<TbMsg> getTbMsgs(String key, Integer partition) {
+        return cache.getTbMsgSetByKey(ruleNodeId, partition, key);
+    }
+
+    @Override
+    public void evictTbMsgs(String key, Integer partition) {
+        cache.evict(ruleNodeId, partition, key);
     }
 
     @Override

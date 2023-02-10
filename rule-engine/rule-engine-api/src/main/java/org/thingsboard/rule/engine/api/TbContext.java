@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -207,6 +208,8 @@ public interface TbContext {
     void checkTenantEntity(EntityId entityId);
 
     boolean isLocalEntity(EntityId entityId);
+
+    TopicPartitionInfo getEntityTopicPartition(EntityId entityId);
 
     RuleNodeId getSelfId();
 

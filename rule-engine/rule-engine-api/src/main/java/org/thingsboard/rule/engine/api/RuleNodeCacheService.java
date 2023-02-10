@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,21 @@ public interface RuleNodeCacheService {
 
     void add(String key, EntityId id);
 
-    void add(String key, TbMsg value);
+    void add(String key, Integer partition, TbMsg value);
 
     void removeStringList(String key, List<String> values);
 
     void removeEntityIdList(String key, List<EntityId> values);
 
-    void removeTbMsgList(String key, List<TbMsg> values);
+    void removeTbMsgList(String key, Integer partition, List<TbMsg> values);
 
     Set<String> getStrings(String key);
 
     Set<EntityId> getEntityIds(String key);
 
-    Set<TbMsg> getTbMsgs(String key);
+    Set<TbMsg> getTbMsgs(String key, Integer partition);
+
+    void evictTbMsgs(String key, Integer partition);
 
     void evict(String key);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,21 @@ public interface RuleNodeCache {
 
     void add(RuleNodeId ruleNodeId, String key, EntityId value);
 
-    void add(RuleNodeId ruleNodeId, String key, TbMsg value);
+    void add(RuleNodeId ruleNodeId, Integer partition, String key, TbMsg value);
 
     void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values);
 
     void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values);
 
-    void removeTbMsgList(RuleNodeId ruleNodeId, String key, List<TbMsg> values);
+    void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, String key, List<TbMsg> values);
 
     Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key);
 
     Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key);
 
-    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, String key);
+    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, String key);
 
     void evict(RuleNodeId ruleNodeId, String key);
+
+    void evict(RuleNodeId ruleNodeId, Integer partition, String key);
 }
