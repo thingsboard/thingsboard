@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.user;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,13 +87,12 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         log.trace("Executing deleteUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
         UserSettings userSettings = userSettingsDao.findById(tenantId, userId);
-        ObjectNode settings = (ObjectNode) userSettings.getSettings();
-
+        DocumentContext docSettings = JsonPath.parse(userSettings.getSettings().toString());
         try {
             for (String s : jsonPaths) {
-                settings = new ObjectMapper().readValue(JsonPath.parse(settings.toString()).delete("$." + s).jsonString(), ObjectNode.class);
-                userSettings.setSettings(settings);
+                docSettings = docSettings.delete("$." + s);
             }
+            userSettings.setSettings(new ObjectMapper().readValue(docSettings.jsonString(), ObjectNode.class));
             userSettingsDao.save(tenantId, userSettings);
             publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
         } catch (Exception t) {
