@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserSettings;
@@ -23,7 +25,8 @@ import java.util.List;
 
 public interface UserSettingsService {
 
-    UserSettings updateUserSettings(TenantId tenantId, UserSettings userSettings);
+    void updateUserSettings(TenantId tenantId, UserId userId, JsonNode settings);
+    void updateUserSettings(TenantId tenantId, UserId userId, String path, JsonNode settings);
 
     UserSettings saveUserSettings(TenantId tenantId, UserSettings userSettings);
 

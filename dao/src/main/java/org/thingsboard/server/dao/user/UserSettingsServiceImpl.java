@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,6 +35,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedService;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -51,13 +54,37 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     }
 
     @Override
-    public UserSettings updateUserSettings(TenantId tenantId, UserSettings userSettings) {
-        log.trace("Executing updateUserSettings for user [{}], [{}]", userSettings.getUserId(), userSettings);
-        validateId(userSettings.getUserId(), INCORRECT_USER_ID + userSettings.getUserId());
-        UserSettings oldSettings = userSettingsDao.findById(tenantId, userSettings.getUserId());
+    public void updateUserSettings(TenantId tenantId, UserId userId, JsonNode settings) {
+        log.trace("Executing updateUserSettings for user [{}], [{}]", userId, settings);
+        validateId(userId, INCORRECT_USER_ID + userId);
+
+        UserSettings oldSettings = userSettingsDao.findById(tenantId, userId);
         JsonNode oldSettingsJson = oldSettings != null ? oldSettings.getSettings() : JacksonUtil.newObjectNode();
-        userSettings.setSettings(merge(oldSettingsJson, userSettings.getSettings()));
-        return doSaveUserSettings(tenantId, userSettings);
+
+        UserSettings newUserSettings = new UserSettings();
+        newUserSettings.setUserId(userId);
+        newUserSettings.setSettings(update(oldSettingsJson, settings));
+        doSaveUserSettings(tenantId, newUserSettings);
+    }
+
+    @Override
+    public void updateUserSettings(TenantId tenantId, UserId userId, String path, JsonNode settings) {
+        log.trace("Executing updateUserSettings for user [{}], [{}]", userId, settings);
+        validateId(userId, INCORRECT_USER_ID + userId);
+        UserSettings oldSettings = userSettingsDao.findById(tenantId, userId);
+
+        UserSettings newUserSettings = new UserSettings();
+        newUserSettings.setUserId(userId);
+
+        JsonNode oldSettingsJson = oldSettings != null ? oldSettings.getSettings() : JacksonUtil.newObjectNode();
+        DocumentContext dcSettings = JsonPath.parse(oldSettingsJson.toString());
+        dcSettings = dcSettings.set("$." + path, new ObjectMapper().convertValue(settings, new TypeReference<Map<String, Object>>(){}));
+        try {
+            newUserSettings.setSettings(new ObjectMapper().readValue(dcSettings.jsonString(), ObjectNode.class));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        doSaveUserSettings(tenantId, newUserSettings);
     }
 
     @Override
@@ -78,11 +105,11 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
             return;
         }
         try {
-            DocumentContext docSettings = JsonPath.parse(userSettings.getSettings().toString());
+            DocumentContext dcSettings = JsonPath.parse(userSettings.getSettings().toString());
             for (String s : jsonPaths) {
-                docSettings = docSettings.delete("$." + s);
+                dcSettings = dcSettings.delete("$." + s);
             }
-            userSettings.setSettings(new ObjectMapper().readValue(docSettings.jsonString(), ObjectNode.class));
+            userSettings.setSettings(new ObjectMapper().readValue(dcSettings.jsonString(), ObjectNode.class));
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             throw new RuntimeException(t);
@@ -110,19 +137,12 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         cache.evict(keys);
     }
 
-    public JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+    public JsonNode update(JsonNode mainNode, JsonNode updateNode) {
         Iterator<String> fieldNames = updateNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
-            JsonNode jsonNode = mainNode.get(fieldName);
-            if (jsonNode != null && jsonNode.isObject()) {
-                merge(jsonNode, updateNode.get(fieldName));
-            } else {
-                if (mainNode instanceof ObjectNode) {
-                    JsonNode value = updateNode.get(fieldName);
-                    ((ObjectNode) mainNode).set(fieldName, value);
-                }
-            }
+            JsonNode value = updateNode.get(fieldName);
+            ((ObjectNode) mainNode).set(fieldName, value);
         }
         return mainNode;
     }
