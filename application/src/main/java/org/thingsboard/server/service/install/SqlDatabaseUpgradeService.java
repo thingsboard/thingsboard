@@ -774,7 +774,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                             alarmRule.setEnabled(true);
                                                             String alarmType = alarm.get("alarmType").asText();
                                                             alarmRule.setAlarmType(alarmType);
-                                                            alarmRule.setName(deviceProfile.getName() + "-" + alarmType);
+                                                            alarmRule.setName(alarmType);
 
                                                             AlarmRuleConfiguration configuration = JacksonUtil.convertValue(alarm, AlarmRuleConfiguration.class);
                                                             configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(deviceProfile.getId())));

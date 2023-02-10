@@ -22,8 +22,7 @@ CREATE TABLE IF NOT EXISTS alarm_rule (
     name varchar(255),
     enabled boolean,
     configuration jsonb,
-    description varchar,
-    CONSTRAINT alarm_rule_name_unq_key UNIQUE (tenant_id, name)
+    description varchar
 );
 
 CREATE TABLE IF NOT EXISTS alarm_rule_entity_state (
