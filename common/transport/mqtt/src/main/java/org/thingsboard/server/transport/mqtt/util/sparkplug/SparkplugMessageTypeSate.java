@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.DeviceTransportType;
-
-@Data
-public class DefaultDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
-
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.DEFAULT;
-    }
+public enum SparkplugMessageTypeSate {
+    /**
+     * The EoN node should examine the payload of this
+     * message to ensure that it is a value of “ONLINE”
+     */
+    OFFLINE,
+    /**
+     * If the value is “OFFLINE”, this indicates the Primary Application
+     * has lost its MQTT Session to this particular MQTT Server.
+     */
+    ONLINE
 
 }

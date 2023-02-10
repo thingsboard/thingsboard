@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NBIRTH;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.fromSparkplugBMetricToKeyValueProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.validatedValueByTypeMetric;
@@ -102,6 +103,9 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         List<TransportProtos.PostTelemetryMsg> msgs = convertToPostTelemetry(sparkplugBProto, topic.getType().name());
         if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
             try {
+                // add Msg Telemetry: key STATE type: String value: ONLINE ts: sparkplugBProto.getTimestamp()
+                stateSparkplugtSendOnTelemetry(contextListenableFuture.get().getSessionInfo(), deviceName, ONLINE,
+                        sparkplugBProto.getTimestamp());
                 contextListenableFuture.get().setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
             } catch (InterruptedException | ExecutionException e) {
                 log.error("Failed add Metrics. MessageType *BIRTH.", e);
@@ -182,30 +186,16 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                         topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
                 Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(key, protoMetric);
                 if (keyValueProtoOpt.isPresent()) {
-                    List<TransportProtos.KeyValueProto> result = new ArrayList<>();
-                    result.add(keyValueProtoOpt.get());
-                    TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
-                    TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-                    builder.setTs(ts);
-                    builder.addAllKv(result);
-                    request.addTsKvList(builder.build());
-                    msgs.add(request.build());
+                    msgs.add(postTelemetryMsgCreated(keyValueProtoOpt.get(), ts));
                 }
             }
 
             if (DBIRTH.name().equals(topicTypeName)) {
-                List<TransportProtos.KeyValueProto> result = new ArrayList<>();
                 TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
                 keyValueProtoBuilder.setKey(topicTypeName + " " + "seq");
                 keyValueProtoBuilder.setType(TransportProtos.KeyValueType.LONG_V);
                 keyValueProtoBuilder.setLongV(sparkplugBProto.getSeq());
-                result.add(keyValueProtoBuilder.build());
-                TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
-                TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-                builder.setTs(sparkplugBProto.getTimestamp());
-                builder.addAllKv(result);
-                request.addTsKvList(builder.build());
-                msgs.add(request.build());
+                msgs.add(postTelemetryMsgCreated(keyValueProtoBuilder.build(), sparkplugBProto.getTimestamp()));
             }
             return msgs;
         } catch (IllegalStateException | JsonSyntaxException | ThingsboardException e) {
@@ -233,11 +223,11 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                 return Optional.of(getPayloadAdaptor().createMqttPublishMsg(deviceSessionCtx, sparkplugTopic, payloadInBytes));
             } else {
                 log.trace("DeviceId: [{}] tenantId: [{}] sessionId:[{}] Failed to convert device attributes [{}] response to MQTT sparkplug  msg",
-                        deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(),  sessionId, tsKvProto.getKv());
+                        deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(), sessionId, tsKvProto.getKv());
             }
         } catch (Exception e) {
             log.trace("DeviceId: [{}] tenantId: [{}] sessionId:[{}] Failed to convert device attributes response to MQTT sparkplug  msg",
-                    deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(),  sessionId, e);
+                    deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(), sessionId, e);
             return Optional.empty();
         }
         return Optional.empty();
