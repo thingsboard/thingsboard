@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.service.mail.TestMailService;
@@ -739,6 +741,48 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         ResultActions result = doGet("/api/users?page={page}&pageSize={pageSize}&sortProperty={sortProperty}", 0, 100, invalidSortProperty)
                 .andExpect(status().isBadRequest());
         assertThat(getErrorMessage(result)).containsIgnoringCase("invalid sort property");
+    }
+
+    @Test
+    public void testSaveUserSettings() throws Exception {
+        loginCustomerUser();
+
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":10, \"E\":18}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
+
+        JsonNode retrievedSettings = doGet("/api/user/settings", JsonNode.class);
+        Assert.assertEquals(retrievedSettings, userSettings);
+   }
+
+    @Test
+    public void testUpdateUserSettings() throws Exception {
+        loginCustomerUser();
+
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":10, \"E\":18}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
+
+        JsonNode newSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
+        JsonNode updatedSettings = doPut("/api/user/settings", newSettings, JsonNode.class);
+
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}, \"E\":18}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+    }
+
+    @Test
+    public void testDeleteUserSettings() throws Exception {
+        loginCustomerUser();
+
+        JsonNode userSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
+
+        doDelete("/api/user/settings/C.D,B");
+
+        JsonNode retrievedSettings = doGet("/api/user/settings", JsonNode.class);
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"C\":{}}");
+        Assert.assertEquals(expectedSettings, retrievedSettings);
     }
 
     private User createUser() throws Exception {
