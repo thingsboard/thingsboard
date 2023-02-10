@@ -72,7 +72,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         customerUser = userService.saveUser(customerUser);
 
         userSettings = createUserSettings(customerUser.getId());
-        userSettings = userService.saveUserSettings(TenantId.SYS_TENANT_ID, customerUser.getId(), userSettings);
     }
 
     @After
@@ -110,14 +109,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(user);
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(SYSTEM_TENANT_ID, user.getId());
         Assert.assertNotNull(userCredentials);
-    }
-
-    @Test
-    public void testFindUserSettings() {
-        User user = userService.findUserByEmail(SYSTEM_TENANT_ID,"customer@thingsboard.org");
-        Assert.assertNotNull(user);
-        UserSettings userSettings = userService.findUserSettings(SYSTEM_TENANT_ID, user.getId());
-        Assert.assertEquals(userSettings.getSettings(), userSettings.getSettings());
     }
 
     @Test

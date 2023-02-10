@@ -328,27 +328,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         return failedLoginAttempts;
     }
 
-    @Override
-    public UserSettings saveUserSettings(TenantId tenantId, UserId userId, UserSettings userSettings) {
-        log.trace("Executing saveUserSettings for user [{}], [{}]", userId, userSettings);
-        validateId(userId, INCORRECT_USER_ID + userId);
-        return userSettingsDao.save(tenantId, userSettings);
-    }
-
-    @Override
-    public UserSettings findUserSettings(TenantId tenantId, UserId userId) {
-        log.trace("Executing findUserSettings for user [{}]", userId);
-        validateId(userId, INCORRECT_USER_ID + userId);
-        return userSettingsDao.findById(tenantId, userId);
-    }
-
-    @Override
-    public void deleteUserSettings(TenantId tenantId, UserId userId) {
-        log.trace("Executing deleteUserSettings for user [{}]", userId);
-        validateId(userId, INCORRECT_USER_ID + userId);
-        userSettingsDao.removeById(tenantId, userId);
-    }
-
     private int increaseFailedLoginAttempts(User user) {
         JsonNode additionalInfo = user.getAdditionalInfo();
         if (!(additionalInfo instanceof ObjectNode)) {

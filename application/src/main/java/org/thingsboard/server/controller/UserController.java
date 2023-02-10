@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -27,6 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -58,6 +61,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.Arrays;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -87,6 +92,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class UserController extends BaseController {
 
     public static final String USER_ID = "userId";
+    public static final String JSON_PATHS = "jsonPaths";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
 
@@ -382,45 +388,54 @@ public class UserController extends BaseController {
     }
 
     @ApiOperation(value = "Save user settings (saveUserSettings)",
-            notes = "Save user settings for specified user id. " )
+            notes = "Save user settings represented in json format for authorized user. " )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PostMapping(value = "/user/{userId}/settings")
-    public UserSettings saveUserSettings(@ApiParam(value = USER_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(USER_ID) String strUserId, @RequestBody UserSettings userSettings) throws ThingsboardException {
-        checkParameter(USER_ID, strUserId);
+    @PostMapping(value = "/user/settings")
+    public JsonNode saveUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
 
-        UserId userId = new UserId(toUUID(strUserId));
-        User user = checkUserId(userId, Operation.WRITE);
+        UserSettings userSettings = new UserSettings();
+        userSettings.setSettings(settings);
+        userSettings.setUserId(currentUser.getId());
+        return userSettingsService.saveUserSettings(currentUser.getTenantId(), userSettings).getSettings();
+    }
 
-        userSettings.setUserId(userId);
-        return userService.saveUserSettings(user.getTenantId(), userId, userSettings);
+    @ApiOperation(value = "Update user settings (saveUserSettings)",
+            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
+                    "Example: you have such settings: {A:5, B:{C:10, D:5}}. Updating it with {A:10, E:6} will result in" +
+                    "{A:10, B:{C:10, D:5}}, E:6")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PutMapping(value = "/user/settings")
+    public JsonNode putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+
+        UserSettings userSettings = new UserSettings();
+        userSettings.setSettings(settings);
+        userSettings.setUserId(currentUser.getId());
+        return userSettingsService.updateUserSettings(currentUser.getTenantId(), userSettings).getSettings();
     }
 
     @ApiOperation(value = "Get user settings (getUserSettings)",
             notes = "Fetch the User settings based on the provided User Id. " )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/user/{userId}/settings")
-    public UserSettings getUserSettings(@ApiParam(value = USER_ID_PARAM_DESCRIPTION)
-                                        @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
-        checkParameter(USER_ID, strUserId);
+    @GetMapping(value = "/user/settings")
+    public JsonNode getUserSettings() throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
 
-        UserId userId = new UserId(toUUID(strUserId));
-        User user = checkUserId(userId, Operation.READ);
-
-        return checkNotNull(userService.findUserSettings(user.getTenantId(), user.getId()), "No user settingd found");
+        UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId());
+        return userSettings == null ? JacksonUtil.newObjectNode(): userSettings.getSettings();
     }
 
     @ApiOperation(value = "Delete user settings (deleteUserSettings)",
-            notes = "Delete user settings based on the provided User Id. " )
+            notes = "Delete user settings by specifying list of json element xpaths. \n " +
+                    "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter" )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/user/{userId}/settings", method = RequestMethod.DELETE)
-    public void deleteUserSettings(@ApiParam(value = USER_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
-        checkParameter(USER_ID, strUserId);
+    @RequestMapping(value = "/user/settings/{jsonPaths}", method = RequestMethod.DELETE)
+    public void deleteUserSettings( @ApiParam(value = JSON_PATHS)
+                                        @PathVariable(JSON_PATHS) String jsonPaths) throws ThingsboardException {
+        checkParameter(USER_ID, jsonPaths);
 
-        UserId userId = new UserId(toUUID(strUserId));
-        User user = checkUserId(userId, Operation.WRITE);
-
-        userService.deleteUserSettings(user.getTenantId(), userId);
+        SecurityUser currentUser = getCurrentUser();
+        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(jsonPaths.split(",")));
     }
 }

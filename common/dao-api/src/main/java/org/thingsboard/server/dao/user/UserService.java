@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.entity.EntityDaoService;
-import org.thingsboard.server.common.data.security.UserSettings;
 
 public interface UserService extends EntityDaoService {
 	
@@ -74,11 +73,5 @@ public interface UserService extends EntityDaoService {
     int increaseFailedLoginAttempts(TenantId tenantId, UserId userId);
 
     void setLastLoginTs(TenantId tenantId, UserId userId);
-
-    UserSettings saveUserSettings(TenantId tenantId, UserId userId, UserSettings userSettings);
-
-    UserSettings findUserSettings(TenantId tenantId, UserId userId);
-
-    void deleteUserSettings(TenantId tenantId, UserId userId);
 
 }

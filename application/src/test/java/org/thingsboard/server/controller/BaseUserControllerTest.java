@@ -745,48 +745,44 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUserSettings() throws Exception {
-        loginSysAdmin();
-
-        User user = createUser();
-        User savedUser = doPost("/api/user", user, User.class);
-
-        UserSettings userSettings = createUserSettings();
-        UserSettings savedSettings = doPost("/api/user/" + savedUser.getId() + "/settings", userSettings, UserSettings.class);
-        Assert.assertEquals(savedSettings.getSettings(), savedSettings.getSettings());
-
-        UserSettings retrievedSettings = doGet("/api/user/" + savedUser.getId() + "/settings", UserSettings.class);
-        Assert.assertEquals(retrievedSettings.getSettings(), retrievedSettings.getSettings());
-
-        doDelete("/api/user/" + savedUser.getId() + "/settings");
-        doGet("/api/user/" + savedUser.getId() + "/settings").andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void testShouldNotSaveSettingsForOtherUser() throws Exception {
-        loginSysAdmin();
-
-        User user = createUser();
-        User savedUser = doPost("/api/user", user, User.class);
-
         loginCustomerUser();
-        UserSettings userSettings = createUserSettings();
-        doPost("/api/user/" + savedUser.getId() + "/settings", userSettings)
-                .andExpect(status().isForbidden());
-    }
+
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":10, \"E\":18}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
+
+        JsonNode retrievedSettings = doGet("/api/user/settings", JsonNode.class);
+        Assert.assertEquals(retrievedSettings, userSettings);
+   }
+
     @Test
-    public void testShouldDeleteSettingsAfterUserDeletion() throws Exception {
-        loginSysAdmin();
+    public void testUpdateUserSettings() throws Exception {
+        loginCustomerUser();
 
-        User user = createUser();
-        User savedUser = doPost("/api/user", user, User.class);
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":10, \"E\":18}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
 
-        UserSettings userSettings = createUserSettings();
-        UserSettings savedSettings = doPost("/api/user/" + savedUser.getId() + "/settings", userSettings, UserSettings.class);
-        Assert.assertEquals(savedSettings.getSettings(), savedSettings.getSettings());
+        JsonNode newSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
+        JsonNode updatedSettings = doPut("/api/user/settings", newSettings, JsonNode.class);
 
-        doDelete("/api/user/" + savedUser.getId())
-                .andExpect(status().isOk());
-        doGet("/api/user/" + savedUser.getId() + "/settings").andExpect(status().isNotFound());
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}, \"E\":18}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+    }
+
+    @Test
+    public void testDeleteUserSettings() throws Exception {
+        loginCustomerUser();
+
+        JsonNode userSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
+
+        doDelete("/api/user/settings/C.D,B");
+
+        JsonNode retrievedSettings = doGet("/api/user/settings", JsonNode.class);
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"C\":{}}");
+        Assert.assertEquals(expectedSettings, retrievedSettings);
     }
 
     private User createUser() throws Exception {
@@ -799,11 +795,5 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setFirstName("Joe");
         user.setLastName("Downs");
         return doPost("/api/user", user, User.class);
-    }
-
-    private UserSettings createUserSettings() {
-        UserSettings userSettings = new UserSettings();
-        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", StringUtils.randomAlphanumeric(10)));
-        return userSettings;
     }
 }
