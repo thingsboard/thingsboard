@@ -168,10 +168,15 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
     }
   }
 
-  public navigatePrevState(index: number): void {
-    if (index < this.stateObject.length - 1) {
-      this.stateObject.splice(index + 1, this.stateObject.length - index - 1);
-      this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
+  public navigatePrevState(index: number, params?: StateParams): void {
+    let lastIndex: number = this.stateObject.length - 1;
+    if (index < lastIndex) {
+      this.stateObject.splice(index + 1, lastIndex - 1);
+      lastIndex = this.stateObject.length - 1;
+      if (params) {
+        this.stateObject[lastIndex].params = params;
+      }
+      this.gotoState(this.stateObject[lastIndex].id, true);
     }
   }
 
