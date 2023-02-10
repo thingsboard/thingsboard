@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserSettings;
@@ -46,14 +47,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     public UserSettings saveUserSettings(TenantId tenantId, UserSettings userSettings) {
         log.trace("Executing saveUserSettings for user [{}], [{}]", userSettings.getUserId(), userSettings);
         validateId(userSettings.getUserId(), INCORRECT_USER_ID + userSettings.getUserId());
-        try {
-            UserSettings saved = userSettingsDao.save(tenantId, userSettings);
-            publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
-            return saved;
-        } catch (Exception t) {
-            handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
-           throw t;
-        }
+        return doSaveUserSettings(tenantId, userSettings);
     }
 
     @Override
@@ -61,16 +55,9 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         log.trace("Executing updateUserSettings for user [{}], [{}]", userSettings.getUserId(), userSettings);
         validateId(userSettings.getUserId(), INCORRECT_USER_ID + userSettings.getUserId());
         UserSettings oldSettings = userSettingsDao.findById(tenantId, userSettings.getUserId());
-        userSettings.setSettings(merge(oldSettings.getSettings(), userSettings.getSettings()));
-
-        try {
-            UserSettings saved = userSettingsDao.save(tenantId, userSettings);
-            publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
-            return saved;
-        } catch (Exception t) {
-            handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
-            throw t;
-        }
+        JsonNode oldSettingsJson = oldSettings != null ? oldSettings.getSettings() : JacksonUtil.newObjectNode();
+        userSettings.setSettings(merge(oldSettingsJson, userSettings.getSettings()));
+        return doSaveUserSettings(tenantId, userSettings);
     }
 
     @Override
@@ -83,21 +70,35 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     }
 
     @Override
-    public void deleteUserSettings(TenantId tenantId, UserId userId, List<String> jsonPaths)  {
+    public void deleteUserSettings(TenantId tenantId, UserId userId, List<String> jsonPaths) {
         log.trace("Executing deleteUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
         UserSettings userSettings = userSettingsDao.findById(tenantId, userId);
-        DocumentContext docSettings = JsonPath.parse(userSettings.getSettings().toString());
+        if (userSettings == null) {
+            return;
+        }
         try {
+            DocumentContext docSettings = JsonPath.parse(userSettings.getSettings().toString());
             for (String s : jsonPaths) {
                 docSettings = docSettings.delete("$." + s);
             }
             userSettings.setSettings(new ObjectMapper().readValue(docSettings.jsonString(), ObjectNode.class));
-            userSettingsDao.save(tenantId, userSettings);
-            publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             throw new RuntimeException(t);
+        }
+        doSaveUserSettings(tenantId, userSettings);
+    }
+
+    private UserSettings doSaveUserSettings(TenantId tenantId, UserSettings userSettings) {
+        try {
+            //TODO: add validation for "." and ",";
+            UserSettings saved = userSettingsDao.save(tenantId, userSettings);
+            publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
+            return saved;
+        } catch (Exception t) {
+            handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
+            throw t;
         }
     }
 
@@ -110,15 +111,13 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     }
 
     public JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
-
         Iterator<String> fieldNames = updateNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
             JsonNode jsonNode = mainNode.get(fieldName);
             if (jsonNode != null && jsonNode.isObject()) {
                 merge(jsonNode, updateNode.get(fieldName));
-            }
-            else {
+            } else {
                 if (mainNode instanceof ObjectNode) {
                     JsonNode value = updateNode.get(fieldName);
                     ((ObjectNode) mainNode).set(fieldName, value);

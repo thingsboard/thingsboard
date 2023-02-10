@@ -765,9 +765,24 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         JsonNode newSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
         JsonNode updatedSettings = doPut("/api/user/settings", newSettings, JsonNode.class);
-
         JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}, \"E\":18}");
         Assert.assertEquals(expectedSettings, updatedSettings);
+
+        JsonNode patchedSettings = mapper.readTree("\"C\":{\"E\": 22}}");
+        updatedSettings = doPut("/api/user/settings", patchedSettings, JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"E\": 22}, \"E\":18}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
+        patchedSettings = mapper.readTree("\"C.D\": 16}}");
+        updatedSettings = doPut("/api/user/settings", patchedSettings, JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16, \"E\": 22}, \"E\":18}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
+        patchedSettings = mapper.readTree("\"C.D\": {\"A\":5}}}");
+        updatedSettings = doPut("/api/user/settings", patchedSettings, JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": {\"A\":5}, \"E\": 22}, \"E\":18}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
     }
 
     @Test
