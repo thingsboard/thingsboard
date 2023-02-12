@@ -127,6 +127,11 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
               {entityView});
           }
           break;
+        case AliasFilterType.assignedAlarms:
+          entityType = this.filter.assigneeId.entityType;
+          this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).list,
+            {count: 1});
+          break;
         case AliasFilterType.relationsQuery:
           allEntitiesText = this.translate.instant('alias.all-entities');
           anyRelationText = this.translate.instant('alias.any-relation');

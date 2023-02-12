@@ -24,6 +24,7 @@ public enum EntityFilterType {
     DEVICE_TYPE("deviceType"),
     ENTITY_VIEW_TYPE("entityViewType"),
     EDGE_TYPE("edgeType"),
+    ASSIGNED_ALARMS("assignedAlarms"),
     RELATIONS_QUERY("relationsQuery"),
     ASSET_SEARCH_QUERY("assetSearchQuery"),
     DEVICE_SEARCH_QUERY("deviceSearchQuery"),

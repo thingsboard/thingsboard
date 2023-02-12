@@ -154,6 +154,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
+    public PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId,
+                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateEntityDataPageLink(query.getPageLink());
+        return alarmDao.findAlarmDataByQueryForAlarms(tenantId, query, orderedEntityIds);
+    }
+
+    @Override
     @Transactional
     public AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId) {
         log.debug("Deleting Alarm Id: {}", alarmId);

@@ -316,6 +316,151 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         });
     }
 
+    @Override
+    public PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        return transactionTemplate.execute(status -> {
+            AlarmDataPageLink pageLink = query.getPageLink();
+            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+            ctx.addUuidListParameter("alarm_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+            StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
+            StringBuilder fromPart = new StringBuilder(" from alarm a ");
+            StringBuilder wherePart = new StringBuilder(" where ");
+            StringBuilder sortPart = new StringBuilder(" order by ");
+            StringBuilder joinPart = new StringBuilder();
+            boolean addAnd = false;
+            selectPart.append(" a.originator_id as entity_id ");
+            fromPart.append(LEFT_JOIN_TB_USERS);
+            EntityDataSortOrder sortOrder = pageLink.getSortOrder();
+            String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
+            if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
+                String sortOrderKey = sortOrder.getKey().getKey();
+                sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
+                        .append(" ").append(sortOrder.getDirection().name());
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.id in (:alarm_ids)");
+                } else {
+                    addAndIfNeeded(wherePart, addAnd);
+                    addAnd = true;
+                    wherePart.append(" a.id in (:alarm_ids)");
+                }
+            } else {
+                joinPart.append(" inner join (select * from (VALUES");
+                int entityIdIdx = 0;
+                int lastEntityIdIdx = orderedEntityIds.size() - 1;
+                for (EntityId entityId : orderedEntityIds) {
+                    joinPart.append("(uuid('").append(entityId.getId().toString()).append("'), ").append(entityIdIdx).append(")");
+                    if (entityIdIdx != lastEntityIdIdx) {
+                        joinPart.append(",");
+                    } else {
+                        joinPart.append(")");
+                    }
+                    entityIdIdx++;
+                }
+                joinPart.append(" as e(id, priority)) e ");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    if (textSearchQuery.isEmpty()) {
+                        joinPart.append("on ea.entity_id = e.id");
+                    } else {
+                        joinPart.append("on a.entity_id = e.id");
+                    }
+                } else {
+                    joinPart.append("on a.id = e.id");
+                }
+                sortPart.append("e.priority");
+            }
+
+            long startTs;
+            long endTs;
+            if (pageLink.getTimeWindow() > 0) {
+                endTs = System.currentTimeMillis();
+                startTs = endTs - pageLink.getTimeWindow();
+            } else {
+                startTs = pageLink.getStartTs();
+                endTs = pageLink.getEndTs();
+            }
+
+            if (startTs > 0) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addLongParameter("startTime", startTs);
+                wherePart.append("a.created_time >= :startTime");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.created_time >= :startTime");
+                }
+            }
+
+            if (endTs > 0) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addLongParameter("endTime", endTs);
+                wherePart.append("a.created_time <= :endTime");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.created_time <= :endTime");
+                }
+            }
+
+            if (pageLink.getTypeList() != null && !pageLink.getTypeList().isEmpty()) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
+                wherePart.append("a.type in (:alarmTypes)");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.alarm_type in (:alarmTypes)");
+                }
+            }
+
+            if (pageLink.getSeverityList() != null && !pageLink.getSeverityList().isEmpty()) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addStringListParameter("alarmSeverities", pageLink.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
+                wherePart.append("a.severity in (:alarmSeverities)");
+            }
+
+            if (pageLink.getStatusList() != null && !pageLink.getStatusList().isEmpty()) {
+                Set<AlarmStatus> statusSet = toStatusSet(pageLink.getStatusList());
+                if (!statusSet.isEmpty()) {
+                    addAndIfNeeded(wherePart, addAnd);
+                    addAnd = true;
+                    ctx.addStringListParameter("alarmStatuses", statusSet.stream().map(AlarmStatus::name).collect(Collectors.toList()));
+                    wherePart.append(" a.status in (:alarmStatuses)");
+                }
+            }
+
+            String mainQuery = String.format("%s%s", selectPart, fromPart);
+            if (textSearchQuery.isEmpty()) {
+                mainQuery = String.format("%s%s%s", mainQuery, joinPart, wherePart);
+            } else {
+                mainQuery = String.format("select * from (%s%s) a %s WHERE %s", mainQuery, wherePart, joinPart, textSearchQuery);
+            }
+            String countQuery = String.format("select count(*) from (%s) result", mainQuery);
+            long queryTs = System.currentTimeMillis();
+            int totalElements;
+            try {
+                totalElements = jdbcTemplate.queryForObject(countQuery, ctx, Integer.class);
+            } finally {
+                queryLog.logQuery(ctx, countQuery, System.currentTimeMillis() - queryTs);
+            }
+            if (totalElements == 0) {
+                return AlarmDataAdapter.createAlarmData(pageLink, Collections.emptyList(), totalElements, orderedEntityIds);
+            }
+
+            String dataQuery = mainQuery + sortPart;
+
+            int startIndex = pageLink.getPageSize() * pageLink.getPage();
+            if (pageLink.getPageSize() > 0) {
+                dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
+            }
+            queryTs = System.currentTimeMillis();
+            List<Map<String, Object>> rows;
+            try {
+                rows = jdbcTemplate.queryForList(dataQuery, ctx);
+            } finally {
+                queryLog.logQuery(ctx, dataQuery, System.currentTimeMillis() - queryTs);
+            }
+            return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
+        });
+    }
+
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && selectionMapping != null && !selectionMapping.isEmpty()) {
             String lowerSearchText = searchText.toLowerCase() + "%";

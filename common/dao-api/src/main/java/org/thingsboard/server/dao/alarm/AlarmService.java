@@ -72,5 +72,8 @@ public interface AlarmService extends EntityDaoService {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
+    PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId,
+                                                        AlarmDataQuery query, Collection<EntityId> orderedAlarmIds);
+
     void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
 }

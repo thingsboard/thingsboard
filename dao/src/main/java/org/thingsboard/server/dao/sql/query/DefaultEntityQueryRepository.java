@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.AssetSearchQueryFilter;
 import org.thingsboard.server.common.data.query.AssetTypeFilter;
+import org.thingsboard.server.common.data.query.AssignedAlarmsFilter;
 import org.thingsboard.server.common.data.query.DeviceSearchQueryFilter;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EdgeSearchQueryFilter;
@@ -241,6 +242,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
+        entityTableMap.put(EntityType.ALARM, "alarm");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -574,6 +576,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return this.entityListQuery(ctx, (EntityListFilter) entityFilter);
             case ENTITY_NAME:
                 return this.entityNameQuery(ctx, (EntityNameFilter) entityFilter);
+            case ASSIGNED_ALARMS:
+                return this.entityAssignedAlarmsQuery(ctx, (AssignedAlarmsFilter) entityFilter);
             case ASSET_TYPE:
             case DEVICE_TYPE:
             case ENTITY_VIEW_TYPE:
@@ -808,6 +812,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return "lower(e.search_text) like lower(concat(:entity_filter_name_filter, '%%'))";
     }
 
+    private String entityAssignedAlarmsQuery(QueryContext ctx, AssignedAlarmsFilter filter) {
+        if (filter.getAssigneeId() == null) {
+            return "e.assigned_id is null";
+        }
+        ctx.addStringParameter("entity_filter_assigned_alarms_filter",  filter.getAssigneeId().toString());
+        return "e.assignee_id = uuid(:entity_filter_assigned_alarms_filter)";
+    }
+
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
         String type;
         String name;
@@ -858,6 +870,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case EDGE_TYPE:
             case EDGE_SEARCH_QUERY:
                 return EntityType.EDGE;
+            case ASSIGNED_ALARMS:
+                return EntityType.ALARM;
             case RELATIONS_QUERY:
                 RelationsQueryFilter rgf = (RelationsQueryFilter) entityFilter;
                 return rgf.isMultiRoot() ? rgf.getMultiRootEntitiesType() : rgf.getRootEntity().getEntityType();
