@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -135,7 +136,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         Iterator<String> fieldNames = updateNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
-            validatePathExists(dcOldSettings, fieldName);
+            createPathIfNotExists(dcOldSettings, "$."+ fieldName);
             dcOldSettings = dcOldSettings.set("$." + fieldName, getValueByNodeType(updateNode.get(fieldName)));
         }
         try {
@@ -145,11 +146,15 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         }
     }
 
-    private static void validatePathExists(DocumentContext dcOldSettings, String fieldName) {
+    private static String createPathIfNotExists(DocumentContext dcOldSettings, String path) {
         try {
-            dcOldSettings.read("$." + fieldName);
-        }catch (PathNotFoundException e) {
-            throw new DataValidationException("Json element with path " + fieldName + "was not found");
+            dcOldSettings.read(path);
+            return path;
+        } catch (PathNotFoundException e) {
+            String lastElement = path.substring(path.lastIndexOf(".") + 1);
+            String pathToLastElement = path.substring(0, path.lastIndexOf("."));
+            dcOldSettings.put(createPathIfNotExists(dcOldSettings, pathToLastElement), lastElement, new LinkedHashMap<String, Object>());
+            return path;
         }
     }
 

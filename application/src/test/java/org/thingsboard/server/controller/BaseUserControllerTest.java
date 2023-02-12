@@ -778,41 +778,68 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        JsonNode patchedSettings = mapper.readTree("{\"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
+        JsonNode patchedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
         patchedSettings = mapper.readTree("{\"B.D\": \"stringValue3\"}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\": \"stringValue3\"}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\": \"stringValue3\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
         patchedSettings = mapper.readTree("{\"B.D\": {\"E\": 76, \"F\": 92}}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\": {\"E\":76, \"F\": 92}}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\": {\"E\":76, \"F\": 92}}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
         patchedSettings = mapper.readTree("{\"B.D.E\": 100}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\": {\"E\":100, \"F\": 92}}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\": {\"E\":100, \"F\": 92}}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
     }
 
     @Test
-    public void testShouldNotUpdateUserSettingsWithNoExistingPath() throws Exception {
+    public void testShouldCreatePathIfNotExists() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
+        JsonNode userSettings = mapper.readTree("{\"A\":5}");
         JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
         Assert.assertEquals(userSettings, savedSettings);
 
-        JsonNode newSettings = mapper.readTree("{\"A.E\":10}");
-        doPut("/api/user/settings", newSettings).andExpect(status().isBadRequest());
+        JsonNode newSettings = mapper.readTree("{\"B\":{\"C\": 10}}");
+        doPut("/api/user/settings", newSettings);
+        JsonNode updatedSettings = doGet("/api/user/settings", JsonNode.class);
+        JsonNode expectedSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\": 10}}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
+        newSettings = mapper.readTree("{\"B.K\":true}");
+        doPut("/api/user/settings", newSettings);
+        updatedSettings = doGet("/api/user/settings", JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\": 10, \"K\": true}}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
+        newSettings = mapper.readTree("{\"B\":{}}");
+        doPut("/api/user/settings", newSettings);
+        updatedSettings = doGet("/api/user/settings", JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{}}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
+        newSettings = mapper.readTree("{\"F.G\":\"string\"}");
+        doPut("/api/user/settings", newSettings);
+        updatedSettings = doGet("/api/user/settings", JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{}, \"F\":{\"G\": \"string\"}}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
+
+        newSettings = mapper.readTree("{\"F\":{\"G\":\"string2\"}}");
+        doPut("/api/user/settings", newSettings);
+        updatedSettings = doGet("/api/user/settings", JsonNode.class);
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{}, \"F\":{\"G\": \"string2\"}}");
+        Assert.assertEquals(expectedSettings, updatedSettings);
     }
 
     @Test
