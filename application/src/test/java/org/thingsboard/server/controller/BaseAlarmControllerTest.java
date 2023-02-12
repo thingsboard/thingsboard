@@ -442,7 +442,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertTrue("Created alarm doesn't match the found one!", equals);
     }
 
-    @Ignore
     @Test
     public void testDeleteAlarmWithDeleteRelationsOk() throws Exception {
         loginCustomerUser();

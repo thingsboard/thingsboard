@@ -718,8 +718,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
-
-    @Ignore
     @Test
     public void testDeleteUserWithDeleteRelationsOk() throws Exception {
         UserId userId = createUser().getId();

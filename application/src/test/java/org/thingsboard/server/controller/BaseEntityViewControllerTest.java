@@ -807,7 +807,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    @Ignore
     @Test
     public void testDeleteEntityViewWithDeleteRelationsOk() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelationsOk").getId();

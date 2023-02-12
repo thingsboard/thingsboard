@@ -261,7 +261,6 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
         testEntityDaoWithRelationsTransactionalException(ruleChainDao, savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
     }
 
-    @Ignore
     @Test
     public void givenRuleNodeWithInvalidConfiguration_thenReturnError() throws Exception {
         RuleChain ruleChain = createRuleChain("Rule chain with invalid nodes");

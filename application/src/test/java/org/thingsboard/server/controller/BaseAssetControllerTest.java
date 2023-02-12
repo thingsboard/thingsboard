@@ -940,7 +940,6 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    @Ignore
     @Test
     public void testDeleteAssetWithDeleteRelationsOk() throws Exception {
         AssetId assetId = createAsset("Asset for Test WithRelationsOk").getId();

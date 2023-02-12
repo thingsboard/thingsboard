@@ -985,7 +985,6 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(errorMsg));
     }
 
-    @Ignore
     @Test
     public void testDeleteDeviceProfileWithDeleteRelationsOk() throws Exception {
         DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelationsOk").getId();

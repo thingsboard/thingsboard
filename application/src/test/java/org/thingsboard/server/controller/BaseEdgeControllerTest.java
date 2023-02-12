@@ -871,7 +871,6 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         }
     }
 
-    @Ignore
     @Test
     public void testDeleteEdgeWithDeleteRelationsOk() throws Exception {
         EdgeId edgeId = savedEdge("Edge for Test WithRelationsOk").getId();
