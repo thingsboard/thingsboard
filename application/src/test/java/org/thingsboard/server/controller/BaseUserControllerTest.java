@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -41,7 +40,6 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.service.mail.TestMailService;
@@ -756,36 +754,59 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
    }
 
     @Test
+    public void testShouldNotSaveJsonWithRestrictedSymbols() throws Exception {
+        loginCustomerUser();
+
+        JsonNode userSettings = mapper.readTree("{\"A.B\":5, \"E\":18}");
+        doPost("/api/user/settings", userSettings).andExpect(status().isBadRequest());
+
+        userSettings = mapper.readTree("{\"A,B\":5, \"E\":18}");
+        doPost("/api/user/settings", userSettings).andExpect(status().isBadRequest());
+    }
+
+    @Test
     public void testUpdateUserSettings() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\":5, \"D\":5}}");
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
         JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
         Assert.assertEquals(userSettings, savedSettings);
 
         JsonNode newSettings = mapper.readTree("{\"A\":10}");
         doPut("/api/user/settings", newSettings);
         JsonNode updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":5, \"D\":5}}");
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        JsonNode patchedSettings = mapper.readTree("{\"B\":{\"E\": 22}}");
+        JsonNode patchedSettings = mapper.readTree("{\"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"E\": 22}}");
+        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        patchedSettings = mapper.readTree("{\"I\": 56}");
-        doPut("/api/user/settings/B.E", patchedSettings);
+        patchedSettings = mapper.readTree("{\"B.D\": {\"E\": 56}}");
+        doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"E\": {\"I\":56}}}");
+        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\": {\"E\": 56}}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        patchedSettings = mapper.readTree("{\"I\": 76, \"F\": 92}");
-        doPut("/api/user/settings/B.E", patchedSettings);
+        patchedSettings = mapper.readTree("{\"B.D\": {\"E\": 76, \"F\": 92}}");
+        doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"E\": {\"I\":76, \"F\": 92}}}");
+        expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":false, \"D\": {\"E\":76, \"F\": 92}}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
+    }
+
+    @Test
+    public void testShouldNotUpdateUserSettingsWithNoExistingPath() throws Exception {
+        loginCustomerUser();
+
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
+        JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
+        Assert.assertEquals(userSettings, savedSettings);
+
+        JsonNode newSettings = mapper.readTree("{\"A.E\":10}");
+        doPut("/api/user/settings", newSettings).andExpect(status().isBadRequest());
     }
 
     @Test

@@ -20,8 +20,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.fge.jackson.NodeType;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -68,26 +71,6 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     }
 
     @Override
-    public void updateUserSettings(TenantId tenantId, UserId userId, String path, JsonNode settings) {
-        log.trace("Executing updateUserSettings for user [{}], [{}]", userId, settings);
-        validateId(userId, INCORRECT_USER_ID + userId);
-        UserSettings oldSettings = userSettingsDao.findById(tenantId, userId);
-
-        UserSettings newUserSettings = new UserSettings();
-        newUserSettings.setUserId(userId);
-
-        JsonNode oldSettingsJson = oldSettings != null ? oldSettings.getSettings() : JacksonUtil.newObjectNode();
-        DocumentContext dcSettings = JsonPath.parse(oldSettingsJson.toString());
-        dcSettings = dcSettings.set("$." + path, new ObjectMapper().convertValue(settings, new TypeReference<Map<String, Object>>(){}));
-        try {
-            newUserSettings.setSettings(new ObjectMapper().readValue(dcSettings.jsonString(), ObjectNode.class));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        doSaveUserSettings(tenantId, newUserSettings);
-    }
-
-    @Override
     public UserSettings findUserSettings(TenantId tenantId, UserId userId) {
         log.trace("Executing findUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
@@ -119,7 +102,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
 
     private UserSettings doSaveUserSettings(TenantId tenantId, UserSettings userSettings) {
         try {
-            //TODO: add validation for "." and ",";
+            validateJsonKeys(userSettings.getSettings());
             UserSettings saved = userSettingsDao.save(tenantId, userSettings);
             publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             return saved;
@@ -137,14 +120,58 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         cache.evict(keys);
     }
 
+    private void validateJsonKeys(JsonNode userSettings) {
+        Iterator<String> fieldNames = userSettings.fieldNames();
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            if (fieldName.contains(".") || fieldName.contains(",")) {
+                throw new DataValidationException("Json field name should not contain \".\" or \",\" symbols");
+            }
+        }
+    }
+
     public JsonNode update(JsonNode mainNode, JsonNode updateNode) {
+        DocumentContext dcOldSettings = JsonPath.parse(mainNode.toString());
         Iterator<String> fieldNames = updateNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
-            JsonNode value = updateNode.get(fieldName);
-            ((ObjectNode) mainNode).set(fieldName, value);
+            validatePathExists(dcOldSettings, fieldName);
+            dcOldSettings = dcOldSettings.set("$." + fieldName, getValueByNodeType(updateNode.get(fieldName)));
         }
-        return mainNode;
+        try {
+            return new ObjectMapper().readValue(dcOldSettings.jsonString(), ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void validatePathExists(DocumentContext dcOldSettings, String fieldName) {
+        try {
+            dcOldSettings.read("$." + fieldName);
+        }catch (PathNotFoundException e) {
+            throw new DataValidationException("Json element with path " + fieldName + "was not found");
+        }
+    }
+
+    private static Object getValueByNodeType(final JsonNode value)
+    {
+        final NodeType type = NodeType.getNodeType(value);
+        switch (type) {
+            case STRING:
+                return value.textValue();
+            case NUMBER:
+            case INTEGER:
+                return value.bigIntegerValue();
+            case NULL:
+            case ARRAY:
+                return value;
+            case OBJECT:
+                return new ObjectMapper().convertValue(value, new TypeReference<Map<String, Object>>() {});
+            case BOOLEAN:
+                return value.booleanValue();
+            default:
+                throw new UnsupportedOperationException();
+        }
     }
 
 }

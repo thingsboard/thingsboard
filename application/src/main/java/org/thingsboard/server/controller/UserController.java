@@ -92,7 +92,6 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class UserController extends BaseController {
 
     public static final String USER_ID = "userId";
-    public static final String PATH = "path";
     public static final String PATHS = "paths";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
@@ -403,8 +402,8 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Update user settings (saveUserSettings)",
             notes = "Update user settings for authorized user. Only specified json elements will be updated." +
-                    "Example: you have such settings: {A:5, B:{C:10, D:5}}. Updating it with {A:10, E:6} will result in" +
-                    "{A:10, B:{C:10, D:5}}, E:6")
+                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
+                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping(value = "/user/settings")
     public void putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
@@ -412,20 +411,8 @@ public class UserController extends BaseController {
         userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), settings);
     }
 
-    @ApiOperation(value = "Update user settings (saveUserSettings)",
-            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
-                    "Example: you have such settings: {A:5, B:{C:10, D:5}}. Updating it with {A:10, E:6} will result in" +
-                    "{A:10, B:{C:10, D:5}}, E:6")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PutMapping(value = "/user/settings/{path}")
-    public void putUserSettings(@ApiParam(value = PATH)
-                                    @PathVariable(PATH) String path, @RequestBody JsonNode settings) throws ThingsboardException {
-        SecurityUser currentUser = getCurrentUser();
-        userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), path, settings);
-    }
-
     @ApiOperation(value = "Get user settings (getUserSettings)",
-            notes = "Fetch the User settings based on the provided User Id. " )
+            notes = "Fetch the User settings based on authorized user. " )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings")
     public JsonNode getUserSettings() throws ThingsboardException {
