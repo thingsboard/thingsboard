@@ -180,7 +180,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         deviceProfile.setDescription(description);
         deviceProfile.setDefault(isDefault);
         deviceProfile.setDefaultQueueName(defaultQueueName);
-        deviceProfile.setProfileDataBytes(JacksonUtil.writeValueAsBytes(profileData));
+        deviceProfile.setProfileData(JacksonUtil.convertValue(profileData, DeviceProfileData.class));
         if (defaultRuleChainId != null) {
             deviceProfile.setDefaultRuleChainId(new RuleChainId(defaultRuleChainId));
         }

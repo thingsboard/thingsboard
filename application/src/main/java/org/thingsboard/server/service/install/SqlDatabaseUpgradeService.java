@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEn
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -49,16 +50,18 @@ import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateDao;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
@@ -152,7 +155,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceProfileService deviceProfileService;
 
     @Autowired
-    private DeviceProfileDao deviceProfileDao;
+    private DeviceProfileRepository deviceProfileRepository;
 
     @Autowired
     private AssetProfileService assetProfileService;
@@ -746,9 +749,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 futures.add(dbUpgradeExecutor.submit(() -> {
                                     try {
                                         PageLink profilePageLink = new PageLink(1000);
-                                        PageData<DeviceProfile> profiles;
+                                        PageData<DeviceProfileEntity> profiles;
                                         do {
-                                            profiles = deviceProfileDao.findDeviceProfilesWithAlarmRules(tenantId, profilePageLink);
+                                            profiles = DaoUtil.pageToPageData(deviceProfileRepository.findDeviceProfilesWIthAlarmRules(
+                                                    tenantId.getId(),
+                                                    DaoUtil.toPageable(profilePageLink)));
 
                                             try {
                                                 RuleChainId rootRuleChainId;
@@ -761,10 +766,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                     rootRuleChainId = null;
                                                 }
 
-                                                for (DeviceProfile deviceProfile : profiles.getData()) {
+                                                for (DeviceProfileEntity deviceProfile : profiles.getData()) {
                                                     Map<String, String> alarmRuleIdMapping = new HashMap<>();
 
-                                                    ObjectNode profileData = JacksonUtil.fromBytes(deviceProfile.getProfileDataBytes(), ObjectNode.class);
+                                                    JsonNode profileData = deviceProfile.getProfileData();
                                                     ArrayNode alarms = (ArrayNode) profileData.get("alarms");
 
                                                     for (JsonNode alarm : alarms) {
@@ -777,7 +782,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                             alarmRule.setName(alarmType);
 
                                                             AlarmRuleConfiguration configuration = JacksonUtil.convertValue(alarm, AlarmRuleConfiguration.class);
-                                                            configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(deviceProfile.getId())));
+                                                            configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(new DeviceProfileId(deviceProfile.getId()))));
                                                             configuration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
                                                             alarmRule.setConfiguration(configuration);
 
@@ -789,13 +794,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                     }
 
                                                     RuleChainId ruleChainId =
-                                                            Optional.ofNullable(deviceProfile.getDefaultRuleChainId()).orElse(rootRuleChainId);
+                                                            Optional.ofNullable(deviceProfile.getDefaultRuleChainId()).map(RuleChainId::new).orElse(rootRuleChainId);
 
                                                     if (rootRuleChainId == null) {
                                                         continue;
                                                     }
 
-                                                    List<JsonNode> states = alarmRuleEntityStateDao.findRuleNodeStatesByRuleChainIdAndType(deviceProfile.getId(), ruleChainId, "org.thingsboard.rule.engine.profile.TbDeviceProfileNode");
+                                                    List<JsonNode> states = alarmRuleEntityStateDao.findRuleNodeStatesByRuleChainIdAndType(new DeviceProfileId(deviceProfile.getId()), ruleChainId, "org.thingsboard.rule.engine.profile.TbDeviceProfileNode");
                                                     states.forEach(stateNode -> {
                                                         Map<String, PersistedAlarmState> alarmStates = new HashMap<>();
                                                         DeviceId deviceId = new DeviceId(UUID.fromString(stateNode.get("entity_id").asText()));
