@@ -21,8 +21,9 @@ import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface AlarmRuleService {
+public interface AlarmRuleService extends EntityDaoService {
 
     AlarmRule saveAlarmRule(TenantId tenantId, AlarmRule alarmRule);
 
