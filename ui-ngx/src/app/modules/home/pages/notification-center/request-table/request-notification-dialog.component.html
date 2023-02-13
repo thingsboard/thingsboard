@@ -37,11 +37,54 @@
     <mat-step [stepControl]="notificationRequestForm">
       <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
       <form [formGroup]="notificationRequestForm" style="padding-bottom: 16px;">
+        <div fxLayout="row" fxLayoutAlign="center">
+          <mat-button-toggle-group class="tb-notification-use-template-toggle-group"
+                                   style="width: 320px;"
+                                   formControlName="useTemplate">
+            <mat-button-toggle fxFlex [value]=true>{{ 'notification.use-template' | translate }}</mat-button-toggle>
+            <mat-button-toggle fxFlex [value]=false>{{ 'notification.start-from-scratch' | translate }}</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
         <tb-template-autocomplete
+          *ngIf="notificationRequestForm.get('useTemplate').value; else scratchTemplate"
           required
-          [notificationTypes]="notificationType.GENERAL"
-          formControlName="templateId">
+          allowCreate
+          formControlName="templateId"
+          [notificationTypes]="notificationType.GENERAL">
         </tb-template-autocomplete>
+        <ng-template #scratchTemplate>
+          <section formGroupName="template">
+            <section formGroupName="configuration">
+              <mat-form-field class="mat-block">
+                <mat-label translate>notification.subject</mat-label>
+                <input matInput formControlName="notificationSubject" required>
+                <mat-error *ngIf="notificationRequestForm.get('template.configuration.notificationSubject').hasError('required')">
+                  {{ 'notification.subject-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field class="mat-block">
+                <mat-label translate>notification.message</mat-label>
+                <input matInput formControlName="defaultTextTemplate" required>
+                <mat-error *ngIf="notificationRequestForm.get('template.configuration.defaultTextTemplate').hasError('required')">
+                  {{ 'notification.message-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <label class="tb-title tb-required"
+                     [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
+                {{ "notification.delivery-methods" | translate }}
+              </label>
+              <section formGroupName="deliveryMethodsTemplates" fxLayout="row warap">
+                <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
+                         [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
+                  <mat-slide-toggle class="delivery-method" formControlName="enabled">
+                    {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
+                  </mat-slide-toggle>
+                </section>
+              </section>
+              <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
+            </section>
+          </section>
+        </ng-template>
         <tb-entity-list
           required
           formControlName="targets"
@@ -55,31 +98,122 @@
             {{ 'notification.create-new' | translate }}
           </button>
         </tb-entity-list>
-        <section formGroupName="additionalConfig" class="additional-config-group">
-          <mat-slide-toggle formControlName="enabled" class="toggle">
-            {{ 'notification.scheduler-later' | translate }}
-          </mat-slide-toggle>
-          <div *ngIf="notificationRequestForm.get('additionalConfig.enabled').value" fxLayout="column">
-            <tb-timezone-select userTimezoneByDefault
-                                required
-                                formControlName="timezone">
-            </tb-timezone-select>
-            <mat-form-field>
-              <mat-label translate>notification.time</mat-label>
-              <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
-              <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-              <input required matInput fxFlex formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
-            </mat-form-field>
-          </div>
+      </form>
+    </mat-step>
+    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.PUSH.enabled').value"
+              [stepControl]="pushTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.web-settings' | translate }}</ng-template>
+      <form [formGroup]="pushTemplateForm">
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.subject</mat-label>
+          <input matInput formControlName="subject" [placeholder]="notificationRequestForm.get('template.configuration.notificationSubject').value">
+        </mat-form-field>
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body"
+                    [placeholder]="notificationRequestForm.get('template.configuration.defaultTextTemplate').value">
+          </textarea>
+        </mat-form-field>
+        <section formGroupName="additionalConfig">
+          <section formGroupName="icon" class="additional-config-group">
+            <mat-slide-toggle formControlName="enabled" class="toggle">
+              {{ 'icon.icon' | translate }}
+            </mat-slide-toggle>
+            <div *ngIf="pushTemplateForm.get('additionalConfig.icon.enabled').value" fxLayout="row" fxLayoutGap="12px">
+              <tb-material-icon-select formControlName="icon" required fxFlex>
+              </tb-material-icon-select>
+              <tb-color-input formControlName="color" fxFlex>
+              </tb-color-input>
+            </div>
+          </section>
+          <section formGroupName="actionButtonConfig" class="additional-config-group">
+            <mat-slide-toggle formControlName="enabled" class="toggle">
+              {{ 'notification.action-button' | translate }}
+            </mat-slide-toggle>
+            <div *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
+              <div fxLayout="row" fxLayoutGap="12px">
+                <mat-form-field class="mat-block" fxFlex>
+                  <mat-label translate>notification.button-text</mat-label>
+                  <input matInput formControlName="text" required>
+                  <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
+                    {{ 'notification.button-text-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <tb-color-input formControlName="color" fxFlex>
+                </tb-color-input>
+              </div>
+              <mat-form-field class="mat-block">
+                <mat-label translate>notification.link</mat-label>
+                <input matInput formControlName="link" required>
+                <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
+                  {{ 'notification.link-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </section>
         </section>
       </form>
     </mat-step>
-    <mat-step>
+    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
+              [stepControl]="emailTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.email-settings' | translate }}</ng-template>
+      <ng-template matStepContent>
+        <form [formGroup]="emailTemplateForm">
+          <mat-form-field class="mat-block" floatLabel="always">
+            <mat-label translate>notification.subject</mat-label>
+            <input matInput formControlName="subject" [placeholder]="notificationRequestForm.get('template.configuration.notificationSubject').value">
+          </mat-form-field>
+          <mat-label class="tb-title" translate>notification.message</mat-label>
+          <editor [init]="tinyMceOptions" formControlName="body"></editor>
+        </form>
+      </ng-template>
+    </mat-step>
+    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SMS.enabled').value"
+              [stepControl]="smsTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.sms-settings' | translate }}</ng-template>
+      <form [formGroup]="smsTemplateForm">
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body"
+                    [placeholder]="notificationRequestForm.get('template.configuration.defaultTextTemplate').value">
+          </textarea>
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SLACK.enabled').value"
+              [stepControl]="slackTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.slack-settings' | translate }}</ng-template>
+      <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body"
+                    [placeholder]="notificationRequestForm.get('template.configuration.defaultTextTemplate').value">
+          </textarea>
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step [stepControl]="notificationRequestAdditionalConfigForm">
       <ng-template matStepLabel>{{ 'notification.review' | translate }}</ng-template>
       <mat-progress-spinner color="warn" mode="indeterminate"
                             strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
       </mat-progress-spinner>
-      <div *ngIf="preview">
+      <div *ngIf="preview" style="padding-bottom: 16px">
         <section class="preview-group notification" *ngIf="preview.processedTemplates.PUSH.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
             <mat-icon svgIcon="mdi:bell-badge"></mat-icon>
@@ -100,6 +234,23 @@
             </div>
           </div>
         </section>
+        <form [formGroup]="notificationRequestAdditionalConfigForm" class="additional-config-group">
+          <mat-slide-toggle formControlName="enabled" class="toggle">
+            {{ 'notification.scheduler-later' | translate }}
+          </mat-slide-toggle>
+          <div *ngIf="notificationRequestAdditionalConfigForm.get('enabled').value" fxLayout="column">
+            <tb-timezone-select userTimezoneByDefault
+                                required
+                                formControlName="timezone">
+            </tb-timezone-select>
+            <mat-form-field>
+              <mat-label translate>notification.time</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput fxFlex formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
+            </mat-form-field>
+          </div>
+        </form>
       </div>
     </mat-step>
   </mat-horizontal-stepper>

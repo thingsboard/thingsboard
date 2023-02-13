@@ -58,9 +58,7 @@
           required
           allowCreate
           formControlName="templateId"
-          [notificationTypes]="ruleNotificationForm.get('triggerType').value"
-          labelText="notification.template-name"
-          requiredText="notification.template-required">
+          [notificationTypes]="ruleNotificationForm.get('triggerType').value">
         </tb-template-autocomplete>
         <section formGroupName="recipientsConfig"
                  *ngIf="ruleNotificationForm.get('triggerType').value !== triggerType.ALARM; else alarmTargesConfig">

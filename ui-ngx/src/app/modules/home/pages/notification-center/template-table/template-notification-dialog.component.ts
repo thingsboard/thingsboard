@@ -22,21 +22,21 @@ import {
   NotificationType
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
-import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { deepClone, deepTrim, isDefinedAndNotNull } from '@core/utils';
-import { Observable, Subject } from 'rxjs';
-import { map, takeUntil } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
 import { MatStepper } from '@angular/material/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
+import { TemplateConfiguration } from '@home/pages/notification-center/template-table/template-configuration';
 
 export interface TemplateNotificationDialogData {
   template?: NotificationTemplate;
@@ -51,7 +51,7 @@ export interface TemplateNotificationDialogData {
   styleUrls: ['./template-notification-dialog.component.scss']
 })
 export class TemplateNotificationDialogComponent
-  extends DialogComponent<TemplateNotificationDialogComponent, NotificationTemplate> implements OnDestroy {
+  extends TemplateConfiguration<TemplateNotificationDialogComponent, NotificationTemplate> implements OnDestroy {
 
   @ViewChild('notificationTemplateStepper', {static: true}) notificationTemplateStepper: MatStepper;
 
@@ -72,113 +72,25 @@ export class TemplateNotificationDialogComponent
   selectedIndex = 0;
   hideSelectType = false;
 
-  tinyMceOptions: Record<string, any> = {
-    base_url: '/assets/tinymce',
-    suffix: '.min',
-    plugins: ['link table image imagetools code fullscreen'],
-    menubar: 'edit insert tools view format table',
-    toolbar: 'fontselect fontsizeselect | formatselect | bold italic  strikethrough  forecolor backcolor ' +
-      '| link | table | image | alignleft aligncenter alignright alignjustify  ' +
-      '| numlist bullist outdent indent  | removeformat | code | fullscreen',
-    height: 400,
-    autofocus: false,
-    branding: false
-  };
-
-  private readonly destroy$ = new Subject<void>();
   private readonly templateNotification: NotificationTemplate;
 
-  private deliveryMethodFormsMap: Map<NotificationDeliveryMethod, FormGroup>;
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected dialogRef: MatDialogRef<TemplateNotificationDialogComponent, NotificationTemplate>,
               @Inject(MAT_DIALOG_DATA) public data: TemplateNotificationDialogData,
               private breakpointObserver: BreakpointObserver,
-              private fb: FormBuilder,
+              protected fb: FormBuilder,
               private notificationService: NotificationService,
               private translate: TranslateService) {
-    super(store, router, dialogRef);
+    super(store, router, dialogRef, fb);
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
     if (isDefinedAndNotNull(this.data?.predefinedType)) {
       this.hideSelectType = true;
+      this.templateNotificationForm.get('notificationType').setValue(this.data.predefinedType, {emitEvents: false});
     }
-
-    this.templateNotificationForm = this.fb.group({
-      name: ['', Validators.required],
-      notificationType: [this.hideSelectType ? this.data.predefinedType : NotificationType.GENERAL],
-      configuration: this.fb.group({
-        notificationSubject: ['', Validators.required],
-        defaultTextTemplate: ['', Validators.required],
-        deliveryMethodsTemplates: this.fb.group({}, {validators: this.atLeastOne()})
-      })
-    });
-    this.notificationDeliveryMethods.forEach(method => {
-      (this.templateNotificationForm.get('configuration.deliveryMethodsTemplates') as FormGroup)
-        .addControl(method, this.fb.group({enabled: method === NotificationDeliveryMethod.PUSH}), {emitEvent: false});
-    });
-
-    this.pushTemplateForm = this.fb.group({
-      subject: [''],
-      body: [''],
-      additionalConfig: this.fb.group({
-        icon: this.fb.group({
-          enabled: [false],
-          icon: [{value: '', disabled: true}, Validators.required],
-          color: ['#757575']
-        }),
-        actionButtonConfig: this.fb.group({
-          enabled: [false],
-          text: [{value: '', disabled: true}, Validators.required],
-          color: ['#305680'],
-          link: [{value: '', disabled: true}, Validators.required]
-        }),
-      })
-    });
-
-    this.pushTemplateForm.get('additionalConfig.icon.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      if (value) {
-        this.pushTemplateForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
-      } else {
-        this.pushTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
-      }
-    });
-
-    this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      if (value) {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.text').enable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
-      } else {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.text').disable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
-      }
-    });
-
-    this.emailTemplateForm = this.fb.group({
-      subject: [''],
-      body: ['']
-    });
-
-    this.smsTemplateForm = this.fb.group({
-      body: ['']
-    });
-
-    this.slackTemplateForm = this.fb.group({
-      body: ['']
-    });
-
-    this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([
-      [NotificationDeliveryMethod.PUSH, this.pushTemplateForm],
-      [NotificationDeliveryMethod.EMAIL, this.emailTemplateForm],
-      [NotificationDeliveryMethod.SMS, this.smsTemplateForm],
-      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm]
-    ]);
 
     if (data.isAdd || data.isCopy) {
       this.dialogTitle = 'notification.add-notification-template';
@@ -241,14 +153,7 @@ export class TemplateNotificationDialogComponent
 
   private add(): void {
     if (this.allValid()) {
-      let template: NotificationTemplate = this.templateNotificationForm.value;
-      this.notificationDeliveryMethods.forEach(method => {
-        if (template.configuration.deliveryMethodsTemplates[method].enabled) {
-          Object.assign(template.configuration.deliveryMethodsTemplates[method], this.deliveryMethodFormsMap.get(method).value, {method});
-        } else {
-          delete template.configuration.deliveryMethodsTemplates[method];
-        }
-      });
+      let template = this.getNotificationTemplateValue();
       if (this.templateNotification && !this.data.isCopy) {
         template = {...this.templateNotification, ...template};
       }
@@ -268,16 +173,5 @@ export class TemplateNotificationDialogComponent
         return false;
       }
     });
-  }
-
-  private atLeastOne() {
-    return (group: FormGroup): ValidationErrors | null => {
-      let hasAtLeastOne = true;
-      if (group?.controls) {
-        const controlsFormValue: FormGroup[] = Object.entries(group.controls).map(method => method[1]) as any;
-        hasAtLeastOne = controlsFormValue.some(value => value.controls.enabled.value);
-      }
-      return hasAtLeastOne ? null : {atLeastOne: true};
-    };
   }
 }

@@ -15,13 +15,14 @@
 ///
 
 import {
+  NotificationDeliveryMethod,
+  NotificationDeliveryMethodTranslateMap,
   NotificationRequest,
   NotificationRequestPreview,
   NotificationTarget,
   NotificationType
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
-import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
@@ -29,7 +30,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { deepTrim } from '@core/utils';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EntityType } from '@shared/models/entity-type.models';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatStepper } from '@angular/material/stepper';
@@ -42,6 +43,7 @@ import {
   TargetsNotificationDialogData
 } from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
 import { MatButton } from '@angular/material/button';
+import { TemplateConfiguration } from '@home/pages/notification-center/template-table/template-configuration';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -54,54 +56,76 @@ export interface RequestNotificationDialogData {
   styleUrls: ['./request-notification-dialog.component.scss']
 })
 export class RequestNotificationDialogComponent extends
-  DialogComponent<RequestNotificationDialogComponent, NotificationRequest> implements OnDestroy {
+  TemplateConfiguration<RequestNotificationDialogComponent, NotificationRequest> implements OnDestroy {
 
   @ViewChild('createNotification', {static: true}) createNotification: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
   isAdd = true;
   entityType = EntityType;
   notificationType = NotificationType;
+
   notificationRequestForm: FormGroup;
+  notificationRequestAdditionalConfigForm: FormGroup;
+
+  notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
+  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   selectedIndex = 0;
   preview: NotificationRequestPreview = null;
 
   dialogTitle = 'notification.notify-again';
 
-  private readonly destroy$ = new Subject<void>();
-
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected dialogRef: MatDialogRef<RequestNotificationDialogComponent, NotificationRequest>,
               @Inject(MAT_DIALOG_DATA) public data: RequestNotificationDialogData,
               private breakpointObserver: BreakpointObserver,
-              private fb: FormBuilder,
+              protected fb: FormBuilder,
               private notificationService: NotificationService,
               private dialog: MatDialog) {
-    super(store, router, dialogRef);
+    super(store, router, dialogRef, fb);
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
     this.notificationRequestForm = this.fb.group({
+      useTemplate: [true],
       templateId: [null, Validators.required],
       targets: [null, Validators.required],
-      additionalConfig: this.fb.group({
-        enabled: [false],
-        timezone: [{value: '', disabled: true}, Validators.required],
-        time: [{value: 0, disabled: true}, Validators.required]
-      })
+      template: this.templateNotificationForm
     });
 
-    this.notificationRequestForm.get('additionalConfig.enabled').valueChanges.pipe(
+    this.notificationRequestForm.get('template').disable({emitEvent: false});
+    this.notificationRequestForm.get('template.name').removeValidators(Validators.required);
+    this.notificationRequestForm.get('template.name').updateValueAndValidity({emitEvent: false});
+
+    this.notificationRequestForm.get('useTemplate').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
       if (value) {
-        this.notificationRequestForm.get('additionalConfig.timezone').enable({emitEvent: false});
-        this.notificationRequestForm.get('additionalConfig.time').enable({emitEvent: false});
+        this.notificationRequestForm.get('templateId').enable({emitEvent: false});
+        this.notificationRequestForm.get('template').disable({emitEvent: false});
       } else {
-        this.notificationRequestForm.get('additionalConfig.timezone').disable({emitEvent: false});
-        this.notificationRequestForm.get('additionalConfig.time').disable({emitEvent: false});
+        this.notificationRequestForm.get('templateId').disable({emitEvent: false});
+        this.notificationRequestForm.get('template').enable({emitEvent: false});
+      }
+    });
+
+    this.notificationRequestAdditionalConfigForm = this.fb.group({
+      enabled: [false],
+      timezone: [{value: '', disabled: true}, Validators.required],
+      time: [{value: 0, disabled: true}, Validators.required]
+    });
+
+    this.notificationRequestAdditionalConfigForm.get('enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.notificationRequestAdditionalConfigForm.get('timezone').enable({emitEvent: false});
+        this.notificationRequestAdditionalConfigForm.get('time').enable({emitEvent: false});
+      } else {
+        this.notificationRequestAdditionalConfigForm.get('timezone').disable({emitEvent: false});
+        this.notificationRequestAdditionalConfigForm.get('time').disable({emitEvent: false});
       }
     });
 
@@ -115,8 +139,6 @@ export class RequestNotificationDialogComponent extends
 
   ngOnDestroy() {
     super.ngOnDestroy();
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   cancel(): void {
@@ -179,9 +201,11 @@ export class RequestNotificationDialogComponent extends
 
   private get notificationFormValue(): NotificationRequest {
     const formValue = deepTrim(this.notificationRequestForm.value);
+    delete formValue.useTemplate;
+    delete formValue.template;
     let delay = 0;
-    if (formValue.additionalConfig.enabled) {
-      delay = (this.notificationRequestForm.value.additionalConfig.time.valueOf() - this.minDate().valueOf()) / 1000;
+    if (this.notificationRequestAdditionalConfigForm.value.enabled) {
+      delay = (this.notificationRequestAdditionalConfigForm.value.time.valueOf() - this.minDate().valueOf()) / 1000;
     }
     formValue.additionalConfig = {
       sendingDelayInSec: delay > 0 ? delay : 0
@@ -202,7 +226,7 @@ export class RequestNotificationDialogComponent extends
   }
 
   minDate(): Date {
-    return new Date(getCurrentTime(this.notificationRequestForm.get('additionalConfig.timezone').value).format('lll'));
+    return new Date(getCurrentTime(this.notificationRequestAdditionalConfigForm.get('timezone').value).format('lll'));
   }
 
   maxDate(): Date {

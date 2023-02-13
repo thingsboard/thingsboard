@@ -52,7 +52,7 @@
           <span translate>notification.no-notification-templates</span>
         </div>
         <ng-template #searchNotEmpty>
-          <span>Not template matching {{ truncate.transform(searchText, true, 6, &apos;...&apos;) }}</span>
+          <span>{{ 'notification.no-template-matching' | translate : {template: truncate.transform(searchText, true, 6, &apos;...&apos;)} }}</span>
         </ng-template>
       </div>
     </mat-option>

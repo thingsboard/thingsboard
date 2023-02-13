@@ -57,12 +57,6 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
   selectTemplateFormGroup: FormGroup;
 
-  @Input()
-  labelText: string;
-
-  @Input()
-  requiredText: string;
-
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
