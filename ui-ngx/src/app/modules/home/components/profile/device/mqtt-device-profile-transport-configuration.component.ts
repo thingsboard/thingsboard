@@ -41,6 +41,8 @@ import {
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
@@ -77,6 +79,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   private propagateChange = (v: any) => { };
 
+  separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
+
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
   }
@@ -93,6 +97,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         sparkPlug: [false],
+        sparkPlugAttributesMetricNames: [null],
         sendAckOnValidationException: [false, Validators.required],
         transportPayloadTypeConfiguration: this.fb.group({
           transportPayloadType: [TransportPayloadType.JSON, Validators.required],
@@ -124,6 +129,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       if (value) {
         this.mqttDeviceProfileTransportConfigurationFormGroup.disable({emitEvent: false});
         this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').enable({emitEvent: false});
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').enable({emitEvent: false});
       } else {
         this.mqttDeviceProfileTransportConfigurationFormGroup.enable({emitEvent: false});
       }
@@ -205,6 +211,34 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('enableCompatibilityWithJsonPayloadFormat').disable({emitEvent: false});
       transportPayloadTypeForm.get('useJsonPayloadFormatForDefaultDownlinkTopics').disable({emitEvent: false});
+    }
+  }
+
+  public removeAttributeMetricName(name: string): void {
+    const names: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;
+    const index = names.indexOf(name);
+    if (index >= 0) {
+      names.splice(index, 1);
+      this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').setValue(names);
+    }
+  }
+
+  public addAttributeMetricName(event: MatChipInputEvent): void {
+    const input = event.input;
+    let value = event.value;
+    if ((value || '').trim()) {
+      value = value.trim();
+      let keys: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;
+      if (!keys || keys.indexOf(value) === -1) {
+        if (!keys) {
+          keys = [];
+        }
+        keys.push(value);
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').setValue(keys, {emitEvent: true});
+      }
+    }
+    if (input) {
+      input.value = '';
     }
   }
 
