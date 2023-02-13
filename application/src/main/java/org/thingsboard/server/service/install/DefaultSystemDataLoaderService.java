@@ -42,6 +42,9 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
@@ -82,6 +85,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -170,6 +174,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private JwtSettingsService jwtSettingsService;
+
+    @Autowired
+    private AlarmRuleService alarmRuleService;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -342,9 +349,19 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         deviceProfileData.setProvisionConfiguration(provisionConfiguration);
         thermostatDeviceProfile.setProfileData(deviceProfileData);
 
+        DeviceProfile savedThermostatDeviceProfile = deviceProfileService.saveDeviceProfile(thermostatDeviceProfile);
+
+        AlarmRule highTemperatureRule = new AlarmRule();
+        highTemperatureRule.setAlarmType("High Temperature");
+        highTemperatureRule.setName("High Temperature rule");
+        highTemperatureRule.setEnabled(true);
+        highTemperatureRule.setTenantId(demoTenant.getId());
+
         AlarmRuleConfiguration highTemperature = new AlarmRuleConfiguration();
-//        highTemperature.setId("highTemperatureAlarmID");
-//        highTemperature.setAlarmType("High Temperature");
+
+        highTemperature.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(savedThermostatDeviceProfile.getId())));
+        highTemperature.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
         AlarmRuleCondition temperatureRule = new AlarmRuleCondition();
         AlarmCondition temperatureCondition = new AlarmCondition();
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
@@ -392,9 +409,21 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearTemperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         highTemperature.setClearRule(clearTemperatureRule);
 
+        highTemperatureRule.setConfiguration(highTemperature);
+
+        alarmRuleService.saveAlarmRule(demoTenant.getId(), highTemperatureRule);
+
+        AlarmRule lowHumidityRule = new AlarmRule();
+        lowHumidityRule.setAlarmType("Low Humidity");
+        lowHumidityRule.setName("Low Humidity rule");
+        lowHumidityRule.setEnabled(true);
+        lowHumidityRule.setTenantId(demoTenant.getId());
+
         AlarmRuleConfiguration lowHumidity = new AlarmRuleConfiguration();
-//        lowHumidity.setId("lowHumidityAlarmID");
-//        lowHumidity.setAlarmType("Low Humidity");
+
+        lowHumidity.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(savedThermostatDeviceProfile.getId())));
+        lowHumidity.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
         AlarmRuleCondition humidityRule = new AlarmRuleCondition();
         AlarmCondition humidityCondition = new AlarmCondition();
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());
@@ -443,9 +472,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setClearRule(clearHumidityRule);
 
-//        deviceProfileData.setAlarms(Arrays.asList(highTemperature, lowHumidity));
+        lowHumidityRule.setConfiguration(lowHumidity);
 
-        DeviceProfile savedThermostatDeviceProfile = deviceProfileService.saveDeviceProfile(thermostatDeviceProfile);
+        alarmRuleService.saveAlarmRule(demoTenant.getId(), lowHumidityRule);
 
         DeviceId t1Id = createDevice(demoTenant.getId(), null, savedThermostatDeviceProfile.getId(), "Thermostat T1", "T1_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
         DeviceId t2Id = createDevice(demoTenant.getId(), null, savedThermostatDeviceProfile.getId(), "Thermostat T2", "T2_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();

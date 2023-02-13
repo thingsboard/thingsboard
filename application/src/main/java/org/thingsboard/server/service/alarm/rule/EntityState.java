@@ -55,9 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -173,6 +171,9 @@ class EntityState {
     public void process(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         lock.lock();
         try {
+            if (latestValues == null) {
+                latestValues = fetchLatestValues(ctx, entityId);
+            }
             boolean stateChanged = false;
             if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
                 stateChanged = processTelemetry(tbContext, msg);
@@ -201,9 +202,6 @@ class EntityState {
             }
         } finally {
             lock.unlock();
-        }
-        if (latestValues == null) {
-            latestValues = fetchLatestValues(ctx, entityId);
         }
     }
 
