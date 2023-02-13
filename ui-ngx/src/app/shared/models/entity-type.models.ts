@@ -28,6 +28,7 @@ export enum EntityType {
   DEVICE_PROFILE = 'DEVICE_PROFILE',
   ASSET_PROFILE = 'ASSET_PROFILE',
   ALARM = 'ALARM',
+  ALARM_RULE = 'ALARM_RULE',
   RULE_CHAIN = 'RULE_CHAIN',
   RULE_NODE = 'RULE_NODE',
   EDGE = 'EDGE',
@@ -251,10 +252,23 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         typePlural: 'entity.type-alarms',
         list: 'entity.list-of-alarms',
         nameStartsWith: 'entity.alarm-name-starts-with',
-        details: 'dashboard.dashboard-details',
+        details: 'alarm.alarm-details',
         noEntities: 'alarm.no-alarms-prompt',
         search: 'alarm.search',
         selectedEntities: 'alarm.selected-alarms'
+      }
+    ],
+    [
+      EntityType.ALARM_RULE,
+      {
+        type: 'entity.type-alarm-rule',
+        typePlural: 'entity.type-alarm-rules',
+        list: 'entity.list-of-alarm-rules',
+        nameStartsWith: 'entity.alarm-rule-name-starts-with',
+        details: 'alarm-rule.alarm-rule-details',
+        noEntities: 'alarm-rule.no-alarm-rules-prompt',
+        search: 'alarm-rule.search',
+        selectedEntities: 'alarm-rule.selected-alarm-rules'
       }
     ],
     [
@@ -389,6 +403,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       }
     ],
     [
+      EntityType.ALARM_RULE,
+      {
+        helpLinkId: 'alarmRules'
+      }
+    ],
+    [
       EntityType.EDGE,
       {
         helpLinkId: 'edges'
@@ -445,15 +465,15 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.CUSTOMER, '/customers'],
   [EntityType.USER, '/users'],
   [EntityType.DASHBOARD, '/dashboards'],
-  [EntityType.ASSET, '/assets'],
-  [EntityType.DEVICE, '/devices'],
+  [EntityType.ASSET, '/entities/assets'],
+  [EntityType.DEVICE, '/entities/devices'],
   [EntityType.DEVICE_PROFILE, '/profiles/deviceProfiles'],
   [EntityType.ASSET_PROFILE, '/profiles/assetProfiles'],
-  [EntityType.RULE_CHAIN, '/ruleChains'],
-  [EntityType.EDGE, '/edgeInstances'],
-  [EntityType.ENTITY_VIEW, '/entityViews'],
-  [EntityType.TB_RESOURCE, '/settings/resources-library'],
-  [EntityType.OTA_PACKAGE, '/otaUpdates'],
+  [EntityType.RULE_CHAIN, '/features/ruleChains'],
+  [EntityType.EDGE, '/edgeManagement/instances'],
+  [EntityType.ENTITY_VIEW, '/entities/entityViews'],
+  [EntityType.TB_RESOURCE, '/resources/resources-library'],
+  [EntityType.OTA_PACKAGE, '/features/otaUpdates'],
   [EntityType.QUEUE, '/settings/queues']
 ]);
 

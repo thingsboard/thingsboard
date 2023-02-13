@@ -27,8 +27,8 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
 import { map } from 'rxjs/operators';
-import { detailsToWidgetInfo, toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import { widgetType, WidgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
+import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import { widgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { WidgetsData } from '@home/models/dashboard-component.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -120,7 +120,89 @@ export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction<any> = (
 export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetEditorComponent> =
   ((route, translate, component) => component ? component.widget.widgetName : '');
 
-export const routes: Routes = [
+export const widgetsBundlesRoutes: Routes = [
+  {
+    path: 'widgets-bundles',
+    data: {
+      breadcrumb: {
+        label: 'widgets-bundle.widgets-bundles',
+        icon: 'now_widgets'
+      }
+    },
+    children: [
+      {
+        path: '',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          title: 'widgets-bundle.widgets-bundles'
+        },
+        resolve: {
+          entitiesTableConfig: WidgetsBundlesTableConfigResolver
+        }
+      },
+      {
+        path: ':widgetsBundleId/widgetTypes',
+        data: {
+          breadcrumb: {
+            labelFunction: widgetTypesBreadcumbLabelFunction,
+            icon: 'now_widgets'
+          } as BreadCrumbConfig<any>
+        },
+        resolve: {
+          widgetsBundle: WidgetsBundleResolver
+        },
+        children: [
+          {
+            path: '',
+            component: WidgetLibraryComponent,
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widget.widget-library'
+            },
+            resolve: {
+              widgetsData: WidgetsTypesDataResolver
+            }
+          },
+          {
+            path: ':widgetTypeId',
+            component: WidgetEditorComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widget.editor',
+              breadcrumb: {
+                labelFunction: widgetEditorBreadcumbLabelFunction,
+                icon: 'insert_chart'
+              } as BreadCrumbConfig<WidgetEditorComponent>
+            },
+            resolve: {
+              widgetEditorData: WidgetEditorDataResolver
+            }
+          },
+          {
+            path: 'add/:widgetType',
+            component: WidgetEditorComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widget.editor',
+              breadcrumb: {
+                labelFunction: widgetEditorBreadcumbLabelFunction,
+                icon: 'insert_chart'
+              } as BreadCrumbConfig<WidgetEditorComponent>
+            },
+            resolve: {
+              widgetEditorData: WidgetEditorAddDataResolver
+            }
+          }
+        ]
+      }
+    ]
+  },
+];
+
+const routes: Routes = [
   {
     path: 'widgets-bundles',
     pathMatch: 'full',
@@ -146,6 +228,12 @@ export const routes: Routes = [
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
-  providers: []
+  providers: [
+    WidgetsBundlesTableConfigResolver,
+    WidgetsBundleResolver,
+    WidgetsTypesDataResolver,
+    WidgetEditorDataResolver,
+    WidgetEditorAddDataResolver
+  ]
 })
 export class WidgetLibraryRoutingModule { }

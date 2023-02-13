@@ -14,37 +14,41 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
-import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
-
-export const auditLogsRoutes: Routes = [
-  {
-    path: 'auditLogs',
-    component: AuditLogTableComponent,
-    data: {
-      auth: [Authority.TENANT_ADMIN],
-      title: 'audit-log.audit-logs',
-      breadcrumb: {
-        label: 'audit-log.audit-logs',
-        icon: 'track_changes'
-      },
-      isPage: true
-    }
-  }
-];
+import { NgModule } from '@angular/core';
+import { deviceRoutes } from '@home/pages/device/device-routing.module';
+import { assetRoutes } from '@home/pages/asset/asset-routing.module';
+import { entityViewRoutes } from '@home/pages/entity-view/entity-view-routing.module';
 
 const routes: Routes = [
   {
-    path: 'auditLogs',
-    redirectTo: '/security-settings/auditLogs'
+    path: 'entities',
+    data: {
+      auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      breadcrumb: {
+        label: 'entity.entities',
+        icon: 'category'
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/entities/devices'
+        }
+      },
+      ...deviceRoutes,
+      ...assetRoutes,
+      ...entityViewRoutes
+    ]
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-  providers: []
+  exports: [RouterModule]
 })
-export class AuditLogRoutingModule { }
+export class EntitiesRoutingModule { }

@@ -70,6 +70,12 @@ export class AlarmService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getAllAlarms(query: AlarmQuery,
+                      config?: RequestConfig): Observable<PageData<AlarmInfo>> {
+    return this.http.get<PageData<AlarmInfo>>(`/api/alarms${query.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getHighestAlarmSeverity(entityId: EntityId, alarmSearchStatus: AlarmSearchStatus, alarmStatus: AlarmStatus,
                                  config?: RequestConfig): Observable<AlarmSeverity> {
     let url = `/api/alarm/highestSeverity/${entityId.entityType}/${entityId.id}`;

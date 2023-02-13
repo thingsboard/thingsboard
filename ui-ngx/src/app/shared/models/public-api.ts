@@ -19,6 +19,7 @@ export * from './page/public-api';
 export * from './telemetry/telemetry.models';
 export * from './time/time.models';
 export * from './alarm.models';
+export * from './alarm-rule.models';
 export * from './alias.models';
 export * from './asset.models';
 export * from './audit-log.models';

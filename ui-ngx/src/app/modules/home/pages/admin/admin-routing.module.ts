@@ -36,16 +36,9 @@ import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
-import { WidgetsBundlesTableConfigResolver } from '@home/pages/widget/widgets-bundles-table-config.resolver';
-import {
-  WidgetEditorAddDataResolver, widgetEditorBreadcumbLabelFunction,
-  WidgetEditorDataResolver,
-  WidgetsBundleResolver,
-  WidgetsTypesDataResolver, widgetTypesBreadcumbLabelFunction
-} from '@home/pages/widget/widget-library-routing.module';
-import { WidgetLibraryComponent } from '@home/pages/widget/widget-library.component';
-import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
+import { widgetsBundlesRoutes } from '@home/pages/widget/widget-library-routing.module';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -77,85 +70,7 @@ const routes: Routes = [
           redirectTo: '/resources/widgets-bundles'
         }
       },
-      {
-        path: 'widgets-bundles',
-        data: {
-          breadcrumb: {
-            label: 'widgets-bundle.widgets-bundles',
-            icon: 'now_widgets'
-          }
-        },
-        children: [
-          {
-            path: '',
-            component: EntitiesTableComponent,
-            data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-              title: 'widgets-bundle.widgets-bundles'
-            },
-            resolve: {
-              entitiesTableConfig: WidgetsBundlesTableConfigResolver
-            }
-          },
-          {
-            path: ':widgetsBundleId/widgetTypes',
-            data: {
-              breadcrumb: {
-                labelFunction: widgetTypesBreadcumbLabelFunction,
-                icon: 'now_widgets'
-              } as BreadCrumbConfig<any>
-            },
-            resolve: {
-              widgetsBundle: WidgetsBundleResolver
-            },
-            children: [
-              {
-                path: '',
-                component: WidgetLibraryComponent,
-                data: {
-                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-                  title: 'widget.widget-library'
-                },
-                resolve: {
-                  widgetsData: WidgetsTypesDataResolver
-                }
-              },
-              {
-                path: ':widgetTypeId',
-                component: WidgetEditorComponent,
-                canDeactivate: [ConfirmOnExitGuard],
-                data: {
-                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-                  title: 'widget.editor',
-                  breadcrumb: {
-                    labelFunction: widgetEditorBreadcumbLabelFunction,
-                    icon: 'insert_chart'
-                  } as BreadCrumbConfig<WidgetEditorComponent>
-                },
-                resolve: {
-                  widgetEditorData: WidgetEditorDataResolver
-                }
-              },
-              {
-                path: 'add/:widgetType',
-                component: WidgetEditorComponent,
-                canDeactivate: [ConfirmOnExitGuard],
-                data: {
-                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-                  title: 'widget.editor',
-                  breadcrumb: {
-                    labelFunction: widgetEditorBreadcumbLabelFunction,
-                    icon: 'insert_chart'
-                  } as BreadCrumbConfig<WidgetEditorComponent>
-                },
-                resolve: {
-                  widgetEditorData: WidgetEditorAddDataResolver
-                }
-              }
-            ]
-          }
-        ]
-      },
+      ...widgetsBundlesRoutes,
       {
         path: 'resources-library',
         data: {
@@ -202,7 +117,7 @@ const routes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        label: 'admin.system-settings',
+        label: 'admin.settings',
         icon: 'settings'
       }
     },
@@ -303,7 +218,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'admin.home-settings',
           breadcrumb: {
-            label: 'admin.home-settings',
+            label: 'admin.home',
             icon: 'settings_applications'
           }
         }
@@ -316,7 +231,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'admin.repository-settings',
           breadcrumb: {
-            label: 'admin.repository-settings',
+            label: 'admin.repository',
             icon: 'manage_history'
           }
         }
@@ -329,7 +244,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'admin.auto-commit-settings',
           breadcrumb: {
-            label: 'admin.auto-commit-settings',
+            label: 'admin.auto-commit',
             icon: 'settings_backup_restore'
           }
         }
@@ -379,7 +294,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           redirectTo: {
             SYS_ADMIN: '/security-settings/general',
-            TENANT_ADMIN: '/security-settings/audit-logs'
+            TENANT_ADMIN: '/security-settings/auditLogs'
           }
         }
       },
@@ -425,7 +340,8 @@ const routes: Routes = [
         resolve: {
           loginProcessingUrl: OAuth2LoginProcessingUrlResolver
         }
-      }
+      },
+      ...auditLogsRoutes
     ]
   }
 ];
@@ -436,12 +352,7 @@ const routes: Routes = [
   providers: [
     OAuth2LoginProcessingUrlResolver,
     ResourcesLibraryTableConfigResolver,
-    QueuesTableConfigResolver,
-    WidgetsBundlesTableConfigResolver,
-    WidgetsBundleResolver,
-    WidgetsTypesDataResolver,
-    WidgetEditorDataResolver,
-    WidgetEditorAddDataResolver
+    QueuesTableConfigResolver
   ]
 })
 export class AdminRoutingModule { }

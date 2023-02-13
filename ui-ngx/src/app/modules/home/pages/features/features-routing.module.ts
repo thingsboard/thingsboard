@@ -14,37 +14,41 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
-import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
-
-export const auditLogsRoutes: Routes = [
-  {
-    path: 'auditLogs',
-    component: AuditLogTableComponent,
-    data: {
-      auth: [Authority.TENANT_ADMIN],
-      title: 'audit-log.audit-logs',
-      breadcrumb: {
-        label: 'audit-log.audit-logs',
-        icon: 'track_changes'
-      },
-      isPage: true
-    }
-  }
-];
+import { NgModule } from '@angular/core';
+import { ruleChainsRoutes } from '@home/pages/rulechain/rulechain-routing.module';
+import { otaUpdatesRoutes } from '@home/pages/ota-update/ota-update-routing.module';
+import { vcRoutes } from '@home/pages/vc/vc-routing.module';
 
 const routes: Routes = [
   {
-    path: 'auditLogs',
-    redirectTo: '/security-settings/auditLogs'
+    path: 'features',
+    data: {
+      auth: [Authority.TENANT_ADMIN],
+      breadcrumb: {
+        label: 'feature.advanced-features',
+        icon: 'construction'
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          redirectTo: '/features/ruleChains'
+        }
+      },
+      ...ruleChainsRoutes,
+      ...otaUpdatesRoutes,
+      ...vcRoutes
+    ]
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-  providers: []
+  exports: [RouterModule]
 })
-export class AuditLogRoutingModule { }
+export class FeaturesRoutingModule { }

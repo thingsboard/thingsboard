@@ -24,6 +24,11 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/table-widget.models';
 
+export enum AlarmsMode {
+  ALL,
+  ENTITY
+}
+
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
   MAJOR = 'MAJOR',
@@ -218,7 +223,7 @@ export class AlarmQuery {
   }
 
   public toQuery(): string {
-    let query = `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}`;
+    let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
     query += this.pageLink.toQuery();
     if (this.searchStatus) {
       query += `&searchStatus=${this.searchStatus}`;
