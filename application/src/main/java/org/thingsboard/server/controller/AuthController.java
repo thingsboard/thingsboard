@@ -85,7 +85,11 @@ public class AuthController extends BaseController {
     User getUser() throws ThingsboardException {
         try {
             SecurityUser securityUser = getCurrentUser();
-            return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            if (user.getAdditionalInfo().isObject()) {
+                ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
+            }
+            return user;
         } catch (Exception e) {
             throw handleException(e);
         }

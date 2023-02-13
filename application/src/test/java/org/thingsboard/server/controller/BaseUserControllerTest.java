@@ -123,7 +123,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         doGet("/api/auth/user")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
-                .andExpect(jsonPath("$.email", is(email)));
+                .andExpect(jsonPath("$.email", is(email)))
+                .andExpect(jsonPath("$.additionalInfo.userPasswordHistory").doesNotExist());
+
 
         resetTokens();
 
@@ -132,10 +134,12 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         doGet("/api/auth/user")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
-                .andExpect(jsonPath("$.email", is(email)));
+                .andExpect(jsonPath("$.email", is(email)))
+                .andExpect(jsonPath("$.additionalInfo.userPasswordHistory").doesNotExist());
 
         loginSysAdmin();
         foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
+        assertThat(foundUser.getAdditionalInfo().has("userPasswordHistory")).isFalse();
 
         Mockito.reset(tbClusterService, auditLogService);
 
