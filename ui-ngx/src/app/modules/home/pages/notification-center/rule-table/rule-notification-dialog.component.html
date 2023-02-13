@@ -91,9 +91,12 @@
         <section formGroupName="triggerConfig">
           <fieldset class="fields-group">
             <legend translate>notification.filter</legend>
-            <tb-alarm-type-list
+            <tb-string-items-list
+              label="{{ 'alarm.alarm-type-list' | translate }}"
+              placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
+              floatLabel="always"
               formControlName="alarmTypes">
-            </tb-alarm-type-list>
+            </tb-string-items-list>
 
             <tb-alarm-severities-list formControlName="alarmSeverities"
                                       flotLabel="always"

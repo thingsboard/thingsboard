@@ -48,7 +48,6 @@ import {
 } from '@home/pages/notification-center/rule-table/rule-notification-dialog.component';
 import { EscalationsComponent } from '@home/pages/notification-center/rule-table/escalations.component';
 import { EscalationFormComponent } from '@home/pages/notification-center/rule-table/escalation-form.component';
-import { AlarmTypeListComponent } from '@home/pages/notification-center/rule-table/alarm-type-list.component';
 import {
   AlarmSeveritiesListComponent
 } from '@home/pages/notification-center/rule-table/alarm-severities-list.component';
@@ -68,7 +67,6 @@ import {
     RuleNotificationDialogComponent,
     EscalationsComponent,
     EscalationFormComponent,
-    AlarmTypeListComponent,
     AlarmSeveritiesListComponent
   ],
   imports: [

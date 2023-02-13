@@ -95,6 +95,7 @@ import { EntitySelectComponent } from '@shared/components/entity/entity-select.c
 import { DatetimeComponent } from '@shared/components/time/datetime.component';
 import { EntityKeysListComponent } from '@shared/components/entity/entity-keys-list.component';
 import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.component';
+import { StringItemsListComponent } from '@shared/components/string-items-list.component';
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
@@ -255,6 +256,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    StringItemsListComponent,
     JsonObjectEditComponent,
     JsonObjectViewComponent,
     JsonContentComponent,
@@ -414,6 +416,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    StringItemsListComponent,
     JsonObjectEditComponent,
     JsonObjectViewComponent,
     JsonContentComponent,

@@ -19,22 +19,23 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-field/form-field';
 
 @Component({
-  selector: 'tb-alarm-type-list',
-  templateUrl: './alarm-type-list.component.html',
+  selector: 'tb-string-items-list',
+  templateUrl: './string-items-list.component.html',
   styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmTypeListComponent),
+      useExisting: forwardRef(() => StringItemsListComponent),
       multi: true
     }
   ]
 })
-export class AlarmTypeListComponent implements ControlValueAccessor{
+export class StringItemsListComponent implements ControlValueAccessor{
 
-  alarmTypeForm: FormGroup;
+  stringItemsForm: FormGroup;
   private modelValue: Array<string> | null;
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
@@ -55,17 +56,35 @@ export class AlarmTypeListComponent implements ControlValueAccessor{
   @Input()
   disabled: boolean;
 
+  @Input()
+  label: string;
+
+  @Input()
+  placeholder: string;
+
+  @Input()
+  hint: string;
+
+  @Input()
+  requiredText: string;
+
+  @Input()
+  floatLabel: FloatLabelType = 'auto';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'standard';
+
   private propagateChange = (v: any) => { };
 
   constructor(private fb: FormBuilder) {
-    this.alarmTypeForm = this.fb.group({
-      alarmTypes: [null, this.required ? [Validators.required] : []]
+    this.stringItemsForm = this.fb.group({
+      items: [null, this.required ? [Validators.required] : []]
     });
   }
 
   updateValidators() {
-    this.alarmTypeForm.get('alarmTypes').setValidators(this.required ? [Validators.required] : []);
-    this.alarmTypeForm.get('alarmTypes').updateValueAndValidity();
+    this.stringItemsForm.get('items').setValidators(this.required ? [Validators.required] : []);
+    this.stringItemsForm.get('items').updateValueAndValidity();
   }
 
   registerOnChange(fn: any): void {
@@ -78,33 +97,33 @@ export class AlarmTypeListComponent implements ControlValueAccessor{
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.alarmTypeForm.disable({emitEvent: false});
+      this.stringItemsForm.disable({emitEvent: false});
     } else {
-      this.alarmTypeForm.enable({emitEvent: false});
+      this.stringItemsForm.enable({emitEvent: false});
     }
   }
 
   writeValue(value: Array<string> | null): void {
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
-      this.alarmTypeForm.get('alarmTypes').setValue(value);
+      this.stringItemsForm.get('items').setValue(value);
     } else {
-      this.alarmTypeForm.get('alarmTypes').setValue(null);
+      this.stringItemsForm.get('items').setValue(null);
       this.modelValue = null;
     }
   }
 
-  addAlarmType(event: MatChipInputEvent): void {
-    let alarmType = event.value || '';
+  addItem(event: MatChipInputEvent): void {
+    let item = event.value || '';
     const input = event.chipInput.inputElement;
-    alarmType = alarmType.trim();
-    if (alarmType) {
-      if (!this.modelValue || this.modelValue.indexOf(alarmType) === -1) {
+    item = item.trim();
+    if (item) {
+      if (!this.modelValue || this.modelValue.indexOf(item) === -1) {
         if (!this.modelValue) {
           this.modelValue = [];
         }
-        this.modelValue.push(alarmType);
-        this.alarmTypeForm.get('alarmTypes').setValue(this.modelValue);
+        this.modelValue.push(item);
+        this.stringItemsForm.get('items').setValue(this.modelValue);
       }
       this.propagateChange(this.modelValue);
       if (input) {
@@ -113,20 +132,20 @@ export class AlarmTypeListComponent implements ControlValueAccessor{
     }
   }
 
-  removeAlarmType(alarmType: string) {
-    const index = this.modelValue.indexOf(alarmType);
+  removeItems(item: string) {
+    const index = this.modelValue.indexOf(item);
     if (index >= 0) {
       this.modelValue.splice(index, 1);
       if (!this.modelValue.length) {
         this.modelValue = null;
       }
-      this.alarmTypeForm.get('alarmTypes').setValue(this.modelValue);
+      this.stringItemsForm.get('items').setValue(this.modelValue);
       this.propagateChange(this.modelValue);
     }
   }
 
-  get alarmTypeList(): string[] {
-    return this.alarmTypeForm.get('alarmTypes').value;
+  get stringItemsList(): string[] {
+    return this.stringItemsForm.get('items').value;
   }
 
 }

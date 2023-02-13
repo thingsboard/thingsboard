@@ -15,22 +15,24 @@
     limitations under the License.
 
 -->
-<section [formGroup]="alarmTypeForm">
-  <mat-form-field fxFlex class="mat-block" floatLabel="always">
-    <mat-label translate>alarm.alarm-type-list</mat-label>
-    <mat-chip-list #alarmTypeChipList formControlName="alarmTypes" [required]="required">
-      <mat-chip *ngFor="let type of alarmTypeList"
+<section [formGroup]="stringItemsForm">
+  <mat-form-field fxFlex class="mat-block" [floatLabel]="floatLabel" [appearance]="appearance">
+    <mat-label *ngIf="label">{{ label }}</mat-label>
+    <mat-chip-list #itemsChipList formControlName="items" [required]="required">
+      <mat-chip *ngFor="let item of stringItemsList"
                 [selectable]="!disabled"
                 [removable]="!disabled"
-                (removed)="removeAlarmType(type)">
-        {{type}}
+                (removed)="removeItems(item)">
+        {{item}}
         <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
       </mat-chip>
-      <input placeholder="{{ !alarmTypeForm.get('alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
-             [matChipInputFor]="alarmTypeChipList"
+      <input placeholder="{{ placeholder }}"
+             [matChipInputFor]="itemsChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              matChipInputAddOnBlur
-             (matChipInputTokenEnd)="addAlarmType($event)">
+             (matChipInputTokenEnd)="addItem($event)">
     </mat-chip-list>
+    <mat-hint>{{ hint }}</mat-hint>
+    <mat-error *ngIf="stringItemsForm.get('items').hasError('required')">{{ requiredText }}</mat-error>
   </mat-form-field>
 </section>
