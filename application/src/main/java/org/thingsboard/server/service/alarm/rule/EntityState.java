@@ -104,34 +104,49 @@ class EntityState {
 
     public void addAlarmRule(AlarmRule alarmRule) {
         if (!alarmStates.containsKey(alarmRule.getId())) {
-            entityRulesState.addAlarmRule(alarmRule);
-            alarmStates.put(alarmRule.getId(),
-                    new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
+            lock.lock();
+            try {
+                entityRulesState.addAlarmRule(alarmRule);
+                alarmStates.put(alarmRule.getId(),
+                        new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
     //TODO: check if we need to recalculate all keys
     public void updateAlarmRule(AlarmRule alarmRule) throws ExecutionException, InterruptedException {
-        Set<AlarmConditionFilterKey> oldKeys = Set.copyOf(this.entityRulesState.getEntityKeys());
-        this.entityRulesState.updateAlarmRule(alarmRule);
-        if (latestValues != null) {
-            Set<AlarmConditionFilterKey> keysToFetch = new HashSet<>(this.entityRulesState.getEntityKeys());
-            keysToFetch.removeAll(oldKeys);
-            if (!keysToFetch.isEmpty()) {
-                addEntityKeysToSnapshot(ctx, entityId, keysToFetch, latestValues);
+        lock.lock();
+        try {
+            Set<AlarmConditionFilterKey> oldKeys = Set.copyOf(this.entityRulesState.getEntityKeys());
+            this.entityRulesState.updateAlarmRule(alarmRule);
+            if (latestValues != null) {
+                Set<AlarmConditionFilterKey> keysToFetch = new HashSet<>(this.entityRulesState.getEntityKeys());
+                keysToFetch.removeAll(oldKeys);
+                if (!keysToFetch.isEmpty()) {
+                    addEntityKeysToSnapshot(ctx, entityId, keysToFetch, latestValues);
+                }
             }
-        }
 
-        if (alarmStates.containsKey(alarmRule.getId())) {
-            alarmStates.get(alarmRule.getId()).updateState(alarmRule, getOrInitPersistedAlarmState(alarmRule));
-        } else {
-            alarmStates.putIfAbsent(alarmRule.getId(), new AlarmState(this.entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
+            if (alarmStates.containsKey(alarmRule.getId())) {
+                alarmStates.get(alarmRule.getId()).updateState(alarmRule, getOrInitPersistedAlarmState(alarmRule));
+            } else {
+                alarmStates.putIfAbsent(alarmRule.getId(), new AlarmState(this.entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     public void removeAlarmRule(AlarmRuleId alarmRuleId) {
-        entityRulesState.removeAlarmRule(alarmRuleId);
-        alarmStates.remove(alarmRuleId);
+        lock.lock();
+        try {
+            entityRulesState.removeAlarmRule(alarmRuleId);
+            alarmStates.remove(alarmRuleId);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isEmpty() {
@@ -140,46 +155,55 @@ class EntityState {
 
     public void harvestAlarms(long ts) throws ExecutionException, InterruptedException {
         log.debug("[{}] Going to harvest alarms: {}", entityId, ts);
-        boolean stateChanged = false;
-        for (AlarmState state : alarmStates.values()) {
-            stateChanged |= state.process(ctx, ts);
-        }
-        if (stateChanged) {
-            state.setData(JacksonUtil.toString(pes));
-            ctx.getStateService().save(tenantId, state);
+        lock.lock();
+        try {
+            boolean stateChanged = false;
+            for (AlarmState state : alarmStates.values()) {
+                stateChanged |= state.process(ctx, ts);
+            }
+            if (stateChanged) {
+                state.setData(JacksonUtil.toString(pes));
+                ctx.getStateService().save(tenantId, state);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     public void process(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+        lock.lock();
+        try {
+            boolean stateChanged = false;
+            if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+                stateChanged = processTelemetry(tbContext, msg);
+            } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
+                stateChanged = processAttributesUpdateRequest(tbContext, msg);
+            } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
+                stateChanged = processDeviceActivityEvent(tbContext, msg);
+            } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
+                stateChanged = processAttributesUpdateNotification(tbContext, msg);
+            } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
+                stateChanged = processAttributesDeleteNotification(tbContext, msg);
+            } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
+                stateChanged = processAlarmClearNotification(msg);
+            } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
+                processAlarmAckNotification(msg);
+            } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
+                processAlarmDeleteNotification(msg);
+            } else {
+                if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
+                    dynamicPredicateValueCtx.resetCustomer();
+                }
+            }
+            if (stateChanged) {
+                state.setData(JacksonUtil.toString(pes));
+                ctx.getStateService().save(tenantId, state);
+            }
+        } finally {
+            lock.unlock();
+        }
         if (latestValues == null) {
             latestValues = fetchLatestValues(ctx, entityId);
-        }
-        boolean stateChanged = false;
-        if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-            stateChanged = processTelemetry(tbContext, msg);
-        } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
-            stateChanged = processAttributesUpdateRequest(tbContext, msg);
-        } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
-            stateChanged = processDeviceActivityEvent(tbContext, msg);
-        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
-            stateChanged = processAttributesUpdateNotification(tbContext, msg);
-        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
-            stateChanged = processAttributesDeleteNotification(tbContext, msg);
-        } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
-            stateChanged = processAlarmClearNotification(msg);
-        } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
-            processAlarmAckNotification(msg);
-        } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
-            processAlarmDeleteNotification(msg);
-        } else {
-            if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
-                dynamicPredicateValueCtx.resetCustomer();
-            }
-//            ctx.tellSuccess(msg);
-        }
-        if (stateChanged) {
-            state.setData(JacksonUtil.toString(pes));
-            ctx.getStateService().save(tenantId, state);
         }
     }
 
@@ -200,7 +224,6 @@ class EntityState {
                     a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             stateChanged |= alarmState.processAlarmClear(alarmNf);
         }
-//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
@@ -211,14 +234,12 @@ class EntityState {
                     a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             alarmState.processAckAlarm(alarmNf);
         }
-//        ctx.tellSuccess(msg);
     }
 
     private void processAlarmDeleteNotification(TbMsg msg) {
         Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm() != null
                 && alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
-//        ctx.tellSuccess(msg);
     }
 
     private boolean processAttributesUpdateNotification(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -250,11 +271,10 @@ class EntityState {
                 stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
             }
         }
-//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
-    protected boolean processAttributesUpdateRequest(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processAttributesUpdateRequest(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         return processAttributes(tbContext, msg, DataConstants.CLIENT_SCOPE);
     }
 
@@ -269,11 +289,10 @@ class EntityState {
                 stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
             }
         }
-//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
-    protected boolean processTelemetry(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processTelemetry(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), msg.getMetaDataTs());
         // iterate over data by ts (ASC order).
@@ -294,7 +313,6 @@ class EntityState {
                 }
             }
         }
-//        ctx.tellSuccess(msg);
         return stateChanged;
     }
 
