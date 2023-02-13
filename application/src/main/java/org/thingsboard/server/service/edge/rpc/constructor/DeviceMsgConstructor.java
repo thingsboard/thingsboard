@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class DeviceMsgConstructor {
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
-    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, String conflictName) {
+    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
@@ -69,9 +69,6 @@ public class DeviceMsgConstructor {
         if (device.getSoftwareId() != null) {
             builder.setSoftwareIdMSB(device.getSoftwareId().getId().getMostSignificantBits())
                     .setSoftwareIdLSB(device.getSoftwareId().getId().getLeastSignificantBits());
-        }
-        if (conflictName != null) {
-            builder.setConflictName(conflictName);
         }
         if (device.getDeviceData() != null) {
             builder.setDeviceDataBytes(ByteString.copyFrom(dataDecodingEncodingService.encode(device.getDeviceData())));

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 
@@ -36,7 +36,7 @@ export interface ColorPickerDialogData {
 export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, string>
   implements OnInit, ErrorStateMatcher {
 
-  colorPickerFormGroup: FormGroup;
+  colorPickerFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -45,7 +45,7 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
               @Inject(MAT_DIALOG_DATA) public data: ColorPickerDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<ColorPickerDialogComponent, string>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
 
@@ -55,7 +55,7 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
     });
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

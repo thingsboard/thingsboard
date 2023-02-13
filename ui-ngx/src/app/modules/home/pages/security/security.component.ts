@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   AbstractControl,
-  FormBuilder,
-  FormGroup, FormGroupDirective,
+  UntypedFormBuilder,
+  UntypedFormGroup, FormGroupDirective,
   NgForm,
   ValidationErrors,
   ValidatorFn,
@@ -62,8 +62,8 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   private readonly destroy$ = new Subject<void>();
   private accountConfig: AccountTwoFaSettingProviders;
 
-  twoFactorAuth: FormGroup;
-  changePassword: FormGroup;
+  twoFactorAuth: UntypedFormGroup;
+  changePassword: UntypedFormGroup;
 
   user: User;
   passwordPolicy: UserPasswordPolicy;
@@ -93,7 +93,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               private twoFaService: TwoFactorAuthenticationService,
               public dialog: MatDialog,
               public dialogService: DialogService,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               private datePipe: DatePipe,
               private authService: AuthService,
               private clipboardService: ClipboardService) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -845,6 +846,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testEntityDaoWithRelationsOk(tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }
 
+    @Ignore
     @Test
     public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();

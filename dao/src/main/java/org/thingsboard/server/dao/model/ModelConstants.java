@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,13 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_BY_USER_COLUMN_FAMILY_NAME = "user_credentials_by_user";
     public static final String USER_CREDENTIALS_BY_ACTIVATE_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_activate_token";
     public static final String USER_CREDENTIALS_BY_RESET_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_reset_token";
+
+    /**
+     * User settings constants.
+     */
+    public static final String USER_SETTINGS_COLUMN_FAMILY_NAME = "user_settings";
+    public static final String USER_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_SETTINGS_SETTINGS = "settings";
 
     /**
      * Cassandra admin_settings constants.

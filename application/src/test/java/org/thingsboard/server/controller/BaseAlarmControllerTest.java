@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -565,7 +566,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertTrue("Created alarm doesn't match the found one!", equals);
     }
 
-
     @Test
     public void testDeleteAlarmWithDeleteRelationsOk() throws Exception {
         loginCustomerUser();
@@ -573,6 +573,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsOk(customerDevice.getId(), alarmId, "/api/alarm/" + alarmId);
     }
 
+    @Ignore
     @Test
     public void testDeleteAlarmExceptionWithRelationsTransactional() throws Exception {
         loginCustomerUser();

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -501,7 +501,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
         DeviceUpdateMsg latestDeviceUpdateMsg = deviceUpdateMsgOpt.get();
         Assert.assertNotEquals(deviceOnCloudName, latestDeviceUpdateMsg.getName());
-        Assert.assertEquals(deviceOnCloudName, latestDeviceUpdateMsg.getConflictName());
 
         UUID newDeviceId = new UUID(latestDeviceUpdateMsg.getIdMSB(), latestDeviceUpdateMsg.getIdLSB());
 

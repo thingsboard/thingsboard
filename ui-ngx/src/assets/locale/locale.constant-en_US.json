@@ -3395,6 +3395,12 @@
         "hours": "{ hours, plural, 0 { hour } 1 {1 hour } other {# hours } }",
         "minutes": "{ minutes, plural, 0 { minute } 1 {1 minute } other {# minutes } }",
         "seconds": "{ seconds, plural, 0 { second } 1 {1 second } other {# seconds } }",
+        "short": {
+            "days": "{ days, plural, 1 {1 day } other {# days } }",
+            "hours": "{ hours, plural, 1 {1 hour } other {# hours } }",
+            "minutes": "{{minutes}} min ",
+            "seconds": "{{seconds}} sec "
+        },
         "realtime": "Realtime",
         "history": "History",
         "last-prefix": "last",
