@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.dao.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.fge.jackson.NodeType;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,10 +33,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -51,13 +58,17 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     }
 
     @Override
-    public UserSettings updateUserSettings(TenantId tenantId, UserSettings userSettings) {
-        log.trace("Executing updateUserSettings for user [{}], [{}]", userSettings.getUserId(), userSettings);
-        validateId(userSettings.getUserId(), INCORRECT_USER_ID + userSettings.getUserId());
-        UserSettings oldSettings = userSettingsDao.findById(tenantId, userSettings.getUserId());
+    public void updateUserSettings(TenantId tenantId, UserId userId, JsonNode settings) {
+        log.trace("Executing updateUserSettings for user [{}], [{}]", userId, settings);
+        validateId(userId, INCORRECT_USER_ID + userId);
+
+        UserSettings oldSettings = userSettingsDao.findById(tenantId, userId);
         JsonNode oldSettingsJson = oldSettings != null ? oldSettings.getSettings() : JacksonUtil.newObjectNode();
-        userSettings.setSettings(merge(oldSettingsJson, userSettings.getSettings()));
-        return doSaveUserSettings(tenantId, userSettings);
+
+        UserSettings newUserSettings = new UserSettings();
+        newUserSettings.setUserId(userId);
+        newUserSettings.setSettings(update(oldSettingsJson, settings));
+        doSaveUserSettings(tenantId, newUserSettings);
     }
 
     @Override
@@ -78,11 +89,11 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
             return;
         }
         try {
-            DocumentContext docSettings = JsonPath.parse(userSettings.getSettings().toString());
+            DocumentContext dcSettings = JsonPath.parse(userSettings.getSettings().toString());
             for (String s : jsonPaths) {
-                docSettings = docSettings.delete("$." + s);
+                dcSettings = dcSettings.delete("$." + s);
             }
-            userSettings.setSettings(new ObjectMapper().readValue(docSettings.jsonString(), ObjectNode.class));
+            userSettings.setSettings(new ObjectMapper().readValue(dcSettings.jsonString(), ObjectNode.class));
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             throw new RuntimeException(t);
@@ -92,7 +103,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
 
     private UserSettings doSaveUserSettings(TenantId tenantId, UserSettings userSettings) {
         try {
-            //TODO: add validation for "." and ",";
+            validateJsonKeys(userSettings.getSettings());
             UserSettings saved = userSettingsDao.save(tenantId, userSettings);
             publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             return saved;
@@ -110,21 +121,62 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         cache.evict(keys);
     }
 
-    public JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+    private void validateJsonKeys(JsonNode userSettings) {
+        Iterator<String> fieldNames = userSettings.fieldNames();
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            if (fieldName.contains(".") || fieldName.contains(",")) {
+                throw new DataValidationException("Json field name should not contain \".\" or \",\" symbols");
+            }
+        }
+    }
+
+    public JsonNode update(JsonNode mainNode, JsonNode updateNode) {
+        DocumentContext dcOldSettings = JsonPath.parse(mainNode.toString());
         Iterator<String> fieldNames = updateNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
-            JsonNode jsonNode = mainNode.get(fieldName);
-            if (jsonNode != null && jsonNode.isObject()) {
-                merge(jsonNode, updateNode.get(fieldName));
-            } else {
-                if (mainNode instanceof ObjectNode) {
-                    JsonNode value = updateNode.get(fieldName);
-                    ((ObjectNode) mainNode).set(fieldName, value);
-                }
-            }
+            createPathIfNotExists(dcOldSettings, "$."+ fieldName);
+            dcOldSettings = dcOldSettings.set("$." + fieldName, getValueByNodeType(updateNode.get(fieldName)));
         }
-        return mainNode;
+        try {
+            return new ObjectMapper().readValue(dcOldSettings.jsonString(), ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String createPathIfNotExists(DocumentContext dcOldSettings, String path) {
+        try {
+            dcOldSettings.read(path);
+            return path;
+        } catch (PathNotFoundException e) {
+            String lastElement = path.substring(path.lastIndexOf(".") + 1);
+            String pathToLastElement = path.substring(0, path.lastIndexOf("."));
+            dcOldSettings.put(createPathIfNotExists(dcOldSettings, pathToLastElement), lastElement, new LinkedHashMap<String, Object>());
+            return path;
+        }
+    }
+
+    private static Object getValueByNodeType(final JsonNode value)
+    {
+        final NodeType type = NodeType.getNodeType(value);
+        switch (type) {
+            case STRING:
+                return value.textValue();
+            case NUMBER:
+            case INTEGER:
+                return value.bigIntegerValue();
+            case NULL:
+            case ARRAY:
+                return value;
+            case OBJECT:
+                return new ObjectMapper().convertValue(value, new TypeReference<Map<String, Object>>() {});
+            case BOOLEAN:
+                return value.booleanValue();
+            default:
+                throw new UnsupportedOperationException();
+        }
     }
 
 }

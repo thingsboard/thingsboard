@@ -92,7 +92,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class UserController extends BaseController {
 
     public static final String USER_ID = "userId";
-    public static final String JSON_PATHS = "jsonPaths";
+    public static final String PATHS = "paths";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
 
@@ -402,21 +402,17 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Update user settings (saveUserSettings)",
             notes = "Update user settings for authorized user. Only specified json elements will be updated." +
-                    "Example: you have such settings: {A:5, B:{C:10, D:5}}. Updating it with {A:10, E:6} will result in" +
-                    "{A:10, B:{C:10, D:5}}, E:6")
+                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
+                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping(value = "/user/settings")
-    public JsonNode putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+    public void putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-
-        UserSettings userSettings = new UserSettings();
-        userSettings.setSettings(settings);
-        userSettings.setUserId(currentUser.getId());
-        return userSettingsService.updateUserSettings(currentUser.getTenantId(), userSettings).getSettings();
+        userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), settings);
     }
 
     @ApiOperation(value = "Get user settings (getUserSettings)",
-            notes = "Fetch the User settings based on the provided User Id. " )
+            notes = "Fetch the User settings based on authorized user. " )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings")
     public JsonNode getUserSettings() throws ThingsboardException {
@@ -430,12 +426,12 @@ public class UserController extends BaseController {
             notes = "Delete user settings by specifying list of json element xpaths. \n " +
                     "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter" )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/user/settings/{jsonPaths}", method = RequestMethod.DELETE)
-    public void deleteUserSettings( @ApiParam(value = JSON_PATHS)
-                                        @PathVariable(JSON_PATHS) String jsonPaths) throws ThingsboardException {
-        checkParameter(USER_ID, jsonPaths);
+    @RequestMapping(value = "/user/settings/{paths}", method = RequestMethod.DELETE)
+    public void deleteUserSettings(@ApiParam(value = PATHS)
+                                        @PathVariable(PATHS) String paths) throws ThingsboardException {
+        checkParameter(USER_ID, paths);
 
         SecurityUser currentUser = getCurrentUser();
-        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(jsonPaths.split(",")));
+        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(paths.split(",")));
     }
 }
