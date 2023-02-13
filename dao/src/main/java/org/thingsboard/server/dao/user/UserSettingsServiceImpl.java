@@ -132,51 +132,25 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
     }
 
     public JsonNode update(JsonNode mainNode, JsonNode updateNode) {
-        DocumentContext dcOldSettings = JsonPath.parse(mainNode.toString());
         Iterator<String> fieldNames = updateNode.fieldNames();
         while (fieldNames.hasNext()) {
-            String fieldName = fieldNames.next();
-            createPathIfNotExists(dcOldSettings, "$."+ fieldName);
-            dcOldSettings = dcOldSettings.set("$." + fieldName, getValueByNodeType(updateNode.get(fieldName)));
+            String fieldExpression = fieldNames.next();
+            String[] fieldPath = fieldExpression.trim().split("\\.");
+            var node = (ObjectNode) mainNode;
+            for (int i = 0; i < fieldPath.length; i++) {
+                var fieldName = fieldPath[i];
+                var last = i == (fieldPath.length - 1);
+                if (last) {
+                    node.set(fieldName, updateNode.get(fieldExpression));
+                } else {
+                    if (!node.has(fieldName)) {
+                        node.set(fieldName, JacksonUtil.newObjectNode());
+                    }
+                    node = (ObjectNode) node.get(fieldName);
+                }
+            }
         }
-        try {
-            return new ObjectMapper().readValue(dcOldSettings.jsonString(), ObjectNode.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static String createPathIfNotExists(DocumentContext dcOldSettings, String path) {
-        try {
-            dcOldSettings.read(path);
-            return path;
-        } catch (PathNotFoundException e) {
-            String lastElement = path.substring(path.lastIndexOf(".") + 1);
-            String pathToLastElement = path.substring(0, path.lastIndexOf("."));
-            dcOldSettings.put(createPathIfNotExists(dcOldSettings, pathToLastElement), lastElement, new LinkedHashMap<String, Object>());
-            return path;
-        }
-    }
-
-    private static Object getValueByNodeType(final JsonNode value)
-    {
-        final NodeType type = NodeType.getNodeType(value);
-        switch (type) {
-            case STRING:
-                return value.textValue();
-            case NUMBER:
-            case INTEGER:
-                return value.bigIntegerValue();
-            case NULL:
-            case ARRAY:
-                return value;
-            case OBJECT:
-                return new ObjectMapper().convertValue(value, new TypeReference<Map<String, Object>>() {});
-            case BOOLEAN:
-                return value.booleanValue();
-            default:
-                throw new UnsupportedOperationException();
-        }
+        return mainNode;
     }
 
 }
