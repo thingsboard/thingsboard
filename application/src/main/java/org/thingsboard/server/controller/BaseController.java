@@ -987,4 +987,10 @@ public abstract class BaseController {
         }, MoreExecutors.directExecutor());
         return deferredResult;
     }
+
+    protected void hidePasswordHistory(User user) {
+        if (user.getAdditionalInfo().isObject()) {
+            ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
+        }
+    }
 }

@@ -203,9 +203,7 @@ public class UserController extends BaseController {
             }
         }
         User savedUser = tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
-        if (savedUser.getAdditionalInfo().isObject()) {
-            ((ObjectNode) savedUser.getAdditionalInfo()).remove("userPasswordHistory");
-        }
+        hidePasswordHistory(savedUser);
         return savedUser;
     }
 

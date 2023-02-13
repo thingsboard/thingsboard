@@ -86,9 +86,7 @@ public class AuthController extends BaseController {
         try {
             SecurityUser securityUser = getCurrentUser();
             User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-            if (user.getAdditionalInfo().isObject()) {
-                ((ObjectNode) user.getAdditionalInfo()).remove("userPasswordHistory");
-            }
+            hidePasswordHistory(user);
             return user;
         } catch (Exception e) {
             throw handleException(e);
