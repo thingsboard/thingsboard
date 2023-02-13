@@ -790,3 +790,9 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
     two_fa_settings varchar
 );
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    settings varchar(10000),
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+);
