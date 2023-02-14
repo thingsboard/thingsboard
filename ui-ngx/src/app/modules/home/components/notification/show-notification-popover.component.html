@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
   </button>
 </section>
 <mat-divider></mat-divider>
-<div *ngIf="(notifications$ | async).length; else emptyNotification">
+<div *ngIf="(notifications$ | async).length; else emptyNotification" style="overflow: auto">
   <section style="min-height: 100px; overflow: auto; padding: 10px 0;">
    <div *ngFor="let notification of (notifications$ | async); let last = last">
      <tb-notification [notification]="notification"
@@ -34,13 +34,13 @@
      <mat-divider *ngIf="!last" style="margin-bottom: 4px"></mat-divider>
    </div>
   </section>
-  <mat-divider></mat-divider>
-  <section fxLayoutAlign="center center">
-    <button fxFlex mat-button color="primary" (click)="viewAll($event)">
-      {{ 'notification.view-all' | translate }}
-    </button>
-  </section>
 </div>
+<mat-divider *ngIf="(notifications$ | async).length"></mat-divider>
+<section fxLayoutAlign="center center" *ngIf="(notifications$ | async).length">
+  <button fxFlex mat-button color="primary" (click)="viewAll($event)">
+    {{ 'notification.view-all' | translate }}
+  </button>
+</section>
 <ng-template #emptyNotification>
   <img src="assets/notification-bell.svg" alt="empty notification" style="margin: 20px 24%">
   <span style="text-align: center; margin-bottom: 12px" translate>notification.no-notifications-yet</span>

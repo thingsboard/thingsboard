@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
   private modelValue;
   private propagateChange = null;
   private propagateChangePending = false;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder,
               private dialog: MatDialog) {
