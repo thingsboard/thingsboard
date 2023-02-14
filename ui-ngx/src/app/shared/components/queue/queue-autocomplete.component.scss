@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 ::ng-deep {
   .template-option {
     .mat-option-text {
       display: inline;
     }
+
     .queue-option-description {
       display: block;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mat-form-field {
+    .mat-form-field-wrapper {
+      padding-bottom: 0px;
+
+      .mat-form-field-underline {
+        position: initial !important;
+        display: block;
+        margin-top: -1px;
+      }
+
+      .mat-form-field-subscript-wrapper,
+      .mat-form-field-ripple {
+        position: initial !important;
+        display: table;
+      }
+
+      .mat-form-field-subscript-wrapper {
+        min-height: calc(1em + 1px);
+      }
     }
   }
 }

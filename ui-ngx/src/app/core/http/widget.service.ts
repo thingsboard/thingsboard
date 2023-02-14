@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ export class WidgetService {
 
   private widgetsInfoInMemoryCache = new Map<string, WidgetInfo>();
 
-  private loadWidgetsBundleCacheSubject: ReplaySubject<any>;
+  private loadWidgetsBundleCacheSubject: ReplaySubject<void>;
 
   constructor(
     private http: HttpClient,
@@ -111,15 +111,13 @@ export class WidgetService {
 
   public deleteWidgetsBundle(widgetsBundleId: string, config?: RequestConfig) {
     return this.getWidgetsBundle(widgetsBundleId, config).pipe(
-      mergeMap((widgetsBundle) => {
-        return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
+      mergeMap((widgetsBundle) => this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
           defaultHttpOptionsFromConfig(config)).pipe(
           tap(() => {
             this.invalidateWidgetsBundleCache();
             this.widgetsBundleDeleted(widgetsBundle);
           })
-        );
-      }
+        )
     ));
   }
 
@@ -232,14 +230,12 @@ export class WidgetService {
   public deleteWidgetType(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean,
                           config?: RequestConfig) {
     return this.getWidgetType(bundleAlias, widgetTypeAlias, isSystem, config).pipe(
-      mergeMap((widgetTypeInstance) => {
-          return this.http.delete(`/api/widgetType/${widgetTypeInstance.id.id}`,
+      mergeMap((widgetTypeInstance) => this.http.delete(`/api/widgetType/${widgetTypeInstance.id.id}`,
             defaultHttpOptionsFromConfig(config)).pipe(
             tap(() => {
               this.widgetTypeUpdated(widgetTypeInstance);
             })
-          );
-        }
+          )
       ));
   }
 
@@ -301,7 +297,7 @@ export class WidgetService {
   private loadWidgetsBundleCache(config?: RequestConfig): Observable<any> {
     if (!this.allWidgetsBundles) {
       if (!this.loadWidgetsBundleCacheSubject) {
-        this.loadWidgetsBundleCacheSubject = new ReplaySubject();
+        this.loadWidgetsBundleCacheSubject = new ReplaySubject<void>();
         this.http.get<Array<WidgetsBundle>>('/api/widgetsBundles',
           defaultHttpOptionsFromConfig(config)).subscribe(
           (allWidgetsBundles) => {

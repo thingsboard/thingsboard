@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -886,7 +886,7 @@ export class EntityService {
               if (result.entityParamName && result.entityParamName.length) {
                 targetParams = stateParams[result.entityParamName];
               }
-              if (targetParams && targetParams.entityId) {
+              if (targetParams && targetParams.entityId && targetParams.entityName) {
                 currentEntity = {
                   id: targetParams.entityId.id,
                   entityType: targetParams.entityId.entityType as EntityType,

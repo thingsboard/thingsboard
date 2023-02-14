@@ -3577,6 +3577,12 @@
         "min": "{{ min }} min",
         "seconds": "{ seconds, plural, 0 { second } 1 {1 second } other {# seconds } }",
         "sec": "{{ sec }} sec",
+        "short": {
+            "days": "{ days, plural, 1 {1 day } other {# days } }",
+            "hours": "{ hours, plural, 1 {1 hour } other {# hours } }",
+            "minutes": "{{minutes}} min ",
+            "seconds": "{{seconds}} sec "
+        },
         "realtime": "Realtime",
         "history": "History",
         "last-prefix": "last",

@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2022 The Thingsboard Authors
+-- Copyright © 2016-2023 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -792,7 +792,6 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     two_fa_settings varchar
 );
 
-
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
@@ -852,3 +851,9 @@ CREATE TABLE IF NOT EXISTS notification (
     info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    settings varchar(10000),
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+);

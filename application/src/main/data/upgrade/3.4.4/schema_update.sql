@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2022 The Thingsboard Authors
+-- Copyright © 2016-2023 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS alarm_comment (
     CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
-
 
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
@@ -95,3 +94,9 @@ CREATE INDEX IF NOT EXISTS idx_notification_id_recipient_id ON notification(id, 
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_status_created_time ON notification(recipient_id, status, created_time DESC);
 
 ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS phone VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    settings varchar(100000),
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+);

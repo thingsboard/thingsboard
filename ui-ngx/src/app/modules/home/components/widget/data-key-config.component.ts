@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  ComparisonResultType, comparisonResultTypeTranslationMap,
+  ComparisonResultType,
+  comparisonResultTypeTranslationMap,
   DataKey,
   dataKeyAggregationTypeHintTranslationMap,
   Widget,
@@ -27,9 +28,9 @@ import {
 } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -50,6 +51,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { aggregationTranslations, AggregationType, ComparisonDuration } from '@shared/models/time/time.models';
+import { genNextLabel } from '@core/utils';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -126,9 +128,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   private propagateChange = null;
 
-  public dataKeyFormGroup: FormGroup;
+  public dataKeyFormGroup: UntypedFormGroup;
 
-  public dataKeySettingsFormGroup: FormGroup;
+  public dataKeySettingsFormGroup: UntypedFormGroup;
 
   private dataKeySettingsData: JsonFormComponentData;
 
@@ -148,7 +150,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
               private dialog: MatDialog,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
@@ -201,7 +203,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
           let newLabel = this.dataKeyFormGroup.get('name').value;
           if (aggType !== AggregationType.NONE) {
             const prefix = this.translate.instant(aggregationTranslations.get(aggType));
-            newLabel = prefix + ' ' + newLabel;
+            newLabel = genNextLabel(prefix + ' ' + newLabel, this.widget.config.datasources);
           }
           this.dataKeyFormGroup.get('label').patchValue(newLabel);
         }
@@ -405,7 +407,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     }
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     if (!this.dataKeyFormGroup.valid) {
       return {
         dataKey: {

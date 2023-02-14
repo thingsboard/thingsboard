@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -66,7 +66,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   private propagateChange = null;
 
-  public entityTypesVersionCreateFormGroup: FormGroup;
+  public entityTypesVersionCreateFormGroup: UntypedFormGroup;
 
   syncStrategies = Object.values(SyncStrategy);
 
@@ -78,7 +78,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -113,7 +113,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       this.prepareEntityTypesFormArray(value), {emitEvent: false});
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.entityTypesVersionCreateFormGroup.valid && this.entityTypesFormGroupArray().length ? null : {
       entityTypes: {
         valid: false,
@@ -121,7 +121,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     };
   }
 
-  private prepareEntityTypesFormArray(entityTypes: {[entityType: string]: EntityTypeVersionCreateConfig} | undefined): FormArray {
+  private prepareEntityTypesFormArray(entityTypes: {[entityType: string]: EntityTypeVersionCreateConfig} | undefined): UntypedFormArray {
     const entityTypesControls: Array<AbstractControl> = [];
     if (entityTypes) {
       for (const entityType of Object.keys(entityTypes)) {
@@ -163,8 +163,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     entityTypeControl.get('config').get('entityIds').updateValueAndValidity({emitEvent: false});
   }
 
-  entityTypesFormGroupArray(): FormGroup[] {
-    return (this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray).controls as FormGroup[];
+  entityTypesFormGroupArray(): UntypedFormGroup[] {
+    return (this.entityTypesVersionCreateFormGroup.get('entityTypes') as UntypedFormArray).controls as UntypedFormGroup[];
   }
 
   entityTypesFormGroupExpanded(entityTypeControl: AbstractControl): boolean {
@@ -176,16 +176,16 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   }
 
   public removeEntityType(index: number) {
-    (this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray).removeAt(index);
+    (this.entityTypesVersionCreateFormGroup.get('entityTypes') as UntypedFormArray).removeAt(index);
   }
 
   public addEnabled(): boolean {
-    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as UntypedFormArray;
     return entityTypesArray.length < exportableEntityTypes.length;
   }
 
   public addEntityType() {
-    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as UntypedFormArray;
     const config: EntityTypeVersionCreateConfig = {
       syncStrategy: null,
       saveAttributes: true,
@@ -206,7 +206,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   }
 
   public removeAll() {
-    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as UntypedFormArray;
     entityTypesArray.clear();
     this.entityTypesVersionCreateFormGroup.updateValueAndValidity();
   }
