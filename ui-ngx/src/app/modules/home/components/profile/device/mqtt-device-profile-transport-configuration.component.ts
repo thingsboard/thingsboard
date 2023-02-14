@@ -175,6 +175,34 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
+  removeAttributeMetricName(name: string): void {
+    const names: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;
+    const index = names.indexOf(name);
+    if (index >= 0) {
+      names.splice(index, 1);
+      this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').setValue(names);
+    }
+  }
+
+  addAttributeMetricName(event: MatChipInputEvent): void {
+    const input = event.input;
+    let value = event.value;
+    if ((value || '').trim()) {
+      value = value.trim();
+      let names: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;
+      if (!names || names.indexOf(value) === -1) {
+        if (!names) {
+          names = [];
+        }
+        names.push(value);
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').setValue(names, {emitEvent: true});
+      }
+    }
+    if (input) {
+      input.value = '';
+    }
+  }
+
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) {
@@ -211,34 +239,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('enableCompatibilityWithJsonPayloadFormat').disable({emitEvent: false});
       transportPayloadTypeForm.get('useJsonPayloadFormatForDefaultDownlinkTopics').disable({emitEvent: false});
-    }
-  }
-
-  public removeAttributeMetricName(name: string): void {
-    const names: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;
-    const index = names.indexOf(name);
-    if (index >= 0) {
-      names.splice(index, 1);
-      this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').setValue(names);
-    }
-  }
-
-  public addAttributeMetricName(event: MatChipInputEvent): void {
-    const input = event.input;
-    let value = event.value;
-    if ((value || '').trim()) {
-      value = value.trim();
-      let keys: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;
-      if (!keys || keys.indexOf(value) === -1) {
-        if (!keys) {
-          keys = [];
-        }
-        keys.push(value);
-        this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').setValue(keys, {emitEvent: true});
-      }
-    }
-    if (input) {
-      input.value = '';
     }
   }
 
