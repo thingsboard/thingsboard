@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, startWith, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -37,7 +37,7 @@ import { objectValues } from '@core/utils';
 })
 export class MessageTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  messageTypeFormGroup: FormGroup;
+  messageTypeFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
 
@@ -65,7 +65,7 @@ export class MessageTypeAutocompleteComponent implements ControlValueAccessor, O
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.messageTypeFormGroup = this.fb.group({
       messageType: [null]
     });

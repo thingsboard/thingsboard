@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -29,7 +29,7 @@ import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { FloatLabelType } from '@angular/material/form-field/form-field';
+import { FloatLabelType } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',
@@ -45,7 +45,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   private dirty = false;
 
-  selectDashboardFormGroup: FormGroup;
+  selectDashboardFormGroup: UntypedFormGroup;
 
   modelValue: DashboardInfo | string | null;
 
@@ -93,7 +93,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private dashboardService: DashboardService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.selectDashboardFormGroup = this.fb.group({
       dashboard: [null]
     });
