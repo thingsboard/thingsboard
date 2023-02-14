@@ -729,7 +729,7 @@ public abstract class AbstractGatewaySessionHandler {
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
         if (this.deviceSessionCtx.isSparkplug()){
             // add Msg Telemetry: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
-            stateSparkplugtSendOnTelemetry (deviceSessionCtx.getSessionInfo(),
+            sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
@@ -738,7 +738,7 @@ public abstract class AbstractGatewaySessionHandler {
         log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
     }
 
-    public void stateSparkplugtSendOnTelemetry (TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugMessageTypeSate typeSate, long ts) {
+    public void sendSparkplugStateOnTelemetry(TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugMessageTypeSate typeSate, long ts) {
         TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
         keyValueProtoBuilder.setKey(STATE.name());
         keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);

@@ -40,6 +40,11 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
 
     protected ThreadLocalRandom random = ThreadLocalRandom.current();
 
+    /**
+     * "sparkPlugAttributesMetricNames": ["SN node", "SN device", "Firmware version", "Date version", "Last date update"]
+     * @throws Exception
+     */
+
     protected void processClientWithCorrectAccessTokenPublishNCMDReBirth() throws Exception {
         clientWithCorrectNodeAccessTokenWithNDEATH();
         List<String> listKeys = new ArrayList<>();

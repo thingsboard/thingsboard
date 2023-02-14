@@ -21,11 +21,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
+import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.eclipse.leshan.core.ResponseCode;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -35,7 +36,6 @@ import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGateway
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
-import org.thingsboard.server.transport.mqtt.TopicType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
@@ -104,7 +104,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
             try {
                 // add Msg Telemetry: key STATE type: String value: ONLINE ts: sparkplugBProto.getTimestamp()
-                stateSparkplugtSendOnTelemetry(contextListenableFuture.get().getSessionInfo(), deviceName, ONLINE,
+                sendSparkplugStateOnTelemetry(contextListenableFuture.get().getSessionInfo(), deviceName, ONLINE,
                         sparkplugBProto.getTimestamp());
                 contextListenableFuture.get().setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
             } catch (InterruptedException | ExecutionException e) {
@@ -152,7 +152,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
             // TODO SUBSCRIBE GroupId
         } else if (sparkplugTopic.isNode()) {
             // SUBSCRIBE Node
-            parent.processAttributesSubscribe(grantedQoSList, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, reqQoS, TopicType.V1);
+            parent.processAttributesRpcSubscribeSparkplugNode(grantedQoSList, reqQoS);
         } else {
             // SUBSCRIBE Device - DO NOTHING, WE HAVE ALREADY SUBSCRIBED.
             // TODO: track that node subscribed to # or to particular device.
@@ -237,5 +237,18 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
     protected SparkplugDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg) {
         return new SparkplugDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
     }
+
+    protected void sendToDeviceRpcRequest (MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
+        parent.sendToDeviceRpcRequest(payload, rpcRequest);
+    }
+
+    protected void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ResponseCode result, String errorMsg) {
+        parent.sendErrorRpcResponse(sessionInfo, requestId, result, errorMsg);
+    }
+
+    protected void sendSuccessRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ResponseCode result, String successMsg) {
+        parent.sendSuccessRpcResponse(sessionInfo, requestId,result, successMsg);
+    }
+
 
 }
