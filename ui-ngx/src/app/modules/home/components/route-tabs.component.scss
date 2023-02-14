@@ -24,17 +24,8 @@
       align-items: center;
       overflow: hidden;
       line-height: 40px;
-      opacity: 1;
-      &:hover {
-        border-bottom: none;
-        background-color: rgba(255,255,255,0.08);
-      }
-      &:focus {
-        border-bottom: none;
-      }
       &.tb-active {
-        font-weight: 500;
-        background-color: rgba(255, 255, 255, .15);
+        opacity: 1;
       }
       mat-icon {
         margin-right: 8px;

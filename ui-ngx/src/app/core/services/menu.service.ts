@@ -577,7 +577,7 @@ export class MenuService {
             id: guid(),
             name: 'audit-log.audit-logs',
             type: 'link',
-            path: '/auditLogs',
+            path: '/security-settings/auditLogs',
             icon: 'track_changes'
           }
         ]

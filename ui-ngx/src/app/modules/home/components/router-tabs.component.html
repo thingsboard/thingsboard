@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="column" style="width: 100%;">
-  <nav mat-tab-nav-bar backgroundColor="primary" class="tb-router-tabs">
+  <nav mat-tab-nav-bar class="tb-router-tabs">
     <a *ngFor="let tab of tabs$ | async"
        routerLink="{{tab.path}}"
        routerLinkActive
