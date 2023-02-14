@@ -537,8 +537,8 @@ public class AdminController extends BaseController {
         if (providerConfig != null) {
             ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
             JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
-            settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId.isNull() ? null : providerTenantId.asText()));
-            settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId.isNull() ? null : providerTenantId.asText()));
+            settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
+            settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
             settings.put("scope", providerConfig.getScope());
         }
     }

@@ -68,7 +68,7 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
                             ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", token.asText()));
                 }
                 else {
-                    if (!adminSettings.getJsonValue().has("password")){
+                    if (!adminSettings.getJsonValue().has("password") && mailSettings.getJsonValue().has("password")){
                          ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
                     }
                 }
