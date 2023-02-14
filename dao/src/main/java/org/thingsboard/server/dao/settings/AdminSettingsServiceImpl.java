@@ -63,14 +63,11 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
         if (adminSettings.getKey().equals("mail")){
             AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
             if (mailSettings != null) {
-                if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
-                    Optional.ofNullable(mailSettings.getJsonValue().get("refreshToken")).ifPresent(token ->
-                            ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", token.asText()));
+                if (!adminSettings.getJsonValue().has("refreshToken") && mailSettings.getJsonValue().has("refreshToken")){
+                    ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", mailSettings.getJsonValue().get("refreshToken").asText());
                 }
-                else {
-                    if (!adminSettings.getJsonValue().has("password") && mailSettings.getJsonValue().has("password")){
-                         ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
-                    }
+                if (!adminSettings.getJsonValue().has("password") && mailSettings.getJsonValue().has("password")){
+                     ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
                 }
             }
         }
