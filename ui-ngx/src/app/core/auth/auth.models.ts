@@ -15,7 +15,7 @@
 ///
 
 import { AuthUser, User } from '@shared/models/user.model';
-import { UserPreferences } from '@shared/models/user-preferences.models';
+import { UserSettings } from '@shared/models/user-settings.models';
 
 export interface SysParamsState {
   userTokenAccessEnabled: boolean;
@@ -23,7 +23,7 @@ export interface SysParamsState {
   edgesSupportEnabled: boolean;
   hasRepository: boolean;
   tbelEnabled: boolean;
-  userPreferences: UserPreferences;
+  userSettings: UserSettings;
 }
 
 export interface AuthPayload extends SysParamsState {

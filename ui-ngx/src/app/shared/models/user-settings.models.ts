@@ -14,10 +14,10 @@
 /// limitations under the License.
 ///
 
-export interface UserPreferences {
+export interface UserSettings {
   openedMenuSections?: string[];
 }
 
-export const initialUserPreferences: UserPreferences = {
+export const initialUserSettings: UserSettings = {
   openedMenuSections: []
 };

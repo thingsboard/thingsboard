@@ -48,8 +48,8 @@ import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isMobileApp } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
-import { UserPreferences } from '@shared/models/user-preferences.models';
-import { UserPreferencesService } from '@core/http/user-preferences.service';
+import { UserSettings } from '@shared/models/user-settings.models';
+import { UserSettingsService } from '@core/http/user-settings.service';
 
 @Injectable({
     providedIn: 'root'
@@ -68,7 +68,7 @@ export class AuthService {
     private dashboardService: DashboardService,
     private adminService: AdminService,
     private translate: TranslateService,
-    private userPreferencesService: UserPreferencesService,
+    private userSettingsService: UserSettingsService,
     private dialog: MatDialog
   ) {
   }
@@ -130,7 +130,8 @@ export class AuthService {
   }
 
   public checkTwoFaVerificationCode(providerType: TwoFactorAuthProviderType, verificationCode: number): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
+    return this.http.post<LoginResponse>
+    (`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
       null, defaultHttpOptions(false, true)).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
@@ -493,8 +494,8 @@ export class AuthService {
     }
   }
 
-  private loadUserPreferences(authUser: AuthUser): Observable<UserPreferences> {
-    return this.userPreferencesService.loadUserPreferences(authUser);
+  private loadUserSettings(): Observable<UserSettings> {
+    return this.userSettingsService.loadUserSettings();
   }
 
   private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
@@ -503,7 +504,7 @@ export class AuthService {
                      this.loadIsEdgesSupportEnabled(),
                      this.loadHasRepository(authPayload.authUser),
                      this.loadTbelEnabled(authPayload.authUser),
-                     this.loadUserPreferences(authPayload.authUser),
+                     this.loadUserSettings(),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
@@ -512,8 +513,8 @@ export class AuthService {
         const edgesSupportEnabled: boolean = data[2] as boolean;
         const hasRepository: boolean = data[3] as boolean;
         const tbelEnabled: boolean = data[4] as boolean;
-        const userPreferences = data[5] as UserPreferences;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled, userPreferences};
+        const userSettings = data[5] as UserSettings;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled, userSettings};
       }, catchError((err) => of({}))));
   }
 

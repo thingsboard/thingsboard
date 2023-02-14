@@ -49,7 +49,7 @@ export * from './rule-node.models';
 export * from './settings.models';
 export * from './tenant.model';
 export * from './user.model';
-export * from './user-preferences.models';
+export * from './user-settings.models';
 export * from './widget.models';
 export * from './widgets-bundle.model';
 export * from './window-message.model';

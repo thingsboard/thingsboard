@@ -20,7 +20,7 @@ import { AppState } from '../core.state';
 import { AuthState } from './auth.models';
 import { take } from 'rxjs/operators';
 import { AuthUser } from '@shared/models/user.model';
-import { UserPreferences } from '@shared/models/user-preferences.models';
+import { UserSettings } from '@shared/models/user-settings.models';
 
 export const selectAuthState = createFeatureSelector< AuthState>(
   'auth'
@@ -66,14 +66,14 @@ export const selectTbelEnabled = createSelector(
   (state: AuthState) => state.tbelEnabled
 );
 
-export const selectUserPreferences = createSelector(
+export const selectUserSettings = createSelector(
   selectAuthState,
-  (state: AuthState) => state.userPreferences
+  (state: AuthState) => state.userSettings
 );
 
 export const selectOpenedMenuSections = createSelector(
   selectAuthState,
-  (state: AuthState) => state.userPreferences.openedMenuSections
+  (state: AuthState) => state.userSettings.openedMenuSections
 );
 
 
@@ -93,12 +93,12 @@ export const getCurrentAuthUser = (store: Store<AppState>): AuthUser => {
   return authUser;
 };
 
-export const getCurrentUserPreferences = (store: Store<AppState>): UserPreferences => {
-  let userPreferences: UserPreferences;
-  store.pipe(select(selectUserPreferences), take(1)).subscribe(
-    val => userPreferences = val
+export const getCurrentUserSettings = (store: Store<AppState>): UserSettings => {
+  let userSettings: UserSettings;
+  store.pipe(select(selectUserSettings), take(1)).subscribe(
+    val => userSettings = val
   );
-  return userPreferences;
+  return userSettings;
 };
 
 export const getCurrentOpenedMenuSections = (store: Store<AppState>): string[] => {

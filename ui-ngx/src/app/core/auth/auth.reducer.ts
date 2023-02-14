@@ -16,7 +16,7 @@
 
 import { AuthPayload, AuthState } from './auth.models';
 import { AuthActions, AuthActionTypes } from './auth.actions';
-import { initialUserPreferences } from '@shared/models/user-preferences.models';
+import { initialUserSettings } from '@shared/models/user-settings.models';
 
 const emptyUserAuthState: AuthPayload = {
   authUser: null,
@@ -27,7 +27,7 @@ const emptyUserAuthState: AuthPayload = {
   edgesSupportEnabled: false,
   hasRepository: false,
   tbelEnabled: false,
-  userPreferences: initialUserPreferences
+  userSettings: initialUserSettings
 };
 
 export const initialState: AuthState = {
@@ -62,7 +62,7 @@ export const authReducer = (
       return { ...state, ...action.payload};
 
     case AuthActionTypes.UPDATE_OPENED_MENU_SECTION:
-      const openedMenuSections = new Set(state.userPreferences.openedMenuSections);
+      const openedMenuSections = new Set(state.userSettings.openedMenuSections);
       if (action.payload.opened) {
         if (!openedMenuSections.has(action.payload.path)) {
           openedMenuSections.add(action.payload.path);
@@ -70,8 +70,8 @@ export const authReducer = (
       } else {
         openedMenuSections.delete(action.payload.path);
       }
-      const userPreferences = {...state.userPreferences, ...{ openedMenuSections: Array.from(openedMenuSections)}};
-      return { ...state, ...{ userPreferences }};
+      const userSettings = {...state.userSettings, ...{ openedMenuSections: Array.from(openedMenuSections)}};
+      return { ...state, ...{ userSettings }};
 
     default:
       return state;

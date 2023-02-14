@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UserPreferencesService } from '@core/http/user-preferences.service';
+import { UserSettingsService } from '@core/http/user-settings.service';
 import { mergeMap, withLatestFrom } from 'rxjs/operators';
 import { AuthActions, AuthActionTypes } from '@core/auth/auth.actions';
 import { selectAuthState } from '@core/auth/auth.selectors';
@@ -28,15 +28,15 @@ export class AuthEffects {
   constructor(
     private actions$: Actions<AuthActions>,
     private store: Store<AppState>,
-    private userPreferencesService: UserPreferencesService
+    private userSettingsService: UserSettingsService
   ) {
   }
 
-  persistUserPreferences = createEffect(() => this.actions$.pipe(
+  persistOpenedMenuSections = createEffect(() => this.actions$.pipe(
     ofType(
       AuthActionTypes.UPDATE_OPENED_MENU_SECTION,
     ),
     withLatestFrom(this.store.pipe(select(selectAuthState))),
-    mergeMap(([action, state]) => this.userPreferencesService.saveUserPreferences(state.authUser, state.userPreferences))
+    mergeMap(([action, state]) => this.userSettingsService.putUserSettings({ openedMenuSections: state.userSettings.openedMenuSections }))
   ), {dispatch: false});
 }
