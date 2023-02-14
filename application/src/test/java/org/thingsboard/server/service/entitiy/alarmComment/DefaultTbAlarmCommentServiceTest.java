@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.entitiy.alarm.DefaultTbAlarmCommentService;
@@ -70,6 +71,8 @@ public class DefaultTbAlarmCommentServiceTest {
     protected CustomerService customerService;
     @MockBean
     protected TbClusterService tbClusterService;
+    @MockBean
+    protected AlarmRuleService alarmRuleService;
     @SpyBean
     DefaultTbAlarmCommentService service;
 
