@@ -18,9 +18,24 @@
 
 :host-context(.tb-fullscreen-dialog .mat-dialog-container) {
   width: 720px;
+  max-height: 100vh;
+
+  .tb-form-fields {
+    margin-bottom: 8px;
+  }
 
   .tb-hint {
     padding: 0;
+  }
+
+  .tb-hint-available-params {
+    border-radius: 6px;
+    background-color: rgba(48, 86, 128, 0.04);
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    color: rgba(0, 0, 0, 0.54);
   }
 
   .delivery-method-container {
@@ -68,9 +83,13 @@
 
     .mat-stepper-horizontal {
       display: flex;
-      flex-direction: column;
       height: 100%;
       overflow: hidden;
+
+      .mat-horizontal-stepper-wrapper {
+        flex: 1 1 100%;
+      }
+
       @media #{$mat-lt-sm} {
         .mat-step-label {
           white-space: normal;
@@ -81,7 +100,7 @@
         }
       }
       .mat-horizontal-content-container {
-        height: 600px;
+        height: 550px;
         max-height: 100%;
         width: 100%;;
         overflow-y: auto;
@@ -119,6 +138,28 @@
 
       &.mat-radio-checked {
         border-color: map_get($tb-accent, 500);
+      }
+    }
+  }
+
+  .mat-form-field {
+    .mat-form-field-wrapper {
+      padding-bottom: 0px;
+
+      .mat-form-field-underline {
+        position: initial !important;
+        display: block;
+        margin-top: -1px;
+      }
+
+      .mat-form-field-subscript-wrapper,
+      .mat-form-field-ripple {
+        position: initial !important;
+        display: table;
+      }
+
+      .mat-form-field-subscript-wrapper {
+        min-height: calc(1em + 1px);
       }
     }
   }

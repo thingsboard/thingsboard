@@ -18,7 +18,6 @@ import {
   NotificationDeliveryMethod,
   NotificationDeliveryMethodTranslateMap,
   NotificationTemplate,
-  NotificationTemplateTypeTranslateMap,
   NotificationType
 } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
@@ -66,7 +65,6 @@ export class TemplateNotificationDialogComponent
 
   notificationTypes = Object.keys(NotificationType) as NotificationType[];
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
-  notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   selectedIndex = 0;

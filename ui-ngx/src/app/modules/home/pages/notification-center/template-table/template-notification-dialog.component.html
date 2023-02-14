@@ -50,22 +50,23 @@
               {{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}
             </mat-option>
           </mat-select>
-          <mat-hint>{{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}</mat-hint>
         </mat-form-field>
         <section formGroupName="configuration">
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block tb-form-fields">
             <mat-label translate>notification.subject</mat-label>
             <input matInput formControlName="notificationSubject" required>
             <mat-error *ngIf="templateNotificationForm.get('configuration.notificationSubject').hasError('required')">
               {{ 'notification.subject-required' | translate }}
             </mat-error>
+            <mat-hint>{{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}</mat-hint>
           </mat-form-field>
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block tb-form-fields">
             <mat-label translate>notification.message</mat-label>
             <input matInput formControlName="defaultTextTemplate" required>
             <mat-error *ngIf="templateNotificationForm.get('configuration.defaultTextTemplate').hasError('required')">
               {{ 'notification.message-required' | translate }}
             </mat-error>
+            <mat-hint>{{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}</mat-hint>
           </mat-form-field>
           <label class="tb-title tb-required"
                  [ngClass]="{'tb-error': templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
@@ -86,6 +87,9 @@
     <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.PUSH.enabled').value"
       [stepControl]="pushTemplateForm">
       <ng-template matStepLabel>{{ 'notification.web-settings' | translate }}</ng-template>
+      <div class="tb-hint tb-hint-available-params">
+        {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
+      </div>
       <form [formGroup]="pushTemplateForm">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.subject</mat-label>
@@ -145,6 +149,9 @@
       [stepControl]="emailTemplateForm">
       <ng-template matStepLabel>{{ 'notification.email-settings' | translate }}</ng-template>
       <ng-template matStepContent>
+        <div class="tb-hint tb-hint-available-params">
+          {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
+        </div>
         <form [formGroup]="emailTemplateForm">
           <mat-form-field class="mat-block" floatLabel="always">
             <mat-label translate>notification.subject</mat-label>
@@ -158,6 +165,9 @@
     <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SMS.enabled').value"
               [stepControl]="smsTemplateForm">
       <ng-template matStepLabel>{{ 'notification.sms-settings' | translate }}</ng-template>
+      <div class="tb-hint tb-hint-available-params">
+        {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
+      </div>
       <form [formGroup]="smsTemplateForm">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.message</mat-label>
@@ -174,6 +184,9 @@
     <mat-step optional *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SLACK.enabled').value"
               [stepControl]="slackTemplateForm">
       <ng-template matStepLabel>{{ 'notification.slack-settings' | translate }}</ng-template>
+      <div class="tb-hint tb-hint-available-params">
+        {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
+      </div>
       <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.message</mat-label>

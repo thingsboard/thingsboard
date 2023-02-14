@@ -19,6 +19,7 @@ import {
   NotificationDeliveryMethod,
   NotificationDeliveryMethodTranslateMap,
   NotificationTemplate,
+  NotificationTemplateTypeTranslateMap,
   NotificationType
 } from '@shared/models/notification.models';
 import { takeUntil } from 'rxjs/operators';
@@ -42,6 +43,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
 
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
+  notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
   tinyMceOptions: Record<string, any> = {
     base_url: '/assets/tinymce',

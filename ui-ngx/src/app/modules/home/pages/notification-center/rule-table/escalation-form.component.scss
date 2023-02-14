@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../../scss/constants";
+
 :host {
   .escalation {
     height: 100%;
@@ -20,24 +22,45 @@
     max-height: 100%;
     border-radius: 8px;
     background: rgba(0,0,0,0.04);
-  }
-
-  .escalation-padding {
     padding: 0 10px;
+
+    > div:first-child {
+      padding-right: 10px;
+    }
   }
 
   .escalation-notify {
-    text-align: end;
+    text-align: center;
+  }
+
+  tb-timeinterval {
+    min-width: 100px;
     padding: 0 10px;
+  }
+
+  @media #{$mat-xs} {
+    .escalation {
+      > div:first-child {
+        padding: 10px 0 0;
+      }
+    }
+
+    tb-timeinterval {
+      padding: 0;
+    }
   }
 }
 
 :host ::ng-deep {
-  tb-timeinterval {
+  .mat-form-field {
     min-width: 100px;
 
     .mat-form-field-infix {
       width: 100%;
+    }
+
+    .mat-select {
+      min-width: 110px !important;
     }
   }
 }

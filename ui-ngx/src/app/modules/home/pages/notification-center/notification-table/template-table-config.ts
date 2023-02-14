@@ -41,6 +41,8 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
               private dialog: MatDialog) {
     super();
     this.loadDataOnInit = false;
+    this.rowPointer = true;
+
     this.entityTranslations = {
       noEntities: 'notification.no-notification-templates',
       search: 'notification.search-templates'
@@ -60,6 +62,11 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
 
     this.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
 
+    this.handleRowClick = ($event, template) => {
+      this.editTemplate($event, template)
+      return true;
+    }
+
     this.columns.push(
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%',
         (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
@@ -78,11 +85,6 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
         icon: 'content_copy',
         isEnabled: () => true,
         onAction: ($event, entity) => this.editTemplate($event, entity, false, true)
-      }, {
-        name: this.translate.instant('notification.edit-template'),
-        icon: 'edit',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.editTemplate($event, entity)
       }
     ];
   }

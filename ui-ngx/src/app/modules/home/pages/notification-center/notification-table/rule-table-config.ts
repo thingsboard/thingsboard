@@ -39,6 +39,8 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
               private dialog: MatDialog) {
     super();
     this.loadDataOnInit = false;
+    this.rowPointer = true;
+
     this.entityTranslations = {
       noEntities: 'notification.no-rules-notification',
       search: 'notification.search-rules'
@@ -56,6 +58,11 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
     this.onEntityAction = action => this.onTargetAction(action);
 
     this.defaultSortOrder = {property: 'name', direction: Direction.ASC};
+
+    this.handleRowClick = ($event, rule) => {
+      this.editRule($event, rule)
+      return true;
+    }
 
     this.columns.push(
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),
@@ -75,11 +82,6 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
       icon: 'content_copy',
       isEnabled: () => true,
       onAction: ($event, entity) => this.editRule($event, entity, false, true)
-    }, {
-      name: this.translate.instant('notification.edit-rule'),
-      icon: 'edit',
-      isEnabled: () => true,
-      onAction: ($event, entity) => this.editRule($event, entity)
     }];
   }
 

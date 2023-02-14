@@ -146,8 +146,12 @@ export class RequestNotificationDialogComponent extends
   }
 
   nextStepLabel(): string {
-    if (this.selectedIndex >= this.maxStepperIndex) {
-      return 'action.send';
+    if (this.selectedIndex !== 0) {
+      if (this.selectedIndex >= this.maxStepperIndex) {
+        return 'action.send';
+      } else if (this.createNotification.selected.stepControl.pristine) {
+        return 'action.skip';
+      }
     }
     return 'action.next';
   }

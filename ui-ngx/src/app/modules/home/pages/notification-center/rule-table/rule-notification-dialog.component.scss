@@ -16,7 +16,8 @@
 @import "../../../../../../theme";
 
 :host {
-  width: 800px;
+  width: 700px;
+  max-height: 100vh;
 
   @media #{$mat-gt-xs} {
     .mat-dialog-content {
@@ -31,9 +32,16 @@
 
   .fields-group {
     padding: 0 16px 8px;
-    margin-bottom: 10px;
     border: 1px groove rgba(0, 0, 0, .25);
     border-radius: 4px;
+
+    &.tb-margin {
+      margin-bottom: 10px;
+    }
+
+    &.tb-hierarchy {
+      padding: 0 0 8px 16px;
+    }
 
     legend {
       margin-bottom: 8px;
@@ -52,9 +60,13 @@
 
       .mat-stepper-horizontal {
         display: flex;
-        flex-direction: column;
         height: 100%;
         overflow: hidden;
+
+        .mat-horizontal-stepper-wrapper {
+          flex: 1 1 100%;
+        }
+
         @media #{$mat-lt-sm} {
           .mat-step-label {
             white-space: normal;
@@ -67,7 +79,7 @@
         }
 
         .mat-horizontal-content-container {
-          height: 600px;
+          height: 550px;
           max-height: 100%;
           width: 100%;;
           overflow-y: auto;
@@ -87,7 +99,8 @@
     .mat-button-toggle-group.tb-notification-unread-toggle-group {
       &.mat-button-toggle-group-appearance-standard {
         border: none;
-        border-radius: 14px;
+        border-radius: 18px;
+        margin-bottom: 8px;
 
         .mat-button-toggle + .mat-button-toggle {
           border-left: none;
@@ -96,7 +109,7 @@
 
       .mat-button-toggle {
         background: rgba(0, 0, 0, 0.06);
-        height: 28px;
+        height: 36px;
         align-items: center;
         display: flex;
 
@@ -105,7 +118,7 @@
           left: 2px;
           right: 2px;
           bottom: 2px;
-          border-radius: 12px;
+          border-radius: 18px;
         }
       }
 
@@ -114,20 +127,20 @@
       }
 
       .mat-button-toggle-focus-overlay {
-        border-radius: 14px;
+        border-radius: 18px;
         margin: 2px;
       }
 
       .mat-button-toggle-checked .mat-button-toggle-button {
         background-color: $tb-primary-color;
         color: #fff;
-        border-radius: 14px;
+        border-radius: 18px;
         margin-left: 2px;
         margin-right: 2px;
       }
 
       .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
-        line-height: 24px;
+        line-height: 34px;
         font-size: 16px;
         font-weight: 500;
       }

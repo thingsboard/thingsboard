@@ -13,9 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../../scss/constants";
 @import "../../../../../../theme";
 
 :host {
+  form.tb-dialog-container {
+    min-width: 580px;
+    max-height: 100vh;
+  }
+
+  .mat-dialog-content {
+    height: 85%;
+  }
+
   .tb-title {
     display: block;
     padding-bottom: 6px;
@@ -27,6 +37,7 @@
     display: flex;
     flex-direction: row;
     margin-bottom: 14px;
+    gap: 8px;
 
     .mat-radio-button {
       flex: 1 1 100%;
@@ -34,13 +45,15 @@
       border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 6px;
 
-      &:not(:last-child){
-        margin-right: 8px;
-      }
-
       &.mat-radio-checked {
         border-color: map_get($tb-accent, 500);
       }
+    }
+  }
+
+  @media #{$mat-xs} {
+    .mat-radio-group {
+      flex-direction: column;
     }
   }
 }

@@ -17,14 +17,12 @@
 -->
 <form [formGroup]="escalationFormGroup" fxLayout="column">
   <div class="escalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start">
-    <div fxFlex fxLayout="row" ngStyle.xs="padding-top: 10px">
-      <div fxFlex *ngIf="systemEscalation; else selectTime" class="escalation-padding" translate>notification.first-recipient</div>
+<!--    <div fxFlex fxLayout="row" ngStyle.xs="padding-top: 10px">-->
+      <div fxFlex *ngIf="systemEscalation; else selectTime" translate>notification.first-recipient</div>
       <ng-template #selectTime>
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
-          <span class="escalation-padding">After</span>
+          <span translate>notification.after</span>
           <tb-timeinterval
-            style="min-width: 100px;"
-            ngStyle.xs="padding: 0 10px;"
             formControlName="delayInSec"
             min="{{ 0 }}"
             max="{{ 604800000 }}"
@@ -32,19 +30,18 @@
           <span fxFlex class="escalation-notify" translate>notification.notify</span>
         </div>
       </ng-template>
-    </div>
-    <div fxFlex="60" class="escalation-padding">
-      <tb-entity-list
-        required
-        formControlName="targets"
-        [entityType]="entityType.NOTIFICATION_TARGET"
-        placeholderText="{{ 'notification.add-target' | translate }}">
-        <button #createTargetButton
-                mat-button [fxHide]="disabled" matSuffix
-                (click)="createTarget($event, createTargetButton)">
-          {{ 'notification.create-new' | translate }}
-        </button>
-      </tb-entity-list>
-    </div>
+<!--    </div>-->
+    <tb-entity-list
+      required
+      fxFlex="60"
+      formControlName="targets"
+      [entityType]="entityType.NOTIFICATION_TARGET"
+      placeholderText="{{ 'notification.add-target' | translate }}">
+      <button #createTargetButton
+              mat-button [fxHide]="disabled" matSuffix
+              (click)="createTarget($event, createTargetButton)">
+        {{ 'notification.create-new' | translate }}
+      </button>
+    </tb-entity-list>
   </div>
 </form>

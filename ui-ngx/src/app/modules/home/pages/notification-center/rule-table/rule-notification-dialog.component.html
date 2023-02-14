@@ -35,7 +35,7 @@
     </ng-template>
     <mat-step [stepControl]="ruleNotificationForm">
       <ng-template matStepLabel>{{ 'notification.basic-settings' | translate }}</ng-template>
-      <form [formGroup]="ruleNotificationForm" style="padding-bottom: 16px;">
+      <form [formGroup]="ruleNotificationForm">
         <mat-form-field class="mat-block">
           <mat-label translate>notification.rule-name</mat-label>
           <input matInput formControlName="name" required>
@@ -75,7 +75,7 @@
           </tb-entity-list>
         </section>
         <ng-template #alarmTargesConfig>
-          <fieldset class="fields-group" formGroupName="recipientsConfig">
+          <fieldset class="fields-group tb-hierarchy" formGroupName="recipientsConfig">
             <legend translate>notification.hierarchy-of-receiving</legend>
             <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
           </fieldset>
@@ -87,7 +87,7 @@
       <ng-template matStepLabel>{{ 'notification.alarm-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="alarmTemplateForm">
         <section formGroupName="triggerConfig">
-          <fieldset class="fields-group">
+          <fieldset class="fields-group tb-margin">
             <legend translate>notification.filter</legend>
             <tb-string-items-list
               label="{{ 'alarm.alarm-type-list' | translate }}"
@@ -102,7 +102,7 @@
             </tb-alarm-severities-list>
           </fieldset>
 
-          <fieldset class="fields-group" formGroupName="clearRule">
+          <fieldset class="fields-group tb-margin" formGroupName="clearRule">
             <legend translate>notification.clear-rule</legend>
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
@@ -132,7 +132,6 @@
       <ng-template matStepLabel>{{ 'notification.device-inactivity-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="deviceInactivityTemplateForm">
         <section formGroupName="triggerConfig">
-          <span translate>notification.filter-by</span>
           <div fxFlex fxLayoutAlign="center center">
             <mat-button-toggle-group class="tb-notification-unread-toggle-group"
                                      style="width: 250px;"
@@ -175,7 +174,7 @@
               [stepControl]="entityActionTemplateForm">
       <ng-template matStepLabel>{{ 'notification.entity-action-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="entityActionTemplateForm">
-        <fieldset class="fields-group" formGroupName="triggerConfig">
+        <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
           <legend translate>notification.filter</legend>
           <tb-entity-type-select required
                                  showLabel

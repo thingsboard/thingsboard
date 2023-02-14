@@ -41,6 +41,8 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
               private dialog: MatDialog) {
     super();
     this.loadDataOnInit = false;
+    this.rowPointer = true;
+
     this.entityTranslations = {
       noEntities: 'notification.no-targets-notification',
       search: 'notification.search-targets'
@@ -60,6 +62,11 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
 
     this.defaultSortOrder = {property: 'name', direction: Direction.ASC};
 
+    this.handleRowClick = ($event, target) => {
+      this.editTarget($event, target);
+      return true;
+    }
+
     this.columns.push(
       new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
       new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '40%',
@@ -72,12 +79,7 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationTarget>> {
-    return [{
-      name: this.translate.instant('device.make-public'),
-      icon: 'edit',
-      isEnabled: () => true,
-      onAction: ($event, entity) => this.editTarget($event, entity)
-    }];
+    return [];
   }
 
   private editTarget($event: Event, target: NotificationTarget, isAdd = false) {

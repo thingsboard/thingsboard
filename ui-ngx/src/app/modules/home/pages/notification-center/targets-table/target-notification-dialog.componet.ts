@@ -85,7 +85,7 @@ export class TargetNotificationDialogComponent extends
           usersIds: [{value: null, disabled: true}, Validators.required],
           customerId: [{value: null, disabled: true}, Validators.required]
         }),
-        conversationType: [{value: SlackChanelType.DIRECT, disabled: true}],
+        conversationType: [{value: SlackChanelType.PUBLIC_CHANNEL, disabled: true}],
         conversation: [{value: '', disabled: true}, Validators.required],
         description: [null]
       })

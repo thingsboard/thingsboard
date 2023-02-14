@@ -250,9 +250,9 @@ export const NotificationRequestStatusTranslateMap = new Map<NotificationRequest
 ]);
 
 export enum SlackChanelType {
-  DIRECT= 'DIRECT',
   PUBLIC_CHANNEL = 'PUBLIC_CHANNEL',
-  PRIVATE_CHANNEL = 'PRIVATE_CHANNEL'
+  PRIVATE_CHANNEL = 'PRIVATE_CHANNEL',
+  DIRECT= 'DIRECT'
 }
 
 export const SlackChanelTypesTranslateMap = new Map<SlackChanelType, string>([
