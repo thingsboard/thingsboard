@@ -25,6 +25,7 @@ import { FormattedData } from '@shared/models/widget.models';
 
 export interface SelectEntityDialogData {
   entities: FormattedData[];
+  showEntityLabel?: boolean;
 }
 
 @Component({

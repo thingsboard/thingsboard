@@ -36,9 +36,14 @@
                 functionTitle="{{ 'widgets.maps.position-function' | translate }}"
                 helpId="widget/lib/map/position_fn">
     </tb-js-func>
-    <mat-checkbox formControlName="draggableMarker" style="margin-bottom: 16px;">
-      {{ 'widgets.maps.draggable-marker' | translate }}
-    </mat-checkbox>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" style="margin-bottom: 16px;">
+      <mat-checkbox formControlName="draggableMarker">
+        {{ 'widgets.maps.draggable-marker' | translate }}
+      </mat-checkbox>
+      <mat-slide-toggle formControlName="useLabelForDragSelection" [fxShow]="markersSettingsFormGroup.get('draggableMarker').value">
+        {{ 'widgets.maps.use-label-for-drag-selection' | translate }}
+      </mat-slide-toggle>
+    </section>
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.maps.label</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="markersSettingsFormGroup.get('showLabel').value">

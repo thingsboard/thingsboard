@@ -205,7 +205,8 @@ export default abstract class LeafletMap {
           disableClose: true,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            entities
+            entities,
+            showEntityLabel: this.options.useLabelForDragSelection
           }
         }).afterClosed();
     }
@@ -217,40 +218,41 @@ export default abstract class LeafletMap {
           this.toggleDrawMode(type);
           let tooltipText;
           let customTranslation;
+          const entityName = this.options.useLabelForDragSelection && data.entityLabel ? data.entityLabel : data.entityName;
           switch (type) {
             case 'tbMarker':
-              tooltipText = this.translateService.instant('widgets.maps.tooltips.placeMarker', {entityName: data.entityName});
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.placeMarker', {entityName: entityName});
               // @ts-ignore
               this.map.pm.Draw.tbMarker._hintMarker.setTooltipContent(tooltipText);
               break;
             case 'tbCircle':
-              tooltipText = this.translateService.instant('widgets.maps.tooltips.startCircle', {entityName: data.entityName});
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.startCircle', {entityName: entityName});
               // @ts-ignore
               this.map.pm.Draw.tbCircle._hintMarker.setTooltipContent(tooltipText);
               customTranslation = {
                 tooltips: {
-                  finishCircle: this.translateService.instant('widgets.maps.tooltips.finishCircle', {entityName: data.entityName})
+                  finishCircle: this.translateService.instant('widgets.maps.tooltips.finishCircle', {entityName: entityName})
                 }
               };
               break;
             case 'tbRectangle':
-              tooltipText = this.translateService.instant('widgets.maps.tooltips.firstVertex', {entityName: data.entityName});
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.firstVertex', {entityName: entityName});
               // @ts-ignore
               this.map.pm.Draw.tbRectangle._hintMarker.setTooltipContent(tooltipText);
               customTranslation = {
                 tooltips: {
-                  finishRect: this.translateService.instant('widgets.maps.tooltips.finishRect', {entityName: data.entityName})
+                  finishRect: this.translateService.instant('widgets.maps.tooltips.finishRect', {entityName: entityName})
                 }
               };
               break;
             case 'tbPolygon':
-              tooltipText = this.translateService.instant('widgets.maps.tooltips.firstVertex', {entityName: data.entityName});
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.firstVertex', {entityName: entityName});
               // @ts-ignore
               this.map.pm.Draw.tbPolygon._hintMarker.setTooltipContent(tooltipText);
               customTranslation = {
                 tooltips: {
-                  continueLine: this.translateService.instant('widgets.maps.tooltips.continueLine', {entityName: data.entityName}),
-                  finishPoly: this.translateService.instant('widgets.maps.tooltips.finishPoly', {entityName: data.entityName})
+                  continueLine: this.translateService.instant('widgets.maps.tooltips.continueLine', {entityName: entityName}),
+                  finishPoly: this.translateService.instant('widgets.maps.tooltips.finishPoly', {entityName: entityName})
                 }
               };
               break;

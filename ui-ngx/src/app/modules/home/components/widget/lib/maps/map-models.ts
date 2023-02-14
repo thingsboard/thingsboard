@@ -302,6 +302,7 @@ export interface MarkersSettings {
   markerOffsetY: number;
   posFunction?: string;
   draggableMarker: boolean;
+  useLabelForDragSelection: boolean;
   showLabel: boolean;
   useLabelFunction: boolean;
   label?: string;
@@ -340,6 +341,7 @@ export const defaultMarkersSettings: MarkersSettings = {
   markerOffsetY: 1,
   posFunction: 'return {x: origXPos, y: origYPos};',
   draggableMarker: false,
+  useLabelForDragSelection: false,
   showLabel: true,
   useLabelFunction: false,
   label: '${entityName}',

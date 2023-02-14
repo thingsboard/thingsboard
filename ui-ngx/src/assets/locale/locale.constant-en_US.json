@@ -4540,6 +4540,7 @@
             "marker-offset-y": "Marker Y offset relative to position multiplied by marker height",
             "position-function": "Position conversion function, should return x,y coordinates as double from 0 to 1 each",
             "draggable-marker": "Draggable marker",
+            "use-label-for-drag-selection": "Use entity label for drag selection",
             "label": "Label",
             "show-label": "Show label",
             "use-label-function": "Use label function",

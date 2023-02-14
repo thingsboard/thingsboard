@@ -86,6 +86,7 @@ export class MarkersSettingsComponent extends PageComponent implements OnInit, C
       markerOffsetY: [null, []],
       posFunction: [null, []],
       draggableMarker: [null, []],
+      useLabelForDragSelection: [null, []],
       showLabel: [null, []],
       useLabelFunction: [null, []],
       label: [null, []],

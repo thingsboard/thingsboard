@@ -266,6 +266,9 @@ export class MapWidgetController implements MapWidgetInterface {
         if (isEditMap && !settings.hasOwnProperty('draggableMarker')) {
           parsedOptions.draggableMarker = true;
         }
+        if (isEditMap && !settings.hasOwnProperty('useLabelForDragSelection')) {
+          parsedOptions.useLabelForDragSelection = false;
+        }
         if (isEditMap && !settings.hasOwnProperty('editablePolygon')) {
           parsedOptions.editablePolygon = true;
         }
