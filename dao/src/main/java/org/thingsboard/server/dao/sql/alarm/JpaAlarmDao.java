@@ -178,8 +178,8 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        return alarmQueryRepository.findAlarmDataByQueryForAlarms(tenantId, query, orderedEntityIds);
+    public PageData<AlarmData> findAlarmDataByQueryForAssignedUser(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        return alarmQueryRepository.findAlarmDataByQueryForAssignedUser(tenantId, query, orderedEntityIds);
     }
 
     @Override

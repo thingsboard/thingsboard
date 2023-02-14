@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.AssignedAlarmsFilter;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -108,12 +109,11 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         AlarmDataUpdate update;
         if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();
-            boolean entitiesAreAlarms = getOrderedEntityIds().stream().allMatch(entityId -> entityId instanceof AlarmId);
             PageData<AlarmData> alarms;
-            if (!entitiesAreAlarms) {
-                alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), query, getOrderedEntityIds());
+            if (query.getEntityFilter() instanceof AssignedAlarmsFilter) {
+                alarms = alarmService.findAlarmDataByQueryForAssignedUser(getTenantId(), query, getOrderedEntityIds());
             } else {
-                alarms = alarmService.findAlarmDataByQueryForAlarms(getTenantId(), query, getOrderedEntityIds());
+                alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), query, getOrderedEntityIds());
             }
             long end = System.currentTimeMillis();
             stats.getAlarmQueryInvocationCnt().incrementAndGet();
@@ -219,6 +219,10 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
         AlarmInfo alarmInfo = subscriptionUpdate.getAlarm();
         AlarmId alarmId = alarmInfo.getId();
+        if (query.getEntityFilter() instanceof AssignedAlarmsFilter) {
+            fetchAlarms();
+            return;
+        }
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);
             if (deleted != null) {

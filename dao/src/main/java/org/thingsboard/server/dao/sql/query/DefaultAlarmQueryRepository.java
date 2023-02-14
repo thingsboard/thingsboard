@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.AssignedAlarmsFilter;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
@@ -317,11 +318,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+    public PageData<AlarmData> findAlarmDataByQueryForAssignedUser(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         return transactionTemplate.execute(status -> {
             AlarmDataPageLink pageLink = query.getPageLink();
             QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
-            ctx.addUuidListParameter("alarm_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+            ctx.addUuidParameter("assignee_id", ((AssignedAlarmsFilter) query.getEntityFilter()).getAssigneeId().getId());
+            ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
             StringBuilder fromPart = new StringBuilder(" from alarm a ");
             StringBuilder wherePart = new StringBuilder(" where ");
@@ -336,37 +338,11 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 String sortOrderKey = sortOrder.getKey().getKey();
                 sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
                         .append(" ").append(sortOrder.getDirection().name());
-                if (pageLink.isSearchPropagatedAlarms()) {
-                    wherePart.append(" and ea.id in (:alarm_ids)");
-                } else {
-                    addAndIfNeeded(wherePart, addAnd);
-                    addAnd = true;
-                    wherePart.append(" a.id in (:alarm_ids)");
-                }
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                wherePart.append(" a.assignee_id = uuid(:assignee_id)");
             } else {
-                joinPart.append(" inner join (select * from (VALUES");
-                int entityIdIdx = 0;
-                int lastEntityIdIdx = orderedEntityIds.size() - 1;
-                for (EntityId entityId : orderedEntityIds) {
-                    joinPart.append("(uuid('").append(entityId.getId().toString()).append("'), ").append(entityIdIdx).append(")");
-                    if (entityIdIdx != lastEntityIdIdx) {
-                        joinPart.append(",");
-                    } else {
-                        joinPart.append(")");
-                    }
-                    entityIdIdx++;
-                }
-                joinPart.append(" as e(id, priority)) e ");
-                if (pageLink.isSearchPropagatedAlarms()) {
-                    if (textSearchQuery.isEmpty()) {
-                        joinPart.append("on ea.entity_id = e.id");
-                    } else {
-                        joinPart.append("on a.entity_id = e.id");
-                    }
-                } else {
-                    joinPart.append("on a.id = e.id");
-                }
-                sortPart.append("e.priority");
+                joinPart.append("on a.assignee_id = e.id");
             }
 
             long startTs;

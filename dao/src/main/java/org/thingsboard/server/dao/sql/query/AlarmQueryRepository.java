@@ -28,7 +28,7 @@ public interface AlarmQueryRepository {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
-    PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId,
-                                                        AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
+    PageData<AlarmData> findAlarmDataByQueryForAssignedUser(TenantId tenantId,
+                                                            AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
 }

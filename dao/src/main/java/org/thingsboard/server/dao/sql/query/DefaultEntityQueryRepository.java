@@ -813,11 +813,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String entityAssignedAlarmsQuery(QueryContext ctx, AssignedAlarmsFilter filter) {
-        if (filter.getAssigneeId() == null) {
-            return "e.assigned_id is null";
-        }
-        ctx.addStringParameter("entity_filter_assigned_alarms_filter",  filter.getAssigneeId().toString());
-        return "e.assignee_id = uuid(:entity_filter_assigned_alarms_filter)";
+        ctx.addUuidParameter("entity_filter_assigned_entity_id", filter.getAssigneeId().getId());
+        return "e.id=:entity_filter_assigned_entity_id";
     }
 
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
@@ -871,7 +868,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case EDGE_SEARCH_QUERY:
                 return EntityType.EDGE;
             case ASSIGNED_ALARMS:
-                return EntityType.ALARM;
+                return EntityType.USER;
             case RELATIONS_QUERY:
                 RelationsQueryFilter rgf = (RelationsQueryFilter) entityFilter;
                 return rgf.isMultiRoot() ? rgf.getMultiRootEntitiesType() : rgf.getRootEntity().getEntityType();

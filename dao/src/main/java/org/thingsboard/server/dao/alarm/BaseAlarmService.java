@@ -61,6 +61,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -154,11 +155,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForAlarms(TenantId tenantId,
-                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+    public PageData<AlarmData> findAlarmDataByQueryForAssignedUser(TenantId tenantId,
+                                                                   AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateEntityDataPageLink(query.getPageLink());
-        return alarmDao.findAlarmDataByQueryForAlarms(tenantId, query, orderedEntityIds);
+        return alarmDao.findAlarmDataByQueryForAssignedUser(tenantId, query, orderedEntityIds);
     }
 
     @Override
@@ -295,11 +296,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 if (alarm == null || assigneeId.equals(alarm.getAssigneeId())) {
                     return new AlarmOperationResult(alarm, false);
                 } else {
+                    Set<EntityId> propagationEntityIds = getPropagationEntityIds(alarm);
+                    propagationEntityIds.add(assigneeId);
                     alarm.setAssigneeId(assigneeId);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
                     AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(propagationEntityIds));
                 }
             }
         });
@@ -314,11 +317,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 if (alarm == null || alarm.getAssigneeId() == null) {
                     return new AlarmOperationResult(alarm, false);
                 } else {
+                    Set<EntityId> propagationEntityIds = getPropagationEntityIds(alarm);
                     alarm.setAssigneeId(null);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
                     AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(propagationEntityIds));
                 }
             }
         });
@@ -437,12 +441,18 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private Set<EntityId> getPropagationEntityIds(Alarm alarm) {
+        Set<EntityId> propagationEntityIds = new HashSet<>();
         if (alarm.isPropagate() || alarm.isPropagateToOwner() || alarm.isPropagateToTenant()) {
             List<EntityAlarm> entityAlarms = alarmDao.findEntityAlarmRecords(alarm.getTenantId(), alarm.getId());
-            return entityAlarms.stream().map(EntityAlarm::getEntityId).collect(Collectors.toSet());
+            propagationEntityIds = entityAlarms.stream().map(EntityAlarm::getEntityId).collect(Collectors.toSet());
         } else {
-            return Collections.singleton(alarm.getOriginator());
+            propagationEntityIds = new HashSet<>(Collections.singleton(alarm.getOriginator()));
         }
+        UserId assignedUserId = alarm.getAssigneeId();
+        if (assignedUserId != null && !propagationEntityIds.contains(assignedUserId)) {
+            propagationEntityIds.add(assignedUserId);
+        }
+        return propagationEntityIds;
     }
 
     private void createEntityAlarmRecord(TenantId tenantId, EntityId entityId, Alarm alarm) {
