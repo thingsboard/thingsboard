@@ -15,15 +15,14 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
-import { fromEvent, Observable } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState, selectAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { MediaBreakpoints } from '@shared/models/constants';
 import screenfull from 'screenfull';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -59,10 +58,6 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   fullscreenEnabled = screenfull.isEnabled;
 
-  authUser$: Observable<any>;
-  userDetails$: Observable<User>;
-  userDetailsString: Observable<string>;
-
   searchEnabled = false;
   showSearch = false;
   searchText = '';
@@ -77,12 +72,6 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   ngOnInit() {
-
-    this.authUser$ = this.store.pipe(select(selectAuthUser));
-    this.userDetails$ = this.store.pipe(select(selectUserDetails));
-    this.userDetailsString = this.userDetails$.pipe(map((user: User) => {
-      return JSON.stringify(user);
-    }));
 
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     this.sidenavMode = isGtSm ? 'side' : 'over';

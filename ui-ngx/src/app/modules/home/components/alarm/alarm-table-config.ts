@@ -33,7 +33,8 @@ import {
   AlarmQuery,
   AlarmSearchStatus,
   alarmSeverityColors,
-  alarmSeverityTranslations, AlarmsMode,
+  alarmSeverityTranslations,
+  AlarmsMode,
   alarmStatusTranslations
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
@@ -48,7 +49,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { AuditLogMode } from '@shared/models/audit-log.models';
 
 export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink> {
 
