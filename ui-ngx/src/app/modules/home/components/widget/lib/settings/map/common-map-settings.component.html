@@ -84,6 +84,9 @@
             <mat-slide-toggle [fxShow]="provider !== mapProvider.image" formControlName="useDefaultCenterPosition" class="slide-block">
               {{ 'widgets.maps.use-default-map-center-position' | translate }}
             </mat-slide-toggle>
+            <mat-slide-toggle [fxShow]="provider !== mapProvider.image" formControlName="useBrowserCenterPosition" class="slide-block">
+              {{ 'widgets.maps.use-browser-map-center-position' | translate }}
+            </mat-slide-toggle>
           </section>
         </section>
         <mat-form-field fxFlex class="mat-block">

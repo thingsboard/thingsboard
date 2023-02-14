@@ -87,6 +87,7 @@ export class CommonMapSettingsComponent extends PageComponent implements OnInit,
       disableZoomControl: [null, []],
       fitMapBounds: [null, []],
       useDefaultCenterPosition: [null, []],
+      useBrowserCenterPosition: [null, []],
       mapPageSize: [null, [Validators.min(1), Validators.required]]
     });
     this.commonMapSettingsFormGroup.valueChanges.subscribe(() => {
@@ -151,6 +152,7 @@ export class CommonMapSettingsComponent extends PageComponent implements OnInit,
       this.commonMapSettingsFormGroup.get('defaultZoomLevel').disable({emitEvent});
       this.commonMapSettingsFormGroup.get('useDefaultCenterPosition').disable({emitEvent});
       this.commonMapSettingsFormGroup.get('defaultCenterPosition').disable({emitEvent});
+      this.commonMapSettingsFormGroup.get('useBrowserCenterPosition').disable({emitEvent});
       this.commonMapSettingsFormGroup.get('fitMapBounds').disable({emitEvent});
 
       this.commonMapSettingsFormGroup.get('xPosKeyName').enable({emitEvent});
@@ -161,6 +163,7 @@ export class CommonMapSettingsComponent extends PageComponent implements OnInit,
       this.commonMapSettingsFormGroup.get('defaultZoomLevel').enable({emitEvent});
       this.commonMapSettingsFormGroup.get('useDefaultCenterPosition').enable({emitEvent});
       this.commonMapSettingsFormGroup.get('defaultCenterPosition').enable({emitEvent});
+      this.commonMapSettingsFormGroup.get('useBrowserCenterPosition').enable({emitEvent});
       this.commonMapSettingsFormGroup.get('fitMapBounds').enable({emitEvent});
 
 
@@ -174,6 +177,7 @@ export class CommonMapSettingsComponent extends PageComponent implements OnInit,
     this.commonMapSettingsFormGroup.get('defaultZoomLevel').updateValueAndValidity({emitEvent: false});
     this.commonMapSettingsFormGroup.get('useDefaultCenterPosition').updateValueAndValidity({emitEvent: false});
     this.commonMapSettingsFormGroup.get('defaultCenterPosition').updateValueAndValidity({emitEvent: false});
+    this.commonMapSettingsFormGroup.get('useBrowserCenterPosition').updateValueAndValidity({emitEvent: false});
     this.commonMapSettingsFormGroup.get('fitMapBounds').updateValueAndValidity({emitEvent: false});
   }
 }

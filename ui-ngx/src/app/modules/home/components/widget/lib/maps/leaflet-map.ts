@@ -67,6 +67,7 @@ export default abstract class LeafletMap {
     map: L.Map;
     options: WidgetUnitedMapSettings;
     bounds: L.LatLngBounds;
+    browserLocation?: [number, number];
     datasources: FormattedData[];
     markersCluster: MarkerClusterGroup;
     points: FeatureGroup;
@@ -494,7 +495,26 @@ export default abstract class LeafletMap {
             this.ctx.updatePopoverPositions();
           });
         });
-        if (this.options.useDefaultCenterPosition) {
+        if (this.options.useBrowserCenterPosition) {
+          const options = {
+            enableHighAccuracy: true,
+            timeout: 1000,
+            maximumAge: 0
+          };
+          navigator.geolocation.getCurrentPosition(
+              position => {
+                this.browserLocation = [position.coords.latitude, position.coords.longitude]
+                this.map.panTo(this.browserLocation)
+              },
+              () => {
+                if (this.options.useDefaultCenterPosition) {
+                  this.map.panTo(this.options.parsedDefaultCenterPosition);
+                  this.bounds = map.getBounds();
+                }
+              },
+              options
+          );
+        } else if (this.options.useDefaultCenterPosition) {
           this.map.panTo(this.options.parsedDefaultCenterPosition);
           this.bounds = map.getBounds();
         } else {
@@ -591,11 +611,12 @@ export default abstract class LeafletMap {
             this.bounds = !!this.bounds ? this.bounds.extend(bounds) : bounds;
             if (!this.options.fitMapBounds && this.options.defaultZoomLevel) {
                 this.map.setZoom(this.options.defaultZoomLevel, { animate: false });
-                if (this.options.useDefaultCenterPosition) {
-                    this.map.panTo(this.options.parsedDefaultCenterPosition, { animate: false });
-                }
-                else {
-                    this.map.panTo(this.bounds.getCenter());
+                if (this.options.useBrowserCenterPosition && this.browserLocation) {
+                  this.map.panTo(this.browserLocation, { animate: false });
+                } else if (this.options.useDefaultCenterPosition) {
+                  this.map.panTo(this.options.parsedDefaultCenterPosition, { animate: false });
+                } else {
+                  this.map.panTo(this.bounds.getCenter());
                 }
             } else {
                 this.map.once('zoomend', () => {
@@ -607,8 +628,10 @@ export default abstract class LeafletMap {
                         this.map.setZoom(minZoom, { animate: false });
                     }
                 });
-                if (this.options.useDefaultCenterPosition) {
-                    this.bounds = this.bounds.extend(this.options.parsedDefaultCenterPosition);
+                if (this.options.useBrowserCenterPosition && this.browserLocation) {
+                  this.bounds = this.bounds.extend(this.browserLocation);
+                } else if (this.options.useDefaultCenterPosition) {
+                  this.bounds = this.bounds.extend(this.options.parsedDefaultCenterPosition);
                 }
                 this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
                 this.map.invalidateSize();

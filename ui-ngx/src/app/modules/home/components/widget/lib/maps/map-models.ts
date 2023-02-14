@@ -226,6 +226,7 @@ export interface CommonMapSettings {
   disableZoomControl: boolean;
   fitMapBounds: boolean;
   useDefaultCenterPosition: boolean;
+  useBrowserCenterPosition: boolean;
   mapPageSize: number;
 }
 
@@ -250,6 +251,7 @@ export const defaultCommonMapSettings: CommonMapSettings = {
   disableZoomControl: false,
   fitMapBounds: true,
   useDefaultCenterPosition: false,
+  useBrowserCenterPosition: false,
   mapPageSize: DEFAULT_MAP_PAGE_SIZE
 };
 

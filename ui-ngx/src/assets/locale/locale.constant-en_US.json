@@ -4534,6 +4534,7 @@
             "disable-zoom-control-buttons": "Disable zoom control buttons",
             "fit-map-bounds": "Fit map bounds to cover all markers",
             "use-default-map-center-position": "Use default map center position",
+            "use-browser-map-center-position": "Use browser map center position",
             "entities-limit": "Limit of entities to load",
             "markers-settings": "Markers settings",
             "marker-offset-x": "Marker X offset relative to position multiplied by marker width",
