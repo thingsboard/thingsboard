@@ -193,18 +193,18 @@ export class MenuService {
           },
           {
             id: guid(),
-            name: 'admin.oauth2.oauth2',
-            type: 'link',
-            path: '/security-settings/oauth2',
-            icon: 'mdi:shield-account',
-            isMdiIcon: true
-          },
-          {
-            id: guid(),
             name: 'admin.2fa.2fa',
             type: 'link',
             path: '/security-settings/2fa',
             icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/security-settings/oauth2',
+            icon: 'mdi:shield-account',
             isMdiIcon: true
           }
         ]
