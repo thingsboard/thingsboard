@@ -47,6 +47,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -192,8 +194,16 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (!userCredentials.isEnabled()) {
             throw new DisabledException(String.format("User credentials not enabled [%s]", email));
         }
-        userCredentials.setResetToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+        userCredentials.setResetToken(generateSafeToken());
         return saveUserCredentials(tenantId, userCredentials);
+    }
+
+    private String generateSafeToken() {
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[DEFAULT_TOKEN_LENGTH];
+        random.nextBytes(bytes);
+        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+        return encoder.encodeToString(bytes);
     }
 
     @Override
