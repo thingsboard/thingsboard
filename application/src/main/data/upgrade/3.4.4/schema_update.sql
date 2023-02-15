@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS user_settings (
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
 );
 
--- move password history from user to user_credentials table
 ALTER TABLE user_credentials
     ADD COLUMN IF NOT EXISTS additional_info varchar;
 
