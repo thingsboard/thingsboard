@@ -115,9 +115,13 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
                 log.error("Failed add Metrics. MessageType *BIRTH.", e);
             }
         }
-        List<TransportApiProtos.AttributesMsg> attributesMsgList = convertToPostAttributes(sparkplugBProto, deviceName);
-        onDeviceAttributesProto(contextListenableFuture, msgId, attributesMsgList, deviceName);
-        List<TransportProtos.PostTelemetryMsg> postTelemetryMsgList = convertToPostTelemetry(sparkplugBProto, topic.getType().name());
+        Set<String> attributesMetricNames = ((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
+                .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkPlugAttributesMetricNames();
+        if (attributesMetricNames != null) {
+            List<TransportApiProtos.AttributesMsg> attributesMsgList = convertToPostAttributes(sparkplugBProto, attributesMetricNames, deviceName);
+            onDeviceAttributesProto(contextListenableFuture, msgId, attributesMsgList, deviceName);
+        }
+        List<TransportProtos.PostTelemetryMsg> postTelemetryMsgList = convertToPostTelemetry(sparkplugBProto, attributesMetricNames, topic.getType().name());
         onDeviceTelemetryProto(contextListenableFuture, msgId, postTelemetryMsgList, deviceName);
     }
 
@@ -216,13 +220,11 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    private List<TransportProtos.PostTelemetryMsg> convertToPostTelemetry(SparkplugBProto.Payload sparkplugBProto, String topicTypeName) throws AdaptorException {
+    private List<TransportProtos.PostTelemetryMsg> convertToPostTelemetry(SparkplugBProto.Payload sparkplugBProto,  Set<String> attributesMetricNames, String topicTypeName) throws AdaptorException {
         try {
             List<TransportProtos.PostTelemetryMsg> msgs = new ArrayList<>();
-            Set<String> attributesMetricNames = ((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
-                    .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkPlugAttributesMetricNames();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (!attributesMetricNames.contains(protoMetric.getName())) {
+                if (attributesMetricNames == null || !attributesMetricNames.contains(protoMetric.getName())) {
                     long ts = protoMetric.getTimestamp();
                     String key = "bdSeq".equals(protoMetric.getName()) ?
                             topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
@@ -247,11 +249,11 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    private List<TransportApiProtos.AttributesMsg> convertToPostAttributes(SparkplugBProto.Payload sparkplugBProto, String deviceName) throws AdaptorException {
+    private List<TransportApiProtos.AttributesMsg> convertToPostAttributes(SparkplugBProto.Payload sparkplugBProto,
+                                                                           Set<String> attributesMetricNames,
+                                                                           String deviceName) throws AdaptorException {
         try {
             List<TransportApiProtos.AttributesMsg> msgs = new ArrayList<>();
-            Set<String> attributesMetricNames = ((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
-                    .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkPlugAttributesMetricNames();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
                 if (attributesMetricNames.contains(protoMetric.getName())) {
                     TransportApiProtos.AttributesMsg.Builder deviceAttributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
