@@ -238,11 +238,11 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         return new SparkplugDeviceSessionContext(this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
     }
 
-    protected void sendToDeviceRpcRequest (MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
-        parent.sendToDeviceRpcRequest(payload, rpcRequest);
+    protected void sendToDeviceRpcRequest (MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
+        parent.sendToDeviceRpcRequest(payload, rpcRequest, sessionInfo);
     }
 
-    protected void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ResponseCode result, String errorMsg) {
+    protected void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {
         parent.sendErrorRpcResponse(sessionInfo, requestId, result, errorMsg);
     }
 

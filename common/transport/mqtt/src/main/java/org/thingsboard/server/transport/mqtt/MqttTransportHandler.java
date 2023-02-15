@@ -1271,13 +1271,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                  *  NCMD {"metricName":"MyNodeMetric04_Float","value":413.18222}
                  *  NCMD {"metricName":"Node Control/Rebirth","value":false}
                  *  NCMD {"metricName":"MyNodeMetric06_Json_Bytes", "value":[40,47,-49]}
-                 *  NCMD {"metricName":"Node Control/Rebirth", "value":false}
-                 *  without backspace
                  */
                 SparkplugMessageType messageType = SparkplugMessageType.parseMessageType(rpcRequest.getMethodName());
                 if (messageType == null) {
                     this.sendErrorRpcResponse(deviceSessionCtx.getSessionInfo(), rpcRequest.getRequestId(),
-                            ResponseCode.METHOD_NOT_ALLOWED, "Unsupported SparkplugMessageType: " + rpcRequest.getMethodName() + rpcRequest.getParams());
+                            ThingsboardErrorCode.INVALID_ARGUMENTS, "Unsupported SparkplugMessageType: " + rpcRequest.getMethodName() + rpcRequest.getParams());
                     return;
                 }
                 SparkplugRpcRequestHeader header = JacksonUtil.fromString(rpcRequest.getParams(), SparkplugRpcRequestHeader.class);
@@ -1289,30 +1287,34 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     sparkplugSessionHandler.createSparkplugMqttPublishMsg(tsKvProto,
                             sparkplugTopic.toString(),
                             sparkplugSessionHandler.getNodeBirthMetrics().get(tsKvProto.getKv().getKey()))
-                            .ifPresent(payload -> sendToDeviceRpcRequest(payload, rpcRequest));
+                            .ifPresent(payload -> sendToDeviceRpcRequest(payload, rpcRequest, deviceSessionCtx.getSessionInfo()));
+                } else {
+                    sendErrorRpcResponse(deviceSessionCtx.getSessionInfo(), rpcRequest.getRequestId(),
+                            ThingsboardErrorCode.BAD_REQUEST_PARAMS, "Failed send To Node Rpc Request: " +
+                                    rpcRequest.getMethodName() + ". This node does not have a metricName: [" + tsKvProto.getKv().getKey() + "]");
                 }
             } else {
                 String baseTopic = rpcSubTopicType.getRpcRequestTopicBase();
                 MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(rpcSubTopicType);
                 adaptor.convertToPublish(deviceSessionCtx, rpcRequest, baseTopic)
-                        .ifPresent(payload -> sendToDeviceRpcRequest(payload, rpcRequest));
+                        .ifPresent(payload -> sendToDeviceRpcRequest(payload, rpcRequest, deviceSessionCtx.getSessionInfo()));
             }
         } catch (Exception e) {
-            log.trace("[{}] Failed to convert device RPC command to Sparkplug MQTT msg", sessionId, e);
+            log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
             this.sendErrorRpcResponse(deviceSessionCtx.getSessionInfo(), rpcRequest.getRequestId(),
-                    ResponseCode.METHOD_NOT_ALLOWED,
-                    "Failed to convert device RPC command to Sparkplug MQTT msg: " + rpcRequest.getMethodName() + rpcRequest.getParams());
+                    ThingsboardErrorCode.INVALID_ARGUMENTS,
+                    "Failed to convert device RPC command to MQTT msg: " + rpcRequest.getMethodName() + rpcRequest.getParams());
             }
     }
 
-    public void sendToDeviceRpcRequest (MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
+    public void sendToDeviceRpcRequest (MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
         int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
         if (isAckExpected(payload)) {
             rpcAwaitingAck.put(msgId, rpcRequest);
             context.getScheduler().schedule(() -> {
                 TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
                 if (msg != null) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+                    transportService.process(sessionInfo, rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
                 }
             }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
         }
@@ -1320,15 +1322,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         cf.addListener(result -> {
             if (result.cause() == null) {
                 if (!isAckExpected(payload)) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                    transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
                 } else if (rpcRequest.getPersisted()) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+                    transportService.process(sessionInfo, rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
                 }
-                this.sendSuccessRpcResponse(deviceSessionCtx.getSessionInfo(), rpcRequest.getRequestId(), ResponseCode.CONTENT, "Success: " + rpcRequest.getMethodName());
+                this.sendSuccessRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.CONTENT, "Success: " + rpcRequest.getMethodName());
             } else {
                 log.trace("[{}] Failed send To Device Rpc Request [{}]", sessionId, rpcRequest.getMethodName());
-                this.sendErrorRpcResponse(deviceSessionCtx.getSessionInfo(), rpcRequest.getRequestId(),
-                        ResponseCode.METHOD_NOT_ALLOWED, " Failed send To Device Rpc Request: " + rpcRequest.getMethodName());
+                this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
+                        ThingsboardErrorCode.INVALID_ARGUMENTS, " Failed send To Device Rpc Request: " + rpcRequest.getMethodName());
             }
         });
     }
@@ -1370,8 +1372,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         ctx.close();
     }
 
-    public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ResponseCode result, String errorMsg) {
-        String payload = JacksonUtil.toString(SparkplugRpcResponseBody.builder().result(result.getName()).error(errorMsg).build());
+    public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {
+        String payload = JacksonUtil.toString(SparkplugRpcResponseBody.builder().result(result.name()).error(errorMsg).build());
         TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setError(payload).build();
         transportService.process(sessionInfo, msg, null);
     }
