@@ -2726,9 +2726,13 @@
         "delivery-method": "Delivery method",
         "delivery-method-type": {
             "email": "Email",
+            "email-preview": "Email notification preview",
             "push": "Web",
+            "push-preview": "Web notification preview",
             "slack": "Slack",
-            "sms": "SMS"
+            "slack-preview": "Slack notification preview",
+            "sms": "SMS",
+            "sms-preview": "SMS notification preview"
         },
         "delivery-methods": "Delivery methods",
         "description": "Description",
@@ -2794,7 +2798,6 @@
         "search-targets": "Search recipients",
         "search-templates": "Search templates",
         "send-notification": "Send notification",
-        "send-test-notification": "Send test notification",
         "sent": "Sent",
         "settings": "Notification settings",
         "slack": "Slack",

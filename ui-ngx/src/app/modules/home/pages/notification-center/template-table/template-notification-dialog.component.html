@@ -207,10 +207,6 @@
   <button mat-stroked-button *ngIf="selectedIndex > 0"
           (click)="backStep()">{{ 'action.back' | translate }}</button>
   <span fxFlex></span>
-  <button *ngIf="selectedIndex > 0"
-          mat-button mat-stroked-button color="primary">
-    {{ 'notification.send-test-notification' | translate }}
-  </button>
   <button mat-raised-button
           color="primary"
           (click)="nextStep()">{{ nextStepLabel() | translate }}</button>

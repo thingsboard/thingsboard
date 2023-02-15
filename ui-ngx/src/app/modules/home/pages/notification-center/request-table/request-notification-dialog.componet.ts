@@ -65,7 +65,6 @@ export class RequestNotificationDialogComponent extends
   notificationType = NotificationType;
 
   notificationRequestForm: FormGroup;
-  notificationRequestAdditionalConfigForm: FormGroup;
 
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
@@ -92,7 +91,12 @@ export class RequestNotificationDialogComponent extends
       useTemplate: [true],
       templateId: [null, Validators.required],
       targets: [null, Validators.required],
-      template: this.templateNotificationForm
+      template: this.templateNotificationForm,
+      additionalConfig: this.fb.group({
+        enabled: [false],
+        timezone: [{value: '', disabled: true}, Validators.required],
+        time: [{value: 0, disabled: true}, Validators.required]
+      })
     });
 
     this.notificationRequestForm.get('template').disable({emitEvent: false});
@@ -111,21 +115,15 @@ export class RequestNotificationDialogComponent extends
       }
     });
 
-    this.notificationRequestAdditionalConfigForm = this.fb.group({
-      enabled: [false],
-      timezone: [{value: '', disabled: true}, Validators.required],
-      time: [{value: 0, disabled: true}, Validators.required]
-    });
-
-    this.notificationRequestAdditionalConfigForm.get('enabled').valueChanges.pipe(
+    this.notificationRequestForm.get('additionalConfig.enabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
       if (value) {
-        this.notificationRequestAdditionalConfigForm.get('timezone').enable({emitEvent: false});
-        this.notificationRequestAdditionalConfigForm.get('time').enable({emitEvent: false});
+        this.notificationRequestForm.get('additionalConfig.timezone').enable({emitEvent: false});
+        this.notificationRequestForm.get('additionalConfig.time').enable({emitEvent: false});
       } else {
-        this.notificationRequestAdditionalConfigForm.get('timezone').disable({emitEvent: false});
-        this.notificationRequestAdditionalConfigForm.get('time').disable({emitEvent: false});
+        this.notificationRequestForm.get('additionalConfig.timezone').disable({emitEvent: false});
+        this.notificationRequestForm.get('additionalConfig.time').disable({emitEvent: false});
       }
     });
 
@@ -208,8 +206,8 @@ export class RequestNotificationDialogComponent extends
     delete formValue.useTemplate;
     delete formValue.template;
     let delay = 0;
-    if (this.notificationRequestAdditionalConfigForm.value.enabled) {
-      delay = (this.notificationRequestAdditionalConfigForm.value.time.valueOf() - this.minDate().valueOf()) / 1000;
+    if (formValue.additionalConfig.enabled) {
+      delay = (this.notificationRequestForm.value.additionalConfig.time.valueOf() - this.minDate().valueOf()) / 1000;
     }
     formValue.additionalConfig = {
       sendingDelayInSec: delay > 0 ? delay : 0
@@ -230,7 +228,7 @@ export class RequestNotificationDialogComponent extends
   }
 
   minDate(): Date {
-    return new Date(getCurrentTime(this.notificationRequestAdditionalConfigForm.get('timezone').value).format('lll'));
+    return new Date(getCurrentTime(this.notificationRequestForm.get('additionalConfig.timezone').value).format('lll'));
   }
 
   maxDate(): Date {

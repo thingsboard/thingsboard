@@ -114,6 +114,26 @@
         background-color: #fff;
       }
     }
+
+    .notification-content {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      background: #fff;
+      padding: 12px 16px;
+
+      .subject {
+        padding-bottom: 12px;
+        font-weight: 500;
+        letter-spacing: 0.25px;
+      }
+
+      .html-content {
+        margin-top: 12px;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+      }
+    }
   }
 
   @media #{$mat-gt-xs} {
@@ -237,6 +257,15 @@
 
       .mat-form-field-subscript-wrapper {
         min-height: calc(1em + 1px);
+      }
+    }
+  }
+
+  .preview-group {
+    .notification-content {
+      .html-content,
+      .html-content * {
+        all: revert;
       }
     }
   }
