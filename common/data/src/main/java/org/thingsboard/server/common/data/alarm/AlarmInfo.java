@@ -17,12 +17,14 @@ package org.thingsboard.server.common.data.alarm;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.User;
 
 import java.util.Objects;
 
+@EqualsAndHashCode(callSuper = true)
 @ApiModel
 public class AlarmInfo extends Alarm {
 
@@ -79,29 +81,4 @@ public class AlarmInfo extends Alarm {
         this.assigneeEmail = assigneeEmail;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        AlarmInfo alarmInfo = (AlarmInfo) o;
-
-        return (Objects.equals(originatorName, alarmInfo.originatorName)) &&
-                (Objects.equals(originatorLabel, alarmInfo.originatorLabel)) &&
-                (Objects.equals(assigneeFirstName, alarmInfo.assigneeFirstName)) &&
-                (Objects.equals(assigneeLastName, alarmInfo.assigneeLastName)) &&
-                (Objects.equals(assigneeEmail, alarmInfo.assigneeEmail));
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (originatorName != null ? originatorName.hashCode() : 0)
-                + (originatorLabel != null ? originatorLabel.hashCode() : 0)
-                + (assigneeFirstName != null ? assigneeFirstName.hashCode() : 0)
-                + (assigneeLastName != null ? assigneeLastName.hashCode() : 0)
-                + (assigneeEmail != null ? assigneeEmail.hashCode() : 0);
-        return result;
-    }
 }

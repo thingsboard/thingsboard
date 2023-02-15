@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,9 @@
 package org.thingsboard.server.dao.entity;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
@@ -37,6 +39,7 @@ import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
@@ -80,59 +83,58 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public Optional<String> fetchEntityName(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityName [{}]", entityId);
-        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
-        if (hasIdOpt.isPresent()) {
-            HasId<?> hasId = hasIdOpt.get();
-            if (hasId instanceof HasName) {
-                HasName hasName = (HasName) hasId;
-                return Optional.ofNullable(hasName.getName());
-            }
-        }
-        return Optional.empty();
+        return fetchAndConvert(tenantId, entityId, this::getName);
     }
 
     @Override
     public Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityLabel [{}]", entityId);
-        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
-        String entityLabel = null;
-        if (entityOpt.isPresent()) {
-            HasId<?> entity = entityOpt.get();
-            if (entity instanceof HasTitle) {
-                entityLabel = ((HasTitle) entity).getTitle();
-            }
-            if (entity instanceof HasLabel && entityLabel == null) {
-                entityLabel = ((HasLabel) entity).getLabel();
-            }
-            if (entity instanceof HasEmail && entityLabel == null) {
-                entityLabel = ((HasEmail) entity).getEmail();
-            }
-            if (entity instanceof HasName && entityLabel == null) {
-                entityLabel = ((HasName) entity).getName();
-            }
-        }
-        return Optional.ofNullable(entityLabel);
+        return fetchAndConvert(tenantId, entityId, this::getLabel);
     }
 
     @Override
     public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
+        return fetchAndConvert(tenantId, entityId, this::getCustomerId);
+    }
+
+    private <T> Optional<T> fetchAndConvert(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
-        if (hasIdOpt.isPresent()) {
-            HasId<?> hasId = hasIdOpt.get();
-            if (hasId instanceof HasCustomerId) {
-                HasCustomerId hasCustomerId = (HasCustomerId) hasId;
-                CustomerId customerId = hasCustomerId.getCustomerId();
-                if (customerId == null) {
-                    customerId = NULL_CUSTOMER_ID;
-                }
-                return Optional.of(customerId);
-            }
+        Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
+        return entityOpt.map(converter);
+    }
+
+    private String getName(HasId<?> entity) {
+        return entity instanceof HasName ? ((HasName) entity).getName() : null;
+    }
+
+    private String getLabel(HasId<?> entity) {
+        String entityLabel = null;
+        if (entity instanceof HasTitle) {
+            entityLabel = ((HasTitle) entity).getTitle();
         }
-        return Optional.of(NULL_CUSTOMER_ID);
+        if (entity instanceof HasLabel && entityLabel == null) {
+            entityLabel = ((HasLabel) entity).getLabel();
+        }
+        if (entity instanceof HasEmail && entityLabel == null) {
+            entityLabel = ((HasEmail) entity).getEmail();
+        }
+        if (entity instanceof HasName && entityLabel == null) {
+            entityLabel = ((HasName) entity).getName();
+        }
+        return entityLabel;
+    }
+
+    private CustomerId getCustomerId(HasId<?> hasId) {
+        if (hasId instanceof HasCustomerId) {
+            HasCustomerId hasCustomerId = (HasCustomerId) hasId;
+            CustomerId customerId = hasCustomerId.getCustomerId();
+            if (customerId == null) {
+                customerId = NULL_CUSTOMER_ID;
+            }
+            return customerId;
+        }
+        return NULL_CUSTOMER_ID;
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {

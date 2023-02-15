@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.entity;
 
+import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;

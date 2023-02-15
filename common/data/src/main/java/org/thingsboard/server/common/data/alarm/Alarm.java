@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
@@ -41,6 +42,7 @@ import java.util.List;
  */
 @ApiModel
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
 public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, HasCustomerId {
@@ -71,7 +73,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     private long ackTs;
     @ApiModelProperty(position = 14, value = "Timestamp of the alarm clearing, in milliseconds", example = "1634114528465")
     private long clearTs;
-    @ApiModelProperty(position = 15, value = "Timestamp of the alarm assigning0, in milliseconds", example = "1634115928465")
+    @ApiModelProperty(position = 15, value = "Timestamp of the alarm assignment, in milliseconds", example = "1634115928465")
     private long assignTs;
     @ApiModelProperty(position = 16, value = "JSON object with alarm details")
     private transient JsonNode details;
