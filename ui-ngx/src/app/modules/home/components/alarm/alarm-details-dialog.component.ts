@@ -84,10 +84,15 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       {
         createdTime: [''],
         originatorName: [''],
+        assigneeFirstName: [''],
+        assigneeLastName: [''],
+        assigneeEmail: [''],
+        assigneeId: [''],
         startTime: [''],
         endTime: [''],
         ackTime: [''],
         clearTime: [''],
+        assignTime: [''],
         type: [''],
         alarmSeverity: [''],
         alarmStatus: [''],
@@ -115,6 +120,22 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       .patchValue(this.datePipe.transform(alarm.createdTime, 'yyyy-MM-dd HH:mm:ss'));
     this.alarmFormGroup.get('originatorName')
       .patchValue(alarm.originatorName);
+    if(alarm.assigneeFirstName) {
+      this.alarmFormGroup.get('assigneeFirstName')
+        .patchValue(alarm.assigneeFirstName);
+    }
+    if(alarm.assigneeLastName) {
+      this.alarmFormGroup.get('assigneeLastName')
+        .patchValue(alarm.assigneeLastName);
+    }
+    if(alarm.assigneeEmail) {
+      this.alarmFormGroup.get('assigneeEmail')
+        .patchValue(alarm.assigneeEmail);
+    }
+    if(alarm.assigneeId) {
+      this.alarmFormGroup.get('assigneeId')
+        .patchValue(alarm.assigneeId.id);
+    }
     if (alarm.startTs) {
       this.alarmFormGroup.get('startTime')
         .patchValue(this.datePipe.transform(alarm.startTs, 'yyyy-MM-dd HH:mm:ss'));
@@ -130,6 +151,10 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
     if (alarm.clearTs) {
       this.alarmFormGroup.get('clearTime')
         .patchValue(this.datePipe.transform(alarm.clearTs, 'yyyy-MM-dd HH:mm:ss'));
+    }
+    if (alarm.assignTs) {
+      this.alarmFormGroup.get('assignTime')
+        .patchValue(this.datePipe.transform(alarm.assignTs, 'yyyy-MM-dd HH:mm:ss'));
     }
     this.alarmFormGroup.get('type').patchValue(alarm.type);
     this.alarmFormGroup.get('alarmSeverity')

@@ -609,7 +609,6 @@ public abstract class BaseController {
             throw handleException(e, false);
         }
     }
-
     Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
