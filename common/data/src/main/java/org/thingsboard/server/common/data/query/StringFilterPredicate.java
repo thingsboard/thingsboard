@@ -15,11 +15,17 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 
     private StringOperation operation;
