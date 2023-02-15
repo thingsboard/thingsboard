@@ -18,6 +18,9 @@ package org.thingsboard.server.common.data;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
@@ -178,6 +181,14 @@ public class StringUtils {
 
     public static String randomAlphabetic(int count) {
         return RandomStringUtils.randomAlphabetic(count);
+    }
+
+    public static String generateSafeToken(int length) {
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[length];
+        random.nextBytes(bytes);
+        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+        return encoder.encodeToString(bytes);
     }
 
 }

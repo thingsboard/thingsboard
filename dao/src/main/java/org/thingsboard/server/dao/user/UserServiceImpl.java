@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -40,19 +39,17 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -128,7 +125,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (user.getId() == null) {
             UserCredentials userCredentials = new UserCredentials();
             userCredentials.setEnabled(false);
-            userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+            userCredentials.setActivateToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
             userCredentials.setUserId(new UserId(savedUser.getUuidId()));
             saveUserCredentialsAndPasswordHistory(user.getTenantId(), userCredentials);
         }
@@ -194,16 +191,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (!userCredentials.isEnabled()) {
             throw new DisabledException(String.format("User credentials not enabled [%s]", email));
         }
-        userCredentials.setResetToken(generateSafeToken());
+        userCredentials.setResetToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
-    }
-
-    private String generateSafeToken() {
-        SecureRandom random = new SecureRandom();
-        byte[] bytes = new byte[DEFAULT_TOKEN_LENGTH];
-        random.nextBytes(bytes);
-        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
-        return encoder.encodeToString(bytes);
     }
 
     @Override
@@ -212,7 +201,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (!userCredentials.isEnabled()) {
             throw new IncorrectParameterException("Unable to reset password for inactive user");
         }
-        userCredentials.setResetToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+        userCredentials.setResetToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
     }
 
