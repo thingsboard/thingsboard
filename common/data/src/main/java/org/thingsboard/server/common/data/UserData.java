@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.common.data;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
+import org.thingsboard.server.common.data.id.UserId;
 
 @ApiModel
 @Data
-@Builder
 @AllArgsConstructor
-@NoArgsConstructor
-public class KeyFilter implements Serializable {
+public class UserData {
 
-    private EntityKey key;
-    private EntityKeyValueType valueType;
-    private KeyFilterPredicate predicate;
+    @ApiModelProperty(position = 1, value = "User id")
+    private UserId id;
+    @ApiModelProperty(position = 2, value = "User email", example = "john@gmail.com")
+    private String email;
+    @ApiModelProperty(position = 3, value = "User first name", example = "John")
+    private String firstName;
+    @ApiModelProperty(position = 4, value = "User last name", example = "Brown")
+    private String lastName;
 
 }
