@@ -145,7 +145,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     public AlarmInfo assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
         AlarmOperationResult result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
         if (result.isSuccessful()) {
-            onAlarmUpdated(result);
+            onAlarmAssigned(result);
         } else {
             log.warn("Failed to assign alarm!");
         }
@@ -156,7 +156,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     public AlarmInfo unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
         AlarmOperationResult result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
         if (result.isSuccessful()) {
-            onAlarmUpdated(result);
+            onAlarmAssigned(result);
         } else {
             log.warn("Failed to unassign alarm!");
         }
@@ -212,6 +212,26 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
                         subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarmInfo, TbCallback.EMPTY);
+                    } else {
+                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+                    }
+                } else {
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarmInfo);
+                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+                }
+            }
+        });
+    }
+
+    private void onAlarmAssigned(AlarmOperationResult result) {
+        wsCallBackExecutor.submit(() -> {
+            AlarmInfo alarmInfo = result.getAlarmInfo();
+            TenantId tenantId = alarmInfo.getTenantId();
+            for (EntityId entityId : result.getPropagatedEntitiesList()) {
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+                if (currentPartitions.contains(tpi)) {
+                    if (subscriptionManagerService.isPresent()) {
+                        subscriptionManagerService.get().onAlarmAssign(tenantId, entityId, alarmInfo, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }

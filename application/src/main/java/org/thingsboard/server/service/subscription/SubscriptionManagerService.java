@@ -44,6 +44,8 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
 
     void onAlarmUpdate(TenantId tenantId, EntityId entityId, AlarmInfo alarmInfo, TbCallback callback);
 
+    void onAlarmAssign(TenantId tenantId, EntityId entityId, AlarmInfo alarmInfo, TbCallback callback);
+
     void onAlarmDeleted(TenantId tenantId, EntityId entityId, AlarmInfo alarmInfo, TbCallback callback);
 
 

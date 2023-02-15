@@ -219,15 +219,13 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
         AlarmInfo alarmInfo = subscriptionUpdate.getAlarm();
         AlarmId alarmId = alarmInfo.getId();
-        if (query.getEntityFilter() instanceof AssignedAlarmsFilter) {
-            fetchAlarms();
-            return;
-        }
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);
             if (deleted != null) {
                 fetchAlarms();
             }
+        } else if (subscriptionUpdate.isAlarmAssigned()) {
+            fetchAlarms();
         } else {
             AlarmData current = alarmsMap.get(alarmId);
             boolean onCurrentPage = current != null;

@@ -39,16 +39,19 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private AlarmInfo alarm;
     @Getter
+    private boolean alarmAssigned;
+    @Getter
     private boolean alarmDeleted;
 
-    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm) {
-        this(subscriptionId, alarm, false);
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmDeleted) {
+        this(subscriptionId, alarm, false, alarmDeleted);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmAssigned, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
         this.alarm = alarm;
+        this.alarmAssigned = alarmAssigned;
         this.alarmDeleted = alarmDeleted;
     }
 

@@ -47,6 +47,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionSer
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmAssignProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
@@ -501,6 +502,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (msg.hasAlarmUpdate()) {
             TbAlarmUpdateProto proto = msg.getAlarmUpdate();
             subscriptionManagerService.onAlarmUpdate(
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class),callback);
+        } else if (msg.hasAlarmAssign()) {
+            TbAlarmAssignProto proto = msg.getAlarmAssign();
+            subscriptionManagerService.onAlarmAssign(
                     TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class),callback);

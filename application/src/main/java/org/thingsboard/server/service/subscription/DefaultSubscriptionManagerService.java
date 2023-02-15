@@ -304,6 +304,25 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 },
                 s -> alarmInfo.getCreatedTime() >= s.getTs() || alarmInfo.getAssignTs() >= s.getTs(),
                 s -> alarmInfo,
+                false,
+                false
+        );
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onAlarmAssign(TenantId tenantId, EntityId entityId, AlarmInfo alarmInfo, TbCallback callback) {
+        onLocalAlarmSubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.ALARMS.equals(s.getType())) {
+                        return (TbAlarmsSubscription) s;
+                    } else {
+                        return null;
+                    }
+                },
+                s -> alarmInfo.getCreatedTime() >= s.getTs() || alarmInfo.getAssignTs() >= s.getTs(),
+                s -> alarmInfo,
+                true,
                 false
         );
         callback.onSuccess();
@@ -321,6 +340,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 },
                 s -> alarmInfo.getCreatedTime() >= s.getTs(),
                 s -> alarmInfo,
+                false,
                 true
         );
         callback.onSuccess();
@@ -416,6 +436,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                                        Function<TbSubscription, TbAlarmsSubscription> castFunction,
                                        Predicate<TbAlarmsSubscription> filterFunction,
                                        Function<TbAlarmsSubscription, AlarmInfo> processFunction,
+                                       boolean assign,
                                        boolean deleted) {
         Set<TbSubscription> entitySubscriptions = subscriptionsByEntityId.get(entityId);
         if (entitySubscriptions != null) {
@@ -423,11 +444,11 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 AlarmInfo alarmInfo = processFunction.apply(s);
                 if (alarmInfo != null) {
                     if (serviceId.equals(s.getServiceId())) {
-                        AlarmSubscriptionUpdate update = new AlarmSubscriptionUpdate(s.getSubscriptionId(), alarmInfo, deleted);
+                        AlarmSubscriptionUpdate update = new AlarmSubscriptionUpdate(s.getSubscriptionId(), alarmInfo, assign, deleted);
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
-                        toCoreNotificationsProducer.send(tpi, toProto(s, alarmInfo, deleted), null);
+                        toCoreNotificationsProducer.send(tpi, toProto(s, alarmInfo, assign, deleted), null);
                     }
                 }
             });
@@ -564,13 +585,14 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
     }
 
-    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, AlarmInfo alarmInfo, boolean deleted) {
+    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, AlarmInfo alarmInfo, boolean assigned, boolean deleted) {
         TbAlarmSubscriptionUpdateProto.Builder builder = TbAlarmSubscriptionUpdateProto.newBuilder();
 
         builder.setSessionId(subscription.getSessionId());
         builder.setSubscriptionId(subscription.getSubscriptionId());
         builder.setAlarm(JacksonUtil.toString(alarmInfo));
         builder.setDeleted(deleted);
+        builder.setAssigned(assigned);
 
         ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(
                         LocalSubscriptionServiceMsgProto.newBuilder()

@@ -562,6 +562,7 @@ message TbAlarmSubscriptionUpdateProto {
   string errorMsg = 4;
   string alarm = 5;
   bool deleted = 6;
+  bool assigned = 7;
 }
 
 message TbAttributeUpdateProto {
@@ -575,6 +576,15 @@ message TbAttributeUpdateProto {
 }
 
 message TbAlarmUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string alarm = 6;
+}
+
+message TbAlarmAssignProto {
   string entityType = 1;
   int64 entityIdMSB = 2;
   int64 entityIdLSB = 3;
@@ -666,6 +676,7 @@ message SubscriptionMgrMsgProto {
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
   TbTimeSeriesDeleteProto tsDelete = 10;
+  TbAlarmAssignProto alarmAssign = 11;
 }
 
 message LocalSubscriptionServiceMsgProto {
