@@ -39,8 +39,10 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
+            "FROM AlarmEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
+            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId " +
             "AND ea.tenantId = :tenantId " +
             "AND ea.entityId = :affectedEntityId " +
@@ -48,6 +50,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
             "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
@@ -63,6 +66,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
                     "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -72,14 +76,18 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                      @Param("startTime") Long startTime,
                                      @Param("endTime") Long endTime,
                                      @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                     @Param("assigneeId") String assigneeId,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
+            "FROM AlarmEntity a " +
+            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ",
@@ -90,6 +98,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -97,14 +106,18 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                         @Param("startTime") Long startTime,
                                         @Param("endTime") Long endTime,
                                         @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                        @Param("assigneeId") String assigneeId,
                                         @Param("searchText") String searchText,
                                         Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
+            "FROM AlarmEntity a " +
+            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
@@ -116,6 +129,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
@@ -124,6 +138,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                              @Param("startTime") Long startTime,
                                              @Param("endTime") Long endTime,
                                              @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                             @Param("assigneeId") String assigneeId,
                                              @Param("searchText") String searchText,
                                              Pageable pageable);
 
@@ -133,11 +148,13 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ea.tenantId = :tenantId " +
             "AND ea.entityId = :affectedEntityId " +
             "AND ea.entityType = :affectedEntityType " +
-            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses))")
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId))")
     Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
                                            @Param("affectedEntityId") UUID affectedEntityId,
                                            @Param("affectedEntityType") String affectedEntityType,
-                                           @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses);
+                                           @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                           @Param("assigneeId") String assigneeId);
 
     @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.createdTime < :time AND a.endTs < :time")
     Page<UUID> findAlarmsIdsByEndTsBeforeAndTenantId(@Param("time") Long time, @Param("tenantId") UUID tenantId, Pageable pageable);

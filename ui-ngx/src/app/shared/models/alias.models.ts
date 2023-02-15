@@ -30,6 +30,7 @@ export enum AliasFilterType {
   edgeType = 'edgeType',
   entityViewType = 'entityViewType',
   apiUsageState = 'apiUsageState',
+  assignedAlarms = 'assignedAlarms',
   relationsQuery = 'relationsQuery',
   assetSearchQuery = 'assetSearchQuery',
   deviceSearchQuery = 'deviceSearchQuery',
@@ -54,6 +55,7 @@ export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
     [ AliasFilterType.edgeType, 'alias.filter-type-edge-type' ],
     [ AliasFilterType.entityViewType, 'alias.filter-type-entity-view-type' ],
     [ AliasFilterType.apiUsageState, 'alias.filter-type-apiUsageState' ],
+    [ AliasFilterType.assignedAlarms, 'alias.filter-type-assignedAlarms' ],
     [ AliasFilterType.relationsQuery, 'alias.filter-type-relations-query' ],
     [ AliasFilterType.assetSearchQuery, 'alias.filter-type-asset-search-query' ],
     [ AliasFilterType.deviceSearchQuery, 'alias.filter-type-device-search-query' ],
@@ -103,6 +105,10 @@ export interface EdgeTypeFilter {
 export interface EntityViewFilter {
   entityViewType?: string;
   entityViewNameFilter?: string;
+}
+
+export interface AssignedUserFilter {
+  assigneeId?: EntityId;
 }
 
 export interface RelationsQueryFilter {
@@ -158,6 +164,7 @@ export type EntityFilters =
   DeviceTypeFilter &
   EdgeTypeFilter &
   EntityViewFilter &
+  AssignedUserFilter &
   RelationsQueryFilter &
   AssetSearchQueryFilter &
   DeviceSearchQueryFilter &

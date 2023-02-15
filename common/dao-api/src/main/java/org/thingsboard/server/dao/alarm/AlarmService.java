@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -49,6 +50,10 @@ public interface AlarmService extends EntityDaoService {
 
     ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
+    AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
+
+    AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
+
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
@@ -60,12 +65,15 @@ public interface AlarmService extends EntityDaoService {
     ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
 
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
-                                           AlarmStatus alarmStatus);
+                                           AlarmStatus alarmStatus, String assigneeId);
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
+
+    PageData<AlarmData> findAlarmDataByQueryForAssignedUser(TenantId tenantId,
+                                                            AlarmDataQuery query, Collection<EntityId> orderedAlarmIds);
 
     void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
 }

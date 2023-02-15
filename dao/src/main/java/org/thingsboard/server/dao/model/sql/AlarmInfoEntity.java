@@ -24,17 +24,33 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
 
     private String originatorName;
+    private String originatorLabel;
+
+    private String assigneeFirstName;
+    private String assigneeLastName;
+    private String assigneeEmail;
 
     public AlarmInfoEntity() {
         super();
     }
 
-    public AlarmInfoEntity(AlarmEntity alarmEntity) {
+    public AlarmInfoEntity(AlarmEntity alarmEntity, String assigneeFirstName,
+                           String assigneeLastName, String assigneeEmail) {
         super(alarmEntity);
+        this.assigneeFirstName = assigneeFirstName;
+        this.assigneeLastName = assigneeLastName;
+        this.assigneeEmail = assigneeEmail;
     }
 
     @Override
     public AlarmInfo toData() {
-        return new AlarmInfo(super.toAlarm(), this.originatorName);
+        AlarmInfo alarmInfo = new AlarmInfo(super.toAlarm());
+        alarmInfo.setOriginatorName(originatorName);
+        alarmInfo.setOriginatorLabel(originatorLabel);
+
+        alarmInfo.setAssigneeFirstName(assigneeFirstName);
+        alarmInfo.setAssigneeLastName(assigneeLastName);
+        alarmInfo.setAssigneeEmail(assigneeEmail);
+        return alarmInfo;
     }
 }

@@ -128,6 +128,11 @@
         <input matInput formControlName="edgeNameFilter">
       </mat-form-field>
     </ng-template>
+    <ng-template [ngSwitchCase]="aliasFilterType.assignedAlarms">
+      <tb-entity-select useAliasEntityTypes="true"
+                        formControlName="assigneeId">
+      </tb-entity-select>
+    </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.relationsQuery">
       <section fxLayout="column" id="relationsQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>

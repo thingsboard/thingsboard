@@ -17,6 +17,7 @@ package org.thingsboard.server.service.telemetry.sub;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.query.AlarmData;
 
@@ -36,18 +37,21 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private String errorMsg;
     @Getter
-    private Alarm alarm;
+    private AlarmInfo alarm;
+    @Getter
+    private boolean alarmAssigned;
     @Getter
     private boolean alarmDeleted;
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm) {
-        this(subscriptionId, alarm, false);
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmDeleted) {
+        this(subscriptionId, alarm, false, alarmDeleted);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmAssigned, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
         this.alarm = alarm;
+        this.alarmAssigned = alarmAssigned;
         this.alarmDeleted = alarmDeleted;
     }
 
@@ -64,7 +68,7 @@ public class AlarmSubscriptionUpdate {
 
     @Override
     public String toString() {
-        return "AlarmUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", alarm="
-                + alarm + "]";
+        return "AlarmUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg +
+                ", alarm=" + alarm + "]";
     }
 }

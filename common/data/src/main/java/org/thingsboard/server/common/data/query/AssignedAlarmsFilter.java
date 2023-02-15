@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.query;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT,
-    CUSTOMER,
-    USER,
-    DASHBOARD,
-    ASSET,
-    DEVICE,
-    ALARM,
-    RULE_CHAIN,
-    RULE_NODE,
-    ENTITY_VIEW,
-    WIDGETS_BUNDLE,
-    WIDGET_TYPE,
-    TENANT_PROFILE,
-    DEVICE_PROFILE,
-    ASSET_PROFILE,
-    API_USAGE_STATE,
-    TB_RESOURCE,
-    OTA_PACKAGE,
-    EDGE,
-    RPC,
-    QUEUE
+import lombok.Data;
+import org.thingsboard.server.common.data.id.UserId;
+
+@Data
+public class AssignedAlarmsFilter implements EntityFilter {
+
+    private UserId assigneeId;
+
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.ASSIGNED_ALARMS;
+    }
+
 }

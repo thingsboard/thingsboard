@@ -20,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasEmail;
+import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -90,6 +93,30 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
+    public Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchEntityLabel [{}]", entityId);
+        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
+        Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
+        String entityLabel = null;
+        if (entityOpt.isPresent()) {
+            HasId<?> entity = entityOpt.get();
+            if (entity instanceof HasTitle) {
+                entityLabel = ((HasTitle) entity).getTitle();
+            }
+            if (entity instanceof HasLabel && entityLabel == null) {
+                entityLabel = ((HasLabel) entity).getLabel();
+            }
+            if (entity instanceof HasEmail && entityLabel == null) {
+                entityLabel = ((HasEmail) entity).getEmail();
+            }
+            if (entity instanceof HasName && entityLabel == null) {
+                entityLabel = ((HasName) entity).getName();
+            }
+        }
+        return Optional.ofNullable(entityLabel);
+    }
+
+    @Override
     public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
@@ -126,7 +153,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private static void validateRelationQuery(RelationsQueryFilter queryFilter) {
-        if (queryFilter.isMultiRoot() && queryFilter.getMultiRootEntitiesType() ==null){
+        if (queryFilter.isMultiRoot() && queryFilter.getMultiRootEntitiesType() == null) {
             throw new IncorrectParameterException("Multi-root relation query filter should contain 'multiRootEntitiesType'");
         }
         if (queryFilter.isMultiRoot() && CollectionUtils.isEmpty(queryFilter.getMultiRootEntityIds())) {

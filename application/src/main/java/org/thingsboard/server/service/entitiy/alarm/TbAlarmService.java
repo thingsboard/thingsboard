@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.UserId;
 
 public interface TbAlarmService {
 
@@ -27,6 +28,10 @@ public interface TbAlarmService {
     ListenableFuture<Void> ack(Alarm alarm, User user);
 
     ListenableFuture<Void> clear(Alarm alarm, User user);
+
+    Alarm assign(Alarm alarm, User user, UserId assigneeId);
+
+    Alarm unassign(Alarm alarm, User user);
 
     Boolean delete(Alarm alarm, User user);
 }

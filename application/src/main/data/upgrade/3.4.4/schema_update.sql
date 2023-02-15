@@ -14,6 +14,14 @@
 -- limitations under the License.
 --
 
+
+-- ALARM ASSIGN TO USER START
+
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assign_ts BIGINT;
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assignee_id UUID;
+
+-- ALARM ASSIGN TO USER END
+
 CREATE TABLE IF NOT EXISTS alarm_comment (
     id uuid NOT NULL,
     created_time bigint NOT NULL,

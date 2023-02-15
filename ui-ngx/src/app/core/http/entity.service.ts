@@ -951,6 +951,13 @@ export class EntityService {
       case AliasFilterType.edgeType:
         result.entityFilter = deepClone(filter);
         return of(result);
+      case AliasFilterType.assignedAlarms:
+        const aliasAssigneeId = this.resolveAliasEntityId(filter.assigneeId.entityType, filter.assigneeId.id);
+        result.entityFilter = {
+          type: AliasFilterType.assignedAlarms,
+          assigneeId: aliasAssigneeId
+        };
+        return of(result);
       case AliasFilterType.relationsQuery:
       case AliasFilterType.assetSearchQuery:
       case AliasFilterType.deviceSearchQuery:
