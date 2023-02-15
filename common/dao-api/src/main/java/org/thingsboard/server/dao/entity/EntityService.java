@@ -29,6 +29,8 @@ public interface EntityService {
 
     Optional<String> fetchEntityName(TenantId tenantId, EntityId entityId);
 
+    Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId);
+
     Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId);
 
     long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);

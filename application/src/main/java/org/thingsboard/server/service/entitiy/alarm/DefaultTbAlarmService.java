@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -91,6 +93,22 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_CLEAR, user);
             return null;
         }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public Alarm assign(Alarm alarm, User user, UserId assigneeId) {
+        long assignTs = System.currentTimeMillis();
+        Alarm assignedAlarm = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, assignTs);
+        notificationEntityService.notifyCreateOrUpdateAlarm(assignedAlarm, ActionType.ALARM_ASSIGN, user);
+        return assignedAlarm;
+    }
+
+    @Override
+    public Alarm unassign(Alarm alarm, User user) {
+        long assignTs = System.currentTimeMillis();
+        Alarm unassignedAlarm = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs);
+        notificationEntityService.notifyCreateOrUpdateAlarm(unassignedAlarm, ActionType.ALARM_UNASSIGN, user);
+        return unassignedAlarm;
     }
 
     @Override

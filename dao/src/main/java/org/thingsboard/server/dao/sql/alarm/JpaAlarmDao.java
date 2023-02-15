@@ -17,6 +17,8 @@ package org.thingsboard.server.dao.sql.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.dialect.Dialect;
+import org.hibernate.type.UUIDCharType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,6 +34,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -112,6 +115,10 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         } else if (query.getStatus() != null) {
             statusSet = Collections.singleton(query.getStatus());
         }
+        String assigneeId = null;
+        if (query.getAssigneeId() != null) {
+            assigneeId = query.getAssigneeId().toString();
+        }
         if (affectedEntity != null) {
             return DaoUtil.toPageData(
                     alarmRepository.findAlarms(
@@ -121,6 +128,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             query.getPageLink().getStartTime(),
                             query.getPageLink().getEndTime(),
                             statusSet,
+                            assigneeId,
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
                     )
@@ -132,6 +140,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             query.getPageLink().getStartTime(),
                             query.getPageLink().getEndTime(),
                             statusSet,
+                            assigneeId,
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
                     )
@@ -148,6 +157,10 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         } else if (query.getStatus() != null) {
             statusSet = Collections.singleton(query.getStatus());
         }
+        String assigneeId = null;
+        if (query.getAssigneeId() != null) {
+            assigneeId = query.getAssigneeId().toString();
+        }
         return DaoUtil.toPageData(
                 alarmRepository.findCustomerAlarms(
                         tenantId.getId(),
@@ -155,6 +168,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                         query.getPageLink().getStartTime(),
                         query.getPageLink().getEndTime(),
                         statusSet,
+                        assigneeId,
                         Objects.toString(query.getPageLink().getTextSearch(), ""),
                         DaoUtil.toPageable(query.getPageLink())
                 )
@@ -167,8 +181,8 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, Set<AlarmStatus> statuses) {
-        return alarmRepository.findAlarmSeverities(tenantId.getId(), entityId.getId(), entityId.getEntityType().name(), statuses);
+    public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, Set<AlarmStatus> statuses, String assigneeId) {
+        return alarmRepository.findAlarmSeverities(tenantId.getId(), entityId.getId(), entityId.getEntityType().name(), statuses, assigneeId);
     }
 
     @Override

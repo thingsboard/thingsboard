@@ -20,9 +20,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -31,7 +33,6 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -45,8 +46,8 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
-import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +57,11 @@ import java.util.concurrent.ExecutionException;
 public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
     public static final String TEST_ALARM = "TEST_ALARM";
+
+    private static final String TEST_TENANT_EMAIL = "testtenant@thingsboard.org";
+    private static final String TEST_TENANT_FIRST_NAME = "testtenantfirstname";
+    private static final String TEST_TENANT_LAST_NAME = "testtenantlastname";
+
     private TenantId tenantId;
 
     @Before
@@ -89,7 +95,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
-        Alarm created = result.getAlarm();
+        Alarm created = new Alarm(result.getAlarmInfo());
 
         Assert.assertNotNull(created);
         Assert.assertNotNull(created.getId());
@@ -128,7 +134,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
-        Alarm created = result.getAlarm();
+        Alarm created = new Alarm(result.getAlarmInfo());
 
         // Check child relation
         PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -139,7 +145,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         // Check parent relation
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -153,7 +159,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         created.setPropagate(true);
         result = alarmService.createOrUpdateAlarm(created);
-        created = result.getAlarm();
+        created = new Alarm(result.getAlarmInfo());
 
         // Check child relation
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -164,7 +170,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         // Check parent relation
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -175,7 +181,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         alarmService.ackAlarm(tenantId, created.getId(), System.currentTimeMillis()).get();
         created = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
@@ -188,7 +194,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         // Check not existing relation
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -208,6 +214,50 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.CLEARED_ACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
+    }
+
+    @Test
+    public void testFindAssignedAlarm() throws ExecutionException, InterruptedException {
+
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
+
+        EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
+
+        Assert.assertTrue(relationService.saveRelationAsync(tenantId, relation).get());
+
+        long ts = System.currentTimeMillis();
+        Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
+                .type(TEST_ALARM)
+                .propagate(false)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+
+        AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
+        Alarm created = new Alarm(result.getAlarmInfo());
+
+        User tenantUser = new User();
+        tenantUser.setTenantId(tenantId);
+        tenantUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantUser.setEmail(TEST_TENANT_EMAIL);
+        tenantUser.setFirstName(TEST_TENANT_FIRST_NAME);
+        tenantUser.setLastName(TEST_TENANT_LAST_NAME);
+        tenantUser = userService.saveUser(tenantUser);
+
+        Assert.assertNotNull(tenantUser);
+
+        AlarmOperationResult assignmentResult = alarmService.assignAlarm(tenantId, created.getId(), tenantUser.getId(), ts);
+        created = assignmentResult.getAlarmInfo();
+
+        PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .assigneeId(tenantUser.getId())
+                .fetchOriginator(true)
+                .pageLink(new TimePageLink(1, 0, "",
+                        new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -242,7 +292,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
-        tenantAlarm = result.getAlarm();
+        tenantAlarm = new Alarm(result.getAlarmInfo());
 
         Alarm deviceAlarm = Alarm.builder().tenantId(tenantId)
                 .originator(customerDevice.getId())
@@ -251,7 +301,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
         result = alarmService.createOrUpdateAlarm(deviceAlarm);
-        deviceAlarm = result.getAlarm();
+        deviceAlarm = new Alarm(result.getAlarmInfo());
 
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
@@ -279,7 +329,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(tenantAlarm, alarms.getData().get(0));
+        Assert.assertEquals(tenantAlarm, new Alarm(alarms.getData().get(0)));
     }
 
     @Test
@@ -318,7 +368,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
-        tenantAlarm = result.getAlarm();
+        tenantAlarm = new Alarm(result.getAlarmInfo());
 
         Alarm customerAlarm = Alarm.builder().tenantId(tenantId)
                 .originator(tenantDevice.getId())
@@ -327,7 +377,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
         result = alarmService.createOrUpdateAlarm(customerAlarm);
-        customerAlarm = result.getAlarm();
+        customerAlarm = new Alarm(result.getAlarmInfo());
 
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
@@ -368,7 +418,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
-        tenantAlarm = result.getAlarm();
+        tenantAlarm = new Alarm(result.getAlarmInfo());
 
         Alarm customerAlarm = Alarm.builder().tenantId(tenantId)
                 .originator(device.getId())
@@ -378,7 +428,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
         result = alarmService.createOrUpdateAlarm(customerAlarm);
-        customerAlarm = result.getAlarm();
+        customerAlarm = new Alarm(result.getAlarmInfo());
 
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
@@ -402,11 +452,11 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(customerAlarm, customerAlarms.getData().get(0));
     }
 
-    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink){
+    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink) {
         return toQuery(pageLink, Collections.emptyList());
     }
 
-    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink, List<EntityKey> alarmFields){
+    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink, List<EntityKey> alarmFields) {
         return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, alarmFields);
     }
 
@@ -425,7 +475,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         customerDevice = deviceService.saveDevice(customerDevice);
 
         // no one alarms was created
-        Assert.assertNull(alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
+        Assert.assertNull(alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null, null));
 
         Alarm alarm1 = Alarm.builder()
                 .tenantId(tenantId)
@@ -435,7 +485,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(System.currentTimeMillis())
                 .build();
-        alarm1 = alarmService.createOrUpdateAlarm(alarm1).getAlarm();
+        alarm1 = alarmService.createOrUpdateAlarm(alarm1).getAlarmInfo();
         alarmService.clearAlarm(tenantId, alarm1.getId(), null, System.currentTimeMillis()).get();
 
         Alarm alarm2 = Alarm.builder()
@@ -446,7 +496,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_ACK)
                 .startTs(System.currentTimeMillis())
                 .build();
-        alarm2 = alarmService.createOrUpdateAlarm(alarm2).getAlarm();
+        alarm2 = alarmService.createOrUpdateAlarm(alarm2).getAlarmInfo();
         alarmService.clearAlarm(tenantId, alarm2.getId(), null, System.currentTimeMillis()).get();
 
         Alarm alarm3 = Alarm.builder()
@@ -457,13 +507,13 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_ACK)
                 .startTs(System.currentTimeMillis())
                 .build();
-        alarm3 = alarmService.createOrUpdateAlarm(alarm3).getAlarm();
+        alarm3 = alarmService.createOrUpdateAlarm(alarm3).getAlarmInfo();
 
-        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.UNACK, null));
-        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
-        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_UNACK));
-        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.ACTIVE, null));
-        Assert.assertEquals(AlarmSeverity.MINOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_ACK));
+        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.UNACK, null, null));
+        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null, null));
+        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_UNACK, null));
+        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.ACTIVE, null, null));
+        Assert.assertEquals(AlarmSeverity.MINOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_ACK, null));
     }
 
     @Test
@@ -487,7 +537,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
-        Alarm created = result.getAlarm();
+        Alarm created = new Alarm(result.getAlarmInfo());
 
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
@@ -504,7 +554,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);
@@ -530,7 +580,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         // Check child relation
         created.setPropagate(true);
         result = alarmService.createOrUpdateAlarm(created);
-        created = result.getAlarm();
+        created = new Alarm(result.getAlarmInfo());
 
         // Check child relation
         pageLink.setPage(0);
@@ -546,7 +596,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         // Check parent relation
         pageLink.setPage(0);
@@ -562,7 +612,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(parentId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         PageData<AlarmInfo> alarmsInfoData = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
@@ -607,7 +657,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(parentId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         alarmService.ackAlarm(tenantId, created.getId(), System.currentTimeMillis()).get();
         created = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
@@ -625,7 +675,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
     }
 
     @Test
@@ -645,7 +695,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
-        Alarm created = result.getAlarm();
+        Alarm created = new Alarm(result.getAlarmInfo());
 
         PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
@@ -655,7 +705,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         // Check parent relation
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -666,7 +716,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
         Assert.assertTrue("Alarm was not deleted when expected", alarmService.deleteAlarm(tenantId, created.getId()).isSuccessful());
 
