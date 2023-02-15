@@ -75,7 +75,7 @@ import java.util.concurrent.ConcurrentMap;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthController extends BaseController {
-    @Value("${rate_limits.reset_password_per_user.configuration:5:300}")
+    @Value("${rate_limits.reset_password_per_user.configuration:5:3600}")
     @Getter
     private String defaultLimitsConfiguration;
     private final ConcurrentMap<UserId, TbRateLimits> resetPasswordRateLimits = new ConcurrentHashMap<>();
