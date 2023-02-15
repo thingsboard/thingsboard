@@ -27,6 +27,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
@@ -81,8 +82,8 @@ public class DefaultTbAlarmServiceTest {
 
     @Test
     public void testSave() throws ThingsboardException {
-        var alarm = new Alarm();
-        when((Alarm) alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
+        var alarm = new AlarmInfo();
+        when(alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
         service.save(alarm, new User());
 
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
