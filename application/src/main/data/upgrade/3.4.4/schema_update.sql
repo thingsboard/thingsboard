@@ -35,15 +35,9 @@ CREATE TABLE IF NOT EXISTS user_settings (
 ALTER TABLE user_credentials
     ADD COLUMN IF NOT EXISTS additional_info varchar;
 
-CREATE OR REPLACE PROCEDURE migrate_password_history()
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    UPDATE user_credentials AS c
-    SET additional_info = u.additional_info
-    FROM tb_user AS u
-    WHERE u.id = c.id;
-END;
-$$;
--- USER PASSWORD MIGRATION END
-call migrate_password_history();
+UPDATE user_credentials AS c
+    SET additional_info = u.additional_info  FROM tb_user AS u
+    WHERE u.id = c.user_id AND u.additional_info is not null;
+
+UPDATE tb_user
+    SET additional_info = null WHERE id is not null;
