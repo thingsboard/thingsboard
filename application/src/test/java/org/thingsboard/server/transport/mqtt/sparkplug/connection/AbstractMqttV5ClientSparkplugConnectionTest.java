@@ -38,6 +38,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.awaitility.Awaitility.await;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -81,9 +83,9 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(SparkplugMessageType.STATE.name(), ONLINE.name()));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), ONLINE.name()));
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
-        await(alias + SparkplugMessageType.STATE.name() + ", device: " + savedGateway.getName())
+        await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
@@ -91,7 +93,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
                 });
 
         for (Device device : devices) {
-            await(alias + SparkplugMessageType.STATE.name() + ", device: " + device.getName())
+            await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
                         finalFuture.set(tsService.findAllLatest(tenantId, device.getId()));
@@ -104,7 +106,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(SparkplugMessageType.STATE.name(), OFFLINE.name()));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), OFFLINE.name()));
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
 
         SparkplugBProto.Payload.Builder payloadDeathDevice = SparkplugBProto.Payload.newBuilder()
@@ -115,7 +117,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
             Device device =  devicesList.get(indexDeviceDisconnect);
             client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DDEATH.name() + "/" + edgeNode + "/" + device.getName(),
                     payloadDeathDevice.build().toByteArray(), 0, false);
-            await(alias + SparkplugMessageType.STATE.name() + ", device: " + device.getName())
+            await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
                         finalFuture.set(tsService.findAllLatest(tenantId, device.getId()));
@@ -128,13 +130,13 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(SparkplugMessageType.STATE.name(), OFFLINE.name()));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), OFFLINE.name()));
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
 
         if (client.isConnected()) {
             client.disconnect();
 
-            await(alias + SparkplugMessageType.STATE.name() + ", device: " + savedGateway.getName())
+            await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
                         finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
@@ -143,7 +145,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
 
             List<Device> devicesList = new ArrayList<>(devices);
             for (Device device : devicesList) {
-                await(alias + SparkplugMessageType.STATE.name() + ", device: " + device.getName())
+                await(alias + messageName(STATE) + ", device: " + device.getName())
                         .atMost(40, TimeUnit.SECONDS)
                         .until(() -> {
                             finalFuture.set(tsService.findAllLatest(tenantId, device.getId()));

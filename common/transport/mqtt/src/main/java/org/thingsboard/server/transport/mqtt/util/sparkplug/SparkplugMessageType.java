@@ -87,6 +87,17 @@ public enum SparkplugMessageType {
 		}
 		throw new ThingsboardException("Invalid message type: " + type, ThingsboardErrorCode.INVALID_ARGUMENTS);
 	}
+	public static String messageName(SparkplugMessageType type) throws ThingsboardException {
+		if (STATE.equals(type)) {
+			return "sparkplugConnectionState";
+		}
+		for (SparkplugMessageType messageType : SparkplugMessageType.values()) {
+			if (messageType.name().equals(type)) {
+				return messageType.name();
+			}
+		}
+		throw new ThingsboardException("Invalid message type: " + type, ThingsboardErrorCode.INVALID_ARGUMENTS);
+	}
 	
 	public boolean isDeath() {
 		return this.equals(DDEATH) || this.equals(NDEATH);
