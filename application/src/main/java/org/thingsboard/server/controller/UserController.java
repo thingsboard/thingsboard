@@ -376,15 +376,11 @@ public class UserController extends BaseController {
 
         EntityDataQuery query = new EntityDataQuery(entityFilter, pageLink, entityFields, null, keyFilters);
 
-        try {
-            return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
-                    new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
-                            entityData.getLatest().get(ENTITY_FIELD).get("email").getValue(),
-                            entityData.getLatest().get(ENTITY_FIELD).get("firstName").getValue(),
-                            entityData.getLatest().get(ENTITY_FIELD).get("lastName").getValue()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
+                new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
+                        entityData.getLatest().get(ENTITY_FIELD).get("email").getValue(),
+                        entityData.getLatest().get(ENTITY_FIELD).get("firstName").getValue(),
+                        entityData.getLatest().get(ENTITY_FIELD).get("lastName").getValue()));
     }
 
     @ApiOperation(value = "Get Tenant Users (getTenantAdmins)",
