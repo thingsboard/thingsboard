@@ -26,16 +26,20 @@ export interface AdminSettings<T> {
   jsonValue: T;
 }
 
-export declare type SmtpProtocol = 'smtp' | 'smtps';
+export enum SmtpProtocol {
+  SMTP = 'smtp',
+  SMTPS = 'smtps'
+}
 
 export interface MailServerSettings {
-  showChangePassword: boolean;
+  showChangePassword?: boolean;
   mailFrom: string;
   smtpProtocol: SmtpProtocol;
   smtpHost: string;
   smtpPort: number;
   timeout: number;
   enableTls: boolean;
+  tlsVersion: string;
   username: string;
   changePassword?: boolean;
   password?: string;

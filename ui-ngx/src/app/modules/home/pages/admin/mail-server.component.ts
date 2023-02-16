@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AdminSettings, MailServerSettings, smtpPortPattern } from '@shared/models/settings.models';
+import { AdminSettings, MailServerSettings, smtpPortPattern, SmtpProtocol } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,8 +33,7 @@ import {
   domainSchemaTranslations,
   MailDomainSchema,
   MailServerOauth2Provider,
-  mailServerOauth2ProvidersTranslations,
-  OAuth2DomainInfo
+  mailServerOauth2ProvidersTranslations
 } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
 
@@ -44,11 +43,8 @@ import { WINDOW } from '@core/services/window.service';
   styleUrls: ['./mail-server.component.scss', './settings-card.scss']
 })
 export class MailServerComponent extends PageComponent implements OnInit, OnDestroy, HasConfirmForm {
-
-  mailSettings: FormGroup;
-  domainForm: FormGroup;
   adminSettings: AdminSettings<MailServerSettings>;
-  smtpProtocols = ['smtp', 'smtps'];
+  smtpProtocols = Object.values(SmtpProtocol);
   showChangePassword = false;
 
   protocols = Object.values(MailDomainSchema);
@@ -64,6 +60,45 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   private DOMAIN_AND_PORT_REGEXP = /^(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?$/;
   private loginProcessingUrl: string = this.route.snapshot.data.loginProcessingUrl;
 
+  mailSettings = this.fb.group({
+    mailFrom: ['', [Validators.required]],
+    smtpProtocol: [SmtpProtocol.SMTP],
+    smtpHost: ['localhost', [Validators.required]],
+    smtpPort: [25, [Validators.required,
+      Validators.pattern(smtpPortPattern),
+      Validators.maxLength(5)]],
+    timeout: [10000, [Validators.required,
+      Validators.pattern(/^[0-9]{1,6}$/),
+      Validators.maxLength(6)]],
+    enableTls: [false],
+    tlsVersion: [{ value: null, disabled: true }],
+    enableProxy: [false],
+    proxyHost: [{ value: '', disabled: true }, [Validators.required]],
+    proxyPort: [{ value: null, disabled: true }, [Validators.required, Validators.min(1), Validators.max(65535)]],
+    proxyUser: [{ value: '', disabled: true }],
+    proxyPassword: [{ value: '', disabled: true }],
+    username: [''],
+    changePassword: [false],
+    password: [''],
+    enableOauth2: [false],
+    providerId: [{ value: MailServerOauth2Provider.GOOGLE, disabled: true }],
+    clientId: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(255)]],
+    clientSecret: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(2048)]],
+    providerTenantId: [{value: '', disabled: true}, [Validators.required]],
+    authUri: [{value: '', disabled: true}, [Validators.required]],
+    tokenUri: [{value: '', disabled: true}, [Validators.required]],
+    scope: [{value: '', disabled: true}, [Validators.required]],
+    redirectUri: [{ value:'', disabled: true}]
+  });
+
+  domainForm = this.fb.group({
+    name: [this.window.location.hostname, [
+      Validators.required, Validators.maxLength(255),
+      Validators.pattern(this.DOMAIN_AND_PORT_REGEXP)]
+    ],
+    scheme: [MailDomainSchema.HTTPS, Validators.required]
+  }, {validators: this.uniqueDomainValidator});
+
   constructor(protected store: Store<AppState>,
               private router: Router,
               private route: ActivatedRoute,
@@ -77,19 +112,20 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   ngOnInit() {
     this.loginProcessingUrl = this.route.snapshot.data.loginProcessingUrl;
     this.buildMailServerSettingsForm();
-    this.buildDomainInfoForm();
+
     this.adminService.getAdminSettings<MailServerSettings>('mail').subscribe(
       (adminSettings) => {
         this.adminSettings = adminSettings;
         if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
           this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
         }
-        this.showChangePassword =
-          isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword) ? this.adminSettings.jsonValue.showChangePassword : true ;
+        this.showChangePassword = isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword)
+          ? this.adminSettings.jsonValue.showChangePassword : true;
         delete this.adminSettings.jsonValue.showChangePassword;
         this.mailSettings.patchValue(this.adminSettings.jsonValue, {emitEvent: false});
         this.enableMailPassword(!this.showChangePassword);
         this.enableProxyChanged();
+        this.enableTls(this.adminSettings.jsonValue.enableTls);
         if (this.adminSettings.jsonValue.enableOauth2) {
           this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
           this.parseUrl(this.adminSettings.jsonValue.redirectUri);
@@ -105,41 +141,14 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   buildMailServerSettingsForm() {
-    this.mailSettings = this.fb.group({
-      mailFrom: ['', [Validators.required]],
-      smtpProtocol: ['smtp'],
-      smtpHost: ['localhost', [Validators.required]],
-      smtpPort: ['25', [Validators.required,
-        Validators.pattern(smtpPortPattern),
-        Validators.maxLength(5)]],
-      timeout: ['10000', [Validators.required,
-        Validators.pattern(/^[0-9]{1,6}$/),
-        Validators.maxLength(6)]],
-      enableTls: [false],
-      tlsVersion: [{ value: null, disabled: true }],
-      enableProxy: [false],
-      proxyHost: [{ value: '', disabled: true }, [Validators.required]],
-      proxyPort: [{ value: '', disabled: true }, [Validators.required, Validators.min(1), Validators.max(65535)]],
-      proxyUser: [{ value: '', disabled: true }],
-      proxyPassword: [{ value: '', disabled: true }],
-      username: [''],
-      changePassword: [false],
-      password: [''],
-      enableOauth2: [false],
-      providerId: [{ value:MailServerOauth2Provider.GOOGLE, disabled: true }],
-      clientId: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(255)]],
-      clientSecret: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(2048)]],
-      providerTenantId: [{value: '', disabled: true}, [Validators.required]],
-      authUri: [{value: '', disabled: true}, [Validators.required]],
-      tokenUri: [{value: '', disabled: true}, [Validators.required]],
-      scope: [{value: '', disabled: true}, [Validators.required]],
-      redirectUri: [{ value:'', disabled: true}]
-    });
-
     this.registerDisableOnLoadFormControl(this.mailSettings.get('smtpProtocol'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableTls'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableProxy'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('changePassword'));
+
+    this.mailSettings.get('enableTls').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => this.enableTls(value));
 
     this.mailSettings.get('enableProxy').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -160,15 +169,6 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.mailSettings.get('providerId').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe( value => this.enableProviderIdChanged(value));
-  }
-
-  private buildDomainInfoForm(domainInfo?: OAuth2DomainInfo) {
-    this.domainForm = this.fb.group({
-      name: [domainInfo ? domainInfo.name : this.window.location.hostname, [
-        Validators.required, Validators.maxLength(255),
-        Validators.pattern(this.DOMAIN_AND_PORT_REGEXP)]],
-      scheme: [domainInfo?.scheme ? domainInfo.scheme : MailDomainSchema.HTTPS, Validators.required]
-    }, {validators: this.uniqueDomainValidator});
   }
 
   private uniqueDomainValidator(control: FormGroup): { [key: string]: boolean } | null {
@@ -218,9 +218,13 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     if (enableProxy) {
       this.mailSettings.get('proxyHost').enable();
       this.mailSettings.get('proxyPort').enable();
+      this.mailSettings.get('proxyUser').enable();
+      this.mailSettings.get('proxyPassword').enable();
     } else {
       this.mailSettings.get('proxyHost').disable();
       this.mailSettings.get('proxyPort').disable();
+      this.mailSettings.get('proxyUser').disable();
+      this.mailSettings.get('proxyPassword').disable();
     }
   }
 
@@ -229,6 +233,14 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.mailSettings.get('password').enable({emitEvent: false});
     } else {
       this.mailSettings.get('password').disable({emitEvent: false});
+    }
+  }
+
+  enableTls(enable: boolean): void {
+    if (enable) {
+      this.mailSettings.get('tlsVersion').enable();
+    } else {
+      this.mailSettings.get('tlsVersion').disable();
     }
   }
 
@@ -295,7 +307,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   private get mailSettingsFormValue(): MailServerSettings {
-    const formValue = this.mailSettings.value;
+    const formValue = this.mailSettings.getRawValue();
     delete formValue.changePassword;
     return formValue;
   }
