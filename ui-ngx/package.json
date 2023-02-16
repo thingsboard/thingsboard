@@ -43,7 +43,7 @@
     "@ngx-translate/http-loader": "^7.0.0",
     "ace-builds": "1.4.13",
     "ace-diff": "^3.0.3",
-    "angular-gridster2": "~14.1.4",
+    "angular-gridster2": "~15.0.3",
     "angular2-hotkeys": "^13.1.0",
     "canvas-gauges": "^2.1.7",
     "core-js": "^3.26.1",
@@ -103,7 +103,7 @@
     "zone.js": "~0.11.8"
   },
   "devDependencies": {
-    "@angular-builders/custom-webpack": "~14.1.0",
+    "@angular-builders/custom-webpack": "~15.0.0",
     "@angular-devkit/build-angular": "^15.1.6",
     "@angular-eslint/builder": "15.2.1",
     "@angular-eslint/eslint-plugin": "15.2.1",
@@ -113,7 +113,7 @@
     "@angular/cli": "^15.1.6",
     "@angular/compiler-cli": "^15.1.5",
     "@angular/language-service": "^15.1.5",
-    "@ngtools/webpack": "^14.2.10",
+    "@ngtools/webpack": "^15.1.6",
     "@types/ace-diff": "^2.1.1",
     "@types/canvas-gauges": "^2.1.4",
     "@types/flot": "^0.0.32",
