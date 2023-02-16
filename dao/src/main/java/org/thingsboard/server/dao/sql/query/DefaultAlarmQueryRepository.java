@@ -151,7 +151,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             SELECT_ASSIGNEE_INFO + ", ";
 
     private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id ";
-    private static final String LEFT_JOIN_TB_USERS = "left join tb_user tbu on a.assignee_id = tbu.id ";
+    private static final String LEFT_JOIN_TB_USERS = "left join tb_user tbu on tbu.id = a.assignee_id ";
 
     protected final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -279,6 +279,11 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     ctx.addStringListParameter("alarmStatuses", statusSet.stream().map(AlarmStatus::name).collect(Collectors.toList()));
                     wherePart.append(" a.status in (:alarmStatuses)");
                 }
+            }
+
+            if (pageLink.getAssigneeId() != null){
+                ctx.addUuidParameter("assigneeId", pageLink.getAssigneeId().getId());
+                wherePart.append(" a.assignee_id = :assigneeId");
             }
 
             String mainQuery = String.format("%s%s", selectPart, fromPart);
