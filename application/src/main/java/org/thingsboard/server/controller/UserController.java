@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.UserSettings;
@@ -73,6 +74,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
@@ -348,10 +350,13 @@ public class UserController extends BaseController {
         EntityDataQuery query = new EntityDataQuery(entityFilter, pageLink, entityFields, null, null);
 
         return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
-                new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
-                        entityData.getLatest().get(ENTITY_FIELD).get("email").getValue(),
-                        entityData.getLatest().get(ENTITY_FIELD).get("firstName").getValue(),
-                        entityData.getLatest().get(ENTITY_FIELD).get("lastName").getValue()));
+        {
+            Map<String, TsValue> keyValueMap = entityData.getLatest().get(ENTITY_FIELD);
+            return new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
+                    keyValueMap.get("email").getValue(),
+                    keyValueMap.get("firstName").getValue(),
+                    keyValueMap.get("lastName").getValue());
+        });
     }
 
     @ApiOperation(value = "Get Tenant Users (getTenantAdmins)",
@@ -485,16 +490,4 @@ public class UserController extends BaseController {
         userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(paths.split(",")));
     }
 
-    private EntityDataSortOrder createEntityDataSortOrder(String sortProperty, String sortOrder) {
-        if (isNotEmpty(sortProperty)) {
-            EntityDataSortOrder entityDataSortOrder = new EntityDataSortOrder();
-            entityDataSortOrder.setKey(new EntityKey(ENTITY_FIELD, sortProperty));
-            if (isNotEmpty(sortOrder)) {
-                entityDataSortOrder.setDirection(EntityDataSortOrder.Direction.valueOf(sortOrder));
-            }
-            return entityDataSortOrder;
-        } else {
-            return null;
-        }
-    }
 }
