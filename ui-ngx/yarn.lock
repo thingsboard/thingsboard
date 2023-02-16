@@ -5145,10 +5145,10 @@ emoji-regex@^8.0.0:
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-8.0.0.tgz#e818fd69ce5ccfcb404594f842963bf53164cc37"
   integrity sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==
 
-emoji-toolkit@^6.6.0:
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/emoji-toolkit/-/emoji-toolkit-6.6.0.tgz#e7287c43a96f940ec4c5428cd7100a40e57518f1"
-  integrity sha512-pEu0kow2p1N8zCKnn/L6H0F3rWUBB3P3hVjr/O5yl1fK7N9jU4vO4G7EFapC5Y3XwZLUCY0FZbOPyTkH+4V2eQ==
+emoji-toolkit@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/emoji-toolkit/-/emoji-toolkit-7.0.0.tgz#63b5e5bdc63acd2e5629a0157969b94d414961fb"
+  integrity sha512-swoVbGlR/cyJ2ysrw1+axjRkEHAlH0myhbK1ybkv8zR6r9KpL4vzb96m3Y2j0hixUKj1Nb8YBQbk3ihB+XkpBw==
 
 emojis-list@^3.0.0:
   version "3.0.0"
@@ -7906,10 +7906,10 @@ ngx-daterangepicker-material@^6.0.4:
     dayjs "^1.11.5"
     tslib "^2.0.0"
 
-ngx-drag-drop@^14.0.0:
-  version "14.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-drag-drop/-/ngx-drag-drop-14.0.0.tgz#93b4643478f5a1eeab6dd207d698e09e4bdbb0ab"
-  integrity sha512-Xo9ma9dbHiYlLkfSB5+L6LTV+mWMZTnSmX5jBhtl6vTjpOs8t+pyMe60ye2zqv8qEfNZKw8z2+6lKjSSyn82pA==
+ngx-drag-drop@^15.0.1:
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-drag-drop/-/ngx-drag-drop-15.0.1.tgz#e751fa0f11a4c86456fbb241bc8c2c530149cee0"
+  integrity sha512-x0YgsVCk95x3YSNZT/EmJvo1sRjra+BtQuZMbRYKc88E0GHIOlmWNp/1Z7w5UdznEp0240KDwYp3crR4FuDGew==
   dependencies:
     tslib "^2.3.0"
 
@@ -7928,19 +7928,18 @@ ngx-hm-carousel@^3.0.0:
     hammerjs "^2.0.8"
     tslib "^2.3.1"
 
-ngx-markdown@^14.0.1:
-  version "14.0.1"
-  resolved "https://registry.yarnpkg.com/ngx-markdown/-/ngx-markdown-14.0.1.tgz#5e97d91012dd3f429635aa7a18b2b75051eea85e"
-  integrity sha512-y5CY4e0QM0uR6+MvU1rnh1Ks+rku14309kVVojyXLcWl4zlrt8VAYCcf/+A+8z/IDOaz38yTrxNBnvYDJzNzYA==
+ngx-markdown@^15.1.1:
+  version "15.1.1"
+  resolved "https://registry.yarnpkg.com/ngx-markdown/-/ngx-markdown-15.1.1.tgz#c52a375bed49ca85ad70784378d65205be8b2e41"
+  integrity sha512-HdiYJVBoZoKnTti3Yj+PR7Uh5LuP5xx97UyFjhgWV25HrT1NE5Lorcg0Xxi7x1wyuRr9V/CKsd5x45jQmY1CZw==
   dependencies:
-    "@types/marked" "^4.0.3"
+    tslib "^2.3.0"
+  optionalDependencies:
     clipboard "^2.0.11"
-    emoji-toolkit "^6.6.0"
+    emoji-toolkit "^7.0.0"
     katex "^0.16.0"
-    marked "^4.0.17"
     mermaid "^9.1.2"
     prismjs "^1.28.0"
-    tslib "^2.3.0"
 
 ngx-sharebuttons@^11.0.0:
   version "11.0.0"
