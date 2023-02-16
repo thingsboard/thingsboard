@@ -365,10 +365,10 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/flex-layout@^14.0.0-beta.41":
-  version "14.0.0-beta.41"
-  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-14.0.0-beta.41.tgz#94903664670090c3ba0d4824b0135882a7f1bda9"
-  integrity sha512-x1YcxqkdFlcbVXEy9ebCgW/F+7n/MXkEkwEcVEIPf5v5qn7HZsjQxgIj35Lf0amvMyF7h35prpoxO1uX5+ntFg==
+"@angular/flex-layout@^15.0.0-beta.42":
+  version "15.0.0-beta.42"
+  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-15.0.0-beta.42.tgz#ad5e1dda32ee6280ba73765be10fd916c222e38e"
+  integrity sha512-cTAPVMMxnyIFwpZwdq0PL5mdP9Qh+R8MB7ZBezVaN3Rz2fRrkagzKpLvPX3TFzepXrvHBdpKsU4b8u+NxEC/6g==
   dependencies:
     tslib "^2.3.0"
 
@@ -1944,10 +1944,10 @@
   resolved "https://registry.yarnpkg.com/@leichtgewicht/ip-codec/-/ip-codec-2.0.4.tgz#b2ac626d6cb9c8718ab459166d4bb405b8ffa78b"
   integrity sha512-Hcv+nVC0kZnQ3tD9GVu5xSMR4VVYOteQIr/hwFPVEvPdlXqgGEuRjiheChHgdM+JyqdgNcmzZOX/tnl0JOiI7A==
 
-"@mat-datetimepicker/core@~10.1.1":
-  version "10.1.1"
-  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-10.1.1.tgz#02e1e4837eecf5e6b06640286089370ac783c279"
-  integrity sha512-6cnMVsdDkPjpqMwOWAFLGPzwC3C9Dsyaq5TcVUpARUVppYz1phB6rVDtD8YTY8Xt5R/P9uL2atLSS0tczMVQ9g==
+"@mat-datetimepicker/core@~11.0.2":
+  version "11.0.2"
+  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-11.0.2.tgz#d89cf5f60a95567ca6e193fcc16a60e91172abdb"
+  integrity sha512-qZeiDWjSQ8OmjrQ7hDR3ynYHAFCTFHViNr38RaemNpfvTWvnYD+rRfD5/dWDo0VqLzkJjpQe0oFXgMkHqDFgzg==
   dependencies:
     tslib "^2.4.0"
 
