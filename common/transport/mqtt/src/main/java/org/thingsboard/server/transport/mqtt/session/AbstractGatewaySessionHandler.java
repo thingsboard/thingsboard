@@ -54,7 +54,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.util.ReturnCode;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_RPC_ASYNC_MSG;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate.OFFLINE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
 
 /**
  * Created by ashvayka on 19.01.17.
@@ -734,11 +734,10 @@ public abstract class AbstractGatewaySessionHandler {
         }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
         transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
-        System.out.println("Removed device " + deviceName + " from the gateway session");
         log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
     }
 
-    public void sendSparkplugStateOnTelemetry(TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugMessageTypeSate typeSate, long ts) {
+    public void sendSparkplugStateOnTelemetry(TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugConnectionState typeSate, long ts) {
         TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
         keyValueProtoBuilder.setKey(STATE.name());
         keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);

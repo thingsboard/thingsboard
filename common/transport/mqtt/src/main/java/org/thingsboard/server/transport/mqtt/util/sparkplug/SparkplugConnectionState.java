@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
-public enum SparkplugMessageTypeSate {
+public enum SparkplugConnectionState {
     /**
      * The EoN node should examine the payload of this
      * message to ensure that it is a value of “ONLINE”

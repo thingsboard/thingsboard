@@ -117,7 +117,7 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_RPC_ASYNC_MSG;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NDEATH;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate.OFFLINE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicPublish;
 
@@ -401,9 +401,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         // TODO
                         break;
                     case NBIRTH:
-                        sparkplugSessionHandler.setNodeBirthMetrics(sparkplugBProtoNode.getMetricsList());
-                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
-                        break;
                     case NCMD:
                     case NDATA:
                         sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
@@ -813,15 +810,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 .setSubscribeToAttributes(SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG)
                 .setSubscribeToRPC(SUBSCRIBE_TO_RPC_ASYNC_MSG)
                 .build(), null);
-//        transportService.process(deviceSessionCtx.getSessionInfo(), TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
-//        attrSubTopicType = TopicType.V1;
-//        mqttQoSMap.put(new MqttTopicMatcher(MqttTopics.DEVICE_ATTRIBUTES_TOPIC), getMinSupportedQos(reqQoS));
         registerSubQoS(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, grantedQoSList, reqQoS);
-//        transportService.process(deviceSessionCtx.getSessionInfo(), TransportProtos.SubscribeToRPCMsg.newBuilder().build(), null);
-//        rpcSubTopicType = TopicType.V2;
-//        mqttQoSMap.put(new MqttTopicMatcher(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC), getMinSupportedQos(reqQoS));
-//        mqttQoSMap.put(new MqttTopicMatcher(MqttTopics.GATEWAY_RPC_TOPIC), getMinSupportedQos(reqQoS));
-//        grantedQoSList.add(getMinSupportedQos(reqQoS));
     }
 
     public void registerSubQoS(String topic, List<Integer> grantedQoSList, MqttQoS reqQoS) {
