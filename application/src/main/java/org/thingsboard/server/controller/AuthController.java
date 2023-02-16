@@ -18,7 +18,6 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,8 +74,8 @@ import java.util.concurrent.ConcurrentMap;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthController extends BaseController {
+
     @Value("${rate_limits.reset_password_per_user.configuration:5:3600}")
-    @Getter
     private String defaultLimitsConfiguration;
     private final ConcurrentMap<UserId, TbRateLimits> resetPasswordRateLimits = new ConcurrentHashMap<>();
     private final BCryptPasswordEncoder passwordEncoder;
@@ -222,12 +221,11 @@ public class AuthController extends BaseController {
         String resetURI = "/login/resetPassword";
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
 
-        TbRateLimits tbRateLimits = getTbRateLimits(userCredentials);
-        if (!tbRateLimits.tryConsume()) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
-        }
-
         if (userCredentials != null) {
+            TbRateLimits tbRateLimits = getTbRateLimits(userCredentials.getUserId());
+            if (!tbRateLimits.tryConsume()) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+            }
             try {
                 URI location = new URI(resetURI + "?resetToken=" + resetToken);
                 headers.setLocation(location);
@@ -340,12 +338,8 @@ public class AuthController extends BaseController {
         }
     }
 
-    private TbRateLimits getTbRateLimits(UserCredentials userCredentials) {
-        TbRateLimits rateLimit = resetPasswordRateLimits.get(userCredentials.getUserId());
-        if (rateLimit == null) {
-            rateLimit = new TbRateLimits(defaultLimitsConfiguration, true);
-            resetPasswordRateLimits.put(userCredentials.getUserId(), rateLimit);
-        }
-        return rateLimit;
+    private TbRateLimits getTbRateLimits(UserId userId) {
+        return resetPasswordRateLimits.computeIfAbsent(userId,
+                key -> new TbRateLimits(defaultLimitsConfiguration, true));
     }
 }
