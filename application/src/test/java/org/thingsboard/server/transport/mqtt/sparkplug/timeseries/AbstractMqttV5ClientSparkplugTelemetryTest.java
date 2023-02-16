@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -39,8 +38,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
 
     protected void processClientWithCorrectAccessTokenPublishNBIRTH() throws Exception {
         clientWithCorrectNodeAccessTokenWithNDEATH();
-        List<String> listKeys = new ArrayList<>();
-        connectionWithBirth(listKeys, Int32, "Node Metric int32", nextInt32());
+        List<String> listKeys = connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
         Assert.assertTrue("Connection node is failed", client.isConnected());
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
         await(alias + SparkplugMessageType.NBIRTH.name())

@@ -15,45 +15,93 @@
  */
 package org.thingsboard.server.transport.mqtt.sparkplug.rpc;
 
-import com.nimbusds.jose.util.StandardCharset;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.mqttv5.common.MqttException;
-import org.eclipse.paho.mqttv5.common.MqttMessage;
-import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
-import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestCallback;
-import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
+import org.junit.Assert;
+import org.junit.Test;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSparkplugTest;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.exception.ThingsboardErrorCode.INVALID_ARGUMENTS;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DCMD;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NCMD;
 
 @Slf4j
-public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttIntegrationTest {
+public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttV5ClientSparkplugTest {
 
-    private static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
-    private static final String setSparklpugRpcNodeRequest = "{\"method\": \"NCMD\", \"params\": {\"MyNodeMetric05_String\":\"MyNodeMetric05_String_Value\"}}";
-    private static final String setSparklpugRpcDeviceRequest = "{\"method\": \"DCMD\", \"params\": {\"MyDeviceMetric05_String\":{\"MyDeviceMetric05_String_Value\"}}";
+    private static final int metricBirthValue_Int32 = 123456;
+    private static final String sparkplugRpcRequest = "{\"metricName\":\"" + metricBirthName_Int32 + "\",\"value\":" + metricBirthValue_Int32 + "}";
 
-    protected class MqttV5TestRpcCallback extends MqttV5TestCallback {
+    @Test
+    public void processClientNodeWithCorrectAccessTokenPublish_TwoWayRpc_Success() throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
+        Assert.assertTrue("Connection node is failed", client.isConnected());
+        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
+        String expected = "{\"result\":\"Success: " + SparkplugMessageType.NCMD.name() + "\"}";
+        String actual = sendRPCSparkplug(NCMD.name(), sparkplugRpcRequest, savedGateway);
+        await(alias + SparkplugMessageType.NCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(expected, actual);
+        Assert.assertEquals(metricBirthName_Int32, mqttCallback.getMessageArrivedMetrics().get(0).getName());
+        Assert.assertTrue(metricBirthValue_Int32 == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+    }
 
-        private final MqttV5TestClient client;
+    @Test
+    public void processClientDeviceWithCorrectAccessTokenPublish_TwoWayRpc_Success() throws Exception {
+        long ts = calendar.getTimeInMillis();
+        List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(1, ts);
+        String expected = "{\"result\":\"Success: " + DCMD.name() + "\"}";
+        String actual = sendRPCSparkplug(DCMD.name() , sparkplugRpcRequest, devices.get(0));
+        await(alias + NCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(expected, actual);
+        Assert.assertEquals(metricBirthName_Int32, mqttCallback.getMessageArrivedMetrics().get(0).getName());
+        Assert.assertTrue(metricBirthValue_Int32 == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+    }
 
-        public MqttV5TestRpcCallback(MqttV5TestClient client, String awaitSubTopic) {
-            super(awaitSubTopic);
-            this.client = client;
-        }
+    @Test
+    public void processClientNodeWithCorrectAccessTokenPublish_TwoWayRpc_InvalidTypeMessage_INVALID_ARGUMENTS() throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
+        Assert.assertTrue("Connection node is failed", client.isConnected());
+        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
+        String invalidateTypeMessageName = "RCMD";
+        String expected = "{\"result\":\"" + INVALID_ARGUMENTS + "\",\"error\":\"Failed to convert device RPC command to MQTT msg: " +
+                invalidateTypeMessageName + "{\\\"metricName\\\":\\\"" + metricBirthName_Int32 + "\\\",\\\"value\\\":" + metricBirthValue_Int32 + "}\"}";
+        String actual = sendRPCSparkplug(invalidateTypeMessageName, sparkplugRpcRequest, savedGateway);
+        Assert.assertEquals(expected, actual);
+    }
 
-        @Override
-        protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
-            log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
-            if (awaitSubTopic.equals(requestTopic)) {
-                qoS = mqttMessage.getQos();
-                payloadBytes = mqttMessage.getPayload();
-                String responseTopic = requestTopic.replace("request", "response");
-                try {
-                    client.publish(responseTopic, DEVICE_RESPONSE.getBytes(StandardCharset.UTF_8));
-                } catch (MqttException e) {
-                    log.warn("Failed to publish response on topic: {} due to: ", responseTopic, e);
-                }
-                subscribeLatch.countDown();
-            }
-        }
+    @Test
+    public void processClientNodeWithCorrectAccessTokenPublish_TwoWayRpc_InBirthNotHaveMetric_BAD_REQUEST_PARAMS() throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
+        Assert.assertTrue("Connection node is failed", client.isConnected());
+        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
+        String metricNameBad = metricBirthName_Int32 + "_Bad";
+        String sparkplugRpcRequestBad = "{\"metricName\":\"" + metricNameBad + "\",\"value\":" + metricBirthValue_Int32 + "}";
+        String expected = "{\"result\":\"BAD_REQUEST_PARAMS\",\"error\":\"Failed send To Node Rpc Request: " +
+                DCMD.name() + ". This node does not have a metricName: [" + metricNameBad + "]\"}";
+        String actual = sendRPCSparkplug(DCMD.name(), sparkplugRpcRequestBad, savedGateway);
+        Assert.assertEquals(expected, actual);
+     }
+
+    private String sendRPCSparkplug(String nameTypeMessage, String keyValue, Device device) throws Exception {
+        String setRpcRequest = "{\"method\": \"" + nameTypeMessage + "\", \"params\": " + keyValue + "}";
+        return doPostAsync("/api/plugins/rpc/twoway/" + device.getId().getId(), setRpcRequest, String.class, status().isOk());
     }
 
 }

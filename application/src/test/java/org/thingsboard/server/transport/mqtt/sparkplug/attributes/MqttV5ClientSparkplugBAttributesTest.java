@@ -68,4 +68,14 @@ public class MqttV5ClientSparkplugBAttributesTest extends AbstractMqttV5ClientSp
         processClientWithCorrectAccessTokenPublishNCMD_StringType_IfMetricFailedTypeCheck_SendValueOk();
     }
 
+    @Test
+    public void testClientDeviceWithCorrectAccessTokenPublishWithBirth_SharedAttribute() throws Exception {
+        processClientDeviceWithCorrectAccessTokenPublishWithBirth_SharedAttribute();
+    }
+
+    @Test
+    public void testClientDeviceWithCorrectAccessTokenPublishWithBirth_SharedAttributes_LongType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {
+        processClientDeviceWithCorrectAccessTokenPublishWithBirth_SharedAttributes_LongType_IfMetricFailedTypeCheck_SendValueOk();
+    }
+
 }

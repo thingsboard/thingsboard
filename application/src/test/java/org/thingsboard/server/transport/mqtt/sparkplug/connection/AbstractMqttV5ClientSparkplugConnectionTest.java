@@ -27,22 +27,17 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSparkplugTest;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -78,15 +73,13 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     }
 
     protected void processClientWithCorrectAccessTokenWithNDEATHCreatedDevices(int cntDevices) throws Exception {
-        Set<Device> devices = new HashSet<>();
         long ts = calendar.getTimeInMillis();
-        connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(devices, cntDevices, ts);
+        connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
     }
 
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_ALL(int cntDevices) throws Exception {
-        Set<Device> devices = new HashSet<>();
         long ts = calendar.getTimeInMillis();
-        connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(devices, cntDevices, ts);
+        List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(SparkplugMessageType.STATE.name(), ONLINE.name()));
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
@@ -108,9 +101,8 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     }
 
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OneDeviceOFFLINE(int cntDevices, int indexDeviceDisconnect) throws Exception {
-        Set<Device> devices = new HashSet<>();
         long ts = calendar.getTimeInMillis();
-        connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(devices, cntDevices, ts);
+        List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(SparkplugMessageType.STATE.name(), OFFLINE.name()));
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
@@ -133,9 +125,8 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     }
 
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OFFLINE_All(int cntDevices) throws Exception {
-        Set<Device> devices = new HashSet<>();
         long ts = calendar.getTimeInMillis();
-        connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(devices, cntDevices, ts);
+        List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(SparkplugMessageType.STATE.name(), OFFLINE.name()));
         AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
@@ -160,50 +151,6 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
                         });
             }
         }
-    }
-
-    private void connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(Set<Device> devices, int cntDevices, long ts) throws Exception {
-        clientWithCorrectNodeAccessTokenWithNDEATH();
-        MetricDataType metricDataType = Int32;
-        String key = "Node Metric int32";
-        int valueDeviceInt32 = 1024;
-        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType);
-        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
-                .setTimestamp(ts)
-                .setSeq(getBdSeqNum());
-        payloadBirthNode.addMetrics(metric);
-        payloadBirthNode.setTimestamp(ts);
-        if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
-                    payloadBirthNode.build().toByteArray(), 0, false);
-        }
-        metricDataType = Int32;
-        key = "Device Metric int32";
-        valueDeviceInt32 = 4024;
-        metric = createMetric(valueDeviceInt32, ts, key, metricDataType);
-        for (int i = 0; i < cntDevices; i++) {
-            SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
-                    .setTimestamp(ts)
-                    .setSeq(getSeqNum());
-            String deviceName = deviceId + "_" + i;
-
-            payloadBirthDevice.addMetrics(metric);
-            if (client.isConnected()) {
-                client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
-                        payloadBirthDevice.build().toByteArray(), 0, false);
-                AtomicReference<Device> device = new AtomicReference<>();
-                await(alias + "find device [" + deviceName + "] after created")
-                        .atMost(200, TimeUnit.SECONDS)
-                        .until(() -> {
-                            device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
-                            return device.get() != null;
-                        });
-                devices.add(device.get());
-            }
-
-        }
-
-        Assert.assertEquals(cntDevices, devices.size());
     }
 
     private boolean findEqualsKeyValueInKvEntrys(List<TsKvEntry> finalFuture, TsKvEntry tsKvEntry) {
