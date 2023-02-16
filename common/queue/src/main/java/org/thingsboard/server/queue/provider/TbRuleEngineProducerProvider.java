@@ -17,13 +17,14 @@ package org.thingsboard.server.queue.provider;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
@@ -40,6 +41,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
+    private TbQueueProducer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> toAlarmRules;
 
     public TbRuleEngineProducerProvider(TbRuleEngineQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -53,6 +55,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
         this.toRuleEngineNotifications = tbQueueProvider.createRuleEngineNotificationsMsgProducer();
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
+        this.toAlarmRules = tbQueueProvider.createAlarmRulesMsgProducer();
     }
 
     @Override
@@ -86,7 +89,12 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Rule Engine!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> getTbAlarmRulesMsgProducer() {
+        return toAlarmRules;
     }
 }

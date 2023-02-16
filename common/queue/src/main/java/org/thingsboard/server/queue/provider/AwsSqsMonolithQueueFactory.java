@@ -23,14 +23,15 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos.RemoteJsRequest;
 import org.thingsboard.server.gen.js.JsInvokeProtos.RemoteJsResponse;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -133,9 +134,9 @@ public class AwsSqsMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEng
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> createToVersionControlMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToVersionControlServiceMsg>> createToVersionControlMsgConsumer() {
         return new TbAwsSqsConsumerTemplate<>(vcAdmin, sqsSettings, vcSettings.getTopic(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToVersionControlServiceMsg.parseFrom(msg.getData()), msg.getHeaders())
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToVersionControlServiceMsg.parseFrom(msg.getData()), msg.getHeaders())
         );
     }
 
@@ -222,8 +223,20 @@ public class AwsSqsMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEng
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> createVersionControlMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> createVersionControlMsgProducer() {
         return new TbAwsSqsProducerTemplate<>(vcAdmin, sqsSettings, vcSettings.getTopic());
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        //TODO: adovh
+        return null;
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
+        //TODO: adovh
+        return null;
     }
 
     @PreDestroy

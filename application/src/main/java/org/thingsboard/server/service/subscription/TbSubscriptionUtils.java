@@ -221,7 +221,7 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-    public static ToCoreMsg toAttributesUpdateProto(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public static TbAttributeUpdateProto toAttributesUpdateProto(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         TbAttributeUpdateProto.Builder builder = TbAttributeUpdateProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -231,12 +231,10 @@ public class TbSubscriptionUtils {
         builder.setScope(scope);
         attributes.forEach(v -> builder.addData(toKeyValueProto(v.getLastUpdateTs(), v).build()));
 
-        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        msgBuilder.setAttrUpdate(builder);
-        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+        return builder.build();
     }
 
-    public static ToCoreMsg toAttributesDeleteProto(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
+    public static TbAttributeDeleteProto toAttributesDeleteProto(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
         TbAttributeDeleteProto.Builder builder = TbAttributeDeleteProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -247,9 +245,7 @@ public class TbSubscriptionUtils {
         builder.addAllKeys(keys);
         builder.setNotifyDevice(notifyDevice);
 
-        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        msgBuilder.setAttrDelete(builder);
-        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+        return builder.build();
     }
 
 
@@ -316,7 +312,7 @@ public class TbSubscriptionUtils {
         return entry;
     }
 
-    public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+    public static TbAlarmUpdateProto toAlarmUpdateProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
         TbAlarmUpdateProto.Builder builder = TbAlarmUpdateProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -324,12 +320,10 @@ public class TbSubscriptionUtils {
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setAlarm(JacksonUtil.toString(alarm));
-        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        msgBuilder.setAlarmUpdate(builder);
-        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+        return builder.build();
     }
 
-    public static ToCoreMsg toAlarmDeletedProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+    public static TbAlarmDeleteProto toAlarmDeletedProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
         TbAlarmDeleteProto.Builder builder = TbAlarmDeleteProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -337,8 +331,6 @@ public class TbSubscriptionUtils {
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setAlarm(JacksonUtil.toString(alarm));
-        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        msgBuilder.setAlarmDelete(builder);
-        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+        return builder.build();
     }
 }

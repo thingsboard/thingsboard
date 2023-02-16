@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.queue.provider;
 
-public enum ServiceType {
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR, TB_ALARM_RULES_EXECUTOR;
+/**
+ * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
+ */
+public interface TbAlarmRulesQueueFactory {
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
-    }
+    /**
+     * Used to consume messages from TB Core or from TB Rule Engine Services
+     *
+     * @return
+     */
+    TbQueueConsumer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer();
+
 }

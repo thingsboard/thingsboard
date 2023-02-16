@@ -999,4 +999,23 @@ message ToOtaPackageStateServiceMsg {
   string type = 8;
 }
 
+message ToTbAlarmRuleStateServiceMsg {
+  TbAlarmRuleRoutingMsg alarmRuleState = 1;
+  TbAttributeUpdateProto attrUpdate = 2;
+  TbAttributeDeleteProto attrDelete = 3;
+  TbAlarmUpdateProto alarmUpdate = 4;
+  TbAlarmDeleteProto alarmDelete = 5;
+}
+
+message TbAlarmRuleRoutingMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 ruleChainIdMSB = 3;
+  int64 ruleChainIdLSB = 4;
+  int64 ruleNodeIdMSB = 5;
+  int64 ruleNodeIdLSB = 6;
+  bool isDebug = 7;
+  bytes tbMsg = 8;
+}
+
 

@@ -198,6 +198,12 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
         return null;
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        //TODO: adovh
+        return null;
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

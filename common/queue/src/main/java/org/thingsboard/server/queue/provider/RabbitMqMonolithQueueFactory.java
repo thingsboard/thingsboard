@@ -224,6 +224,18 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         return new TbRabbitMqProducerTemplate<>(vcAdmin, rabbitMqSettings, vcSettings.getTopic());
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        //TODO: adovh
+        return null;
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
+        //TODO: adovh
+        return null;
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

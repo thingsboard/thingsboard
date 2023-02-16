@@ -82,7 +82,6 @@ class AlarmState {
         this.updateState(alarmDefinition, alarmState);
     }
 
-    //TODO: maybe need to synchronize it because we can use more then 1 nodes
     public boolean process(TbContext tbContext, TbAlarmRuleContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();

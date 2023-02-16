@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.queue.settings;
 
-public enum ServiceType {
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR, TB_ALARM_RULES_EXECUTOR;
+@Lazy
+@Data
+@Component
+public class TbQueueAlarmRulesSettings {
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
-    }
+    @Value("${queue.ar.topic:tb_alarm_rules}")
+    private String topic;
+
 }

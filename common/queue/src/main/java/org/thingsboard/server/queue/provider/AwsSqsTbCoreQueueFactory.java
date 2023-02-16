@@ -205,6 +205,12 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
         return new TbAwsSqsProducerTemplate<>(vcAdmin, sqsSettings, vcSettings.getTopic());
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        //TODO: adovh
+        return null;
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

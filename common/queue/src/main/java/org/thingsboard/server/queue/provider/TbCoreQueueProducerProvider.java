@@ -20,6 +20,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
@@ -41,6 +42,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> toVersionControl;
+    private TbQueueProducer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> toAlarmRules;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -55,6 +57,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toVersionControl = tbQueueProvider.createVersionControlMsgProducer();
+        this.toAlarmRules = tbQueueProvider.createAlarmRulesMsgProducer();
     }
 
     @Override
@@ -90,5 +93,10 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
         return toVersionControl;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> getTbAlarmRulesMsgProducer() {
+        return toAlarmRules;
     }
 }

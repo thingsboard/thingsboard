@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
@@ -79,6 +80,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbEntityViewService tbEntityViewService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
+    private final TbAlarmRuleStateService alarmRuleStateService;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -88,13 +90,15 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TbClusterService clusterService,
                                                PartitionService partitionService,
                                                TbApiUsageReportClient apiUsageClient,
-                                               TbApiUsageStateService apiUsageStateService) {
+                                               TbApiUsageStateService apiUsageStateService,
+                                               TbAlarmRuleStateService alarmRuleStateService) {
         super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
+        this.alarmRuleStateService = alarmRuleStateService;
     }
 
     @PostConstruct
@@ -383,8 +387,26 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }
         } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
+            TransportProtos.TbAttributeUpdateProto attributeUpdateProto = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
+
+            TransportProtos.SubscriptionMgrMsgProto.Builder msgBuilder = TransportProtos.SubscriptionMgrMsgProto.newBuilder();
+            msgBuilder.setAttrUpdate(attributeUpdateProto);
+            TransportProtos.ToCoreMsg toCoreMsg = TransportProtos.ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+        }
+
+        if (entityId.getEntityType().equals(EntityType.DEVICE) || entityId.getEntityType().equals(EntityType.ASSET)) {
+            TopicPartitionInfo arTpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
+            if (arTpi.isMyPartition()) {
+                alarmRuleStateService.onAttributesUpdate(tenantId, entityId, scope, attributes);
+            } else {
+                TransportProtos.TbAttributeUpdateProto tbAttributeUpdateProto = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
+
+                TransportProtos.ToTbAlarmRuleStateServiceMsg toAlarmRule =
+                        TransportProtos.ToTbAlarmRuleStateServiceMsg.newBuilder().setAttrUpdate(tbAttributeUpdateProto).build();
+                clusterService.pushMsgToAlarmRules(tpi, entityId, toAlarmRule, null);
+            }
         }
     }
 
@@ -397,8 +419,27 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }
         } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
+            TransportProtos.TbAttributeDeleteProto attributeDeleteProto = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
+
+            TransportProtos.SubscriptionMgrMsgProto.Builder msgBuilder = TransportProtos.SubscriptionMgrMsgProto.newBuilder();
+            msgBuilder.setAttrDelete(attributeDeleteProto);
+            TransportProtos.ToCoreMsg toCoreMsg = TransportProtos.ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+        }
+
+        if (entityId.getEntityType().equals(EntityType.DEVICE) || entityId.getEntityType().equals(EntityType.ASSET)) {
+            TopicPartitionInfo arTpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
+            if (arTpi.isMyPartition()) {
+                alarmRuleStateService.onAttributesDelete(tenantId, entityId, scope, keys);
+            } else {
+                TransportProtos.TbAttributeDeleteProto attributeDeleteProto =
+                        TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
+
+                TransportProtos.ToTbAlarmRuleStateServiceMsg toAlarmRule =
+                        TransportProtos.ToTbAlarmRuleStateServiceMsg.newBuilder().setAttrDelete(attributeDeleteProto).build();
+                clusterService.pushMsgToAlarmRules(tpi, entityId, toAlarmRule, null);
+            }
         }
     }
 

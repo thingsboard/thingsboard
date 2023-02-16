@@ -198,6 +198,12 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
         return new TbRabbitMqProducerTemplate<>(coreAdmin, rabbitMqSettings, coreSettings.getUsageStatsTopic());
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        //TODO: adovh
+        return null;
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

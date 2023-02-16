@@ -47,6 +47,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -71,6 +72,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueVersionControlSettings vcSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
     private final TbKafkaConsumerStatsService consumerStatsService;
 
     private final TbQueueAdmin coreAdmin;
@@ -82,6 +84,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin fwUpdatesAdmin;
     private final TbQueueAdmin vcAdmin;
+    private final TbQueueAdmin arAdmin;
 
     private final AtomicLong consumerCount = new AtomicLong();
 
@@ -93,6 +96,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                                      TbQueueTransportNotificationSettings transportNotificationSettings,
                                      TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                      TbQueueVersionControlSettings vcSettings,
+                                     TbQueueAlarmRulesSettings arSettings,
                                      TbKafkaConsumerStatsService consumerStatsService,
                                      TbKafkaTopicConfigs kafkaTopicConfigs) {
         this.notificationsTopicService = notificationsTopicService;
@@ -104,6 +108,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         this.transportNotificationSettings = transportNotificationSettings;
         this.jsInvokeSettings = jsInvokeSettings;
         this.vcSettings = vcSettings;
+        this.arSettings = arSettings;
         this.consumerStatsService = consumerStatsService;
 
         this.coreAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCoreConfigs());
@@ -115,6 +120,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         this.notificationAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getNotificationsConfigs());
         this.fwUpdatesAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getFwUpdatesConfigs());
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
+        this.arAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getArConfigs());
     }
 
     @Override
@@ -346,6 +352,29 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         return requestBuilder.build();
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("monolith-ar-producer-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(arSettings.getTopic());
+        requestBuilder.admin(arAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
+        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
+        consumerBuilder.settings(kafkaSettings);
+        consumerBuilder.topic(arSettings.getTopic());
+        consumerBuilder.clientId("monolith-ar-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("monolith-ar-node");
+        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToTbAlarmRuleStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        consumerBuilder.admin(arAdmin);
+        consumerBuilder.statsService(consumerStatsService);
+        return consumerBuilder.build();
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {
@@ -374,6 +403,9 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         }
         if (vcAdmin != null) {
             vcAdmin.destroy();
+        }
+        if (arAdmin != null) {
+            arAdmin.destroy();
         }
     }
 }

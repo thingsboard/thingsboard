@@ -1007,6 +1007,7 @@ queue:
       js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      alarm-rules: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
@@ -1097,6 +1098,11 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:60000}"
     request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:60000}"
     msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
+  ar:
+    topic: "${TB_QUEUE_AR_TOPIC:tb_alarm_rules}"
+    partitions: "${TB_QUEUE_AR_PARTITIONS:10}"
+    poll-interval: "${TB_QUEUE_AR_INTERVAL_MS:25}"
+    pack-processing-timeout: "${TB_QUEUE_AR_PACK_PROCESSING_TIMEOUT_MS:60000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"

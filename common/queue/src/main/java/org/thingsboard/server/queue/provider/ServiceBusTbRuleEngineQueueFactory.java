@@ -160,6 +160,18 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
         return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, coreSettings.getOtaPackageTopic());
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
+        //TODO: adovh
+        return null;
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
+        //TODO: adovh
+        return null;
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

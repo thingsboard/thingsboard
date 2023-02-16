@@ -15,9 +15,16 @@
  */
 package org.thingsboard.server.service.alarm.rule;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -25,10 +32,9 @@ import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleRelationTargetEntity;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleSpecifiedTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -37,22 +43,28 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.provider.TbAlarmRulesQueueFactory;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -65,9 +77,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -76,13 +90,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 
+    @Value("${queue.ar.poll-interval:25}")
+    private long pollDuration;
+    @Value("${queue.ar.pack-processing-timeout:60000}")
+    private long packProcessingTimeout;
+
     private final TbAlarmRuleContext ctx;
     private final AlarmRuleService alarmRuleService;
     private final AlarmRuleEntityStateService alarmRuleEntityStateService;
-    private final HashPartitionService partitionService;
+    private final PartitionService partitionService;
     private final RelationService relationService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
+
+    private final TbQueueProducerProvider producerProvider;
+    private final TbAlarmRulesQueueFactory queueFactory;
+    private volatile ExecutorService consumerExecutor;
+    private volatile ListeningExecutorService consumerLoopExecutor;
+    private volatile TbQueueConsumer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> consumer;
+//    private volatile TbQueueProducer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> producer;
+    private volatile boolean stopped = false;
 
     private ScheduledExecutorService scheduler;
 
@@ -126,13 +153,28 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         }
         log.info("Fetched alarm rule state for {} entities.", fetchCount);
 
+        consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ar-consumer"));
+        consumerLoopExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ar-consumer-loop")));
+//        producer = producerProvider.getTbAlarmRulesMsgProducer();
+        consumer = queueFactory.createToAlarmRulesMsgConsumer();
+
         scheduler.scheduleAtFixedRate(this::harvestAlarms, 1, 1, TimeUnit.MINUTES);
     }
 
     @PreDestroy
     private void destroy() {
+        stopped = true;
+        if (consumer != null) {
+            consumer.unsubscribe();
+        }
+        if (consumerExecutor != null) {
+            consumerExecutor.shutdownNow();
+        }
         if (scheduler != null) {
             scheduler.shutdownNow();
+        }
+        if (consumerLoopExecutor != null) {
+            consumerLoopExecutor.shutdownNow();
         }
     }
 
@@ -184,6 +226,72 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 
         toAdd.forEach(ares -> createEntityState(ares.getTenantId(), ares.getEntityId(), ares));
     }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(value = 2)
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        consumerExecutor.execute(() -> consumerLoop(consumer));
+    }
+
+    void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> consumer) {
+        while (!stopped && !consumer.isStopped()) {
+            List<ListenableFuture<?>> futures = new ArrayList<>();
+            try {
+                List<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> msgs = consumer.poll(pollDuration);
+                if (msgs.isEmpty()) {
+                    continue;
+                }
+                for (TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg> msgWrapper : msgs) {
+                    TransportProtos.ToTbAlarmRuleStateServiceMsg msg = msgWrapper.getValue();
+                    ListenableFuture<?> future = consumerLoopExecutor.submit(() -> processMessage(msg));
+                    futures.add(future);
+                }
+                try {
+                    Futures.allAsList(futures).get(packProcessingTimeout, TimeUnit.MILLISECONDS);
+                } catch (TimeoutException e) {
+                    log.info("Timeout for processing the alarm rules tasks.", e);
+                }
+                consumer.commit();
+            } catch (Exception e) {
+                if (!stopped) {
+                    log.warn("Failed to obtain alarm rules requests from queue.", e);
+                    try {
+                        Thread.sleep(pollDuration);
+                    } catch (InterruptedException e2) {
+                        log.trace("Failed to wait until the server has capacity to handle new alarm rules messages", e2);
+                    }
+                }
+            }
+        }
+        log.info("TB Alarm Rules request consumer stopped.");
+    }
+
+    private void processMessage(ToTbAlarmRuleStateServiceMsg msg) {
+        if (msg.hasAlarmRuleState()) {
+            //TODO: ybondarenko
+        } else if (msg.hasAttrUpdate()) {
+            TransportProtos.TbAttributeUpdateProto proto = msg.getAttrUpdate();
+            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+            EntityId entityId = TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB());
+            onAttributesUpdate(tenantId, entityId, proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()));
+        } else if (msg.hasAttrDelete()) {
+            TransportProtos.TbAttributeDeleteProto proto = msg.getAttrDelete();
+            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+            EntityId entityId = TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB());
+            onAttributesDelete(tenantId, entityId, proto.getScope(), proto.getKeysList());
+        } else if (msg.hasAlarmUpdate()) {
+            TransportProtos.TbAlarmUpdateProto proto = msg.getAlarmUpdate();
+            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+            EntityId entityId = TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB());
+            onAlarmUpdate(tenantId, entityId, JacksonUtil.fromString(proto.getAlarm(), Alarm.class));
+        } else if (msg.hasAlarmDelete()) {
+            TransportProtos.TbAlarmDeleteProto proto = msg.getAlarmDelete();
+            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+            EntityId entityId = TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB());
+            onAlarmDeleted(tenantId, entityId, JacksonUtil.fromString(proto.getAlarm(), Alarm.class));
+        }
+    }
+
 
     @Override
     public void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
@@ -258,6 +366,26 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
             rules.remove(tenantId);
             otherEntityStateIds.remove(tenantId);
         }
+    }
+
+    @Override
+    public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+        //TODO: ybondarenko
+    }
+
+    @Override
+    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+        //TODO: ybondarenko
+    }
+
+    @Override
+    public void onAlarmUpdate(TenantId tenantId, EntityId entityId, Alarm alarm) {
+        //TODO: ybondarenko
+    }
+
+    @Override
+    public void onAlarmDeleted(TenantId tenantId, EntityId entityId, Alarm alarm) {
+        //TODO: ybondarenko
     }
 
     private List<EntityState> getOrCreateEntityStates(TenantId tenantId, EntityId msgOriginator) {
@@ -409,6 +537,6 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
     }
 
     private boolean isLocalEntity(TenantId tenantId, EntityId entityId) {
-        return partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId).isMyPartition();
+        return partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId).isMyPartition();
     }
 }

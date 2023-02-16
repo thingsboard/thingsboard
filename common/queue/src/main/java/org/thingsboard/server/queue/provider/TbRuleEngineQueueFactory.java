@@ -32,7 +32,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
  * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
  */
-public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory {
+public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory, TbAlarmRulesQueueFactory {
 
     /**
      * Used to push messages to instances of TB Transport Service
@@ -93,4 +93,11 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer();
 
     TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate();
+
+    /**
+     * Used to push messages to instances of TB Alarm Rules State Service
+     *
+     * @return
+     */
+    TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer();
 }
