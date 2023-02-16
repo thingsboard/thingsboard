@@ -19,27 +19,36 @@ import {
   ChangeDetectorRef,
   Component,
   NgZone,
-  OnInit,
+  OnDestroy,
   Renderer2,
   ViewContainerRef
 } from '@angular/core';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, publishReplay, refCount, tap } from 'rxjs/operators';
+import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
+import { distinctUntilChanged, share, tap } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
-import { NotificationSubscriber } from '@shared/models/notification-ws.models';
+import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
 
 @Component({
   selector: 'tb-notification-bell',
   templateUrl: './notification-bell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NotificationBellComponent implements OnInit {
+export class NotificationBellComponent implements OnDestroy {
 
   private notificationSubscriber: NotificationSubscriber;
-  count$: Observable<number>;
+  private notificationCountSubscriber: Subscription;
+  private countSubject = new BehaviorSubject(0);
+
+  count$ = this.countSubject.asObservable().pipe(
+    distinctUntilChanged(),
+    tap(() => setTimeout(() => this.cd.markForCheck())),
+    share({
+      connector: () => new ReplaySubject(1)
+    })
+  );
 
   constructor(
     private notificationWsService: NotificationWebsocketService,
@@ -48,25 +57,18 @@ export class NotificationBellComponent implements OnInit {
     private popoverService: TbPopoverService,
     private renderer: Renderer2,
     private viewContainerRef: ViewContainerRef) {
+    this.initSubscription();
   }
 
-  ngOnInit() {
-    this.notificationSubscriber = NotificationSubscriber.createNotificationCountSubscription(
-      this.notificationWsService, this.zone);
-    this.notificationSubscriber.subscribe();
-
-    this.count$ = this.notificationSubscriber.notificationCount$.pipe(
-      distinctUntilChanged(),
-      publishReplay(1),
-      refCount(),
-      tap(() => setTimeout(() => this.cd.markForCheck())),
-    );
+  ngOnDestroy() {
+    this.unsubscribeSubscription();
   }
 
   showNotification($event: Event, createVersionButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
+    this.unsubscribeSubscription();
     const trigger = createVersionButton._elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
@@ -76,12 +78,26 @@ export class NotificationBellComponent implements OnInit {
         {
           onClose: () => {
             showNotificationPopover.hide();
-          }
+            this.initSubscription();
+          },
+          counter: this.countSubject
         },
         {maxHeight: '90vh', height: '100%', padding: '10px'},
         {width: '400px', minWidth: '100%', maxWidth: '100%'},
         {height: '100%', flexDirection: 'column', boxSizing: 'border-box', display: 'flex'}, false);
       showNotificationPopover.tbComponentRef.instance.popoverComponent = showNotificationPopover;
     }
+  }
+
+  private initSubscription() {
+    this.notificationSubscriber = NotificationSubscriber.createNotificationCountSubscription(this.notificationWsService, this.zone);
+    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.subscribe(value => this.countSubject.next(value));
+
+    this.notificationSubscriber.subscribe();
+  }
+
+  private unsubscribeSubscription() {
+    this.notificationCountSubscriber.unsubscribe();
+    this.notificationSubscriber.unsubscribe();
   }
 }

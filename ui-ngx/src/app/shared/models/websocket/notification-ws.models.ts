@@ -14,12 +14,14 @@
 /// limitations under the License.
 ///
 
-import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 import { CmdUpdate, CmdUpdateMsg, CmdUpdateType, WebsocketCmd } from '@shared/models/telemetry/telemetry.models';
 import { first, map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Notification } from '@shared/models/notification.models';
+import { CmdWrapper, WsSubscriber } from '@shared/models/websocket/websocket.models';
+import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 
 export class NotificationCountUpdate extends CmdUpdate {
   totalUnreadCount: number;
@@ -43,26 +45,16 @@ export class NotificationsUpdate extends CmdUpdate {
   }
 }
 
-export interface NotificationWsService {
-  subscribe(subscriber: NotificationSubscriber);
-
-  update(subscriber: NotificationSubscriber);
-
-  unsubscribe(subscriber: NotificationSubscriber);
-}
-
-export class NotificationSubscriber {
+export class NotificationSubscriber extends WsSubscriber {
   private notificationCountSubject = new ReplaySubject<NotificationCountUpdate>(1);
   private notificationsSubject = new BehaviorSubject<NotificationsUpdate>(null);
-  private reconnectSubject = new Subject<void>();
 
-  public subscriptionCommands: Array<WebsocketCmd>;
   public messageLimit = 10;
 
   public notificationCount$ = this.notificationCountSubject.asObservable().pipe(map(msg => msg.totalUnreadCount));
   public notifications$ = this.notificationsSubject.asObservable().pipe(map(msg => msg?.notifications || []));
 
-  public static createNotificationCountSubscription(notificationWsService: NotificationWsService,
+  public static createNotificationCountSubscription(notificationWsService: NotificationWebsocketService,
                                                     zone: NgZone): NotificationSubscriber {
     const subscriptionCommand = new UnreadCountSubCmd();
     const subscriber = new NotificationSubscriber(notificationWsService, zone);
@@ -70,7 +62,7 @@ export class NotificationSubscriber {
     return subscriber;
   }
 
-  public static createNotificationsSubscription(notificationWsService: NotificationWsService,
+  public static createNotificationsSubscription(notificationWsService: NotificationWebsocketService,
                                                 zone: NgZone, limit = 10): NotificationSubscriber {
     const subscriptionCommand = new UnreadSubCmd(limit);
     const subscriber = new NotificationSubscriber(notificationWsService, zone);
@@ -79,7 +71,7 @@ export class NotificationSubscriber {
     return subscriber;
   }
 
-  public static createMarkAsReadCommand(notificationWsService: NotificationWsService,
+  public static createMarkAsReadCommand(notificationWsService: NotificationWebsocketService,
                                         ids: string[]): NotificationSubscriber {
     const subscriptionCommand = new MarkAsReadCmd(ids);
     const subscriber = new NotificationSubscriber(notificationWsService);
@@ -87,38 +79,15 @@ export class NotificationSubscriber {
     return subscriber;
   }
 
-  public static createMarkAllAsReadCommand(notificationWsService: NotificationWsService): NotificationSubscriber {
+  public static createMarkAllAsReadCommand(notificationWsService: NotificationWebsocketService): NotificationSubscriber {
     const subscriptionCommand = new MarkAllAsReadCmd();
     const subscriber = new NotificationSubscriber(notificationWsService);
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
 
-  constructor(private notificationWsService: NotificationWsService, private zone?: NgZone) {
-    this.subscriptionCommands = [];
-  }
-
-  public subscribe() {
-    this.notificationWsService.subscribe(this);
-  }
-
-  public update() {
-    this.notificationWsService.update(this);
-  }
-
-  public unsubscribe() {
-    this.notificationWsService.unsubscribe(this);
-    this.complete();
-  }
-
-  public onReconnected() {
-    this.reconnectSubject.next();
-  }
-
-  public complete() {
-    this.notificationCountSubject.complete();
-    this.notificationsSubject.complete();
-    this.reconnectSubject.complete();
+  constructor(private notificationWsService: NotificationWebsocketService, protected zone?: NgZone) {
+    super(notificationWsService, zone);
   }
 
   onNotificationCountUpdate(message: NotificationCountUpdate) {
@@ -131,6 +100,12 @@ export class NotificationSubscriber {
     } else {
       this.notificationCountSubject.next(message);
     }
+  }
+
+  public complete() {
+    this.notificationCountSubject.complete();
+    this.notificationsSubject.complete();
+    super.complete();
   }
 
   onNotificationsUpdate(message: NotificationsUpdate) {
@@ -221,7 +196,7 @@ export function isNotificationsUpdateMsg(message: WebsocketNotificationMsg): mes
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS;
 }
 
-export class NotificationPluginCmdsWrapper {
+export class NotificationPluginCmdWrapper implements CmdWrapper {
 
   constructor() {
     this.unreadCountSubCmd = null;
@@ -253,13 +228,14 @@ export class NotificationPluginCmdsWrapper {
     this.markAllAsReadCmd = null;
   }
 
-  public preparePublishCommands(): NotificationPluginCmdsWrapper {
-    const preparedWrapper = new NotificationPluginCmdsWrapper();
+  public preparePublishCommands(): NotificationPluginCmdWrapper {
+    const preparedWrapper = new NotificationPluginCmdWrapper();
     preparedWrapper.unreadCountSubCmd = this.unreadCountSubCmd || undefined;
     preparedWrapper.unreadSubCmd = this.unreadSubCmd || undefined;
     preparedWrapper.unsubCmd = this.unsubCmd || undefined;
     preparedWrapper.markAsReadCmd = this.markAsReadCmd || undefined;
     preparedWrapper.markAllAsReadCmd = this.markAllAsReadCmd || undefined;
+    this.clear();
     return preparedWrapper;
   }
 }

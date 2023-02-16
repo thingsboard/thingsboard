@@ -26,7 +26,7 @@
 <mat-divider></mat-divider>
 <div *ngIf="(notifications$ | async).length; else emptyNotification" style="overflow: auto">
   <section style="min-height: 100px; overflow: auto; padding: 10px 0;">
-   <div *ngFor="let notification of (notifications$ | async); let last = last">
+   <div *ngFor="let notification of (notifications$ | async); let last = last; trackBy: trackById">
      <tb-notification [notification]="notification"
                       [onClose]="onClose"
                       (markAsRead)="markAsRead($event)">

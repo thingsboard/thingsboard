@@ -19,12 +19,12 @@ import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Notification } from '@shared/models/notification.models';
+import { Notification, NotificationRequest } from '@shared/models/notification.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
-import { Observable } from 'rxjs';
-import { publishReplay, refCount, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription } from 'rxjs';
+import { share, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { NotificationSubscriber } from '@shared/models/notification-ws.models';
+import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
 
 @Component({
   selector: 'tb-show-notification-popover',
@@ -37,9 +37,14 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
   onClose: () => void;
 
   @Input()
+  counter: BehaviorSubject<number>;
+
+  @Input()
   popoverComponent: TbPopoverComponent;
 
   private notificationSubscriber: NotificationSubscriber;
+  private notificationCountSubscriber: Subscription;
+
   notifications$: Observable<Notification[]>;
 
   constructor(protected store: Store<AppState>,
@@ -51,19 +56,22 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
   }
 
   ngOnInit() {
-    this.notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(
-      this.notificationWsService, this.zone);
+    this.notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone);
     this.notifications$ = this.notificationSubscriber.notifications$.pipe(
-      publishReplay(1),
-      refCount(),
+      share({
+        connector: () => new ReplaySubject(1)
+      }),
       tap(() => setTimeout(() => this.cd.markForCheck()))
     );
+    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.subscribe(value => this.counter.next(value));
     this.notificationSubscriber.subscribe();
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
+    this.notificationCountSubscriber.unsubscribe();
     this.notificationSubscriber.unsubscribe();
+    this.onClose();
   }
 
   markAsRead(id: string) {
@@ -85,5 +93,9 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
     }
     this.onClose();
     this.router.navigateByUrl(this.router.createUrlTree(['notification-center'])).then(() => {});
+  }
+
+  trackById (index: number, item: NotificationRequest): string {
+    return item.id.id;
   }
 }
