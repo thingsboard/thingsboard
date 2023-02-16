@@ -36,6 +36,7 @@ import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
+import { AdminService } from '@core/http/admin.service';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -45,6 +46,17 @@ export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
 
   resolve(): Observable<string> {
     return this.oauth2Service.getLoginProcessingUrl();
+  }
+}
+
+@Injectable()
+export class OAuth2MailProcessingUrlResolver implements Resolve<string> {
+
+  constructor(private adminService: AdminService) {
+  }
+
+  resolve(): Observable<string> {
+    return this.adminService.getLoginProcessingUrl();
   }
 }
 
@@ -94,6 +106,9 @@ const routes: Routes = [
             label: 'admin.outgoing-mail',
             icon: 'mail'
           }
+        },
+        resolve: {
+          loginProcessingUrl: OAuth2MailProcessingUrlResolver
         }
       },
       {
@@ -276,6 +291,7 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     OAuth2LoginProcessingUrlResolver,
+    OAuth2MailProcessingUrlResolver,
     ResourcesLibraryTableConfigResolver,
     QueuesTableConfigResolver
   ]

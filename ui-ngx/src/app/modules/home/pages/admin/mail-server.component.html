@@ -122,26 +122,156 @@
               <tb-toggle-password matSuffix></tb-toggle-password>
             </mat-form-field>
           </div>
-          <mat-form-field class="mat-block">
-            <mat-label translate>common.username</mat-label>
-            <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
-                   autocomplete="new-username"/>
-          </mat-form-field>
-          <mat-checkbox *ngIf="showChangePassword" formControlName="changePassword" style="padding-bottom: 16px;">
-            {{ 'admin.change-password' | translate }}
-          </mat-checkbox>
-          <mat-form-field class="mat-block" *ngIf="mailSettings.get('changePassword').value || !showChangePassword">
-            <mat-label translate>common.password</mat-label>
-            <input matInput formControlName="password" type="password"
-                   placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
-            <tb-toggle-password matSuffix></tb-toggle-password>
-          </mat-form-field>
+
+          <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
+            <legend class="group-title" translate>admin.oauth2.authentication</legend>
+            <mat-form-field class="mat-block">
+              <mat-label translate>common.username</mat-label>
+              <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
+                     autocomplete="new-username"/>
+            </mat-form-field>
+            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
+                                     style="width: 250px;"
+                                     formControlName="enableOauth2">
+              <mat-button-toggle fxFlex [value]=false>{{ 'admin.oauth2.basic' | translate }}</mat-button-toggle>
+              <mat-button-toggle fxFlex [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</mat-button-toggle>
+            </mat-button-toggle-group>
+            <section *ngIf="!mailSettings.get('enableOauth2').value">
+              <mat-checkbox *ngIf="showChangePassword" formControlName="changePassword" style="padding-bottom: 16px;">
+                {{ 'admin.change-password' | translate }}
+              </mat-checkbox>
+              <mat-form-field class="mat-block" *ngIf="mailSettings.get('changePassword').value || !showChangePassword">
+                <mat-label translate>common.password</mat-label>
+                <input matInput formControlName="password" type="password"
+                       placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
+                <tb-toggle-password matSuffix></tb-toggle-password>
+              </mat-form-field>
+            </section>
+            <section *ngIf="mailSettings.get('enableOauth2').value">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.oauth2.login-provider</mat-label>
+                <mat-select formControlName="providerId">
+                  <mat-option *ngFor="let provider of mailServerOauth2Providers" [value]="provider">
+                    {{ mailServerOauth2ProvidersTranslations.get(provider) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.oauth2.client-id</mat-label>
+                <input matInput formControlName="clientId" required>
+                <mat-error *ngIf="mailSettings.get('clientId').hasError('required')">
+                  {{ 'admin.oauth2.client-id-required' | translate }}
+                </mat-error>
+                <mat-error *ngIf="mailSettings.get('clientId').hasError('maxlen gth')">
+                  {{ 'admin.oauth2.client-id-max-length' | translate }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.oauth2.client-secret</mat-label>
+                <input matInput formControlName="clientSecret" required>
+                <mat-error *ngIf="mailSettings.get('clientSecret').hasError('required')">
+                  {{ 'admin.oauth2.client-secret-required' | translate }}
+                </mat-error>
+                <mat-error *ngIf="mailSettings.get('clientSecret').hasError('maxlength')">
+                  {{ 'admin.oauth2.client-secret-max-length' | translate }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field fxFlex class="mat-block" *ngIf="mailSettings.get('providerId').value === mailServerOauth2Provider.MICROSOFT">
+                <mat-label translate>admin.oauth2.microsoft-tenant-id</mat-label>
+                <input matInput formControlName="providerTenantId" required>
+                <mat-error *ngIf="mailSettings.get('providerTenantId').hasError('required')">
+                  {{ 'admin.oauth2.microsoft-tenant-id-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <section *ngIf="mailSettings.get('providerId').value === mailServerOauth2Provider.CUSTOM">
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>admin.oauth2.authorization-uri</mat-label>
+                  <input matInput formControlName="authUri" required>
+                  <mat-error *ngIf="mailSettings.get('authUri').hasError('required')">
+                    {{ 'admin.oauth2.authorization-uri-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>admin.oauth2.token-uri</mat-label>
+                  <input matInput formControlName="tokenUri" required>
+                  <mat-error *ngIf="mailSettings.get('tokenUri').hasError('required')">
+                    {{ 'admin.oauth2.token-uri-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>admin.oauth2.scope</mat-label>
+                  <input matInput formControlName="scope" required>
+                  <mat-error *ngIf="mailSettings.get('scope').hasError('required')">
+                    {{ 'admin.oauth2.scope-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+              </section>
+              <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px" [formGroup]="domainForm">
+                <legend class="group-title" translate>admin.oauth2.redirect-uri</legend>
+                <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+                  <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
+                    <div fxLayout="row" fxLayout.xs="column" fxLayout.md="column" fxLayoutGap="8px" fxLayoutGap.md="0px">
+                      <mat-form-field fxFlex="30" fxFlex.md fxFlex.xs class="mat-block">
+                        <mat-label translate>admin.oauth2.protocol</mat-label>
+                        <mat-select formControlName="scheme">
+                          <mat-option *ngFor="let protocol of protocols" [value]="protocol">
+                            {{ domainSchemaTranslations.get(protocol) | translate | uppercase }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field fxFlex class="mat-block">
+                        <mat-label translate>admin.domain-name</mat-label>
+                        <input matInput formControlName="name" required>
+                        <mat-error *ngIf="domainForm.get('name').hasError('pattern')">
+                          {{ 'admin.error-verification-url' | translate }}
+                        </mat-error>
+                        <mat-error *ngIf="domainForm.get('name').hasError('maxlength')">
+                          {{ 'admin.domain-name-max-length' | translate }}
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                    <mat-error *ngIf="domainForm.hasError('unique')">
+                      {{ 'admin.domain-name-unique' | translate }}
+                    </mat-error>
+                  </div>
+
+                  <div fxFlex fxLayout="column">
+                    <mat-form-field fxFlex class="mat-block">
+                      <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
+                      <input matInput [value]="redirectURI()" readonly>
+                      <tb-copy-button
+                        matSuffix
+                        color="primary"
+                        [copyText]="redirectURI()"
+                        tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+                        tooltipPosition="above"
+                        mdiIcon="mdi:clipboard-arrow-left">
+                      </tb-copy-button>
+                    </mat-form-field>
+                  </div>
+                </div>
+              </fieldset>
+            </section>
+            <section fxFlex fxLayoutAlign="end center" *ngIf="mailSettings.get('enableOauth2').value">
+              <button mat-raised-button type="button" color="primary" style="width: min-content;"
+                      matTooltip="{{'admin.oauth2.generate-access-token-hint' | translate}}"
+                      [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid"
+                      (click)="generateAccessToken()">
+                {{'admin.oauth2.generate-access-token' | translate}}
+              </button>
+            </section>
+          </fieldset>
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"
-                    [disabled]="(isLoading$ | async) || mailSettings.invalid" (click)="sendTestMail()">
+                    matTooltip="{{'admin.oauth2.send-test-mail-hint' | translate}}"
+                    [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid"
+                    (click)="sendTestMail()">
               {{'admin.send-test-mail' | translate}}
             </button>
-            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || mailSettings.invalid || !mailSettings.dirty"
+            <button mat-raised-button color="primary"
+                    [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (!mailSettings.dirty && !domainForm.dirty)"
                     type="submit">{{'action.save' | translate}}
             </button>
           </div>

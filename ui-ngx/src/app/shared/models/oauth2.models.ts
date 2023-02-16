@@ -29,12 +29,17 @@ export interface OAuth2ParamsInfo {
 
 export interface OAuth2DomainInfo {
   name: string;
-  scheme: DomainSchema;
+  scheme: DomainSchema | MailDomainSchema;
 }
 
 export interface OAuth2MobileInfo {
   pkgName: string;
   appSecret: string;
+}
+
+export enum MailDomainSchema {
+  HTTP = 'HTTP',
+  HTTPS = 'HTTPS'
 }
 
 export enum DomainSchema{
@@ -139,3 +144,16 @@ export interface OAuth2ClientInfo {
   icon?: string;
   url: string;
 }
+
+export enum MailServerOauth2Provider {
+  GOOGLE = 'GOOGLE',
+  MICROSOFT = 'MICROSOFT',
+  CUSTOM = 'CUSTOM'
+}
+export const mailServerOauth2ProvidersTranslations = new Map<MailServerOauth2Provider, string>(
+  [
+    [MailServerOauth2Provider.GOOGLE, 'admin.oauth2.google-provider'],
+    [MailServerOauth2Provider.MICROSOFT, 'admin.oauth2.microsoft-provider'],
+    [MailServerOauth2Provider.CUSTOM, 'admin.oauth2.custom-provider']
+  ]
+);

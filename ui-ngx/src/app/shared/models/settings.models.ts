@@ -17,6 +17,7 @@
 import { ValidatorFn } from '@angular/forms';
 import { isNotEmptyStr, isNumber } from '@core/utils';
 import { VersionCreateConfig } from '@shared/models/vc.models';
+import { MailServerOauth2Provider } from '@shared/models/oauth2.models';
 
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
@@ -43,6 +44,15 @@ export interface MailServerSettings {
   proxyPort: number;
   proxyUser: string;
   proxyPassword: string;
+  enableOauth2: boolean;
+  providerId?: MailServerOauth2Provider;
+  clientId?: string;
+  clientSecret?: string;
+  providerTenantId?: string;
+  authUri?: string;
+  tokenUri?: string;
+  scope?: string;
+  redirectUri?: string;
 }
 
 export interface GeneralSettings {
