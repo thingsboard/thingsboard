@@ -36,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -739,15 +738,11 @@ public abstract class AbstractGatewaySessionHandler {
         log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
     }
 
-    public void sendSparkplugStateOnTelemetry(TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugConnectionState typeSate, long ts) {
+    public void sendSparkplugStateOnTelemetry(TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugConnectionState connectionState, long ts) {
         TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
-        try {
-            keyValueProtoBuilder.setKey(messageName(STATE));
-            keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
-            keyValueProtoBuilder.setStringV(typeSate.name());
-        } catch (ThingsboardException e) {
-            e.printStackTrace();
-        }
+        keyValueProtoBuilder.setKey(messageName(STATE));
+        keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
+        keyValueProtoBuilder.setStringV(connectionState.name());
         TransportProtos.PostTelemetryMsg postTelemetryMsg = postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
 
         transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(channel, deviceName, -1, postTelemetryMsg));
