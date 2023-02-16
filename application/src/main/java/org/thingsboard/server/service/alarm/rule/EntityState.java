@@ -19,7 +19,6 @@ import com.google.gson.JsonParser;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
@@ -168,7 +167,8 @@ class EntityState {
         }
     }
 
-    public void process(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+    //TODO: move lock to the particular process methods
+    public void process(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         lock.lock();
         try {
             if (latestValues == null) {
@@ -176,15 +176,15 @@ class EntityState {
             }
             boolean stateChanged = false;
             if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-                stateChanged = processTelemetry(tbContext, msg);
+                stateChanged = processTelemetry(requestCtx, msg);
             } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
-                stateChanged = processAttributesUpdateRequest(tbContext, msg);
+                stateChanged = processAttributesUpdateRequest(requestCtx, msg);
             } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
-                stateChanged = processDeviceActivityEvent(tbContext, msg);
+                stateChanged = processDeviceActivityEvent(requestCtx, msg);
             } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
-                stateChanged = processAttributesUpdateNotification(tbContext, msg);
+                stateChanged = processAttributesUpdateNotification(requestCtx, msg);
             } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
-                stateChanged = processAttributesDeleteNotification(tbContext, msg);
+                stateChanged = processAttributesDeleteNotification(requestCtx, msg);
             } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
                 stateChanged = processAlarmClearNotification(msg);
             } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
@@ -205,12 +205,12 @@ class EntityState {
         }
     }
 
-    private boolean processDeviceActivityEvent(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processDeviceActivityEvent(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
-            return processTelemetry(tbContext, msg);
+            return processTelemetry(requestCtx, msg);
         } else {
-            return processAttributes(tbContext, msg, scope);
+            return processAttributes(requestCtx, msg, scope);
         }
     }
 
@@ -236,26 +236,31 @@ class EntityState {
 
     private void processAlarmDeleteNotification(TbMsg msg) {
         Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        processAlarmDeleteNotification(alarm);
+    }
+
+    public void processAlarmDeleteNotification(Alarm alarm) {
         alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm() != null
                 && alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
     }
 
-    private boolean processAttributesUpdateNotification(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processAttributesUpdateNotification(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
-        return processAttributes(tbContext, msg, scope);
+        return processAttributes(requestCtx, msg, scope);
     }
 
-    private boolean processAttributesDeleteNotification(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
-        boolean stateChanged = false;
+    private boolean processAttributesDeleteNotification(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         List<String> keys = new ArrayList<>();
         new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
+        boolean stateChanged = false;
+
         if (!keys.isEmpty()) {
             EntityKeyType keyType = getKeyTypeFromScope(scope);
             Set<AlarmConditionFilterKey> removedKeys = keys.stream().map(key -> new EntityKey(keyType, key))
@@ -266,31 +271,32 @@ class EntityState {
             for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
+                stateChanged |= alarmState.process(requestCtx, ctx, msg, latestValues, update);
             }
         }
         return stateChanged;
     }
 
-    private boolean processAttributesUpdateRequest(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
-        return processAttributes(tbContext, msg, DataConstants.CLIENT_SCOPE);
+    private boolean processAttributesUpdateRequest(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
+        return processAttributes(requestCtx, msg, DataConstants.CLIENT_SCOPE);
     }
 
-    private boolean processAttributes(TbContext tbContext, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
+    private boolean processAttributes(TbAlarmRuleRequestCtx requestCtx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
+
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
+                stateChanged |= alarmState.process(requestCtx, ctx, msg, latestValues, update);
             }
         }
         return stateChanged;
     }
 
-    private boolean processTelemetry(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException {
+    private boolean processTelemetry(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), msg.getMetaDataTs());
         // iterate over data by ts (ASC order).
@@ -303,7 +309,7 @@ class EntityState {
                     AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                             a -> new AlarmState(this.entityRulesState, tenantId, entityId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                     try {
-                        stateChanged |= alarmState.process(tbContext, ctx, msg, latestValues, update);
+                        stateChanged |= alarmState.process(requestCtx, ctx, msg, latestValues, update);
                     } catch (ApiUsageLimitsExceededException e) {
                         alarmStates.remove(alarm.getId());
                         throw e;

@@ -171,6 +171,19 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void pushMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback) {
+        log.trace("PUSHING msg: {} to:{}", msg, tpi);
+        TransportProtos.ToTbAlarmRuleStateServiceMsg toAlarmRule =
+                TransportProtos.ToTbAlarmRuleStateServiceMsg.newBuilder()
+                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                        .setTbMsg(TbMsg.toByteString(msg))
+                        .build();
+
+        pushMsgToAlarmRules(tpi, entityId, toAlarmRule, callback);
+    }
+
+    @Override
     public void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, ToRuleEngineMsg msg, TbQueueCallback callback) {
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(msgId, msg), callback);

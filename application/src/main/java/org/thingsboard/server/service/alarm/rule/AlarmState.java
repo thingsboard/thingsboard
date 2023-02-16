@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
-import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -82,13 +81,19 @@ class AlarmState {
         this.updateState(alarmDefinition, alarmState);
     }
 
-    public boolean process(TbContext tbContext, TbAlarmRuleContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
+    public boolean process(TbAlarmRuleRequestCtx requestCtx, TbAlarmRuleContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        lastMsgMetaData = msg.getMetaData();
-        lastMsgQueueName = msg.getQueueName();
-        lastRuleChainId = tbContext.getSelf().getRuleChainId();
-        lastRuleNodeId = tbContext.getSelf().getId();
-        isLastRuleNodeDebugMode = tbContext.getSelf().isDebugMode();
+        if (msg != null) {
+            lastMsgMetaData = msg.getMetaData();
+            lastMsgQueueName = msg.getQueueName();
+        }
+
+        if (requestCtx != null) {
+            lastRuleChainId = requestCtx.getRuleChainId();
+            lastRuleNodeId = requestCtx.getRuleNodeId();
+            isLastRuleNodeDebugMode = requestCtx.isDebugMode();
+        }
+
         this.dataSnapshot = data;
         try {
             return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);

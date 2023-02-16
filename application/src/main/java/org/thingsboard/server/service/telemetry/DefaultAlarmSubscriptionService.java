@@ -24,8 +24,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
@@ -49,13 +47,10 @@ import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -73,21 +68,18 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     private final AlarmCommentService alarmCommentService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
-    private final TbAlarmRuleStateService alarmRuleStateService;
 
     public DefaultAlarmSubscriptionService(TbClusterService clusterService,
                                            PartitionService partitionService,
                                            AlarmService alarmService,
                                            TbApiUsageReportClient apiUsageClient,
                                            TbApiUsageStateService apiUsageStateService,
-                                           AlarmCommentService alarmCommentService,
-                                           TbAlarmRuleStateService alarmRuleStateService) {
+                                           AlarmCommentService alarmCommentService) {
         super(clusterService, partitionService);
         this.alarmService = alarmService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
         this.alarmCommentService = alarmCommentService;
-        this.alarmRuleStateService = alarmRuleStateService;
     }
 
     @Autowired(required = false)
@@ -201,25 +193,8 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TbAlarmUpdateProto updateProto = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
-
-                    SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-                    msgBuilder.setAlarmUpdate(updateProto);
-                    ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
-
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
-
-                TopicPartitionInfo arTpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
-                if (arTpi.isMyPartition()) {
-                    alarmRuleStateService.onAlarmUpdate(tenantId, entityId, alarm);
-                } else {
-                    TbAlarmUpdateProto updateProto = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
-
-                    ToTbAlarmRuleStateServiceMsg toAlarmRuleMsg =
-                            ToTbAlarmRuleStateServiceMsg.newBuilder().setAlarmUpdate(updateProto).build();
-
-                    clusterService.pushMsgToAlarmRules(tpi, entityId, toAlarmRuleMsg, null);
                 }
             }
         });
@@ -238,25 +213,8 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TbAlarmDeleteProto deleteProto = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
-
-                    SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-                    msgBuilder.setAlarmDelete(deleteProto);
-                    ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
-
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
-
-                TopicPartitionInfo arTpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
-                if (arTpi.isMyPartition()) {
-                    alarmRuleStateService.onAlarmDeleted(tenantId, entityId, alarm);
-                } else {
-                    TbAlarmDeleteProto deleteProto = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
-
-                    ToTbAlarmRuleStateServiceMsg toAlarmRuleMsg =
-                            ToTbAlarmRuleStateServiceMsg.newBuilder().setAlarmDelete(deleteProto).build();
-
-                    clusterService.pushMsgToAlarmRules(tpi, entityId, toAlarmRuleMsg, null);
                 }
             }
         });

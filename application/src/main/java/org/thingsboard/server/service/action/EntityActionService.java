@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -40,7 +41,11 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.List;
 import java.util.Map;
@@ -52,11 +57,15 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
+    private final TbAlarmRuleStateService alarmRuleStateService;
+    private final PartitionService partitionService;
 
     private static final ObjectMapper json = new ObjectMapper();
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
+        boolean sendEventToAlarmRuleStateService = false;
+
         String msgType = null;
         switch (actionType) {
             case ADDED:
@@ -76,18 +85,23 @@ public class EntityActionService {
                 break;
             case ATTRIBUTES_UPDATED:
                 msgType = DataConstants.ATTRIBUTES_UPDATED;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case ATTRIBUTES_DELETED:
                 msgType = DataConstants.ATTRIBUTES_DELETED;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case ALARM_ACK:
                 msgType = DataConstants.ALARM_ACK;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case ALARM_DELETE:
                 msgType = DataConstants.ALARM_DELETE;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case ASSIGNED_FROM_TENANT:
                 msgType = DataConstants.ENTITY_ASSIGNED_FROM_TENANT;
@@ -215,6 +229,15 @@ public class EntityActionService {
                     }
                 }
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
+
+                if (sendEventToAlarmRuleStateService && (entityId.getEntityType().equals(EntityType.DEVICE) || entityId.getEntityType().equals(EntityType.ASSET))) {
+                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
+                    if (tpi.isMyPartition()) {
+                        alarmRuleStateService.process(tenantId, tbMsg);
+                    } else {
+                        tbClusterService.pushMsgToAlarmRules(tpi, tenantId, entityId, tbMsg, null);
+                    }
+                }
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

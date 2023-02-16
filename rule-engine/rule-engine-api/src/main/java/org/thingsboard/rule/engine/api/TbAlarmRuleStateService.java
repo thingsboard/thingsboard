@@ -15,18 +15,15 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.List;
 
 public interface TbAlarmRuleStateService {
 
     void process(TbContext tbContext, TbMsg msg) throws Exception;
+
+    void process(TenantId tenantId, TbMsg msg) throws Exception;
 
     void processEntityDeleted(TbMsg msg);
 
@@ -37,12 +34,4 @@ public interface TbAlarmRuleStateService {
     void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
 
     void deleteTenant(TenantId tenantId);
-
-    void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes);
-
-    void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys);
-
-    void onAlarmUpdate(TenantId tenantId, EntityId entityId, Alarm alarm);
-
-    void onAlarmDeleted(TenantId tenantId, EntityId entityId, Alarm alarm);
 }
