@@ -40,7 +40,7 @@ import { CustomerService } from '@core/http/customer.service';
 import { Customer } from '@app/shared/models/customer.model';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BroadcastService } from '@core/services/broadcast.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { DialogService } from '@core/services/dialog.service';
 import {
   AssignToCustomerDialogComponent,

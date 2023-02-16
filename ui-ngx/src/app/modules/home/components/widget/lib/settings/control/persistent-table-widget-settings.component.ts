@@ -23,8 +23,8 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject } from 'rxjs';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
-import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatLegacyChipInputEvent as MatChipInputEvent, MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
+import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteSelectedEvent as MatAutocompleteSelectedEvent } from '@angular/material/legacy-autocomplete';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 

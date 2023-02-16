@@ -25,7 +25,7 @@ import { DebugEventType, Event, EventType, FilterEventBody } from '@shared/model
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EventService } from '@app/core/http/event.service';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';

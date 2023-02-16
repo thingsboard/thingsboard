@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { Directive, InjectionToken } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';

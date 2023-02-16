@@ -33,7 +33,7 @@ import { map, mergeMap, take, tap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { AddUserDialogComponent, AddUserDialogData } from '@modules/home/pages/user/add-user-dialog.component';
 import { AuthState } from '@core/auth/auth.models';

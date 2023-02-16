@@ -52,7 +52,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
-import { MatMenuTrigger } from '@angular/material/menu';
+import { MatLegacyMenuTrigger as MatMenuTrigger } from '@angular/material/legacy-menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';

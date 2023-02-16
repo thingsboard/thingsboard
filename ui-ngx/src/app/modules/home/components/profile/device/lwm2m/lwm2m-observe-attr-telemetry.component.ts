@@ -30,7 +30,7 @@ import {
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Instance, ObjectLwM2M } from './lwm2m-profile-config.models';
 import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   Lwm2mObjectAddInstancesData,
   Lwm2mObjectAddInstancesDialogComponent

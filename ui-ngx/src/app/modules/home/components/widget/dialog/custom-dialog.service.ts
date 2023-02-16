@@ -16,7 +16,7 @@
 
 import { Inject, Injectable, Type } from '@angular/core';
 import { Observable } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';

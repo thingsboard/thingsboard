@@ -28,7 +28,7 @@ import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { DialogService } from '@core/services/dialog.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { AssetProfile, TB_SERVICE_QUEUE } from '@shared/models/asset.models';

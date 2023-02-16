@@ -18,7 +18,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { Dashboard, WidgetLayout } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Widget } from '@shared/models/widget.models';

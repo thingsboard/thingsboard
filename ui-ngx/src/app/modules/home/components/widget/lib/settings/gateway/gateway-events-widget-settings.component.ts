@@ -19,7 +19,7 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { MatLegacyChipInputEvent as MatChipInputEvent } from '@angular/material/legacy-chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 
 @Component({

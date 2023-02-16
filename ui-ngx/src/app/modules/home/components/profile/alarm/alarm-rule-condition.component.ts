@@ -25,7 +25,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmCondition, AlarmConditionType } from '@shared/models/device.models';

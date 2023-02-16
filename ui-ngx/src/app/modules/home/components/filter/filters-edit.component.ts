@@ -24,7 +24,7 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { TooltipPosition } from '@angular/material/tooltip';
+import { LegacyTooltipPosition as TooltipPosition } from '@angular/material/legacy-tooltip';
 import { IAliasController } from '@core/api/widget-api.models';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,7 +39,7 @@ import {
 } from '@home/components/filter/filters-edit-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { UserFilterDialogComponent, UserFilterDialogData } from '@home/components/filter/user-filter-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 
 @Component({
   selector: 'tb-filters-edit',

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable } from 'rxjs';
 import {

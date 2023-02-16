@@ -18,7 +18,7 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { AuditLogService } from '@core/http/audit-log.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { AuditLogMode } from '@shared/models/audit-log.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { UserId } from '@shared/models/id/user-id';

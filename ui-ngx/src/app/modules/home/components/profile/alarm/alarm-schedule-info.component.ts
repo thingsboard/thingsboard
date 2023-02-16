@@ -22,7 +22,7 @@ import {
   AlarmScheduleTypeTranslationMap, dayOfWeekTranslations,
   getAlarmScheduleRangeText, utcTimestampToTimeOfDay
 } from '@shared/models/device.models';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   AlarmScheduleDialogComponent,
   AlarmScheduleDialogData

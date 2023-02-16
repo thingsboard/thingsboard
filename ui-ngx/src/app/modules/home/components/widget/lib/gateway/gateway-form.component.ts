@@ -46,7 +46,7 @@ import {
   WidgetSetting
 } from './gateway-form.models';
 import { WINDOW } from '@core/services/window.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   JsonObjectEditDialogComponent,
   JsonObjectEditDialogData

@@ -96,7 +96,7 @@ import {
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
 import { UntypedFormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
@@ -144,7 +144,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 import { DOCUMENT } from '@angular/common';
 import { IAliasController } from '@core/api/widget-api.models';
-import { MatButton } from '@angular/material/button';
+import { MatLegacyButton as MatButton } from '@angular/material/legacy-button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { tap } from 'rxjs/operators';

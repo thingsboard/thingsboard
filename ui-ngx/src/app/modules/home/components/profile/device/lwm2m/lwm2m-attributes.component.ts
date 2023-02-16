@@ -19,7 +19,7 @@ import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_AC
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { isEmpty, isUndefinedOrNull } from '@core/utils';
 import { Lwm2mAttributesDialogComponent, Lwm2mAttributesDialogData } from './lwm2m-attributes-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { AttributesNameValueMap } from './lwm2m-profile-config.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';

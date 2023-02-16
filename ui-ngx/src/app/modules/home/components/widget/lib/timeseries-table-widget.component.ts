@@ -56,7 +56,7 @@ import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {

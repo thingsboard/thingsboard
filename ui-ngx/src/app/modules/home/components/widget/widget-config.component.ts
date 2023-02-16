@@ -65,7 +65,7 @@ import {
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
@@ -74,7 +74,7 @@ import { entityFields } from '@shared/models/entity.models';
 import { Filter } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { MatLegacyChipInputEvent as MatChipInputEvent } from '@angular/material/legacy-chips';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 const emptySettingsSchema: JsonSchema = {

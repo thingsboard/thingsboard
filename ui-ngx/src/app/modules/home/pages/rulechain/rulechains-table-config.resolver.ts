@@ -44,7 +44,7 @@ import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { isUndefined } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';

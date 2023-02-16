@@ -17,7 +17,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { DialogService } from '@core/services/dialog.service';

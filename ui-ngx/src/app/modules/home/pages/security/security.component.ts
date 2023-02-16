@@ -29,7 +29,7 @@ import {
   Validators
 } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { ActivatedRoute } from '@angular/router';
 import { ActionNotificationShow } from '@core/notification/notification.actions';

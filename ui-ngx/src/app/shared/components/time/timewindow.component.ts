@@ -52,7 +52,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
-import { TooltipPosition } from '@angular/material/tooltip';
+import { LegacyTooltipPosition as TooltipPosition } from '@angular/material/legacy-tooltip';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 

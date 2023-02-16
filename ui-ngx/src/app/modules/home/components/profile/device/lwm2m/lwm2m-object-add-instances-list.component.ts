@@ -26,7 +26,7 @@ import {
 import { INSTANCES_ID_VALUE_MAX, INSTANCES_ID_VALUE_MIN } from './lwm2m-profile-config.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { MatLegacyChipInputEvent as MatChipInputEvent } from '@angular/material/legacy-chips';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-add-instances-list',

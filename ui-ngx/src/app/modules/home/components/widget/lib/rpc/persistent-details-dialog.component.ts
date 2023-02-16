@@ -21,7 +21,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { PersistentRpc, RpcStatus, rpcStatusColors, rpcStatusTranslation } from '@shared/models/rpc.models';

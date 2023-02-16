@@ -33,7 +33,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { MatCheckbox } from '@angular/material/checkbox';
+import { MatLegacyCheckbox as MatCheckbox } from '@angular/material/legacy-checkbox';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-other-entities-confirm.component';
 

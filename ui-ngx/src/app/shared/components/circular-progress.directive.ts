@@ -15,7 +15,7 @@
 ///
 
 import { ComponentRef, Directive, ElementRef, Input, ViewContainerRef } from '@angular/core';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatLegacyProgressSpinner as MatProgressSpinner } from '@angular/material/legacy-progress-spinner';
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector

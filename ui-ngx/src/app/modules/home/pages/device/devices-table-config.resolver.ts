@@ -44,7 +44,7 @@ import { Customer } from '@app/shared/models/customer.model';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { DeviceTableHeaderComponent } from '@modules/home/pages/device/device-table-header.component';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   DeviceCredentialsDialogComponent,
   DeviceCredentialsDialogData

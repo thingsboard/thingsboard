@@ -107,7 +107,7 @@ import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
 import { AlarmDataService } from '@core/api/alarm-data.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';

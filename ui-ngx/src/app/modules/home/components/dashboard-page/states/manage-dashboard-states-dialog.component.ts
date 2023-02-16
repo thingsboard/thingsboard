@@ -16,7 +16,7 @@
 
 import { AfterViewInit, Component, ElementRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
@@ -29,7 +29,7 @@ import {
   DashboardStatesDatasource
 } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component.models';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
 import { MatSort } from '@angular/material/sort';
 import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';

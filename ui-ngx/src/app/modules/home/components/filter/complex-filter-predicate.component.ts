@@ -17,7 +17,7 @@
 import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ComplexFilterPredicateInfo, EntityKeyValueType } from '@shared/models/query/query.models';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { deepClone } from '@core/utils';
 import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter-component.models';
 import { COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN } from '@home/components/tokens';

@@ -33,7 +33,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileAlarm, deviceProfileAlarmValidator } from '@shared/models/device.models';
 import { guid } from '@core/utils';
 import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({

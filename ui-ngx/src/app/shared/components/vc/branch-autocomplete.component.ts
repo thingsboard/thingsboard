@@ -34,7 +34,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { BranchInfo } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { isNotEmptyStr } from '@core/utils';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteTrigger as MatAutocompleteTrigger } from '@angular/material/legacy-autocomplete';
 
 @Component({
   selector: 'tb-branch-autocomplete',

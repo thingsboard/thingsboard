@@ -33,9 +33,9 @@ import {
 } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
+import { MatLegacySnackBarModule as MatSnackBarModule } from '@angular/material/legacy-snack-bar';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';
 import { WINDOW_PROVIDERS } from '@core/services/window.service';

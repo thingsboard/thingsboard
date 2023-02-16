@@ -46,7 +46,7 @@ import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { ExceptionData } from '@shared/models/error.models';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult

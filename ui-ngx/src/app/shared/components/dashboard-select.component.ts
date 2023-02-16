@@ -37,7 +37,7 @@ import { AppState } from '@app/core/core.state';
 import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { TooltipPosition } from '@angular/material/tooltip';
+import { LegacyTooltipPosition as TooltipPosition } from '@angular/material/legacy-tooltip';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { DOCUMENT } from '@angular/common';

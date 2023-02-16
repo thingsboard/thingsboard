@@ -55,12 +55,12 @@ import {
 } from '@shared/models/rpc.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
 import { MatSort } from '@angular/material/sort';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DialogService } from '@core/services/dialog.service';
 import { DeviceService } from '@core/http/device.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   PersistentDetailsDialogComponent,
   PersistentDetailsDialogData

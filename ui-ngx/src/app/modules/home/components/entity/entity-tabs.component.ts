@@ -20,7 +20,7 @@ import { AfterViewInit, Directive, Input, OnInit, QueryList, ViewChildren } from
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { MatTab } from '@angular/material/tabs';
+import { MatLegacyTab as MatTab } from '@angular/material/legacy-tabs';
 import { BehaviorSubject } from 'rxjs';
 import { Authority } from '@app/shared/models/authority.enum';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';

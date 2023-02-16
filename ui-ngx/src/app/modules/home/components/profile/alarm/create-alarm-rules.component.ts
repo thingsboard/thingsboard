@@ -28,7 +28,7 @@ import {
   Validators
 } from '@angular/forms';
 import { AlarmRule, alarmRuleValidator } from '@shared/models/device.models';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { Subscription } from 'rxjs';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { EntityId } from '@shared/models/id/entity-id';

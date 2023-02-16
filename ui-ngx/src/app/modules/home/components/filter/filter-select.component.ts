@@ -32,7 +32,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteTrigger as MatAutocompleteTrigger } from '@angular/material/legacy-autocomplete';
 import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';

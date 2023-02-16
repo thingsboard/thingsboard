@@ -16,7 +16,7 @@
 
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { ClipboardService } from 'ngx-clipboard';
-import { TooltipPosition } from '@angular/material/tooltip';
+import { LegacyTooltipPosition as TooltipPosition } from '@angular/material/legacy-tooltip';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

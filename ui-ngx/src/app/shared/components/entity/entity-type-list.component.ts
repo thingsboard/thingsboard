@@ -23,8 +23,8 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
-import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
+import { MatLegacyAutocomplete as MatAutocomplete } from '@angular/material/legacy-autocomplete';
+import { MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 interface EntityTypeInfo {

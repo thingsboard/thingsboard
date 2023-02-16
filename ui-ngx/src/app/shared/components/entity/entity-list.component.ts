@@ -35,8 +35,8 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
-import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
+import { MatLegacyAutocomplete as MatAutocomplete } from '@angular/material/legacy-autocomplete';
+import { MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({

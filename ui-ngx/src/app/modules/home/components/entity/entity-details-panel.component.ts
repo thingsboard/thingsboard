@@ -41,7 +41,7 @@ import { EntityComponent } from './entity.component';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Observable, ReplaySubject, Subscription } from 'rxjs';
-import { MatTab, MatTabGroup } from '@angular/material/tabs';
+import { MatLegacyTab as MatTab, MatLegacyTabGroup as MatTabGroup } from '@angular/material/legacy-tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
 import { deepClone, mergeDeep } from '@core/utils';
 import { entityIdEquals } from '@shared/models/id/entity-id';

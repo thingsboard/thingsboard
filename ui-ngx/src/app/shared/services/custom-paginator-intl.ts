@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { MatPaginatorIntl } from '@angular/material/paginator';
+import { MatLegacyPaginatorIntl as MatPaginatorIntl } from '@angular/material/legacy-paginator';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 

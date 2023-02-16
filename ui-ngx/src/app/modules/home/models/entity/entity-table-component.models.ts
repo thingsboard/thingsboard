@@ -22,7 +22,7 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
 import { ElementRef, EventEmitter } from '@angular/core';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
 import { MatSort } from '@angular/material/sort';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import {

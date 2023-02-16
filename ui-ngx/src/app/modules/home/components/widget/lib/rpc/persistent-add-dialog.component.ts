@@ -19,7 +19,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { RequestData } from '@shared/models/rpc.models';
 import { TranslateService } from '@ngx-translate/core';

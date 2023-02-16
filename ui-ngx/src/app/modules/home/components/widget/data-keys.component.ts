@@ -42,8 +42,8 @@ import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
+import { MatLegacyAutocomplete as MatAutocomplete } from '@angular/material/legacy-autocomplete';
+import { MatLegacyChipInputEvent as MatChipInputEvent, MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
@@ -54,7 +54,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { DialogService } from '@core/services/dialog.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData

@@ -35,7 +35,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { EntityAlias } from '@shared/models/alias.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteTrigger as MatAutocompleteTrigger } from '@angular/material/legacy-autocomplete';
 import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';

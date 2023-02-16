@@ -37,7 +37,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { MatLegacyChipInputEvent as MatChipInputEvent } from '@angular/material/legacy-chips';
 import { WINDOW } from '@core/services/window.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { DialogService } from '@core/services/dialog.service';

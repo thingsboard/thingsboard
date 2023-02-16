@@ -24,7 +24,7 @@ import { isDefined } from '@core/utils';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatLegacySlideToggle as MatSlideToggle } from '@angular/material/legacy-slide-toggle';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { ThemePalette } from '@angular/material/core';
 

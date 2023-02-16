@@ -31,7 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Country, CountryData } from '@shared/models/country.models';
 import examples from 'libphonenumber-js/examples.mobile.json';
 import { Subscription } from 'rxjs';
-import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-field';
+import { LegacyFloatLabelType as FloatLabelType, MatLegacyFormFieldAppearance as MatFormFieldAppearance } from '@angular/material/legacy-form-field';
 
 @Component({
   selector: 'tb-phone-input',
