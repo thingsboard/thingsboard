@@ -37,15 +37,15 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private String errorMsg;
     @Getter
-    private AlarmInfo alarm;
+    private Alarm alarm;
     @Getter
     private boolean alarmDeleted;
 
-    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm) {
+    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm) {
         this(subscriptionId, alarm, false);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
         this.alarm = alarm;

@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -161,8 +162,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null) {
             return new AlarmOperationResult(alarm, false);
         }
-        AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-        AlarmOperationResult result = new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+        AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
         deleteEntityRelations(tenantId, alarm.getId());
         alarmDao.removeById(tenantId, alarm.getUuidId());
         return result;
@@ -172,8 +172,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
-        AlarmInfo alarmInfo = getAlarmInfo(alarm.getTenantId(), saved);
-        return new AlarmOperationResult(alarmInfo, true, true, propagatedEntitiesList);
+        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -229,8 +228,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
         }
-        AlarmInfo alarmInfo = getAlarmInfo(newAlarm.getTenantId(), newAlarm);
-        return new AlarmOperationResult(alarmInfo, true, false, oldAlarmSeverity, propagatedEntitiesList);
+        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
     }
 
     @Override
@@ -247,8 +245,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setStatus(newStatus);
                     alarm.setAckTs(ackTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
@@ -271,8 +268,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                         alarm.setDetails(details);
                     }
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
@@ -290,8 +286,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(assigneeId);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
@@ -309,8 +304,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(null);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarmInfo, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
@@ -359,10 +353,15 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
         List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
         for (AlarmInfo alarmInfo : alarms.getData()) {
-            alarmInfo.setOriginatorName(
-                    entityService.fetchEntityName(tenantId, alarmInfo.getOriginator()).orElse("Deleted"));
-            alarmInfo.setOriginatorLabel(
-                    entityService.fetchEntityLabel(tenantId, alarmInfo.getOriginator()).orElse(alarmInfo.getOriginatorName()));
+            Optional<NameLabelAndCustomerDetails> detailsOpt = entityService.fetchNameLabelAndCustomerDetails(tenantId, alarmInfo.getOriginator());
+            if (detailsOpt.isPresent() && detailsOpt.get().getName() != null) {
+                NameLabelAndCustomerDetails details = detailsOpt.get();
+                alarmInfo.setOriginatorName(details.getName());
+                alarmInfo.setOriginatorLabel(details.getLabel());
+            } else {
+                alarmInfo.setOriginatorName("Deleted");
+                alarmInfo.setOriginatorLabel("Deleted");
+            }
             alarmFutures.add(Futures.immediateFuture(alarmInfo));
         }
         return Futures.transform(Futures.successfulAsList(alarmFutures),
@@ -465,8 +464,15 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         String assigneeLastName = null;
         String assigneeEmail = null;
 
-        originatorName = entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse("Deleted");
-        originatorLabel = entityService.fetchEntityLabel(tenantId, alarm.getOriginator()).orElse(originatorName);
+        Optional<NameLabelAndCustomerDetails> detailsOpt = entityService.fetchNameLabelAndCustomerDetails(tenantId, alarm.getOriginator());
+        if (detailsOpt.isPresent() && detailsOpt.get().getName() != null) {
+            NameLabelAndCustomerDetails details = detailsOpt.get();
+            originatorName = details.getName();
+            originatorLabel = details.getLabel();
+        } else {
+            originatorName = "Deleted";
+            originatorLabel = "Deleted";
+        }
 
         if (alarm.getAssigneeId() != null) {
             User assignedUser = userService.findUserById(tenantId, alarm.getAssigneeId());

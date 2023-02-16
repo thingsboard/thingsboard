@@ -211,8 +211,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
-        AlarmInfo alarmInfo = subscriptionUpdate.getAlarm();
-        AlarmId alarmId = alarmInfo.getId();
+        Alarm alarm = subscriptionUpdate.getAlarm();
+        AlarmId alarmId = alarm.getId();
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);
             if (deleted != null) {
@@ -221,10 +221,10 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         } else {
             AlarmData current = alarmsMap.get(alarmId);
             boolean onCurrentPage = current != null;
-            boolean matchesFilter = filter(alarmInfo);
+            boolean matchesFilter = filter(alarm);
             if (onCurrentPage) {
                 if (matchesFilter) {
-                    AlarmData updated = new AlarmData(alarmInfo, current.getEntityId());
+                    AlarmData updated = current.update(alarm);
                     updated.getLatest().putAll(current.getLatest());
                     alarmsMap.put(alarmId, updated);
                     sendWsMsg(new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), maxEntitiesPerAlarmSubscription, data.getTotalElements()));

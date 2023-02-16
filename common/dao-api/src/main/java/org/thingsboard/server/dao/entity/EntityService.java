@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.entity;
 
-import org.springframework.data.util.Pair;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,8 +34,9 @@ public interface EntityService {
 
     Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId);
 
+    Optional<NameLabelAndCustomerDetails> fetchNameLabelAndCustomerDetails(TenantId tenantId, EntityId entityId);
+
     long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);
 
     PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
-
 }

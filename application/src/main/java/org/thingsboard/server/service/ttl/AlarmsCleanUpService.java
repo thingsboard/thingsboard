@@ -84,8 +84,8 @@ public class AlarmsCleanUpService {
                     PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
                     toRemove.getData().forEach(alarmId -> {
                         relationService.deleteEntityRelations(tenantId, alarmId);
-                        AlarmInfo alarmInfo = alarmService.deleteAlarm(tenantId, alarmId).getAlarmInfo();
-                        entityActionService.pushEntityActionToRuleEngine(alarmInfo.getOriginator(), alarmInfo, tenantId, null, ActionType.ALARM_DELETE, null);
+                        Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
+                        entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
                     });
 
                     totalRemoved += toRemove.getTotalElements();

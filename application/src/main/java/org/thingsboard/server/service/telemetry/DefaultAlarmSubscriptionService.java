@@ -94,16 +94,16 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public AlarmInfo createOrUpdateAlarm(Alarm alarm) {
+    public Alarm createOrUpdateAlarm(Alarm alarm) {
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm, apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled());
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
             AlarmSeverity oldSeverity = result.getOldSeverity();
-            if (oldSeverity != null && !oldSeverity.equals(result.getAlarmInfo().getSeverity())) {
+            if (oldSeverity != null && !oldSeverity.equals(result.getAlarm().getSeverity())) {
                 AlarmComment alarmComment = AlarmComment.builder()
                         .alarmId(alarm.getId())
                         .type(AlarmCommentType.SYSTEM)
-                        .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarmInfo().getSeverity())))
+                        .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarm().getSeverity())))
                         .build();
                 alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             }
@@ -111,7 +111,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         if (result.isCreated()) {
             apiUsageClient.report(alarm.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
         }
-        return result.getAlarmInfo();
+        return result.getAlarm();
     }
 
     @Override
@@ -142,25 +142,25 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public AlarmInfo assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
+    public AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
         AlarmOperationResult result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
         } else {
-            log.warn("Failed to assign alarm!");
+            log.warn("[{}][{}] Failed to assign alarm.", tenantId, alarmId);
         }
-        return result.getAlarmInfo();
+        return result;
     }
 
     @Override
-    public AlarmInfo unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
+    public AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
         AlarmOperationResult result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
         } else {
-            log.warn("Failed to unassign alarm!");
+            log.warn("[{}][{}] Failed to unassign alarm.", tenantId, alarmId);
         }
-        return result.getAlarmInfo();
+        return result;
     }
 
     @Override
@@ -205,18 +205,18 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     private void onAlarmUpdated(AlarmOperationResult result) {
         wsCallBackExecutor.submit(() -> {
-            AlarmInfo alarmInfo = result.getAlarmInfo();
-            TenantId tenantId = alarmInfo.getTenantId();
+            Alarm alarm = result.getAlarm();
+            TenantId tenantId = alarm.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarmInfo, TbCallback.EMPTY);
+                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarmInfo);
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
                 }
             }
@@ -225,18 +225,18 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     private void onAlarmDeleted(AlarmOperationResult result) {
         wsCallBackExecutor.submit(() -> {
-            AlarmInfo alarmInfo = result.getAlarmInfo();
-            TenantId tenantId = alarmInfo.getTenantId();
+            Alarm alarm = result.getAlarm();
+            TenantId tenantId = alarm.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarmInfo, TbCallback.EMPTY);
+                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarmInfo);
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
                 }
             }

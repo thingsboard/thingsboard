@@ -98,17 +98,17 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public Alarm assign(Alarm alarm, User user, UserId assigneeId) {
         long assignTs = System.currentTimeMillis();
-        Alarm assignedAlarm = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, assignTs);
-        notificationEntityService.notifyCreateOrUpdateAlarm(assignedAlarm, ActionType.ALARM_ASSIGN, user);
-        return assignedAlarm;
+        AlarmOperationResult operationResult = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, assignTs);
+        notificationEntityService.notifyCreateOrUpdateAlarm(operationResult.getAlarm(), ActionType.ALARM_ASSIGN, user);
+        return operationResult.getAlarm();
     }
 
     @Override
     public Alarm unassign(Alarm alarm, User user) {
         long assignTs = System.currentTimeMillis();
-        Alarm unassignedAlarm = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs);
-        notificationEntityService.notifyCreateOrUpdateAlarm(unassignedAlarm, ActionType.ALARM_UNASSIGN, user);
-        return unassignedAlarm;
+        AlarmOperationResult operationResult = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs);
+        notificationEntityService.notifyCreateOrUpdateAlarm(operationResult.getAlarm(), ActionType.ALARM_UNASSIGN, user);
+        return operationResult.getAlarm();
     }
 
     @Override

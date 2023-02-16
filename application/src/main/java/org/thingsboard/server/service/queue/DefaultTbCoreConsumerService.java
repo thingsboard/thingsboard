@@ -503,13 +503,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.onAlarmUpdate(
                     TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                    JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class),callback);
+                    JacksonUtil.fromString(proto.getAlarm(), Alarm.class),callback);
         } else if (msg.hasAlarmDelete()) {
             TbAlarmDeleteProto proto = msg.getAlarmDelete();
             subscriptionManagerService.onAlarmDeleted(
                     TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                    JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class), callback);
+                    JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
         } else {
             throwNotHandled(msg, callback);
         }

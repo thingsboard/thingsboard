@@ -28,26 +28,22 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class AlarmOperationResult {
-    private final AlarmInfo alarmInfo;
+    private final Alarm alarm;
     private final boolean successful;
     private final boolean created;
     private final AlarmSeverity oldSeverity;
     private final List<EntityId> propagatedEntitiesList;
 
     public AlarmOperationResult(Alarm alarm, boolean successful) {
-        this(new AlarmInfo(alarm, null, null, null, null, null), successful, Collections.emptyList());
+        this(alarm, successful, Collections.emptyList());
     }
 
-    public AlarmOperationResult(AlarmInfo alarmInfo, boolean successful) {
-        this(alarmInfo, successful, Collections.emptyList());
+    public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList) {
+        this(alarm, successful, false, null, propagatedEntitiesList);
     }
 
-    public AlarmOperationResult(AlarmInfo alarmInfo, boolean successful, List<EntityId> propagatedEntitiesList) {
-        this(alarmInfo, successful, false, null, propagatedEntitiesList);
-    }
-
-    public AlarmOperationResult(AlarmInfo alarmInfo, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
-        this.alarmInfo = alarmInfo;
+    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
+        this.alarm = alarm;
         this.successful = successful;
         this.created = created;
         this.propagatedEntitiesList = propagatedEntitiesList;

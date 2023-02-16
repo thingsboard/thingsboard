@@ -16,9 +16,7 @@
 package org.thingsboard.server.dao.entity;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
@@ -26,6 +24,8 @@ import org.thingsboard.server.common.data.HasEmail;
 import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTitle;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -98,6 +98,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return fetchAndConvert(tenantId, entityId, this::getCustomerId);
     }
 
+    @Override
+    public Optional<NameLabelAndCustomerDetails> fetchNameLabelAndCustomerDetails(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchNameLabelAndCustomerDetails [{}]", entityId);
+        return fetchAndConvert(tenantId, entityId, this::getNameLabelAndCustomerDetails);
+    }
+
     private <T> Optional<T> fetchAndConvert(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
         Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
@@ -109,25 +115,24 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private String getLabel(HasId<?> entity) {
-        String entityLabel = null;
-        if (entity instanceof HasTitle) {
-            entityLabel = ((HasTitle) entity).getTitle();
+        if (entity instanceof HasTitle && StringUtils.isNotEmpty(((HasTitle) entity).getTitle())) {
+            return ((HasTitle) entity).getTitle();
         }
-        if (entity instanceof HasLabel && entityLabel == null) {
-            entityLabel = ((HasLabel) entity).getLabel();
+        if (entity instanceof HasLabel && StringUtils.isNotEmpty(((HasLabel) entity).getLabel())) {
+            return ((HasLabel) entity).getLabel();
         }
-        if (entity instanceof HasEmail && entityLabel == null) {
-            entityLabel = ((HasEmail) entity).getEmail();
+        if (entity instanceof HasEmail && StringUtils.isNotEmpty(((HasEmail) entity).getEmail())) {
+            return ((HasEmail) entity).getEmail();
         }
-        if (entity instanceof HasName && entityLabel == null) {
-            entityLabel = ((HasName) entity).getName();
+        if (entity instanceof HasName && StringUtils.isNotEmpty(((HasName) entity).getName())) {
+            return ((HasName) entity).getName();
         }
-        return entityLabel;
+        return null;
     }
 
-    private CustomerId getCustomerId(HasId<?> hasId) {
-        if (hasId instanceof HasCustomerId) {
-            HasCustomerId hasCustomerId = (HasCustomerId) hasId;
+    private CustomerId getCustomerId(HasId<?> entity) {
+        if (entity instanceof HasCustomerId) {
+            HasCustomerId hasCustomerId = (HasCustomerId) entity;
             CustomerId customerId = hasCustomerId.getCustomerId();
             if (customerId == null) {
                 customerId = NULL_CUSTOMER_ID;
@@ -135,6 +140,10 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             return customerId;
         }
         return NULL_CUSTOMER_ID;
+    }
+
+    private NameLabelAndCustomerDetails getNameLabelAndCustomerDetails(HasId<?> entity) {
+        return new NameLabelAndCustomerDetails(getName(entity), getLabel(entity), getCustomerId(entity));
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {

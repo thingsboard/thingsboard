@@ -40,7 +40,7 @@ import java.util.Collection;
  */
 public interface RuleEngineAlarmService {
 
-    AlarmInfo createOrUpdateAlarm(Alarm alarm);
+    Alarm createOrUpdateAlarm(Alarm alarm);
 
     Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
@@ -50,9 +50,9 @@ public interface RuleEngineAlarmService {
 
     ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
-    AlarmInfo assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
+    AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
 
-    AlarmInfo unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
+    AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 

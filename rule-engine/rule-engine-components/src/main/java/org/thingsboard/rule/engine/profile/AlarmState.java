@@ -132,7 +132,7 @@ class AlarmState {
                 );
                 DonAsynchron.withCallback(alarmClearOperationResult,
                         result -> {
-                            pushMsg(ctx, msg, new TbAlarmResult(false, false, true, result.getAlarmInfo()), clearState);
+                            pushMsg(ctx, msg, new TbAlarmResult(false, false, true, result.getAlarm()), clearState);
                         },
                         throwable -> {
                             throw new RuntimeException(throwable);
