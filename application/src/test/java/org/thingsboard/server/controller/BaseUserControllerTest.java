@@ -811,7 +811,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void shouldFindCustomerUsersByFirstName() throws Exception {
+    public void shouldFindCustomerUsersBySearchText() throws Exception {
         loginSysAdmin();
         User tenantAdmin = createTenantAdminUser();
         createUserAndLogin(tenantAdmin, "testPassword1");
@@ -829,7 +829,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             customerUsersContainingWord.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId), User.class));
             doPost("/api/user", createCustomerUser(null, null, customerId), User.class);
 
+            suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
             doPost("/api/user", createCustomerUser(searchText + i, "Last" + i, customerId2), User.class);
+            doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId2), User.class);
         }
 
         createUserAndLogin(createCustomerUser(customerId), "testPassword2");
@@ -860,7 +862,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void shouldFindTenantUsersByTextFromLastName() throws Exception {
+    public void shouldFindTenantUsersBySearchText() throws Exception {
         loginSysAdmin();
 
         User tenantAdmin = createTenantAdminUser();
@@ -875,6 +877,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             String suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
             usersContainingWord.add(doPost("/api/user", createCustomerUser("First" + i, searchText + i, customerId), User.class));
             usersContainingWord.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId), User.class));
+            doPost("/api/user", createCustomerUser(null, null, customerId), User.class);
 
             suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
             usersContainingWord.add(doPost("/api/user", createCustomerUser("First" + i, searchText + i, customerId2), User.class));
