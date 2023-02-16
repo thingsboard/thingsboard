@@ -49,16 +49,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.KeyFilter;
-import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.UserSettings;
@@ -76,14 +71,11 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
-import static org.thingsboard.server.common.data.query.FilterPredicateValue.fromString;
-import static org.thingsboard.server.common.data.query.StringFilterPredicate.StringOperation.EQUAL;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
@@ -328,10 +320,10 @@ public class UserController extends BaseController {
     }
 
     @ApiOperation(value = "Find users by query (findUsersByQuery)",
-            notes = "Returns a page of user data owned by tenant or customer." +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Returns page of user data objects. Search is been executed by email, firstName and " +
+                    "lastName fields. " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/users/find", method = RequestMethod.GET)
+    @RequestMapping(value = "/users/info", method = RequestMethod.GET)
     @ResponseBody
     public PageData<UserData> findUsersByQuery(
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
@@ -348,33 +340,12 @@ public class UserController extends BaseController {
 
         EntityTypeFilter entityFilter = new EntityTypeFilter();
         entityFilter.setEntityType(EntityType.USER);
-
         EntityDataPageLink pageLink = new EntityDataPageLink(pageSize, page, textSearch, createEntityDataSortOrder(sortProperty, sortOrder));
-
         List<EntityKey> entityFields = Arrays.asList(new EntityKey(ENTITY_FIELD, "firstName"),
                 new EntityKey(ENTITY_FIELD, "lastName"),
                 new EntityKey(ENTITY_FIELD, "email"));
 
-        List<KeyFilter> keyFilters = new ArrayList<>();
-        KeyFilter tenantIdFilter = KeyFilter.builder()
-                .key(new EntityKey(ENTITY_FIELD, "tenantId"))
-                .predicate(StringFilterPredicate.builder()
-                        .operation(EQUAL)
-                        .value(fromString(securityUser.getTenantId().getId().toString())).build())
-                .build();
-        keyFilters.add(tenantIdFilter);
-
-        if (!Authority.TENANT_ADMIN.equals(securityUser.getAuthority())) {
-            KeyFilter customerIdFilter = KeyFilter.builder()
-                    .key(new EntityKey(ENTITY_FIELD, "customerId"))
-                    .predicate(StringFilterPredicate.builder()
-                            .operation(EQUAL)
-                            .value(fromString(securityUser.getCustomerId().getId().toString())).build())
-                    .build();
-            keyFilters.add(customerIdFilter);
-        }
-
-        EntityDataQuery query = new EntityDataQuery(entityFilter, pageLink, entityFields, null, keyFilters);
+        EntityDataQuery query = new EntityDataQuery(entityFilter, pageLink, entityFields, null, null);
 
         return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
                 new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
