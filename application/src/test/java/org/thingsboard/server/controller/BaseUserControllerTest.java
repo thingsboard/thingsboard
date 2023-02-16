@@ -915,7 +915,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(10, 0, "Name");
         PageData<UserData> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/users/find?",
+            pageData = doGetTypedWithPageLink("/api/users/info?",
                     new TypeReference<>() {
                     }, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
@@ -934,7 +934,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         // find user my full name
         loadedCustomerUsers.clear();
         pageLink = new PageLink(10, 0, "Name3");
-        pageData = doGetTypedWithPageLink("/api/users/find?",
+        pageData = doGetTypedWithPageLink("/api/users/info?",
                 new TypeReference<>() {
                 }, pageLink);
         loadedCustomerUsers.addAll(pageData.getData());
@@ -995,7 +995,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(10, 0, "Name");
         PageData<UserData> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/users/find?",
+            pageData = doGetTypedWithPageLink("/api/users/info?",
                     new TypeReference<>() {
                     }, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
@@ -1014,7 +1014,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         // find user my full name
         loadedCustomerUsers.clear();
         pageLink = new PageLink(10, 0, "SecondCustomerLastname3");
-        pageData = doGetTypedWithPageLink("/api/users/find?",
+        pageData = doGetTypedWithPageLink("/api/users/info?",
                 new TypeReference<>() {
                 }, pageLink);
         loadedCustomerUsers.addAll(pageData.getData());
