@@ -82,8 +82,30 @@
             {{ column.title }}
           </mat-header-cell>
           <mat-cell *matCellDef="let alarm; let row = index"
-                    [innerHTML]="cellContent(alarm, column, row)"
                     [ngStyle]="cellStyle(alarm, column, row)">
+            <span [innerHTML]="cellContent(alarm, column, row)"></span>
+            <ng-container *ngIf="column.entityKey.key === 'assigneeEmail'">
+              <span class="assignee-cell" fxLayout="row" fxLayoutAlign="start center">
+                <span *ngIf="alarm.assigneeId" class="assigned-container">
+                  <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm)">
+                    {{ getUserInitials(alarm) }}
+                  </span>
+                  <span style="text-overflow: ellipsis">{{ getUserDisplayName(alarm) }}</span>
+                </span>
+                <span *ngIf="!alarm.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
+                  <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
+                  <span translate>alarm.unassigned</span>
+                </span>
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ alarm.assign | translate }}"
+                        matTooltipPosition="above"
+                        (click)="openAlarmAssigneePanel($event, alarm)">
+                  <mat-icon>
+                    keyboard_arrow_down
+                  </mat-icon>
+                </button>
+              </span>
+            </ng-container>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">

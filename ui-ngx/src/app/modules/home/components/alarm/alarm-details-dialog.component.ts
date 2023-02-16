@@ -33,6 +33,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface AlarmDetailsDialogData {
   alarmId?: string;
@@ -45,7 +46,7 @@ export interface AlarmDetailsDialogData {
 @Component({
   selector: 'tb-alarm-details-dialog',
   templateUrl: './alarm-details-dialog.component.html',
-  styleUrls: []
+  styleUrls: ['./alarm-details-dialog.component.scss']
 })
 export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> implements OnInit {
 
@@ -66,6 +67,8 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
 
   alarmUpdated = false;
 
+  assigneeInitials = '';
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private datePipe: DatePipe,
@@ -73,7 +76,8 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
               @Inject(MAT_DIALOG_DATA) public data: AlarmDetailsDialogData,
               private alarmService: AlarmService,
               public dialogRef: MatDialogRef<AlarmDetailsDialogComponent, boolean>,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,
+              private utilsService: UtilsService) {
     super(store, router, dialogRef);
 
     this.allowAcknowledgment = data.allowAcknowledgment;
@@ -95,6 +99,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         assignTime: [''],
         type: [''],
         alarmSeverity: [''],
+        assignee: [''],
         alarmStatus: [''],
         alarmDetails: [null]
       }
@@ -161,6 +166,11 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       .patchValue(this.translate.instant(alarmSeverityTranslations.get(alarm.severity)));
     this.alarmFormGroup.get('alarmStatus')
       .patchValue(this.translate.instant(alarmStatusTranslations.get(alarm.status)));
+    if (alarm.assigneeId) {
+      this.alarmFormGroup.get('assignee').
+      patchValue(this.getUserDisplayName(alarm));
+      this.assigneeInitials = this.getUserInitials(alarm);
+    }
     this.alarmFormGroup.get('alarmDetails').patchValue(alarm.details);
   }
 
@@ -191,6 +201,45 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         }
       );
     }
+  }
+
+  getColorFromString(userDisplayName: string) {
+    return this.utilsService.stringToHslColor(userDisplayName, 40, 60);
+  }
+
+  getUserDisplayName(entity: AlarmInfo) {
+    let displayName = '';
+    if ((entity.assigneeFirstName && entity.assigneeFirstName.length > 0) ||
+      (entity.assigneeLastName && entity.assigneeLastName.length > 0)) {
+      if (entity.assigneeFirstName) {
+        displayName += entity.assigneeFirstName;
+      }
+      if (entity.assigneeLastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += entity.assigneeLastName;
+      }
+    } else {
+      displayName = entity.assigneeEmail;
+    }
+    return displayName;
+  }
+
+  getUserInitials(entity: AlarmInfo): string {
+    let initials = '';
+    if (entity.assigneeFirstName && entity.assigneeFirstName.length ||
+      entity.assigneeLastName && entity.assigneeLastName.length) {
+      if (entity.assigneeFirstName) {
+        initials += entity.assigneeFirstName.charAt(0);
+      }
+      if (entity.assigneeLastName) {
+        initials += entity.assigneeLastName.charAt(0);
+      }
+    } else {
+      initials += entity.assigneeEmail.charAt(0);
+    }
+    return initials.toUpperCase();
   }
 
 }

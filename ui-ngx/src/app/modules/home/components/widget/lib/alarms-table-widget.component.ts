@@ -93,7 +93,7 @@ import {
 } from '@home/components/widget/lib/display-columns-panel.component';
 import {
   AlarmDataInfo,
-  alarmFields,
+  alarmFields, AlarmInfo,
   AlarmSearchStatus,
   alarmSeverityColors,
   alarmSeverityTranslations,
@@ -127,6 +127,10 @@ import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import {
+  ALARM_ASSIGNEE_PANEL_DATA, AlarmAssigneePanelComponent,
+  AlarmAssigneePanelData
+} from '@home/components/alarm/alarm-assignee-panel.component';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -417,6 +421,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           const alarmField = alarmFields[dataKey.name];
           if (alarmField && alarmField.time) {
             keySettings.columnWidth = '120px';
+          }
+          if (alarmField && alarmField.keyName  === alarmFields.assigneeEmail.keyName) {
+            keySettings.columnWidth = '120px'
           }
         }
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, alarm, ctx');
@@ -966,7 +973,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
         } else if (alarmField.value === alarmFields.originatorType.value) {
           return this.translate.instant(entityTypeTranslations.get(value).type);
-        } else {
+        } else if (alarmField.value === alarmFields.assigneeEmail.value) {
+          return '';
+        }
+        else {
           return value;
         }
       }
@@ -1012,6 +1022,84 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.cellContentCache.length = 0;
     this.cellStyleCache.length = 0;
     this.rowStyleCache.length = 0;
+  }
+
+  getUserDisplayName(entity: AlarmInfo) {
+    let displayName = '';
+    if ((entity.assigneeFirstName && entity.assigneeFirstName.length > 0) ||
+      (entity.assigneeLastName && entity.assigneeLastName.length > 0)) {
+      if (entity.assigneeFirstName) {
+        displayName += entity.assigneeFirstName;
+      }
+      if (entity.assigneeLastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += entity.assigneeLastName;
+      }
+    } else {
+      displayName = entity.assigneeEmail;
+    }
+    return displayName;
+  }
+
+  getUserInitials(entity: AlarmInfo): string {
+    let initials = '';
+    if (entity.assigneeFirstName && entity.assigneeFirstName.length ||
+      entity.assigneeLastName && entity.assigneeLastName.length) {
+      if (entity.assigneeFirstName) {
+        initials += entity.assigneeFirstName.charAt(0);
+      }
+      if (entity.assigneeLastName) {
+        initials += entity.assigneeLastName.charAt(0);
+      }
+    } else {
+      initials += entity.assigneeEmail.charAt(0);
+    }
+    return initials.toUpperCase();
+  }
+
+  getAvatarBgColor(entity: AlarmInfo) {
+    return this.utils.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  }
+
+  openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'center',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+    config.minWidth = '260px';
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+    const providers: StaticProvider[] = [
+      {
+        provide: ALARM_ASSIGNEE_PANEL_DATA,
+        useValue: {
+          alarmId: entity.id.id,
+          assigneeId: entity.assigneeId?.id
+        } as AlarmAssigneePanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
+      this.viewContainerRef, injector));
   }
 }
 
