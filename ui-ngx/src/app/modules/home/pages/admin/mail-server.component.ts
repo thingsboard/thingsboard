@@ -54,7 +54,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   protocols = Object.values(MailDomainSchema);
   domainSchemaTranslations = domainSchemaTranslations;
 
-  mailServerOauth2Provider = MailServerOauth2Provider
+  mailServerOauth2Provider = MailServerOauth2Provider;
   mailServerOauth2Providers = Object.values(MailServerOauth2Provider);
   mailServerOauth2ProvidersTranslations = mailServerOauth2ProvidersTranslations;
 
