@@ -19,12 +19,13 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.UserId;
 
 @ApiModel
 @Data
 @AllArgsConstructor
-public class UserData {
+public class UserData implements HasId<UserId> {
 
     @ApiModelProperty(position = 1, value = "User id")
     private UserId id;
