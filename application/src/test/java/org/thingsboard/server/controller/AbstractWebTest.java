@@ -29,8 +29,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
@@ -196,9 +198,20 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 this.mappingJackson2HttpMessageConverter);
     }
 
+    @BeforeClass
+    public static void beforeWebTestClass() throws Exception {
+
+    }
+
+    @AfterClass
+    public static void afterWebTestClass() throws Exception {
+        Mockito.clearAllCaches();
+    }
+
+
     @Before
     public void setupWebTest() throws Exception {
-        log.info("Executing web test setup");
+        log.debug("Executing web test setup");
 
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
@@ -238,12 +251,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         resetTokens();
 
-        log.info("Executed web test setup");
+        log.debug("Executed web test setup");
     }
 
     @After
     public void teardownWebTest() throws Exception {
-        log.info("Executing web test teardown");
+        log.debug("Executing web test teardown");
 
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
