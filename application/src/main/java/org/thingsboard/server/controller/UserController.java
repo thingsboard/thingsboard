@@ -41,7 +41,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.UserData;
+import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -51,7 +51,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.TsValue;
@@ -76,7 +75,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -327,7 +325,7 @@ public class UserController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/users/info", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<UserData> findUsersByQuery(
+    public PageData<UserEmailInfo> findUsersByQuery(
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -352,7 +350,7 @@ public class UserController extends BaseController {
         return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
         {
             Map<String, TsValue> fieldValues = entityData.getLatest().get(ENTITY_FIELD);
-            return new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
+            return new UserEmailInfo(UserId.fromString(entityData.getEntityId().getId().toString()),
                     fieldValues.get("email").getValue(),
                     fieldValues.get("firstName").getValue(),
                     fieldValues.get("lastName").getValue());

@@ -18,7 +18,6 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -35,7 +34,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.UserData;
+import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -64,7 +63,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
-    private IdComparator<UserData> userDataIdComparator = new IdComparator<>();
+    private IdComparator<UserEmailInfo> userDataIdComparator = new IdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
 
@@ -811,7 +810,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         createUserAndLogin(user2, "testPassword2");
 
         PageLink pageLink = new PageLink(10, 0, searchText);
-        List<UserData> usersInfo = getUsersInfo(pageLink);
+        List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
         Assert.assertEquals(usersInfo.size(), 0);
 
@@ -854,9 +853,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         // find users by search text
         PageLink pageLink = new PageLink(10, 0, searchText);
-        List<UserData> usersInfo = getUsersInfo(pageLink);
+        List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
-        List<UserData> expectedUserInfos = customerUsersContainingWord.stream().map(customerUser -> new UserData(customerUser.getId(),
+        List<UserEmailInfo> expectedUserInfos = customerUsersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
                 customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
                         customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
@@ -907,9 +906,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         // find users by search text
         loginUser(tenantAdmin.getEmail(), "testPassword1");
         PageLink pageLink = new PageLink(10, 0, searchText);
-        List<UserData> usersInfo = getUsersInfo(pageLink);
+        List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
-        List<UserData> expectedUserInfos = usersContainingWord.stream().map(customerUser -> new UserData(customerUser.getId(),
+        List<UserEmailInfo> expectedUserInfos = usersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
                         customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
                         customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
@@ -969,9 +968,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         return tenantAdmin;
     }
 
-    private List<UserData> getUsersInfo(PageLink pageLink) throws Exception {
-        List<UserData> loadedCustomerUsers = new ArrayList<>();
-        PageData<UserData> pageData = null;
+    private List<UserEmailInfo> getUsersInfo(PageLink pageLink) throws Exception {
+        List<UserEmailInfo> loadedCustomerUsers = new ArrayList<>();
+        PageData<UserEmailInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/users/info?", new TypeReference<>() {}, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
