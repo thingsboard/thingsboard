@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
-public enum SparkplugMessageTypeSate {
-    /**
-     * The EoN node should examine the payload of this
-     * message to ensure that it is a value of “ONLINE”
-     */
-    OFFLINE,
-    /**
-     * If the value is “OFFLINE”, this indicates the Primary Application
-     * has lost its MQTT Session to this particular MQTT Server.
-     */
-    ONLINE
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SparkplugRpcRequestHeader {
+
+    private String messageType;
+    private String metricName;
+    private Object value;
 
 }

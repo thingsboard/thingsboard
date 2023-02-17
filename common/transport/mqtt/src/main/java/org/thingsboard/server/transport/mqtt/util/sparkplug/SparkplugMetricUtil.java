@@ -189,6 +189,41 @@ public class SparkplugMetricUtil {
         return metric;
     }
 
+    public static TransportProtos.TsKvProto getTsKvProto(String key, Object value, long ts) throws ThingsboardException {
+        try {
+            TransportProtos.TsKvProto.Builder tsKvProtoBuilder = TransportProtos.TsKvProto.newBuilder();
+            TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
+            keyValueProtoBuilder.setKey(key);
+            if (value instanceof String) {
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
+                keyValueProtoBuilder.setStringV((String) value);
+            } else if (value instanceof Integer) {
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.LONG_V);
+                keyValueProtoBuilder.setLongV((Integer) value);
+            } else if (value instanceof Long) {
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.LONG_V);
+                keyValueProtoBuilder.setLongV((Long) value);
+            } else if (value instanceof Boolean) {
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.BOOLEAN_V);
+                keyValueProtoBuilder.setBoolV((Boolean) value);
+            } else if (value instanceof Double) {
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.DOUBLE_V);
+                keyValueProtoBuilder.setDoubleV((Double) value);
+            } else if (value instanceof List) {
+                keyValueProtoBuilder.setType(TransportProtos.KeyValueType.JSON_V);
+                ArrayNode arrayNodeBytes = JacksonUtil.convertValue(value, ArrayNode.class);
+                keyValueProtoBuilder.setJsonV(arrayNodeBytes.toString());
+            } else {
+                throw new ThingsboardException("Failed to convert device/node RPC command to TsKvProto for Sparkplug MQT msg: value [" + value + "]", ThingsboardErrorCode.INVALID_ARGUMENTS);
+            }
+            tsKvProtoBuilder.setKv(keyValueProtoBuilder.build());
+            tsKvProtoBuilder.setTs(ts);
+            return tsKvProtoBuilder.build();
+        } catch (Exception e) {
+            throw new ThingsboardException("Failed to convert device/node RPC command to TsKvProto for Sparkplug MQT msg: value [" + value + "]", ThingsboardErrorCode.INVALID_ARGUMENTS);
+        }
+    }
+
     public static Optional<Object> validatedValueByTypeMetric(TransportProtos.KeyValueProto kv, MetricDataType metricDataType) throws ThingsboardException {
         if (kv.getTypeValue() <= 3) {
             return validatedValuePrimitiveByTypeMetric(kv, metricDataType);
@@ -214,8 +249,8 @@ public class SparkplugMetricUtil {
                     case UInt8:
                     case UInt16:
                     case Int32:
-                        Optional <Integer> boolInt8 = booleanStringToInt (valueOpt.get());
-                        if(boolInt8.isPresent()) {
+                        Optional<Integer> boolInt8 = booleanStringToInt(valueOpt.get());
+                        if (boolInt8.isPresent()) {
                             return Optional.of(boolInt8.get());
                         }
                         try {
@@ -233,25 +268,25 @@ public class SparkplugMetricUtil {
                     case Int64:
                     case UInt64:
                     case DateTime:
-                        Optional <Integer> boolInt64 = booleanStringToInt (valueOpt.get());
-                        if(boolInt64.isPresent()) {
+                        Optional<Integer> boolInt64 = booleanStringToInt(valueOpt.get());
+                        if (boolInt64.isPresent()) {
                             return Optional.of(Long.valueOf(boolInt64.get()));
                         }
                         var l = new BigDecimal(valueOpt.get());
                         return Optional.of(l.longValue());
-                        // float
+                    // float
                     case Float:
-                        Optional <Integer> boolFloat = booleanStringToInt (valueOpt.get());
-                        if(boolFloat.isPresent()) {
+                        Optional<Integer> boolFloat = booleanStringToInt(valueOpt.get());
+                        if (boolFloat.isPresent()) {
                             var fb = new BigDecimal(boolFloat.get());
                             return Optional.of(fb.floatValue());
                         }
                         var f = new BigDecimal(valueOpt.get());
                         return Optional.of(f.floatValue());
-                        // double
+                    // double
                     case Double:
-                        Optional <Integer> boolDouble = booleanStringToInt (valueOpt.get());
-                        if(boolDouble.isPresent()) {
+                        Optional<Integer> boolDouble = booleanStringToInt(valueOpt.get());
+                        if (boolDouble.isPresent()) {
                             return Optional.of(Double.valueOf(boolDouble.get()));
                         }
                         var dd = new BigDecimal(valueOpt.get());
@@ -272,7 +307,7 @@ public class SparkplugMetricUtil {
                     case String:
                     case Text:
                     case UUID:
-                        return  Optional.of(valueOpt.get());
+                        return Optional.of(valueOpt.get());
                 }
             } catch (Exception e) {
                 log.trace("Invalid type value [{}] for MetricDataType [{}] [{}]", kv, metricDataType.name(), e.getMessage());
@@ -282,15 +317,16 @@ public class SparkplugMetricUtil {
         return Optional.empty();
     }
 
-    public static Optional<Object> validatedValueJsonByTypeMetric(String arrayNodeStr,  MetricDataType metricDataType) {
+    public static Optional<Object> validatedValueJsonByTypeMetric(String arrayNodeStr, MetricDataType metricDataType) {
         try {
             Optional<Object> valueOpt;
             switch (metricDataType) {
                 // byte[]
                 case Bytes:
-                    List<Byte> listBytes = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {});
+                    List<Byte> listBytes = JacksonUtil.fromString(arrayNodeStr, new TypeReference<>() {
+                    });
                     byte[] bytes = new byte[listBytes.size()];
-                    for(int i = 0; i < listBytes.size(); i++) {
+                    for (int i = 0; i < listBytes.size(); i++) {
                         bytes[i] = listBytes.get(i).byteValue();
                     }
                     return Optional.of(bytes);
@@ -324,7 +360,7 @@ public class SparkplugMetricUtil {
         }
     }
 
-    private static Optional<Integer> booleanStringToInt (String booleanStr) {
+    private static Optional<Integer> booleanStringToInt(String booleanStr) {
         if ("true".equals(booleanStr)) {
             return Optional.of(1);
         } else if ("false".equals(booleanStr)) {

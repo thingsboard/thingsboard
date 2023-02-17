@@ -60,4 +60,19 @@ public class MqttV5ClientSparkplugBConnectionTest extends AbstractMqttV5ClientSp
         processClientWithCorrectAccessTokenWithNDEATHCreatedDevices(2);
     }
 
+    @Test
+    public void testClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_ALL() throws Exception {
+        processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_ALL(3);
+    }
+
+    @Test
+    public void testConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OneDeviceOFFLINE() throws Exception {
+        processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OneDeviceOFFLINE(3, 1);
+    }
+
+    @Test
+    public void testConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OFFLINE_All() throws Exception {
+        processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OFFLINE_All(3);
+    }
+
 }

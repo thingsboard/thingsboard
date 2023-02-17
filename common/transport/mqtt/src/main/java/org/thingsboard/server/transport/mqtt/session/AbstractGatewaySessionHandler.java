@@ -54,7 +54,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.util.ReturnCode;
-import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -75,8 +75,9 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_RPC_ASYNC_MSG;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageTypeSate.OFFLINE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 
 /**
  * Created by ashvayka on 19.01.17.
@@ -246,45 +247,45 @@ public abstract class AbstractGatewaySessionHandler {
         if (future != null) {
             return future;
         }
-            try {
-                transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
-                                .setDeviceName(deviceName)
-                                .setDeviceType(deviceType)
-                                .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
-                                .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits())
-                                .setSparkplug(this.deviceSessionCtx.isSparkplug())
-                                .build(),
-                        new TransportServiceCallback<>() {
-                            @Override
-                            public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                                AbstractGatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg);
-                                if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
-                                    log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
-                                    SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
-                                    transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
-                                    transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
-                                            .setSessionInfo(deviceSessionInfo)
-                                            .setSessionEvent(SESSION_EVENT_MSG_OPEN)
-                                            .setSubscribeToAttributes(SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG)
-                                            .setSubscribeToRPC(SUBSCRIBE_TO_RPC_ASYNC_MSG)
-                                            .build(), null);
-                                }
-                                futureToSet.set(devices.get(deviceName));
-                                deviceFutures.remove(deviceName);
+        try {
+            transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
+                            .setDeviceName(deviceName)
+                            .setDeviceType(deviceType)
+                            .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
+                            .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits())
+                            .setSparkplug(this.deviceSessionCtx.isSparkplug())
+                            .build(),
+                    new TransportServiceCallback<>() {
+                        @Override
+                        public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
+                            AbstractGatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg);
+                            if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
+                                log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
+                                SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
+                                transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
+                                transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
+                                        .setSessionInfo(deviceSessionInfo)
+                                        .setSessionEvent(SESSION_EVENT_MSG_OPEN)
+                                        .setSubscribeToAttributes(SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG)
+                                        .setSubscribeToRPC(SUBSCRIBE_TO_RPC_ASYNC_MSG)
+                                        .build(), null);
                             }
+                            futureToSet.set(devices.get(deviceName));
+                            deviceFutures.remove(deviceName);
+                        }
 
-                            @Override
-                            public void onError(Throwable e) {
-                                log.warn("[{}] Failed to process device connect command: {}", sessionId, deviceName, e);
-                                futureToSet.setException(e);
-                                deviceFutures.remove(deviceName);
-                            }
-                        });
-                return futureToSet;
-            } catch (Throwable e) {
-                deviceFutures.remove(deviceName);
-                throw e;
-            }
+                        @Override
+                        public void onError(Throwable e) {
+                            log.warn("[{}] Failed to process device connect command: {}", sessionId, deviceName, e);
+                            futureToSet.setException(e);
+                            deviceFutures.remove(deviceName);
+                        }
+                    });
+            return futureToSet;
+        } catch (Throwable e) {
+            deviceFutures.remove(deviceName);
+            throw e;
+        }
     }
 
     protected abstract AbstractGatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg);
@@ -557,7 +558,7 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    private void processPostAttributesMsg(MqttDeviceAwareSessionContext deviceCtx, TransportProtos.PostAttributeMsg postAttributeMsg, String deviceName, int msgId) {
+    protected void processPostAttributesMsg(MqttDeviceAwareSessionContext deviceCtx, TransportProtos.PostAttributeMsg postAttributeMsg, String deviceName, int msgId) {
         transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
     }
 
@@ -727,23 +728,23 @@ public abstract class AbstractGatewaySessionHandler {
     }
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
-        if (this.deviceSessionCtx.isSparkplug()){
+        if (this.deviceSessionCtx.isSparkplug()) {
             // add Msg Telemetry: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
-            stateSparkplugtSendOnTelemetry (deviceSessionCtx.getSessionInfo(),
+            sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
         transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
-        System.out.println("Removed device " + deviceName + " from the gateway session");
         log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
     }
 
-    public void stateSparkplugtSendOnTelemetry (TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugMessageTypeSate typeSate, long ts) {
+    public void sendSparkplugStateOnTelemetry(TransportProtos.SessionInfoProto sessionInfo, String deviceName, SparkplugConnectionState connectionState, long ts) {
         TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
-        keyValueProtoBuilder.setKey(STATE.name());
+        keyValueProtoBuilder.setKey(messageName(STATE));
         keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
-        keyValueProtoBuilder.setStringV(typeSate.name());
-        TransportProtos.PostTelemetryMsg postTelemetryMsg =  postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
+        keyValueProtoBuilder.setStringV(connectionState.name());
+        TransportProtos.PostTelemetryMsg postTelemetryMsg = postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
+
         transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(channel, deviceName, -1, postTelemetryMsg));
     }
 

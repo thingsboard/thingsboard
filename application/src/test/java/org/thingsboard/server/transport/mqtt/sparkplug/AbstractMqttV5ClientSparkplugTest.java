@@ -28,6 +28,7 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -48,8 +49,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
@@ -84,10 +89,19 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected int seq = 0;
     protected static final long PUBLISH_TS_DELTA_MS = 86400000;// Publish start TS <-> 24h
 
+    // NBIRTH
+    protected static final String keyNodeRebirth = "Node Control/Rebirth";
+
+    //*BIRTH
+    protected static final MetricDataType metricBirthDataType_Int32 = Int32;
+    protected static final String metricBirthName_Int32 = "Device Metric int32";
+    protected Set<String> sparkPlugAttributesMetricNames;
+
     public void beforeSparkplugTest() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName("Test Connect Sparkplug client node")
                 .isSparkPlug(true)
+                .sparkPlugAttributesMetricNames(sparkPlugAttributesMetricNames)
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .build();
         processBeforeTest(configProperties);
@@ -123,6 +137,50 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         MqttConnAck connAckMsg = (MqttConnAck) response;
         Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
+    protected List<Device> connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(int cntDevices, long ts) throws Exception {
+        List<Device> devices = new ArrayList<>();
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        MetricDataType metricDataType = Int32;
+        String key = "Node Metric int32";
+        int valueDeviceInt32 = 1024;
+        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType);
+        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(ts)
+                .setSeq(getBdSeqNum());
+        payloadBirthNode.addMetrics(metric);
+        payloadBirthNode.setTimestamp(ts);
+        if (client.isConnected()) {
+            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+                    payloadBirthNode.build().toByteArray(), 0, false);
+        }
+
+        valueDeviceInt32 = 4024;
+        metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32,  metricBirthDataType_Int32);
+        for (int i = 0; i < cntDevices; i++) {
+            SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
+                    .setTimestamp(ts)
+                    .setSeq(getSeqNum());
+            String deviceName = deviceId + "_" + i;
+
+            payloadBirthDevice.addMetrics(metric);
+            if (client.isConnected()) {
+                client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
+                        payloadBirthDevice.build().toByteArray(), 0, false);
+                AtomicReference<Device> device = new AtomicReference<>();
+                await(alias + "find device [" + deviceName + "] after created")
+                        .atMost(200, TimeUnit.SECONDS)
+                        .until(() -> {
+                            device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
+                            return device.get() != null;
+                        });
+                devices.add(device.get());
+            }
+
+        }
+
+        Assert.assertEquals(cntDevices, devices.size());
+        return devices;
+    }
 
     protected long getBdSeqNum() throws Exception {
         if (bdSeq == 256) {
@@ -138,17 +196,16 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return seq++;
     }
 
-
-    protected void connectionWithBirth(List<String> listKeys, MetricDataType metricDataType, String metricKey, Object metricValue) throws Exception {
+    protected List<String> connectionWithNBirth(MetricDataType metricDataType, String metricKey, Object metricValue) throws Exception {
+        List<String> listKeys = new ArrayList<>();
         SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(calendar.getTimeInMillis());
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long valueBdSec = getBdSeqNum();
         payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, keysBdSeq, Int64));
         listKeys.add(SparkplugMessageType.NBIRTH.name() + " " + keysBdSeq);
-        String keyRebirth = "Node Control/Rebirth";
-        payloadBirthNode.addMetrics(createMetric(false, ts, keyRebirth, MetricDataType.Boolean));
-        listKeys.add(keyRebirth);
+        payloadBirthNode.addMetrics(createMetric(false, ts, keyNodeRebirth, MetricDataType.Boolean));
+        listKeys.add(keyNodeRebirth);
 
         payloadBirthNode.addMetrics(createMetric(metricValue, ts, metricKey, metricDataType));
         listKeys.add(metricKey);
@@ -157,6 +214,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
+        return listKeys;
     }
 
     protected void createdAddMetricValuePrimitiveTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
@@ -369,11 +427,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         @Override
         public void messageArrived(String topic, MqttMessage mqttMsg) throws Exception {
             SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(mqttMsg.getPayload());
-            System.out.println("Message Arrived on topic " + topic);
-            for (SparkplugBProto.Payload.Metric metric : sparkplugBProtoNode.getMetricsList()) {
-                System.out.println("Metric: " + metric.toString());
-                messageArrivedMetrics.add(metric);
-            }
+            messageArrivedMetrics.addAll(sparkplugBProtoNode.getMetricsList());
         }
 
         @Override

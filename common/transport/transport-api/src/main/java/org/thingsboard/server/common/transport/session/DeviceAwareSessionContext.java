@@ -46,7 +46,7 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     protected volatile DeviceProfile deviceProfile;
     @Getter
     @Setter
-    private volatile TransportProtos.SessionInfoProto sessionInfo;
+    protected volatile TransportProtos.SessionInfoProto sessionInfo;
 
     @Setter
     private volatile boolean connected;
