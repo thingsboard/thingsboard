@@ -29,17 +29,12 @@ export interface OAuth2ParamsInfo {
 
 export interface OAuth2DomainInfo {
   name: string;
-  scheme: DomainSchema | MailDomainSchema;
+  scheme: DomainSchema;
 }
 
 export interface OAuth2MobileInfo {
   pkgName: string;
   appSecret: string;
-}
-
-export enum MailDomainSchema {
-  HTTP = 'HTTP',
-  HTTPS = 'HTTPS'
 }
 
 export enum DomainSchema{
