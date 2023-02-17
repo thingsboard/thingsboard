@@ -289,10 +289,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
                     AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
-                    return new AlarmOperationResult(alarm, new AlarmAssigneeUpdate(false,
-                            new AlarmAssignee(alarmInfo.getAssigneeId(), alarmInfo.getAssigneeFirstName(),
-                                    alarmInfo.getAssigneeLastName(), alarmInfo.getAssigneeEmail())
-                            ), new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarm,
+                            new AlarmAssigneeUpdate(false, alarmInfo.getAssignee()),
+                            new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
@@ -467,9 +466,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private AlarmInfo getAlarmInfo(TenantId tenantId, Alarm alarm) {
         String originatorName;
         String originatorLabel;
-        String assigneeFirstName = null;
-        String assigneeLastName = null;
-        String assigneeEmail = null;
 
         Optional<NameLabelAndCustomerDetails> detailsOpt = entityService.fetchNameLabelAndCustomerDetails(tenantId, alarm.getOriginator());
         if (detailsOpt.isPresent() && detailsOpt.get().getName() != null) {
@@ -481,13 +477,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             originatorLabel = "Deleted";
         }
 
+        AlarmAssignee assignee = null;
         if (alarm.getAssigneeId() != null) {
             User assignedUser = userService.findUserById(tenantId, alarm.getAssigneeId());
-            assigneeFirstName = assignedUser.getFirstName();
-            assigneeLastName = assignedUser.getLastName();
-            assigneeEmail = assignedUser.getEmail();
+            assignee = new AlarmAssignee(assignedUser.getId(), assignedUser.getFirstName(), assignedUser.getLastName(), assignedUser.getEmail());
         }
-        return new AlarmInfo(alarm, originatorName, originatorLabel, assigneeFirstName, assigneeLastName, assigneeEmail);
+        return new AlarmInfo(alarm, originatorName, originatorLabel, assignee);
     }
 
     @Override

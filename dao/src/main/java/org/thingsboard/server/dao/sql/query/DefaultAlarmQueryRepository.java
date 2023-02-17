@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -186,6 +187,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
             fromPart.append(LEFT_JOIN_TB_USERS);
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
+
+            List<EntityKey> queryFields = new ArrayList<>();
+            for(EntityKey key: query.getAlarmFields()){
+                if()
+            }
+
             String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
             if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
                 String sortOrderKey = sortOrder.getKey().getKey();

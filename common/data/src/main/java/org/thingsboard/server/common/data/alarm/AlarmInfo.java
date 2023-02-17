@@ -44,18 +44,8 @@ public class AlarmInfo extends Alarm {
 
     @Getter
     @Setter
-    @ApiModelProperty(position = 21, value = "Alarm assignee first name")
-    private String assigneeFirstName;
-
-    @Getter
-    @Setter
-    @ApiModelProperty(position = 22, value = "Alarm assignee last name")
-    private String assigneeLastName;
-
-    @Getter
-    @Setter
-    @ApiModelProperty(position = 23, value = "Alarm assignee email")
-    private String assigneeEmail;
+    @ApiModelProperty(position = 21, value = "Alarm assignee")
+    private AlarmAssignee assignee;
 
     public AlarmInfo() {
         super();
@@ -69,18 +59,14 @@ public class AlarmInfo extends Alarm {
         super(alarmInfo);
         this.originatorName = alarmInfo.originatorName;
         this.originatorLabel = alarmInfo.originatorLabel;
-        this.assigneeFirstName = alarmInfo.assigneeFirstName;
-        this.assigneeLastName = alarmInfo.assigneeLastName;
-        this.assigneeEmail = alarmInfo.assigneeEmail;
+        this.assignee = alarmInfo.getAssignee();
     }
 
-    public AlarmInfo(Alarm alarm, String originatorName, String originatorLabel, String assigneeFirstName, String assigneeLastName, String assigneeEmail) {
+    public AlarmInfo(Alarm alarm, String originatorName, String originatorLabel, AlarmAssignee assignee) {
         super(alarm);
         this.originatorName = originatorName;
         this.originatorLabel = originatorLabel;
-        this.assigneeFirstName = assigneeFirstName;
-        this.assigneeLastName = assigneeLastName;
-        this.assigneeEmail = assigneeEmail;
+        this.assignee = assignee;
     }
 
 }

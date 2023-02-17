@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -123,9 +124,7 @@ public class AlarmDataAdapter {
         AlarmData alarmData = new AlarmData(alarm, entityId);
         alarmData.setOriginatorName(originatorName);
         alarmData.setOriginatorLabel(originatorLabel);
-        alarmData.setAssigneeFirstName(assigneeFirstName);
-        alarmData.setAssigneeLastName(assigneeLastName);
-        alarmData.setAssigneeEmail(assigneeEmail);
+        alarmData.setAssignee(new AlarmAssignee(alarm.getAssigneeId(), assigneeFirstName, assigneeLastName, assigneeEmail));
 
         return alarmData;
     }

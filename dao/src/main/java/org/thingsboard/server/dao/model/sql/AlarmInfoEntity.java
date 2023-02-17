@@ -17,7 +17,9 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.id.UserId;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -47,10 +49,7 @@ public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
         AlarmInfo alarmInfo = new AlarmInfo(super.toAlarm());
         alarmInfo.setOriginatorName(originatorName);
         alarmInfo.setOriginatorLabel(originatorLabel);
-
-        alarmInfo.setAssigneeFirstName(assigneeFirstName);
-        alarmInfo.setAssigneeLastName(assigneeLastName);
-        alarmInfo.setAssigneeEmail(assigneeEmail);
+        alarmInfo.setAssignee(new AlarmAssignee(new UserId(getAssigneeId()), assigneeFirstName, assigneeLastName, assigneeEmail));
         return alarmInfo;
     }
 }

@@ -52,15 +52,11 @@ public class AlarmData extends AlarmInfo {
         if (assigneeUpdate != null) {
             if (assigneeUpdate.isDeleted()) {
                 this.setAssigneeId(null);
-                this.setAssigneeFirstName(null);
-                this.setAssigneeLastName(null);
-                this.setAssigneeEmail(null);
+                this.setAssignee(null);
             } else {
                 AlarmAssignee assignee = assigneeUpdate.getAssignee();
                 this.setAssigneeId(assignee.getId());
-                this.setAssigneeFirstName(assignee.getFirstName());
-                this.setAssigneeLastName(assignee.getLastName());
-                this.setAssigneeEmail(assignee.getEmail());
+                this.setAssignee(assignee);
             }
         }
         return this;
