@@ -75,7 +75,7 @@ import java.util.concurrent.ConcurrentMap;
 @RequiredArgsConstructor
 public class AuthController extends BaseController {
 
-    @Value("${rate_limits.reset_password_per_user.configuration:5:3600}")
+    @Value("${rate_limits.reset_password_per_user:5:3600}")
     private String defaultLimitsConfiguration;
     private final ConcurrentMap<UserId, TbRateLimits> resetPasswordRateLimits = new ConcurrentHashMap<>();
     private final BCryptPasswordEncoder passwordEncoder;
