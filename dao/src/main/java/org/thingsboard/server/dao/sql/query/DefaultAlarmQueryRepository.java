@@ -52,6 +52,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     private static final Map<String, String> alarmFieldColumnMap = new HashMap<>();
 
+    private static final String ASSIGNEE_EMAIL_KEY = "assigneeEmail";
+    private static final String ASSIGNEE_LAST_NAME_KEY = "assigneeLastName";
+    private static final String ASSIGNEE_FIRST_NAME_KEY = "assigneeFirstName";
+    private static final String ASSIGNEE_ID_KEY = "assigneeId";
+    private static final String ASSIGNEE_KEY = "assignee";
+
     static {
         alarmFieldColumnMap.put("createdTime", ModelConstants.CREATED_TIME_PROPERTY);
         alarmFieldColumnMap.put("ackTs", ModelConstants.ALARM_ACK_TS_PROPERTY);
@@ -69,12 +75,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("severity", ModelConstants.ALARM_SEVERITY_PROPERTY);
         alarmFieldColumnMap.put("originatorId", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originatorType", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
-        alarmFieldColumnMap.put("assigneeId", ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_ID_KEY, ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY);
         alarmFieldColumnMap.put("originator", ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
         alarmFieldColumnMap.put("originatorLabel", ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
-        alarmFieldColumnMap.put("assigneeFirstName", ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
-        alarmFieldColumnMap.put("assigneeLastName", ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
-        alarmFieldColumnMap.put("assigneeEmail", ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_FIRST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_LAST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_EMAIL_KEY, ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
     }
 
     private static final String SELECT_ORIGINATOR_NAME = " COALESCE(CASE" +
@@ -188,12 +194,19 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             fromPart.append(LEFT_JOIN_TB_USERS);
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
 
-            List<EntityKey> queryFields = new ArrayList<>();
-            for(EntityKey key: query.getAlarmFields()){
-                if()
+            List<EntityKey> alarmFields = new ArrayList<>();
+            for (EntityKey key : query.getAlarmFields()) {
+                if (EntityKeyType.ALARM_FIELD.equals(key.getType()) && ASSIGNEE_KEY.equalsIgnoreCase(key.getKey())) {
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_ID_KEY));
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_FIRST_NAME_KEY));
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_LAST_NAME_KEY));
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_EMAIL_KEY));
+                } else {
+                    alarmFields.add(key);
+                }
             }
 
-            String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
+            String textSearchQuery = buildTextSearchQuery(ctx, alarmFields, pageLink.getTextSearch());
             if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
                 String sortOrderKey = sortOrder.getKey().getKey();
                 sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
@@ -288,7 +301,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 }
             }
 
-            if (pageLink.getAssigneeId() != null){
+            if (pageLink.getAssigneeId() != null) {
                 ctx.addUuidParameter("assigneeId", pageLink.getAssigneeId().getId());
                 wherePart.append(" a.assignee_id = :assigneeId");
             }
