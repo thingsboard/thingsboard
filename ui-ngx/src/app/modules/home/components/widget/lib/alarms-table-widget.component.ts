@@ -53,7 +53,7 @@ import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subscription }
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
-import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
+import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
@@ -105,7 +105,7 @@ import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
 } from '@home/components/alarm/alarm-details-dialog.component';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DialogService } from '@core/services/dialog.service';
 import { AlarmService } from '@core/http/alarm.service';

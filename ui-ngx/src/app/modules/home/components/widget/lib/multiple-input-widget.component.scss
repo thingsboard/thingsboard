@@ -44,7 +44,8 @@
         margin-bottom: 5px;
       }
     }
-
+    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
     mat-checkbox,
     mat-slide-toggle {
       display: block;
@@ -54,7 +55,8 @@
         white-space: normal;
       }
     }
-
+    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
     mat-slide-toggle {
       height: auto;
     }
@@ -74,6 +76,8 @@
 
 :host ::ng-deep {
   .tb-multiple-input {
+    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
     .mat-slide-toggle-content {
       width: 100%;
       display: flex;

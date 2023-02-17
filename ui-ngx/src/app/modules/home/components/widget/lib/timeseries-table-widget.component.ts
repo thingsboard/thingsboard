@@ -56,7 +56,7 @@ import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
+import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
@@ -302,7 +302,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     let cssString = constructTableCssString(this.widgetConfig);
 
     const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
-    cssString += '.tb-table-widget mat-toolbar.mat-table-toolbar:not([color=primary]) {\n' +
+    cssString += '.tb-table-widget mat-toolbar.mat-mdc-table-toolbar:not([color=primary]) {\n' +
     'background-color: ' + origBackgroundColor + ' !important;\n' +
     '}\n';
 

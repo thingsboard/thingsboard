@@ -16,9 +16,9 @@
 
 -->
 <div class="profile-container" fxLayout="column" fxLayoutGap="8px">
-  <mat-card class="profile-card" fxLayout="column">
+  <mat-card appearance="outlined" class="profile-card" fxLayout="column">
     <mat-card-title style="margin-bottom: 8px;">
-      <span class="mat-headline card-title" translate>profile.jwt-token</span>
+      <span class="mat-headline-5 card-title" translate>profile.jwt-token</span>
     </mat-card-title>
     <mat-card-content>
       <div fxLayout="row" fxLayoutAlign="space-between center">
@@ -32,7 +32,7 @@
       </div>
     </mat-card-content>
   </mat-card>
-  <mat-card class="profile-card" fxLayout="column">
+  <mat-card appearance="outlined" class="profile-card" fxLayout="column">
     <mat-card-content class="change-password" tb-toast toastTarget="changePassword">
       <form #changePasswordForm="ngForm" [formGroup]="changePassword" (ngSubmit)="onChangePassword(changePasswordForm)">
         <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutGap.xs="0">
@@ -125,12 +125,12 @@
       </form>
     </mat-card-content>
   </mat-card>
-  <mat-card class="profile-card" *ngIf="allowTwoFactorProviders.length">
+  <mat-card appearance="outlined" class="profile-card" *ngIf="allowTwoFactorProviders.length">
     <mat-card-title style="margin-bottom: 20px;">
-      <span class="mat-headline card-title" translate>admin.2fa.2fa</span>
+      <span class="mat-headline-5 card-title" translate>admin.2fa.2fa</span>
     </mat-card-title>
     <mat-card-subtitle style="margin-bottom: 40px;">
-      <div class="mat-body-1 description" translate>security.2fa.2fa-description</div>
+      <div class="mat-body-2 description" translate>security.2fa.2fa-description</div>
     </mat-card-subtitle>
     <mat-card-content>
       <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
@@ -139,11 +139,11 @@
           <div class="provider">
             <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
             <div fxLayout="row" fxLayoutAlign="space-between start">
-              <div class="mat-body-1 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
+              <div class="mat-body-2 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
                 {{ providersData.get(provider).description | translate }}
               </div>
               <ng-template #providerInfo>
-                <div class="mat-body-1 description">
+                <div class="mat-body-2 description">
                   {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
                 </div>
               </ng-template>

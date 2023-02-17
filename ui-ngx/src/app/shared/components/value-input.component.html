@@ -64,7 +64,7 @@
         <mat-label translate>value.json-value</mat-label>
         <input [disabled]="disabled" matInput tb-json-to-string required name="value" #value="ngModel"
                [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"/>
-        <button matSuffix mat-button mat-icon-button (click)="openEditJSONDialog($event)">
+        <button matSuffix mat-icon-button (click)="openEditJSONDialog($event)">
           <mat-icon>open_in_new</mat-icon>
         </button>
         <mat-error *ngIf="value.hasError('required')">

@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>layout.manage</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
       (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -147,7 +147,7 @@
                     color="accent"
                     formControlName="sliderPercentage"
                     thumbLabel
-                    [displayWith]="formatSliderTooltipLabel.bind(this)">
+                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb />
         </mat-slider>
         <mat-slider *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.PERCENTAGE"
                     step="1"
@@ -157,7 +157,7 @@
                     color="accent"
                     formControlName="sliderFixed"
                     thumbLabel
-                    [displayWith]="formatSliderTooltipLabel.bind(this)">
+                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb />
         </mat-slider>
         <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group" style="width: 100%;">
           <label>

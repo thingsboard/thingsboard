@@ -26,7 +26,7 @@ import {
   Validators
 } from '@angular/forms';
 import { AlarmRule } from '@shared/models/device.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
 import {

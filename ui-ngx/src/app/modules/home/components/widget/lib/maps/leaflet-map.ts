@@ -54,7 +54,7 @@ import {
   SelectEntityDialogComponent,
   SelectEntityDialogData
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 

@@ -32,12 +32,12 @@
         cursor: move;
       }
 
-      .mat-list {
+      .mat-mdc-list {
         min-height: 68px;
         padding-left: 0;
       }
 
-      .mat-list-item {
+      .mat-mdc-list-item {
         height: auto;
         min-height: 68px;
         display: block;
@@ -102,7 +102,7 @@
 
 :host ::ng-deep {
   .tb-widget-config {
-    .mat-tab-body-wrapper {
+    .mat-mdc-tab-body-wrapper {
       position: absolute;
       top: 49px;
       left: 0;
@@ -118,6 +118,8 @@
     //    height: 100%;
     //  }
     //}
+    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
     .mat-checkbox-label {
       white-space: normal;
     }
@@ -147,9 +149,13 @@
         .tb-json-object-panel, .tb-css-content-panel {
           margin: 0 0 8px;
         }
+        /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
         .mat-checkbox-layout {
           margin: 5px 0;
         }
+        /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
         .mat-checkbox-inner-container {
           margin-right: 12px;
         }
@@ -161,7 +167,9 @@
         .mat-expansion-panel-body{
           padding: 0 12px 16px;
         }
-        .mat-list-base .mat-list-item {
+        .mat-mdc-list-base .mat-mdc-list-item {
+          /*TODO(mdc-migration): The following rule targets internal classes of list that may no longer apply for the MDC version.
+ */
           .mat-list-item-content {
             padding: 0;
           }
@@ -172,20 +180,24 @@
       }
     }
     .tb-datasource-type {
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-infix {
         width: 100%;
       }
+      /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
+ */
       .mat-select-value {
         min-width: 92px;
       }
     }
     .tb-datasource {
       tb-entity-alias-select {
-        .mat-form-field {
+        .mat-mdc-form-field {
           margin-top: 20px;
         }
         @media #{$mat-gt-sm} {
-          .mat-form-field {
+          .mat-mdc-form-field {
             width: 200px;
             max-width: 200px;
           }
@@ -193,13 +205,15 @@
       }
       tb-filter-select {
         @media #{$mat-gt-sm} {
-          .mat-form-field {
+          .mat-mdc-form-field {
             width: 200px;
             max-width: 200px;
           }
         }
       }
       .tb-datasource-name.no-border-top {
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-infix {
           border-top: 0;
         }
@@ -207,7 +221,7 @@
     }
     .tb-data-keys {
       @media #{$mat-gt-sm} {
-        .mat-input-element {
+        .mat-mdc-input-element {
           min-height: 32px;
         }
       }
@@ -221,6 +235,8 @@
         margin-bottom: 8px;
       }
     }
+    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
     .mat-slide-toggle-content {
       white-space: normal;
     }

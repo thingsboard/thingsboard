@@ -38,7 +38,7 @@ import { AppState } from '@core/core.state';
 import { Authority } from '@app/shared/models/authority.enum';
 import { CustomerService } from '@core/http/customer.service';
 import { Customer } from '@app/shared/models/customer.model';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import {
   AddEntitiesToCustomerDialogComponent,

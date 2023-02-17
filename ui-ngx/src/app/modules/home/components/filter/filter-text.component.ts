@@ -16,7 +16,7 @@
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';

@@ -15,16 +15,15 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="keysListFormGroup" class="mat-block">
-  <mat-chip-list #chipList>
-    <mat-chip
+<mat-form-field [formGroup]="keysListFormGroup" class="mat-block">
+  <mat-chip-grid #chipList>
+    <mat-chip-row
       *ngFor="let key of modelValue"
-      [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(key)">
       {{key}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip>
+    </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? (keysText | translate) : '' }}"
            style="max-width: 200px;"
            #keyInput
@@ -38,7 +37,7 @@
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            matChipInputAddOnBlur
            (matChipInputTokenEnd)="add($event)">
-  </mat-chip-list>
+  </mat-chip-grid>
   <mat-autocomplete #keyAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"

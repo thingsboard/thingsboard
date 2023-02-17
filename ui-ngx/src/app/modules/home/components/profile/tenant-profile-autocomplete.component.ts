@@ -31,7 +31,7 @@ import { entityIdEquals } from '@shared/models/id/entity-id';
 import { TruncatePipe } from '@shared//pipe/truncate.pipe';
 import { ENTER } from '@angular/cdk/keycodes';
 import { TenantProfile } from '@shared/models/tenant.model';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';

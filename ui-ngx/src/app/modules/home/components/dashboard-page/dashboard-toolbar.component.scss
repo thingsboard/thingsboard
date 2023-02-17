@@ -60,10 +60,12 @@ div.tb-dashboard-page.mobile-app {
 tb-dashboard-toolbar {
   mat-fab-toolbar {
     mat-fab-trigger {
-      .mat-fab {
+      .mat-mdc-fab {
         width: 36px;
         height: 36px;
         margin: 4px 0 0 4px;
+        /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
         .mat-button-wrapper {
           padding: 0;
         }
@@ -155,6 +157,8 @@ tb-dashboard-toolbar {
                 height: $half-mobile-toolbar-height;
 
                 @media #{$mat-lt-md} {
+                  /*TODO(mdc-migration): The following rule targets internal classes of menu that may no longer apply for the MDC version.
+ */
                   mat-menu{
                     margin: 0;
                   }
@@ -171,7 +175,8 @@ tb-dashboard-toolbar {
                     height: 46px;
                   }
                 }
-
+                /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
+ */
                 mat-select {
                   margin: 0;
                   pointer-events: all;
@@ -181,13 +186,15 @@ tb-dashboard-toolbar {
                   pointer-events: all;
                 }
 
-                button.mat-icon-button:not(.tb-mat-32) {
+                button.mat-mdc-icon-button:not(.tb-mat-32) {
                   min-width: 40px;
 
                   @media #{$mat-lt-md} {
                     min-width: 28px;
                     padding: 2px;
                     margin: 0;
+                    /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
                     .mat-button-wrapper {
                       display: block;
                       line-height: 24px;

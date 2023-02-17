@@ -30,13 +30,13 @@
   </a>
   <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled && editProfileEnabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Edit"
+          matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'asset-profile.edit' | translate }}"
           matTooltipPosition="above"
           (click)="editAssetProfile($event)">

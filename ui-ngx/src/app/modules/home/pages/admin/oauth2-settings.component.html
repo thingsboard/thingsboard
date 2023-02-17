@@ -16,10 +16,10 @@
 
 -->
 <div>
-  <mat-card class="settings-card">
+  <mat-card appearance="outlined" class="settings-card">
     <mat-card-title>
       <div fxLayout="row">
-        <span class="mat-headline" translate>admin.oauth2.oauth2</span>
+        <span class="mat-headline-5" translate>admin.oauth2.oauth2</span>
         <span fxFlex></span>
         <div tb-help="oauth2Settings"></div>
       </div>
@@ -314,7 +314,7 @@
                                           </div>
 
                                           <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                                            <mat-form-field fxFlex class="mat-block" appearance="legacy">
+                                            <mat-form-field fxFlex class="mat-block">
                                               <mat-label translate>admin.oauth2.jwk-set-uri</mat-label>
                                               <input matInput formControlName="jwkSetUri">
                                               <button mat-icon-button matSuffix
@@ -383,17 +383,17 @@
 
                                           <mat-form-field fxFlex class="mat-block">
                                             <mat-label translate>admin.oauth2.scope</mat-label>
-                                            <mat-chip-list #scopeList>
-                                              <mat-chip *ngFor="let scope of registration.get('scope').value; let k = index; trackBy: trackByParams"
+                                            <mat-chip-grid #scopeList>
+                                              <mat-chip-row *ngFor="let scope of registration.get('scope').value; let k = index; trackBy: trackByParams"
                                                 removable (removed)="removeScope(k, registration)">
                                                 {{scope}}
                                                 <mat-icon matChipRemove>cancel</mat-icon>
-                                              </mat-chip>
+                                              </mat-chip-row>
                                               <input [matChipInputFor]="scopeList"
                                                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                                                      matChipInputAddOnBlur
                                                      (matChipInputTokenEnd)="addScope($event, registration)">
-                                            </mat-chip-list>
+                                            </mat-chip-grid>
                                             <mat-error *ngIf="registration.get('scope').hasError('required')">
                                               {{ 'admin.oauth2.scope-required' | translate }}
                                             </mat-error>

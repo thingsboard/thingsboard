@@ -88,7 +88,10 @@ $error-height: 14px !default;
   .tb-switch {
     .switch {
       z-index: 1;
-
+      /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
+      /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
       mat-slide-toggle {
         position: absolute;
         top: 0;
@@ -96,7 +99,8 @@ $error-height: 14px !default;
         bottom: 0;
         left: 0;
         margin: 0;
-
+        /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
         .mat-slide-toggle-bar {
           top: 0;
           left: 0;
@@ -106,17 +110,21 @@ $error-height: 14px !default;
           background-size: contain;
           border-radius: 0;
         }
-
+        /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
         .mat-slide-toggle-thumb-container {
           top: 5%;
           left: .25%;
           width: 50%;
           height: 90%;
         }
-
+        /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
         .mat-slide-toggle-label{
           height: 100%;
         }
+        /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
         .mat-slide-toggle-thumb {
           top: 0;
           left: 0;
@@ -129,14 +137,19 @@ $error-height: 14px !default;
         }
 
         &.mat-checked {
+          /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
           .mat-slide-toggle-thumb-container {
             transform: translate3d(100%,0,0);
           }
+          /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
           .mat-slide-toggle-bar {
             background: $thumb-bar-checked-img no-repeat;
             background-size: contain;
           }
-
+          /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
+ */
           .mat-slide-toggle-thumb {
             background: $thumb-checked-img no-repeat;
             background-size: contain;

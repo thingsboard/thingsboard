@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 :host ::ng-deep {
+  /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
   .mat-checkbox-label {
     white-space: normal;
   }

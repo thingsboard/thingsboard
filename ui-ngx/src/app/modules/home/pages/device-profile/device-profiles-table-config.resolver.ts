@@ -36,7 +36,7 @@ import {
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileComponent } from '@home/components/profile/device-profile.component';
 import { DeviceProfileTabsComponent } from './device-profile-tabs.component';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import {
   AddDeviceProfileDialogComponent,
   AddDeviceProfileDialogData

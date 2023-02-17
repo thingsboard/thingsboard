@@ -33,7 +33,7 @@ import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.comp
 import { DashboardCallbacks, IDashboardComponent, WidgetsData } from '@home/models/dashboard-component.models';
 import { IAliasController, IStateController, StateParams } from '@app/core/api/widget-api.models';
 import { AliasController } from '@core/api/alias-controller';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ImportExportService } from '@home/components/import-export/import-export.service';

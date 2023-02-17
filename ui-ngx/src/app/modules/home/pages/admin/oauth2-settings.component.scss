@@ -57,14 +57,18 @@
       .mat-expansion-panel-body{
         padding: 0 2px 1em;
       }
-      .mat-form-field-suffix .mat-icon-button .mat-icon{
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+      .mat-form-field-suffix .mat-mdc-icon-button .mat-icon{
         font-size: 18px;
       }
     }
   }
   .domains-list, .apps-list {
     margin-bottom: 1.5em;
-    .mat-form-field-suffix .mat-icon-button .mat-icon{
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+    .mat-form-field-suffix .mat-mdc-icon-button .mat-icon{
       font-size: 24px;
     }
   }

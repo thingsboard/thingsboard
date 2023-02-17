@@ -39,7 +39,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { EntityVersion, VersionCreationResult, VersionLoadResult } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
-import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
+import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
@@ -48,7 +48,7 @@ import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autoco
 import { isNotEmptyStr } from '@core/utils';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
-import { MatLegacyButton as MatButton } from '@angular/material/legacy-button';
+import { MatButton } from '@angular/material/button';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';

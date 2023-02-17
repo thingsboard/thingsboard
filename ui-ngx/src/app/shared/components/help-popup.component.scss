@@ -21,7 +21,7 @@
 
 .tb-help-popup-button {
   position: relative;
-  .mat-progress-spinner {
+  .mat-mdc-progress-spinner {
     position: absolute;
     top: 0;
     left: 0;
@@ -40,14 +40,14 @@
   position: relative;
   padding: 0 2px 0 8px;
   line-height: 28px;
-  &.mat-stroked-button {
+  &.mat-mdc-outlined-button {
     padding: 0 1px 0 7px;
     line-height: 26px;
   }
   .mat-icon {
     padding-left: 4px;
   }
-  .mat-progress-spinner {
+  .mat-mdc-progress-spinner {
     display: inline-block;
     margin-left: 4px;
     margin-right: 5px;

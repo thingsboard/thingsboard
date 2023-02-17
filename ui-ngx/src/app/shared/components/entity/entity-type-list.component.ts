@@ -23,8 +23,8 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
-import { MatLegacyAutocomplete as MatAutocomplete } from '@angular/material/legacy-autocomplete';
-import { MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
+import { MatAutocomplete } from '@angular/material/autocomplete';
+import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 interface EntityTypeInfo {
@@ -74,7 +74,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
 
   @ViewChild('entityTypeInput') entityTypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityTypeAutocomplete') entityTypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   allEntityTypeList: Array<EntityTypeInfo> = [];
   entityTypeList: Array<EntityTypeInfo> = [];

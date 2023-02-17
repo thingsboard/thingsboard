@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectDashboardFormGroup" class="mat-block" [floatLabel]="floatLabel">
-  <input matInput type="text" placeholder="{{ placeholder || ('dashboard.dashboard' | translate) }}"
+  <mat-label>{{ placeholder || ('dashboard.dashboard' | translate) }}</mat-label>
+  <input matInput type="text"
          #dashboardInput
          formControlName="dashboard"
          (focusin)="onFocus()"
@@ -24,7 +25,7 @@
          [matAutocomplete]="dashboardAutocomplete">
   <button *ngIf="selectDashboardFormGroup.get('dashboard').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

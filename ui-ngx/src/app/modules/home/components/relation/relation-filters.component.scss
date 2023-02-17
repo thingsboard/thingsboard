@@ -60,11 +60,15 @@
 :host ::ng-deep {
   .tb-relation-filters {
     .cell {
-      .mat-form-field {
+      .mat-mdc-form-field {
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-infix {
           border-top: none;
         }
         &.mat-form-field-appearance-standard {
+          /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
           .mat-form-field-flex {
             padding-top: 0;
           }

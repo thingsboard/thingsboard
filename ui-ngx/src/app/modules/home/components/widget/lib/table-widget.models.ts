@@ -396,10 +396,10 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-input-element:-ms-input-placeholder {\n' +
     '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    'mat-toolbar.mat-table-toolbar {\n' +
+    'mat-toolbar.mat-mdc-table-toolbar {\n' +
     'color: ' + mdDark + ';\n' +
     '}\n' +
-    'mat-toolbar.mat-table-toolbar:not([color="primary"]) button.mat-icon-button mat-icon {\n' +
+    'mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) button.mat-icon-button mat-icon {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
     '.mat-tab-label {\n' +

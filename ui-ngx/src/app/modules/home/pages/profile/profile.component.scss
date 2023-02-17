@@ -16,19 +16,23 @@
 @import "../../../../../scss/constants";
 
 :host {
+  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
+ */
+  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
+ */
   mat-card.profile-card {
     margin: 8px;
     @media #{$mat-gt-sm} {
       width: 60%;
     }
-    .mat-headline {
+    .mat-headline-5 {
       margin: 0;
     }
     .profile-email {
       font-size: 16px;
       font-weight: 400;
     }
-    .mat-subheader {
+    .mat-mdc-subheader {
       line-height: 24px;
       color: rgba(0,0,0,0.54);
       font-size: 14px;
@@ -48,6 +52,8 @@
           padding-bottom: 12px;
         }
       }
+      /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
       mat-checkbox {
         @media #{$mat-gt-sm} {
           margin-top: 16px;

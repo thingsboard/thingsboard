@@ -44,7 +44,7 @@ import { KeyValue } from '@angular/common';
 import * as _moment from 'moment';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { MatLegacySelect as MatSelect } from '@angular/material/legacy-select';
+import { MatSelect } from '@angular/material/select';
 import { Subscription } from 'rxjs';
 import { HistoryWindowType, TimewindowType } from '@shared/models/time/time.models';
 import { isDefined } from '@core/utils';

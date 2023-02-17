@@ -15,11 +15,10 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="keysListFormGroup" class="mat-block">
-  <mat-chip-list #chipList formControlName="keys" tb-chip-draggable (chipDrop)="onChipDrop($event)">
-    <mat-chip class="tb-datakey-chip"
+<mat-form-field [formGroup]="keysListFormGroup" class="mat-block">
+  <mat-chip-grid #chipList formControlName="keys" tb-chip-draggable (chipDrop)="onChipDrop($event)">
+    <mat-chip-row class="tb-datakey-chip"
       *ngFor="let key of keys; let $index = index"
-      [selectable]="!disabled"
       [removable]="!disabled && !isEntityCountDatasource"
       (removed)="remove(key)">
       <div fxLayout="row" fxLayoutAlign="start center" class="tb-attribute-chip">
@@ -62,12 +61,12 @@
         </div>
         <button *ngIf="!disabled"
                 type="button"
-                (click)="editDataKey(key, $index)" mat-button mat-icon-button class="tb-mat-32">
+                (click)="editDataKey(key, $index)" mat-icon-button class="tb-mat-32">
           <mat-icon class="tb-mat-20">edit</mat-icon>
         </button>
         <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
       </div>
-    </mat-chip>
+    </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? (keys.length ? secondaryPlaceholder : placeholder) : '' }}"
            style="max-width: 200px;"
            #keyInput
@@ -82,7 +81,7 @@
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            (matChipInputTokenEnd)="add($event)">
-  </mat-chip-list>
+  </mat-chip-grid>
   <mat-autocomplete #keyAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     [displayWith]="displayKeyFn">
@@ -130,20 +129,20 @@
           </span>
           <ng-template #createEntityKey>
             <span>{{'entity.create-new-key' | translate }}  </span>
-            <span *ngIf="widgetType == widgetTypes.alarm"
+            <span *ngIf="widgetType === widgetTypes.alarm"
                   matTooltip="{{'datakey.alarm' | translate }}"
                   matTooltipPosition="above">
               <mat-icon (click)="createKey(searchText, dataKeyTypes.alarm)"
                         class="tb-mat-16">notifications</mat-icon>
             </span>
-            <span *ngIf="widgetType == widgetTypes.latest || widgetType == widgetTypes.alarm"
+            <span *ngIf="widgetType === widgetTypes.latest || widgetType === widgetTypes.alarm"
                   matTooltip="{{'datakey.attributes' | translate }}"
                   matTooltipPosition="above">
               <mat-icon (click)="createKey(searchText, dataKeyTypes.attribute)"
                       class="tb-mat-16"
                       svgIcon="mdi:alpha-a-circle-outline"></mat-icon>
             </span>
-            <span *ngIf="widgetType == widgetTypes.latest || widgetType == widgetTypes.alarm"
+            <span *ngIf="widgetType === widgetTypes.latest || widgetType === widgetTypes.alarm"
                   matTooltip="{{'datakey.entity-field' | translate }}"
                   matTooltipPosition="above">
               <mat-icon (click)="createKey(searchText, dataKeyTypes.entityField)"

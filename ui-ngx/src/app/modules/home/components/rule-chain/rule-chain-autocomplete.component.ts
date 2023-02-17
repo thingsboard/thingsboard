@@ -28,7 +28,7 @@ import { BaseData } from '@shared/models/base-data';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { MatLegacyAutocompleteTrigger as MatAutocompleteTrigger } from '@angular/material/legacy-autocomplete';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 
 @Component({

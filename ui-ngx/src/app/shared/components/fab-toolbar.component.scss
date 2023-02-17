@@ -102,16 +102,16 @@ mat-fab-toolbar {
     .mat-toolbar-tools {
       flex-direction: row-reverse;
 
-      > .mat-button:first-child {
+      > .mat-mdc-button:first-child {
         @include rtl-prop(margin-right, margin-left, 0.6rem, auto)
       }
 
-      > .mat-button:first-child {
+      > .mat-mdc-button:first-child {
         @include rtl-prop(margin-left, margin-right, -0.8rem, auto);
       }
 
 
-      > .mat-button:last-child {
+      > .mat-mdc-button:last-child {
         @include rtl-prop(margin-right, margin-left, 8px, auto);
       }
 

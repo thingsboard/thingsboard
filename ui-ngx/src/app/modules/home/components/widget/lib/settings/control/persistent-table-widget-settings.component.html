@@ -62,16 +62,16 @@
     <legend class="group-title" translate>widgets.persistent-table.columns-settings</legend>
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>widgets.persistent-table.display-columns</mat-label>
-      <mat-chip-list #columnsChipList class="tb-drop-list"
+      <mat-chip-grid #columnsChipList class="tb-drop-list"
                      required
                      cdkDropList
                      cdkDropListOrientation="horizontal"
                      (cdkDropListDropped)="columnDrop($event)">
-        <mat-chip class="tb-draggable" cdkDrag *ngFor="let column of persistentTableWidgetSettingsForm.get('displayColumns').value"
+        <mat-chip-row class="tb-draggable" cdkDrag *ngFor="let column of persistentTableWidgetSettingsForm.get('displayColumns').value"
                   [removable]="true" (removed)="onColumnRemoved(column)">
           {{ displayColumnFromValue(column)?.name }}
           <mat-icon matChipRemove>cancel</mat-icon>
-        </mat-chip>
+        </mat-chip-row>
         <input matInput type="text" placeholder="{{ 'widgets.persistent-table.column' | translate }}"
                style="max-width: 200px;"
                #columnInput
@@ -84,7 +84,7 @@
                [matChipInputFor]="columnsChipList"
                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                (matChipInputTokenEnd)="addColumnFromChipInput($event)">
-      </mat-chip-list>
+      </mat-chip-grid>
       <mat-autocomplete #columnAutocomplete="matAutocomplete"
                         class="tb-autocomplete"
                         (optionSelected)="columnSelected($event)"

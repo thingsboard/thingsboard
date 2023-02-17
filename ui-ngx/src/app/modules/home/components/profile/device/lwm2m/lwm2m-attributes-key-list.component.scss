@@ -32,12 +32,18 @@
 }
 
 :host ::ng-deep {
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-wrapper {
     padding-bottom: 0;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-infix {
     border-top: 0;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-underline {
     bottom: 0;
   }
@@ -50,16 +56,26 @@
 
   .map-list {
     mat-form-field {
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-wrapper {
         padding-bottom: 0;
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-infix {
           border-top-width: 0.2em;
           width: auto;
           min-width: auto;
         }
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-underline {
           bottom: 0;
         }
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-subscript-wrapper{
           margin-top: 1.8em;
         }

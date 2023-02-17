@@ -38,7 +38,7 @@ import {
   utcTimestampToTimeOfDay
 } from '@shared/models/device.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
-import { MatLegacyCheckboxChange as MatCheckboxChange } from '@angular/material/legacy-checkbox';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 
 @Component({

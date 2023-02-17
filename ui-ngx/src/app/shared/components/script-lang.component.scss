@@ -13,20 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
+/*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
+/*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
 .mat-button-toggle-group.tb-script-lang-toggle-group {
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   &.mat-button-toggle-group-appearance-standard {
     border: none;
     border-radius: 18px;
+    /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
     .mat-button-toggle+.mat-button-toggle {
       border-left: none;
     }
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   .mat-button-toggle {
     background: rgba(0, 0, 0, 0.06);
     height: 36px;
     align-items: center;
     display: flex;
-
+    /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
     .mat-button-toggle-ripple {
       top: 2px;
       left: 2px;
@@ -35,13 +52,19 @@
       border-radius: 16px;
     }
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   .mat-button-toggle-button {
     color: #959595;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   .mat-button-toggle-focus-overlay {
     border-radius: 16px;
     margin: 2px;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   .mat-button-toggle-checked .mat-button-toggle-button {
     background-color: #305680;
     color: #fff;
@@ -49,11 +72,15 @@
     margin-left: 2px;
     margin-right: 2px;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
     line-height: 32px;
     font-size: 16px;
     font-weight: 500;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
   .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
     opacity: .01;
   }

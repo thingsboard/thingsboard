@@ -25,7 +25,7 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { MatLegacyFormFieldAppearance as MatFormFieldAppearance } from '@angular/material/legacy-form-field';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
@@ -98,7 +98,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   requiredText: string;
 
   @Input()
-  appearance: MatFormFieldAppearance = 'legacy';
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

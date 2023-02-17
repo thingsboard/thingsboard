@@ -34,14 +34,28 @@ tb-widget-editor {
   mat-form-field.resource-field {
     max-height: 40px;
     margin: 10px 0 0;
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
     .mat-form-field-wrapper {
       padding-bottom: 0;
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-flex {
         max-height: 40px;
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-infix {
           border: 0;
         }
       }
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-underline {
         bottom: 0;
       }
@@ -91,7 +105,8 @@ tb-widget-editor {
     width: 100%;
     height: 100%;
   }
-
+  /*TODO(mdc-migration): The following rule targets internal classes of tabs that may no longer apply for the MDC version.
+ */
   .mat-tab-label[aria-labelledby='hidden'] {
     width: 0px !important;
     min-width: 0px;
@@ -101,11 +116,10 @@ tb-widget-editor {
 }
 
 .tb-split-vertical {
-  mat-tab-group {
-    .mat-tab-body-wrapper {
+  .mat-mdc-tab-group {
+    .mat-mdc-tab-body-wrapper {
       height: calc(100% - 49px);
-
-      mat-tab-body {
+      .mat-mdc-tab-body {
         height: 100%;
 
         & > div {
@@ -137,7 +151,7 @@ div.tb-editor-area-title-panel {
     border-radius: 5px;
   }
 
-  button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+  button.mat-mdc-button, button.mat-mdc-icon-button, button.mat-icon-button.tb-mat-32 {
     align-items: center;
     vertical-align: middle;
     min-width: 32px;
@@ -171,7 +185,7 @@ mat-toolbar.tb-edit-toolbar {
   min-height: $edit-toolbar-height !important;
   max-height: $edit-toolbar-height !important;
 
-  button.mat-button-base:not(.mat-icon-button) {
+  button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
     font-size: 12px;
     line-height: 28px;
     padding: 0 8px;
@@ -192,6 +206,8 @@ mat-toolbar.tb-edit-toolbar {
       font-weight: 400;
       letter-spacing: .005em;
     }
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
     div.mat-form-field-infix {
       padding-bottom: 5px;
     }

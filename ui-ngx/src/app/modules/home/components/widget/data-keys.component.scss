@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.mat-chip.mat-standard-chip.tb-datakey-chip {
+.mat-mdc-chip.mat-mdc-standard-chip.tb-datakey-chip {
   overflow: hidden;
 
   .tb-attribute-chip {
@@ -45,7 +45,8 @@
         white-space: pre;
       }
     }
-
+    /*TODO(mdc-migration): The following rule targets internal classes of chips that may no longer apply for the MDC version.
+ */
     .mat-chip-remove.mat-icon {
       width: 24px;
       height: 24px;
@@ -58,8 +59,14 @@
 }
 
 :host ::ng-deep {
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-flex {
     padding-top: 0;
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
     .mat-form-field-infix {
       border-top: 0;
     }

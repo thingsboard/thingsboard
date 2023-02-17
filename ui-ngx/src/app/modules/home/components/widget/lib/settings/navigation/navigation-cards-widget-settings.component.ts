@@ -19,8 +19,8 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MatLegacyChipInputEvent as MatChipInputEvent, MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
-import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteSelectedEvent as MatAutocompleteSelectedEvent } from '@angular/material/legacy-autocomplete';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
+import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { Observable, of, Subject } from 'rxjs';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';
@@ -32,7 +32,7 @@ import { map, mergeMap, share, startWith } from 'rxjs/operators';
 })
 export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  @ViewChild('filterItemsChipList') filterItemsChipList: MatChipList;
+  @ViewChild('filterItemsChipList') filterItemsChipList: MatChipGrid;
   @ViewChild('filterItemAutocomplete') filterItemAutocomplete: MatAutocomplete;
   @ViewChild('filterItemInput') filterItemInput: ElementRef<HTMLInputElement>;
 

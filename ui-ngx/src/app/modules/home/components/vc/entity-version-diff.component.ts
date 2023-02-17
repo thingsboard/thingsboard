@@ -37,7 +37,7 @@ import { getAceDiff } from '@shared/models/ace/ace.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { entityExportDataToJsonString, VersionLoadResult } from '@shared/models/vc.models';
 import { Ace } from 'ace-builds';
-import { MatLegacyButton as MatButton } from '@angular/material/legacy-button';
+import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 

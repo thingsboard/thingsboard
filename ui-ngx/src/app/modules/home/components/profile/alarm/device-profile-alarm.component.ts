@@ -26,9 +26,9 @@ import {
   Validators
 } from '@angular/forms';
 import { AlarmRule, DeviceProfileAlarm, deviceProfileAlarmValidator } from '@shared/models/device.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { MatLegacyChipInputEvent as MatChipInputEvent } from '@angular/material/legacy-chips';
+import { MatChipInputEvent } from '@angular/material/chips';
 import { EntityId } from '@shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
 

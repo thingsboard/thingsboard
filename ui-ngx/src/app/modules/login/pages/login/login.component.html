@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-login-content mat-app-background tb-dark" fxFlex fxLayoutAlign="center center">
-  <mat-card style="max-height: 80vh; overflow-y: auto;">
+  <mat-card appearance="outlined" style="max-height: 80vh; overflow-y: auto;">
     <mat-card-content>
       <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
         <fieldset [disabled]="isLoading$ | async" fxLayout="column">

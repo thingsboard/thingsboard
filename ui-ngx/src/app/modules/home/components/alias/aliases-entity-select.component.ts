@@ -25,7 +25,7 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { LegacyTooltipPosition as TooltipPosition } from '@angular/material/legacy-tooltip';
+import { TooltipPosition } from '@angular/material/tooltip';
 import { AliasInfo, IAliasController } from '@core/api/widget-api.models';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';

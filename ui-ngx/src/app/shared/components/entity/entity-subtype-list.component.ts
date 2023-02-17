@@ -22,8 +22,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
-import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteSelectedEvent as MatAutocompleteSelectedEvent } from '@angular/material/legacy-autocomplete';
-import { MatLegacyChipInputEvent as MatChipInputEvent, MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
+import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { DeviceService } from '@core/http/device.service';
@@ -71,7 +71,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
 
   @ViewChild('entitySubtypeInput') entitySubtypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entitySubtypeAutocomplete') entitySubtypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   entitySubtypeList: Array<string> = [];
   filteredEntitySubtypeList: Observable<Array<string>>;

@@ -15,13 +15,12 @@
     limitations under the License.
 
 -->
-<section fxLayout="row">
+<section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px">
   <section fxLayout="column" [fxShow]="isEdit">
     <label class="tb-small hide-label" translate>timewindow.hide</label>
     <mat-checkbox [(ngModel)]="hideFlag" (ngModelChange)="onHideFlagChange()"></mat-checkbox>
   </section>
   <section class="interval-section" fxLayout="column" fxFlex [fxShow]="advanced && (isEdit || !hideFlag)">
-    <label class="tb-small interval-label" translate>{{ predefinedName }}</label>
     <section fxLayout="row wrap" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px">
       <mat-form-field class="number-input">
         <mat-label translate>timeinterval.days</mat-label>

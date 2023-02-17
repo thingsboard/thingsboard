@@ -21,8 +21,8 @@ import { Observable, of } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { deepClone } from '@core/utils';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatLegacyAutocomplete as MatAutocomplete, MatLegacyAutocompleteSelectedEvent as MatAutocompleteSelectedEvent } from '@angular/material/legacy-autocomplete';
-import { MatLegacyChipInputEvent as MatChipInputEvent, MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
+import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { TranslateService } from '@ngx-translate/core';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { catchError, map, mergeMap, share, startWith } from 'rxjs/operators';
@@ -40,7 +40,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 })
 export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChanges {
 
-  @ViewChild('chipList') chipList: MatChipList;
+  @ViewChild('chipList') chipList: MatChipGrid;
   @ViewChild('labelAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('labelInput') labelInput: ElementRef<HTMLInputElement>;
 

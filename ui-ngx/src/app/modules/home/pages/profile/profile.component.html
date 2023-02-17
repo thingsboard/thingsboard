@@ -16,12 +16,12 @@
 
 -->
 <div>
-  <mat-card class="profile-card">
+  <mat-card appearance="outlined" class="profile-card">
     <mat-card-title>
       <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px"
            fxLayoutAlign="space-between start" fxLayoutAlign.xs="start start">
         <div fxFlex fxLayout="column">
-          <span class="mat-headline" translate>profile.profile</span>
+          <span class="mat-headline-5" translate>profile.profile</span>
           <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
         </div>
         <div fxLayout="column">

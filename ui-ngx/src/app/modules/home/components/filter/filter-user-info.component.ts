@@ -22,7 +22,7 @@ import {
   KeyFilterPredicateUserInfo, NumericOperation,
   StringOperation
 } from '@shared/models/query/query.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import {
   FilterUserInfoDialogComponent,
   FilterUserInfoDialogData

@@ -36,7 +36,7 @@ import {
   EntityKeyValueType,
   KeyFilterPredicateInfo
 } from '@shared/models/query/query.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { map } from 'rxjs/operators';
 import { ComponentType } from '@angular/cdk/portal';
 import { COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN } from '@home/components/tokens';

@@ -18,14 +18,28 @@
   mat-form-field.resource-field {
     max-height: 40px;
     margin: 10px 0 0;
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
     .mat-form-field-wrapper {
       padding-bottom: 0;
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-flex {
         max-height: 40px;
+        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
         .mat-form-field-infix {
           border: 0;
         }
       }
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-underline {
         bottom: 0;
       }
@@ -58,7 +72,7 @@
       }
     }
 
-    button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+    button.mat-mdc-button, button.mat-mdc-icon-button, button.mat-icon-button.tb-mat-32 {
       align-items: center;
       vertical-align: middle;
       min-width: 32px;

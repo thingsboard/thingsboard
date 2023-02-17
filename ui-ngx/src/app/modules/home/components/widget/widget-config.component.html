@@ -67,18 +67,18 @@
              fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block" floatLabel="always">
             <mat-label translate>alarm.alarm-type-list</mat-label>
-            <mat-chip-list #alarmTypeChipList formControlName="alarmTypeList">
-              <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
+            <mat-chip-grid #alarmTypeChipList formControlName="alarmTypeList">
+              <mat-chip-row *ngFor="let type of alarmTypeList()"
               [removable]="true" (removed)="removeAlarmType(type)">
               {{type}}
               <mat-icon matChipRemove>cancel</mat-icon>
-              </mat-chip>
+              </mat-chip-row>
               <input placeholder="{{ !dataSettings.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
                      [matChipInputFor]="alarmTypeChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                      matChipInputAddOnBlur
                      (matChipInputTokenEnd)="addAlarmType($event)">
-            </mat-chip-list>
+            </mat-chip-grid>
           </mat-form-field>
           <mat-checkbox fxFlex formControlName="searchPropagatedAlarms">
             {{ 'alarm.search-propagated-alarms' | translate }}
@@ -245,7 +245,7 @@
                     type="button"
                     mat-raised-button color="primary"
                     [fxShow]="modelValue?.typeParameters &&
-                              (modelValue?.typeParameters.maxDatasources == -1 || datasourcesFormArray().controls.length < modelValue?.typeParameters.maxDatasources)"
+                              (modelValue?.typeParameters.maxDatasources === -1 || datasourcesFormArray().controls.length < modelValue?.typeParameters.maxDatasources)"
                     (click)="addDatasource()"
                     matTooltip="{{ 'widget-config.add-datasource' | translate }}"
                     matTooltipPosition="above">

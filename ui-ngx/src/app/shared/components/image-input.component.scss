@@ -140,6 +140,8 @@ $previewSize: 96px !default;
   button.browse-file {
     padding: 0;
     font-size: 16px;
+    /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
     span.mat-button-wrapper {
       display: block;
       label {

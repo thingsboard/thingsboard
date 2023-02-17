@@ -19,22 +19,22 @@
   width: 100%;
   height: 100%;
 
-  .mat-tab-group.tb-rulenode-details {
-    > .mat-tab-body-wrapper {
+  .mat-mdc-tab-group.tb-rulenode-details {
+    > .mat-mdc-tab-body-wrapper {
       position: absolute;
       top: 49px;
       left: 0;
       right: 0;
       bottom: 0;
     }
-    > .mat-tab-header {
-      .mat-tab-label {
+    > .mat-mdc-tab-header {
+      .mat-mdc-tab {
         min-width: 40px;
       }
     }
   }
 
-  button.mat-button.mat-icon-button.tb-fullscreen-button {
+  button.mat-mdc-button.mat-mdc-icon-button.tb-fullscreen-button {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -45,14 +45,16 @@
     z-index: 2;
   }
 
-  button.mat-button.mat-icon-button.version-control-button {
+  button.mat-mdc-button.mat-mdc-icon-button.version-control-button {
     position: absolute;
     top: 10px;
     right: 60px;
     opacity: .85;
     margin: 0 6px;
     z-index: 2;
-    &.mat-fab {
+    &.mat-mdc-fab {
+      /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
       .mat-button-wrapper {
         padding: 0;
       }
@@ -66,13 +68,15 @@
     z-index: 2;
     pointer-events: none;
 
-    .mat-fab {
+    .mat-mdc-fab {
+      /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
       .mat-button-wrapper {
         padding: 0;
       }
     }
 
-    .mat-button.tb-btn-open-library {
+    .mat-mdc-button.tb-btn-open-library {
       top: 0;
       left: 0;
       width: 36px;
@@ -98,13 +102,15 @@
         padding: 0 6px;
         font-size: 14px;
 
-        .mat-form-field {
+        .mat-mdc-form-field {
+          /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
           .mat-form-field-infix {
             width: auto;
           }
         }
 
-        .mat-button.mat-icon-button {
+        .mat-mdc-button.mat-mdc-icon-button {
           margin: 0;
 
           &.tb-small {
@@ -344,12 +350,13 @@
   max-height: 404px;
   border-radius: 8px;
   margin-left: -20px;
-
+  /*TODO(mdc-migration): The following rule targets internal classes of menu that may no longer apply for the MDC version.
+ */
   &.mat-menu-below {
     margin-top: -60px;
   }
 
-  .mat-menu-content {
+  .mat-mdc-menu-content {
     padding: 0;
     display: flex;
     flex-direction: column;

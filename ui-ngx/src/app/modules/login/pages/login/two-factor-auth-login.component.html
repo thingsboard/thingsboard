@@ -17,13 +17,15 @@
 -->
 <div class="tb-two-factor-auth-login-content mat-app-background tb-dark" fxLayout="row" fxLayoutAlign="center center"
      style="width: 100%;">
-  <mat-card fxFlex="initial" class="tb-two-factor-auth-login-card" >
-    <mat-card-title class="mat-headline" fxLayout="row" fxLayoutAlign="start center">
-      <button mat-icon-button type="button" (click)="cancelLogin()">
-        <mat-icon>chevron_left</mat-icon>
-      </button>
-      {{ 'login.verify-your-identity' | translate }}
-    </mat-card-title>
+  <mat-card appearance="outlined" fxFlex="initial" class="tb-two-factor-auth-login-card" >
+    <mat-card-header>
+      <mat-card-title class="mat-headline-5" fxLayout="row" fxLayoutAlign="start center">
+        <button mat-icon-button type="button" (click)="cancelLogin()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        {{ 'login.verify-your-identity' | translate }}
+      </mat-card-title>
+    </mat-card-header>
     <mat-card-content>
       <div class="providers-container tb-default" fxLayout="column" fxLayoutGap="8px" *ngIf="!selectedProvider">
         <p class="mat-body" translate>login.select-way-to-verify</p>

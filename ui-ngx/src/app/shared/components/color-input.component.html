@@ -26,7 +26,7 @@
   <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker()" [required]="required">
   <button *ngIf="colorClearButton && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

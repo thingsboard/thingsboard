@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { switchMap } from 'rxjs/operators';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import {
   NodeScriptTestDialogComponent,
   NodeScriptTestDialogData

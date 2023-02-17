@@ -23,7 +23,7 @@
     <div class="tb-rulechain-layout" fxFlex fxLayout="row">
       <section fxLayout="row"
                class="tb-header-buttons tb-library-open" [fxShow]="!isLibraryOpen">
-        <button mat-button mat-icon-button color="primary"
+        <button mat-icon-button color="primary"
                 class="tb-btn-header tb-btn-open-library mat-fab"
                 (click)="isLibraryOpen = true"
                 matTooltip="{{ 'rulenode.open-node-library' | translate }}"
@@ -40,7 +40,7 @@
                     fxLayout="column">
           <mat-toolbar color="primary" class="tb-dark">
             <div class="mat-toolbar-tools">
-              <button mat-button mat-icon-button class="tb-small"
+              <button mat-icon-button class="tb-small"
                 matTooltip="{{'rulenode.search' | translate}}"
                 matTooltipPosition="above">
                 <mat-icon>search</mat-icon>
@@ -51,14 +51,14 @@
                        [(ngModel)]="ruleNodeTypeSearch"
                        placeholder="{{'rulenode.search' | translate}}"/>
               </mat-form-field>
-              <button mat-button mat-icon-button class="tb-small"
+              <button mat-icon-button class="tb-small"
                       [fxShow]="ruleNodeTypeSearch !== ''"
                       (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
                       matTooltip="{{'action.clear-search' | translate}}"
                       matTooltipPosition="above">
                 <mat-icon>close</mat-icon>
               </button>
-              <button mat-button mat-icon-button class="tb-small"
+              <button mat-icon-button class="tb-small"
                       (click)="isLibraryOpen = false"
                       matTooltip="{{'action.close' | translate}}"
                       matTooltipPosition="above">

@@ -14,18 +14,26 @@
  * limitations under the License.
  */
 :host ::ng-deep {
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-wrapper {
     padding-bottom: 8px;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-underline {
     bottom: 8px;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-infix {
     width: auto;
     min-width: 100px;
   }
   mat-form-field {
     &.no-label {
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-infix {
         border-top-width: 0.2em;
       }

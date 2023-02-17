@@ -17,7 +17,7 @@
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
   <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <span class="tb-entity-table-title" translate>widget-config.actions</span>
         <span fxFlex></span>
@@ -36,7 +36,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 type="button"

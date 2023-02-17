@@ -22,7 +22,7 @@ import {
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { MatLegacyChipInputEvent as MatChipInputEvent } from '@angular/material/legacy-chips';
+import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { OverlayRef } from '@angular/cdk/overlay';
 

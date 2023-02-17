@@ -19,7 +19,10 @@
   .profile-container {
     padding: 8px;
   }
-
+  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
+ */
+  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
+ */
   mat-card.profile-card {
     padding: 24px;
     @media #{$mat-gt-sm} {
@@ -52,7 +55,7 @@
         margin-bottom: 25px;
       }
 
-      .mat-form-field {
+      .mat-mdc-form-field {
         margin-bottom: 4px;
       }
 
@@ -114,16 +117,18 @@
       opacity: 0.87;
     }
 
-    .mat-checkbox {
+    .mat-mdc-checkbox {
       margin-top: 8px;
     }
 
-    .mat-stroked-button {
+    .mat-mdc-outlined-button {
       margin-top: 8px;
     }
   }
 }
 :host ::ng-deep {
+  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
   .mat-form-field-appearance-fill .mat-form-field-underline::before {
     background-color: transparent;
   }

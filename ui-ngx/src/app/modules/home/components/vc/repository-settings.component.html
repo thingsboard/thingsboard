@@ -16,10 +16,10 @@
 
 -->
 <div>
-  <mat-card class="repository-settings" [ngClass]="{'settings-card': !detailsMode}" [ngStyle]="popoverComponent ? {boxShadow: 'none', width: '800px'} : {}">
+  <mat-card appearance="outlined" class="repository-settings" [ngClass]="{'settings-card': !detailsMode}" [ngStyle]="popoverComponent ? {boxShadow: 'none', width: '800px'} : {}">
     <mat-card-title>
       <div fxLayout="row">
-        <span class="mat-headline" translate>admin.repository-settings</span>
+        <span class="mat-headline-5" translate>admin.repository-settings</span>
         <span fxFlex></span>
         <div tb-help="repositorySettings"></div>
       </div>

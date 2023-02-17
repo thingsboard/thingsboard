@@ -36,6 +36,8 @@ div.tb-dashboard-page {
     padding-left: 20px;
     max-height: 60px;
     mat-form-field {
+      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
+ */
       .mat-form-field-infix {
         width: 100%;
       }

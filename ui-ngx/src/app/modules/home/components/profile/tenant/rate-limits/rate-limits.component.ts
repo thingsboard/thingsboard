@@ -24,7 +24,7 @@ import {
   NG_VALUE_ACCESSOR,
   Validator
 } from '@angular/forms';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import {
   RateLimitsDetailsDialogComponent,
   RateLimitsDetailsDialogData

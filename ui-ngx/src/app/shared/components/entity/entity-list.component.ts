@@ -35,8 +35,8 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
-import { MatLegacyAutocomplete as MatAutocomplete } from '@angular/material/legacy-autocomplete';
-import { MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
+import { MatAutocomplete } from '@angular/material/autocomplete';
+import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
@@ -81,7 +81,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   entities: Array<BaseData<EntityId>> = [];
   filteredEntities: Observable<Array<BaseData<EntityId>>>;

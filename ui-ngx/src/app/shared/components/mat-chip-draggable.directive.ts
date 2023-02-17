@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Directive, ElementRef, EventEmitter, HostListener, Output } from '@angular/core';
-import { MatLegacyChip as MatChip, MatLegacyChipList as MatChipList } from '@angular/material/legacy-chips';
+import { MatChipGrid, MatChipRow } from '@angular/material/chips';
 import Timeout = NodeJS.Timeout;
 
 export interface MatChipDropEvent {
@@ -24,7 +24,7 @@ export interface MatChipDropEvent {
 }
 
 @Directive({
-  selector: 'mat-chip-list[tb-chip-draggable]',
+  selector: 'mat-chip-grid[tb-chip-draggable]',
 })
 export class MatChipDraggableDirective implements AfterViewInit {
 
@@ -33,7 +33,7 @@ export class MatChipDraggableDirective implements AfterViewInit {
 
   private draggableChips: Array<DraggableChip> = [];
 
-  constructor(private chipsList: MatChipList,
+  constructor(private chipsList: MatChipGrid,
               private elementRef: ElementRef<HTMLElement>) {
   }
 
@@ -46,14 +46,14 @@ export class MatChipDraggableDirective implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.configureDraggableChipList();
-    this.chipsList.chips.changes.subscribe(() => {
+    this.chipsList._chips.changes.subscribe(() => {
       this.configureDraggableChipList();
     });
   }
 
   private configureDraggableChipList() {
     const toRemove: Array<DraggableChip> = [];
-    this.chipsList.chips.forEach((chip) => {
+    this.chipsList._chips.forEach((chip) => {
         const found = this.draggableChips.find((draggableChip) => draggableChip.chip === chip);
         if (!found) {
           this.draggableChips.push(new DraggableChip(chip,
@@ -64,7 +64,7 @@ export class MatChipDraggableDirective implements AfterViewInit {
       }
     );
     this.draggableChips.forEach((draggableChip) => {
-      const found = this.chipsList.chips.find((chip) => chip === draggableChip.chip);
+      const found = this.chipsList._chips.find((chip) => chip === draggableChip.chip);
       if (!found) {
         toRemove.push(draggableChip);
       }
@@ -100,8 +100,8 @@ class DraggableChip {
   private dropHandler = this.onDrop.bind(this);
   private dragOverHandler = this.onDragOver.bind(this);
 
-  constructor(public chip: MatChip,
-              private chipsList: MatChipList,
+  constructor(public chip: MatChipRow,
+              private chipsList: MatChipGrid,
               private chipListElement: HTMLElement,
               private chipDrop: EventEmitter<MatChipDropEvent>) {
     this.chipElement = chip._elementRef.nativeElement;
@@ -251,10 +251,10 @@ class DraggableChip {
   }
 
   private index(): number {
-    return this.chipsList.chips.toArray().indexOf(this.chip);
+    return this.chipsList._chips.toArray().indexOf(this.chip);
   }
 
-  private calculateDragImageOffset(event: DragEvent, dragImage: Element): { x: number, y: number } {
+  private calculateDragImageOffset(event: DragEvent, dragImage: Element): { x: number; y: number } {
 
     const dragImageComputedStyle = window.getComputedStyle( dragImage );
     const paddingTop = parseFloat( dragImageComputedStyle.paddingTop ) || 0;

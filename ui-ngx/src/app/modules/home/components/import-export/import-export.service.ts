@@ -32,7 +32,7 @@ import {
   EntityAliasFilter,
   EntityAliasInfo
 } from '@shared/models/alias.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';

@@ -17,7 +17,7 @@
 import { Component, Inject, InjectionToken } from '@angular/core';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Filter, FilterInfo } from '@shared/models/query/query.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
 import { UserFilterDialogComponent, UserFilterDialogData } from '@home/components/filter/user-filter-dialog.component';
 

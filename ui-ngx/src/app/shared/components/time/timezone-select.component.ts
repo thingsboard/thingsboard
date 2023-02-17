@@ -16,14 +16,14 @@
 
 import { AfterViewInit, Component, forwardRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatLegacyFormFieldAppearance as MatFormFieldAppearance } from '@angular/material/legacy-form-field';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { MatLegacyAutocompleteTrigger as MatAutocompleteTrigger } from '@angular/material/legacy-autocomplete';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { getDefaultTimezoneInfo, getTimezoneInfo, getTimezones, TimezoneInfo } from '@shared/models/time/time.models';
 import { deepClone } from '@core/utils';
 
@@ -46,7 +46,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   defaultTimezoneId: string = null;
 
   @Input()
-  appearance: MatFormFieldAppearance = 'legacy';
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   set defaultTimezone(timezone: string) {

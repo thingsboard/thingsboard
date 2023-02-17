@@ -168,9 +168,8 @@
               <div fxLayout="row" fxLayoutAlign="start center" fxFlex>
                 <mat-slider fxFlex formControlName="limit"
                             thumbLabel
-                            [value]="timewindowForm.get('aggregation.limit').value"
                             min="{{minDatapointsLimit()}}"
-                            max="{{maxDatapointsLimit()}}">
+                            max="{{maxDatapointsLimit()}}"><input matSliderThumb [value]="timewindowForm.get('aggregation.limit').value" />
                 </mat-slider>
                 <mat-form-field class="limit-slider-value">
                   <input matInput formControlName="limit" type="number" step="1"

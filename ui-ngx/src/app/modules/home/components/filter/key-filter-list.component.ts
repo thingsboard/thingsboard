@@ -35,7 +35,7 @@ import {
   KeyFilterInfo,
   keyFilterInfosToKeyFilters
 } from '@shared/models/query/query.models';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
 import { KeyFilterDialogComponent, KeyFilterDialogData } from '@home/components/filter/key-filter-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';

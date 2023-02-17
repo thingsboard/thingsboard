@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 :host {
+  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
+ */
   mat-card.repository-settings {
     margin: 8px;
   }
+  /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
   mat-checkbox {
     padding-bottom: 16px;
   }
@@ -38,6 +42,8 @@
   }
 }
 :host ::ng-deep {
+  /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
+ */
   .mat-checkbox-layout {
     white-space: normal !important;
   }

@@ -32,7 +32,7 @@
       <input [formControl]="keyValControl.get('value')" matInput required
              placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
     </mat-form-field>
-    <button mat-button mat-icon-button color="primary"
+    <button mat-icon-button color="primary"
             [fxShow]="!disabled"
             type="button"
             (click)="removeKeyVal($index)"

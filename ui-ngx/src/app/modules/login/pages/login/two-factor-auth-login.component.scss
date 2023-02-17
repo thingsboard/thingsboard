@@ -29,11 +29,11 @@
         width: 450px !important;
       }
 
-      .mat-card-title {
+      .mat-mdc-card-title {
         font: 400 28px / 36px Roboto, "Helvetica Neue", sans-serif;
       }
 
-      .mat-card-content {
+      .mat-mdc-card-content {
         margin-top: 44px;
         margin-left: 40px;
       }
@@ -75,7 +75,8 @@
     button.provider {
       text-align: start;
       font-weight: 400;
-
+      /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
+ */
       &:not(.mat-button-disabled) {
         border-color: rgba(255, 255, 255, .8);
       }
@@ -87,7 +88,7 @@
       }
     }
 
-    .mat-form-field-invalid .mat-hint {
+    .mat-form-field-invalid .mat-mdc-form-field-hint {
       margin-top: 20px;
     }
   }

@@ -58,7 +58,7 @@ import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
+import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
