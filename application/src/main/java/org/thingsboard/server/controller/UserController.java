@@ -351,11 +351,11 @@ public class UserController extends BaseController {
 
         return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
         {
-            Map<String, TsValue> keyValueMap = entityData.getLatest().get(ENTITY_FIELD);
+            Map<String, TsValue> fieldValues = entityData.getLatest().get(ENTITY_FIELD);
             return new UserData(UserId.fromString(entityData.getEntityId().getId().toString()),
-                    keyValueMap.get("email").getValue(),
-                    keyValueMap.get("firstName").getValue(),
-                    keyValueMap.get("lastName").getValue());
+                    fieldValues.get("email").getValue(),
+                    fieldValues.get("firstName").getValue(),
+                    fieldValues.get("lastName").getValue());
         });
     }
 
