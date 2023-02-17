@@ -35,6 +35,7 @@ public class AlarmQuery {
     private AlarmSearchStatus searchStatus;
     private AlarmStatus status;
     private UserId assigneeId;
+    @Deprecated
     private Boolean fetchOriginator;
 
 }

@@ -26,17 +26,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -59,8 +60,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,8 +68,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -91,23 +88,22 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private EntityService entityService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private DataValidator<Alarm> alarmDataValidator;
 
-    protected ExecutorService readResultsProcessingExecutor;
 
-    @PostConstruct
-    public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("alarm-service"));
+    @Override
+    public AlarmOperationResult updateAlarm(AlarmUpdateRequest request) {
+        return null;
     }
 
-    @PreDestroy
-    public void stopExecutor() {
-        if (readResultsProcessingExecutor != null) {
-            readResultsProcessingExecutor.shutdownNow();
-        }
+    @Override
+    public AlarmOperationResult createAlarm(CreateOrUpdateActiveAlarmRequest request) {
+        return null;
+    }
+
+    @Override
+    public AlarmOperationResult createAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled) {
+        return null;
     }
 
     @Override
@@ -235,45 +231,35 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
-        return getAndUpdateAsync(tenantId, alarmId, new Function<>() {
-            @Nullable
-            @Override
-            public AlarmOperationResult apply(@Nullable Alarm alarm) {
-                if (alarm == null || alarm.getStatus().isAck()) {
-                    return new AlarmOperationResult(alarm, false);
-                } else {
-                    AlarmStatus oldStatus = alarm.getStatus();
-                    AlarmStatus newStatus = oldStatus.isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK;
-                    alarm.setStatus(newStatus);
-                    alarm.setAckTs(ackTime);
-                    alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
-                }
-            }
-        });
+        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
+        if (alarm == null || alarm.getStatus().isAck()) {
+            return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
+        } else {
+            AlarmStatus oldStatus = alarm.getStatus();
+            AlarmStatus newStatus = oldStatus.isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK;
+            alarm.setStatus(newStatus);
+            alarm.setAckTs(ackTime);
+            alarm = alarmDao.save(alarm.getTenantId(), alarm);
+            return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
+        }
     }
 
     @Override
     public ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTime) {
-        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
-            @Nullable
-            @Override
-            public AlarmOperationResult apply(@Nullable Alarm alarm) {
-                if (alarm == null || alarm.getStatus().isCleared()) {
-                    return new AlarmOperationResult(alarm, false);
-                } else {
-                    AlarmStatus oldStatus = alarm.getStatus();
-                    AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
-                    alarm.setStatus(newStatus);
-                    alarm.setClearTs(clearTime);
-                    if (details != null) {
-                        alarm.setDetails(details);
-                    }
-                    alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
-                }
+        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
+        if (alarm == null || alarm.getStatus().isCleared()) {
+            return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
+        } else {
+            AlarmStatus oldStatus = alarm.getStatus();
+            AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
+            alarm.setStatus(newStatus);
+            alarm.setClearTs(clearTime);
+            if (details != null) {
+                alarm.setDetails(details);
             }
-        });
+            alarm = alarmDao.save(alarm.getTenantId(), alarm);
+            return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
+        }
     }
 
     @Override
@@ -288,7 +274,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(assigneeId);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
+                    AlarmInfo alarmInfo = alarmDao.findAlarmInfoById(tenantId, alarm.getUuidId());
                     return new AlarmOperationResult(alarm,
                             new AlarmAssigneeUpdate(false, alarmInfo.getAssignee()),
                             new ArrayList<>(getPropagationEntityIds(alarm)));
@@ -331,48 +317,20 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId) {
+    public AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmInfoByIdAsync [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
-        return Futures.transform(alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()),
-                a -> getAlarmInfo(tenantId, a), MoreExecutors.directExecutor());
+        return alarmDao.findAlarmInfoById(tenantId, alarmId.getId());
     }
 
     @Override
     public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
-        PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
-        if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            return fetchAlarmsOriginators(tenantId, alarms);
-        }
-        return Futures.immediateFuture(alarms);
+        return Futures.immediateFuture(alarmDao.findAlarms(tenantId, query));
     }
 
     @Override
     public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
-        PageData<AlarmInfo> alarms = alarmDao.findCustomerAlarms(tenantId, customerId, query);
-        if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            return fetchAlarmsOriginators(tenantId, alarms);
-        }
-        return Futures.immediateFuture(alarms);
-    }
-
-    private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
-        List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
-        for (AlarmInfo alarmInfo : alarms.getData()) {
-            Optional<NameLabelAndCustomerDetails> detailsOpt = entityService.fetchNameLabelAndCustomerDetails(tenantId, alarmInfo.getOriginator());
-            if (detailsOpt.isPresent() && detailsOpt.get().getName() != null) {
-                NameLabelAndCustomerDetails details = detailsOpt.get();
-                alarmInfo.setOriginatorName(details.getName());
-                alarmInfo.setOriginatorLabel(details.getLabel());
-            } else {
-                alarmInfo.setOriginatorName("Deleted");
-                alarmInfo.setOriginatorLabel("Deleted");
-            }
-            alarmFutures.add(Futures.immediateFuture(alarmInfo));
-        }
-        return Futures.transform(Futures.successfulAsList(alarmFutures),
-                alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
-                        alarms.hasNext()), MoreExecutors.directExecutor());
+        return Futures.immediateFuture(alarmDao.findCustomerAlarms(tenantId, customerId, query));
     }
 
     @Override
@@ -451,38 +409,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         }
     }
 
-    private <T> ListenableFuture<T> getAndUpdateAsync(TenantId tenantId, AlarmId alarmId, Function<Alarm, T> function) {
-        validateId(alarmId, "Alarm id should be specified!");
-        ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId());
-        return Futures.transform(entity, function, readResultsProcessingExecutor);
-    }
-
     private <T> T getAndUpdate(TenantId tenantId, AlarmId alarmId, Function<Alarm, T> function) {
         validateId(alarmId, "Alarm id should be specified!");
         Alarm entity = alarmDao.findAlarmById(tenantId, alarmId.getId());
         return function.apply(entity);
-    }
-
-    private AlarmInfo getAlarmInfo(TenantId tenantId, Alarm alarm) {
-        String originatorName;
-        String originatorLabel;
-
-        Optional<NameLabelAndCustomerDetails> detailsOpt = entityService.fetchNameLabelAndCustomerDetails(tenantId, alarm.getOriginator());
-        if (detailsOpt.isPresent() && detailsOpt.get().getName() != null) {
-            NameLabelAndCustomerDetails details = detailsOpt.get();
-            originatorName = details.getName();
-            originatorLabel = details.getLabel();
-        } else {
-            originatorName = "Deleted";
-            originatorLabel = "Deleted";
-        }
-
-        AlarmAssignee assignee = null;
-        if (alarm.getAssigneeId() != null) {
-            User assignedUser = userService.findUserById(tenantId, alarm.getAssigneeId());
-            assignee = new AlarmAssignee(assignedUser.getId(), assignedUser.getFirstName(), assignedUser.getLastName(), assignedUser.getEmail());
-        }
-        return new AlarmInfo(alarm, originatorName, originatorLabel, assignee);
     }
 
     @Override

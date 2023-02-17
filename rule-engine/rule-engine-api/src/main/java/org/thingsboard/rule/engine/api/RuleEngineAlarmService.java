@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -60,7 +61,11 @@ public interface RuleEngineAlarmService {
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
-    ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId);
+    AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
+
+    default ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId){
+        return Futures.immediateFuture(findAlarmInfoById(tenantId, alarmId));
+    }
 
     ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
 

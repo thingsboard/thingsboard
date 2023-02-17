@@ -28,6 +28,9 @@ CREATE INDEX IF NOT EXISTS idx_alarm_tenant_assignee_created_time ON alarm(tenan
 
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_created_time ON entity_alarm(tenant_id, entity_id, created_time DESC);
 
+CREATE INDEX IF NOT EXISTS idx_entity_alarm_entity_id_alarm_type_created_time_alarm_id ON entity_alarm
+USING btree (tenant_id, entity_id, alarm_type, created_time DESC) INCLUDE(alarm_id);
+
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_alarm_id ON entity_alarm(alarm_id);
 
 CREATE INDEX IF NOT EXISTS idx_relation_to_id ON relation(relation_type_group, to_type, to_id);

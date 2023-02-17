@@ -39,10 +39,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
-            "FROM AlarmEntity a " +
+    @Query(value = "SELECT a " +
+            "FROM AlarmInfoEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
-            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
             "WHERE a.tenantId = :tenantId " +
             "AND ea.tenantId = :tenantId " +
             "AND ea.entityId = :affectedEntityId " +
@@ -57,7 +56,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             ,
             countQuery = "" +
                     "SELECT count(a) " + //alarms with relations only
-                    "FROM AlarmEntity a " +
+                    "FROM AlarmInfoEntity a " +
                     "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
                     "WHERE a.tenantId = :tenantId " +
                     "AND ea.tenantId = :tenantId " +
@@ -80,9 +79,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
-            "FROM AlarmEntity a " +
-            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
+    @Query(value = "SELECT a " +
+            "FROM AlarmInfoEntity a " +
             "WHERE a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
@@ -110,9 +108,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                         @Param("searchText") String searchText,
                                         Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a, tbu.firstName, tbu.lastName, tbu.email) " +
-            "FROM AlarmEntity a " +
-            "LEFT JOIN UserEntity tbu ON tbu.id = a.assigneeId " +
+    @Query(value = "SELECT a " +
+            "FROM AlarmInfoEntity a " +
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
@@ -124,7 +121,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             ,
             countQuery = "" +
                     "SELECT count(a) " +
-                    "FROM AlarmEntity a " +
+                    "FROM AlarmInfoEntity a " +
                     "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
@@ -159,4 +156,6 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.createdTime < :time AND a.endTs < :time")
     Page<UUID> findAlarmsIdsByEndTsBeforeAndTenantId(@Param("time") Long time, @Param("tenantId") UUID tenantId, Pageable pageable);
 
+    @Query(value = "SELECT a FROM AlarmInfoEntity a WHERE a.tenantId = :tenantId AND a.id = :alarmId")
+    AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
 }

@@ -21,23 +21,44 @@ import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.UserId;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_VIEW_NAME;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Entity
+@Table(name = ALARM_VIEW_NAME)
 public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
 
+    @Column(name = ALARM_ORIGINATOR_NAME_PROPERTY)
     private String originatorName;
+    @Column(name = ALARM_ORIGINATOR_LABEL_PROPERTY)
     private String originatorLabel;
-
+    @Column(name = ALARM_ASSIGNEE_FIRST_NAME_PROPERTY)
     private String assigneeFirstName;
+    @Column(name = ALARM_ASSIGNEE_LAST_NAME_PROPERTY)
     private String assigneeLastName;
+    @Column(name = ALARM_ASSIGNEE_EMAIL_PROPERTY)
     private String assigneeEmail;
 
     public AlarmInfoEntity() {
         super();
     }
 
-    public AlarmInfoEntity(AlarmEntity alarmEntity, String assigneeFirstName,
-                           String assigneeLastName, String assigneeEmail) {
+    public AlarmInfoEntity(AlarmEntity alarmEntity,
+                           String assigneeFirstName,
+                           String assigneeLastName,
+                           String assigneeEmail) {
         super(alarmEntity);
         this.assigneeFirstName = assigneeFirstName;
         this.assigneeLastName = assigneeLastName;

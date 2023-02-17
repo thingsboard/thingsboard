@@ -174,8 +174,8 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId) {
-        return alarmService.findAlarmInfoByIdAsync(tenantId, alarmId);
+    public AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId) {
+        return alarmService.findAlarmInfoById(tenantId, alarmId);
     }
 
     @Override

@@ -101,6 +101,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
+    public AlarmInfo findAlarmInfoById(TenantId tenantId, UUID key) {
+        return DaoUtil.getData(alarmRepository.findAlarmInfoById(tenantId.getId(), key));
+    }
+
+    @Override
     public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, UUID key) {
         return findByIdAsync(tenantId, key);
     }

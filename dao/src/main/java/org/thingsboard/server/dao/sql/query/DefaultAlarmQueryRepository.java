@@ -83,7 +83,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put(ASSIGNEE_EMAIL_KEY, ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
     }
 
-    private static final String SELECT_ORIGINATOR_NAME = " COALESCE(CASE" +
+    public static final String SELECT_ORIGINATOR_NAME = " COALESCE(CASE" +
             " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
             " THEN (select title from tenant where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
@@ -106,7 +106,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " THEN (select name from edge where id = a.originator_id)" +
             " END, 'Deleted') as " + ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY;
 
-    private static final String SELECT_ORIGINATOR_LABEL = " COALESCE(CASE" +
+    public static final String SELECT_ORIGINATOR_LABEL = " COALESCE(CASE" +
             " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
             " THEN (select title from tenant where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
