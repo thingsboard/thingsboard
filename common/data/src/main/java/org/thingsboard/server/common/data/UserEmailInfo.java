@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.UserId;
 @ApiModel
 @Data
 @AllArgsConstructor
-public class UserData implements HasId<UserId> {
+public class UserEmailInfo implements HasId<UserId> {
 
     @ApiModelProperty(position = 1, value = "User id")
     private UserId id;
