@@ -790,24 +790,40 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void checkCustomerUserDoNotSeeTenantAndOtherCustomerUsers() throws Exception {
+    public void checkCustomerUserDoNotSeeTenantUsersOtherTenantUsersOtherCustomerUsers() throws Exception {
         loginSysAdmin();
+        String searchText = "Joe";
 
-        User tenantAdmin = createTenantAdminUser("Joe", "Brown");
+        loginDifferentTenant();
+        CustomerId customerId1 = postCustomer();
+        doPost("/api/user", createCustomerUser(searchText, "Ress", customerId1), User.class);
+
+        loginSysAdmin();
+        User tenantAdmin = createTenantAdminUser(searchText, "Brown");
         createUserAndLogin(tenantAdmin, "testPassword1");
 
-        CustomerId customerId = postCustomer();
-        User user = createCustomerUser("Joe", "Downs", customerId);
+        CustomerId customerId2 = postCustomer();
+        User user = createCustomerUser(searchText, "Downs", customerId2);
         doPost("/api/user", user, User.class);
 
-        CustomerId customerId2 = postCustomer();
-        User user2 = createCustomerUser(customerId2);
+        CustomerId customerId3 = postCustomer();
+        User user2 = createCustomerUser(customerId3);
         createUserAndLogin(user2, "testPassword2");
 
-        PageLink pageLink = new PageLink(10, 0, "Joe");
+        PageLink pageLink = new PageLink(10, 0, searchText);
         List<UserData> usersInfo = getUsersInfo(pageLink);
 
         Assert.assertEquals(usersInfo.size(), 0);
+
+        //clear users
+        loginDifferentTenant();
+        doDelete("/api/customer/" + customerId1.getId().toString())
+                .andExpect(status().isOk());
+        loginUser(tenantAdmin.getEmail(), "testPassword1");
+        doDelete("/api/customer/" + customerId2.getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/customer/" + customerId3.getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
