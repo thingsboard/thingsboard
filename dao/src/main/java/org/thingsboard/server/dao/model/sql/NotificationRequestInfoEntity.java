@@ -48,9 +48,14 @@ public class NotificationRequestInfoEntity extends NotificationRequestEntity {
     public NotificationRequestInfo toData() {
         NotificationRequest request = super.toData();
         List<NotificationDeliveryMethod> deliveryMethods;
+
+        NotificationTemplateConfig templateConfig = fromJson(this.templateConfig, NotificationTemplateConfig.class);
+        String templateName = this.templateName;
+        if (templateConfig == null && request.getTemplate() != null) {
+            templateConfig = request.getTemplate().getConfiguration();
+        }
         if (templateConfig != null) {
-            deliveryMethods = fromJson(templateConfig, NotificationTemplateConfig.class)
-                    .getDeliveryMethodsTemplates().entrySet().stream()
+            deliveryMethods = templateConfig.getDeliveryMethodsTemplates().entrySet().stream()
                     .filter(entry -> entry.getValue().isEnabled())
                     .map(Map.Entry::getKey).collect(Collectors.toList());
         } else if (request.getStats() != null) {

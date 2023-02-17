@@ -189,17 +189,25 @@ public class NotificationController extends BaseController {
 
     @PostMapping("/notification/request/preview")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationRequestPreview getNotificationRequestPreview(@RequestBody @Valid NotificationRequest notificationRequest,
+    public NotificationRequestPreview getNotificationRequestPreview(@RequestBody @Valid NotificationRequest request,
                                                                     @AuthenticationPrincipal SecurityUser user) {
         NotificationRequestPreview preview = new NotificationRequestPreview();
 
-        notificationRequest.setOriginatorEntityId(user.getId());
-        NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(user.getTenantId(), notificationRequest.getTemplateId());
+        request.setOriginatorEntityId(user.getId());
+        NotificationTemplate template;
+        if (request.getTemplateId() != null) {
+            template = notificationTemplateService.findNotificationTemplateById(user.getTenantId(), request.getTemplateId());
+        } else {
+            template = request.getTemplate();
+        }
+        if (template == null) {
+            throw new IllegalArgumentException("Template is missing");
+        }
         NotificationProcessingContext mockProcessingCtx = NotificationProcessingContext.builder()
                 .tenantId(user.getTenantId())
-                .request(notificationRequest)
+                .request(request)
                 .settings(null)
-                .template(notificationTemplate)
+                .template(template)
                 .build();
 
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = mockProcessingCtx.getDeliveryMethods().stream()
@@ -215,7 +223,7 @@ public class NotificationController extends BaseController {
         preview.setProcessedTemplates(processedTemplates);
 
         Map<String, Integer> recipientsCountByTarget = new HashMap<>();
-        notificationRequest.getTargets().forEach(targetId -> {
+        request.getTargets().forEach(targetId -> {
             NotificationTarget notificationTarget = notificationTargetService.findNotificationTargetById(user.getTenantId(), new NotificationTargetId(targetId));
             if (notificationTarget == null) {
                 throw new IllegalArgumentException("Notification target with id " + targetId + " not found");

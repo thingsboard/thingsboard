@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
@@ -55,8 +56,12 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGETS_PROPERTY, nullable = false)
     private String targets;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY, nullable = false)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY)
     private UUID templateId;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEMPLATE_PROPERTY)
+    private JsonNode template;
 
     @Type(type = "json")
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_INFO_PROPERTY)
@@ -92,6 +97,7 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setTenantId(getTenantUuid(notificationRequest.getTenantId()));
         setTargets(listToString(notificationRequest.getTargets()));
         setTemplateId(getUuid(notificationRequest.getTemplateId()));
+        setTemplate(toJson(notificationRequest.getTemplate()));
         setInfo(toJson(notificationRequest.getInfo()));
         setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
         if (notificationRequest.getOriginatorEntityId() != null) {
@@ -109,6 +115,7 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         this.tenantId = other.tenantId;
         this.targets = other.targets;
         this.templateId = other.templateId;
+        this.template = other.template;
         this.info = other.info;
         this.additionalConfig = other.additionalConfig;
         this.originatorEntityId = other.originatorEntityId;
@@ -126,6 +133,7 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setTenantId(getTenantId(tenantId));
         notificationRequest.setTargets(listFromString(targets, UUID::fromString));
         notificationRequest.setTemplateId(getEntityId(templateId, NotificationTemplateId::new));
+        notificationRequest.setTemplate(fromJson(template, NotificationTemplate.class));
         notificationRequest.setInfo(fromJson(info, NotificationInfo.class));
         notificationRequest.setAdditionalConfig(fromJson(additionalConfig, NotificationRequestConfig.class));
         if (originatorEntityId != null) {

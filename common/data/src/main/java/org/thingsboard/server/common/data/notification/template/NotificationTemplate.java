@@ -34,7 +34,6 @@ public class NotificationTemplate extends BaseData<NotificationTemplateId> imple
 
     private TenantId tenantId;
     @NoXss
-    @NotNull
     private String name;
     @NoXss
     @NotNull
