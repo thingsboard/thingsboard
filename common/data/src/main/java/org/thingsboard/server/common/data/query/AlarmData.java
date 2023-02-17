@@ -18,12 +18,13 @@ package org.thingsboard.server.common.data.query;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmAssignee;
+import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 public class AlarmData extends AlarmInfo {
@@ -35,7 +36,7 @@ public class AlarmData extends AlarmInfo {
     @Getter
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
 
-    public AlarmData update(Alarm alarm) {
+    public AlarmData update(Alarm alarm, AlarmAssigneeUpdate assigneeUpdate) {
         this.setEndTs(alarm.getEndTs());
         this.setSeverity(alarm.getSeverity());
         this.setStatus(alarm.getStatus());
@@ -47,6 +48,21 @@ public class AlarmData extends AlarmInfo {
         // This should be changed via separate message?
         this.setAckTs(alarm.getAckTs());
         this.setClearTs(alarm.getClearTs());
+
+        if (assigneeUpdate != null) {
+            if (assigneeUpdate.isDeleted()) {
+                this.setAssigneeId(null);
+                this.setAssigneeFirstName(null);
+                this.setAssigneeLastName(null);
+                this.setAssigneeEmail(null);
+            } else {
+                AlarmAssignee assignee = assigneeUpdate.getAssignee();
+                this.setAssigneeId(assignee.getId());
+                this.setAssigneeFirstName(assignee.getFirstName());
+                this.setAssigneeLastName(assignee.getLastName());
+                this.setAssigneeEmail(assignee.getEmail());
+            }
+        }
         return this;
     }
 

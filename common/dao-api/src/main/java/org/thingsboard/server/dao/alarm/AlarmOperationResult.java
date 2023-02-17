@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.alarm;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Collections;
@@ -34,12 +34,18 @@ public class AlarmOperationResult {
     private final AlarmSeverity oldSeverity;
     private final List<EntityId> propagatedEntitiesList;
 
+    private final AlarmAssigneeUpdate assigneeUpdate;
+
+    public AlarmOperationResult(Alarm alarm, AlarmAssigneeUpdate assigneeUpdate, List<EntityId> propagatedEntitiesList) {
+        this(alarm, true, false, null, propagatedEntitiesList, assigneeUpdate);
+    }
+
     public AlarmOperationResult(Alarm alarm, boolean successful) {
         this(alarm, successful, Collections.emptyList());
     }
 
     public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList) {
-        this(alarm, successful, false, null, propagatedEntitiesList);
+        this(alarm, successful, false, null, propagatedEntitiesList, null);
     }
 
     public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
@@ -48,5 +54,6 @@ public class AlarmOperationResult {
         this.created = created;
         this.propagatedEntitiesList = propagatedEntitiesList;
         this.oldSeverity = null;
+        this.assigneeUpdate = null;
     }
 }

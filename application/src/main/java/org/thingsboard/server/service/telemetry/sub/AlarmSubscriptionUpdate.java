@@ -17,16 +17,7 @@ package org.thingsboard.server.service.telemetry.sub;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.query.AlarmData;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 
 public class AlarmSubscriptionUpdate {
 
@@ -39,16 +30,19 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private Alarm alarm;
     @Getter
+    private AlarmAssigneeUpdate assignee;
+    @Getter
     private boolean alarmDeleted;
 
     public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm) {
-        this(subscriptionId, alarm, false);
+        this(subscriptionId, alarm, null, false);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, AlarmAssigneeUpdate assignee, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
         this.alarm = alarm;
+        this.assignee = assignee;
         this.alarmDeleted = alarmDeleted;
     }
 

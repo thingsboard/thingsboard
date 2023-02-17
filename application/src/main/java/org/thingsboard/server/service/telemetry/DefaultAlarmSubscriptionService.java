@@ -211,12 +211,12 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
+                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, result.getAssigneeUpdate(), TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
                 } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, result.getAssigneeUpdate(), alarm);
                     clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
                 }
             }

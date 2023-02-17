@@ -30,6 +30,8 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmAssignee;
+import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -228,12 +230,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
         }
-        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
+        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList, null);
     }
 
     @Override
     public ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
-        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+        return getAndUpdateAsync(tenantId, alarmId, new Function<>() {
             @Nullable
             @Override
             public AlarmOperationResult apply(@Nullable Alarm alarm) {
@@ -286,7 +288,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(assigneeId);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    AlarmInfo alarmInfo = getAlarmInfo(tenantId, alarm);
+                    return new AlarmOperationResult(alarm, new AlarmAssigneeUpdate(false,
+                            new AlarmAssignee(alarmInfo.getAssigneeId(), alarmInfo.getAssigneeFirstName(),
+                                    alarmInfo.getAssigneeLastName(), alarmInfo.getAssigneeEmail())
+                            ), new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
@@ -304,7 +310,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarm.setAssigneeId(null);
                     alarm.setAssignTs(assignTime);
                     alarm = alarmDao.save(alarm.getTenantId(), alarm);
-                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+                    return new AlarmOperationResult(alarm, new AlarmAssigneeUpdate(true, null),
+                            new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
