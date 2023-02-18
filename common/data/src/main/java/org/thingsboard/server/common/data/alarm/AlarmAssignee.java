@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
-import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.UserId;
 
