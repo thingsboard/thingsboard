@@ -217,7 +217,7 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/assign", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public Alarm assignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+    public Alarm unassignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
                             @PathVariable(ALARM_ID) String strAlarmId
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
