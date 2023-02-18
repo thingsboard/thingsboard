@@ -28,8 +28,6 @@ import javax.persistence.Table;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_VIEW_NAME;
@@ -70,7 +68,9 @@ public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
         AlarmInfo alarmInfo = new AlarmInfo(super.toAlarm());
         alarmInfo.setOriginatorName(originatorName);
         alarmInfo.setOriginatorLabel(originatorLabel);
-        alarmInfo.setAssignee(new AlarmAssignee(new UserId(getAssigneeId()), assigneeFirstName, assigneeLastName, assigneeEmail));
+        if (getAssigneeId() != null) {
+            alarmInfo.setAssignee(new AlarmAssignee(new UserId(getAssigneeId()), assigneeFirstName, assigneeLastName, assigneeEmail));
+        }
         return alarmInfo;
     }
 }
