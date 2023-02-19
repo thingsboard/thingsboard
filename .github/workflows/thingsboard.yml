@@ -30,12 +30,19 @@ jobs:
     - name: Build with Maven
       run: mvn clean package -DskipTests
 
-    - name: Deploy to server
-        uses: appleboy/scp-action@master
-        with:
-          server: 20.14.100.97
-          username: kawsarahmd
-          password: kawsar1qazZAQ!
-          port: 22
-          local_path: './application/target/myapp.war'
-          remote_path: '/opt/tesenso/'
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v2
+
+        - name: Setup SSH Connection
+          uses: webfactory/ssh-agent@v0.4.1
+          with:
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+        - name: Copy Jar File to Azure App Service
+          run: scp -r application/target/*.deb kawsarahmd@20.14.100.97:/opt/tesenso
+
