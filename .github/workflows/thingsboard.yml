@@ -42,9 +42,8 @@ jobs:
             SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
             ARGS: "-rlgoDzvc -i --delete"
             SOURCE: "dist/"
-            REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-            REMOTE_USER: ${{ secrets.REMOTE_USER }}
-            TARGET: ${{ secrets.REMOTE_TARGET }}
+            REMOTE_HOST: ${{ secrets.SERVER_IP }}
+            REMOTE_USER: ${{ secrets.SERVER_USERNAME }}
             EXCLUDE: "/dist/, /node_modules/"
             local_path: './application/target/*.deb'
             remote_path: '/opt/tesenso/'
