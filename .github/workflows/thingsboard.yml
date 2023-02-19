@@ -37,12 +37,15 @@ jobs:
 
     steps:
       - name: Deploy to server
-        uses: easingthemes/ssh-deploy@v2.1.7
-        with:
-            server: ${{ secrets.SERVER_IP }}
-            username: ${{ secrets.SERVER_USERNAME }}
-            password: ${{ secrets.SERVER_PASSWORD }}
-            port: ${{ secrets.SERVER_PORT }}
+        uses: easingthemes/ssh-deploy@main
+        env:
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+            ARGS: "-rlgoDzvc -i --delete"
+            SOURCE: "dist/"
+            REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+            REMOTE_USER: ${{ secrets.REMOTE_USER }}
+            TARGET: ${{ secrets.REMOTE_TARGET }}
+            EXCLUDE: "/dist/, /node_modules/"
             local_path: './application/target/*.deb'
             remote_path: '/opt/tesenso/'
 
