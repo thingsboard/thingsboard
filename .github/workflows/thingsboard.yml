@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Deploy to server
-      - uses: mdallasanta/ssh-scp-deploy@v1.2.0
+        uses: mdallasanta/ssh-scp-deploy@v1.2.0
         with:
           local: './application/target/*.deb'                                                  # Local file path - REQUIRED false - DEFAULT ./
           remote: '/opt/tesenso'                                                 # Remote file path - REQUIRED false - DEFAULT ~/
