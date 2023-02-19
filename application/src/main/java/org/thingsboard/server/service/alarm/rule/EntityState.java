@@ -64,6 +64,8 @@ class EntityState {
     private final TenantId tenantId;
     @Getter
     private final EntityId entityId;
+    @Getter
+    private final EntityId profileId;
     private final TbAlarmRuleContext ctx;
     private final EntityRulesState entityRulesState;
     private final AlarmRuleEntityState state;
@@ -73,9 +75,10 @@ class EntityState {
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
     private final Lock lock = new ReentrantLock();
 
-    EntityState(TenantId tenantId, EntityId entityId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, AlarmRuleEntityState state) {
+    EntityState(TenantId tenantId, EntityId entityId, EntityId profileId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, AlarmRuleEntityState state) {
         this.tenantId = tenantId;
         this.entityId = entityId;
+        this.profileId = profileId;
         this.ctx = ctx;
         this.entityRulesState = entityRulesState;
 

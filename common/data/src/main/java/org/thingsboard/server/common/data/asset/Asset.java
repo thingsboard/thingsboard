@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.asset;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -24,6 +25,7 @@ import lombok.Setter;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -37,7 +39,7 @@ import java.util.Optional;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId, ExportableEntity<AssetId> {
+public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId, ExportableEntity<AssetId>, HasProfileId<AssetProfileId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -158,6 +160,11 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.assetProfileId = assetProfileId;
     }
 
+    @Override
+    @JsonIgnore
+    public AssetProfileId getProfileId() {
+        return assetProfileId;
+    }
 
     @Override
     public String getSearchText() {

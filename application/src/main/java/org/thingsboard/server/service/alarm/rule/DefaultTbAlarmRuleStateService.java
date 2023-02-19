@@ -32,15 +32,17 @@ import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -51,15 +53,15 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbAlarmRulesQueueFactory;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -69,7 +71,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ import java.util.stream.Collectors;
 @Service
 @TbRuleEngineComponent
 @RequiredArgsConstructor
-public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
+public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<PartitionChangeEvent> implements TbAlarmRuleStateService {
 
     @Value("${queue.ar.poll-interval:25}")
     private long pollDuration;
@@ -98,11 +99,12 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
     private final AlarmRuleService alarmRuleService;
     private final AlarmRuleEntityStateService alarmRuleEntityStateService;
     private final PartitionService partitionService;
-    private final RelationService relationService;
+    //    private final RelationService relationService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
+    private final DataDecodingEncodingService encodingService;
 
-    private final TbQueueProducerProvider producerProvider;
+    //    private final TbQueueProducerProvider producerProvider;
     private final TbAlarmRulesQueueFactory queueFactory;
     private volatile ExecutorService consumerExecutor;
     private volatile ListeningExecutorService consumerLoopExecutor;
@@ -169,11 +171,11 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         if (consumerExecutor != null) {
             consumerExecutor.shutdownNow();
         }
-        if (scheduler != null) {
-            scheduler.shutdownNow();
-        }
         if (consumerLoopExecutor != null) {
             consumerLoopExecutor.shutdownNow();
+        }
+        if (scheduler != null) {
+            scheduler.shutdownNow();
         }
     }
 
@@ -188,22 +190,33 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 
     @Override
     public void process(TenantId tenantId, TbMsg msg) throws Exception {
-        List<EntityState> entityStates = getOrCreateEntityStates(tenantId, msg.getOriginator());
-        for (EntityState entityState : entityStates) {
+        EntityState entityState = getOrCreateEntityState(tenantId, msg.getOriginator());
+        if (entityState != null) {
             entityState.process(null, msg);
         }
     }
 
     private void process(TbAlarmRuleRequestCtx requestCtx, TenantId tenantId, TbMsg msg) throws Exception {
-        List<EntityState> entityStates = getOrCreateEntityStates(tenantId, msg.getOriginator());
-        for (EntityState entityState : entityStates) {
+        EntityState entityState = getOrCreateEntityState(tenantId, msg.getOriginator());
+        if (entityState != null) {
             entityState.process(requestCtx, msg);
         }
     }
 
     @Override
-    public void processEntityDeleted(TbMsg msg) {
-        EntityId entityId = msg.getOriginator();
+    public <T extends HasProfileId<? extends EntityId>> void processEntityUpdated(EntityId entityId, T entity) {
+        //TODO: maybe we should analyze rules in entity state (remove old rules and add new rules)
+        EntityState entityState = entityStates.get(entityId);
+        if (entityState != null) {
+            EntityId currentProfileId = entity.getProfileId();
+            if (!currentProfileId.equals(entity.getProfileId())) {
+                removeEntityState(entityId);
+            }
+        }
+    }
+
+    @Override
+    public void processEntityDeleted(EntityId entityId) {
         EntityState state = entityStates.remove(entityId);
         if (state != null) {
             myEntityStateIds.values().forEach(ids -> ids.remove(entityId));
@@ -211,35 +224,39 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         }
     }
 
-    @EventListener(PartitionChangeEvent.class)
-    public void onPartitionChangeEvent(PartitionChangeEvent event) {
-        List<EntityId> toRemove = new ArrayList<>();
-        List<AlarmRuleEntityState> toAdd = new ArrayList<>();
+    @Override
+    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+        if (ServiceType.TB_ALARM_RULES_EXECUTOR.equals(event.getServiceType())) {
+            consumer.subscribe(event.getPartitions());
 
-        otherEntityStateIds.forEach(((tenantId, entityIds) -> {
-            List<EntityId> ids = new ArrayList<>();
-            entityIds.forEach(entityId -> {
-                if (isLocalEntity(tenantId, entityId)) {
-                    ids.add(entityId);
+            List<EntityId> toRemove = new ArrayList<>();
+            List<AlarmRuleEntityState> toAdd = new ArrayList<>();
+
+            otherEntityStateIds.forEach(((tenantId, entityIds) -> {
+                List<EntityId> ids = new ArrayList<>();
+                entityIds.forEach(entityId -> {
+                    if (isLocalEntity(tenantId, entityId)) {
+                        ids.add(entityId);
+                    }
+                });
+                ids.forEach(entityIds::remove);
+                toAdd.addAll(alarmRuleEntityStateService.findAllByIds(ids));
+            }));
+
+            entityStates.values().forEach(entityState -> {
+                TenantId tenantId = entityState.getTenantId();
+                EntityId entityId = entityState.getEntityId();
+                if (!isLocalEntity(tenantId, entityId)) {
+                    toRemove.add(entityId);
+                    otherEntityStateIds.computeIfAbsent(tenantId, key -> ConcurrentHashMap.newKeySet()).add(entityId);
                 }
             });
-            ids.forEach(entityIds::remove);
-            toAdd.addAll(alarmRuleEntityStateService.findAllByIds(ids));
-        }));
 
-        entityStates.values().forEach(entityState -> {
-            TenantId tenantId = entityState.getTenantId();
-            EntityId entityId = entityState.getEntityId();
-            if (!isLocalEntity(tenantId, entityId)) {
-                toRemove.add(entityId);
-                otherEntityStateIds.computeIfAbsent(tenantId, key -> ConcurrentHashMap.newKeySet()).add(entityId);
-            }
-        });
+            toRemove.forEach(entityStates::remove);
+            myEntityStateIds.values().forEach(ids -> toRemove.forEach(ids::remove));
 
-        toRemove.forEach(entityStates::remove);
-        myEntityStateIds.values().forEach(ids -> toRemove.forEach(ids::remove));
-
-        toAdd.forEach(ares -> createEntityState(ares.getTenantId(), ares.getEntityId(), ares));
+            toAdd.forEach(ares -> createEntityState(ares.getTenantId(), ares.getEntityId(), ares));
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -289,19 +306,32 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 
     private void processMessage(ToTbAlarmRuleStateServiceMsg msgProto) throws Exception {
         TenantId tenantId = TenantId.fromUUID(new UUID(msgProto.getTenantIdMSB(), msgProto.getTenantIdLSB()));
-        TbMsg tbMsg = TbMsg.fromBytes(msgProto.getQueueName(), msgProto.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
-        if (msgProto.hasAlarmRuleRequest()) {
-            TransportProtos.TbAlarmRuleRequestCtxProto alarmRuleRequest = msgProto.getAlarmRuleRequest();
 
-            RuleChainId ruleChainId = new RuleChainId(new UUID(alarmRuleRequest.getRuleChainIdMSB(), alarmRuleRequest.getRuleChainIdLSB()));
-            RuleNodeId ruleNodeId = new RuleNodeId(new UUID(alarmRuleRequest.getRuleNodeIdMSB(), alarmRuleRequest.getRuleNodeIdLSB()));
-            TbAlarmRuleRequestCtx ctx = new TbAlarmRuleRequestCtx();
-            ctx.setRuleChainId(ruleChainId);
-            ctx.setRuleNodeId(ruleNodeId);
-            ctx.setDebugMode(alarmRuleRequest.getIsDebug());
-            process(ctx, tenantId, tbMsg);
+        if (msgProto.hasEntityUpdateMsg()) {
+            TransportProtos.EntityUpdateMsg entityUpdateMsg = msgProto.getEntityUpdateMsg();
+            HasProfileId<?> entity = (HasProfileId) encodingService.decode(entityUpdateMsg.getData().toByteArray()).get();
+
+            processEntityUpdated(((HasId<? extends EntityId>) entity).getId(), entity);
+        } else if (msgProto.hasEntityDeleteMsg()) {
+            TransportProtos.EntityDeleteMsg entityDeleteMsg = msgProto.getEntityDeleteMsg();
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityDeleteMsg.getEntityType(),
+                    new UUID(entityDeleteMsg.getEntityIdMSB(), entityDeleteMsg.getEntityIdLSB()));
+            processEntityDeleted(entityId);
         } else {
-            process(tenantId, tbMsg);
+            TbMsg tbMsg = TbMsg.fromBytes(msgProto.getQueueName(), msgProto.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
+            if (msgProto.hasAlarmRuleRequest()) {
+                TransportProtos.TbAlarmRuleRequestCtxProto alarmRuleRequest = msgProto.getAlarmRuleRequest();
+
+                RuleChainId ruleChainId = new RuleChainId(new UUID(alarmRuleRequest.getRuleChainIdMSB(), alarmRuleRequest.getRuleChainIdLSB()));
+                RuleNodeId ruleNodeId = new RuleNodeId(new UUID(alarmRuleRequest.getRuleNodeIdMSB(), alarmRuleRequest.getRuleNodeIdLSB()));
+                TbAlarmRuleRequestCtx ctx = new TbAlarmRuleRequestCtx();
+                ctx.setRuleChainId(ruleChainId);
+                ctx.setRuleNodeId(ruleNodeId);
+                ctx.setDebugMode(alarmRuleRequest.getIsDebug());
+                process(ctx, tenantId, tbMsg);
+            } else {
+                process(tenantId, tbMsg);
+            }
         }
     }
 
@@ -380,25 +410,81 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         }
     }
 
-    private List<EntityState> getOrCreateEntityStates(TenantId tenantId, EntityId msgOriginator) {
+    protected void harvestAlarms() {
+        long ts = System.currentTimeMillis();
+        for (EntityState state : entityStates.values()) {
+            try {
+                state.harvestAlarms(ts);
+            } catch (Exception e) {
+                log.warn("[{}] [{}] Failed to harvest alarms.", state.getTenantId(), state.getEntityId());
+            }
+        }
+    }
+
+    private EntityState getOrCreateEntityState(TenantId tenantId, EntityId msgOriginator) {
+        EntityState entityState = entityStates.get(msgOriginator);
+
+        if (entityState != null) {
+            return entityState;
+        }
+
         List<AlarmRule> filteredRules =
                 getOrFetchAlarmRules(tenantId)
                         .stream()
                         .filter(rule -> isEntityMatches(tenantId, msgOriginator, rule))
                         .collect(Collectors.toList());
 
-        Map<EntityId, List<AlarmRule>> entityAlarmRules = new HashMap<>();
+        if (filteredRules.isEmpty()) {
+            return null;
+        }
 
-        filteredRules.forEach(alarmRule -> {
-            List<EntityId> targetEntities = getTargetEntities(tenantId, msgOriginator, alarmRule.getConfiguration().getAlarmTargetEntity());
-            targetEntities.forEach(targetEntityId -> entityAlarmRules.computeIfAbsent(targetEntityId, key -> new ArrayList<>()).add(alarmRule));
-        });
+//        Map<EntityId, List<AlarmRule>> entityAlarmRules = new HashMap<>();
+//
+//        filteredRules.forEach(alarmRule -> {
+//            List<EntityId> targetEntities = getTargetEntities(tenantId, msgOriginator, alarmRule.getConfiguration().getAlarmTargetEntity());
+//            targetEntities.forEach(targetEntityId -> entityAlarmRules.computeIfAbsent(targetEntityId, key -> new ArrayList<>()).add(alarmRule));
+//        });
 
-        return entityAlarmRules
-                .entrySet()
-                .stream()
-                .map(entry -> getOrCreateEntityState(tenantId, entry.getKey(), entry.getValue(), null))
-                .collect(Collectors.toList());
+//        return entityAlarmRules
+//                .entrySet()
+//                .stream()
+//                .map(entry -> getOrCreateEntityState(tenantId, entry.getKey(), entry.getValue(), null))
+//                .collect(Collectors.toList());
+        return getOrCreateEntityState(tenantId, msgOriginator, filteredRules, null);
+    }
+
+    private EntityState getOrCreateEntityState(TenantId tenantId, EntityId targetEntityId, List<AlarmRule> alarmRules, AlarmRuleEntityState alarmRuleEntityState) {
+        EntityState entityState = entityStates.get(targetEntityId);
+        if (entityState == null) {
+            entityState = new EntityState(tenantId, targetEntityId, getProfileId(tenantId, targetEntityId), ctx, new EntityRulesState(alarmRules), alarmRuleEntityState);
+            entityStates.put(targetEntityId, entityState);
+            alarmRules.forEach(alarmRule -> myEntityStateIds.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId));
+        } else {
+            for (AlarmRule alarmRule : alarmRules) {
+                Set<EntityId> entityIds = myEntityStateIds.get(alarmRule.getId());
+                if (entityIds == null || !entityIds.contains(targetEntityId)) {
+                    myEntityStateIds.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
+                    entityState.addAlarmRule(alarmRule);
+                }
+            }
+        }
+
+        return entityState;
+    }
+
+    private EntityId getProfileId(TenantId tenantId, EntityId entityId) {
+        HasId<? extends EntityId> profile;
+        switch (entityId.getEntityType()) {
+            case ASSET:
+                profile = assetProfileCache.get(tenantId, (AssetId) entityId);
+                break;
+            case DEVICE:
+                profile = deviceProfileCache.get(tenantId, (DeviceId) entityId);
+                break;
+            default:
+                throw new IllegalArgumentException("Wrong entity type: " + entityId.getEntityType());
+        }
+        return profile.getId();
     }
 
     private void createEntityState(TenantId tenantId, EntityId entityId, AlarmRuleEntityState alarmRuleEntityState) {
@@ -427,36 +513,6 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         }).values();
     }
 
-    private EntityState getOrCreateEntityState(TenantId tenantId, EntityId targetEntityId, List<AlarmRule> alarmRules, AlarmRuleEntityState alarmRuleEntityState) {
-        EntityState entityState = entityStates.get(targetEntityId);
-        if (entityState == null) {
-            entityState = new EntityState(tenantId, targetEntityId, ctx, new EntityRulesState(alarmRules), alarmRuleEntityState);
-            entityStates.put(targetEntityId, entityState);
-            alarmRules.forEach(alarmRule -> myEntityStateIds.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId));
-        } else {
-            for (AlarmRule alarmRule : alarmRules) {
-                Set<EntityId> entityIds = myEntityStateIds.get(alarmRule.getId());
-                if (entityIds == null || !entityIds.contains(targetEntityId)) {
-                    myEntityStateIds.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
-                    entityState.addAlarmRule(alarmRule);
-                }
-            }
-        }
-
-        return entityState;
-    }
-
-    protected void harvestAlarms() {
-        long ts = System.currentTimeMillis();
-        for (EntityState state : entityStates.values()) {
-            try {
-                state.harvestAlarms(ts);
-            } catch (Exception e) {
-                log.warn("[{}] [{}] Failed to harvest alarms.", state.getTenantId(), state.getEntityId());
-            }
-        }
-    }
-
     private List<AlarmRule> fetchAlarmRules(TenantId tenantId) {
         List<AlarmRule> alarmRules = new ArrayList<>();
 
@@ -474,10 +530,10 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
         return alarmRules;
     }
 
-    private List<EntityId> getTargetEntities(TenantId tenantId, EntityId originator, AlarmRuleTargetEntity targetEntity) {
-        switch (targetEntity.getType()) {
-            case ORIGINATOR:
-                return Collections.singletonList(originator);
+//    private List<EntityId> getTargetEntities(TenantId tenantId, EntityId originator, AlarmRuleTargetEntity targetEntity) {
+//        switch (targetEntity.getType()) {
+//            case ORIGINATOR:
+//                return Collections.singletonList(originator);
 //            case SINGLE_ENTITY:
 //                return Collections.singletonList(((AlarmRuleSpecifiedTargetEntity) targetEntity).getEntityId());
 //            case RELATION:
@@ -489,9 +545,9 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 //                    List<EntityRelation> relations = relationService.findByFromAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
 //                    return relations.stream().map(EntityRelation::getTo).collect(Collectors.toList());
 //                }
-        }
-        return Collections.emptyList();
-    }
+//        }
+//        return Collections.emptyList();
+//    }
 
     private boolean isEntityMatches(TenantId tenantId, EntityId entityId, AlarmRule alarmRule) {
         List<AlarmRuleEntityFilter> sourceEntityFilters = alarmRule.getConfiguration().getSourceEntityFilters();
@@ -506,9 +562,6 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
 
     private boolean isEntityMatches(TenantId tenantId, EntityId entityId, AlarmRuleEntityFilter filter) {
         switch (filter.getType()) {
-            case SINGLE_ENTITY:
-            case ENTITY_LIST:
-                return filter.isEntityMatches(entityId);
             case DEVICE_TYPE:
                 if (entityId.getEntityType() == EntityType.DEVICE) {
                     DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, (DeviceId) entityId);
@@ -522,13 +575,20 @@ public class DefaultTbAlarmRuleStateService implements TbAlarmRuleStateService {
                 }
                 break;
             default:
-                log.warn("AlarmRuleEntityFilter {} not implemented!", filter.getType());
-                break;
+                return filter.isEntityMatches(entityId);
         }
         return false;
     }
 
     private boolean isLocalEntity(TenantId tenantId, EntityId entityId) {
         return partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId).isMyPartition();
+    }
+
+    private void removeEntityState(EntityId entityId) {
+        EntityState state = entityStates.remove(entityId);
+        if (state != null) {
+            myEntityStateIds.values().forEach(ids -> ids.remove(entityId));
+            alarmRuleEntityStateService.deleteByEntityId(state.getTenantId(), entityId);
+        }
     }
 }

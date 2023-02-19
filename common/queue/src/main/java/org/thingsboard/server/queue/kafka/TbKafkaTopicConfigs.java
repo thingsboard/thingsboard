@@ -81,7 +81,7 @@ public class TbKafkaTopicConfigs {
         jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = getConfigs(fwUpdatesProperties);
         vcConfigs = getConfigs(vcProperties);
-        vcConfigs = getConfigs(arProperties);
+        arConfigs = getConfigs(arProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {

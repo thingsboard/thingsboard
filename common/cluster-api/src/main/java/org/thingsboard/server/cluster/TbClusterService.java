@@ -59,6 +59,10 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushMsgToAlarmRules(TopicPartitionInfo tpi, EntityId entityId, TransportProtos.ToTbAlarmRuleStateServiceMsg msg, TbQueueCallback callback);
 
+    <T> void pushUpdateEntityMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, T entity, TbQueueCallback callback);
+
+    void pushDeleteEntityMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, TbQueueCallback callback);
+
     void pushMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback);
 
     void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, ToRuleEngineMsg msg, TbQueueCallback callback);

@@ -40,7 +40,7 @@ import java.util.Optional;
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId>, HasProfileId<DeviceProfileId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -171,6 +171,12 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
 
     public void setDeviceProfileId(DeviceProfileId deviceProfileId) {
         this.deviceProfileId = deviceProfileId;
+    }
+
+    @Override
+    @JsonIgnore
+    public DeviceProfileId getProfileId() {
+        return deviceProfileId;
     }
 
     @ApiModelProperty(position = 9, value = "JSON object with content specific to type of transport in the device profile.")

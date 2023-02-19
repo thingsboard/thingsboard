@@ -15,6 +15,20 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.filter;
 
-public enum AlarmRuleEntityFilterType {
-    SINGLE_ENTITY, DEVICE_TYPE, ASSET_TYPE, ENTITY_LIST, ALL_DEVICES, ALL_ASSETS
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
+
+public class AlarmRuleAllDevicesEntityFilter implements AlarmRuleEntityFilter {
+
+    private static final long serialVersionUID = 457160168944469618L;
+
+    @Override
+    public AlarmRuleEntityFilterType getType() {
+        return AlarmRuleEntityFilterType.ALL_DEVICES;
+    }
+
+    @Override
+    public boolean isEntityMatches(EntityId entityId) {
+        return entityId.getEntityType().equals(EntityType.DEVICE);
+    }
 }

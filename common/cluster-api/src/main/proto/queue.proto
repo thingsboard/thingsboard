@@ -1002,9 +1002,11 @@ message ToOtaPackageStateServiceMsg {
 message ToTbAlarmRuleStateServiceMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  bytes tbMsg = 3;
-  string queueName = 4;
-  TbAlarmRuleRequestCtxProto alarmRuleRequest = 5;
+  string queueName = 3;
+  bytes tbMsg = 4;
+  EntityUpdateMsg entityUpdateMsg = 5;
+  EntityDeleteMsg entityDeleteMsg = 6;
+  TbAlarmRuleRequestCtxProto alarmRuleRequest = 7;
 }
 
 message TbAlarmRuleRequestCtxProto {

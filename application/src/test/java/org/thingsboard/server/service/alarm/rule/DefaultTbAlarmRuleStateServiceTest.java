@@ -44,6 +44,8 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleRelationTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleSpecifiedTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllAssetsEntityFilter;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllDevicesEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAssetTypeEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
@@ -822,14 +824,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         device.setDeviceProfileId(deviceProfile.getId());
         device = deviceService.saveDevice(device);
 
-        AssetProfile sourceDeviceProfile = createAssetProfile("source asset profile");
-        sourceDeviceProfile.setTenantId(tenantId);
-        sourceDeviceProfile = assetProfileService.saveAssetProfile(sourceDeviceProfile);
+        AssetProfile sourceAssetProfile = createAssetProfile("source asset profile");
+        sourceAssetProfile.setTenantId(tenantId);
+        sourceAssetProfile = assetProfileService.saveAssetProfile(sourceAssetProfile);
 
         Asset sourceEntity = new Asset();
         sourceEntity.setTenantId(tenantId);
         sourceEntity.setName("alarm owner");
-        sourceEntity.setAssetProfileId(sourceDeviceProfile.getId());
+        sourceEntity.setAssetProfileId(sourceAssetProfile.getId());
         sourceEntity = assetService.saveAsset(sourceEntity);
 
         DeviceId deviceId = device.getId();
@@ -867,7 +869,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
 
-        AlarmRuleEntityFilter sourceFilter = new AlarmRuleAssetTypeEntityFilter(sourceDeviceProfile.getId());
+        AlarmRuleEntityFilter sourceFilter = new AlarmRuleAssetTypeEntityFilter(sourceAssetProfile.getId());
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
@@ -892,6 +894,196 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(sourceEntity.getId()), any(), eq(Collections.singleton("Alarm Created")), any());
 
         ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
+                new TimePageLink(10), AlarmSearchStatus.ANY, null, true));
+
+        List<AlarmInfo> alarms = future.get().getData();
+        Assert.equals(1, alarms.size());
+
+        AlarmInfo alarm = alarms.get(0);
+        Assert.equals("highTemperatureAlarm", alarm.getName());
+        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
+    }
+
+    @Test
+    public void testAllDevicesEntityFilter() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("device profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("temperature sensor");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        AssetProfile assetProfile = createAssetProfile("asset profile");
+        assetProfile.setTenantId(tenantId);
+        assetProfile = assetProfileService.saveAssetProfile(assetProfile);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("asset");
+        asset.setAssetProfileId(assetProfile.getId());
+        asset = assetService.saveAsset(asset);
+
+        AssetId assetId = asset.getId();
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
+        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
+        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
+        highTempFilter.setPredicate(highTemperaturePredicate);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(Collections.singletonList(highTempFilter));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
+        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
+        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
+        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        AlarmRuleCondition clearRule = new AlarmRuleCondition();
+        AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setCondition(Collections.singletonList(lowTempFilter));
+        clearRule.setCondition(clearCondition);
+        alarmRuleConfiguration.setClearRule(clearRule);
+
+        AlarmRuleEntityFilter sourceFilter = new AlarmRuleAllDevicesEntityFilter();
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperature", 42);
+
+        TbMsg msgFromAsset = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msgFromAsset);
+
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, tbMsg);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+                new TimePageLink(10), AlarmSearchStatus.ANY, null, true));
+
+        List<AlarmInfo> alarms = future.get().getData();
+        Assert.equals(1, alarms.size());
+
+        AlarmInfo alarm = alarms.get(0);
+        Assert.equals("highTemperatureAlarm", alarm.getName());
+        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
+    }
+
+    @Test
+    public void testAllAssetsEntityFilter() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("device profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("temperature sensor");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        AssetProfile assetProfile = createAssetProfile("asset profile");
+        assetProfile.setTenantId(tenantId);
+        assetProfile = assetProfileService.saveAssetProfile(assetProfile);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("asset");
+        asset.setAssetProfileId(assetProfile.getId());
+        asset = assetService.saveAsset(asset);
+
+        AssetId assetId = asset.getId();
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
+        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
+        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
+        highTempFilter.setPredicate(highTemperaturePredicate);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(Collections.singletonList(highTempFilter));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
+        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
+        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
+        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        AlarmRuleCondition clearRule = new AlarmRuleCondition();
+        AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setCondition(Collections.singletonList(lowTempFilter));
+        clearRule.setCondition(clearCondition);
+        alarmRuleConfiguration.setClearRule(clearRule);
+
+        AlarmRuleEntityFilter sourceFilter = new AlarmRuleAllAssetsEntityFilter();
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperature", 42);
+
+        TbMsg msgFromDevice = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msgFromDevice);
+
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, tbMsg);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(assetId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, true));
 
         List<AlarmInfo> alarms = future.get().getData();
@@ -2129,7 +2321,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
 
     }
-
 
     @Test
     public void testCustomerInheritModeForDynamicValues() throws Exception {

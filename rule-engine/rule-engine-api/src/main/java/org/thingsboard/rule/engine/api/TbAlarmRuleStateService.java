@@ -15,7 +15,9 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -25,7 +27,9 @@ public interface TbAlarmRuleStateService {
 
     void process(TenantId tenantId, TbMsg msg) throws Exception;
 
-    void processEntityDeleted(TbMsg msg);
+    <T extends HasProfileId<? extends EntityId>> void processEntityUpdated(EntityId entityId, T entity);
+
+    void processEntityDeleted(EntityId entityId);
 
     void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
 

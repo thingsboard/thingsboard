@@ -29,7 +29,9 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = AlarmRuleSingleEntityFilter.class, name = "SINGLE_ENTITY"),
         @JsonSubTypes.Type(value = AlarmRuleDeviceTypeEntityFilter.class, name = "DEVICE_TYPE"),
         @JsonSubTypes.Type(value = AlarmRuleAssetTypeEntityFilter.class, name = "ASSET_TYPE"),
-        @JsonSubTypes.Type(value = AlarmRuleEntityListEntityFilter.class, name = "ENTITY_LIST")})
+        @JsonSubTypes.Type(value = AlarmRuleEntityListEntityFilter.class, name = "ENTITY_LIST"),
+        @JsonSubTypes.Type(value = AlarmRuleAllDevicesEntityFilter.class, name = "ALL_DEVICES"),
+        @JsonSubTypes.Type(value = AlarmRuleAllAssetsEntityFilter.class, name = "ALL_ASSETS")})
 public interface AlarmRuleEntityFilter extends Serializable {
 
     @JsonIgnore

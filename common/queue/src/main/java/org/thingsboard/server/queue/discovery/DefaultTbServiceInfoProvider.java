@@ -66,7 +66,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         log.info("Current Service ID: {}", serviceId);
         if (serviceType.equalsIgnoreCase("monolith")) {
             serviceTypes = Collections.unmodifiableList(Arrays.asList(ServiceType.values()));
-        } else if (serviceType.equalsIgnoreCase(ServiceType.TB_RULE_ENGINE.name())) {
+        } else if (serviceType.equalsIgnoreCase("tb-rule-engine")) {
             //TODO: remove after TB_ALARM_RULES_EXECUTOR implementation
             serviceTypes = Arrays.asList(ServiceType.TB_RULE_ENGINE, ServiceType.TB_ALARM_RULES_EXECUTOR);
         } else {

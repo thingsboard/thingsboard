@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.filter;
+package org.thingsboard.server.common.data;
 
-public enum AlarmRuleEntityFilterType {
-    SINGLE_ENTITY, DEVICE_TYPE, ASSET_TYPE, ENTITY_LIST, ALL_DEVICES, ALL_ASSETS
+import org.thingsboard.server.common.data.id.EntityId;
+
+public interface HasProfileId<T extends EntityId> {
+
+    T getProfileId();
+
 }
