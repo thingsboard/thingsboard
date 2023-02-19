@@ -43,8 +43,8 @@ jobs:
             username: ${{ secrets.SERVER_USERNAME }}
             password: ${{ secrets.SERVER_PASSWORD }}
             port: ${{ secrets.SERVER_PORT }}
-            local_path: './target/myapp.war'
-            remote_path: '/var/lib/tomcat9/webapps/myapp.war'
+            local_path: './application/target/*.deb'
+            remote_path: '/opt/tesenso/'
 
 #      - name: Checkout Code
 #        uses: actions/checkout@v3
