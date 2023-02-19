@@ -31,11 +31,11 @@ jobs:
       run: mvn clean package -DskipTests
 
     - name: Deploy to server
-        uses: easingthemes/ssh-deploy@v2.1.7
+        uses: appleboy/scp-action@master
         with:
           server: 20.14.100.97
           username: kawsarahmd
           password: kawsar1qazZAQ!
           port: 22
-          local_path: './application/target/thingsboard.deb'
+          local_path: './application/target/myapp.war'
           remote_path: '/opt/tesenso/'
