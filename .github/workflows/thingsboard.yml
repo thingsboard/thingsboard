@@ -37,16 +37,23 @@ jobs:
 
     steps:
       - name: Deploy to server
-        uses: easingthemes/ssh-deploy@main
-        env:
-            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-            ARGS: "-rlgoDzvc -i --delete"
-            SOURCE: "dist/"
-            REMOTE_HOST: ${{ secrets.SERVER_IP }}
-            REMOTE_USER: ${{ secrets.SERVER_USERNAME }}
-            EXCLUDE: "/dist/, /node_modules/"
-            local_path: './application/target/*.deb'
-            remote_path: '/opt/tesenso/'
+        uses: srueda99/scp-action@v12
+        with:
+          port: 22
+          host: ${{ secrets.SERVER_IP }}
+          destination: "/home/${{ secrets.SERVER_USERNAME }}/"
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+#        uses: easingthemes/ssh-deploy@main
+#        env:
+#            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+#            ARGS: "-rlgoDzvc -i --delete"
+#            SOURCE: "dist/"
+#            REMOTE_HOST: ${{ secrets.SERVER_IP }}
+#            REMOTE_USER: ${{ secrets.SERVER_USERNAME }}
+#            EXCLUDE: "/dist/, /node_modules/"
+#            local_path: './application/target/*.deb'
+#            remote_path: '/opt/tesenso/'
 
 #      - name: Checkout Code
 #        uses: actions/checkout@v3
