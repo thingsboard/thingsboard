@@ -36,6 +36,21 @@ jobs:
     needs: build
 
     steps:
+      - uses: actions/checkout@v1
+      - name: Setup SSH Keys and known_hosts
+        env:
+            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+            run: |
+              mkdir -p ~/.ssh
+              ssh-keyscan github.com >> ~/.ssh/known_hosts
+              ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+              ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      - name: Some task that fetches dependencies
+        env:
+            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+            run: ./fetch-deps.sh
+
       - name: Deploy to server
         uses: mdallasanta/ssh-scp-deploy@v1.2.0
         with:
@@ -44,7 +59,7 @@ jobs:
           host: ${{secrets.SERVER_IP}}                                      # Remote server address - REQUIRED true
           user: ${{secrets.SERVER_USERNAME}}                                      # Remote server user - REQUIRED true
           password: ${{secrets.SERVER_PASSWORD}}                              # User password - REQUIRED at least one of "password" or "key"
-          key: ${{secrets.SSH_PRIVATE_KEY}}                                        # Remote server private key - REQUIRED at least one of "password" or "key"
+#          key: ${{secrets.SSH_PRIVATE_KEY}}                                        # Remote server private key - REQUIRED at least one of "password" or "key"
           pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
           post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
           ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
