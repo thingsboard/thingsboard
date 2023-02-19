@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Deploy to server
-      - uses: mdallasanta/ssh-scp-deploy@{version}
+      - uses: mdallasanta/ssh-scp-deploy@v1.2.0
         with:
             local: './'                                                  # Local file path - REQUIRED false - DEFAULT ./
             remote: '~/'                                                 # Remote file path - REQUIRED false - DEFAULT ~/
