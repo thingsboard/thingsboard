@@ -39,39 +39,17 @@ jobs:
       - name: Deploy to server
       - uses: mdallasanta/ssh-scp-deploy@v1.2.0
         with:
-            local: './'                                                  # Local file path - REQUIRED false - DEFAULT ./
-            remote: '~/'                                                 # Remote file path - REQUIRED false - DEFAULT ~/
-            host: ${{secrets.SERVER_IP}}                                      # Remote server address - REQUIRED true
-            user: ${{secrets.SERVER_USERNAME}}                                      # Remote server user - REQUIRED true
-            password: ${{secrets.SERVER_PASSWORD}}                              # User password - REQUIRED at least one of "password" or "key"
-            key: ${{secrets.SSH_PRIVATE_KEY}}                                        # Remote server private key - REQUIRED at least one of "password" or "key"
-            pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
-            post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
-            ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-            scp_options: -v
+          local: './application/target/*.deb'                                                  # Local file path - REQUIRED false - DEFAULT ./
+          remote: '/opt/tesenso'                                                 # Remote file path - REQUIRED false - DEFAULT ~/
+          host: ${{secrets.SERVER_IP}}                                      # Remote server address - REQUIRED true
+          user: ${{secrets.SERVER_USERNAME}}                                      # Remote server user - REQUIRED true
+          password: ${{secrets.SERVER_PASSWORD}}                              # User password - REQUIRED at least one of "password" or "key"
+          key: ${{secrets.SSH_PRIVATE_KEY}}                                        # Remote server private key - REQUIRED at least one of "password" or "key"
+          pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
+          post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
+          ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+          scp_options: -v
 
-
-#        uses: easingthemes/ssh-deploy@main
-#        env:
-#            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-#            ARGS: "-rlgoDzvc -i --delete"
-#            SOURCE: "dist/"
-#            REMOTE_HOST: ${{ secrets.SERVER_IP }}
-#            REMOTE_USER: ${{ secrets.SERVER_USERNAME }}
-#            EXCLUDE: "/dist/, /node_modules/"
-#            local_path: './application/target/*.deb'
-#            remote_path: '/opt/tesenso/'
-
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#
-#      - name: Setup SSH Connection
-#        uses: webfactory/ssh-agent@v0.7.0
-#        with:
-#          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-#
-#      - name: Copy Jar File to Azure App Service
-#        run: scp -r application/target/*.deb kawsarahmd@20.14.100.97:/opt/tesenso
 
 
 
