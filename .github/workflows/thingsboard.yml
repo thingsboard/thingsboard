@@ -29,3 +29,13 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn clean package -DskipTests
+
+    - name: Deploy to server
+        uses: easingthemes/ssh-deploy@v2.1.7
+        with:
+          server: 20.14.100.97
+          username: kawsarahmd
+          password: kawsar1qazZAQ!
+          port: 22
+          local_path: './application/target/thingsboard.deb'
+          remote_path: '/opt/tesenso/'
