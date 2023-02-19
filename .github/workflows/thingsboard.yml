@@ -30,20 +30,21 @@ jobs:
     - name: Build with Maven
       run: mvn clean package -DskipTests
 
-  jobs:
-    deploy:
-      runs-on: ubuntu-latest
-      needs: build
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
 
-      steps:
-        - name: Checkout Code
-          uses: actions/checkout@v2
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-        - name: Setup SSH Connection
-          uses: webfactory/ssh-agent@v0.4.1
-          with:
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH Connection
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-        - name: Copy Jar File to Azure App Service
-          run: scp -r application/target/*.deb kawsarahmd@20.14.100.97:/opt/tesenso
+      - name: Copy Jar File to Azure App Service
+        run: scp -r application/target/*.deb kawsarahmd@20.14.100.97:/opt/tesenso
+
+
 
