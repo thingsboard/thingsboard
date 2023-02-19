@@ -37,8 +37,8 @@ jobs:
 
     steps:
       - name: Deploy to server
-          uses: easingthemes/ssh-deploy@v2.1.7
-          with:
+        uses: easingthemes/ssh-deploy@v2.1.7
+        with:
             server: ${{ secrets.SERVER_IP }}
             username: ${{ secrets.SERVER_USERNAME }}
             password: ${{ secrets.SERVER_PASSWORD }}
