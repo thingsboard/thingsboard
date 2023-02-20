@@ -28,7 +28,7 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn clean package -DskipTests
+#      run: mvn clean package -DskipTests
     - name: current location
       run: pwd
 
@@ -40,7 +40,7 @@ jobs:
         password: ${{ secrets.SERVER_PASSWORD }}
         port: ${{ secrets.SERVER_PORT }}
         source: "/opt/tesenso/"
-        target: "/home/runner/work/thingsboard/thingsboard/application/target/thingsboard.deb"
+        target: "/home/runner/work/thingsboard/thingsboard/pom.xml"
 
 
 #  deploy:
