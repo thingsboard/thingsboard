@@ -127,9 +127,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             userCredentials.setEnabled(false);
             userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
             userCredentials.setUserId(new UserId(savedUser.getUuidId()));
-            if (userCredentials.getPassword() != null) {
-                updatePasswordHistory(userCredentials);
-            }
             userCredentialsDao.save(user.getTenantId(), userCredentials);
         }
         return savedUser;
