@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -36,9 +37,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
@@ -88,6 +91,43 @@ public class TbMsgDelayNode implements TbNode {
         }
     }
 
+    private void getPendingMsgsFromCacheAndSchedule(TbContext ctx) {
+        log.trace("[{}] Going to fetch delayed messages from cache ...", ctx.getSelfId());
+        Set<EntityId> entityIds = ctx.getRuleNodeCacheService().getEntityIds(DELAYED_ORIGINATOR_IDS_CACHE_KEY);
+        if (entityIds.isEmpty()) {
+            return;
+        }
+        long currentTs = System.currentTimeMillis();
+        entityIds.forEach(id -> {
+            TopicPartitionInfo tpi = ctx.getEntityTopicPartition(id);
+            if (tpi.isMyPartition()) {
+                // todo: check if we should use -999999 partition instead of orElse runnable.
+                tpi.getPartition().ifPresentOrElse(
+                        partition -> {
+                            Set<EntityId> partitionEntityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
+                            boolean added = partitionEntityIds.add(id);
+                            if (added) {
+                                Set<TbMsg> pendingMsgs = ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), partition);
+                                if (!pendingMsgs.isEmpty()) {
+                                    Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdPendingMsgs.computeIfAbsent(id, k -> new HashMap<>());
+                                    pendingMsgs.forEach(pendingMsg -> {
+                                        long delayMsgScheduledTs = getDelayTimeout(ctx, pendingMsg);
+                                        if (currentTs >= delayMsgScheduledTs) {
+                                            processEnqueue(ctx, pendingMsg, partition);
+                                        } else {
+                                            originatorPendingMsgsMap.put(pendingMsg.getId(), pendingMsg);
+                                            scheduleTickMsg(ctx, delayMsgScheduledTs - currentTs, id, pendingMsg.getId());
+                                        }
+                                    });
+                                }
+                            }
+                        },
+                        () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id)
+                );
+            }
+        });
+    }
+
     private void processDelayMsg(TbContext ctx, TbMsg msg) {
         EntityId originator = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getEntityTopicPartition(originator);
@@ -97,12 +137,12 @@ public class TbMsgDelayNode implements TbNode {
         // todo: check if we should use -999999 partition instead of orElse runnable.
         tpi.getPartition().ifPresentOrElse(
                 partition -> {
-                    Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
-                    entityIds.add(originator);
                     Map<UUID, TbMsg> pendingMsgs = entityIdPendingMsgs.get(originator);
-                    TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
-                    if (pendingMsg != null) {
-                        processEnqueue(ctx, pendingMsg, partition);
+                    if (pendingMsgs != null) {
+                        TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
+                        if (pendingMsg != null) {
+                            processEnqueue(ctx, pendingMsg, partition);
+                        }
                     }
                 },
                 () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), originator)
@@ -125,11 +165,12 @@ public class TbMsgDelayNode implements TbNode {
                             }
                             long delay = getDelay(msg);
                             UUID msgId = msg.getId();
-                            TbMsg added = originatorPendingMsgsMap.put(msgId, msg);
+                            TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
+                            metaDataCopy.putValue(ctx.getSelfId().getId().toString(), String.valueOf(System.currentTimeMillis() + delay));
+                            TbMsg transformedMsg = TbMsg.transformMsg(msg, metaDataCopy);
+                            TbMsg added = originatorPendingMsgsMap.put(msgId, transformedMsg);
                             if (added == null) {
-                                TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
-                                metaDataCopy.putValue(ctx.getSelfId().getId().toString(), String.valueOf(System.currentTimeMillis() + delay));
-                                ctx.getRuleNodeCacheService().add(id.toString(), partition, TbMsg.transformMsg(msg, metaDataCopy));
+                                ctx.getRuleNodeCacheService().add(id.toString(), partition, transformedMsg);
                             }
                             scheduleTickMsg(ctx, delay, id, msgId);
                             ctx.ack(msg);
@@ -145,36 +186,8 @@ public class TbMsgDelayNode implements TbNode {
         }
     }
 
-    private void getPendingMsgsFromCacheAndSchedule(TbContext ctx) {
-        Set<EntityId> entityIds = ctx.getRuleNodeCacheService().getEntityIds(DELAYED_ORIGINATOR_IDS_CACHE_KEY);
-        if (entityIds.isEmpty()) {
-            return;
-        }
-        long currentTs = System.currentTimeMillis();
-        entityIds.forEach(id -> {
-            TopicPartitionInfo tpi = ctx.getEntityTopicPartition(id);
-            if (tpi.isMyPartition()) {
-                // todo: check if we should use -999999 partition instead of orElse runnable.
-                tpi.getPartition().ifPresentOrElse(
-                        partition -> {
-                            Set<TbMsg> pendingMsgs = ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), partition);
-                            pendingMsgs.forEach(pendingMsg -> {
-                                long delayMsgTimeout = getDelayTimeout(ctx, pendingMsg);
-                                if (currentTs >= delayMsgTimeout) {
-                                    processEnqueue(ctx, pendingMsg, partition);
-                                } else {
-                                    scheduleTickMsg(ctx, delayMsgTimeout - currentTs, id, pendingMsg.getId());
-                                }
-                            });
-                        },
-                        () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id)
-                );
-            }
-        });
-    }
-
     private long getDelayTimeout(TbContext ctx, TbMsg msg) {
-        String delayMsgTimeoutStr = msg.getMetaData().getData().remove(ctx.getSelfId().getId().toString());
+        String delayMsgTimeoutStr = msg.getMetaData().getData().get(ctx.getSelfId().getId().toString());
         if (StringUtils.isNotEmpty(delayMsgTimeoutStr)) {
             try {
                 return Long.parseLong(delayMsgTimeoutStr);
@@ -186,13 +199,16 @@ public class TbMsgDelayNode implements TbNode {
 
     private void processEnqueue(TbContext ctx, TbMsg pendingMsg, Integer partition) {
         EntityId originator = pendingMsg.getOriginator();
-        ctx.enqueueForTellNext(pendingMsg, SUCCESS,
+        TbMsgMetaData metaData = pendingMsg.getMetaData().copy();
+        metaData.getData().remove(ctx.getSelfId().getId().toString());
+        ctx.enqueueForTellNext(TbMsg.transformMsg(pendingMsg, metaData), SUCCESS,
                 () -> log.trace("[{}][{}] Successfully enqueue delayed message!", ctx.getSelfId(), originator),
                 throwable -> log.trace("[{}][{}][{}] Failed to enqueue delayed message due to: ", ctx.getSelfId(), originator, throwable));
         ctx.getRuleNodeCacheService().removeTbMsgList(originator.toString(), partition, Collections.singletonList(pendingMsg));
     }
 
     private void scheduleTickMsg(TbContext ctx, long delay, EntityId originator, UUID msgId) {
+        log.trace("[{}] Schedule delay tick msg for entity: [{}], msgId: [{}], delay: [{}]", ctx.getSelfId(), originator, msgId, delay);
         TbMsg tickMsg = ctx.newMsg(null, TB_MSG_DELAY_NODE_MSG, originator, EMPTY_META_DATA, msgId.toString());
         ctx.tellSelf(tickMsg, delay);
     }
@@ -230,11 +246,30 @@ public class TbMsgDelayNode implements TbNode {
 
     @Override
     public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
-        Set<Integer> myPartitions = new HashSet<>();
-        msg.getPartitions().forEach(tpi -> tpi.getPartition().ifPresent(myPartitions::add));
-        partitionsEntityIdsMap.keySet().removeIf(partition -> !myPartitions.contains(partition));
-        entityIdPendingMsgs.keySet().removeIf(entityId -> !ctx.isLocalEntity(entityId));
-
+        Set<Integer> currentPartitions = partitionsEntityIdsMap.keySet();
+        RuleNodeId ruleNodeId = ctx.getSelfId();
+        log.trace("[{}] On partition change msg: {}, current partitions: {}", ruleNodeId, msg, currentPartitions);
+        Set<Integer> newPartitions = msg.getPartitions().stream()
+                .map(TopicPartitionInfo::getPartition)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
+        currentPartitions.removeIf(partition -> {
+            boolean remove = !newPartitions.contains(partition);
+            if (remove) {
+                log.trace("[{}] Removed odd partition: [{}] from the partitions map!", ruleNodeId, partition);
+                Set<EntityId> entityIds = partitionsEntityIdsMap.get(partition);
+                entityIds.forEach(entityId -> {
+                    log.trace("[{}] Removed non-local entity: [{}] from the entityId pending msgs map!", ruleNodeId, entityId);
+                    entityIdPendingMsgs.remove(entityId);
+                });
+            }
+            return remove;
+        });
+        boolean checkCache = newPartitions.stream().anyMatch(newPartition -> !currentPartitions.contains(newPartition));
+        if (checkCache) {
+            getPendingMsgsFromCacheAndSchedule(ctx);
+        }
     }
 
 }
