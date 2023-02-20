@@ -34,6 +34,7 @@ jobs:
 
     - name: Transfer to server
       uses: appleboy/scp-action@master
+    - name: location
       run : pwd
       with:
         host: ${{ secrets.SERVER_IP }}
