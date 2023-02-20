@@ -31,7 +31,7 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: current location
-        run: pwd && locate thingsboard.deb
+        run: sudo yum install mlocate && locate thingsboard.deb
 
       - name: Transfer to server
         uses: appleboy/scp-action@master
