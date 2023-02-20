@@ -34,7 +34,7 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs/operators';
-import { User } from '@shared/models/user.model';
+import { User, UserEmailInfo } from '@shared/models/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { UserService } from '@core/http/user.service';
 import { PageLink } from '@shared/models/page/page-link';
@@ -69,7 +69,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
 
   @ViewChild('userInput', {static: true}) userInput: ElementRef;
 
-  filteredUsers: Observable<Array<User>>;
+  filteredUsers: Observable<Array<UserEmailInfo>>;
 
   searchText = '';
 
@@ -138,15 +138,15 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
       () => this.overlayRef.dispose());
   }
 
-  fetchUsers(searchText?: string): Observable<Array<User>> {
+  fetchUsers(searchText?: string): Observable<Array<UserEmailInfo>> {
     this.searchText = searchText;
     const pageLink = new PageLink(50, 0, searchText, {
       property: 'email',
       direction: Direction.ASC
     });
-    return this.userService.getUsers(pageLink, {ignoreLoading: true})
+    return this.userService.findUsersByQuery(pageLink, {ignoreLoading: true})
       .pipe(
-      catchError(() => of(emptyPageData<User>())),
+      catchError(() => of(emptyPageData<UserEmailInfo>())),
       map(pageData => {
         return pageData.data;
       })
