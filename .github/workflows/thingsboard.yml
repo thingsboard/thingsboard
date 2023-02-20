@@ -18,13 +18,13 @@ jobs:
           java-version: '11'
 
       - name: Build and Package
-        run: mvn clean package
+        run: mvn clean package -DskipTests
 
       - name: Copy Artifact via SCP
         uses: appleboy/scp-action@master
         with:
-          host: <remote-server-hostname>
-          username: <remote-server-username>
+          host: 20.14.100.97
+          username: kawsarahmd
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: /home/runner/work/thingsboard/thingsboard/application/target/thingsboard.deb
           target: /opt/tesenso
