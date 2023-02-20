@@ -20,20 +20,18 @@
     <mat-card-title style="margin-bottom: 8px;">
       <span class="mat-headline-5 card-title" translate>profile.jwt-token</span>
     </mat-card-title>
-    <mat-card-content>
-      <div fxLayout="row" fxLayoutAlign="space-between center">
-        <div class="token-text">{{ 'profile.token-valid-till' | translate }} <span class="date">{{ jwtTokenExpiration | date: 'yyyy-MM-dd HH:mm:ss' }}</span></div>
-        <button mat-raised-button
-                color="primary"
-                type="button"
-                (click)="copyToken()">
-          <span>{{ 'profile.copy-jwt-token' | translate }}</span>
-        </button>
-      </div>
-    </mat-card-content>
+    <div fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="token-text">{{ 'profile.token-valid-till' | translate }} <span class="date">{{ jwtTokenExpiration | date: 'yyyy-MM-dd HH:mm:ss' }}</span></div>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="copyToken()">
+        <span>{{ 'profile.copy-jwt-token' | translate }}</span>
+      </button>
+    </div>
   </mat-card>
   <mat-card appearance="outlined" class="profile-card" fxLayout="column">
-    <mat-card-content class="change-password" tb-toast toastTarget="changePassword">
+    <div class="change-password" tb-toast toastTarget="changePassword">
       <form #changePasswordForm="ngForm" [formGroup]="changePassword" (ngSubmit)="onChangePassword(changePasswordForm)">
         <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutGap.xs="0">
           <div fxFlex="290px" fxFlex.sm="250px"  fxFlex.xs="100">
@@ -123,7 +121,7 @@
           </button>
         </div>
       </form>
-    </mat-card-content>
+    </div>
   </mat-card>
   <mat-card appearance="outlined" class="profile-card" *ngIf="allowTwoFactorProviders.length">
     <mat-card-title style="margin-bottom: 20px;">
@@ -132,42 +130,40 @@
     <mat-card-subtitle style="margin-bottom: 40px;">
       <div class="mat-body-2 description" translate>security.2fa.2fa-description</div>
     </mat-card-subtitle>
-    <mat-card-content>
-      <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
-      <form [formGroup]="twoFactorAuth">
-        <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
-          <div class="provider">
-            <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
-            <div fxLayout="row" fxLayoutAlign="space-between start">
-              <div class="mat-body-2 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
-                {{ providersData.get(provider).description | translate }}
-              </div>
-              <ng-template #providerInfo>
-                <div class="mat-body-2 description">
-                  {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
-                </div>
-              </ng-template>
-              <mat-slide-toggle [formControlName]="provider"
-                                (click)="confirm2FAChange($event, provider)">
-              </mat-slide-toggle>
+    <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
+    <form [formGroup]="twoFactorAuth">
+      <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
+        <div class="provider">
+          <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
+          <div fxLayout="row" fxLayoutAlign="space-between start">
+            <div class="mat-body-2 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
+              {{ providersData.get(provider).description | translate }}
             </div>
-            <mat-checkbox [value]="provider"
-                          [checked]="useByDefault === provider"
-                          (click)="changeDefaultProvider($event, provider)"
-                          [disabled]="(isLoading$ | async)"
-                           *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
-              <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
-            </mat-checkbox>
-            <button type="button"
-             mat-stroked-button color="primary"
-             (click)="generateNewBackupCode()"
-             *ngIf="twoFactorAuth.get(provider).value && provider === twoFactorAuthProviderType.BACKUP_CODE">
-              {{ 'security.2fa.get-new-code' | translate }}
-            </button>
+            <ng-template #providerInfo>
+              <div class="mat-body-2 description">
+                {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
+              </div>
+            </ng-template>
+            <mat-slide-toggle [formControlName]="provider"
+                              (mousedown)="confirm2FAChange($event, provider)">
+            </mat-slide-toggle>
           </div>
-          <mat-divider *ngIf="!$last"></mat-divider>
-        </ng-container>
-      </form>
-    </mat-card-content>
+          <mat-checkbox [value]="provider"
+                        [checked]="useByDefault === provider"
+                        (click)="changeDefaultProvider($event, provider)"
+                        [disabled]="(isLoading$ | async)"
+                         *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
+            <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
+          </mat-checkbox>
+          <button type="button"
+           mat-stroked-button color="primary"
+           (click)="generateNewBackupCode()"
+           *ngIf="twoFactorAuth.get(provider).value && provider === twoFactorAuthProviderType.BACKUP_CODE">
+            {{ 'security.2fa.get-new-code' | translate }}
+          </button>
+        </div>
+        <mat-divider *ngIf="!$last"></mat-divider>
+      </ng-container>
+    </form>
   </mat-card>
 </div>

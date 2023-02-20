@@ -52,8 +52,6 @@
       &:focus {
         border-bottom: none;
       }
-      /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
       display: flex;
       flex-direction: column;
       align-items: center;

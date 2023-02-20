@@ -196,7 +196,6 @@ section.tb-footer-buttons {
   .tb-btn-footer {
     margin: 6px 8px;
     position: relative !important;
-    display: inline-block !important;
     animation: tbMoveFromBottomFade .3s ease both;
     &.tb-hide {
       animation: tbMoveToBottomFade .3s ease both;
@@ -947,6 +946,22 @@ mat-label {
     .mat-mdc-select-arrow-wrapper {
       transform: none;
     }
+    .mdc-text-field {
+      .mdc-floating-label:not(.mdc-floating-label--float-above) {
+        transform: translateY(-10%);
+      }
+    }
+    .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
+      align-self: end;
+      > .mat-icon {
+        padding-bottom: 4px;
+      }
+      .mat-mdc-icon-button.mat-mdc-button-base {
+        width: 36px;
+        height: 36px;
+        padding: 6px;
+      }
+    }
     .mat-mdc-text-field-wrapper {
       .mat-mdc-form-field-flex {
         .mat-mdc-floating-label {
@@ -1225,18 +1240,14 @@ mat-label {
     min-width: inherit;
     pointer-events: none;
     display: flex;
-  }
-
-  .mat-mdc-snack-bar-handset {
-    .mat-mdc-snack-bar-container {
-      position: relative !important;
-      width: 100% !important;
-      top: 0 !important;
-      left: 0 !important;
-      height: inherit !important;
-      tb-snack-bar-component {
-        width: 100%;
-      }
+    .mdc-snackbar__surface {
+      padding: 0;
+      border: none;
+      background: none;
+      box-shadow: none;
+    }
+    .mdc-snackbar__label {
+      padding: 0;
     }
   }
 
@@ -1405,8 +1416,13 @@ mat-label {
     text-align: center;
   }
 
-  .mat-mdc-tab-group.tb-headless {
-    margin-top: -50px;
+  .mat-mdc-tab-group {
+    &.tb-headless {
+      margin-top: -50px;
+    }
+    .mat-mdc-tab-header {
+      border-bottom: 1px solid #0000001f;
+    }
   }
 
   .tb-primary-background {

@@ -16,9 +16,7 @@
 @import "../../../../../scss/constants";
 
 :host {
- /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
- mat-card.settings-card {
+ .mat-mdc-card.settings-card {
    margin: 8px;
 
    @media #{$mat-md} {

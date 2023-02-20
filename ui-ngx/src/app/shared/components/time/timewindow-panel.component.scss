@@ -45,7 +45,7 @@
     .limit-slider-value {
       margin-left: 16px;
       min-width: 25px;
-      max-width: 80px;
+      max-width: 100px;
     }
     mat-form-field input[type=number] {
       text-align: center;
@@ -77,13 +77,5 @@
         padding-top: 10px;
       }
     }
-  }
-  /*TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version.
- */
-  .mat-slider-horizontal .mat-slider-thumb-label {
-    width: 38px;
-    height: 38px;
-    top: -46px;
-    right: -19px;
   }
 }

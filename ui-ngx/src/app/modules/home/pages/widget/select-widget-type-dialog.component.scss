@@ -14,31 +14,25 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  button.tb-card-button {
+  .mat-mdc-button-base.tb-card-button {
     width: 100%;
     height: 100%;
     max-width: 240px;
-    /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
-    .mat-button-wrapper {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      mat-icon {
-        margin: auto;
-      }
-      span {
-        height: 18px;
-        min-height: 18px;
-        max-height: 18px;
-        margin: 0 0 20px 0;
-        font-size: 18px;
-        font-weight: 400;
-        line-height: 18px;
-        white-space: normal;
-      }
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    mat-icon {
+      margin: auto;
+    }
+    span.mdc-button__label {
+      height: 18px;
+      min-height: 18px;
+      max-height: 18px;
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 18px;
+      white-space: normal;
     }
     &.mat-mdc-raised-button.mat-primary {
       .mat-ripple-element {

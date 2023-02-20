@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-  .mat-form-field-infix {
+  .mat-mdc-form-field-infix {
     width: 100% !important;
   }
 
   .mat-mdc-checkbox{
     &.hinted-checkbox {
-      /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-      .mat-checkbox-inner-container {
-        margin-top: 4px;
+      .mdc-checkbox {
+        margin-top: -28px;
       }
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-    .mat-checkbox-layout{
+    .mdc-form-field {
       white-space: normal;
     }
   }
@@ -47,6 +41,9 @@
 
   .mat-expansion-panel-header {
     height: 48px;
+    &.mat-expanded {
+      height: 48px;
+    }
   }
   .expansion-panel-block {
     padding-bottom: 16px;

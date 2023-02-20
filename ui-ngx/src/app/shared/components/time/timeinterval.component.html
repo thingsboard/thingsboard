@@ -16,7 +16,7 @@
 
 -->
 <section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px">
-  <section fxLayout="column" [fxShow]="isEdit">
+  <section fxLayout="column" fxLayoutAlign="start center" [fxShow]="isEdit">
     <label class="tb-small hide-label" translate>timewindow.hide</label>
     <mat-checkbox [(ngModel)]="hideFlag" (ngModelChange)="onHideFlagChange()"></mat-checkbox>
   </section>
