@@ -1,65 +1,31 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Java CI with Maven
+name: Java App Build and Deploy
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        cache: maven
-#    - name: Build with Maven
-#      run: mvn clean package -DskipTests
-    - name: current location
-      run: pwd
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-    - name: Transfer to server
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        password: ${{ secrets.SERVER_PASSWORD }}
-        port: ${{ secrets.SERVER_PORT }}
-        source: "/opt/tesenso/"
-        target: "/home/runner/work/thingsboard/thingsboard/pom.xml"
-    - name: location
-      run: pwd
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
 
+      - name: Build and Package
+        run: mvn clean package
 
-#  deploy:
-#    runs-on: ubuntu-latest
-#    needs: build
-
-#    steps:
-#      - name: Deploy to server
-#        uses: appleboy/scp-action@master
-#        with:
-#            host: ${{ secrets.SERVER_IP }}
-#            username: ${{ secrets.SERVER_USERNAME }}
-#            password: ${{ secrets.SERVER_PASSWORD }}
-#            port: ${{ secrets.SERVER_PORT }}
-#            source: "/opt/tesenso/"
-#            target: "/home/runner/work/thingsboard/thingsboard/application/target/thingsboard.deb"
-
-
-
-
+      - name: Copy Artifact via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: <remote-server-hostname>
+          username: <remote-server-username>
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: /home/runner/work/thingsboard/thingsboard/application/target/thingsboard.deb
+          target: /opt/tesenso
