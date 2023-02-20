@@ -73,6 +73,7 @@ class EntityState {
     private DataSnapshot latestValues;
     private final ConcurrentMap<AlarmRuleId, AlarmState> alarmStates = new ConcurrentHashMap<>();
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
+    @Getter
     private final Lock lock = new ReentrantLock();
 
     EntityState(TenantId tenantId, EntityId entityId, EntityId profileId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, AlarmRuleEntityState state) {
@@ -100,6 +101,10 @@ class EntityState {
             pes = new PersistedEntityState();
             pes.setAlarmStates(new HashMap<>());
         }
+    }
+
+    public List<AlarmRule> getAlarmRules() {
+        return new ArrayList<>(entityRulesState.getAlarmRules().values());
     }
 
     public void addAlarmRule(AlarmRule alarmRule) {
@@ -139,14 +144,30 @@ class EntityState {
         }
     }
 
-    public void removeAlarmRule(AlarmRuleId alarmRuleId) {
-        lock.lock();
-        try {
-            entityRulesState.removeAlarmRule(alarmRuleId);
-            alarmStates.remove(alarmRuleId);
-        } finally {
-            lock.unlock();
+    public void removeAlarmRules(List<AlarmRuleId> alarmRuleIds) {
+        boolean stateChanged = false;
+        for (AlarmRuleId alarmRuleId : alarmRuleIds) {
+            stateChanged |= doRemoveAlarmRule(alarmRuleId);
         }
+        if (stateChanged) {
+            saveState();
+        }
+    }
+
+    public void removeAlarmRule(AlarmRuleId alarmRuleId) {
+        if (doRemoveAlarmRule(alarmRuleId)) {
+            saveState();
+        }
+    }
+
+    private boolean doRemoveAlarmRule(AlarmRuleId alarmRuleId) {
+        entityRulesState.removeAlarmRule(alarmRuleId);
+        alarmStates.remove(alarmRuleId);
+        if (pes != null) {
+            PersistedAlarmState pas = pes.getAlarmStates().remove(alarmRuleId.toString());
+            return pas != null;
+        }
+        return false;
     }
 
     public boolean isEmpty() {
@@ -162,8 +183,7 @@ class EntityState {
                 stateChanged |= state.process(ctx, ts);
             }
             if (stateChanged) {
-                state.setData(JacksonUtil.toString(pes));
-                ctx.getStateService().save(tenantId, state);
+                saveState();
             }
         } finally {
             lock.unlock();
@@ -200,12 +220,16 @@ class EntityState {
                 }
             }
             if (stateChanged) {
-                state.setData(JacksonUtil.toString(pes));
-                ctx.getStateService().save(tenantId, state);
+                saveState();
             }
         } finally {
             lock.unlock();
         }
+    }
+
+    private void saveState() {
+        state.setData(JacksonUtil.toString(pes));
+        ctx.getStateService().save(tenantId, state);
     }
 
     private boolean processDeviceActivityEvent(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {

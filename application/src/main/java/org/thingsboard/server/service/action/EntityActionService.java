@@ -248,7 +248,7 @@ public class EntityActionService {
 
         if (actionType.equals(ActionType.UPDATED)) {
             if (tpi.isMyPartition()) {
-                alarmRuleStateService.get().processEntityUpdated(entityId, (HasProfileId<? extends EntityId>) entity);
+                alarmRuleStateService.get().processEntityUpdated(tenantId, entityId, (HasProfileId<? extends EntityId>) entity);
             } else {
                 tbClusterService.pushUpdateEntityMsgToAlarmRules(tpi, tenantId, entityId, entity,null);
             }

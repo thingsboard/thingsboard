@@ -27,7 +27,7 @@ public interface TbAlarmRuleStateService {
 
     void process(TenantId tenantId, TbMsg msg) throws Exception;
 
-    <T extends HasProfileId<? extends EntityId>> void processEntityUpdated(EntityId entityId, T entity);
+    <T extends HasProfileId<? extends EntityId>> void processEntityUpdated(TenantId tenantId, EntityId entityId, T entity);
 
     void processEntityDeleted(EntityId entityId);
 

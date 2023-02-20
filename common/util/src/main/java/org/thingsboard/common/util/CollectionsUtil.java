@@ -16,6 +16,7 @@
 package org.thingsboard.common.util;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,13 @@ public class CollectionsUtil {
      */
     public static <T> Set<T> diffSets(Set<T> a, Set<T> b) {
         return b.stream().filter(p -> !a.contains(p)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns new list with elements that are present in list B(new) but absent in list A(old).
+     */
+    public static <T> List<T> diffLists(List<T> a, List<T> b) {
+        return b.stream().filter(p -> !a.contains(p)).collect(Collectors.toList());
     }
 
     public static <T> boolean contains(Collection<T> collection, T element) {
