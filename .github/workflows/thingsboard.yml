@@ -44,7 +44,7 @@ jobs:
             password: ${{ secrets.SERVER_PASSWORD }}
             port: ${{ secrets.SERVER_PORT }}
             source: "/opt/tesenso/"
-            target: "./application/target/thingsboard.deb"
+            target: "/home/runner/work/thingsboard/thingsboard/application/target/thingsboard.deb"
 
 
 
