@@ -39,7 +39,6 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEntityDetailsNodeConfiguration> implements TbNode {
@@ -71,47 +70,47 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     protected MessageData getDataAsJson(TbMsg msg) {
         if (this.config.isAddToMetadata()) {
-            return new MessageData(gson.toJsonTree(msg.getMetaData().getData(), TYPE), "metadata");
+            return new MessageData(gson.toJsonTree(msg.getMetaData().getData(), TYPE), DataSource.METADATA);
         } else {
-            return new MessageData(jsonParser.parse(msg.getData()), "data");
+            return new MessageData(jsonParser.parse(msg.getData()), DataSource.DATA);
         }
     }
 
     protected ListenableFuture<TbMsg> getTbMsgListenableFuture(TbContext ctx, TbMsg msg, MessageData messageData, String prefix) {
-        if (!this.config.getDetailsList().isEmpty()) {
+        if (this.config.getDetailsList().isEmpty()) {
+            return Futures.immediateFuture(msg);
+        } else {
             ListenableFuture<ContactBased> contactBasedListenableFuture = getContactBasedListenableFuture(ctx, msg);
             ListenableFuture<JsonElement> resultObject = addContactProperties(messageData.getData(), contactBasedListenableFuture, prefix);
             return transformMsg(ctx, msg, resultObject, messageData);
-        } else {
-            return Futures.immediateFuture(msg);
         }
     }
 
     private ListenableFuture<TbMsg> transformMsg(TbContext ctx, TbMsg msg, ListenableFuture<JsonElement> propertiesFuture, MessageData messageData) {
         return Futures.transformAsync(propertiesFuture, jsonElement -> {
-            if (jsonElement != null) {
-                if (messageData.getDataType().equals("metadata")) {
+            if (jsonElement == null) {
+                return Futures.immediateFuture(null);
+            } else {
+                if (messageData.getDataSource().equals(DataSource.METADATA)) {
                     Map<String, String> metadataMap = gson.fromJson(jsonElement.toString(), TYPE);
                     return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), new TbMsgMetaData(metadataMap), msg.getData()));
                 } else {
                     return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), gson.toJson(jsonElement)));
                 }
-            } else {
-                return Futures.immediateFuture(null);
             }
         }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<JsonElement> addContactProperties(JsonElement data, ListenableFuture<ContactBased> entityFuture, String prefix) {
         return Futures.transformAsync(entityFuture, contactBased -> {
-            if (contactBased != null) {
+            if (contactBased == null) {
+                return Futures.immediateFuture(null);
+            } else {
                 JsonElement jsonElement = null;
                 for (EntityDetails entityDetails : this.config.getDetailsList()) {
                     jsonElement = setProperties(contactBased, data, entityDetails, prefix);
                 }
                 return Futures.immediateFuture(jsonElement);
-            } else {
-                return Futures.immediateFuture(null);
             }
         }, MoreExecutors.directExecutor());
     }
@@ -175,7 +174,11 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     @AllArgsConstructor
     private static class MessageData {
         private JsonElement data;
-        private String dataType;
+        private DataSource dataSource;
+    }
+
+    private enum DataSource {
+        DATA, METADATA
     }
 
 

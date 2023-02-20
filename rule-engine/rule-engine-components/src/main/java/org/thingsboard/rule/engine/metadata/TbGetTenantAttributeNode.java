@@ -40,6 +40,7 @@ public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override
     protected ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
+        ctx.checkTenantEntity(originator);
         return Futures.immediateFuture(ctx.getTenantId());
     }
 

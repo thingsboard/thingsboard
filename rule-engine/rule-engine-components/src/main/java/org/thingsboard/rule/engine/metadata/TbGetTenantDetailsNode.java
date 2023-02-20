@@ -54,12 +54,9 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
 
     @Override
     protected ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg) {
-        return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId()), tenant -> {
-            if (tenant != null) {
-                return Futures.immediateFuture(tenant);
-            } else {
-                return Futures.immediateFuture(null);
-            }
-        }, MoreExecutors.directExecutor());
+        ctx.checkTenantEntity(msg.getOriginator());
+        return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId()), tenant ->
+                        tenant == null ? Futures.immediateFuture(null) : Futures.immediateFuture(tenant),
+                MoreExecutors.directExecutor());
     }
 }
