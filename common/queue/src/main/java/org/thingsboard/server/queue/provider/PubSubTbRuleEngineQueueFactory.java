@@ -31,6 +31,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
@@ -43,6 +44,7 @@ import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 import org.thingsboard.server.queue.pubsub.TbPubSubSubscriptionSettings;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -62,11 +64,13 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public PubSubTbRuleEngineQueueFactory(TbPubSubSettings pubSubSettings,
                                           TbQueueCoreSettings coreSettings,
@@ -75,7 +79,7 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
                                           TbServiceInfoProvider serviceInfoProvider,
                                           TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                           TbQueueTransportNotificationSettings transportNotificationSettings,
-                                          TbPubSubSubscriptionSettings pubSubSubscriptionSettings) {
+                                          TbQueueAlarmRulesSettings arSettings, TbPubSubSubscriptionSettings pubSubSubscriptionSettings) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -83,11 +87,13 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
         this.serviceInfoProvider = serviceInfoProvider;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getCoreSettings());
         this.ruleEngineAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getRuleEngineSettings());
         this.jsExecutorAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getJsExecutorSettings());
         this.notificationAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getNotificationsSettings());
+        this.arAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getArSettings());
     }
 
     @Override
@@ -163,14 +169,15 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbPubSubProducerTemplate<>(arAdmin, pubSubSettings, arSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
-        //TODO: adovh
-        return null;
+        TbQueueMsgDecoder<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> decoder =
+                msg -> new TbProtoQueueMsg<>(msg.getKey(),
+                        TransportProtos.ToTbAlarmRuleStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders());
+        return new TbPubSubConsumerTemplate<>(arAdmin, pubSubSettings, arSettings.getTopic(), decoder);
     }
 
     @PreDestroy

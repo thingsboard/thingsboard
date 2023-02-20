@@ -28,6 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
@@ -35,11 +36,11 @@ import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
-import org.thingsboard.server.queue.settings.TbQueueVersionControlSettings;
 import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
@@ -60,12 +61,14 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     private final TbAwsSqsSettings sqsSettings;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin otaAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public AwsSqsTbRuleEngineQueueFactory(NotificationsTopicService notificationsTopicService, TbQueueCoreSettings coreSettings,
                                           TbQueueRuleEngineSettings ruleEngineSettings,
@@ -73,7 +76,7 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
                                           TbAwsSqsSettings sqsSettings,
                                           TbAwsSqsQueueAttributes sqsQueueAttributes,
                                           TbQueueRemoteJsInvokeSettings jsInvokeSettings,
-                                          TbQueueTransportNotificationSettings transportNotificationSettings) {
+                                          TbQueueTransportNotificationSettings transportNotificationSettings, TbQueueAlarmRulesSettings arSettings) {
         this.notificationsTopicService = notificationsTopicService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -81,12 +84,14 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
         this.sqsSettings = sqsSettings;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getCoreAttributes());
         this.ruleEngineAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getRuleEngineAttributes());
         this.jsExecutorAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getJsExecutorAttributes());
         this.notificationAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getNotificationsAttributes());
         this.otaAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getOtaAttributes());
+        this.arAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getArAttributes());
     }
 
     @Override
@@ -162,14 +167,14 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbAwsSqsProducerTemplate<>(arAdmin, sqsSettings, arSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
-        //TODO: adovh
-        return null;
+        TbQueueMsgDecoder<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> decoder =
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToTbAlarmRuleStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders());
+        return new TbAwsSqsConsumerTemplate<>(arAdmin, sqsSettings, arSettings.getTopic(), decoder);
     }
 
     @PreDestroy

@@ -43,6 +43,8 @@ public class TbAwsSqsQueueAttributes {
     private String otaProperties;
     @Value("${queue.aws-sqs.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.aws-sqs.queue-properties.alarm-rules:}")
+    private String arProperties;
 
     @Getter
     private Map<String, String> coreAttributes;
@@ -58,6 +60,8 @@ public class TbAwsSqsQueueAttributes {
     private Map<String, String> otaAttributes;
     @Getter
     private Map<String, String> vcAttributes;
+    @Getter
+    private Map<String, String> arAttributes;
 
     private final Map<String, String> defaultAttributes = new HashMap<>();
 
@@ -72,6 +76,7 @@ public class TbAwsSqsQueueAttributes {
         jsExecutorAttributes = getConfigs(jsExecutorProperties);
         otaAttributes = getConfigs(otaProperties);
         vcAttributes = getConfigs(vcProperties);
+        arAttributes = getConfigs(arProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {

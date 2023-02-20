@@ -45,6 +45,8 @@ import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -66,12 +68,14 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public ServiceBusTbCoreQueueFactory(TbServiceBusSettings serviceBusSettings,
                                         TbQueueCoreSettings coreSettings,
@@ -81,7 +85,7 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
                                         TbServiceInfoProvider serviceInfoProvider,
                                         TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                         TbQueueTransportNotificationSettings transportNotificationSettings,
-                                        TbServiceBusQueueConfigs serviceBusQueueConfigs) {
+                                        TbQueueAlarmRulesSettings arSettings, TbServiceBusQueueConfigs serviceBusQueueConfigs) {
         this.serviceBusSettings = serviceBusSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
@@ -90,12 +94,14 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
         this.serviceInfoProvider = serviceInfoProvider;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getCoreConfigs());
         this.ruleEngineAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getRuleEngineConfigs());
         this.jsExecutorAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getJsExecutorConfigs());
         this.transportApiAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getTransportApiConfigs());
         this.notificationAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getNotificationsConfigs());
+        this.arAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getArConfigs());
     }
 
     @Override
@@ -200,8 +206,7 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbServiceBusProducerTemplate<>(arAdmin, serviceBusSettings, arSettings.getTopic());
     }
 
     @PreDestroy

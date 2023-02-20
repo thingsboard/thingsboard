@@ -45,6 +45,7 @@ import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqQueueArguments;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -66,12 +67,14 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public RabbitMqTbCoreQueueFactory(TbRabbitMqSettings rabbitMqSettings,
                                       TbQueueCoreSettings coreSettings,
@@ -81,7 +84,7 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
                                       TbServiceInfoProvider serviceInfoProvider,
                                       TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                       TbQueueTransportNotificationSettings transportNotificationSettings,
-                                      TbRabbitMqQueueArguments queueArguments) {
+                                      TbQueueAlarmRulesSettings arSettings, TbRabbitMqQueueArguments queueArguments) {
         this.rabbitMqSettings = rabbitMqSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
@@ -90,12 +93,14 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
         this.serviceInfoProvider = serviceInfoProvider;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getCoreArgs());
         this.ruleEngineAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getRuleEngineArgs());
         this.jsExecutorAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getJsExecutorArgs());
         this.transportApiAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getTransportApiArgs());
         this.notificationAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getNotificationsArgs());
+        this.arAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getArArgs());
     }
 
     @Override
@@ -200,8 +205,7 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbRabbitMqProducerTemplate<>(arAdmin, rabbitMqSettings, arSettings.getTopic());
     }
 
     @PreDestroy
