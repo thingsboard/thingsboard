@@ -33,14 +33,15 @@ jobs:
 
       - name: Transfer to server
         uses: appleboy/scp-action@master
-        working-directory: thingsboard
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
+          working-directory: thingsboard
           source: '/opt/tesenso/'
           target: 'application/target/thinsboard.deb'
+
 
 
 #  deploy:
