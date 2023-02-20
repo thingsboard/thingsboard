@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +26,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -34,6 +38,7 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -44,6 +49,7 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.sql.tenant.TenantRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
@@ -109,6 +115,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private TenantRepository tenantRepository;
@@ -700,6 +709,28 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             conn.createStatement().execute("ALTER TABLE device_profile ADD CONSTRAINT fk_default_edge_rule_chain_device_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                         } catch (Exception e) {
                         }
+
+                        PageLink pageLink = new PageLink(1000);
+                        PageData<User> users;
+                        do {
+                            List<ListenableFuture<?>> futures = new ArrayList<>();
+                            users = userService.findAllUsers(pageLink);
+                            for (User user : users.getData()) {
+                                futures.add(dbUpgradeExecutor.submit(() -> {
+                                    JsonNode additionalInfo = user.getAdditionalInfo();
+                                    if (additionalInfo.isObject() && additionalInfo.has("userPasswordHistory")){
+                                        UserCredentials creds = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+                                        if (creds != null) {
+                                            creds.setAdditionalInfo(JacksonUtil.newObjectNode().set("userPasswordHistory", additionalInfo.get("userPasswordHistory")));
+                                            userService.saveUserCredentials(user.getTenantId(), creds);
+                                        }
+                                        ((ObjectNode) additionalInfo).remove("userPasswordHistory");
+                                        userService.saveUser(user);
+                                    }}));
+                            }
+                            Futures.allAsList(futures).get();
+                            pageLink = pageLink.nextPageLink();
+                        } while (users.hasNext());
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005000;");
                     }
