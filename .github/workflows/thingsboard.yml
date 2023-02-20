@@ -27,6 +27,8 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: maven
+          working-directory: thingsboard
+          
       - name: Build with Maven
         working-directory: thingsboard
         run: mvn clean package -DskipTests
