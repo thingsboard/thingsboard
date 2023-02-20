@@ -38,6 +38,7 @@ jobs:
     steps:
       - name: Deploy to server
         uses: appleboy/scp-action@master
+        run: pwd
         with:
             host: ${{ secrets.SERVER_IP }}
             username: ${{ secrets.SERVER_USERNAME }}
