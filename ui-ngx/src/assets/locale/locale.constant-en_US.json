@@ -433,12 +433,7 @@
         "type": "Type",
         "severity": "Severity",
         "originator": "Originator",
-        "originator-label": "Originator label",
         "originator-type": "Originator type",
-        "assignee-id": "Assignee id",
-        "assignee-first-name": "Assignee first name",
-        "assignee-last-name": "Assignee last name",
-        "assignee-email": "Assignee email",
         "details": "Details",
         "originator-label": "Originator label",
         "assign": "Assign",
@@ -4752,7 +4747,8 @@
             "enable-alarm-filter": "Enable alarm filter",
             "display-alarm-details": "Display alarm details",
             "allow-alarms-ack": "Allow alarms acknowledgment",
-            "allow-alarms-clear": "Allow alarms clear"
+            "allow-alarms-clear": "Allow alarms clear",
+            "allow-alarms-assign": "Allow alarms assignment"
         },
         "value-source": {
             "value-source": "Value source",

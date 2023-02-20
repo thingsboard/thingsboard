@@ -36,9 +36,10 @@
       <span class="user-avatar" [innerHTML]="getUserInitials(user)"
             [style.background-color]="getAvatarBgColor(user)">
       </span>
-      <div fxLayout="column" fxLayoutGap="2px">
-        <span class="user-email" [innerHTML]="user.email | highlight:searchText"></span>
-        <span class="user-name" *ngIf="user.firstName || user.lastName" [innerHTML]="getFullName(user)"></span>
+      <div class="user-display-name" fxLayout="column" fxLayoutGap="2px">
+        <span *ngIf="user.firstName || user.lastName"
+              [innerHTML]="getFullName(user) | highlight:searchText"></span>
+        <span [innerHTML]="user.email | highlight:searchText"></span>
       </div>
     </mat-option>
     <mat-option *ngIf="!(filteredUsers | async)?.length" [value]="null">

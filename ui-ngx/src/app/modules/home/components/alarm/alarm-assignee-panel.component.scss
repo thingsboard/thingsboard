@@ -76,19 +76,22 @@
         background-color: #5cb445;
         width: 28px;
         height: 28px;
+        min-width: 28px;
+        min-height: 28px;
         color: white;
         font-size: 13px;
         font-weight: 700
       }
-      .user-email {
-        color: rgba(0, 0, 0, 0.76);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 185px
-      }
-      .user-name {
-        color: rgba(0, 0, 0, 0.38);
-        font-size: 13px;
+      .user-display-name {
+        max-width: 180px;
+        span {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        span + span {
+          color: rgba(0, 0, 0, 0.38);
+        }
       }
       .mat-option-text {
         display: flex;

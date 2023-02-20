@@ -116,7 +116,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           color: alarmSeverityColors.get(entity.severity)
         })));
     this.columns.push(
-      new EntityTableColumn<AlarmInfo>('assigneeEmail', 'alarm.assignee', '200px',
+      new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '200px',
         (entity) => {
           return this.getAssigneeTemplate(entity)
         },
@@ -190,7 +190,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity)}">
             ${this.getUserInitials(entity)}
           </span>
-          <span>${this.getUserDisplayName(entity)}</span>
+          <span class="user-display-name">${this.getUserDisplayName(entity)}</span>
         </span>`
         :
         `<mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
@@ -201,35 +201,35 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
 
   getUserDisplayName(entity: AlarmInfo) {
     let displayName = '';
-    if ((entity.assigneeFirstName && entity.assigneeFirstName.length > 0) ||
-      (entity.assigneeLastName && entity.assigneeLastName.length > 0)) {
-      if (entity.assigneeFirstName) {
-        displayName += entity.assigneeFirstName;
+    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
+      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
+      if (entity.assignee.firstName) {
+        displayName += entity.assignee.firstName;
       }
-      if (entity.assigneeLastName) {
+      if (entity.assignee.lastName) {
         if (displayName.length > 0) {
           displayName += ' ';
         }
-        displayName += entity.assigneeLastName;
+        displayName += entity.assignee.lastName;
       }
     } else {
-      displayName = entity.assigneeEmail;
+      displayName = entity.assignee.email;
     }
     return displayName;
   }
 
   getUserInitials(entity: AlarmInfo): string {
     let initials = '';
-    if (entity.assigneeFirstName && entity.assigneeFirstName.length ||
-      entity.assigneeLastName && entity.assigneeLastName.length) {
-      if (entity.assigneeFirstName) {
-        initials += entity.assigneeFirstName.charAt(0);
+    if (entity.assignee.firstName && entity.assignee.firstName.length ||
+      entity.assignee.lastName && entity.assignee.lastName.length) {
+      if (entity.assignee.firstName) {
+        initials += entity.assignee.firstName.charAt(0);
       }
-      if (entity.assigneeLastName) {
-        initials += entity.assigneeLastName.charAt(0);
+      if (entity.assignee.lastName) {
+        initials += entity.assignee.lastName.charAt(0);
       }
     } else {
-      initials += entity.assigneeEmail.charAt(0);
+      initials += entity.assignee.email.charAt(0);
     }
     return initials.toUpperCase();
   }

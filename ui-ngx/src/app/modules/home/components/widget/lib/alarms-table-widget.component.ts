@@ -142,6 +142,7 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   displayDetails: boolean;
   allowAcknowledgment: boolean;
   allowClear: boolean;
+  allowAssign: boolean;
 }
 
 interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
@@ -193,6 +194,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private displayDetails = true;
   public allowAcknowledgment = true;
   private allowClear = true;
+  public allowAssign = true;
 
   private defaultPageSize = 10;
   private defaultSortOrder = '-' + alarmFields.createdTime.value;
@@ -329,6 +331,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.displayDetails = isDefined(this.settings.displayDetails) ? this.settings.displayDetails : true;
     this.allowAcknowledgment = isDefined(this.settings.allowAcknowledgment) ? this.settings.allowAcknowledgment : true;
     this.allowClear = isDefined(this.settings.allowClear) ? this.settings.allowClear : true;
+    this.allowAssign = isDefined(this.settings.allowAssign) ? this.settings.allowAssign : true;
 
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
       this.alarmsTitlePattern = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
@@ -422,7 +425,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           if (alarmField && alarmField.time) {
             keySettings.columnWidth = '120px';
           }
-          if (alarmField && alarmField.keyName  === alarmFields.assigneeEmail.keyName) {
+          if (alarmField && alarmField.keyName  === alarmFields.assignee.keyName) {
             keySettings.columnWidth = '120px'
           }
         }
@@ -973,7 +976,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
         } else if (alarmField.value === alarmFields.originatorType.value) {
           return this.translate.instant(entityTypeTranslations.get(value).type);
-        } else if (alarmField.value === alarmFields.assigneeEmail.value) {
+        } else if (alarmField.value === alarmFields.assignee.value) {
           return '';
         }
         else {
@@ -1026,35 +1029,35 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   getUserDisplayName(entity: AlarmInfo) {
     let displayName = '';
-    if ((entity.assigneeFirstName && entity.assigneeFirstName.length > 0) ||
-      (entity.assigneeLastName && entity.assigneeLastName.length > 0)) {
-      if (entity.assigneeFirstName) {
-        displayName += entity.assigneeFirstName;
+    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
+      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
+      if (entity.assignee.firstName) {
+        displayName += entity.assignee.firstName;
       }
-      if (entity.assigneeLastName) {
+      if (entity.assignee.lastName) {
         if (displayName.length > 0) {
           displayName += ' ';
         }
-        displayName += entity.assigneeLastName;
+        displayName += entity.assignee.lastName;
       }
     } else {
-      displayName = entity.assigneeEmail;
+      displayName = entity.assignee.email;
     }
     return displayName;
   }
 
   getUserInitials(entity: AlarmInfo): string {
     let initials = '';
-    if (entity.assigneeFirstName && entity.assigneeFirstName.length ||
-      entity.assigneeLastName && entity.assigneeLastName.length) {
-      if (entity.assigneeFirstName) {
-        initials += entity.assigneeFirstName.charAt(0);
+    if (entity.assignee.firstName && entity.assignee.firstName.length ||
+      entity.assignee.lastName && entity.assignee.lastName.length) {
+      if (entity.assignee.firstName) {
+        initials += entity.assignee.firstName.charAt(0);
       }
-      if (entity.assigneeLastName) {
-        initials += entity.assigneeLastName.charAt(0);
+      if (entity.assignee.lastName) {
+        initials += entity.assignee.lastName.charAt(0);
       }
     } else {
-      initials += entity.assigneeEmail.charAt(0);
+      initials += entity.assignee.email.charAt(0);
     }
     return initials.toUpperCase();
   }

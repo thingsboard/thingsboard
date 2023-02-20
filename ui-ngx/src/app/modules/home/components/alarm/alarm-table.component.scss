@@ -22,6 +22,10 @@
         justify-content: flex-start;
         align-items: center;
         .assigned-container {
+          max-width: 180px;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
           .user-avatar {
             display: inline-flex;
             justify-content: center;
@@ -30,6 +34,8 @@
             border-radius: 50%;
             width: 28px;
             height: 28px;
+            min-width: 28px;
+            min-height: 28px;
             color: white;
             font-size: 13px;
             font-weight: 700;
