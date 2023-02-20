@@ -2,8 +2,7 @@ name: Java App Build and Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "master" ]
 
 jobs:
   build:
