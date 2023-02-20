@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -1402,6 +1402,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     }));
     if (datasource.latestDataKeys) {
       datasourceDataArray = datasourceDataArray.concat(datasource.latestDataKeys.map((dataKey, latestKeyIndex) => {
+        dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
         const datasourceData: DatasourceData = {
           datasource,
           dataKey,
