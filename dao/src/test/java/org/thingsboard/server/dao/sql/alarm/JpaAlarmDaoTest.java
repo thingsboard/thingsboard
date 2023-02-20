@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
@@ -69,7 +69,17 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(alarm2Id, alarm.getId().getId());
     }
 
-    private void saveAlarm(UUID id, UUID tenantId, UUID deviceId, String type) {
+    @Test
+    public void testAckAlarmProcedure() {
+        UUID tenantId = UUID.fromString("d4b68f40-3e96-11e7-a884-898080180d6b");
+        UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
+        UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
+        Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
+        AlarmInfo alarmInfo = alarmDao.acknowledgeAlarm(alarm.getTenantId(), alarm.getId());
+        assertNotNull(alarmInfo);
+    }
+
+    private Alarm saveAlarm(UUID id, UUID tenantId, UUID deviceId, String type) {
         Alarm alarm = new Alarm();
         alarm.setId(new AlarmId(id));
         alarm.setTenantId(TenantId.fromUUID(tenantId));
@@ -80,6 +90,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         alarm.setEndTs(System.currentTimeMillis());
         alarm.setAcknowledged(false);
         alarm.setCleared(false);
-        alarmDao.save(TenantId.fromUUID(tenantId), alarm);
+        return alarmDao.save(TenantId.fromUUID(tenantId), alarm);
     }
+
 }

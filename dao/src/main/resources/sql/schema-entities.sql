@@ -832,3 +832,13 @@ COALESCE(CASE WHEN a.originator_type = 0 THEN (select title from tenant where id
 u.first_name as assignee_first_name, u.last_name as assignee_last_name, u.email as assignee_email
 FROM alarm a
 LEFT JOIN tb_user u ON u.id = a.assignee_id;
+
+DROP FUNCTION IF EXISTS acknowledge_alarm;
+CREATE OR REPLACE FUNCTION acknowledge_alarm(t_id uuid, a_id uuid, a_ts bigint)
+RETURNS alarm_info LANGUAGE plpgsql
+AS $$
+BEGIN
+UPDATE alarm a SET acknowledged = true, ack_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id and a.acknowledged = false;
+RETURN (SELECT a FROM alarm_info a WHERE a.tenant_id = t_id AND id = a_id);
+END;
+$$;

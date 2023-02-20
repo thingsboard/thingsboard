@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -177,4 +178,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query(value = "SELECT a FROM AlarmInfoEntity a WHERE a.tenantId = :tenantId AND a.id = :alarmId")
     AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
+
+    // See named native query for definition
+    AlarmInfoEntity acknowledgeAlarm(@Param("t_id") UUID tenantId,
+                                     @Param("a_id") UUID alarmId,
+                                     @Param("a_ts") long ts);
 }

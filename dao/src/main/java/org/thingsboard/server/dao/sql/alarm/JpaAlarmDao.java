@@ -48,6 +48,8 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.query.AlarmQueryRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -217,6 +219,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
         log.trace("[{}] Try to delete entity alarm records using [{}]", tenantId, entityId);
         entityAlarmRepository.deleteByEntityId(entityId.getId());
+    }
+
+    @Override
+    public AlarmInfo acknowledgeAlarm(TenantId tenantId, AlarmId id) {
+        return DaoUtil.getData(alarmRepository.acknowledgeAlarm(tenantId.getId(), id.getId(), System.currentTimeMillis()));
     }
 
     @Override
