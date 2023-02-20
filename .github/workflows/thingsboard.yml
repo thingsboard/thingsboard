@@ -27,10 +27,7 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: maven
-          working-directory: thingsboard
-
       - name: Build with Maven
-        working-directory: thingsboard
         run: mvn clean package -DskipTests
 
       - name: Transfer to server
@@ -40,10 +37,10 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          working-directory: thingsboard
-          source: '/opt/tesenso/'
-          target: 'application/target/thinsboard.deb'
-
+          source: '/home/runner/work/thingsboard/thingsboard/application/target/*.deb'
+          target: '/opt/tesenso'
+      - name: location
+        run: pwd
 
 
 #  deploy:
