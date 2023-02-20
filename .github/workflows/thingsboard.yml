@@ -34,8 +34,6 @@ jobs:
 
     - name: Transfer to server
       uses: appleboy/scp-action@master
-    - name: location
-      run : pwd
       with:
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USERNAME }}
@@ -43,6 +41,8 @@ jobs:
         port: ${{ secrets.SERVER_PORT }}
         source: "/opt/tesenso/"
         target: "/home/runner/work/thingsboard/thingsboard/pom.xml"
+    - name: location
+      run: pwd
 
 
 #  deploy:
