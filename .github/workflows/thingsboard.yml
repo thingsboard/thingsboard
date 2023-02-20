@@ -30,31 +30,30 @@ jobs:
       - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
 
-      - name: Transfer to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: ${{ secrets.SERVER_PORT }}
-          source: '/home/runner/work/thingsboard/thingsboard/application/target/*.deb'
-          target: '/opt/tesenso'
-
-
-#  deploy:
-#    runs-on: ubuntu-latest
-#    needs: build
-#
-#    steps:
-#      - name: Deploy to server
+#      - name: Transfer to server
 #        uses: appleboy/scp-action@master
 #        with:
-#            host: ${{ secrets.SERVER_IP }}
-#            username: ${{ secrets.SERVER_USERNAME }}
-#            password: ${{ secrets.SERVER_PASSWORD }}
-#            port: ${{ secrets.SERVER_PORT }}
-#            source: "/home/runner/work/thingsboard/thingsboard/application/target/*.deb"
-#            target: "/opt/tesenso"
+#          host: ${{ secrets.SERVER_IP }}
+#          username: ${{ secrets.SERVER_USERNAME }}
+#          password: ${{ secrets.SERVER_PASSWORD }}
+#          port: ${{ secrets.SERVER_PORT }}
+#          source: '/home/runner/work/thingsboard/thingsboard/application/target/*.deb'
+#          target: '/opt/tesenso'
+
+
+  deploy:
+    needs: upload
+
+    steps:
+      - name: upload to server
+        uses: appleboy/scp-action@master
+        with:
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SERVER_USERNAME }}
+            password: ${{ secrets.SERVER_PASSWORD }}
+            port: ${{ secrets.SERVER_PORT }}
+            source: "/home/runner/work/thingsboard/thingsboard/application/target/*.deb"
+            target: "/opt/tesenso"
 
 
 
