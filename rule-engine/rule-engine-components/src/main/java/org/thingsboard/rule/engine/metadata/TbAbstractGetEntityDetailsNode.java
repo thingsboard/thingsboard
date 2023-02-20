@@ -90,13 +90,11 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
         return Futures.transformAsync(propertiesFuture, jsonElement -> {
             if (jsonElement == null) {
                 return Futures.immediateFuture(null);
+            } else if (messageData.getDataSource().equals(DataSource.METADATA)) {
+                Map<String, String> metadataMap = gson.fromJson(jsonElement.toString(), TYPE);
+                return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), new TbMsgMetaData(metadataMap), msg.getData()));
             } else {
-                if (messageData.getDataSource().equals(DataSource.METADATA)) {
-                    Map<String, String> metadataMap = gson.fromJson(jsonElement.toString(), TYPE);
-                    return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), new TbMsgMetaData(metadataMap), msg.getData()));
-                } else {
-                    return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), gson.toJson(jsonElement)));
-                }
+                return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), gson.toJson(jsonElement)));
             }
         }, MoreExecutors.directExecutor());
     }
