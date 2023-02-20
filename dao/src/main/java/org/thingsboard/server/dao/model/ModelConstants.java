@@ -682,6 +682,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_TABLE_NAME = "notification_request";
     public static final String NOTIFICATION_REQUEST_TARGETS_PROPERTY = "targets";
     public static final String NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY = "template_id";
+    public static final String NOTIFICATION_REQUEST_TEMPLATE_PROPERTY = "template";
     public static final String NOTIFICATION_REQUEST_INFO_PROPERTY = "info";
     public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY = "originator_entity_id";
     public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_TYPE_PROPERTY = "originator_entity_type";

@@ -99,7 +99,14 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
-        NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
+        NotificationTemplate notificationTemplate;
+        if (notificationRequest.getTemplateId() != null) {
+            notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, notificationRequest.getTemplateId());
+        } else {
+            notificationTemplate = notificationRequest.getTemplate();
+        }
+        if (notificationTemplate == null) throw new IllegalArgumentException("Template is missing");
+
         List<NotificationTarget> targets = notificationRequest.getTargets().stream()
                 .map(NotificationTargetId::new)
                 .map(targetId -> notificationTargetService.findNotificationTargetById(tenantId, targetId))

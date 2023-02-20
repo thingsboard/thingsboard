@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -48,8 +49,9 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     @NotNull
     private List<UUID> targets;
 
-    @NotNull
     private NotificationTemplateId templateId;
+    @Valid
+    private NotificationTemplate template;
     @Valid
     private NotificationInfo info;
     @NotNull
@@ -68,6 +70,7 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
         this.tenantId = other.tenantId;
         this.targets = other.targets;
         this.templateId = other.templateId;
+        this.template = other.template;
         this.info = other.info;
         this.additionalConfig = other.additionalConfig;
         this.originatorEntityId = other.originatorEntityId;
