@@ -86,6 +86,7 @@ import { MarkdownEditorComponent } from '@shared/components/markdown-editor.comp
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { DashboardStateAutocompleteComponent } from '@shared/components/dashboard-state-autocomplete.component';
 import { EntitySubTypeAutocompleteComponent } from '@shared/components/entity/entity-subtype-autocomplete.component';
 import { EntitySubTypeSelectComponent } from '@shared/components/entity/entity-subtype-select.component';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
@@ -243,6 +244,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimezoneSelectComponent,
     ValueInputComponent,
     DashboardAutocompleteComponent,
+    DashboardStateAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntitySubTypeListComponent,
@@ -403,6 +405,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DatetimeComponent,
     TimezoneSelectComponent,
     DashboardAutocompleteComponent,
+    DashboardStateAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntitySubTypeListComponent,

@@ -30,6 +30,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
+import { deepClone, deepTrim } from '@core/utils';
 
 @Directive()
 // tslint:disable-next-line:directive-class-suffix
@@ -161,7 +162,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   }
 
   protected getNotificationTemplateValue(): NotificationTemplate {
-    const template: NotificationTemplate = this.templateNotificationForm.value;
+    const template: NotificationTemplate = deepClone(this.templateNotificationForm.value);
     this.notificationDeliveryMethods.forEach(method => {
       if (template.configuration.deliveryMethodsTemplates[method].enabled) {
         Object.assign(template.configuration.deliveryMethodsTemplates[method], this.deliveryMethodFormsMap.get(method).value, {method});
@@ -169,6 +170,6 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
         delete template.configuration.deliveryMethodsTemplates[method];
       }
     });
-    return template;
+    return deepTrim(template);
   }
 }

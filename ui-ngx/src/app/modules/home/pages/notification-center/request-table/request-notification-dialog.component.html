@@ -36,7 +36,7 @@
     </ng-template>
     <mat-step [stepControl]="notificationRequestForm">
       <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
-      <form [formGroup]="notificationRequestForm" style="padding-bottom: 16px;">
+      <form [formGroup]="notificationRequestForm">
         <div fxLayout="row" fxLayoutAlign="center">
           <mat-button-toggle-group class="tb-notification-use-template-toggle-group"
                                    style="width: 320px;"

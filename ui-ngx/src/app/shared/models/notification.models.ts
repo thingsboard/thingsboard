@@ -50,7 +50,8 @@ export interface NotificationInfo {
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
   tenantId?: TenantId;
   targets: Array<string>;
-  templateId: NotificationTemplateId;
+  templateId?: NotificationTemplateId;
+  template?: NotificationTemplate;
   info?: NotificationInfo;
   deliveryMethods: Array<NotificationDeliveryMethod>;
   originatorEntityId: EntityId;

@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
-import { deepTrim } from '@core/utils';
+import { deepTrim, guid } from '@core/utils';
 import { Observable } from 'rxjs';
 import { EntityType } from '@shared/models/entity-type.models';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -88,8 +88,8 @@ export class RequestNotificationDialogComponent extends
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
     this.notificationRequestForm = this.fb.group({
-      useTemplate: [true],
-      templateId: [null, Validators.required],
+      useTemplate: [false],
+      templateId: [{value: null, disabled: true}, Validators.required],
       targets: [null, Validators.required],
       template: this.templateNotificationForm,
       additionalConfig: this.fb.group({
@@ -99,9 +99,7 @@ export class RequestNotificationDialogComponent extends
       })
     });
 
-    this.notificationRequestForm.get('template').disable({emitEvent: false});
-    this.notificationRequestForm.get('template.name').removeValidators(Validators.required);
-    this.notificationRequestForm.get('template.name').updateValueAndValidity({emitEvent: false});
+    this.notificationRequestForm.get('template.name').setValue(guid())
 
     this.notificationRequestForm.get('useTemplate').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -203,8 +201,10 @@ export class RequestNotificationDialogComponent extends
 
   private get notificationFormValue(): NotificationRequest {
     const formValue = deepTrim(this.notificationRequestForm.value);
+    if (!formValue.useTemplate) {
+      formValue.template = super.getNotificationTemplateValue();
+    }
     delete formValue.useTemplate;
-    delete formValue.template;
     let delay = 0;
     if (formValue.additionalConfig.enabled) {
       delay = (this.notificationRequestForm.value.additionalConfig.time.valueOf() - this.minDate().valueOf()) / 1000;

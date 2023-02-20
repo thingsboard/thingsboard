@@ -17,7 +17,7 @@
 @import "../../../../../../theme";
 
 :host-context(.tb-fullscreen-dialog .mat-dialog-container) {
-  width: 640px;
+  width: 800px;
   max-height: 100vh;
 
   .tb-form-fields {
@@ -169,7 +169,7 @@
         }
       }
       .mat-horizontal-content-container {
-        height: 540px;
+        height: 600px;
         max-height: 100%;
         width: 100%;;
         overflow-y: auto;
@@ -241,7 +241,7 @@
 
   .mat-form-field {
     .mat-form-field-wrapper {
-      padding-bottom: 0px;
+      padding-bottom: 0;
 
       .mat-form-field-underline {
         position: initial !important;

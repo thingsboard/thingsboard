@@ -27,7 +27,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
-import { deepClone, deepTrim, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
@@ -155,7 +155,7 @@ export class TemplateNotificationDialogComponent
       if (this.templateNotification && !this.data.isCopy) {
         template = {...this.templateNotification, ...template};
       }
-      this.notificationService.saveNotificationTemplate(deepTrim(template)).subscribe(
+      this.notificationService.saveNotificationTemplate(template).subscribe(
         (target) => this.dialogRef.close(target)
       );
     }

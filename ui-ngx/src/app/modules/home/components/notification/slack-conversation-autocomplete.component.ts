@@ -16,8 +16,8 @@
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { debounceTime, map, publishReplay, refCount, share, switchMap, tap } from 'rxjs/operators';
+import { Observable, of, ReplaySubject } from 'rxjs';
+import { debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -201,8 +201,12 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
         fetchObservable = of([]);
       }
       this.slackConversetionFetchObservable$ = fetchObservable.pipe(
-        publishReplay(1),
-        refCount()
+        share({
+          connector: () => new ReplaySubject(1),
+          resetOnError: false,
+          resetOnComplete: false,
+          resetOnRefCountZero: false
+        })
       );
     }
     return this.slackConversetionFetchObservable$;
