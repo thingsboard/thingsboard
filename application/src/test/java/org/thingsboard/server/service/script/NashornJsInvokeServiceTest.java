@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
+        "js.evaluator=local",
         "js.max_script_body_size=50",
         "js.max_total_args_size=50",
         "js.max_result_size=50",
