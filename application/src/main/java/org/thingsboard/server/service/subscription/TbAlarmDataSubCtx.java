@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -269,8 +270,24 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         if (filter.getStatusList() != null && !filter.getStatusList().isEmpty()) {
             boolean matches = false;
             for (AlarmSearchStatus status : filter.getStatusList()) {
-                if (status.getStatuses().contains(alarm.getStatus())) {
-                    matches = true;
+                switch (status) {
+                    case ANY:
+                        matches = true;
+                        break;
+                    case ACK:
+                        matches = alarm.isAcknowledged();
+                        break;
+                    case UNACK:
+                        matches = !alarm.isAcknowledged();
+                        break;
+                    case CLEARED:
+                        matches = alarm.isCleared();
+                        break;
+                    case ACTIVE:
+                        matches = !alarm.isCleared();
+                        break;
+                }
+                if (matches) {
                     break;
                 }
             }

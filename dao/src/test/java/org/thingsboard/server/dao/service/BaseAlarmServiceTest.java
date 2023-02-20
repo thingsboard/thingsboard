@@ -92,7 +92,9 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         long ts = System.currentTimeMillis();
         Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
                 .type(TEST_ALARM)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
+                .acknowledged(false)
+                .cleared(false)
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
@@ -131,7 +133,9 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
                 .type(TEST_ALARM)
                 .propagate(false)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
+                .acknowledged(false)
+                .cleared(false)
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
@@ -235,7 +239,9 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
                 .type(TEST_ALARM)
                 .propagate(false)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
+                .acknowledged(false)
+                .cleared(false)
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
@@ -316,7 +322,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(tenantDevice.getId())
                 .type(TEST_ALARM)
                 .propagate(true)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
         tenantAlarm = result.getAlarm();
@@ -325,7 +331,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .propagate(true)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
         result = alarmService.createOrUpdateAlarm(deviceAlarm);
         deviceAlarm = result.getAlarm();
@@ -392,7 +398,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(tenantDevice.getId())
                 .type("Not Propagated")
                 .propagate(false)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
         tenantAlarm = result.getAlarm();
@@ -401,7 +407,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(tenantDevice.getId())
                 .type("Propagated")
                 .propagate(true)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
         result = alarmService.createOrUpdateAlarm(customerAlarm);
         customerAlarm = result.getAlarm();
@@ -442,7 +448,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(device.getId())
                 .type("Propagated To Tenant")
                 .propagateToTenant(true)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
         tenantAlarm = result.getAlarm();
@@ -452,7 +458,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .type("Propagated to Customer")
                 .propagate(false)
                 .propagateToOwner(true)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
         result = alarmService.createOrUpdateAlarm(customerAlarm);
         customerAlarm = result.getAlarm();
@@ -509,7 +515,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.MAJOR)
-                .status(AlarmStatus.ACTIVE_UNACK)
+                .acknowledged(false)
+                .cleared(false)
                 .startTs(System.currentTimeMillis())
                 .build();
         alarm1 = alarmService.createOrUpdateAlarm(alarm1).getAlarm();
@@ -520,7 +527,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.MINOR)
-                .status(AlarmStatus.ACTIVE_ACK)
+                .acknowledged(true)
+                .cleared(false)
                 .startTs(System.currentTimeMillis())
                 .build();
         alarm2 = alarmService.createOrUpdateAlarm(alarm2).getAlarm();
@@ -531,7 +539,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.CRITICAL)
-                .status(AlarmStatus.ACTIVE_ACK)
+                .acknowledged(true)
+                .cleared(false)
                 .startTs(System.currentTimeMillis())
                 .build();
         alarm3 = alarmService.createOrUpdateAlarm(alarm3).getAlarm();
@@ -560,7 +569,6 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 .type(TEST_ALARM)
                 .propagate(false)
                 .severity(AlarmSeverity.CRITICAL)
-                .status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
@@ -720,7 +728,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
                 .type(TEST_ALARM)
                 .propagate(true)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(ts).build();
 
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);

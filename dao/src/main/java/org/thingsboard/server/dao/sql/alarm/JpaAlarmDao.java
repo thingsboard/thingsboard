@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -114,12 +115,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
-        Set<AlarmStatus> statusSet = null;
-        if (query.getSearchStatus() != null) {
-            statusSet = query.getSearchStatus().getStatuses();
-        } else if (query.getStatus() != null) {
-            statusSet = Collections.singleton(query.getStatus());
-        }
+        AlarmStatusFilter asf = AlarmStatusFilter.from(query);
         String assigneeId = null;
         if (query.getAssigneeId() != null) {
             assigneeId = query.getAssigneeId().toString();
@@ -132,7 +128,10 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             affectedEntity.getEntityType().name(),
                             query.getPageLink().getStartTime(),
                             query.getPageLink().getEndTime(),
-                            statusSet,
+                            asf.hasClearFilter(),
+                            asf.hasClearFilter() && asf.getClearFilter(),
+                            asf.hasAckFilter(),
+                            asf.hasAckFilter() && asf.getAckFilter(),
                             assigneeId,
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
@@ -144,7 +143,10 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             tenantId.getId(),
                             query.getPageLink().getStartTime(),
                             query.getPageLink().getEndTime(),
-                            statusSet,
+                            asf.hasClearFilter(),
+                            asf.hasClearFilter() && asf.getClearFilter(),
+                            asf.hasAckFilter(),
+                            asf.hasAckFilter() && asf.getAckFilter(),
                             assigneeId,
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
@@ -156,12 +158,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
         log.trace("Try to find customer alarms by status [{}] and pageLink [{}]", query.getStatus(), query.getPageLink());
-        Set<AlarmStatus> statusSet = null;
-        if (query.getSearchStatus() != null) {
-            statusSet = query.getSearchStatus().getStatuses();
-        } else if (query.getStatus() != null) {
-            statusSet = Collections.singleton(query.getStatus());
-        }
+        AlarmStatusFilter asf = AlarmStatusFilter.from(query);
         String assigneeId = null;
         if (query.getAssigneeId() != null) {
             assigneeId = query.getAssigneeId().toString();
@@ -172,7 +169,10 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                         customerId.getId(),
                         query.getPageLink().getStartTime(),
                         query.getPageLink().getEndTime(),
-                        statusSet,
+                        asf.hasClearFilter(),
+                        asf.hasClearFilter() && asf.getClearFilter(),
+                        asf.hasAckFilter(),
+                        asf.hasAckFilter() && asf.getAckFilter(),
                         assigneeId,
                         Objects.toString(query.getPageLink().getTextSearch(), ""),
                         DaoUtil.toPageable(query.getPageLink())
@@ -186,8 +186,13 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, Set<AlarmStatus> statuses, String assigneeId) {
-        return alarmRepository.findAlarmSeverities(tenantId.getId(), entityId.getId(), entityId.getEntityType().name(), statuses, assigneeId);
+    public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, AlarmStatusFilter asf, String assigneeId) {
+        return alarmRepository.findAlarmSeverities(tenantId.getId(), entityId.getId(), entityId.getEntityType().name(),
+                asf.hasClearFilter(),
+                asf.hasClearFilter() && asf.getClearFilter(),
+                asf.hasAckFilter(),
+                asf.hasAckFilter() && asf.getAckFilter(),
+                assigneeId);
     }
 
     @Override

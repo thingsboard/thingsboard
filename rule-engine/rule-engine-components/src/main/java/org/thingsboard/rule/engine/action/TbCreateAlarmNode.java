@@ -116,9 +116,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (msgAlarm.getOriginator() == null) {
             msgAlarm.setOriginator(msg.getOriginator());
         }
-        if (msgAlarm.getStatus() == null) {
-            msgAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
-        }
         return msgAlarm;
     }
 
@@ -195,7 +192,8 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         return Alarm.builder()
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
-                .status(AlarmStatus.ACTIVE_UNACK)
+                .cleared(false)
+                .acknowledged(false)
                 .severity(this.config.isDynamicSeverity() ? processAlarmSeverity(msg) : notDynamicAlarmSeverity)
                 .propagate(config.isPropagate())
                 .propagateToOwner(config.isPropagateToOwner())

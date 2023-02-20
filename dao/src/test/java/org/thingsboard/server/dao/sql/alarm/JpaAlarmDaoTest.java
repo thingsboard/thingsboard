@@ -78,7 +78,8 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         alarm.setPropagate(true);
         alarm.setStartTs(System.currentTimeMillis());
         alarm.setEndTs(System.currentTimeMillis());
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
+        alarm.setAcknowledged(false);
+        alarm.setCleared(false);
         alarmDao.save(TenantId.fromUUID(tenantId), alarm);
     }
 }

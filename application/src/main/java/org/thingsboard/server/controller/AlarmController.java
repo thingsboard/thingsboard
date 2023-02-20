@@ -102,12 +102,8 @@ public class AlarmController extends BaseController {
     public Alarm getAlarmById(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
                               @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            return checkAlarmId(alarmId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        return checkAlarmId(alarmId, Operation.READ);
     }
 
     @ApiOperation(value = "Get Alarm Info (getAlarmInfoById)",
@@ -119,12 +115,8 @@ public class AlarmController extends BaseController {
     public AlarmInfo getAlarmInfoById(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
                                       @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            return checkAlarmInfoId(alarmId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        return checkAlarmInfoId(alarmId, Operation.READ);
     }
 
     @ApiOperation(value = "Create or update Alarm (saveAlarm)",

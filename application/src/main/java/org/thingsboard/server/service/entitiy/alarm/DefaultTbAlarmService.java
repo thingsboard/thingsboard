@@ -69,7 +69,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                     .build();
             alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             alarm.setAckTs(ackTs);
-            alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
+            alarm.setAcknowledged(true);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_ACK, user);
             return null;
         }, MoreExecutors.directExecutor());
@@ -89,7 +89,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                     .build();
             alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
             alarm.setClearTs(clearTs);
-            alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
+            alarm.setCleared(true);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_CLEAR, user);
             return null;
         }, MoreExecutors.directExecutor());

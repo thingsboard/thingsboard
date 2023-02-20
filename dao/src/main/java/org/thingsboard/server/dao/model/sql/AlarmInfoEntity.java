@@ -30,6 +30,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_FIR
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_STATUS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_VIEW_NAME;
 
 @Data
@@ -48,6 +49,8 @@ public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
     private String assigneeLastName;
     @Column(name = ALARM_ASSIGNEE_EMAIL_PROPERTY)
     private String assigneeEmail;
+    @Column(name = ALARM_STATUS_PROPERTY)
+    private String status;
 
     public AlarmInfoEntity() {
         super();

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
+import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -123,6 +124,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             }
             alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()).orElse(null));
             if (alarm.getId() == null) {
+                // Atomic update and return alarm + assignee.
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
                 if (existing == null || existing.getStatus().isCleared()) {
                     if (!alarmCreationEnabled) {
@@ -235,9 +237,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null || alarm.getStatus().isAck()) {
             return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
         } else {
-            AlarmStatus oldStatus = alarm.getStatus();
-            AlarmStatus newStatus = oldStatus.isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK;
-            alarm.setStatus(newStatus);
+            alarm.setAcknowledged(true);
             alarm.setAckTs(ackTime);
             alarm = alarmDao.save(alarm.getTenantId(), alarm);
             return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
@@ -250,9 +250,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null || alarm.getStatus().isCleared()) {
             return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
         } else {
-            AlarmStatus oldStatus = alarm.getStatus();
-            AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
-            alarm.setStatus(newStatus);
+            alarm.setCleared(true);
             alarm.setClearTs(clearTime);
             if (details != null) {
                 alarm.setDetails(details);
@@ -336,15 +334,16 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                                   AlarmStatus alarmStatus, String assigneeId) {
-        Set<AlarmStatus> statusList = null;
+        AlarmStatusFilter asf;
         if (alarmSearchStatus != null) {
-            statusList = alarmSearchStatus.getStatuses();
+            asf = AlarmStatusFilter.from(alarmSearchStatus);
         } else if (alarmStatus != null) {
-            statusList = Collections.singleton(alarmStatus);
+            asf = AlarmStatusFilter.from(alarmStatus);
+        } else {
+            asf= AlarmStatusFilter.empty();
         }
 
-        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList, assigneeId);
-
+        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, asf, assigneeId);
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }
 
@@ -369,7 +368,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm.getAssignTs() > existing.getAssignTs()) {
             existing.setAssignTs(alarm.getAssignTs());
         }
-        existing.setStatus(alarm.getStatus());
+        existing.setAcknowledged(alarm.isAcknowledged());
+        existing.setCleared(alarm.isCleared());
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
         existing.setCustomerId(alarm.getCustomerId());

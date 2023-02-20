@@ -99,7 +99,8 @@ public class AlarmDataAdapter {
         alarm.setPropagateToTenant((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_TENANT_PROPERTY));
         alarm.setType(row.get(ModelConstants.ALARM_TYPE_PROPERTY).toString());
         alarm.setSeverity(AlarmSeverity.valueOf(row.get(ModelConstants.ALARM_SEVERITY_PROPERTY).toString()));
-        alarm.setStatus(AlarmStatus.valueOf(row.get(ModelConstants.ALARM_STATUS_PROPERTY).toString()));
+        alarm.setAcknowledged((boolean) row.get(ModelConstants.ALARM_ACKNOWLEDGED_PROPERTY));
+        alarm.setCleared((boolean) row.get(ModelConstants.ALARM_CLEARED_PROPERTY));
         alarm.setTenantId(TenantId.fromUUID((UUID) row.get(ModelConstants.TENANT_ID_PROPERTY)));
         Object customerIdObj = row.get(ModelConstants.CUSTOMER_ID_PROPERTY);
         CustomerId customerId = customerIdObj != null ? new CustomerId((UUID) customerIdObj) : null;

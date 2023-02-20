@@ -53,14 +53,15 @@ CREATE TABLE IF NOT EXISTS alarm (
     severity varchar(255),
     start_ts bigint,
     assign_ts bigint,
-    status varchar(255),
     assignee_id uuid,
     tenant_id uuid,
     customer_id uuid,
     propagate_relation_types varchar,
     type varchar(255),
     propagate_to_owner boolean,
-    propagate_to_tenant boolean
+    propagate_to_tenant boolean,
+    acknowledged boolean,
+    cleared boolean
 );
 
 CREATE TABLE IF NOT EXISTS alarm_comment (
@@ -802,6 +803,10 @@ CREATE TABLE IF NOT EXISTS user_settings (
 DROP VIEW IF EXISTS alarm_info;
 CREATE VIEW alarm_info AS
 SELECT a.*,
+(CASE WHEN a.acknowledged AND a.cleared THEN 'CLEARED_ACK'
+      WHEN NOT a.acknowledged AND a.cleared THEN 'CLEARED_UNACK'
+      WHEN a.acknowledged AND NOT a.cleared THEN 'ACTIVE_ACK'
+      WHEN NOT a.acknowledged AND NOT a.cleared THEN 'ACTIVE_UNACK' END) as status,
 COALESCE(CASE WHEN a.originator_type = 0 THEN (select title from tenant where id = a.originator_id)
               WHEN a.originator_type = 1 THEN (select title from customer where id = a.originator_id)
               WHEN a.originator_type = 2 THEN (select email from tb_user where id = a.originator_id)

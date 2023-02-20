@@ -62,7 +62,9 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                         existentAlarm.setClearTs(alarmUpdateMsg.getClearTs());
                         existentAlarm.setPropagate(alarmUpdateMsg.getPropagate());
                     }
-                    existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
+                    var alarmStatus = AlarmStatus.valueOf(alarmUpdateMsg.getStatus());
+                    existentAlarm.setCleared(alarmStatus.isCleared());
+                    existentAlarm.setAcknowledged(alarmStatus.isAck());
                     existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                     existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
                     existentAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));

@@ -39,7 +39,8 @@ public class AlarmData extends AlarmInfo {
     public AlarmData update(Alarm alarm, AlarmAssigneeUpdate assigneeUpdate) {
         this.setEndTs(alarm.getEndTs());
         this.setSeverity(alarm.getSeverity());
-        this.setStatus(alarm.getStatus());
+        this.setAcknowledged(alarm.isAcknowledged());
+        this.setCleared(alarm.isCleared());
         this.setDetails(alarm.getDetails());
         this.setPropagate(alarm.isPropagate());
         this.setPropagateToOwner(alarm.isPropagateToOwner());

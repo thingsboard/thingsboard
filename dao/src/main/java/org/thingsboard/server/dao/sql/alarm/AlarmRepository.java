@@ -48,7 +48,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ea.entityType = :affectedEntityType " +
             "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
             "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
-            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+            "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
@@ -64,7 +65,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ea.entityType = :affectedEntityType " +
                     "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
                     "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
-                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+                    "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
@@ -74,7 +76,10 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                      @Param("affectedEntityType") String affectedEntityType,
                                      @Param("startTime") Long startTime,
                                      @Param("endTime") Long endTime,
-                                     @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                     @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                     @Param("clearFilter") boolean clearFilter,
+                                     @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                     @Param("ackFilter") boolean ackFilter,
                                      @Param("assigneeId") String assigneeId,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
@@ -84,18 +89,20 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "WHERE a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+            "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ",
             countQuery = "" +
                     "SELECT count(a) " +
-                    "FROM AlarmEntity a " +
+                    "FROM AlarmInfoEntity a " +
                     "WHERE a.tenantId = :tenantId " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+                    "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
@@ -103,7 +110,10 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     Page<AlarmInfoEntity> findAllAlarms(@Param("tenantId") UUID tenantId,
                                         @Param("startTime") Long startTime,
                                         @Param("endTime") Long endTime,
-                                        @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                        @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                        @Param("clearFilter") boolean clearFilter,
+                                        @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                        @Param("ackFilter") boolean ackFilter,
                                         @Param("assigneeId") String assigneeId,
                                         @Param("searchText") String searchText,
                                         Pageable pageable);
@@ -113,7 +123,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+            "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
@@ -125,7 +136,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+                    "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
@@ -134,7 +146,10 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                              @Param("customerId") UUID customerId,
                                              @Param("startTime") Long startTime,
                                              @Param("endTime") Long endTime,
-                                             @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                             @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                             @Param("clearFilter") boolean clearFilter,
+                                             @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                             @Param("ackFilter") boolean ackFilter,
                                              @Param("assigneeId") String assigneeId,
                                              @Param("searchText") String searchText,
                                              Pageable pageable);
@@ -145,12 +160,16 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ea.tenantId = :tenantId " +
             "AND ea.entityId = :affectedEntityId " +
             "AND ea.entityType = :affectedEntityType " +
-            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+            "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId))")
     Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
                                            @Param("affectedEntityId") UUID affectedEntityId,
                                            @Param("affectedEntityType") String affectedEntityType,
-                                           @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                           @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                           @Param("clearFilter") boolean clearFilter,
+                                           @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                           @Param("ackFilter") boolean ackFilter,
                                            @Param("assigneeId") String assigneeId);
 
     @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.createdTime < :time AND a.endTs < :time")

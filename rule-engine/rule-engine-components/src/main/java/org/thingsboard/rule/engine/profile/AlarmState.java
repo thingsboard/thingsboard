@@ -255,7 +255,8 @@ class AlarmState {
         } else {
             currentAlarm = new Alarm();
             currentAlarm.setType(alarmDefinition.getAlarmType());
-            currentAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
+            currentAlarm.setAcknowledged(false);
+            currentAlarm.setCleared(false);
             currentAlarm.setSeverity(severity);
             long startTs = dataSnapshot.getTs();
             if (startTs == 0L) {
@@ -342,7 +343,7 @@ class AlarmState {
 
     public void processAckAlarm(Alarm alarm) {
         if (currentAlarm != null && currentAlarm.getId().equals(alarm.getId())) {
-            currentAlarm.setStatus(alarm.getStatus());
+            currentAlarm.setAcknowledged(alarm.isAcknowledged());
             currentAlarm.setAckTs(alarm.getAckTs());
         }
     }

@@ -93,7 +93,6 @@ public class DefaultTbAlarmServiceTest {
     @Test
     public void testAck() {
         var alarm = new Alarm();
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         when(alarmSubscriptionService.ackAlarm(any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
@@ -105,7 +104,7 @@ public class DefaultTbAlarmServiceTest {
     @Test
     public void testClear() {
         var alarm = new Alarm();
-        alarm.setStatus(AlarmStatus.ACTIVE_ACK);
+        alarm.setAcknowledged(true);
         when(alarmSubscriptionService.clearAlarm(any(), any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
