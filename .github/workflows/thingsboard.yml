@@ -6,13 +6,13 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Java CI with Maven
+name: Tesenso CI/CD Pipeline
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+#  pull_request:
+#    branches: [ "master" ]
 
 jobs:
   build:
@@ -27,36 +27,34 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: maven
-      - name: Build with Maven
+      - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
 
-      - name: Transfer to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: ${{ secrets.SERVER_PORT }}
-          source: '/home/runner/work/thingsboard/thingsboard/application/target/*.deb'
-          target: '/opt/tesenso'
-      - name: location
-        run: pwd
-
-
-#  deploy:
-#    runs-on: ubuntu-latest
-#    needs: build
-
-#    steps:
-#      - name: Deploy to server
+#      - name: Transfer to server
 #        uses: appleboy/scp-action@master
 #        with:
-#            host: ${{ secrets.SERVER_IP }}
-#            username: ${{ secrets.SERVER_USERNAME }}
-#            password: ${{ secrets.SERVER_PASSWORD }}
-#            port: ${{ secrets.SERVER_PORT }}
-#            source: "/opt/tesenso/"
-#            target: "/home/runner/work/thingsboard/thingsboard/application/target/thingsboard.deb"
+#          host: ${{ secrets.SERVER_IP }}
+#          username: ${{ secrets.SERVER_USERNAME }}
+#          password: ${{ secrets.SERVER_PASSWORD }}
+#          port: ${{ secrets.SERVER_PORT }}
+#          source: '/home/runner/work/thingsboard/thingsboard/application/target/*.deb'
+#          target: '/opt/tesenso'
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/scp-action@master
+        with:
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SERVER_USERNAME }}
+            password: ${{ secrets.SERVER_PASSWORD }}
+            port: ${{ secrets.SERVER_PORT }}
+            source: "/application/target/*.deb"
+            target: "/opt/tesenso"
 
 
 
