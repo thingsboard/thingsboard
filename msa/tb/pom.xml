@@ -27,15 +27,15 @@
     <artifactId>tb</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard Docker Images</name>
-    <url>https://thingsboard.io</url>
-    <description>ThingsBoard Docker Images</description>
+    <name>IoT4H Platform Docker Images</name>
+    <url>https://iot4h.de/</url>
+    <description>IoT4H Platform Docker Images</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>thingsboard</pkg.name>
-        <tb-postgres.docker.name>tb-postgres</tb-postgres.docker.name>
+        <tb-postgres.docker.name>iot4h-platform</tb-postgres.docker.name>
         <tb-cassandra.docker.name>tb-cassandra</tb-cassandra.docker.name>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.upgradeVersion>3.4.2</pkg.upgradeVersion>
