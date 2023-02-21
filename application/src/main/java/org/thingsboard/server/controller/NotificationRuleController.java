@@ -44,6 +44,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 import javax.validation.Valid;
 import java.util.UUID;
 
+import static org.thingsboard.server.service.security.permission.Resource.NOTIFICATION;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api/notification")
@@ -57,7 +59,7 @@ public class NotificationRuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule) throws Exception {
         notificationRule.setTenantId(getTenantId());
-        checkEntity(notificationRule.getId(), notificationRule, Resource.NOTIFICATION_RULE);
+        checkEntity(notificationRule.getId(), notificationRule, NOTIFICATION);
         return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
     }
 
@@ -65,7 +67,7 @@ public class NotificationRuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public NotificationRuleInfo getNotificationRuleById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);
-        return checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleInfoById, Operation.READ);
+        return checkEntityId(NOTIFICATION, Operation.READ, notificationRuleId, notificationRuleService::findNotificationRuleInfoById);
     }
 
     @GetMapping("/rules")
@@ -76,6 +78,7 @@ public class NotificationRuleController extends BaseController {
                                                            @RequestParam(required = false) String sortProperty,
                                                            @RequestParam(required = false) String sortOrder,
                                                            @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        // generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationRuleService.findNotificationRulesInfosByTenantId(user.getTenantId(), pageLink);
     }
@@ -85,7 +88,7 @@ public class NotificationRuleController extends BaseController {
     public void deleteNotificationRule(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) throws Exception {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);
-        NotificationRule notificationRule = checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleById, Operation.DELETE);
+        NotificationRule notificationRule = checkEntityId(NOTIFICATION, Operation.DELETE, notificationRuleId, notificationRuleService::findNotificationRuleById);
         doDeleteAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::deleteNotificationRuleById);
         tbClusterService.broadcastEntityStateChangeEvent(user.getTenantId(), notificationRuleId, ComponentLifecycleEvent.DELETED);
     }

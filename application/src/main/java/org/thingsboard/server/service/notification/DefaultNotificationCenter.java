@@ -107,15 +107,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
         if (notificationTemplate == null) throw new IllegalArgumentException("Template is missing");
 
-        List<NotificationTarget> targets = notificationRequest.getTargets().stream()
-                .map(NotificationTargetId::new)
-                .map(targetId -> notificationTargetService.findNotificationTargetById(tenantId, targetId))
-                .peek(target -> {
-                    if (target == null) {
-                        throw new IllegalArgumentException("Some of the targets no longer exist");
-                    }
-                })
-                .collect(Collectors.toList());
+        List<NotificationTarget> targets = notificationTargetService.findNotificationTargetsByTenantIdAndIds(tenantId,
+                notificationRequest.getTargets().stream().map(NotificationTargetId::new).collect(Collectors.toList()));
 
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;

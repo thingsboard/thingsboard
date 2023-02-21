@@ -25,7 +25,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -173,7 +172,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
-import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -603,12 +601,16 @@ public abstract class BaseController {
     }
 
     protected <E extends HasId<I> & HasTenantId, I extends EntityId> E checkEntityId(I entityId, ThrowingBiFunction<TenantId, I, E> findingFunction, Operation operation) throws ThingsboardException {
+        return checkEntityId(Resource.of(entityId.getEntityType()), operation, entityId, findingFunction);
+    }
+
+    protected <E extends HasId<I> & HasTenantId, I extends EntityId> E checkEntityId(Resource resource, Operation operation, I entityId, ThrowingBiFunction<TenantId, I, E> findingFunction) throws ThingsboardException {
         try {
-            validateId((UUIDBased) entityId, "Invalid " + entityId.getClass().getSimpleName().toLowerCase());
+            validateId((UUIDBased) entityId, "Invalid entity id");
             SecurityUser user = getCurrentUser();
             E entity = findingFunction.apply(user.getTenantId(), entityId);
-            checkNotNull(entity, entity.getClass().getSimpleName() + " with id [" + entityId + "] not found");
-            accessControlService.checkPermission(user, Resource.of(entityId.getEntityType()), operation, entityId, entity);
+            checkNotNull(entity, entityId.getEntityType() + " with id [" + entityId + "] not found");
+            accessControlService.checkPermission(user, resource, operation, entityId, entity);
             return entity;
         } catch (Exception e) {
             throw handleException(e, false);
@@ -665,7 +667,7 @@ public abstract class BaseController {
             if (!alarmId.equals(alarmComment.getAlarmId())) {
                 throw new ThingsboardException("Alarm id does not match with comment alarm id", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-           return alarmComment;
+            return alarmComment;
         } catch (Exception e) {
             throw handleException(e, false);
         }

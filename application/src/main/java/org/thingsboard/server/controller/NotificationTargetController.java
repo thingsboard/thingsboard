@@ -31,10 +31,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
+import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -51,6 +56,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.service.security.permission.Resource.NOTIFICATION;
 
 @RestController
 @TbCoreComponent
@@ -78,17 +84,11 @@ public class NotificationTargetController extends BaseController {
     public NotificationTarget saveNotificationTarget(@RequestBody @Valid NotificationTarget notificationTarget,
                                                      @AuthenticationPrincipal SecurityUser user) throws Exception {
         notificationTarget.setTenantId(user.getTenantId());
-        checkEntity(notificationTarget.getId(), notificationTarget, Resource.NOTIFICATION_TARGET);
-        if (!user.isSystemAdmin()) {
-            NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
-            if (targetConfig.getType() == NotificationTargetType.PLATFORM_USERS) {
-                PageDataIterable<User> recipients = new PageDataIterable<>(pageLink -> {
-                    return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, targetConfig, pageLink);
-                }, 200);
-                for (User recipient : recipients) {
-                    accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
-                }
-            }
+        checkEntity(notificationTarget.getId(), notificationTarget, NOTIFICATION);
+
+        NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
+        if (targetConfig.getType() == NotificationTargetType.PLATFORM_USERS) {
+            checkTargetUsers(user, targetConfig);
         }
 
         return doSaveAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::saveNotificationTarget);
@@ -101,10 +101,10 @@ public class NotificationTargetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget getNotificationTargetById(@PathVariable UUID id) throws ThingsboardException {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.READ);
+        return checkEntityId(NOTIFICATION, Operation.READ, notificationTargetId, notificationTargetService::findNotificationTargetById);
     }
 
-    @ApiOperation(value = "Get recipient for notification target config (getRecipientsForNotificationTargetConfig)",
+    @ApiOperation(value = "Get recipients for notification target config (getRecipientsForNotificationTargetConfig)",
             notes = "Get the list (page) of recipients (users) for such notification target configuration." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/target/recipients")
@@ -113,20 +113,23 @@ public class NotificationTargetController extends BaseController {
                                                                    @RequestParam int pageSize,
                                                                    @RequestParam int page,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, null, null, null);
-        PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, notificationTarget.getConfiguration(), pageLink);
-        if (!user.isSystemAdmin()) {
-            for (User recipient : recipients.getData()) {
-                accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
-            }
+        // generic permission
+        NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
+        if (targetConfig.getType() == NotificationTargetType.PLATFORM_USERS) {
+            checkTargetUsers(user, targetConfig);
+        } else {
+            throw new IllegalArgumentException("Target type is not platform users");
         }
-        return recipients;
+
+        PageLink pageLink = createPageLink(pageSize, page, null, null, null);
+        return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, notificationTarget.getConfiguration(), pageLink);
     }
 
     @GetMapping(value = "/targets", params = {"ids"})
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public List<NotificationTarget> getNotificationTargetsByIds(@RequestParam("ids") UUID[] ids,
                                                                 @AuthenticationPrincipal SecurityUser user) {
+        // generic permission
         List<NotificationTargetId> targetsIds = Arrays.stream(ids).map(NotificationTargetId::new).collect(Collectors.toList());
         return notificationTargetService.findNotificationTargetsByTenantIdAndIds(user.getTenantId(), targetsIds);
     }
@@ -142,6 +145,7 @@ public class NotificationTargetController extends BaseController {
                                                                @RequestParam(required = false) String sortProperty,
                                                                @RequestParam(required = false) String sortOrder,
                                                                @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        // generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationTargetService.findNotificationTargetsByTenantId(user.getTenantId(), pageLink);
     }
@@ -154,8 +158,27 @@ public class NotificationTargetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationTargetById(@PathVariable UUID id) throws Exception {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        NotificationTarget notificationTarget = checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.DELETE);
+        NotificationTarget notificationTarget = checkEntityId(NOTIFICATION, Operation.DELETE, notificationTargetId, notificationTargetService::findNotificationTargetById);
         doDeleteAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::deleteNotificationTargetById);
+    }
+
+    private void checkTargetUsers(SecurityUser user, NotificationTargetConfig targetConfig) throws ThingsboardException {
+        if (user.isSystemAdmin()) {
+            return;
+        }
+        // generic permission for users
+        UsersFilter usersFilter = ((PlatformUsersNotificationTargetConfig) targetConfig).getUsersFilter();
+        if (usersFilter.getType() == UsersFilterType.USER_LIST) {
+            PageDataIterable<User> recipients = new PageDataIterable<>(pageLink -> {
+                return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, targetConfig, pageLink);
+            }, 200);
+            for (User recipient : recipients) {
+                accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
+            }
+        } else if (usersFilter.getType() == UsersFilterType.CUSTOMER_USERS) {
+            CustomerId customerId = new CustomerId(((CustomerUsersFilter) usersFilter).getCustomerId());
+            checkEntityId(customerId, Operation.READ);
+        }
     }
 
 }

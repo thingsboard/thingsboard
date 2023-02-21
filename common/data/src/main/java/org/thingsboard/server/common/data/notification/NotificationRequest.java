@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
@@ -46,7 +47,7 @@ import java.util.UUID;
 public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
-    @NotNull
+    @NotEmpty
     private List<UUID> targets;
 
     private NotificationTemplateId templateId;
