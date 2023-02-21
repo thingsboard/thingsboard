@@ -716,27 +716,30 @@ public class DefaultDataUpdateService implements DataUpdateService {
             };
 
     private void updateTenantDashboardsFilters(TenantId tenantId) {
-        PageLink pageLink = new PageLink(100);
-        PageData<DashboardInfo> pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
-        boolean hasNext = true;
-        while (hasNext) {
-            List<ListenableFuture<List<Void>>> updateFutures = new ArrayList<>();
-            for (DashboardInfo dashboardInfo : pageData.getData()) {
-                updateFutures.add(updateDashboardFilters(tenantId, dashboardInfo));
+        for (String filterTypeForUpdate : DataConstants.DASHBOARD_FILTER_TYPES_FOR_UPDATE) {
+            PageLink pageLink = new PageLink(100);
+            PageData<DashboardInfo> pageData = dashboardService.findDashboardsByTenantIdAndConfigurationText(tenantId, filterTypeForUpdate, pageLink);
+            boolean hasNext = true;
+            while (hasNext) {
+                List<ListenableFuture<List<Void>>> updateFutures = new ArrayList<>();
+                for (DashboardInfo dashboardInfo : pageData.getData()) {
+                    updateFutures.add(updateDashboardFilters(tenantId, dashboardInfo));
+                }
+
+                try {
+                    Futures.allAsList(updateFutures).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    log.error("Failed to update dashboards filters", e);
+                }
+
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                    pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
+                } else {
+                    hasNext = false;
+                }
             }
 
-            try {
-                Futures.allAsList(updateFutures).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Failed to update dashboards filters", e);
-            }
-
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-                pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
-            } else {
-                hasNext = false;
-            }
         }
     }
 

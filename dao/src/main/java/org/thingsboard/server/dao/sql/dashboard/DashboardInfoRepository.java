@@ -72,4 +72,9 @@ public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEnti
                                                       @Param("searchText") String searchText,
                                                       Pageable pageable);
 
+    @Query("SELECT d FROM DashboardEntity d WHERE d.tenantId = :tenantId " +
+            "AND LOWER(d.configuration) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    Page<DashboardInfoEntity> findByTenantIdAndConfigurationText(@Param("tenantId") UUID tenantId,
+                                                                 @Param("searchText") String searchText,
+                                                                 Pageable pageable);
 }
