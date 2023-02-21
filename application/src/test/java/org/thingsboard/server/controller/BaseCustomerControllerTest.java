@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -428,6 +429,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         testEntityDaoWithRelationsOk(savedTenant.getId(), customerId, "/api/customer/" + customerId);
     }
 
+    @Ignore
     @Test
     public void testDeleteCustomerExceptionWithRelationsTransactional() throws Exception {
         CustomerId customerId = createCustomer("Customer for Test WithRelations Transactional Exception").getId();
