@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entitySubtypeListFormGroup" class="mat-block">
+<mat-form-field [formGroup]="entitySubtypeListFormGroup" class="mat-block tb-chip-list">
   <mat-chip-grid #chipList formControlName="entitySubtypeList">
     <mat-chip-row
       *ngFor="let entitySubtype of entitySubtypeList"

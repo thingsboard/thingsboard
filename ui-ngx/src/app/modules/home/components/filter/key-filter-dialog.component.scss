@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  .entity-key {
-    mat-form-field {
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      .mat-form-field-wrapper {
-        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-        .mat-form-field-infix {
-          width: auto;
+  .mat-mdc-form-field.tb-value-type {
+    mat-select-trigger {
+      .mat-icon {
+        vertical-align: middle;
+        margin-right: 8px;
+        svg {
+          vertical-align: initial;
         }
       }
     }

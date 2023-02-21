@@ -19,6 +19,7 @@
   <mat-label>{{ 'version-control.branch' | translate }}</mat-label>
   <input matInput type="text" placeholder="{{emptyPlaceholder || ((loading ? 'common.loading' : 'version-control.select-branch') | translate)}}"
          #branchInput
+         #branchMatInput="matInput"
          formControlName="branch"
          (keydown.enter)="branchInput.blur(); autoCompleteTrigger.closePanel();"
          (focusin)="onFocus()"
@@ -33,7 +34,7 @@
   </button>
   <mat-autocomplete
     class="tb-autocomplete"
-    (closed)="onPanelClosed()"
+    (closed)="!branchMatInput.focused ? onPanelClosed() : false"
     #branchAutocomplete="matAutocomplete"
     [displayWith]="displayBranchFn">
     <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch" class="branch-option">

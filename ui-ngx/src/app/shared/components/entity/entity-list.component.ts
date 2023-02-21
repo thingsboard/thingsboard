@@ -42,7 +42,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 @Component({
   selector: 'tb-entity-list',
   templateUrl: './entity-list.component.html',
-  styleUrls: ['./entity-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

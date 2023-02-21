@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance">
-  <input matInput type="text" placeholder="{{ entityText | translate }}"
+  <mat-label>{{ entityText | translate }}</mat-label>
+  <input matInput type="text"
          #entityInput
          formControlName="entity"
          (focusin)="onFocus()"

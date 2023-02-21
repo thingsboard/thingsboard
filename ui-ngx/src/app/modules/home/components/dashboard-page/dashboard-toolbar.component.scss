@@ -25,10 +25,10 @@ $mobile-app-toolbar-height: 40px !default;
 
 div.tb-dashboard-page.mobile-app {
   tb-dashboard-toolbar {
-    mat-fab-toolbar {
+    .mat-fab-toolbar {
       .mat-fab-toolbar-wrapper {
         height: $mobile-app-toolbar-height;
-        mat-toolbar {
+        .mat-toolbar.mat-toolbar-single-row {
           height: $mobile-app-toolbar-height;
           min-height: $mobile-app-toolbar-height;
           .mat-toolbar-tools {
@@ -58,17 +58,12 @@ div.tb-dashboard-page.mobile-app {
 }
 
 tb-dashboard-toolbar {
-  mat-fab-toolbar {
+  .mat-fab-toolbar {
     mat-fab-trigger {
       .mat-mdc-fab {
         width: 36px;
         height: 36px;
         margin: 4px 0 0 4px;
-        /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
-        .mat-button-wrapper {
-          padding: 0;
-        }
       }
     }
 
@@ -81,7 +76,7 @@ tb-dashboard-toolbar {
           height: $fullscreen-toolbar-height;
         }
 
-        mat-toolbar {
+        .mat-toolbar.mat-toolbar-single-row {
           height: $mobile-toolbar-height;
           min-height: $mobile-toolbar-height;
           .mat-toolbar-tools {
@@ -107,7 +102,7 @@ tb-dashboard-toolbar {
         height: $toolbar-height;
       }
 
-      mat-toolbar {
+      .mat-toolbar.mat-toolbar-single-row {
         height: $mobile-toolbar-height;
         min-height: $mobile-toolbar-height;
         .mat-toolbar-tools {

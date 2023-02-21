@@ -402,18 +402,8 @@ mat-label {
 
 .tb-autocomplete {
   .mat-mdc-option {
-    display: block;
-    line-height: 24px;
-    height: auto !important;
-    min-height: inherit;
-    padding-top: 8px;
     border-bottom: 1px solid #eee;
-    font-size: 14px;
     .mdc-list-item__primary-text {
-      display: inline-block;
-      line-height: 24px;
-      height: auto !important;
-      white-space: normal !important;
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -929,8 +919,11 @@ mat-label {
   button.mat-mdc-menu-item {
     overflow: hidden;
     fill: #737373;
-    .tb-alt-text {
-      float: right;
+    .mdc-list-item__primary-text {
+      width: 100%;
+      .tb-alt-text {
+        float: right;
+      }
     }
   }
 
@@ -983,6 +976,9 @@ mat-label {
         color: white;
       }
     }
+    .mat-mdc-select-value, .mat-mdc-select-arrow {
+      color: white;
+    }
   }
 
   .mat-toolbar.mat-mdc-table-toolbar {
@@ -1020,19 +1016,19 @@ mat-label {
     margin: 0;
   }
 
-  mat-footer-row::after, mat-header-row::after, mat-row::after {
+  .mat-mdc-footer-row::after, .mat-mdc-header-row::after, .mat-mdc-row::after {
     content: none;
   }
 
-  mat-header-row {
+  .mat-mdc-header-row {
     height: 60px;
   }
 
-  mat-footer-row, mat-row {
+  .mat-mdc-footer-row, .mat-mdc-row {
     height: 52px;
   }
 
-  mat-header-row, mat-footer-row, mat-row {
+  .mat-mdc-header-row, .mat-mdc-footer-row, .mat-mdc-row {
     min-height: auto;
   }
 
@@ -1041,23 +1037,10 @@ mat-label {
     display: table-row;
   }
 
-
-  .mat-mdc-header-row.mat-mdc-table-sticky {
-    background-clip: padding-box;
-    .mat-mdc-header-cell {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: inherit;
+  .mat-mdc-header-cell, .mat-mdc-cell {
+    &.mat-mdc-table-sticky {
       background-clip: padding-box;
-      &.mat-mdc-table-sticky {
-        z-index: 11 !important;
-      }
     }
-  }
-
-  .mat-mdc-cell.mat-mdc-table-sticky {
-    background-clip: padding-box;
   }
 
   .mat-mdc-row {
@@ -1074,23 +1057,23 @@ mat-label {
   }
 
   .mat-mdc-row:not(.mat-row-select), .mat-mdc-header-row:not(.mat-row-select) {
-    mat-cell:first-child, mat-footer-cell:first-child, mat-header-cell:first-child {
+    .mat-mdc-cell:first-child, .mat-mdc-footer-cell:first-child, .mat-mdc-header-cell:first-child {
       padding: 0 12px;
     }
-    mat-cell:nth-child(n+2):nth-last-child(n+2), mat-footer-cell:nth-child(n+2):nth-last-child(n+2), mat-header-cell:nth-child(n+2):nth-last-child(n+2) {
+    .mat-mdc-cell:nth-child(n+2):nth-last-child(n+2), .mat-mdc-footer-cell:nth-child(n+2):nth-last-child(n+2), .mat-mdc-header-cell:nth-child(n+2):nth-last-child(n+2) {
       padding: 0 28px 0 0;
     }
   }
 
   .mat-mdc-row.mat-row-select, .mat-mdc-header-row.mat-row-select {
-    mat-cell:first-child, mat-footer-cell:first-child, mat-header-cell:first-child {
+    .mat-mdc-cell:first-child, .mat-mdc-footer-cell:first-child, .mat-mdc-header-cell:first-child {
       width: 30px;
       padding: 0 0 0 12px;
     }
-    mat-cell:nth-child(2), mat-footer-cell:nth-child(2), mat-header-cell:nth-child(2) {
+    .mat-mdc-cell:nth-child(2), .mat-mdc-footer-cell:nth-child(2), .mat-mdc-header-cell:nth-child(2) {
       padding: 0 12px;
     }
-    mat-cell:nth-child(n+3):nth-last-child(n+2), mat-footer-cell:nth-child(n+3):nth-last-child(n+2), mat-header-cell:nth-child(n+3):nth-last-child(n+2) {
+    .mat-mdc-cell:nth-child(n+3):nth-last-child(n+2), .mat-mdc-footer-cell:nth-child(n+3):nth-last-child(n+2), .mat-mdc-header-cell:nth-child(n+3):nth-last-child(n+2) {
       padding: 0 28px 0 0;
     }
     &.mat-mdc-selected:not(.tb-current-entity) {
@@ -1120,6 +1103,7 @@ mat-label {
     border-style: solid;
     text-overflow: ellipsis;
     touch-action: auto !important;
+    letter-spacing: normal;
     &:last-child {
       padding: 0 12px 0 0;
     }
@@ -1169,7 +1153,6 @@ mat-label {
   }
 
   .mat-mdc-cell, .mat-mdc-footer-cell, .mat-mdc-header-cell {
-    // fix for ie11 'align-items: center'
     height: 20px;
   }
 
@@ -1222,6 +1205,9 @@ mat-label {
     }
     &.tb-mat-32 {
       @include tb-mat-icon-button-size(32);
+    }
+    &.tb-mat-40 {
+      @include tb-mat-icon-button-size(40);
     }
     &.tb-mat-96 {
       @include tb-mat-icon-button-size(96);
@@ -1539,4 +1525,19 @@ mat-label {
       pointer-events: none;
     }
   }
+
+  .tb-chip-list {
+    &.mat-mdc-form-field {
+      .mdc-text-field {
+        .mat-mdc-form-field-infix {
+          padding-top: 8px;
+          padding-bottom: 8px;
+          .mat-mdc-chip-grid {
+            min-height: 40px;
+          }
+        }
+      }
+    }
+  }
+
 }

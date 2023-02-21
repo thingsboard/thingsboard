@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="otaPackageFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ placeholderText | translate }}"
+  <mat-label>{{ placeholderText | translate }}</mat-label>
+  <input matInput type="text"
          #packageInput
          formControlName="packageId"
          (focusin)="onFocus()"

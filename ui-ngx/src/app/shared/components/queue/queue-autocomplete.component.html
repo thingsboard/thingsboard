@@ -17,7 +17,8 @@
 -->
 <mat-form-field [formGroup]="selectQueueFormGroup"
                 class="mat-block autocomplete-queue">
-  <input matInput type="text" placeholder="{{ 'queue.queue-name' | translate }}"
+  <mat-label>{{ 'queue.queue-name' | translate }}</mat-label>
+  <input matInput type="text"
          #queueInput
          formControlName="queueName"
          (focusin)="onFocus()"

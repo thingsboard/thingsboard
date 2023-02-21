@@ -33,7 +33,7 @@ import { isEqual } from '@core/utils';
 @Component({
   selector: 'tb-entity-keys-list',
   templateUrl: './entity-keys-list.component.html',
-  styleUrls: ['./entity-keys-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

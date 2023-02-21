@@ -26,9 +26,7 @@
         padding-bottom: 12px;
       }
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-    mat-checkbox {
+    .mat-mdc-checkbox {
       @media #{$mat-gt-sm} {
         margin-top: 16px;
       }

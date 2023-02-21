@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectRuleChainFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ labelText | translate }}"
+  <mat-label>{{ labelText | translate }}</mat-label>
+  <input matInput type="text"
          #ruleChainInput
          formControlName="ruleChainId"
          (focusin)="onFocus()"

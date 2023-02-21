@@ -59,7 +59,7 @@
         margin-right: 4px;
       }
     }
-    button.mat-mdc-button, button.mat-mdc-icon-button, button.mat-icon-button.tb-mat-32 {
+    button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
       background: rgba(220, 220, 220, .35);
       align-items: center;
       vertical-align: middle;
@@ -71,6 +71,9 @@
       &:not(.tb-help-popup-button) {
         color: #7b7b7b;
       }
+    }
+    button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+      height: 23px;
     }
     .tb-help-popup-button-loading {
       background: #f3f3f3;

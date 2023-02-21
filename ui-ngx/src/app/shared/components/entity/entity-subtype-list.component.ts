@@ -35,7 +35,7 @@ import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 @Component({
   selector: 'tb-entity-subtype-list',
   templateUrl: './entity-subtype-list.component.html',
-  styleUrls: ['./entity-subtype-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

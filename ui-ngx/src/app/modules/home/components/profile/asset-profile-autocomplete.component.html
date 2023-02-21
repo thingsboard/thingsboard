@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ 'asset-profile.asset-profile' | translate }}"
+  <mat-label>{{ 'asset-profile.asset-profile' | translate }}</mat-label>
+  <input matInput type="text"
          #assetProfileInput
          formControlName="assetProfile"
          (focusin)="onFocus()"

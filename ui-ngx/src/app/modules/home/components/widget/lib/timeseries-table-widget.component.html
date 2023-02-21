@@ -38,6 +38,7 @@
       </div>
     </mat-toolbar>
     <mat-tab-group [ngClass]="{'tb-headless': sources.length === 1}" fxFlex
+                   mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
       <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" [label]="getTabLabel(source)">
         <ng-template [ngIf]="isActiveTab(index)">

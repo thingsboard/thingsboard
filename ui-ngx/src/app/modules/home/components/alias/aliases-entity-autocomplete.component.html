@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectEntityInfoFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ alias }}"
+  <mat-label>{{ alias }}</mat-label>
+  <input matInput type="text"
          #entityInfoInput
          formControlName="entityInfo"
          [required]="required"

@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="relationTypeFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ required  ? ('relation.relation-type' | translate) : ( !modelValue ? ('relation.any-relation-type' | translate) : ' ') }}"
+  <mat-label>{{ required  ? ('relation.relation-type' | translate) : ( !modelValue ? ('relation.any-relation-type' | translate) : ' ') }}</mat-label>
+  <input matInput type="text"
          #relationTypeInput
          formControlName="relationType"
          (focusin)="onFocus()"

@@ -20,15 +20,10 @@
 }
 
 :host ::ng-deep {
-  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-  .mat-form-field-infix {
+  .mat-mdc-form-field-infix {
      width: 100%;
   }
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  .mat-select-value {
-    max-width: 200px;
+  .mat-mdc-select-value {
     min-width: 100px;
   }
 }

@@ -56,6 +56,9 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   selectFirstDashboard = false;
 
   @Input()
+  label = this.translate.instant('dashboard.dashboard');
+
+  @Input()
   placeholder: string;
 
   @Input()

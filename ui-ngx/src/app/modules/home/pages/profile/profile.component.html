@@ -65,7 +65,7 @@
           <section class="tb-home-dashboard" fxFlex fxLayout="column" fxLayout.gt-sm="row" *ngIf="!isSysAdmin()">
             <tb-dashboard-autocomplete
               fxFlex
-              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              label="{{ 'dashboard.home-dashboard' | translate }}"
               formControlName="homeDashboardId"
               [dashboardsScope]="user?.authority === authorities.TENANT_ADMIN ? 'tenant' : 'customer'"
               [tenantId]="user?.tenantId?.id"
