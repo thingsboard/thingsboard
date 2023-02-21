@@ -30,6 +30,7 @@ import java.util.Objects;
 import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.getJson;
 import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.setJson;
 
+@EqualsAndHashCode(callSuper = true)
 public class UserCredentials extends BaseData<UserCredentialsId> {
 
     private static final long serialVersionUID = -2108436378880529163L;
@@ -110,24 +111,6 @@ public class UserCredentials extends BaseData<UserCredentialsId> {
 
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        UserCredentials that = (UserCredentials) o;
-        return enabled == that.enabled && userId.equals(that.userId) && Objects.equals(password, that.password)
-                && Objects.equals(activateToken, that.activateToken) && Objects.equals(resetToken, that.resetToken)
-                && Arrays.equals(additionalInfoBytes, that.additionalInfoBytes);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(super.hashCode(), userId, enabled, password, activateToken, resetToken);
-        result = 31 * result + Arrays.hashCode(additionalInfoBytes);
-        return result;
     }
 
     @Override
