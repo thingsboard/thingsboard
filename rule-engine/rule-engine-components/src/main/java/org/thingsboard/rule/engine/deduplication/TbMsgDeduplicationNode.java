@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
@@ -46,6 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
@@ -112,24 +114,50 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     @Override
     public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
-        Set<Integer> myPartitions = new HashSet<>();
-        msg.getPartitions().forEach(tpi -> tpi.getPartition().ifPresent(myPartitions::add));
-        partitionsEntityIdsMap.keySet().removeIf(partition -> !myPartitions.contains(partition));
-        entityIdDeduplicationMsgsMap.keySet().removeIf(entityId -> !ctx.isLocalEntity(entityId));
+        Set<Integer> currentPartitions = partitionsEntityIdsMap.keySet();
+        RuleNodeId ruleNodeId = ctx.getSelfId();
+        log.trace("[{}] On partition change msg: {}, current partitions: {}", ruleNodeId, msg, currentPartitions);
+        Set<Integer> newPartitions = msg.getPartitions().stream()
+                .map(TopicPartitionInfo::getPartition)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
+        currentPartitions.removeIf(partition -> {
+            boolean remove = !newPartitions.contains(partition);
+            if (remove) {
+                log.trace("[{}] Removed odd partition: [{}] from the partitions map!", ruleNodeId, partition);
+                Set<EntityId> entityIds = partitionsEntityIdsMap.get(partition);
+                entityIds.forEach(entityId -> {
+                    log.trace("[{}] Removed non-local entity: [{}] from the entityId deduplication msgs map!", ruleNodeId, entityId);
+                    entityIdDeduplicationMsgsMap.remove(entityId);
+                });
+            }
+            return remove;
+        });
+        boolean checkCache = newPartitions.stream().anyMatch(newPartition -> !currentPartitions.contains(newPartition));
+        if (checkCache) {
+            getDeduplicationDataFromCacheAndSchedule(ctx);
+        }
     }
 
     private void getDeduplicationDataFromCacheAndSchedule(TbContext ctx) {
+        log.trace("[{}] Going to fetch deduplication data from cache ...", ctx.getSelfId());
         ctx.getRuleNodeCacheService().getEntityIds(DEDUPLICATION_IDS_CACHE_KEY).forEach(id -> {
             TopicPartitionInfo tpi = ctx.getEntityTopicPartition(id);
             if (tpi.isMyPartition()) {
                 tpi.getPartition().ifPresentOrElse(
                         partition -> {
-                            List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), partition));
                             Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
-                            entityIds.add(id);
-                            DeduplicationData deduplicationData = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
-                            deduplicationData.addAll(tbMsgs);
-                            scheduleTickMsg(ctx, id, deduplicationData, 0);
+                            boolean added = entityIds.add(id);
+                            if (added) {
+                                List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), partition));
+                                DeduplicationData deduplicationData = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
+                                if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
+                                    return;
+                                }
+                                deduplicationData.addAll(tbMsgs);
+                                scheduleTickMsg(ctx, id, deduplicationData, 0);
+                            }
                         },
                         () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id));
             } else {
@@ -165,7 +193,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                     () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id)
             );
         } else {
-            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to my partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
+            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
         }
     }
 
@@ -242,6 +270,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private void scheduleTickMsg(TbContext ctx, EntityId deduplicationId, DeduplicationData data, long delayMs) {
         if (!data.isTickScheduled()) {
+            log.trace("[{}] Schedule deduplication tick msg for entity: [{}], delay: [{}]", ctx.getSelfId(), deduplicationId, delayMs);
             scheduleTickMsg(ctx, deduplicationId, delayMs);
             data.setTickScheduled(true);
         }

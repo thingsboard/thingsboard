@@ -182,7 +182,7 @@ public class TbMsgDelayNode implements TbNode {
                     () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id)
             );
         } else {
-            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to my partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
+            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
         }
     }
 
