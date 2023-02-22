@@ -42,7 +42,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+#    needs: build
     steps:
       - name: Transfer to server
         uses: appleboy/scp-action@master
