@@ -30,7 +30,10 @@ jobs:
           cache: maven
 
       - name: Build tesenso middleware core
-        run: mvn clean package -DskipTests
+        run: | 
+            mvn clean package -DskipTests
+            pwd
+        
 
 
 
