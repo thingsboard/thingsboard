@@ -476,11 +476,11 @@ public class AdminController extends BaseController {
         String redirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
         String scope = checkNotNull(jsonValue.get("scope"), "No scope was configured").asText();
 
-        return new AuthorizationCodeRequestUrl(authUri, clientId)
+        return "\"" + new AuthorizationCodeRequestUrl(authUri, clientId)
                 .setScopes(List.of(scope))
                 .setState(state)
                 .setRedirectUri(redirectUri)
-                .build();
+                .build() + "\"";
     }
     @RequestMapping(value = "/mail/oauth2/code", params = {"code", "state"}, method = RequestMethod.GET)
     public void codeProcessingUrl(
