@@ -257,7 +257,7 @@
             <section fxFlex fxLayoutAlign="end center" *ngIf="mailSettings.get('enableOauth2').value">
               <button mat-raised-button type="button" color="primary" style="width: min-content;"
                       matTooltip="{{'admin.oauth2.generate-access-token-hint' | translate}}"
-                      [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid"
+                      [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
                       (click)="generateAccessToken()">
                 {{'admin.oauth2.generate-access-token' | translate}}
               </button>
@@ -266,7 +266,7 @@
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"
                     matTooltip="{{'admin.oauth2.send-test-mail-hint' | translate}}"
-                    [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid"
+                    [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
                     (click)="sendTestMail()">
               {{'admin.send-test-mail' | translate}}
             </button>

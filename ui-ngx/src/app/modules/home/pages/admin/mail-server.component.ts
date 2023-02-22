@@ -35,6 +35,7 @@ import {
   mailServerOauth2ProvidersTranslations
 } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'tb-mail-server',
@@ -102,6 +103,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
               private router: Router,
               private route: ActivatedRoute,
               private adminService: AdminService,
+              private authService: AuthService,
               private translate: TranslateService,
               public fb: FormBuilder,
               @Inject(WINDOW) private window: Window) {
@@ -128,6 +130,8 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
         if (this.adminSettings.jsonValue.enableOauth2) {
           this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
           this.parseUrl(this.adminSettings.jsonValue.redirectUri);
+        } else {
+          this.mailSettings.get('enableOauth2').patchValue(false, {emitEvent: false});
         }
       }
     );
@@ -246,10 +250,9 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   sendTestMail(): void {
     this.assignSettings();
     this.adminService.sendTestMail(this.adminSettings).subscribe(
-      () => {
-        this.store.dispatch(new ActionNotificationShow({ message: this.translate.instant('admin.test-mail-sent'),
-          type: 'success' }));
-      }
+      () => this.store.dispatch(new ActionNotificationShow({ message: this.translate.instant('admin.test-mail-sent'),
+          type: 'success' })),
+      error => this.store.dispatch(new ActionNotificationShow({message: error.error.message, type: 'error'}))
     );
   }
 
@@ -274,7 +277,9 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   generateAccessToken() {
-    this.adminService.generateAccessToken().subscribe();
+    this.adminService.generateAccessToken().subscribe(
+      uri => this.window.location.href = uri
+    );
   }
 
   redirectURI(schema?: DomainSchema): string {
