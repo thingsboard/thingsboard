@@ -33,7 +33,6 @@ jobs:
           source: 'application/target/*.deb'
           target: '/opt/tesenso'
 
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
