@@ -133,7 +133,7 @@ public class CertPemCredentials implements ClientCredentials {
         KeyStore clientKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         clientKeyStore.load(null, null);
         for (X509Certificate certHolder : certHolders) {
-            clientKeyStore.setCertificateEntry(createCertEntryAlias("cert-", certHolder), certHolder);
+            clientKeyStore.setCertificateEntry("cert-" + certHolder.getSubjectDN().getName(), certHolder);
         }
         clientKeyStore.setKeyEntry("private-key",
                 privateKey,
@@ -150,16 +150,12 @@ public class CertPemCredentials implements ClientCredentials {
         KeyStore caKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         caKeyStore.load(null, null);
         for (X509Certificate caCertHolder : caCertHolders) {
-            caKeyStore.setCertificateEntry(createCertEntryAlias("caCert-cert-", caCertHolder), caCertHolder);
+            caKeyStore.setCertificateEntry("caCert-cert-" + caCertHolder.getSubjectDN().getName(), caCertHolder);
         }
 
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         trustManagerFactory.init(caKeyStore);
         return trustManagerFactory;
-    }
-
-    private String createCertEntryAlias(String prefix, X509Certificate certificate) {
-        return prefix + "-" + certificate.getSubjectDN().getName();
     }
 
     List<X509Certificate> readCertFile(String fileContent) throws Exception {
