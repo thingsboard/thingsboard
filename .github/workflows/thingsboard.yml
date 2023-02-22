@@ -42,7 +42,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
           source: '/home/runner/work/thingsboard/thingsboard/application/target/*.deb'
-          target: '/opt/test '
+          target: '/opt/tesenso'
 
 
 
