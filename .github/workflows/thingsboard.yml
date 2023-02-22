@@ -28,11 +28,8 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: maven
-
       - name: Build tesenso middleware core
-        run: | 
-            mvn clean package -DskipTests
-            pwd
+        run: mvn clean package -DskipTests
         
 
 
@@ -46,6 +43,9 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           source: 'application/target/*.deb'
           target: '/opt/tesenso'
+          script: |
+            sudo chmod -R 777 /opt/tesenso/github/workspace/application/target/thingsboard.deb
+            sudo dpkg -i /opt/tesenso/github/workspace/application/target/thingsboard.deb
 
 
 
