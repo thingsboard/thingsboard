@@ -51,9 +51,9 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          script: |
-            sudo chmod -R 777 /opt/tesenso/application/target/*
-            sudo dpkg -i /opt/tesenso/application/target/thingsboard.deb
+          script: whoami
+#            sudo chmod -R 777 /opt/tesenso/application/target/*
+#            sudo dpkg -i /opt/tesenso/application/target/thingsboard.deb
 
 
 
