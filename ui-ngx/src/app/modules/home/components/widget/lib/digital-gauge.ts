@@ -406,7 +406,7 @@ export class TbCanvasDigitalGauge {
             filter.transform(timestamp, this.localSettings.timestampFormat);
         }
         const value = tvPair[1];
-        if (value !== this.gauge.value) {
+        if (value != this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
           }
