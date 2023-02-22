@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Transfer to server
+      - name: Deploy to the server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
