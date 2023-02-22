@@ -2,10 +2,10 @@
 name: Tesenso CI/CD Pipeline
 
 on:
-#  push:
+  push:
+    branches: [ "read-pom" ]
+#  pull_request:
 #    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
   build:
