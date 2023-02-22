@@ -44,27 +44,16 @@ jobs:
     runs-on: ubuntu-latest
 #    needs: build
     steps:
-    - name: multiple command
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        password: ${{ secrets.SERVER_PASSWORD }}
-        port: ${{ secrets.SERVER_PORT }}
-        script: |
-          hostname
-          pwd
-
-#      - name: Transfer to server
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ secrets.SERVER_IP }}
-#          username: ${{ secrets.SERVER_USERNAME }}
-#          password: ${{ secrets.SERVER_PASSWORD }}
-#          port: ${{ secrets.SERVER_PORT }}
-#          script: whoami
-#            sudo chmod -R 777 /opt/tesenso/application/target/*
-#            sudo dpkg -i /opt/tesenso/application/target/thingsboard.deb
+      - name: Transfer to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            sudo chmod -R 777 /opt/tesenso/application/target/*
+            sudo dpkg -i /opt/tesenso/application/target/thingsboard.deb
 
 
 
