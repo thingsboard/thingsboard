@@ -52,7 +52,7 @@ jobs:
         password: ${{ secrets.SERVER_PASSWORD }}
         port: ${{ secrets.SERVER_PORT }}
         script: |
-            whoami
+            pwd
             ls -al
 
 #      - name: Transfer to server
