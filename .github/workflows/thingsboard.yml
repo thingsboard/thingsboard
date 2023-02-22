@@ -48,8 +48,8 @@ jobs:
       uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_IP }}
-        key: ${{ secrets.SERVER_PASSWORD }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        password: ${{ secrets.SERVER_PASSWORD }}
         port: ${{ secrets.SERVER_PORT }}
         script: |
             whoami
