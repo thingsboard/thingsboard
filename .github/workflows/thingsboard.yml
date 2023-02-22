@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '11'
-          distribution: 'oracle'
+          distribution: 'temurin'
           cache: maven
       - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
