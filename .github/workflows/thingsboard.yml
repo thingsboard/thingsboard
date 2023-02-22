@@ -53,6 +53,7 @@ jobs:
         port: ${{ secrets.SERVER_PORT }}
         script: |
           hostname
+          pwd
 
 #      - name: Transfer to server
 #        uses: appleboy/scp-action@master
