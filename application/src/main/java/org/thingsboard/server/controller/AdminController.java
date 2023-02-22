@@ -459,8 +459,8 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in " +
             "provider sends authorization code to specified redirect uri.)" )
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/mail/oauth2/authorize", method = RequestMethod.POST, produces = "application/text")
-    public String getAuthorizationUrl(@RequestBody AdminSettings adminSettings, HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
+    @RequestMapping(value = "/mail/oauth2/authorize", method = RequestMethod.GET, produces = "application/text")
+    public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
         String state = this.secureKeyGenerator.generateKey();
         if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
             CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
@@ -468,8 +468,7 @@ public class AdminController extends BaseController {
         CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
 
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
-        JsonNode jsonValue = adminSettings.getJsonValue();
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");        JsonNode jsonValue = adminSettings.getJsonValue();
 
         String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
         String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
