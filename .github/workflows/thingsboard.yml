@@ -36,24 +36,24 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: 'application/target/*.deb'
+          source: 'target/*.deb'
           target: '/opt/tesenso'
 
 
-#  deploy:
-#    runs-on: ubuntu-latest
-#    needs: build
-#    steps:
-#      - name: Transfer to server
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ secrets.SERVER_IP }}
-#          username: ${{ secrets.SERVER_USERNAME }}
-#          password: ${{ secrets.SERVER_PASSWORD }}
-#          port: ${{ secrets.SERVER_PORT }}
-#          script: |
-#            sudo chmod -R 777 /opt/tesenso/github/workspace/application/target/*
-#            sudo dpkg -i /opt/tesenso/github/workspace/application/target/*.deb
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Transfer to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            sudo chmod -R 777 //opt/tesenso/application/target/*
+            sudo dpkg -i /opt/tesenso/application/target/*.deb
 
 
 
