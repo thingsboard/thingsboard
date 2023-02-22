@@ -16,9 +16,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -26,13 +24,10 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '11'
-          distribution: 'temurin'
+          distribution: 'oracle'
           cache: maven
       - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
-        
-
-
 
       - name: Transfer to server
         uses: appleboy/scp-action@master
@@ -43,8 +38,20 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           source: 'application/target/*.deb'
           target: '/opt/tesenso'
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Transfer to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
-            sudo chmod -R 777 /opt/tesenso/github/workspace/application/target/thingsboard.deb
+            sudo chmod -R 777 /opt/tesenso/github/workspace/application/target/*
             sudo dpkg -i /opt/tesenso/github/workspace/application/target/thingsboard.deb
 
 
