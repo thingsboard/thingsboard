@@ -459,8 +459,8 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in " +
             "provider sends authorization code to specified redirect uri.)" )
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/mail/oauth2/login", method = RequestMethod.GET)
-    public void authorize(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
+    @RequestMapping(value = "/mail/oauth2/authorize", method = RequestMethod.GET)
+    public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
         String state = this.secureKeyGenerator.generateKey();
         if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
             CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
@@ -476,12 +476,11 @@ public class AdminController extends BaseController {
         String redirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
         String scope = checkNotNull(jsonValue.get("scope"), "No scope was configured").asText();
 
-        String url = new AuthorizationCodeRequestUrl(authUri, clientId)
+        return new AuthorizationCodeRequestUrl(authUri, clientId)
                 .setScopes(List.of(scope))
                 .setState(state)
                 .setRedirectUri(redirectUri)
                 .build();
-        response.sendRedirect(url);
     }
     @RequestMapping(value = "/mail/oauth2/code", params = {"code", "state"}, method = RequestMethod.GET)
     public void codeProcessingUrl(

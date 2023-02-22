@@ -137,6 +137,6 @@ export class AdminService {
   }
 
   public generateAccessToken(config?: RequestConfig) {
-    return this.http.get<string>(`/api/admin/mail/oauth2/login`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<string>(`/api/admin/mail/oauth2/authorize`, defaultHttpOptionsFromConfig(config));
   }
 }
