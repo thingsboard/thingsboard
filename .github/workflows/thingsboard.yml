@@ -23,14 +23,6 @@ jobs:
       - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
 
-#      - name: Get artifact ID
-#        run: |
-#          sudo apt-get install xmlstarlet
-#          ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
-#          VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
-#          VAR3="${ARTIFACT_ID}-${VERSION}.deb"
-#          echo "$VAR3"
-
       - name: Get artifact id & rename deb file name
         run: |
           sudo apt-get install xmlstarlet
@@ -50,7 +42,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: '*.deb'
+          source: 'application/target/*.deb'
           target: '/opt/tesenso'
 #
 #  deploy:
