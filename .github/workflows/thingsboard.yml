@@ -28,7 +28,8 @@ jobs:
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
-          NAME = "${ARTIFACT_ID}.deb"
+          VER=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
+          NAME = "${ARTIFACT_ID}${VER}.deb"
           echo "$NAME"
       - name: rename deb file name
         run: |
