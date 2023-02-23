@@ -23,17 +23,17 @@ jobs:
       - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
 
-      - name: Get artifact id & rename deb file name
+      - name: Get artifact id & rename debian file name
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
           VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
-          VAR3="${ARTIFACT_ID}-${VERSION}.deb"
-          echo "$VAR3"
+          FILE_NAME="${ARTIFACT_ID}-${VERSION}.deb"
+          echo "$FILE_NAME"
           cd application/target/
-          mv thingsboard.deb "$VAR3"
-#
-      - name: Transfer to server
+          mv thingsboard.deb "$FILE_NAME"
+
+      - name: Transfer to remote server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
