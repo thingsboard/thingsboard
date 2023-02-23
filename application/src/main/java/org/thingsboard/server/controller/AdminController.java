@@ -254,8 +254,10 @@ public class AdminController extends BaseController {
         if (adminSettings.getKey().equals("mail")) {
             if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
                 AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
-                JsonNode refreshToken = checkNotNull(mailSettings.getJsonValue().get("refreshToken"),
-                        "Refresh token was not generated. Please save settings and generate token.");
+                JsonNode refreshToken = mailSettings.getJsonValue().get("refreshToken");
+                if (refreshToken == null) {
+                    throw new ThingsboardException("Refresh token was not generated. Please, generate refresh token.", ThingsboardErrorCode.GENERAL);
+                }
                 ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", refreshToken.asText());
                 updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
             }
@@ -517,7 +519,12 @@ public class AdminController extends BaseController {
             throw new ThingsboardException("Error while requesting refresh token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
 
-        ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+        String refreshToken = tokenResponse.getRefreshToken();
+        if (refreshToken == null) {
+            throw new ThingsboardException("Refresh token was not found in provider response. ", ThingsboardErrorCode.GENERAL);
+        }
+        ((ObjectNode)jsonValue).put("refreshToken", refreshToken);
+        ((ObjectNode)jsonValue).put("refreshTokenGenerated", true);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);
     }
