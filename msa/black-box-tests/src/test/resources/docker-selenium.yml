@@ -32,6 +32,4 @@ services:
       SE_SCREEN_DEPTH: 24
       SE_SCREEN_DPI: 74
     extra_hosts:
-      - "host.docker.internal:172.17.0.1"
-
-
+      - "host.docker.internal:host-gateway"
