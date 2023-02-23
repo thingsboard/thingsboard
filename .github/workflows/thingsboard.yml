@@ -33,6 +33,7 @@ jobs:
         run: |
           cd application/target/
           mv thingsboard.deb things.deb
+          sudo apt-get -y install locate
           locate things.deb
 
       - name: Transfer to server
