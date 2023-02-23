@@ -254,22 +254,22 @@
                 </div>
               </fieldset>
             </section>
-            <section fxFlex fxLayoutAlign="end center" *ngIf="mailSettings.get('enableOauth2').value">
+            <section fxLayout="row" fxLayoutAlign="space-between center" *ngIf="mailSettings.get('enableOauth2').value">
+              <div>
+                <span class="token-status" translate>admin.oauth2.access-token-status</span>
+                <span>
+                  {{ adminSettings.jsonValue.refreshTokenGenerated ? 'admin.oauth2.token-status-generated' : 'admin.oauth2.token-status-not-generated' | translate }}
+                </span>
+              </div>
               <button mat-raised-button type="button" color="primary" style="width: min-content;"
-                      matTooltip="{{'admin.oauth2.generate-access-token-hint' | translate}}"
                       [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
                       (click)="generateAccessToken()">
-                {{'admin.oauth2.generate-access-token' | translate}}
-                <mat-icon *ngIf="adminSettings.jsonValue.refreshTokenGenerated"
-                          matTooltip="{{'admin.oauth2.generate-access-token-success' | translate}}">
-                  done
-                </mat-icon>
+                {{ accessTokenButtonName }}
               </button>
             </section>
           </fieldset>
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"
-                    matTooltip="{{'admin.oauth2.send-test-mail-hint' | translate}}"
                     [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
                     (click)="sendTestMail()">
               {{'admin.send-test-mail' | translate}}

@@ -27,6 +27,13 @@
     }
   }
 
+  .token-status {
+    font: 400 14px / 16px Roboto, "Helvetica Neue", sans-serif;
+    color: rgba(0,0,0, 0.6);
+    letter-spacing: 0.25px;
+    padding: 8px 0;
+  }
+
   ::ng-deep{
     .mat-button-toggle-group.tb-notification-unread-toggle-group {
       &.mat-button-toggle-group-appearance-standard {

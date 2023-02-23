@@ -304,6 +304,12 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.domainForm.get('name').patchValue(url.host, {emitEvent: false});
   }
 
+  get accessTokenButtonName() {
+    return this.translate.instant(
+      this.adminSettings.jsonValue.refreshTokenGenerated ? 'admin.oauth2.update-access-token' : 'admin.oauth2.generate-access-token'
+    );
+  }
+
   confirmForm(): FormGroup {
     return this.mailSettings;
   }
