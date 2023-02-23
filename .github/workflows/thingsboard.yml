@@ -28,8 +28,8 @@ jobs:
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
-          VERSION = '3.4.4-SNAPSHOT'
-          NAME = "${ARTIFACT_ID}" "${VERSION}" ".deb"
+          ARTIFACT_ID += "3.4.4-SNAPSHOT"
+          ARTIFACT_ID += ".deb"
       - name: rename deb file name
         run: |
           cd application/target/
