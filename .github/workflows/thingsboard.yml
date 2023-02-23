@@ -33,7 +33,7 @@ jobs:
       - name: rename deb file name
         run: |
           cd application/target/
-          mv thingsboard.deb $NAME.deb
+          mv thingsboard.deb $NAME
           ls
           pwd
           
