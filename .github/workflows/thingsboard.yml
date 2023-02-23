@@ -58,4 +58,4 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             sudo chmod -R 777 /opt/tesenso/application/target/*
-            sudo dpkg -i /opt/tesenso/application/target/thingsboard.deb
+            sudo dpkg -i /opt/tesenso/application/target/*.deb
