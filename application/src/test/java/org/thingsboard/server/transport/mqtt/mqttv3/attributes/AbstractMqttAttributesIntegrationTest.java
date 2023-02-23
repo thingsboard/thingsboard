@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.mqttv3.attributes;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
@@ -22,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DynamicProtoUtils;
@@ -45,6 +47,7 @@ import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -391,9 +394,19 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                 100);
         assertNotNull(device);
 
+        String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
+
+        String attributeValuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/CLIENT_SCOPE?keys=" + clientKeysStr;
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<Map<String, Object>> attributes = doGetAsyncTyped(attributeValuesUrl, new TypeReference<>() {});
+                    return attributes.size() == 5;
+                });
+
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(device.getId());
-        String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
         String sharedKeysStr = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
         List<String> clientKeysList = List.of(clientKeysStr.split(","));
         List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
