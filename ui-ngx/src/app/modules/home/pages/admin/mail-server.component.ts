@@ -310,6 +310,12 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     );
   }
 
+  get accessTokenStatus() {
+    return this.translate.instant(
+      this.adminSettings.jsonValue.refreshTokenGenerated ? 'admin.oauth2.token-status-generated' : 'admin.oauth2.token-status-not-generated'
+    );
+  }
+
   confirmForm(): FormGroup {
     return this.mailSettings;
   }

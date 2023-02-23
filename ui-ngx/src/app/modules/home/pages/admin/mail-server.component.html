@@ -258,7 +258,7 @@
               <div>
                 <span class="token-status" translate>admin.oauth2.access-token-status</span>
                 <span>
-                  {{ adminSettings.jsonValue.refreshTokenGenerated ? 'admin.oauth2.token-status-generated' : 'admin.oauth2.token-status-not-generated' | translate }}
+                  {{ accessTokenStatus }}
                 </span>
               </div>
               <button mat-raised-button type="button" color="primary" style="width: min-content;"
