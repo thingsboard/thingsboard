@@ -44,7 +44,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: 'application/target/*.deb'
+          source: '*.deb'
           target: '/opt/tesenso'
 #
 #  deploy:
