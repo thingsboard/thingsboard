@@ -272,7 +272,7 @@
           "microsoft-provider": "Microsoft",
           "custom-provider": "Custom",
           "generate-access-token": "Generate access token",
-          "generate-access-token-success": "Access token was successfully generate!",
+          "generate-access-token-success": "Access token was generate!",
           "generate-access-token-hint": "Save settings to Generate access token",
           "send-test-mail-hint": "Save settings to send test mail"
         },

@@ -260,6 +260,10 @@
                       [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
                       (click)="generateAccessToken()">
                 {{'admin.oauth2.generate-access-token' | translate}}
+                <mat-icon *ngIf="adminSettings.jsonValue.refreshTokenGenerated"
+                          matTooltip="{{'admin.oauth2.generate-access-token-success' | translate}}">
+                  done
+                </mat-icon>
               </button>
             </section>
           </fieldset>
