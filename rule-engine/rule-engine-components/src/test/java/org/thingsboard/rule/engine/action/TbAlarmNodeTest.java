@@ -28,7 +28,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -36,6 +35,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -46,6 +48,7 @@ import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 
 import javax.script.ScriptException;
 import java.io.IOException;
@@ -59,7 +62,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.times;
@@ -71,9 +73,6 @@ import static org.thingsboard.server.common.data.DataConstants.IS_EXISTING_ALARM
 import static org.thingsboard.server.common.data.DataConstants.IS_NEW_ALARM;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.CRITICAL;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.WARNING;
-import static org.thingsboard.server.common.data.alarm.AlarmStatus.ACTIVE_UNACK;
-import static org.thingsboard.server.common.data.alarm.AlarmStatus.CLEARED_ACK;
-import static org.thingsboard.server.common.data.alarm.AlarmStatus.CLEARED_UNACK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbAlarmNodeTest {
@@ -128,11 +127,26 @@ public class TbAlarmNodeTest {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+        long ts = msg.getTs();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
-        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
-        long ts = msg.getTs();
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        Alarm expectedAlarm = Alarm.builder()
+                .startTs(ts)
+                .endTs(ts)
+                .tenantId(tenantId)
+                .originator(originator)
+                .severity(CRITICAL)
+                .propagate(true)
+                .type("SomeType")
+                .details(null)
+                .build();
+        when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
+                AlarmApiCallResult.builder()
+                        .created(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
+
         node.onMsg(ctx, msg);
 
         verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
@@ -153,17 +167,6 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-        Alarm expectedAlarm = Alarm.builder()
-                .startTs(ts)
-                .endTs(ts)
-                .tenantId(tenantId)
-                .originator(originator)
-                .severity(CRITICAL)
-                .propagate(true)
-                .type("SomeType")
-                .details(null)
-                .build();
-
         assertEquals(expectedAlarm, actualAlarm);
     }
 
@@ -174,7 +177,7 @@ public class TbAlarmNodeTest {
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFailedFuture(new NotImplementedException("message")));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
 
         node.onMsg(ctx, msg);
 
@@ -185,7 +188,7 @@ public class TbAlarmNodeTest {
         verify(ctx, times(3)).getDbCallbackExecutor();
         verify(ctx).logJsEvalRequest();
         verify(ctx).getTenantId();
-        verify(alarmService).findLatestByOriginatorAndType(tenantId, originator, "SomeType");
+        verify(alarmService).findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType");
 
         verifyNoMoreInteractions(ctx, alarmService);
     }
@@ -199,9 +202,24 @@ public class TbAlarmNodeTest {
         Alarm clearedAlarm = Alarm.builder().cleared(true).acknowledged(true).build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(clearedAlarm));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(clearedAlarm);
 
-        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
+        Alarm expectedAlarm = Alarm.builder()
+                .startTs(ts)
+                .endTs(ts)
+                .tenantId(tenantId)
+                .originator(originator)
+                .severity(CRITICAL)
+                .propagate(true)
+                .type("SomeType")
+                .details(null)
+                .build();
+        when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
+                AlarmApiCallResult.builder()
+                        .successful(true)
+                        .created(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
 
         node.onMsg(ctx, msg);
 
@@ -224,22 +242,11 @@ public class TbAlarmNodeTest {
 
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-        Alarm expectedAlarm = Alarm.builder()
-                .startTs(ts)
-                .endTs(ts)
-                .tenantId(tenantId)
-                .originator(originator)
-                .severity(CRITICAL)
-                .propagate(true)
-                .type("SomeType")
-                .details(null)
-                .build();
-
         assertEquals(expectedAlarm, actualAlarm);
     }
 
     @Test
-    public void alarmCanBeUpdated() throws ScriptException, IOException {
+    public void alarmCanBeUpdated() throws IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -248,10 +255,23 @@ public class TbAlarmNodeTest {
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).severity(WARNING).endTs(oldEndDate).build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(activeAlarm));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(activeAlarm);
 
-        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(activeAlarm);
-
+        Alarm expectedAlarm = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(originator)
+                .severity(CRITICAL)
+                .propagate(true)
+                .type("SomeType")
+                .details(null)
+                .endTs(activeAlarm.getEndTs())
+                .build();
+        when(alarmService.updateAlarm(any(AlarmUpdateRequest.class))).thenReturn(
+                AlarmApiCallResult.builder()
+                        .successful(true)
+                        .modified(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
         node.onMsg(ctx, msg);
 
         verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
@@ -272,17 +292,7 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-        assertTrue(activeAlarm.getEndTs() > oldEndDate);
-        Alarm expectedAlarm = Alarm.builder()
-                .tenantId(tenantId)
-                .originator(originator)
-                .severity(CRITICAL)
-                .propagate(true)
-                .type("SomeType")
-                .details(null)
-                .endTs(activeAlarm.getEndTs())
-                .build();
-
+        assertTrue(activeAlarm.getEndTs() >= oldEndDate);
         assertEquals(expectedAlarm, actualAlarm);
     }
 
@@ -290,17 +300,30 @@ public class TbAlarmNodeTest {
     public void alarmCanBeCleared() throws ScriptException, IOException {
         initWithClearAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = TbMsg.newMsg( "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).severity(WARNING).endTs(oldEndDate).build();
 
+        Alarm expectedAlarm = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(originator)
+                .cleared(true)
+                .severity(WARNING)
+                .propagate(false)
+                .type("SomeType")
+                .details(null)
+                .endTs(oldEndDate)
+                .build();
+
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(activeAlarm));
-        when(alarmService.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), nullable(JsonNode.class), anyLong()))
-                .thenReturn(Futures.immediateFuture( false));
-        when(alarmService.findAlarmByIdAsync(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()))).thenReturn(Futures.immediateFuture(activeAlarm));
-//        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(activeAlarm);
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(activeAlarm);
+        when(alarmService.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
+                .thenReturn(AlarmApiCallResult.builder()
+                        .successful(true)
+                        .cleared(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
 
         node.onMsg(ctx, msg);
 
@@ -322,6 +345,20 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        assertEquals(expectedAlarm, actualAlarm);
+    }
+
+    @Test
+    public void alarmCanBeClearedWithAlarmOriginator() throws ScriptException, IOException {
+        initWithClearAlarmScript();
+        metaData.putValue("key", "value");
+        TbMsg msg = TbMsg.newMsg("USER", alarmOriginator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+
+        long oldEndDate = System.currentTimeMillis();
+        AlarmId id = new AlarmId(alarmOriginator.getId());
+        Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).severity(WARNING).endTs(oldEndDate).build();
+        activeAlarm.setId(id);
+
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(originator)
@@ -332,25 +369,16 @@ public class TbAlarmNodeTest {
                 .details(null)
                 .endTs(oldEndDate)
                 .build();
-
-        assertEquals(expectedAlarm, actualAlarm);
-    }
-
-    @Test
-    public void alarmCanBeClearedWithAlarmOriginator() throws ScriptException, IOException {
-        initWithClearAlarmScript();
-        metaData.putValue("key", "value");
-        TbMsg msg = TbMsg.newMsg( "USER", alarmOriginator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
-
-        long oldEndDate = System.currentTimeMillis();
-        AlarmId id = new AlarmId(alarmOriginator.getId());
-        Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).severity(WARNING).endTs(oldEndDate).build();
-        activeAlarm.setId(id);
+        expectedAlarm.setId(id);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findAlarmByIdAsync(tenantId, id)).thenReturn(Futures.immediateFuture(activeAlarm));
-        when(alarmService.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), nullable(JsonNode.class), anyLong())).thenReturn(Futures.immediateFuture(true));
-//        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(activeAlarm);
+        when(alarmService.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
+                .thenReturn(AlarmApiCallResult.builder()
+                        .successful(true)
+                        .cleared(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
 
         node.onMsg(ctx, msg);
 
@@ -372,18 +400,6 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-        Alarm expectedAlarm = Alarm.builder()
-                .tenantId(tenantId)
-                .originator(originator)
-                .cleared(true)
-                .severity(WARNING)
-                .propagate(false)
-                .type("SomeType")
-                .details(null)
-                .endTs(oldEndDate)
-                .build();
-        expectedAlarm.setId(id);
-
         assertEquals(expectedAlarm, actualAlarm);
     }
 
@@ -412,9 +428,25 @@ public class TbAlarmNodeTest {
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
         long ts = msg.getTs();
+        Alarm expectedAlarm = Alarm.builder()
+                .startTs(ts)
+                .endTs(ts)
+                .tenantId(tenantId)
+                .originator(originator)
+                .severity(WARNING)
+                .propagate(true)
+                .type("SomeType")
+                .details(null)
+                .build();
+
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
-        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
+                AlarmApiCallResult.builder()
+                        .successful(true)
+                        .created(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
 
         node.onMsg(ctx, msg);
 
@@ -436,17 +468,6 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-        Alarm expectedAlarm = Alarm.builder()
-                .startTs(ts)
-                .endTs(ts)
-                .tenantId(tenantId)
-                .originator(originator)
-                .severity(WARNING)
-                .propagate(true)
-                .type("SomeType")
-                .details(null)
-                .build();
-
         assertEquals(expectedAlarm, actualAlarm);
     }
 
@@ -474,10 +495,25 @@ public class TbAlarmNodeTest {
         metaData.putValue("alarmSeverity", "WARNING");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
         long ts = msg.getTs();
+        Alarm expectedAlarm = Alarm.builder()
+                .startTs(ts)
+                .endTs(ts)
+                .tenantId(tenantId)
+                .originator(originator)
+                .severity(WARNING)
+                .propagate(true)
+                .type("SomeType")
+                .details(null)
+                .build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
-        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
+                AlarmApiCallResult.builder()
+                        .successful(true)
+                        .created(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
 
         node.onMsg(ctx, msg);
 
@@ -498,22 +534,11 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
         Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-        Alarm expectedAlarm = Alarm.builder()
-                .startTs(ts)
-                .endTs(ts)
-                .tenantId(tenantId)
-                .originator(originator)
-                .severity(WARNING)
-                .propagate(true)
-                .type("SomeType")
-                .details(null)
-                .build();
-
         assertEquals(expectedAlarm, actualAlarm);
     }
 
     @Test
-    public void testCreateAlarmsWithPropagationToTenantWithDynamicTypes() throws Exception{
+    public void testCreateAlarmsWithPropagationToTenantWithDynamicTypes() throws Exception {
         for (int i = 0; i < 10; i++) {
             var config = new TbCreateAlarmNodeConfiguration();
             config.setPropagateToTenant(true);
@@ -536,11 +561,26 @@ public class TbAlarmNodeTest {
 
             metaData.putValue("key", "value");
             TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+            long ts = msg.getTs();
+            Alarm expectedAlarm = Alarm.builder()
+                    .startTs(ts)
+                    .endTs(ts)
+                    .tenantId(tenantId)
+                    .originator(originator)
+                    .severity(CRITICAL)
+                    .propagateToTenant(true)
+                    .type("SomeType" + i)
+                    .details(null)
+                    .build();
 
             when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-            when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType" + i)).thenReturn(Futures.immediateFuture(null));
-            doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
-            long ts = msg.getTs();
+            when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType" + i)).thenReturn(null);
+            when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
+                    AlarmApiCallResult.builder()
+                            .successful(true)
+                            .created(true)
+                            .alarm(new AlarmInfo(expectedAlarm))
+                            .build());
             node.onMsg(ctx, msg);
 
             verify(ctx, atMost(10)).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
@@ -561,17 +601,6 @@ public class TbAlarmNodeTest {
             assertNotSame(metaData, metadataCaptor.getValue());
 
             Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
-            Alarm expectedAlarm = Alarm.builder()
-                    .startTs(ts)
-                    .endTs(ts)
-                    .tenantId(tenantId)
-                    .originator(originator)
-                    .severity(CRITICAL)
-                    .propagateToTenant(true)
-                    .type("SomeType" + i)
-                    .details(null)
-                    .build();
-
             assertEquals(expectedAlarm, actualAlarm);
         }
     }

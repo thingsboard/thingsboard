@@ -48,7 +48,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             return Futures.immediateFuture(null);
         }
         try {
-            Alarm existentAlarm = alarmService.findLatestByOriginatorAndType(tenantId, originatorId, alarmUpdateMsg.getType()).get();
+            Alarm existentAlarm = alarmService.findLatestActiveByOriginatorAndType(tenantId, originatorId, alarmUpdateMsg.getType());
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -78,12 +78,12 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                 case ALARM_CLEAR_RPC_MESSAGE:
                     if (existentAlarm != null) {
                         alarmService.clearAlarm(tenantId, existentAlarm.getId(),
-                                JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
+                                alarmUpdateMsg.getAckTs(), JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
                     if (existentAlarm != null) {
-                        alarmService.deleteAlarm(tenantId, existentAlarm.getId());
+                        alarmService.delAlarm(tenantId, existentAlarm.getId());
                     }
                     break;
             }

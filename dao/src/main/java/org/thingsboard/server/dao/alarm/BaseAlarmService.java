@@ -22,13 +22,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
@@ -37,7 +35,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -60,7 +58,6 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -94,12 +91,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request) {
+    public AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request) {
         return createAlarm(request, true);
     }
 
     @Override
-    public AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled) {
+    public AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled) {
         validateAlarmRequest(request);
         CustomerId customerId = entityService.fetchEntityCustomerId(request.getTenantId(), request.getOriginator()).orElse(null);
         if (customerId == null && request.getCustomerId() != null) {
@@ -160,6 +157,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         }
     }
 
+    @Override
+    public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+        return alarmDao.findLatestActiveByOriginatorAndType(tenantId, originator, type);
+    }
+
+    @Override
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmDao.findLatestByOriginatorAndTypeAsync(tenantId, originator, type);
     }
@@ -452,7 +455,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private void validateAlarmRequest(AlarmModificationRequest request) {
         ConstraintValidator.validateFields(request);
-        if (request.getStartTs() > request.getEndTs()) {
+        if (request.getEndTs() > 0 && request.getStartTs() > request.getEndTs()) {
             throw new DataValidationException("Alarm start ts can't be greater then alarm end ts!");
         }
         if (!tenantService.tenantExists(request.getTenantId())) {

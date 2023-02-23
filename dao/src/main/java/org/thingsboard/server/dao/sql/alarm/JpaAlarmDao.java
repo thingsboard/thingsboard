@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -96,6 +96,15 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
+                originator.getId(),
+                type,
+                PageRequest.of(0, 1));
+        return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
+    }
+
+    @Override
+    public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+        List<AlarmEntity> latest = alarmRepository.findLatestActiveByOriginatorAndType(
                 originator.getId(),
                 type,
                 PageRequest.of(0, 1));
@@ -231,7 +240,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public AlarmApiCallResult createOrUpdateActiveAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled) {
+    public AlarmApiCallResult createOrUpdateActiveAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled) {
         AlarmPropagationInfo ap = getSafePropagationInfo(request.getPropagation());
         return toAlarmApiResult(alarmRepository.createOrUpdateActiveAlarm(
                 request.getTenantId().getId(),

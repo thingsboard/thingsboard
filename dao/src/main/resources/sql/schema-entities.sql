@@ -851,8 +851,8 @@ DECLARE
     result    alarm_info;
     row_count integer;
 BEGIN
-    SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type ORDER BY a.start_ts DESC FOR UPDATE;
-    IF existing.id IS NULL OR existing.cleared IS TRUE THEN
+    SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type AND a.cleared = false ORDER BY a.start_ts DESC FOR UPDATE;
+    IF existing.id IS NULL THEN
         IF a_creation_enabled = FALSE THEN
             RETURN json_build_object('success', false)::text;
         END IF;

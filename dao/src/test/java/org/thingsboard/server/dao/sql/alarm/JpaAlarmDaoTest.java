@@ -17,15 +17,13 @@ package org.thingsboard.server.dao.sql.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
-import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -93,7 +91,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
 
-        CreateOrUpdateActiveAlarmRequest request = CreateOrUpdateActiveAlarmRequest.builder()
+        AlarmCreateOrUpdateActiveRequest request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
                 .originator(deviceId)
                 .type("ALARM_TYPE")
@@ -109,7 +107,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         AlarmInfo afterSave = alarmDao.findAlarmInfoById(tenantId, newAlarmId);
         assertEquals(afterSave, result.getAlarm());
 
-        request = CreateOrUpdateActiveAlarmRequest.builder()
+        request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
                 .originator(deviceId)
                 .type("ALARM_TYPE")
@@ -127,7 +125,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
 
         alarmDao.clearAlarm(tenantId, result.getAlarm().getId(), System.currentTimeMillis(), result.getAlarm().getDetails());
 
-        request = CreateOrUpdateActiveAlarmRequest.builder()
+        request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
                 .originator(deviceId)
                 .type("ALARM_TYPE")
@@ -145,7 +143,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
 
         alarmDao.clearAlarm(tenantId, result.getAlarm().getId(), System.currentTimeMillis(), result.getAlarm().getDetails());
 
-        request = CreateOrUpdateActiveAlarmRequest.builder()
+        request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
                 .originator(deviceId)
                 .type("ALARM_TYPE2")
@@ -165,7 +163,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
 
-        CreateOrUpdateActiveAlarmRequest request = CreateOrUpdateActiveAlarmRequest.builder()
+        AlarmCreateOrUpdateActiveRequest request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
                 .originator(deviceId)
                 .type("ALARM_TYPE")

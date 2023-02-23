@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,7 +30,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
-public class CreateOrUpdateActiveAlarmRequest implements AlarmModificationRequest {
+public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationRequest {
 
     @NotNull
     @ApiModelProperty(position = 1, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
@@ -59,8 +58,8 @@ public class CreateOrUpdateActiveAlarmRequest implements AlarmModificationReques
     @ApiModelProperty(position = 9, value = "JSON object with propagation details")
     private AlarmPropagationInfo propagation;
 
-    public static CreateOrUpdateActiveAlarmRequest fromAlarm(Alarm a) {
-        return CreateOrUpdateActiveAlarmRequest.builder()
+    public static AlarmCreateOrUpdateActiveRequest fromAlarm(Alarm a) {
+        return AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(a.getTenantId())
                 .customerId(a.getCustomerId())
                 .type(a.getType())

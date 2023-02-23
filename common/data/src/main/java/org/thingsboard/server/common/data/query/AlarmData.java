@@ -36,31 +36,11 @@ public class AlarmData extends AlarmInfo {
     @Getter
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
 
-    public AlarmData update(Alarm alarm, AlarmAssigneeUpdate assigneeUpdate) {
-        this.setEndTs(alarm.getEndTs());
-        this.setSeverity(alarm.getSeverity());
-        this.setAcknowledged(alarm.isAcknowledged());
-        this.setCleared(alarm.isCleared());
-        this.setDetails(alarm.getDetails());
-        this.setPropagate(alarm.isPropagate());
-        this.setPropagateToOwner(alarm.isPropagateToOwner());
-        this.setPropagateToTenant(alarm.isPropagateToTenant());
-        this.setPropagateRelationTypes(alarm.getPropagateRelationTypes());
-        // This should be changed via separate message?
-        this.setAckTs(alarm.getAckTs());
-        this.setClearTs(alarm.getClearTs());
-
-        if (assigneeUpdate != null) {
-            if (assigneeUpdate.isDeleted()) {
-                this.setAssigneeId(null);
-                this.setAssignee(null);
-            } else {
-                AlarmAssignee assignee = assigneeUpdate.getAssignee();
-                this.setAssigneeId(assignee.getId());
-                this.setAssignee(assignee);
-            }
-        }
-        return this;
+    public AlarmData(AlarmInfo main, AlarmData prototype) {
+        super(main);
+        this.entityId = prototype.entityId;
+        this.latest = new HashMap<>();
+        this.latest.putAll(prototype.getLatest());
     }
 
     public AlarmData(Alarm alarm, EntityId entityId) {

@@ -26,6 +26,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -293,7 +294,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     @Override
-    public void onAlarmUpdate(TenantId tenantId, EntityId entityId, Alarm alarm, AlarmAssigneeUpdate assignee, TbCallback callback) {
+    public void onAlarmUpdate(TenantId tenantId, EntityId entityId, AlarmInfo alarm, TbCallback callback) {
         onLocalAlarmSubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.ALARMS.equals(s.getType())) {
@@ -303,13 +304,13 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     }
                 },
                 s -> alarm.getCreatedTime() >= s.getTs() || alarm.getAssignTs() >= s.getTs(),
-                alarm, assignee, false
+                alarm, false
         );
         callback.onSuccess();
     }
 
     @Override
-    public void onAlarmDeleted(TenantId tenantId, EntityId entityId, Alarm alarm, TbCallback callback) {
+    public void onAlarmDeleted(TenantId tenantId, EntityId entityId, AlarmInfo alarm, TbCallback callback) {
         onLocalAlarmSubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.ALARMS.equals(s.getType())) {
@@ -319,7 +320,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     }
                 },
                 s -> alarm.getCreatedTime() >= s.getTs(),
-                alarm, null, true
+                alarm, true
         );
         callback.onSuccess();
     }
@@ -413,8 +414,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private void onLocalAlarmSubUpdate(EntityId entityId,
                                        Function<TbSubscription, TbAlarmsSubscription> castFunction,
                                        Predicate<TbAlarmsSubscription> filterFunction,
-                                       Alarm alarm, AlarmAssigneeUpdate assignee,
-                                       boolean deleted) {
+                                       AlarmInfo alarm, boolean deleted) {
         Set<TbSubscription> entitySubscriptions = subscriptionsByEntityId.get(entityId);
         if (alarm == null) {
             log.warn("[{}] empty alarm update!", entityId);
@@ -423,11 +423,11 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         if (entitySubscriptions != null) {
             entitySubscriptions.stream().map(castFunction).filter(Objects::nonNull).filter(filterFunction).forEach(s -> {
                 if (serviceId.equals(s.getServiceId())) {
-                    AlarmSubscriptionUpdate update = new AlarmSubscriptionUpdate(s.getSubscriptionId(), alarm, assignee, deleted);
+                    AlarmSubscriptionUpdate update = new AlarmSubscriptionUpdate(s.getSubscriptionId(), alarm, deleted);
                     localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                 } else {
                     TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
-                    toCoreNotificationsProducer.send(tpi, toProto(s, alarm, assignee, deleted), null);
+                    toCoreNotificationsProducer.send(tpi, toProto(s, alarm, deleted), null);
                 }
             });
         } else {
@@ -563,15 +563,12 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
     }
 
-    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, Alarm alarm, AlarmAssigneeUpdate assignee, boolean deleted) {
+    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, AlarmInfo alarm, boolean deleted) {
         TbAlarmSubscriptionUpdateProto.Builder builder = TbAlarmSubscriptionUpdateProto.newBuilder();
 
         builder.setSessionId(subscription.getSessionId());
         builder.setSubscriptionId(subscription.getSubscriptionId());
         builder.setAlarm(JacksonUtil.toString(alarm));
-        if (assignee != null) {
-            builder.setAssignee(JacksonUtil.toString(assignee));
-        }
         builder.setDeleted(deleted);
 
         ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(

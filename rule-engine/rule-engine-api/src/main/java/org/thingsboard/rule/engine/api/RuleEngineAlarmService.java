@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -52,7 +52,7 @@ public interface RuleEngineAlarmService {
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}
      */
-    AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request);
+    AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request);
     /**
      * Designed to update existing alarm. Accepts only part of the alarm fields.
      */
@@ -87,6 +87,8 @@ public interface RuleEngineAlarmService {
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
+
+    Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 

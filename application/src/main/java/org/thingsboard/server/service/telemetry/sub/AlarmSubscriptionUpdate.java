@@ -18,6 +18,7 @@ package org.thingsboard.server.service.telemetry.sub;
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 
 public class AlarmSubscriptionUpdate {
 
@@ -28,21 +29,18 @@ public class AlarmSubscriptionUpdate {
     @Getter
     private String errorMsg;
     @Getter
-    private Alarm alarm;
-    @Getter
-    private AlarmAssigneeUpdate assignee;
+    private AlarmInfo alarm;
     @Getter
     private boolean alarmDeleted;
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm) {
-        this(subscriptionId, alarm, null, false);
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm) {
+        this(subscriptionId, alarm, false);
     }
 
-    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, AlarmAssigneeUpdate assignee, boolean alarmDeleted) {
+    public AlarmSubscriptionUpdate(int subscriptionId, AlarmInfo alarm, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
         this.alarm = alarm;
-        this.assignee = assignee;
         this.alarmDeleted = alarmDeleted;
     }
 

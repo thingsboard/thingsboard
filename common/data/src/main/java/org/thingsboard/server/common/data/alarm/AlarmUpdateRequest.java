@@ -56,6 +56,7 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
     public static AlarmUpdateRequest fromAlarm(Alarm a) {
         return AlarmUpdateRequest.builder()
                 .tenantId(a.getTenantId())
+                .alarmId(a.getId())
                 .severity((a.getSeverity()))
                 .startTs(a.getStartTs())
                 .endTs(a.getEndTs())

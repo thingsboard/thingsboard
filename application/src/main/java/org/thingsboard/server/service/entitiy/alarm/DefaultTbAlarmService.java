@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -28,9 +25,8 @@ import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -38,7 +34,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -52,18 +47,17 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         ActionType actionType = alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = alarm.getTenantId();
         try {
-            Alarm savedAlarm = checkNotNull(alarmSubscriptionService.createOrUpdateAlarm(alarm));
             AlarmApiCallResult result;
             if (alarm.getId() == null) {
-                result = alarmSubscriptionService.createAlarm(CreateOrUpdateActiveAlarmRequest.fromAlarm(alarm));
+                result = alarmSubscriptionService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm));
             } else {
                 result = alarmSubscriptionService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
             }
             actionType = result.isCreated() ? ActionType.ADDED : ActionType.UPDATED;
             if (result.isModified()) {
-                notificationEntityService.notifyCreateOrUpdateAlarm(savedAlarm, actionType, user);
+                notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), actionType, user);
             }
-            return savedAlarm;
+            return new Alarm(result.getAlarm());
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM), alarm, actionType, user, e);
             throw e;

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.subscription;
 
 import org.springframework.context.ApplicationListener;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -43,9 +44,9 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
 
     void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, TbCallback callback);
 
-    void onAlarmUpdate(TenantId tenantId, EntityId entityId, Alarm alarm, AlarmAssigneeUpdate assignee, TbCallback callback);
+    void onAlarmUpdate(TenantId tenantId, EntityId entityId, AlarmInfo alarm, TbCallback callback);
 
-    void onAlarmDeleted(TenantId tenantId, EntityId entityId, Alarm alarm, TbCallback callback);
+    void onAlarmDeleted(TenantId tenantId, EntityId entityId, AlarmInfo alarm, TbCallback callback);
 
 
 }

@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.alarm;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -58,7 +57,7 @@ public class AlarmApiCallResult {
         this.propagatedEntitiesList = propagatedEntitiesList;
     }
 
-    boolean hasSeverityChange() {
+    public boolean isSeverityChanged() {
         if (alarm == null || old == null) {
             return false;
         } else {
@@ -67,10 +66,13 @@ public class AlarmApiCallResult {
     }
 
     public AlarmSeverity getOldSeverity() {
-        return hasSeverityChange() ? old.getSeverity() : null;
+        return isSeverityChanged() ? old.getSeverity() : null;
     }
 
     public boolean isPropagationChanged() {
+        if (created) {
+            return true;
+        }
         if (alarm == null || old == null) {
             return false;
         }

@@ -28,6 +28,8 @@ import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
@@ -157,9 +159,9 @@ class AlarmState {
         return true;
     }
 
-    public void initCurrentAlarm(TbContext ctx) throws InterruptedException, ExecutionException {
+    public void initCurrentAlarm(TbContext ctx) {
         if (!initialFetchDone) {
-            Alarm alarm = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), originator, alarmDefinition.getAlarmType()).get();
+            Alarm alarm = ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), originator, alarmDefinition.getAlarmType());
             if (alarm != null && !alarm.getStatus().isCleared()) {
                 currentAlarm = alarm;
             }
@@ -233,14 +235,10 @@ class AlarmState {
             // Skip update if severity is decreased.
             if (severity.ordinal() <= oldSeverity.ordinal()) {
                 currentAlarm.setDetails(createDetails(ruleState));
-                if (!oldSeverity.equals(severity)) {
-                    currentAlarm.setSeverity(severity);
-                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                    return new TbAlarmResult(false, false, true, false, currentAlarm);
-                } else {
-                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                    return new TbAlarmResult(false, true, false, false, currentAlarm);
-                }
+                currentAlarm.setSeverity(severity);
+                AlarmApiCallResult result = ctx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(currentAlarm));
+                currentAlarm = result.getAlarm();
+                return TbAlarmResult.fromAlarmResult(result);
             } else {
                 return null;
             }
@@ -265,9 +263,9 @@ class AlarmState {
             if (alarmDefinition.getPropagateRelationTypes() != null) {
                 currentAlarm.setPropagateRelationTypes(alarmDefinition.getPropagateRelationTypes());
             }
-            currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-            boolean updated = currentAlarm.getStartTs() != currentAlarm.getEndTs();
-            return new TbAlarmResult(!updated, updated, false, false, currentAlarm);
+            AlarmApiCallResult result = ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(currentAlarm));
+            currentAlarm = result.getAlarm();
+            return TbAlarmResult.fromAlarmResult(result);
         }
     }
 

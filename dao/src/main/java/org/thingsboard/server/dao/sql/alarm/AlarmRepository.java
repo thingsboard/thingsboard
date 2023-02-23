@@ -40,6 +40,11 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 
+    @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType AND a.cleared = FALSE ORDER BY a.createdTime DESC")
+    List<AlarmEntity> findLatestActiveByOriginatorAndType(@Param("originatorId") UUID originatorId,
+                                                          @Param("alarmType") String alarmType,
+                                                          Pageable pageable);
+
     @Query(value = "SELECT a " +
             "FROM AlarmInfoEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +

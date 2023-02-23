@@ -225,8 +225,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             boolean matchesFilter = filter(alarm);
             if (onCurrentPage) {
                 if (matchesFilter) {
-                    AlarmData updated = current.update(alarm, subscriptionUpdate.getAssignee());
-                    updated.getLatest().putAll(current.getLatest());
+                    AlarmData updated = new AlarmData(subscriptionUpdate.getAlarm(), current);
                     alarmsMap.put(alarmId, updated);
                     sendWsMsg(new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), maxEntitiesPerAlarmSubscription, data.getTotalElements()));
                 } else {

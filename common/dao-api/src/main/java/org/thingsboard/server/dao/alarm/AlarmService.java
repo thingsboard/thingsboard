@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,13 +48,13 @@ public interface AlarmService extends EntityDaoService {
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}
      */
-    AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request);
+    AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request);
 
     /**
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}
      */
-    AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled);
+    AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled);
 
     /**
      * Designed to update existing alarm. Accepts only part of the alarm fields.
@@ -89,6 +89,9 @@ public interface AlarmService extends EntityDaoService {
     @Deprecated(since = "3.5.0", forRemoval = true)
     AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
+    @Deprecated(since = "3.5.0", forRemoval = true)
+    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
@@ -103,7 +106,7 @@ public interface AlarmService extends EntityDaoService {
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                            AlarmStatus alarmStatus, String assigneeId);
 
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+    Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);

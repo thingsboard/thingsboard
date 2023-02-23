@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
-import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -47,6 +47,8 @@ import java.util.UUID;
 public interface AlarmDao extends Dao<Alarm> {
 
     Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
@@ -74,7 +76,7 @@ public interface AlarmDao extends Dao<Alarm> {
 
     void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 
-    AlarmApiCallResult createOrUpdateActiveAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled);
+    AlarmApiCallResult createOrUpdateActiveAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled);
 
     AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);
 
