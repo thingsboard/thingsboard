@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
           VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
-          echo $ARTIFACT_ID-$VERSION".deb"
+          echo $ARTIFACT_ID"-"$VERSION".deb"
 #      - name: rename deb file name
 #        run: |
 #          cd application/target/
