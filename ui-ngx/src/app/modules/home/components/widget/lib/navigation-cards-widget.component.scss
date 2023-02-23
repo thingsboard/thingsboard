@@ -28,25 +28,17 @@
         font-size: 24px;
       }
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-    mat-card {
+    .mat-mdc-card {
       padding: 0;
       margin: 8px;
-      /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-      mat-card-title {
+      .mat-mdc-card-title {
         margin: 0;
         padding: 24px 16px 16px;
       }
-      mat-card-title+mat-card-content {
+      .mat-mdc-card-title+.mat-mdc-card-content {
         padding-top: 0;
       }
-      /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-      mat-card-content {
+      .mat-mdc-card-content {
         padding: 16px;
       }
     }
@@ -60,28 +52,23 @@
       &:focus {
         border-bottom: none;
       }
-      /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
-      .mat-button-wrapper {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        mat-icon {
-          margin: auto;
-        }
-        span {
-          height: 18px;
-          min-height: 36px;
-          max-height: 36px;
-          padding: 0 0 20px 0;
-          margin: auto;
-          font-size: 18px;
-          font-weight: 400;
-          line-height: 18px;
-          white-space: normal;
-        }
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      mat-icon {
+        margin: auto;
+      }
+      span.mdc-button__label {
+        height: 18px;
+        min-height: 36px;
+        max-height: 36px;
+        padding: 0 0 20px 0;
+        margin: auto;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 18px;
+        white-space: normal;
+        text-align: center;
       }
       &.mat-mdc-raised-button.mat-primary {
         .mat-ripple-element {

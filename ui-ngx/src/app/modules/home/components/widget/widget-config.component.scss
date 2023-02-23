@@ -15,9 +15,65 @@
  */
 @import '../../../../../scss/constants';
 
-.tb-datasource-list-item.tb-draggable {
-  &.cdk-drag-preview {
-    background: #fff;
+.tb-widget-config {
+  .tb-panel-hint {
+    font-size: 12px;
+    color: #808080;
+  }
+}
+
+.tb-datasource-list-item {
+  &.mat-mdc-list-item {
+    height: auto;
+    min-height: 68px;
+    display: block;
+    padding: 0;
+  }
+  &.tb-draggable {
+    &.cdk-drag-preview {
+      background: #fff;
+    }
+  }
+}
+
+.tb-datasource-params {
+  position: relative;
+  padding: 0 0 0 10px;
+  margin: 5px;
+  tb-error.tb-datasource-error {
+    position: absolute;
+    bottom: 4px;
+    left: 8px;
+  }
+  .tb-datasource-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 1;
+    padding-top: 20px;
+    @media #{$mat-gt-sm} {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+    }
+  }
+  .tb-datasource-type {
+    min-width: 160px;
+    @media #{$mat-gt-sm} {
+      max-width: 160px;
+    }
+  }
+  .tb-datasource {
+    @media #{$mat-gt-sm} {
+      padding-left: 8px;
+      width: 208px;
+      max-width: 208px;
+    }
+  }
+  .tb-data-keys {
+    @media #{$mat-gt-sm} {
+      padding-left: 8px;
+    }
   }
 }
 
@@ -35,44 +91,6 @@
       .mat-mdc-list {
         min-height: 68px;
         padding-left: 0;
-      }
-
-      .mat-mdc-list-item {
-        height: auto;
-        min-height: 68px;
-        display: block;
-      }
-    }
-    .tb-datasource-type {
-      min-width: 120px;
-      @media #{$mat-gt-sm} {
-        max-width: 120px;
-      }
-    }
-    .tb-datasource {
-      @media #{$mat-gt-sm} {
-        padding-left: 8px;
-      }
-    }
-    .tb-datasource-name {
-      @media #{$mat-gt-sm} {
-        width: 200px;
-        max-width: 200px;
-      }
-    }
-    .tb-datasource-params {
-      position: relative;
-      padding: 0 0 0 10px;
-      margin: 5px;
-      tb-error.tb-datasource-error {
-        position: absolute;
-        bottom: 4px;
-        left: 8px;
-      }
-    }
-    .tb-data-keys {
-      @media #{$mat-gt-sm} {
-        padding-left: 8px;
       }
     }
     .fields-group {
@@ -109,20 +127,6 @@
       right: 0;
       bottom: 0;
     }
-    .tb-panel-hint {
-      font-size: 12px;
-      color: #808080;
-    }
-    //.mat-tab-body.mat-tab-body-active {
-    //  .mat-tab-body-content > div {
-    //    height: 100%;
-    //  }
-    //}
-    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-    .mat-checkbox-label {
-      white-space: normal;
-    }
     .mat-expansion-panel {
       &.tb-settings {
         box-shadow: none;
@@ -149,16 +153,6 @@
         .tb-json-object-panel, .tb-css-content-panel {
           margin: 0 0 8px;
         }
-        /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-        .mat-checkbox-layout {
-          margin: 5px 0;
-        }
-        /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-        .mat-checkbox-inner-container {
-          margin-right: 12px;
-        }
       }
       &.tb-datasources {
         &.mat-expanded {
@@ -167,63 +161,9 @@
         .mat-expansion-panel-body{
           padding: 0 12px 16px;
         }
-        .mat-mdc-list-base .mat-mdc-list-item {
-          /*TODO(mdc-migration): The following rule targets internal classes of list that may no longer apply for the MDC version.
- */
-          .mat-list-item-content {
-            padding: 0;
-          }
-        }
       }
       .mat-expansion-panel-content {
         font: inherit;
-      }
-    }
-    .tb-datasource-type {
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      .mat-form-field-infix {
-        width: 100%;
-      }
-      /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-      .mat-select-value {
-        min-width: 92px;
-      }
-    }
-    .tb-datasource {
-      tb-entity-alias-select {
-        .mat-mdc-form-field {
-          margin-top: 20px;
-        }
-        @media #{$mat-gt-sm} {
-          .mat-mdc-form-field {
-            width: 200px;
-            max-width: 200px;
-          }
-        }
-      }
-      tb-filter-select {
-        @media #{$mat-gt-sm} {
-          .mat-mdc-form-field {
-            width: 200px;
-            max-width: 200px;
-          }
-        }
-      }
-      .tb-datasource-name.no-border-top {
-        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-        .mat-form-field-infix {
-          border-top: 0;
-        }
-      }
-    }
-    .tb-data-keys {
-      @media #{$mat-gt-sm} {
-        .mat-mdc-input-element {
-          min-height: 32px;
-        }
       }
     }
     .mat-slide {
@@ -234,11 +174,6 @@
       &:not(:last-child) {
         margin-bottom: 8px;
       }
-    }
-    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
- */
-    .mat-slide-toggle-content {
-      white-space: normal;
     }
   }
 }

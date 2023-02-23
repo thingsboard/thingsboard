@@ -16,16 +16,9 @@
 :host {
   .mat-icon.icon-value {
     padding: 4px;
-    margin: 8px 4px 4px;
+    margin: 12px 4px 4px;
     cursor: pointer;
     border: solid 1px rgba(0, 0, 0, .27);
-  }
-}
-
-:host ::ng-deep {
-  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-  .mat-form-field-infix{
-    width: 146px;
+    box-sizing: initial;
   }
 }

@@ -75,16 +75,8 @@
     button.provider {
       text-align: start;
       font-weight: 400;
-      /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
-      &:not(.mat-button-disabled) {
+      &:not([disabled][disabled]) {
         border-color: rgba(255, 255, 255, .8);
-      }
-
-      .icon {
-        height: 18px;
-        width: 18px;
-        vertical-align: sub;
       }
     }
 

@@ -15,23 +15,15 @@
  */
 :host {
   width: min-content; //for Safari
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  mat-select.default-state-controller {
-    margin: 0;
-  }
 }
 
 :host ::ng-deep {
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  mat-select.default-state-controller {
-    /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-    .mat-select-value {
+  .mat-mdc-select.default-state-controller {
+    .mat-mdc-select-value {
       max-width: 200px;
+    }
+    .mat-mdc-select-arrow {
+      width: 24px;
     }
   }
 }

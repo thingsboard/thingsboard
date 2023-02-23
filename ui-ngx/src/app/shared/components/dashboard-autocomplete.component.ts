@@ -135,7 +135,10 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   selectFirstDashboardIfNeeded(): void {
     if (this.selectFirstDashboard && !this.modelValue) {
-      this.getDashboards(new PageLink(1)).subscribe(
+      this.getDashboards(new PageLink(1, 0, null, {
+        property: 'title',
+        direction: Direction.ASC
+      })).subscribe(
         (data) => {
           if (data.data.length) {
             const dashboard = data.data[0];

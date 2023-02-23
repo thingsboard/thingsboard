@@ -15,17 +15,14 @@
  */
 :host {
   button.tb-add-new-widget {
+    height: auto;
     padding-right: 12px;
     font-size: 20px;
     border-style: dashed;
     border-width: 2px;
-    /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
-    ::ng-deep .mat-button-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-    }
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
   }
 }

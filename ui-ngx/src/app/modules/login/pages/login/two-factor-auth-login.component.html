@@ -31,7 +31,7 @@
         <p class="mat-body" translate>login.select-way-to-verify</p>
         <ng-container *ngFor="let provider of allowProviders">
           <button type="button" mat-stroked-button class="provider" (click)="selectProvider(provider)">
-            <mat-icon class="icon" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
             {{ providersData.get(provider).name | translate }}
           </button>
         </ng-container>
@@ -41,8 +41,7 @@
           <div tb-toast fxLayout="column">
             <p class="mat-body">{{ providerDescription }}</p>
             <div fxLayout="row" class="code-block" fxLayoutGap="8px">
-              <mat-form-field class="mat-block" fxFlex floatLabel="always" hideRequiredMarker>
-                <mat-label></mat-label>
+              <mat-form-field class="mat-block tb-appearance-transparent" fxFlex>
                 <input matInput formControlName="verificationCode"
                        required [maxlength]="maxLengthInput" type="text"
                        [attr.inputmode]="inputMode" [pattern]="pattern"

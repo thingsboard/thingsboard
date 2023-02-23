@@ -35,6 +35,7 @@ import { BranchInfo } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { isNotEmptyStr } from '@core/utils';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-branch-autocomplete',
@@ -52,6 +53,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   branchFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   private requiredValue: boolean;
 

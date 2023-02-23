@@ -33,34 +33,20 @@
       white-space: nowrap;
       outline: none;
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-    mat-select {
-      margin: 0;
-    }
   }
 }
 
 :host ::ng-deep {
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  mat-select {
-    /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-    .mat-select-value {
+  .mat-mdc-select {
+    .mat-mdc-select-value {
       max-width: 200px;
-      /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-      .mat-select-value-text {
+      .mat-mdc-select-value-text {
         font-size: 18px;
         font-weight: 700;
       }
+    }
+    .mat-mdc-select-arrow {
+      width: 24px;
     }
   }
 }

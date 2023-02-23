@@ -24,10 +24,6 @@
   .widget-select {
     padding: 12px 0 12px 12px;
     background-color: #cfd8dc;
-    /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
     .mat-card-container {
       flex: 0 0 100%;
       max-width: 100%;
@@ -41,6 +37,7 @@
       .mat-mdc-card {
         cursor: pointer;
         transition: box-shadow 0.2s;
+        padding: 16px;
 
         .preview-container {
           text-align: center;
@@ -55,19 +52,28 @@
 
         .mat-mdc-card-title {
           font-size: 20px;
+          line-height: normal;
+          margin-bottom: 8px;
+        }
+
+        .mat-mdc-card-subtitle {
+          margin-bottom: 16px;
+          margin-top: -4px;
+          line-height: normal;
+          font-weight: normal;
         }
 
         .mat-mdc-card-content {
           font-size: 14px;
           line-height: 18px;
           color: #666;
+          margin-bottom: 16px;
+          padding: 0;
         }
       }
     }
 
     @media #{$mat-gt-xs} {
-      /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
       .mat-card-container {
         flex: 0 0 50%;
         max-width: 50%;
@@ -75,8 +81,6 @@
     }
 
     @media screen and (min-width: 2000px) {
-      /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
       .mat-card-container {
         flex: 0 0 33.333333%;
         max-width: 33.333333%;

@@ -56,8 +56,7 @@
             >
             </tb-alarm-duration-predicate-value>
             <div fxFlex="23" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
-              <mat-form-field class="mat-block" hideRequiredMarker floatLabel="always">
-                <mat-label></mat-label>
+              <mat-form-field class="mat-block">
                 <mat-select formControlName="unit" required
                             placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
                   <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">

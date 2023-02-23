@@ -150,7 +150,7 @@
           </div>
           <mat-checkbox [value]="provider"
                         [checked]="useByDefault === provider"
-                        (click)="changeDefaultProvider($event, provider)"
+                        (change)="changeDefaultProvider($event, provider)"
                         [disabled]="(isLoading$ | async)"
                          *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
             <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>

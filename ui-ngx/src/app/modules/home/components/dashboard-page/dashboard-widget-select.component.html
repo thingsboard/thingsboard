@@ -19,7 +19,7 @@
   <div *ngIf="widgetsBundle; else bundles">
     <div *ngIf="(widgets$ | async)?.length; else loadingWidgets" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
       <div *ngFor="let widget of widgets$ | async" class="mat-card-container">
-        <mat-card appearance="outlined" fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="onWidgetClicked($event, widget)">
+        <mat-card appearance="raised" fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="onWidgetClicked($event, widget)">
           <div class="preview-container" fxFlex="45">
             <img class="preview" [src]="getPreviewImage(widget.image)" alt="{{ widget.title }}">
           </div>
@@ -52,7 +52,7 @@
   <ng-template #bundles>
     <div *ngIf="(widgetsBundles$ | async)?.length; else loadingWidgetBundles" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
       <div *ngFor="let widgetsBundle of widgetsBundles$ | async" class="mat-card-container">
-        <mat-card appearance="outlined" fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, widgetsBundle)">
+        <mat-card appearance="raised" fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, widgetsBundle)">
           <div class="preview-container" fxFlex="45">
             <img class="preview" [src]=getPreviewImage(widgetsBundle.image) alt="{{ widgetsBundle.title }}">
           </div>

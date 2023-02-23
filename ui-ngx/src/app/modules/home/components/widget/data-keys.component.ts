@@ -29,12 +29,12 @@ import {
 } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
   FormGroupDirective,
   NG_VALUE_ACCESSOR,
   NgForm,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -43,7 +43,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
+import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
@@ -62,7 +62,6 @@ import {
 import { deepClone } from '@core/utils';
 import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
 import { Dashboard } from '@shared/models/dashboard.models';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AggregationType } from '@shared/models/time/time.models';
 
 @Component({
@@ -175,7 +174,6 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
               private dialogs: DialogService,
               private dialog: MatDialog,
               private fb: UntypedFormBuilder,
-              private sanitizer: DomSanitizer,
               public truncate: TruncatePipe) {
   }
 
@@ -450,34 +448,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     return key ? key.name : undefined;
   }
 
-  displayDataKeyNameFn(key: DataKey): SafeHtml {
-    let keyName = key.name;
-    if (this.widgetType === widgetType.latest && key.type === DataKeyType.timeseries
-      && key.aggregationType && key.aggregationType !== AggregationType.NONE) {
-      let aggFuncName: string;
-      switch (key.aggregationType) {
-        case AggregationType.MIN:
-          aggFuncName = 'MIN';
-          break;
-        case AggregationType.MAX:
-          aggFuncName = 'MAX';
-          break;
-        case AggregationType.AVG:
-          aggFuncName = 'AVG';
-          break;
-        case AggregationType.SUM:
-          aggFuncName = 'SUM';
-          break;
-        case AggregationType.COUNT:
-          aggFuncName = 'COUNT';
-          break;
-      }
-      keyName = `<span class="tb-agg-func">${aggFuncName}</span>(${keyName})`;
-    }
-    if (this.datasourceType !== DatasourceType.function && key.postFuncBody) {
-      keyName = `f(${keyName})`;
-    }
-    return this.sanitizer.bypassSecurityTrustHtml(`<strong>${keyName}</strong>`);
+  dataKeyHasAggregation(key: DataKey): boolean {
+    return this.widgetType === widgetType.latest && key.type === DataKeyType.timeseries
+      && key.aggregationType && key.aggregationType !== AggregationType.NONE;
+  }
+
+  dataKeyHasPostprocessing(key: DataKey): boolean {
+    return this.datasourceType !== DatasourceType.function && !!key.postFuncBody;
   }
 
   private fetchKeys(searchText?: string): Observable<Array<DataKey>> {

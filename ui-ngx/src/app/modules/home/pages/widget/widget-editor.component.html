@@ -19,8 +19,7 @@
   <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" tb-hotkeys [hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
     <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px" fxLayoutGap.lt-xl="8px">
-      <mat-form-field floatLabel="always" hideRequiredMarker class="tb-widget-title tb-appearance-transparent">
-        <mat-label></mat-label>
+      <mat-form-field class="tb-widget-title tb-appearance-transparent">
         <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
                placeholder="{{ 'widget.title' | translate }}"/>

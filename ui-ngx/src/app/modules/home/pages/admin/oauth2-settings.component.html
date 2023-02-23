@@ -103,7 +103,6 @@
                                         </tb-copy-button>
                                       </mat-form-field>
                                       <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
-                                        <mat-label></mat-label>
                                         <input matInput [value]="redirectURIMixed(domainInfo)" readonly>
                                         <tb-copy-button
                                           matSuffix

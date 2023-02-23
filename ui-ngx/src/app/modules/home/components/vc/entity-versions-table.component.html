@@ -23,6 +23,7 @@
           <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
           <tb-branch-autocomplete
             #branchAutocompleteComponent
+            subscriptSizing="dynamic"
             [selectionMode]="true"
             [selectDefaultBranch]="false"
             [disabled]="isLoading$ | async"
@@ -31,7 +32,7 @@
           </tb-branch-autocomplete>
         </div>
         <span fxFlex></span>
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center end">
+        <div fxLayout="row" fxLayoutAlign="center center" fxLayout.xs="column" fxLayoutAlign.xs="center end">
           <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
                   #createVersionButton
                   [disabled]="(isLoading$ | async) || (isReadOnly | async)"

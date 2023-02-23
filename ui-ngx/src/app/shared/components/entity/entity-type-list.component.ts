@@ -26,6 +26,7 @@ import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 interface EntityTypeInfo {
   name: string;
@@ -65,6 +66,9 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   allowedEntityTypes: Array<EntityType | AliasEntityType>;

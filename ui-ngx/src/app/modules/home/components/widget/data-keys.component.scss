@@ -15,6 +15,7 @@
  */
 .mat-mdc-chip.mat-mdc-standard-chip.tb-datakey-chip {
   overflow: hidden;
+  line-height: 20px;
 
   .tb-attribute-chip {
     max-width: 100%;
@@ -27,55 +28,72 @@
 
       mat-icon {
         pointer-events: none;
+        margin-right: 4px;
+        margin-left: 4px;
+        vertical-align: bottom;
       }
     }
 
     .tb-chip-labels {
       display: flex;
       flex-direction: row;
-      align-items: flex-end;
+      align-items: center;
       min-width: 0;
       .tb-chip-label {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        mat-icon {
+          margin-right: 4px;
+          margin-left: 4px;
+          vertical-align: middle;
+        }
       }
 
       .tb-chip-separator {
         white-space: pre;
       }
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of chips that may no longer apply for the MDC version.
- */
-    .mat-chip-remove.mat-icon {
+
+    .mat-mdc-chip-remove.mat-icon {
       width: 24px;
       height: 24px;
       font-size: 24px;
-      margin-left: 0;
+      margin-right: 4px;
       color: inherit;
       opacity: inherit;
+      padding-left: 0;
     }
   }
 }
 
-:host ::ng-deep {
-  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-  /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-  .mat-form-field-flex {
-    padding-top: 0;
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    .mat-form-field-infix {
-      border-top: 0;
-    }
+.tb-datakey-icon {
+  vertical-align: middle;
+  &.new-key {
+    margin-left: 8px;
+    margin-right: 8px;
   }
+}
 
+::ng-deep {
+  .mat-icon.tb-datakey-icon > svg {
+    vertical-align: initial;
+  }
+}
+
+:host ::ng-deep {
   .tb-chip-label {
     .tb-agg-func {
       font-style: italic;
       color: #0c959c;
+    }
+  }
+  .tb-datakey-chip {
+    .mat-mdc-chip-action {
+      overflow: hidden;
+      .mat-mdc-chip-action-label {
+        overflow: hidden;
+      }
     }
   }
 }

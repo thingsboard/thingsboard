@@ -81,7 +81,7 @@ const droppingClassName = 'dropping';
 const droppingBeforeClassName = 'dropping-before';
 const droppingAfterClassName = 'dropping-after';
 
-let globalDraggingChipListId = null;
+let globalDraggingChipList: MatChipGrid = null;
 
 class DraggableChip {
 
@@ -104,6 +104,7 @@ class DraggableChip {
               private chipsList: MatChipGrid,
               private chipListElement: HTMLElement,
               private chipDrop: EventEmitter<MatChipDropEvent>) {
+    chip._mousedown = () => {};
     this.chipElement = chip._elementRef.nativeElement;
     this.chipElement.setAttribute('draggable', 'true');
     this.handle = this.chipElement.getElementsByClassName('tb-chip-drag-handle')[0] as HTMLElement;
@@ -126,7 +127,7 @@ class DraggableChip {
     } else {
       event.stopPropagation();
       this.dragging = true;
-      globalDraggingChipListId = this.chipListElement.id;
+      globalDraggingChipList = this.chipsList;
       this.chipListElement.classList.add(draggingClassName);
       this.chipElement.classList.add(draggingClassName);
       event = (event as any).originalEvent || event;
@@ -164,7 +165,7 @@ class DraggableChip {
   private onDragEnd(event: Event | any) {
     event.stopPropagation();
     this.dragging = false;
-    globalDraggingChipListId = null;
+    globalDraggingChipList = null;
     this.chipListElement.classList.remove(draggingClassName);
     this.chipElement.classList.remove(draggingClassName);
   }
@@ -174,7 +175,7 @@ class DraggableChip {
       return;
     }
     event.preventDefault();
-    if (globalDraggingChipListId !== this.chipListElement.id) {
+    if (globalDraggingChipList !== this.chipsList) {
       return;
     }
     const bounds = this.chipElement.getBoundingClientRect();
@@ -210,7 +211,7 @@ class DraggableChip {
   private onDrop(event: Event | any) {
     this.counter = 0;
     event.preventDefault();
-    if (globalDraggingChipListId !== this.chipListElement.id) {
+    if (globalDraggingChipList !== this.chipsList) {
       return;
     }
     event = (event as any).originalEvent || event;
@@ -233,21 +234,23 @@ class DraggableChip {
     if (this.dropTimeout) {
       clearTimeout(this.dropTimeout);
     }
-    this.dropTimeout = setTimeout(() => {
-      this.dropPosition = null;
+    if (droppedItemIndex !== newIndex) {
+      this.dropTimeout = setTimeout(() => {
+        this.dropPosition = null;
 
-      this.chipElement.classList.remove(droppingClassName);
-      this.chipElement.classList.remove(droppingAfterClassName);
-      this.chipElement.classList.remove(droppingBeforeClassName);
+        this.chipElement.classList.remove(droppingClassName);
+        this.chipElement.classList.remove(droppingAfterClassName);
+        this.chipElement.classList.remove(droppingBeforeClassName);
 
-      this.chipElement.removeEventListener('drop', this.dropHandler);
+        this.chipElement.removeEventListener('drop', this.dropHandler);
 
-      const dropEvent: MatChipDropEvent = {
-        from: droppedItemIndex,
-        to: newIndex
-      };
-      this.chipDrop.emit(dropEvent);
-    }, 1000 / 16);
+        const dropEvent: MatChipDropEvent = {
+          from: droppedItemIndex,
+          to: newIndex
+        };
+        this.chipDrop.emit(dropEvent);
+      }, 1000 / 16);
+    }
   }
 
   private index(): number {

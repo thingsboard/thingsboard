@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityTypeListFormGroup" class="mat-block">
+<mat-form-field [formGroup]="entityTypeListFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
   <mat-chip-grid #chipList formControlName="entityTypeList">
     <mat-chip-row
       *ngFor="let entityType of entityTypeList"

@@ -145,9 +145,8 @@
                     max="{{ layoutPercentageSize.MAX }}"
                     style="width: 100%;"
                     color="accent"
-                    formControlName="sliderPercentage"
-                    thumbLabel
-                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb />
+                    discrete
+                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderPercentage"/>
         </mat-slider>
         <mat-slider *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.PERCENTAGE"
                     step="1"
@@ -155,9 +154,8 @@
                     max="{{ layoutFixedSize.MAX }}"
                     style="width: 100%;"
                     color="accent"
-                    formControlName="sliderFixed"
-                    thumbLabel
-                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb />
+                    discrete
+                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderFixed"/>
         </mat-slider>
         <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group" style="width: 100%;">
           <label>

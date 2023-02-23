@@ -15,138 +15,67 @@
  */
 @import '../../../scss/constants';
 
+.tb-widgets-bundle-select {
+  .mdc-list-item__primary-text {
+    width: 100%;
+  }
+}
+
 tb-widgets-bundle-select {
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  mat-select {
-    margin: 0;
-  }
-
-  .tb-bundle-item {
-    height: 26px;
-    line-height: 26px;
+  .mat-mdc-select-arrow {
+    width: 18px;
   }
 }
 
-.tb-widgets-bundle-select {
+tb-widgets-bundle-select, .tb-widgets-bundle-select {
   .tb-bundle-item {
-    height: 48px;
-    line-height: 48px;
-  }
-}
-
-tb-widgets-bundle-select,
-.tb-widgets-bundle-select {
-  /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-  .mat-select-value-text {
-    display: block;
-    width: 100%;
-  }
-
-  .tb-bundle-item {
-    display: inline-block;
-    width: 100%;
-
-    span {
-      display: inline-block;
-      vertical-align: middle;
-    }
-
     .tb-bundle-system {
       float: right;
       font-size: .8rem;
       opacity: .8;
     }
   }
-  /*TODO(mdc-migration): The following rule targets internal classes of option that may no longer apply for the MDC version.
- */
-  mat-option {
-    height: auto !important;
-    white-space: normal !important;
-  }
 }
 
 mat-toolbar {
   tb-widgets-bundle-select {
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    .mat-form-field-wrapper {
-      padding-bottom: 0 !important;
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      .mat-form-field-infix {
+    .mat-mdc-text-field-wrapper {
+      border-radius: 0;
+      .mat-mdc-form-field-infix {
         background: rgba(255, 255, 255, .2);
         padding: 5px 20px !important;
-        border: none;
-        /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-        /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-        /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-        mat-select {
-          /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-          .mat-select-value-text {
-            font-size: 1.2rem;
-            color: #fff;
-
-            span:first-child::after {
-              color: #fff;
+        min-height: 44.5px;
+        .mat-mdc-select {
+          .mat-mdc-select-trigger {
+            height: 34.5px;
+            .mat-mdc-select-value {
+              vertical-align: middle;
+              min-height: 30px;
+              height: 30px;
+              padding: 2px 2px 1px;
+              .mat-mdc-select-value-text {
+                font-size: 1.2rem;
+                color: #fff;
+              }
             }
           }
-          /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-          /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-          .mat-select-value {
-            vertical-align: middle;
-            min-height: 30px;
-            height: 30px;
-            padding: 2px 2px 1px;
-            /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-            .mat-select-placeholder {
-              color: #fff;
-              opacity: .8;
-              line-height: 26px;
-            }
+          .mat-mdc-select-arrow {
+            width: 18px;
           }
         }
-        /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-        .mat-mdc-select.mat-select-invalid {
-          /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-          .mat-select-arrow {
-            color: #fff !important;
-          }
-        }
-
         @media #{$mat-xs} {
           width: auto;
         }
       }
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      .mat-form-field-underline {
+      .mdc-line-ripple {
         display: none;
       }
+    }
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+    .mat-mdc-form-field.mat-focused.mat-primary .mat-mdc-select-arrow-wrapper .mat-mdc-select-arrow {
+      color: #fff;
     }
   }
 }
