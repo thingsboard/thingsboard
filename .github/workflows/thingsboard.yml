@@ -32,8 +32,6 @@ jobs:
           echo "$VAR3"
           cd application/target/
           mv thingsboard.deb "$VAR3"
-          ls
-          pwd
 #
       - name: Transfer to server
         uses: appleboy/scp-action@master
