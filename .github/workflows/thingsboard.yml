@@ -30,7 +30,7 @@ jobs:
           VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
           FILE_NAME="${ARTIFACT_ID}-${VERSION}.deb"
           cd application/target/
-          mv thingsboard.deb "$FILE_NAME"
+#          mv thingsboard.deb "$FILE_NAME"
 
       - name: Transfer to remote server
         uses: appleboy/scp-action@master
