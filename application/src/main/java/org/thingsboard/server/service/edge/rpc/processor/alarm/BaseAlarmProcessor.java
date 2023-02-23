@@ -72,7 +72,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
                     if (existentAlarm != null) {
-                        alarmService.ackAlarm(tenantId, existentAlarm.getId(), alarmUpdateMsg.getAckTs());
+                        alarmService.acknowledgeAlarm(tenantId, existentAlarm.getId(), alarmUpdateMsg.getAckTs());
                     }
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:

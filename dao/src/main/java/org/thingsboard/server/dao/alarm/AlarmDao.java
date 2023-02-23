@@ -15,13 +15,15 @@
  */
 package org.thingsboard.server.dao.alarm;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -72,5 +74,16 @@ public interface AlarmDao extends Dao<Alarm> {
 
     void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 
-    AlarmInfo acknowledgeAlarm(TenantId tenantId, AlarmId id);
+    AlarmApiCallResult createOrUpdateActiveAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled);
+
+    AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);
+
+    AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId id, long ackTs);
+
+    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
+
+    AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime);
+
+    AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long unassignTime);
+
 }

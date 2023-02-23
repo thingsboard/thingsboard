@@ -29,8 +29,10 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -83,15 +85,18 @@ public class DefaultTbAlarmServiceTest {
     @Test
     public void testSave() throws ThingsboardException {
         var alarm = new AlarmInfo();
-        when(alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
+        when(alarmSubscriptionService.createAlarm(any())).thenReturn(AlarmApiCallResult.builder()
+                .successful(true)
+                .alarm(alarm)
+                .build());
         service.save(alarm, new User());
 
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).createOrUpdateAlarm(eq(alarm));
+        verify(alarmSubscriptionService, times(1)).createAlarm(any());
     }
 
     @Test
-    public void testAck() {
+    public void testAck() throws ThingsboardException {
         var alarm = new Alarm();
         when(alarmSubscriptionService.ackAlarm(any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
@@ -102,7 +107,7 @@ public class DefaultTbAlarmServiceTest {
     }
 
     @Test
-    public void testClear() {
+    public void testClear() throws ThingsboardException {
         var alarm = new Alarm();
         alarm.setAcknowledged(true);
         when(alarmSubscriptionService.clearAlarm(any(), any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));

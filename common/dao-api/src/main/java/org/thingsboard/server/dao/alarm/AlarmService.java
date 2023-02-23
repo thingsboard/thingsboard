@@ -40,43 +40,56 @@ import java.util.Collection;
 
 public interface AlarmService extends EntityDaoService {
 
-    // New API, since 3.5.
-    /**
-     * Designed for atomic operations over active alarms.
-     * Only one active alarm may exist for the pair {originatorId, alarmType}
+    /*
+     *  New API, since 3.5.
      */
-    AlarmOperationResult createAlarm(CreateOrUpdateActiveAlarmRequest request);
 
     /**
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}
      */
-    AlarmOperationResult createAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled);
+    AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request);
+
+    /**
+     * Designed for atomic operations over active alarms.
+     * Only one active alarm may exist for the pair {originatorId, alarmType}
+     */
+    AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request, boolean alarmCreationEnabled);
 
     /**
      * Designed to update existing alarm. Accepts only part of the alarm fields.
-     *
      */
-    AlarmOperationResult updateAlarm(AlarmUpdateRequest request);
+    AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);
 
-    // Legacy API, before 3.5
+    AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
+    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
+
+    AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long ts);
+
+    AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long ts);
+
+    AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId);
+
+    /*
+     *  Legacy API, before 3.5.
+     */
+    @Deprecated(since = "3.5.0", forRemoval = true)
     AlarmOperationResult createOrUpdateAlarm(Alarm alarm);
 
+    @Deprecated(since = "3.5.0", forRemoval = true)
     AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled);
 
-    // Other API
-
-    AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
-
+    @Deprecated(since = "3.5.0", forRemoval = true)
     ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
+    @Deprecated(since = "3.5.0", forRemoval = true)
     ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
-    AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long ts);
+    @Deprecated(since = "3.5.0", forRemoval = true)
+    AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
-    AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long ts);
-
+    // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);

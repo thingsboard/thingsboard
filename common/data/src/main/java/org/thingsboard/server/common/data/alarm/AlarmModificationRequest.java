@@ -15,23 +15,17 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.io.Serializable;
+public interface AlarmModificationRequest {
 
-@Builder
-@AllArgsConstructor
-@Data
-public class AlarmAssignee implements Serializable {
+    TenantId getTenantId();
 
-    private static final long serialVersionUID = 6628286223963972860L;
+    long getStartTs();
 
-    private final UserId id;
-    private final String firstName;
-    private final String lastName;
-    private final String email;
+    long getEndTs();
 
+    void setStartTs(long startTs);
+
+    void setEndTs(long endTs);
 }

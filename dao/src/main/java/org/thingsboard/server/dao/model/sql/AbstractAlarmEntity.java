@@ -113,7 +113,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
     private Long assignTs;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY)
+    @Column(name = ModelConstants.ALARM_DETAILS_PROPERTY)
     private JsonNode details;
 
     @Column(name = ALARM_PROPAGATE_PROPERTY)

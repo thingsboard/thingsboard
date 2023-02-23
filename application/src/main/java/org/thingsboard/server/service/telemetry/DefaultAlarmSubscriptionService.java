@@ -33,6 +33,8 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -45,6 +47,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -94,6 +97,37 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
+    public AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request) {
+        boolean creationEnabled = apiUsageStateService.getApiUsageState(request.getTenantId()).isAlarmCreationEnabled();
+        return withWsCallback(alarmService.createAlarm(request, creationEnabled));
+    }
+
+    @Override
+    public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
+        return withWsCallback(alarmService.updateAlarm(request));
+    }
+
+    @Override
+    public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
+        return withWsCallback(alarmService.acknowledgeAlarm(tenantId, alarmId, ackTs));
+    }
+
+    @Override
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
+        return withWsCallback(alarmService.clearAlarm(tenantId, alarmId, clearTs, details));
+    }
+
+    @Override
+    public AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
+        return withWsCallback(alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs));
+    }
+
+    @Override
+    public AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
+        return withWsCallback(alarmService.unassignAlarm(tenantId, alarmId, assignTs));
+    }
+
+    @Override
     public Alarm createOrUpdateAlarm(Alarm alarm) {
         AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm, apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled());
         if (result.isSuccessful()) {
@@ -123,44 +157,22 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
-        ListenableFuture<AlarmOperationResult> result = alarmService.ackAlarm(tenantId, alarmId, ackTs);
+        ListenableFuture<AlarmApiCallResult> result = Futures.immediateFuture(alarmService.acknowledgeAlarm(tenantId, alarmId, ackTs));
         Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
-        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+        return Futures.transform(result, AlarmApiCallResult::isSuccessful, wsCallBackExecutor);
     }
 
     @Override
     public ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
-        ListenableFuture<AlarmOperationResult> result = clearAlarmForResult(tenantId, alarmId, details, clearTs);
-        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+        AlarmApiCallResult result = alarmService.clearAlarm(tenantId, alarmId, clearTs, details);
+        return Futures.transform(Futures.immediateFuture(result), AlarmApiCallResult::isSuccessful, wsCallBackExecutor);
     }
 
     @Override
     public ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
-        ListenableFuture<AlarmOperationResult> result = alarmService.clearAlarm(tenantId, alarmId, details, clearTs);
-        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
-        return result;
-    }
-
-    @Override
-    public AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
-        AlarmOperationResult result = alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs);
-        if (result.isSuccessful()) {
-            onAlarmUpdated(result);
-        } else {
-            log.warn("[{}][{}] Failed to assign alarm.", tenantId, alarmId);
-        }
-        return result;
-    }
-
-    @Override
-    public AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
-        AlarmOperationResult result = alarmService.unassignAlarm(tenantId, alarmId, assignTs);
-        if (result.isSuccessful()) {
-            onAlarmUpdated(result);
-        } else {
-            log.warn("[{}][{}] Failed to unassign alarm.", tenantId, alarmId);
-        }
-        return result;
+        AlarmApiCallResult result = alarmService.clearAlarm(tenantId, alarmId, clearTs, details);
+        Futures.addCallback(Futures.immediateFuture(result), new AlarmUpdateCallback(), wsCallBackExecutor);
+        return Futures.immediateFuture(new AlarmOperationResult(result));
     }
 
     @Override
@@ -203,7 +215,28 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         return alarmService.findLatestByOriginatorAndType(tenantId, originator, type);
     }
 
+    @Deprecated
     private void onAlarmUpdated(AlarmOperationResult result) {
+        wsCallBackExecutor.submit(() -> {
+            Alarm alarm = result.getAlarm();
+            TenantId tenantId = alarm.getTenantId();
+            for (EntityId entityId : result.getPropagatedEntitiesList()) {
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+                if (currentPartitions.contains(tpi)) {
+                    if (subscriptionManagerService.isPresent()) {
+                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, null, TbCallback.EMPTY);
+                    } else {
+                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+                    }
+                } else {
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, null, alarm);
+                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+                }
+            }
+        });
+    }
+
+    private void onAlarmUpdated(AlarmApiCallResult result) {
         wsCallBackExecutor.submit(() -> {
             Alarm alarm = result.getAlarm();
             TenantId tenantId = alarm.getTenantId();
@@ -243,9 +276,9 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         });
     }
 
-    private class AlarmUpdateCallback implements FutureCallback<AlarmOperationResult> {
+    private class AlarmUpdateCallback implements FutureCallback<AlarmApiCallResult> {
         @Override
-        public void onSuccess(@Nullable AlarmOperationResult result) {
+        public void onSuccess(@Nullable AlarmApiCallResult result) {
             onAlarmUpdated(result);
         }
 
@@ -253,6 +286,13 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         public void onFailure(Throwable t) {
             log.warn("Failed to update alarm", t);
         }
+    }
+
+    private AlarmApiCallResult withWsCallback(AlarmApiCallResult result) {
+        if (result.isSuccessful() && result.isModified()) {
+            Futures.addCallback(Futures.immediateFuture(result), new AlarmUpdateCallback(), wsCallBackExecutor);
+        }
+        return result;
     }
 
 }

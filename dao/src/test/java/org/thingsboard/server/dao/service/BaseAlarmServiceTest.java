@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.Arrays;
@@ -188,7 +189,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
-        alarmService.ackAlarm(tenantId, created.getId(), System.currentTimeMillis()).get();
+        alarmService.acknowledgeAlarm(tenantId, created.getId(), System.currentTimeMillis());
         created = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
 
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -257,7 +258,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         Assert.assertNotNull(tenantUser);
 
-        AlarmOperationResult assignmentResult = alarmService.assignAlarm(tenantId, created.getId(), tenantUser.getId(), ts);
+        AlarmApiCallResult assignmentResult = alarmService.assignAlarm(tenantId, created.getId(), tenantUser.getId(), ts);
         created = assignmentResult.getAlarm();
 
         PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
@@ -697,7 +698,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
-        created = alarmService.ackAlarm(tenantId, created.getId(), System.currentTimeMillis()).get().getAlarm();
+        created = new Alarm(alarmService.acknowledgeAlarm(tenantId, created.getId(), System.currentTimeMillis()).getAlarm());
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);

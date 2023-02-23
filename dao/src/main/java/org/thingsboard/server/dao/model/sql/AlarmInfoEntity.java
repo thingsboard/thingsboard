@@ -47,13 +47,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_VIEW_NAME;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ALARM_VIEW_NAME)
-@NamedNativeQueries({
-        @NamedNativeQuery(
-                name = "AlarmEntity.acknowledgeAlarm",
-                query = "SELECT * FROM acknowledge_alarm(:t_id, :a_id, :a_ts)",
-                resultClass = AlarmInfoEntity.class
-        )
-})
 public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
 
     @Column(name = ALARM_ORIGINATOR_NAME_PROPERTY)
@@ -71,16 +64,6 @@ public class AlarmInfoEntity extends AbstractAlarmEntity<AlarmInfo> {
 
     public AlarmInfoEntity() {
         super();
-    }
-
-    public AlarmInfoEntity(AlarmEntity alarmEntity,
-                           String assigneeFirstName,
-                           String assigneeLastName,
-                           String assigneeEmail) {
-        super(alarmEntity);
-        this.assigneeFirstName = assigneeFirstName;
-        this.assigneeLastName = assigneeLastName;
-        this.assigneeEmail = assigneeEmail;
     }
 
     @Override

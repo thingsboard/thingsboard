@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.alarm.CreateOrUpdateActiveAlarmRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,6 +34,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.Collection;
@@ -41,19 +44,45 @@ import java.util.Collection;
  */
 public interface RuleEngineAlarmService {
 
+    /*
+     *  New API, since 3.5.
+     */
+
+    /**
+     * Designed for atomic operations over active alarms.
+     * Only one active alarm may exist for the pair {originatorId, alarmType}
+     */
+    AlarmApiCallResult createAlarm(CreateOrUpdateActiveAlarmRequest request);
+    /**
+     * Designed to update existing alarm. Accepts only part of the alarm fields.
+     */
+    AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);
+
+    AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
+
+    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
+
+    AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
+
+    AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
+
+    /*
+     *  Legacy API, before 3.5.
+     */
+    @Deprecated(since = "3.5", forRemoval = true)
     Alarm createOrUpdateAlarm(Alarm alarm);
 
-    Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
-
+    @Deprecated(since = "3.5", forRemoval = true)
     ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
+    @Deprecated(since = "3.5", forRemoval = true)
     ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
+    @Deprecated(since = "3.5", forRemoval = true)
     ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
-    AlarmOperationResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
-
-    AlarmOperationResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
+    // Other API
+    Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 
@@ -63,7 +92,7 @@ public interface RuleEngineAlarmService {
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
 
-    default ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId){
+    default ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId) {
         return Futures.immediateFuture(findAlarmInfoById(tenantId, alarmId));
     }
 
