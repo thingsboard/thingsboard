@@ -31,7 +31,8 @@ jobs:
           echo $ARTIFACT_ID
       - name: rename deb file name
         run: |
-          mv application/target/thingsboard.deb 10.deb
+          mv application/target/thingsboard.deb things.deb
+          locate things.deb
 
       - name: Transfer to server
         uses: appleboy/scp-action@master
