@@ -23,16 +23,21 @@ jobs:
       - name: Build tesenso middleware core
         run: mvn clean package -DskipTests
 
-      - name: Get artifact ID
+#      - name: Get artifact ID
+#        run: |
+#          sudo apt-get install xmlstarlet
+#          ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
+#          VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
+#          VAR3="${ARTIFACT_ID}-${VERSION}.deb"
+#          echo "$VAR3"
+
+      - name: Get artifact id & rename deb file name
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
           VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
           VAR3="${ARTIFACT_ID}-${VERSION}.deb"
           echo "$VAR3"
-
-      - name: rename deb file name
-        run: |
           cd application/target/
           mv thingsboard.deb "$VAR3"
           ls
