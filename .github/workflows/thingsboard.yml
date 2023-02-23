@@ -28,11 +28,12 @@ jobs:
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
-          echo $ARTIFACT_ID
+          VERSION = '3.4.4-SNAPSHOT'
+          NAME = "${ARTIFACT_ID} ${VERSION}"
       - name: rename deb file name
         run: |
           cd application/target/
-          mv thingsboard.deb $ARTIFACT_ID.deb
+          mv thingsboard.deb $NAME.deb
           ls
           pwd
           
