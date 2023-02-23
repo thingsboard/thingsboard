@@ -13,15 +13,15 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
-#      - name: Set up JDK 11
-#        uses: actions/setup-java@v3
-#        with:
-#          java-version: '11'
-#          distribution: 'temurin'
-#          cache: maven
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
 
-#      - name: Build tesenso middleware core
-#        run: mvn clean package -DskipTests
+      - name: Build tesenso middleware core
+        run: mvn clean package -DskipTests
 
       - name: Get artifact ID
         run: |
@@ -30,22 +30,22 @@ jobs:
           VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
           NAME = $ARTIFACT_ID"-"$VERSION".deb"
           echo $NAME
-#      - name: rename deb file name
-#        run: |
-#          cd application/target/
-#          mv thingsboard.deb $ARTIFACT_ID.deb
-#          ls
-#          pwd
+      - name: rename deb file name
+        run: |
+          cd application/target/
+          mv thingsboard.deb $NAME
+          ls
+          pwd
 
-#      - name: Transfer to server
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ secrets.SERVER_IP }}
-#          username: ${{ secrets.SERVER_USERNAME }}
-#          password: ${{ secrets.SERVER_PASSWORD }}
-#          port: ${{ secrets.SERVER_PORT }}
-#          source: 'application/target/*.deb'
-#          target: '/opt/tesenso'
+      - name: Transfer to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: 'application/target/*.deb'
+          target: '/opt/tesenso'
 #
 #  deploy:
 #    runs-on: ubuntu-latest
