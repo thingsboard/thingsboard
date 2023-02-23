@@ -33,6 +33,8 @@ jobs:
         run: |
           cd application/target/
           mv thingsboard.deb $ARTIFACT_ID.deb
+          ll
+          pwd
           
 
       - name: Transfer to server
