@@ -242,6 +242,7 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
+                            systemDataLoaderService.createDefaultNotificationConfigs();
                             break;
                         //TODO update CacheCleanupService on the next version upgrade
                         default:

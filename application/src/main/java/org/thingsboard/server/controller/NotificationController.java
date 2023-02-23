@@ -212,22 +212,22 @@ public class NotificationController extends BaseController {
         if (template == null) {
             throw new IllegalArgumentException("Template is missing");
         }
-        NotificationProcessingContext mockProcessingCtx = NotificationProcessingContext.builder()
+        NotificationProcessingContext tmpProcessingCtx = NotificationProcessingContext.builder()
                 .tenantId(user.getTenantId())
                 .request(request)
                 .settings(null)
                 .template(template)
                 .build();
 
-        Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = mockProcessingCtx.getDeliveryMethods().stream()
+        Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = tmpProcessingCtx.getDeliveryMethods().stream()
                 .collect(Collectors.toMap(m -> m, deliveryMethod -> {
                     Map<String, String> templateContext;
                     if (NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods().contains(deliveryMethod)) {
-                        templateContext = mockProcessingCtx.createTemplateContext(user);
+                        templateContext = tmpProcessingCtx.createTemplateContext(user);
                     } else {
                         templateContext = Collections.emptyMap();
                     }
-                    return mockProcessingCtx.getProcessedTemplate(deliveryMethod, templateContext);
+                    return tmpProcessingCtx.getProcessedTemplate(deliveryMethod, templateContext);
                 }));
         preview.setProcessedTemplates(processedTemplates);
 

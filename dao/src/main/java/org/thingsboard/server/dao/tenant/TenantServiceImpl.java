@@ -40,6 +40,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -124,6 +125,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private AdminSettingsService adminSettingsService;
 
     @Autowired
+    private NotificationSettingsService notificationSettingsService;
+
+    @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
     @TransactionalEventListener(classes = TenantEvictEvent.class)
@@ -175,6 +179,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             assetProfileService.createDefaultAssetProfile(savedTenant.getId());
             apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
+            notificationSettingsService.createDefaultNotificationConfigs(savedTenant.getId());
         }
         return savedTenant;
     }

@@ -100,6 +100,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
         switch (usersFilter.getType()) {
             case USER_LIST: {
                 List<User> users = ((UserListFilter) usersFilter).getUsersIds().stream()
+                        .limit(pageLink.getPageSize())
                         .map(UserId::new).map(userId -> userService.findUserById(tenantId, userId))
                         .collect(Collectors.toList());
                 return new PageData<>(users, 1, users.size(), false);

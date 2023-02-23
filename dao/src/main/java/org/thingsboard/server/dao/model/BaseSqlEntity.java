@@ -77,10 +77,10 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
     }
 
     protected static UUID getTenantUuid(TenantId tenantId) {
-        if (tenantId != null && !tenantId.isNullUid()) {
+        if (tenantId != null) {
             return tenantId.getId();
         } else {
-            return null;
+            return EntityId.NULL_UUID;
         }
     }
 

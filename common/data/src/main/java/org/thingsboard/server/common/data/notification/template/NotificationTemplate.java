@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @Data
@@ -34,6 +35,7 @@ public class NotificationTemplate extends BaseData<NotificationTemplateId> imple
 
     private TenantId tenantId;
     @NoXss
+    @NotEmpty
     private String name;
     @NoXss
     @NotNull

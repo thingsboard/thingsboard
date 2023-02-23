@@ -145,6 +145,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.lastName = lastName;
     }
 
+    @ApiModelProperty(position = 10, required = true, value = "Phone number of the user", example = "38012345123")
     public String getPhone() {
         return phone;
     }
@@ -153,7 +154,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.phone = phone;
     }
 
-    @ApiModelProperty(position = 10, value = "Additional parameters of the user", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 11, value = "Additional parameters of the user", dataType = "com.fasterxml.jackson.databind.JsonNode")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

@@ -95,18 +95,11 @@ public abstract class DaoUtil {
     }
 
     public static UUID getId(UUIDBased idBased) {
-        return getId(idBased, false);
-    }
-
-    public static UUID getId(UUIDBased uuidBased, boolean nullUuidToNull) {
-        UUID uuid = null;
-        if (uuidBased != null) {
-            uuid = uuidBased.getId();
-            if (nullUuidToNull && uuid.equals(EntityId.NULL_UUID)) {
-                uuid = null;
-            }
+        UUID id = null;
+        if (idBased != null) {
+            id = idBased.getId();
         }
-        return uuid;
+        return id;
     }
 
     public static List<UUID> toUUIDs(List<? extends UUIDBased> idBasedIds) {
