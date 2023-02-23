@@ -18,9 +18,9 @@ import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -75,7 +75,7 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
 
   @Input() onlyUserDynamicSource = false;
 
-  filterListFormGroup: FormGroup;
+  filterListFormGroup: UntypedFormGroup;
 
   valueTypeEnum = EntityKeyValueType;
 
@@ -85,7 +85,7 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
 
   private valueChangeSubscription: Subscription = null;
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               @Inject(COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN) private complexFilterPredicateDialogComponent: ComponentType<any>,
               private dialog: MatDialog) {
   }
@@ -96,8 +96,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
       this.fb.array([]));
   }
 
-  predicatesFormArray(): FormArray {
-    return this.filterListFormGroup.get('predicates') as FormArray;
+  predicatesFormArray(): UntypedFormArray {
+    return this.filterListFormGroup.get('predicates') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -144,11 +144,11 @@ export class FilterPredicateListComponent implements ControlValueAccessor, Valid
   }
 
   public removePredicate(index: number) {
-    (this.filterListFormGroup.get('predicates') as FormArray).removeAt(index);
+    (this.filterListFormGroup.get('predicates') as UntypedFormArray).removeAt(index);
   }
 
   public addPredicate(complex: boolean) {
-    const predicatesFormArray = this.filterListFormGroup.get('predicates') as FormArray;
+    const predicatesFormArray = this.filterListFormGroup.get('predicates') as UntypedFormArray;
     const predicate = createDefaultFilterPredicateInfo(this.valueType, complex);
     let observable: Observable<KeyFilterPredicateInfo>;
     if (complex) {

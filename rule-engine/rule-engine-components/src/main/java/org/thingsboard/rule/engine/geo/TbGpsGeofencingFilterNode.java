@@ -32,7 +32,32 @@ import org.thingsboard.server.common.msg.TbMsg;
         configClazz = TbGpsGeofencingFilterNodeConfiguration.class,
         relationTypes = {"True", "False"},
         nodeDescription = "Filter incoming messages by GPS based geofencing",
-        nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns 'True' if they are inside configured perimeters, 'False' otherwise.",
+        nodeDetails = "Extracts latitude and longitude parameters from the incoming message and checks them according to configured perimeter. </br>" +
+                "Configuration:</br></br>" +
+                "<ul>" +
+                "<li>Latitude key name - name of the message field that contains location latitude;</li>" +
+                "<li>Longitude key name - name of the message field that contains location longitude;</li>" +
+                "<li>Perimeter type - Polygon or Circle;</li>" +
+                "<li>Fetch perimeter from message metadata - checkbox to load perimeter from message metadata; " +
+                "   Enable if your perimeter is specific to device/asset and you store it as device/asset attribute;</li>" +
+                "<li>Perimeter key name - name of the metadata key that stores perimeter information;</li>" +
+                "<li>For Polygon perimeter type: <ul>" +
+                "    <li>Polygon definition - string that contains array of coordinates in the following format: [[lat1, lon1],[lat2, lon2],[lat3, lon3], ... , [latN, lonN]]</li>" +
+                "</ul></li>" +
+                "<li>For Circle perimeter type: <ul>" +
+                "   <li>Center latitude - latitude of the circle perimeter center;</li>" +
+                "   <li>Center longitude - longitude of the circle perimeter center;</li>" +
+                "   <li>Range - value of the circle perimeter range, double-precision floating-point value;</li>" +
+                "   <li>Range units - one of: Meter, Kilometer, Foot, Mile, Nautical Mile;</li>" +
+                "</ul></li></ul></br>" +
+                "Rule node will use default metadata key names, if the \"Fetch perimeter from message metadata\" is enabled and \"Perimeter key name\" is not configured. " +
+                "Default metadata key names for polygon perimeter type is \"perimeter\". Default metadata key names for circle perimeter are: \"centerLatitude\", \"centerLongitude\", \"range\", \"rangeUnit\"." +
+                "</br></br>" +
+                "Structure of the circle perimeter definition (stored in server-side attribute, for example):" +
+                "</br></br>" +
+                "{\"latitude\":  48.198618758582384, \"longitude\": 24.65322245153503, \"radius\":  100.0, \"radiusUnit\": \"METER\" }" +
+                "</br></br>" +
+                "Available radius units: METER, KILOMETER, FOOT, MILE, NAUTICAL_MILE;",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeGpsGeofencingConfig")
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {

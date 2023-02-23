@@ -17,8 +17,8 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -60,7 +60,7 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, Va
 
   valueTypeEnum = EntityKeyValueType;
 
-  booleanFilterPredicateFormGroup: FormGroup;
+  booleanFilterPredicateFormGroup: UntypedFormGroup;
 
   booleanOperations = Object.keys(BooleanOperation);
   booleanOperationEnum = BooleanOperation;
@@ -68,7 +68,7 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, Va
 
   private propagateChange = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

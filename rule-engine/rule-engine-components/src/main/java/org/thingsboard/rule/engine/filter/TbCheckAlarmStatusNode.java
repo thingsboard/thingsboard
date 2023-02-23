@@ -42,7 +42,7 @@ import java.io.IOException;
         configClazz = TbCheckAlarmStatusNodeConfig.class,
         relationTypes = {"True", "False"},
         nodeDescription = "Checks alarm status.",
-        nodeDetails = "If the alarm status matches the specified one - msg is success if does not match - msg is failure.",
+        nodeDetails = "Checks the alarm status to match one of the specified statuses.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {

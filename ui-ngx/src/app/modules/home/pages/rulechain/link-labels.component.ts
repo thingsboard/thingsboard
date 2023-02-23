@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LinkLabel } from '@shared/models/rule-node.models';
 import { Observable, of } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -72,7 +72,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   sourceRuleChainId: string;
 
-  linksFormGroup: FormGroup;
+  linksFormGroup: UntypedFormGroup;
 
   modelValue: Array<string>;
 
@@ -88,7 +88,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               public truncate: TruncatePipe,
               public translate: TranslateService,
               private ruleChainService: RuleChainService) {

@@ -25,13 +25,17 @@ CREATE TABLE IF NOT EXISTS alarm_comment (
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
 
-
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    settings varchar(100000),
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+);
 
 -- DEVICE PROFILE CERTIFICATE START
 
 ALTER TABLE device_profile
     ADD COLUMN IF NOT EXISTS certificate_hash varchar,
-    DROP CONSTRAINT IF EXISTS device_profile_credentials_hash_unq_key,
+DROP CONSTRAINT IF EXISTS device_profile_credentials_hash_unq_key,
     ADD CONSTRAINT device_profile_credentials_hash_unq_key UNIQUE (certificate_hash);
 
 -- DEVICE PROFILE CERTIFICATE END

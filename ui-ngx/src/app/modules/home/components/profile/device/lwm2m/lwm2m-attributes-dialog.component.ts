@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { AttributesNameValueMap } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 export interface Lwm2mAttributesDialogData {
@@ -46,14 +46,14 @@ export class Lwm2mAttributesDialogComponent
 
   private submitted = false;
 
-  attributeFormGroup: FormGroup;
+  attributeFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) private data: Lwm2mAttributesDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<Lwm2mAttributesDialogComponent, AttributesNameValueMap>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.readonly = data.readonly;
@@ -68,7 +68,7 @@ export class Lwm2mAttributesDialogComponent
     }
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
