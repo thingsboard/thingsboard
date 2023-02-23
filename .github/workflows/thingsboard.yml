@@ -33,6 +33,7 @@ jobs:
         run: |
           cd application/target/
           mv thingsboard.deb $ARTIFACT_ID.deb
+          ls
           pwd
           
 
