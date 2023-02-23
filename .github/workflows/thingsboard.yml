@@ -1,4 +1,3 @@
-
 name: Tesenso CI/CD Pipeline
 
 on:
@@ -28,25 +27,23 @@ jobs:
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
-          NAME = "${ARTIFACT_ID}.deb"
-          echo "$NAME"
+          echo $ARTIFACT_ID
 #      - name: rename deb file name
 #        run: |
 #          cd application/target/
-#          mv thingsboard.deb $NAME
+#          mv thingsboard.deb $ARTIFACT_ID.deb
 #          ls
 #          pwd
-          
 
-#      - name: Transfer to server
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ secrets.SERVER_IP }}
-#          username: ${{ secrets.SERVER_USERNAME }}
-#          password: ${{ secrets.SERVER_PASSWORD }}
-#          port: ${{ secrets.SERVER_PORT }}
-#          source: '*.deb'
-#          target: '/opt/tesenso'
+      - name: Transfer to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: 'application/target/*.deb'
+          target: '/opt/tesenso'
 #
 #  deploy:
 #    runs-on: ubuntu-latest
@@ -62,9 +59,3 @@ jobs:
 #          script: |
 #            sudo chmod -R 777 /opt/tesenso/application/target/*
 #            sudo dpkg -i /opt/tesenso/application/target/thingsboard.deb
-
-
-
-
-
-
