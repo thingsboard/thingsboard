@@ -27,7 +27,8 @@ jobs:
         run: |
           sudo apt-get install xmlstarlet
           ARTIFACT_ID=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:artifactId" pom.xml)
-          echo $ARTIFACT_ID
+          VERSION=$(xmlstarlet sel -N x=http://maven.apache.org/POM/4.0.0 -t -v "/x:project/x:version" pom.xml)
+          echo $ARTIFACT_ID$VERSION
 #      - name: rename deb file name
 #        run: |
 #          cd application/target/
@@ -35,15 +36,15 @@ jobs:
 #          ls
 #          pwd
 
-      - name: Transfer to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: ${{ secrets.SERVER_PORT }}
-          source: 'application/target/*.deb'
-          target: '/opt/tesenso'
+#      - name: Transfer to server
+#        uses: appleboy/scp-action@master
+#        with:
+#          host: ${{ secrets.SERVER_IP }}
+#          username: ${{ secrets.SERVER_USERNAME }}
+#          password: ${{ secrets.SERVER_PASSWORD }}
+#          port: ${{ secrets.SERVER_PORT }}
+#          source: 'application/target/*.deb'
+#          target: '/opt/tesenso'
 #
 #  deploy:
 #    runs-on: ubuntu-latest
