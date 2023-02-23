@@ -32,7 +32,7 @@ jobs:
       - name: rename deb file name
         run: |
           cd application/target/
-          mv thingsboard.deb things.deb
+          mv thingsboard.deb $ARTIFACT_ID.deb
           
 
       - name: Transfer to server
