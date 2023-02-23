@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.kv;
 
 import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public abstract class BasicKvEntry implements KvEntry {
 
     @Length(fieldName = "attribute key")
+    @NoXss
     private final String key;
 
     protected BasicKvEntry(String key) {
