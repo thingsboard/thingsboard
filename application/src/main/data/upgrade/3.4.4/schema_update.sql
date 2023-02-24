@@ -38,7 +38,7 @@ UPDATE alarm SET acknowledged = false, cleared = false WHERE status = 'ACTIVE_UN
 -- Drop index by 'status' column and replace with new one that has only active alarms;
 DROP INDEX IF EXISTS idx_alarm_originator_alarm_type_active;
 CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type_active
-    ON alarm USING btree (originator_id, type, created_time DESC) WHERE cleared = false;
+    ON alarm USING btree (originator_id, type) WHERE cleared = false;
 
 -- Cover index by alarm type to optimize propagated alarm queries;
 DROP INDEX IF EXISTS idx_entity_alarm_entity_id_alarm_type_created_time_alarm_id;
