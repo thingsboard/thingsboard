@@ -51,7 +51,6 @@ import { EscalationFormComponent } from '@home/pages/notification-center/rule-ta
 import {
   AlarmSeveritiesListComponent
 } from '@home/pages/notification-center/rule-table/alarm-severities-list.component';
-import { TemplateConfiguration } from '@home/pages/notification-center/template-table/template-configuration';
 
 @NgModule({
   declarations: [

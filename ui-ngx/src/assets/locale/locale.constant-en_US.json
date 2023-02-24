@@ -2690,6 +2690,7 @@
     },
     "notification": {
         "action-button": "Action button",
+        "action-type": "Action type",
         "add-notification-target": "Add notification recipient",
         "add-notification-template": "Add notification template",
         "add-rule": "Add rule",
@@ -2756,6 +2757,10 @@
         "inbox": "Inbox",
         "link": "Link",
         "link-required": "Link is required",
+        "link-type": {
+            "link": "Open URL link",
+            "dashboard": "Open dashboard"
+        },
         "management": "Notification management",
         "mark-all-as-read": "Mark all as read",
         "mark-as-read": "Mark as read",

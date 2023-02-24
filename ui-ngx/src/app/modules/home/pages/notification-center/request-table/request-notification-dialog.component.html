@@ -112,15 +112,15 @@
             <mat-form-field>
               <mat-label translate>notification.time</mat-label>
               <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
-              <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+              <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true" timeInterval="1"></mat-datetimepicker>
               <input required matInput fxFlex formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
             </mat-form-field>
           </div>
         </section>
       </form>
     </mat-step>
-    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
-                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.PUSH.enabled').value"
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.PUSH.enabled').value"
               [stepControl]="pushTemplateForm">
       <ng-template matStepLabel>{{ 'notification.web-settings' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">
@@ -158,7 +158,7 @@
               {{ 'notification.action-button' | translate }}
             </mat-slide-toggle>
             <div *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
-              <div fxLayout="row" fxLayoutGap="12px">
+              <div fxLayout="row" fxLayoutGap="8px">
                 <mat-form-field class="mat-block" fxFlex>
                   <mat-label translate>notification.button-text</mat-label>
                   <input matInput formControlName="text" required>
@@ -169,20 +169,42 @@
                 <tb-color-input formControlName="color" fxFlex>
                 </tb-color-input>
               </div>
-              <mat-form-field class="mat-block">
-                <mat-label translate>notification.link</mat-label>
-                <input matInput formControlName="link" required>
-                <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
-                  {{ 'notification.link-required' | translate }}
-                </mat-error>
-              </mat-form-field>
+              <div fxLayout="row" fxLayoutGap="8px">
+                <mat-form-field fxFlex="30">
+                  <mat-label translate>notification.action-type</mat-label>
+                  <mat-select formControlName="linkType">
+                    <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes" [value]="actionButtonLinkType">
+                      {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field fxFlex
+                                *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
+                  <mat-label translate>notification.link</mat-label>
+                  <input matInput formControlName="link" required>
+                  <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
+                    {{ 'notification.link-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <ng-template #dashboardSelector>
+                  <tb-dashboard-autocomplete
+                    fxFlex="35"
+                    required
+                    formControlName="dashboardId">
+                  </tb-dashboard-autocomplete>
+                  <tb-dashboard-state-autocomplete fxFlex="35"
+                                                   [dashboardId]="pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').value"
+                                                   formControlName="dashboardState">
+                  </tb-dashboard-state-autocomplete>
+                </ng-template>
+              </div>
             </div>
           </section>
         </section>
       </form>
     </mat-step>
-    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
-                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
               [stepControl]="emailTemplateForm">
       <ng-template matStepLabel>{{ 'notification.email-settings' | translate }}</ng-template>
       <ng-template matStepContent>
@@ -199,8 +221,8 @@
         </form>
       </ng-template>
     </mat-step>
-    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
-                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SMS.enabled').value"
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SMS.enabled').value"
               [stepControl]="smsTemplateForm">
       <ng-template matStepLabel>{{ 'notification.sms-settings' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">
@@ -219,8 +241,8 @@
         </mat-form-field>
       </form>
     </mat-step>
-    <mat-step optional *ngIf="!notificationRequestForm.get('useTemplate').value &&
-                              notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SLACK.enabled').value"
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SLACK.enabled').value"
               [stepControl]="slackTemplateForm">
       <ng-template matStepLabel>{{ 'notification.slack-settings' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">

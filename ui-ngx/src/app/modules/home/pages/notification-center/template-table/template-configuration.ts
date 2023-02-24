@@ -16,6 +16,8 @@
 
 import { FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import {
+  ActionButtonLinkType,
+  ActionButtonLinkTypeTranslateMap,
   NotificationDeliveryMethod,
   NotificationDeliveryMethodTranslateMap,
   NotificationTemplate,
@@ -45,6 +47,10 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
+
+  actionButtonLinkType = ActionButtonLinkType;
+  actionButtonLinkTypes = Object.keys(ActionButtonLinkType) as ActionButtonLinkType[];
+  actionButtonLinkTypeTranslateMap = ActionButtonLinkTypeTranslateMap;
 
   tinyMceOptions: Record<string, any> = {
     base_url: '/assets/tinymce',
@@ -97,7 +103,10 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
           enabled: [false],
           text: [{value: '', disabled: true}, Validators.required],
           color: ['#305680'],
-          link: [{value: '', disabled: true}, Validators.required]
+          linkType: [ActionButtonLinkType.LINK],
+          link: [{value: '', disabled: true}, Validators.required],
+          dashboardId: [{value: null, disabled: true}, Validators.required],
+          dashboardState: [{value: null, disabled: true}]
         }),
       })
     });
@@ -116,11 +125,25 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       if (value) {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.text').enable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig').enable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').updateValueAndValidity({onlySelf: true});
       } else {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.text').disable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig').disable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').enable({emitEvent: false});
+      }
+    });
+
+    this.pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (value === ActionButtonLinkType.LINK) {
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
+      } else {
         this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
+        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
       }
     });
 
@@ -150,7 +173,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     this.destroy$.complete();
   }
 
-  private atLeastOne() {
+  atLeastOne() {
     return (group: FormGroup): ValidationErrors | null => {
       let hasAtLeastOne = true;
       if (group?.controls) {

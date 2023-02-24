@@ -22,6 +22,7 @@
       <mat-chip *ngFor="let item of stringItemsList"
                 [selectable]="!disabled"
                 [removable]="!disabled"
+                [contentEditable]="editable && !disabled"
                 (removed)="removeItems(item)">
         {{item}}
         <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>

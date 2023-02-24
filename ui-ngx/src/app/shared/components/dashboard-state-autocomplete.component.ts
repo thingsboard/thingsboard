@@ -47,12 +47,11 @@ export class DashboardStateAutocompleteComponent implements ControlValueAccessor
 
   private propagateChange = (v: any) => { };
 
+  @Input()
+  label: string = this.translate.instant('widget-action.target-dashboard-state');
 
   @Input()
   placeholder: string;
-
-  @Input()
-  floatLabel: FloatLabelType = 'auto';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -66,17 +65,20 @@ export class DashboardStateAutocompleteComponent implements ControlValueAccessor
   @Input()
   disabled: boolean;
 
-  private dashboardIdValue: string;
+  private dashboardIdValue: string = null;
   get dashboardId(): string {
     return this.dashboardIdValue;
   }
 
+  @Input()
   set dashboardId(value: string) {
-    this.dashboardIdValue = value;
-    this.clearDashboardStateCache();
-    this.searchText = '';
-    this.selectDashboardStateFormGroup.get('dashboardStateId').patchValue('', {emitEvent: false});
-    this.dirty = true;
+    if (this.dashboardIdValue !== value) {
+      this.dashboardIdValue = value;
+      this.clearDashboardStateCache();
+      this.searchText = '';
+      this.selectDashboardStateFormGroup.get('dashboardStateId').patchValue('', {emitEvent: false});
+      this.dirty = true;
+    }
   }
 
   @ViewChild('dashboardStateInput', {static: true}) dashboardStateInput: ElementRef;
@@ -113,7 +115,7 @@ export class DashboardStateAutocompleteComponent implements ControlValueAccessor
         debounceTime(150),
         tap(value => {
           let modelValue;
-          if (!value || !this.latestDashboardStates.includes(value)) {
+          if (!value || !this.latestDashboardStates?.includes(value)) {
             modelValue = null;
           } else {
             modelValue = value;
@@ -160,7 +162,7 @@ export class DashboardStateAutocompleteComponent implements ControlValueAccessor
 
   onFocus() {
     if (this.dirty) {
-      this.selectDashboardStateFormGroup.get('dashboard').updateValueAndValidity({onlySelf: true});
+      this.selectDashboardStateFormGroup.get('dashboardStateId').updateValueAndValidity({onlySelf: true});
       this.dirty = false;
     }
   }

@@ -90,6 +90,7 @@
           <fieldset class="fields-group tb-margin">
             <legend translate>notification.filter</legend>
             <tb-string-items-list
+              editable
               label="{{ 'alarm.alarm-type-list' | translate }}"
               placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
               floatLabel="always"
