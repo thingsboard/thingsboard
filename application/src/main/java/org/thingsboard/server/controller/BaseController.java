@@ -601,20 +601,21 @@ public abstract class BaseController {
     }
 
     protected <E extends HasId<I> & HasTenantId, I extends EntityId> E checkEntityId(I entityId, ThrowingBiFunction<TenantId, I, E> findingFunction, Operation operation) throws ThingsboardException {
-        return checkEntityId(Resource.of(entityId.getEntityType()), operation, entityId, findingFunction);
-    }
-
-    protected <E extends HasId<I> & HasTenantId, I extends EntityId> E checkEntityId(Resource resource, Operation operation, I entityId, ThrowingBiFunction<TenantId, I, E> findingFunction) throws ThingsboardException {
         try {
             validateId((UUIDBased) entityId, "Invalid entity id");
             SecurityUser user = getCurrentUser();
             E entity = findingFunction.apply(user.getTenantId(), entityId);
             checkNotNull(entity, entityId.getEntityType() + " with id [" + entityId + "] not found");
-            accessControlService.checkPermission(user, resource, operation, entityId, entity);
-            return entity;
+            return checkEntity(user, entity, operation);
         } catch (Exception e) {
             throw handleException(e, false);
         }
+    }
+
+    protected <E extends HasId<I> & HasTenantId, I extends EntityId> E checkEntity(SecurityUser user, E entity, Operation operation) throws ThingsboardException {
+        checkNotNull(entity, "Entity not found");
+        accessControlService.checkPermission(user, Resource.of(entity.getId().getEntityType()), operation, entity.getId(), entity);
+        return entity;
     }
 
     Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {

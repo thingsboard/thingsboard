@@ -53,4 +53,6 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
                                                                       @Param("searchText") String searchText,
                                                                       Pageable pageable);
 
+    void deleteByTenantId(UUID tenantId);
+
 }

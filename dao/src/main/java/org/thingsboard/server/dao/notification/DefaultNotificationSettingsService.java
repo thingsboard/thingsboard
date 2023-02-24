@@ -21,6 +21,11 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.OriginatorEntityOwnerUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.util.Collections;
@@ -31,6 +36,9 @@ import java.util.Optional;
 public class DefaultNotificationSettingsService implements NotificationSettingsService {
 
     private final AdminSettingsService adminSettingsService;
+    private final NotificationTargetService notificationTargetService;
+    private final NotificationTemplateService notificationTemplateService;
+    private final NotificationRuleService notificationRuleService;
 
     private static final String SETTINGS_KEY = "notifications";
 
@@ -56,6 +64,30 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                     settings.setDeliveryMethodsConfigs(Collections.emptyMap());
                     return settings;
                 });
+    }
+
+    @Override
+    public void createDefaultNotificationConfigs(TenantId tenantId) {
+        NotificationTarget allUsersTarget = new NotificationTarget();
+        allUsersTarget.setTenantId(tenantId);
+        allUsersTarget.setName("All users");
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        targetConfig.setUsersFilter(new AllUsersFilter());
+        targetConfig.setDescription("All users in scope of tenant");
+        allUsersTarget.setConfiguration(targetConfig);
+        allUsersTarget = notificationTargetService.saveNotificationTarget(tenantId, allUsersTarget);
+
+        NotificationTarget originatorEntityOwnerUsers = new NotificationTarget();
+        originatorEntityOwnerUsers.setTenantId(tenantId);
+        originatorEntityOwnerUsers.setName("Users of rule trigger entity's owner");
+        targetConfig.setUsersFilter(new OriginatorEntityOwnerUsersFilter());
+        targetConfig.setDescription("For usage with notification rules. For example, if alarm trigger type is chosen, " +
+                "notifications will be sent to alarm owner's users, e.g. it's customer's users");
+        originatorEntityOwnerUsers.setConfiguration(targetConfig);
+        originatorEntityOwnerUsers = notificationTargetService.saveNotificationTarget(tenantId, originatorEntityOwnerUsers);
+
+        NotificationTemplate alarmNotificationTemplate = new NotificationTemplate();
+
     }
 
 }

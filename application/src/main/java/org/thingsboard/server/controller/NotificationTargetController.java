@@ -47,7 +47,6 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
 import java.util.Arrays;
@@ -101,7 +100,7 @@ public class NotificationTargetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget getNotificationTargetById(@PathVariable UUID id) throws ThingsboardException {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        return checkEntityId(NOTIFICATION, Operation.READ, notificationTargetId, notificationTargetService::findNotificationTargetById);
+        return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.READ);
     }
 
     @ApiOperation(value = "Get recipients for notification target config (getRecipientsForNotificationTargetConfig)",
@@ -158,7 +157,7 @@ public class NotificationTargetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationTargetById(@PathVariable UUID id) throws Exception {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        NotificationTarget notificationTarget = checkEntityId(NOTIFICATION, Operation.DELETE, notificationTargetId, notificationTargetService::findNotificationTargetById);
+        NotificationTarget notificationTarget = checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, Operation.DELETE);
         doDeleteAndLog(EntityType.NOTIFICATION_TARGET, notificationTarget, notificationTargetService::deleteNotificationTargetById);
     }
 
@@ -173,7 +172,7 @@ public class NotificationTargetController extends BaseController {
                 return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, targetConfig, pageLink);
             }, 200);
             for (User recipient : recipients) {
-                accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
+                checkEntity(user, recipient, Operation.READ);
             }
         } else if (usersFilter.getType() == UsersFilterType.CUSTOMER_USERS) {
             CustomerId customerId = new CustomerId(((CustomerUsersFilter) usersFilter).getCustomerId());

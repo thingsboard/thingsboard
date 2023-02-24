@@ -142,4 +142,9 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
         notificationTargetDao.removeById(tenantId, id.getId());
     }
 
+    @Override
+    public void deleteNotificationTargetsByTenantId(TenantId tenantId) {
+        notificationTargetDao.removeByTenantId(tenantId);
+    }
+
 }

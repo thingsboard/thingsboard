@@ -39,4 +39,6 @@ public interface NotificationTemplateRepository extends JpaRepository<Notificati
                                                                                      @Param("searchText") String searchText,
                                                                                      Pageable pageable);
 
+    void deleteByTenantId(UUID tenantId);
+
 }

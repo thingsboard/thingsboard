@@ -41,4 +41,6 @@ public interface NotificationRuleService {
 
     void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id);
 
+    void deleteNotificationRulesByTenantId(TenantId tenantId);
+
 }

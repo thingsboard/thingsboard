@@ -44,4 +44,6 @@ public interface NotificationTargetService {
 
     void deleteNotificationTargetById(TenantId tenantId, NotificationTargetId id);
 
+    void deleteNotificationTargetsByTenantId(TenantId tenantId);
+
 }

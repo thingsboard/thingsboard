@@ -95,6 +95,11 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         notificationRequestDao.updateById(tenantId, requestId, requestStatus, stats);
     }
 
+    @Override
+    public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
+        notificationRequestDao.removeByTenantId(tenantId);
+    }
+
 
     private static class NotificationRequestValidator extends DataValidator<NotificationRequest> {
 

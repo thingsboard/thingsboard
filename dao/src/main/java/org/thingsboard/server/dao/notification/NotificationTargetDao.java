@@ -30,4 +30,6 @@ public interface NotificationTargetDao extends Dao<NotificationTarget> {
 
     List<NotificationTarget> findByTenantIdAndIds(TenantId tenantId, List<NotificationTargetId> ids);
 
+    void removeByTenantId(TenantId tenantId);
+
 }

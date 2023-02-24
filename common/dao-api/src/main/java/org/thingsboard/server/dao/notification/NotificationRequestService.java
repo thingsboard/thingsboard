@@ -51,4 +51,6 @@ public interface NotificationRequestService {
 
     void updateNotificationRequest(TenantId tenantId, NotificationRequestId requestId, NotificationRequestStatus requestStatus, NotificationRequestStats stats);
 
+    void deleteNotificationRequestsByTenantId(TenantId tenantId);
+
 }

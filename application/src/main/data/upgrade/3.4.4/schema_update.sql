@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id)
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NULL CONSTRAINT fk_notification_target_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     configuration VARCHAR(10000) NOT NULL,
     CONSTRAINT uq_notification_target_name UNIQUE (tenant_id, name)
@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON not
 CREATE TABLE IF NOT EXISTS notification_template (
     id UUID NOT NULL CONSTRAINT notification_template_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NULL CONSTRAINT fk_notification_template_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(50) NOT NULL,
     configuration VARCHAR(10000) NOT NULL,
@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_template_tenant_id_created_time ON n
 CREATE TABLE IF NOT EXISTS notification_rule (
     id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NULL CONSTRAINT fk_notification_rule_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
     trigger_type VARCHAR(50) NOT NULL,
@@ -63,7 +63,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_created_time ON notif
 CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
-    tenant_id UUID NULL CONSTRAINT fk_notification_request_tenant_id REFERENCES tenant(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL,
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
     template VARCHAR(10000),

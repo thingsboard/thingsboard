@@ -24,4 +24,6 @@ public interface NotificationSettingsService {
 
     NotificationSettings findNotificationSettings(TenantId tenantId);
 
+    void createDefaultNotificationConfigs(TenantId tenantId);
+
 }

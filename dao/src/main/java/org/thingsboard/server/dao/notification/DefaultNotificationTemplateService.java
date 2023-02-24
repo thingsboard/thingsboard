@@ -73,4 +73,9 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
         }
     }
 
+    @Override
+    public void deleteNotificationTemplatesByTenantId(TenantId tenantId) {
+        notificationTemplateDao.removeByTenantId(tenantId);
+    }
+
 }

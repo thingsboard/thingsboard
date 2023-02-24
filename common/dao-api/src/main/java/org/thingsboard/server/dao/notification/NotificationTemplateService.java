@@ -34,4 +34,6 @@ public interface NotificationTemplateService {
 
     void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id);
 
+    void deleteNotificationTemplatesByTenantId(TenantId tenantId);
+
 }

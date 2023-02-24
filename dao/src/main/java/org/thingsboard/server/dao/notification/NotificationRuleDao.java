@@ -39,4 +39,6 @@ public interface NotificationRuleDao extends Dao<NotificationRule> {
 
     NotificationRuleInfo findInfoById(TenantId tenantId, NotificationRuleId id);
 
+    void removeByTenantId(TenantId tenantId);
+
 }

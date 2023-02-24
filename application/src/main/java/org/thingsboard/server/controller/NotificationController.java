@@ -58,7 +58,6 @@ import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
 import java.util.Collections;
@@ -133,7 +132,7 @@ public class NotificationController extends BaseController {
                     "```\n{\n" +
                     "  \"cmdId\": 1234,\n" +
                     "  \"totalUnreadCount\": 5\n" +
-                    "}\n```" )
+                    "}\n```")
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public PageData<Notification> getNotifications(@RequestParam int pageSize,
@@ -203,9 +202,7 @@ public class NotificationController extends BaseController {
         request.setOriginatorEntityId(user.getId());
         NotificationTemplate template;
         if (request.getTemplateId() != null) {
-            template = notificationTemplateService.findNotificationTemplateById(user.getTenantId(), request.getTemplateId());
-            checkNotNull(template, "Template not found");
-            accessControlService.checkPermission(user, NOTIFICATION, Operation.READ, template.getId(), template);
+            template = checkEntityId(request.getTemplateId(), notificationTemplateService::findNotificationTemplateById, Operation.READ);
         } else {
             template = request.getTemplate();
         }
@@ -254,7 +251,7 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRequestInfo getNotificationRequestById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        return checkEntityId(NOTIFICATION, Operation.READ, notificationRequestId, notificationRequestService::findNotificationRequestInfoById);
+        return checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestInfoById, Operation.READ);
     }
 
     @GetMapping("/notification/requests")
@@ -274,7 +271,7 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationRequest(@PathVariable UUID id) throws Exception {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        NotificationRequest notificationRequest = checkEntityId(NOTIFICATION, Operation.DELETE, notificationRequestId, notificationRequestService::findNotificationRequestById);
+        NotificationRequest notificationRequest = checkEntityId(notificationRequestId, notificationRequestService::findNotificationRequestById, Operation.DELETE);
         doDeleteAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationCenter::deleteNotificationRequest);
     }
 

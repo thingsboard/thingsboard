@@ -71,4 +71,6 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
 
     int deleteAllByCreatedTimeBefore(long ts);
 
+    void deleteByTenantId(UUID tenantId);
+
 }

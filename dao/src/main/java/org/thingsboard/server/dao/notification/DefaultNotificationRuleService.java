@@ -99,6 +99,11 @@ public class DefaultNotificationRuleService extends AbstractCachedEntityService<
     }
 
     @Override
+    public void deleteNotificationRulesByTenantId(TenantId tenantId) {
+        notificationRuleDao.removeByTenantId(tenantId);
+    }
+
+    @Override
     public void handleEvictEvent(NotificationRule notificationRule) {
         NotificationRuleCacheKey cacheKey = NotificationRuleCacheKey.builder()
                 .tenantId(notificationRule.getTenantId())

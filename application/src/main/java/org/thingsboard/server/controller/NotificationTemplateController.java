@@ -45,7 +45,6 @@ import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -94,7 +93,7 @@ public class NotificationTemplateController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTemplate getNotificationTemplateById(@PathVariable UUID id) throws ThingsboardException {
         NotificationTemplateId notificationTemplateId = new NotificationTemplateId(id);
-        return checkEntityId(NOTIFICATION, Operation.READ, notificationTemplateId, notificationTemplateService::findNotificationTemplateById);
+        return checkEntityId(notificationTemplateId, notificationTemplateService::findNotificationTemplateById, Operation.READ);
     }
 
     @ApiOperation(value = "Get notification templates (getNotificationTemplates)",
@@ -126,7 +125,7 @@ public class NotificationTemplateController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationTemplateById(@PathVariable UUID id) throws Exception {
         NotificationTemplateId notificationTemplateId = new NotificationTemplateId(id);
-        NotificationTemplate notificationTemplate = checkEntityId(NOTIFICATION, Operation.DELETE, notificationTemplateId, notificationTemplateService::findNotificationTemplateById);
+        NotificationTemplate notificationTemplate = checkEntityId(notificationTemplateId, notificationTemplateService::findNotificationTemplateById, Operation.DELETE);
         doDeleteAndLog(EntityType.NOTIFICATION_TEMPLATE, notificationTemplate, notificationTemplateService::deleteNotificationTemplateById);
     }
 
