@@ -734,7 +734,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                 if (pageData.hasNext()) {
                     pageLink = pageLink.nextPageLink();
-                    pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
+                    pageData = dashboardService.findDashboardsByTenantIdAndConfigurationText(tenantId, filterTypeForUpdate, pageLink);
                 } else {
                     hasNext = false;
                 }
