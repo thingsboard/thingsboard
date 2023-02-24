@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,6 +33,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
 import { UtilsService } from '@core/services/utils.service';
 
 export interface AlarmDetailsDialogData {
@@ -66,6 +67,8 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   alarmStatuses = AlarmStatus;
 
   alarmUpdated = false;
+
+  @ViewChild('alarmCommentComponent', { static: true }) alarmCommentComponent: AlarmCommentComponent;
 
   assigneeInitials = '';
 
@@ -172,6 +175,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
@@ -183,6 +187,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
