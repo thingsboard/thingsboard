@@ -124,6 +124,7 @@ LEFT JOIN tb_user u ON u.id = a.assignee_id;
 
 -- ALARM FUNCTIONS START
 
+DROP FUNCTION IF EXISTS create_or_update_active_alarm;
 CREATE OR REPLACE FUNCTION create_or_update_active_alarm(
                                         t_id uuid, c_id uuid, a_id uuid, a_created_ts bigint,
                                         a_o_id uuid, a_o_type integer, a_type varchar,
@@ -142,8 +143,8 @@ DECLARE
     result    alarm_info;
     row_count integer;
 BEGIN
-    SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type ORDER BY a.start_ts DESC FOR UPDATE;
-    IF existing.id IS NULL OR existing.cleared IS TRUE THEN
+    SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type AND a.cleared = false ORDER BY a.start_ts DESC FOR UPDATE;
+    IF existing.id IS NULL THEN
         IF a_creation_enabled = FALSE THEN
             RETURN json_build_object('success', false)::text;
         END IF;
