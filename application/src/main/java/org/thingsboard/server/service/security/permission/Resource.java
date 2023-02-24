@@ -52,7 +52,7 @@ public enum Resource {
     private final Set<EntityType> entityTypes;
 
     Resource() {
-        this.entityTypes = null;
+        this.entityTypes = Collections.emptySet();
     }
 
     Resource(EntityType... entityTypes) {
@@ -60,7 +60,7 @@ public enum Resource {
     }
 
     public Set<EntityType> getEntityTypes() {
-        return Optional.ofNullable(entityTypes).orElse(Collections.emptySet());
+        return entityTypes;
     }
 
     public static Resource of(EntityType entityType) {

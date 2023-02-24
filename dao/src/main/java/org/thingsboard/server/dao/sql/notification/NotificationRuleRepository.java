@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
@@ -53,6 +54,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
                                                                       @Param("searchText") String searchText,
                                                                       Pageable pageable);
 
+    @Transactional
     void deleteByTenantId(UUID tenantId);
 
 }

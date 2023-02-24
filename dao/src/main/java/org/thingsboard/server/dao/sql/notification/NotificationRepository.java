@@ -55,6 +55,7 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     int updateStatusesByRequestId(@Param("requestId") UUID requestId,
                                   @Param("status") NotificationStatus status);
 
+    @Transactional
     int deleteByIdAndRecipientId(UUID id, UUID recipientId);
 
     @Modifying

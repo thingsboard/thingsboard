@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.notification.targets.platform.Customer
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.notification.NotificationTargetDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -141,10 +142,10 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
         targetConfig.setUsersFilter(new AllUsersFilter());
         notificationTarget.setConfiguration(targetConfig);
         save(notificationTarget, status().isOk());
-        assertThat(notificationTargetDao.find(TenantId.SYS_TENANT_ID)).isNotEmpty();
+        assertThat(notificationTargetDao.findByTenantIdAndPageLink(differentTenantId, new PageLink(10)).getData()).isNotEmpty();
 
         deleteDifferentTenant();
-        assertThat(notificationTargetDao.find(TenantId.SYS_TENANT_ID)).isEmpty();
+        assertThat(notificationTargetDao.findByTenantIdAndPageLink(differentTenantId, new PageLink(10)).getData()).isEmpty();
     }
 
     private String saveAndGetError(NotificationTarget notificationTarget, ResultMatcher statusMatcher) throws Exception {

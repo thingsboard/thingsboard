@@ -68,6 +68,11 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
     @Override
     public void createDefaultNotificationConfigs(TenantId tenantId) {
+        if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
+            // TODO
+            return;
+        }
+
         NotificationTarget allUsersTarget = new NotificationTarget();
         allUsersTarget.setTenantId(tenantId);
         allUsersTarget.setName("All users");

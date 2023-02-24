@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.NotificationTargetEntity;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public interface NotificationTargetRepository extends JpaRepository<Notification
 
     List<NotificationTargetEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> ids);
 
+    @Transactional
     void deleteByTenantId(UUID tenantId);
 
 }

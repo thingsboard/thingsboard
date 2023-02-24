@@ -678,6 +678,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createDefaultNotificationConfigs() {
+        notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
         for (TenantId tenantId : tenants) {
             try {
