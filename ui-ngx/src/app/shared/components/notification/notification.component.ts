@@ -16,6 +16,7 @@
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
+  ActionButtonLinkType,
   AlarmSeverityNotificationColors,
   Notification,
   NotificationType,
@@ -26,6 +27,8 @@ import { Router } from '@angular/router';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { alarmSeverityTranslations } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
+import { StateObject } from '@core/api/widget-api.models';
+import { objToBase64URI } from '@core/utils';
 
 @Component({
   selector: 'tb-notification',
@@ -91,11 +94,27 @@ export class NotificationComponent implements OnInit {
       $event.stopPropagation();
     }
     if (!this.preview) {
-      if (this.notification.additionalConfig.actionButtonConfig.link.startsWith('/')) {
-        this.router.navigateByUrl(this.router.parseUrl(this.notification.additionalConfig.actionButtonConfig.link)).then(() => {
+      let link: string;
+      if (this.notification.additionalConfig.actionButtonConfig.linkType === ActionButtonLinkType.DASHBOARD) {
+        let state = null;
+        if (this.notification.additionalConfig.actionButtonConfig.dashboardState) {
+          const stateObject: StateObject = {};
+          stateObject.params = {};
+          stateObject.id = this.notification.additionalConfig.actionButtonConfig.dashboardState;
+          state = objToBase64URI([ stateObject ]);
+        }
+        link = `/dashboards/${this.notification.additionalConfig.actionButtonConfig.dashboardId}`
+        if (state) {
+          link += `?state=${state}`;
+        }
+      } else {
+        link = this.notification.additionalConfig.actionButtonConfig.link;
+      }
+      if (link.startsWith('/')) {
+        this.router.navigateByUrl(this.router.parseUrl(link)).then(() => {
         });
       } else {
-        window.open(this.notification.additionalConfig.actionButtonConfig.link, '_blank');
+        window.open(link, '_blank');
       }
       if (this.onClose) {
         this.onClose();

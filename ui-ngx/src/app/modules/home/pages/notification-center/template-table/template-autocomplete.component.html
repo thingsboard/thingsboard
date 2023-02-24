@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectTemplateFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ 'notification.template' | translate }}"
+  <mat-label translate>notification.template</mat-label>
+  <input matInput type="text"
          #templateInput
          formControlName="templateName"
          (focusin)="onFocus()"

@@ -29,10 +29,10 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Subject } from 'rxjs';
 import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
 import { takeUntil } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-escalations-component',
@@ -56,14 +56,9 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   escalationsFormGroup: FormGroup;
   newEscalation = false;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;

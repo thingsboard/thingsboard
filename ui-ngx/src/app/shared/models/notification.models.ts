@@ -206,7 +206,10 @@ interface PushDeliveryMethodAdditionalConfig {
     enabled: boolean;
     text: string;
     color: string;
-    link: string;
+    linkType: ActionButtonLinkType,
+    link?: string;
+    dashboardId?: string;
+    dashboardState?: string;
   };
 }
 
@@ -300,6 +303,16 @@ export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
     [AlarmSeverity.INDETERMINATE, '#00000061']
   ]
 );
+
+export enum ActionButtonLinkType {
+  LINK = 'LINK',
+  DASHBOARD  = 'DASHBOARD'
+}
+
+export const ActionButtonLinkTypeTranslateMap = new Map<ActionButtonLinkType, string>([
+  [ActionButtonLinkType.LINK, 'notification.link-type.link'],
+  [ActionButtonLinkType.DASHBOARD, 'notification.link-type.dashboard']
+]);
 
 interface NotificationTemplateTypeTranslate {
   name: string;

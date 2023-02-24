@@ -16,10 +16,10 @@
 
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-field';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-string-items-list',
@@ -45,15 +45,16 @@ export class StringItemsListComponent implements ControlValueAccessor{
     return this.requiredValue;
   }
   @Input()
+  @coerceBoolean()
   set required(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.requiredValue !== newVal) {
-      this.requiredValue = newVal;
+    if (this.requiredValue !== value) {
+      this.requiredValue = value;
       this.updateValidators();
     }
   }
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Input()
@@ -73,6 +74,10 @@ export class StringItemsListComponent implements ControlValueAccessor{
 
   @Input()
   appearance: MatFormFieldAppearance = 'standard';
+
+  @Input()
+  @coerceBoolean()
+  editable: boolean = false
 
   private propagateChange = (v: any) => { };
 
