@@ -41,7 +41,7 @@ public class TbRabbitMqQueueArguments {
     private String jsExecutorProperties;
     @Value("${queue.rabbitmq.queue-properties.version-control:}")
     private String vcProperties;
-    @Value("${queue.kafka.topic-properties.alarm-rules:}")
+    @Value("${queue.rabbitmq.queue-properties.alarm-rules:}")
     private String arProperties;
 
     @Getter
