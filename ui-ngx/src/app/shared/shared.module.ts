@@ -114,7 +114,6 @@ import { EntitySubTypeListComponent } from '@shared/components/entity/entity-sub
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { TbJsonPipe } from '@shared/pipe/tbJson.pipe';
 import { ColorPickerDialogComponent } from '@shared/components/dialog/color-picker-dialog.component';
-import { MatChipDraggableDirective } from '@shared/components/mat-chip-draggable.directive';
 import { ColorInputComponent } from '@shared/components/color-input.component';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
@@ -209,7 +208,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
-    MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
     TbPopoverComponent,
@@ -369,7 +367,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
-    MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
     TbStringTemplateOutletDirective,

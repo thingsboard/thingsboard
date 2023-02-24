@@ -918,9 +918,8 @@ mat-label {
 
   button.mat-mdc-menu-item {
     overflow: hidden;
-    fill: #737373;
     .mdc-list-item__primary-text {
-      width: 100%;
+      flex: 1;
       .tb-alt-text {
         float: right;
       }
@@ -1413,61 +1412,6 @@ mat-label {
 
   .tb-primary-background {
     background-color: $primary;
-  }
-
-  .mat-mdc-chip.mat-mdc-standard-chip {
-    &.dragging {
-      .mat-mdc-chip-ripple {
-        display: none !important;
-      }
-    }
-  }
-
-  .mat-mdc-chip-set, .mat-mdc-chip-grid {
-    &.dragging {
-      .mat-mdc-chip {
-        &.mat-mdc-standard-chip {
-          &.dropping {
-            //border: dashed 2px;
-            //opacity: .5;
-
-            //.md-chip-content {
-            //  margin: -2px;
-            //}
-          }
-
-          &.dropping-before {
-            &::after {
-              position: absolute;
-              top: 0;
-              right: 50%;
-              bottom: 0;
-              left: 0;
-              content: "";
-              background-color: #fff;
-              border: dashed 2px;
-              border-radius: 16px;
-              opacity: .7;
-            }
-          }
-
-          &.dropping-after {
-            &::after {
-              position: absolute;
-              top: 0;
-              right: 0;
-              bottom: 0;
-              left: 50%;
-              content: "";
-              background-color: #fff;
-              border: dashed 2px;
-              border-radius: 16px;
-              opacity: .7;
-            }
-          }
-        }
-      }
-    }
   }
 
   .tb-color-preview {

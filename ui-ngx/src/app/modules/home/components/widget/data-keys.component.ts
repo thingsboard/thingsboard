@@ -17,15 +17,18 @@
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
   Input,
   OnChanges,
   OnInit,
+  Renderer2,
   SimpleChanges,
   SkipSelf,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -43,7 +46,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
+import { MatChipGrid, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
@@ -59,10 +62,11 @@ import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
 } from '@home/components/widget/data-key-config-dialog.component';
-import { deepClone } from '@core/utils';
-import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
+import { deepClone, guid, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
+import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-data-keys',
@@ -78,7 +82,8 @@ import { AggregationType } from '@shared/models/time/time.models';
       provide: ErrorStateMatcher,
       useExisting: DataKeysComponent
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
 export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges, ErrorStateMatcher {
 
@@ -160,6 +165,11 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   requiredText: string;
 
   searchText = '';
+
+  dndId = guid();
+
+  dragIndex: number;
+
   private latestSearchTextResult: Array<DataKey> = null;
   private fetchObservable$: Observable<Array<DataKey>> = null;
 
@@ -174,6 +184,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
               private dialogs: DialogService,
               private dialog: MatDialog,
               private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef,
+              private renderer: Renderer2,
               public truncate: TruncatePipe) {
   }
 
@@ -318,7 +330,16 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     return originalErrorState || customErrorState;
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void {
+    this.chipList._chips.forEach((chip) => {
+      chip._mousedown = () => {};
+    });
+    this.chipList._chips.changes.subscribe(() => {
+      this.chipList._chips.forEach((chip) => {
+        chip._mousedown = () => {};
+      });
+    });
+  }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
@@ -393,12 +414,24 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     }
   }
 
-  onChipDrop(event: MatChipDropEvent) {
-    const from = event.from;
-    const to = event.to;
-    this.keys.splice(to, 0, this.keys.splice(from, 1)[0]);
+  chipDragStart(index: number, chipRow: MatChipRow, placeholderChipRow: MatChipRow) {
+    this.renderer.setStyle(placeholderChipRow._elementRef.nativeElement, 'width', chipRow._elementRef.nativeElement.offsetWidth + 'px');
+    this.dragIndex = index;
+  }
+
+  chipDragEnd() {
+    this.dragIndex = -1;
+  }
+
+  onChipDrop(event: DndDropEvent) {
+    let index = event.index;
+    if (isUndefined(index)) {
+      index = this.keys.length;
+    }
+    moveItemInArray(this.keys, this.dragIndex, index);
     this.keysListFormGroup.get('keys').setValue(this.keys);
-    this.modelValue.splice(to, 0, this.modelValue.splice(from, 1)[0]);
+    moveItemInArray(this.modelValue, this.dragIndex, index);
+    this.dragIndex = -1;
     this.propagateChange(this.modelValue);
   }
 

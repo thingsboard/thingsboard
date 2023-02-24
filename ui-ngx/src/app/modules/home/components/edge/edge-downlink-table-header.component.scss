@@ -18,27 +18,3 @@
 :host {
   padding-right: 8px;
 }
-
-:host ::ng-deep {
-  mat-form-field {
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    .mat-form-field-wrapper {
-      padding-bottom: 0;
-    }
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    .mat-form-field-underline {
-      bottom: 0;
-    }
-
-    @media #{$mat-xs} {
-      width: 100%;
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      .mat-form-field-infix {
-        width: auto !important;
-      }
-    }
-  }
-}

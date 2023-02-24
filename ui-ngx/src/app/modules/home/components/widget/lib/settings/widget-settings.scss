@@ -30,7 +30,7 @@
 
       legend + * {
         display: block;
-        margin-top: 16px;
+        margin-top: 8px;
       }
 
       &.fields-group-slider {
@@ -77,20 +77,6 @@
 
 :host ::ng-deep {
   .tb-widget-settings {
-    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-    .mat-checkbox-label {
-      white-space: normal;
-    }
-
-    .row-fill {
-      /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-      .mat-form-field-infix {
-        width: 100%;
-      }
-    }
-
     .mat-expansion-panel {
       &.tb-settings {
         box-shadow: none;
@@ -120,16 +106,6 @@
             padding: 0;
           }
         }
-        /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-        .mat-checkbox-layout {
-          margin: 5px 0;
-        }
-        /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-        .mat-checkbox-inner-container {
-          margin-right: 12px;
-        }
       }
 
       .mat-expansion-panel-content {
@@ -148,22 +124,5 @@
         margin-bottom: 8px;
       }
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
- */
-    .mat-slide-toggle-content {
-      white-space: normal;
-    }
-    /*TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version.
- */
-    /*TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version.
- */
-    .mat-slider-multiline {
-      /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
- */
-      .mat-slide-toggle-content {
-        line-height: 18px;
-      }
-    }
-
   }
 }

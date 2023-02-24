@@ -16,66 +16,88 @@
 
 -->
 <mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-chip-list">
-  <mat-chip-grid #chipList formControlName="keys" tb-chip-draggable (chipDrop)="onChipDrop($event)">
-    <mat-chip-row class="tb-datakey-chip"
-      *ngFor="let key of keys; let $index = index"
-      [removable]="!disabled && !isEntityCountDatasource"
-      (removed)="remove(key)">
-      <div fxLayout="row" fxLayoutAlign="start center" class="tb-attribute-chip">
-        <div *ngIf="!disabled" class="tb-chip-drag-handle" style="margin-right: 5px;">
-          <mat-icon class="tb-mat-20">drag_handle</mat-icon>
-        </div>
-        <div class="tb-color-preview" (click)="showColorPicker(key)" style="margin-right: 5px;">
-          <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
-        </div>
-        <div class="tb-chip-labels">
-          <div class="tb-chip-label">
-            <ng-container *ngIf="datasourceType === datasourceTypes.entity">
-              <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.alarm"
-                        matTooltip="{{'datakey.alarm' | translate }}"
-                        matTooltipPosition="above">notifications</mat-icon>
-              <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.attribute"
-                        matTooltip="{{'datakey.attributes' | translate }}"
-                        matTooltipPosition="above" svgIcon="mdi:alpha-a-circle-outline"></mat-icon>
-              <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.entityField"
-                        matTooltip="{{'datakey.entity-field' | translate }}"
-                        matTooltipPosition="above" svgIcon="mdi:alpha-e-circle-outline"></mat-icon>
-              <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.timeseries"
-                        matTooltip="{{'datakey.timeseries' | translate }}"
-                        matTooltipPosition="above">timeline</mat-icon>
-            </ng-container>
-            {{key.label}}
+  <mat-chip-grid #chipList formControlName="keys">
+    <div class="tb-datakeys-container"
+         [dndDropzone]="[dndId]"
+         [dndHorizontal]="true"
+         dndEffectAllowed="move"
+         dndAllowExternal="false"
+         [dndDisableIf]="disabled"
+         (dndDrop)="onChipDrop($event)">
+      <mat-chip-row #placeholderChipRow
+                    dndPlaceholderRef
+                    class="tb-datakey-chip tb-datakey-chip-dnd-placeholder">
+      </mat-chip-row>
+      <mat-chip-row #chipRow *ngFor="let key of keys; let $index = index"
+                    class="tb-datakey-chip"
+                    (dndStart)="chipDragStart($index, chipRow, placeholderChipRow)"
+                    (dndEnd)="chipDragEnd()"
+                    [dndDraggable]="key"
+                    [dndDisableIf]="disabled"
+                    dndType="{{ dndId }}"
+                    dndEffectAllowed="move"
+                    dndDraggingSourceClass="tb-chip-dragging"
+                    [removable]="!disabled && !isEntityCountDatasource"
+                    (removed)="remove(key)">
+        <div dndDragImageRef fxLayout="row" fxLayoutAlign="start center" class="tb-attribute-chip"
+             [ngClass]="{'tb-dragging-chip-image': $index === dragIndex}">
+          <div class="tb-absolute-fill tb-dragging-chip-image-fill"></div>
+          <div dndHandle *ngIf="!disabled" class="tb-chip-drag-handle" style="margin-right: 5px;">
+            <mat-icon class="tb-mat-20">drag_handle</mat-icon>
           </div>
-          <div class="tb-chip-separator">: </div>
-          <div class="tb-chip-label">
-            <strong>
-              <ng-container *ngTemplateOutlet="keyName; context:{key: key}"></ng-container>
-            </strong>
+          <div class="tb-color-preview" (click)="showColorPicker(key)" style="margin-right: 5px;">
+            <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
           </div>
+          <div class="tb-chip-labels">
+            <div class="tb-chip-label">
+              <ng-container *ngIf="datasourceType === datasourceTypes.entity">
+                <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.alarm"
+                          matTooltip="{{'datakey.alarm' | translate }}"
+                          matTooltipPosition="above">notifications</mat-icon>
+                <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.attribute"
+                          matTooltip="{{'datakey.attributes' | translate }}"
+                          matTooltipPosition="above" svgIcon="mdi:alpha-a-circle-outline"></mat-icon>
+                <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.entityField"
+                          matTooltip="{{'datakey.entity-field' | translate }}"
+                          matTooltipPosition="above" svgIcon="mdi:alpha-e-circle-outline"></mat-icon>
+                <mat-icon class="tb-mat-20 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.timeseries"
+                          matTooltip="{{'datakey.timeseries' | translate }}"
+                          matTooltipPosition="above">timeline</mat-icon>
+              </ng-container>
+              {{key.label}}
+            </div>
+            <div class="tb-chip-separator">: </div>
+            <div class="tb-chip-label">
+              <strong>
+                <ng-container *ngTemplateOutlet="keyName; context:{key: key}"></ng-container>
+              </strong>
+            </div>
+          </div>
+          <button *ngIf="!disabled"
+                  type="button"
+                  (click)="editDataKey(key, $index)" mat-icon-button class="tb-mat-32">
+            <mat-icon class="tb-mat-20">edit</mat-icon>
+          </button>
+          <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
         </div>
-        <button *ngIf="!disabled"
-                type="button"
-                (click)="editDataKey(key, $index)" mat-icon-button class="tb-mat-32">
-          <mat-icon class="tb-mat-20">edit</mat-icon>
-        </button>
-        <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
-      </div>
-    </mat-chip-row>
-    <input matInput type="text" placeholder="{{ !disabled ? (keys.length ? secondaryPlaceholder : placeholder) : '' }}"
-           style="max-width: 200px;"
-           #keyInput
-           formControlName="key"
-           matAutocompleteOrigin
-           [readonly]="isEntityCountDatasource"
-           #origin="matAutocompleteOrigin"
-           [matAutocompleteConnectedTo]="origin"
-           (focusin)="onFocus()"
-           (drop)="$event.preventDefault();"
-           [matAutocomplete]="keyAutocomplete"
-           [matAutocompleteDisabled]="isEntityCountDatasource"
-           [matChipInputFor]="chipList"
-           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-           (matChipInputTokenEnd)="add($event)">
+      </mat-chip-row>
+      <input matInput type="text" placeholder="{{ !disabled ? (keys.length ? secondaryPlaceholder : placeholder) : '' }}"
+             [ngClass]="{'tb-dragging': dragIndex > -1}"
+             style="max-width: 200px;"
+             #keyInput
+             formControlName="key"
+             matAutocompleteOrigin
+             [readonly]="isEntityCountDatasource"
+             #origin="matAutocompleteOrigin"
+             [matAutocompleteConnectedTo]="origin"
+             (focusin)="onFocus()"
+             (drop)="$event.preventDefault();"
+             [matAutocomplete]="keyAutocomplete"
+             [matAutocompleteDisabled]="isEntityCountDatasource"
+             [matChipInputFor]="chipList"
+             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+             (matChipInputTokenEnd)="add($event)">
+    </div>
   </mat-chip-grid>
   <mat-autocomplete #keyAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
