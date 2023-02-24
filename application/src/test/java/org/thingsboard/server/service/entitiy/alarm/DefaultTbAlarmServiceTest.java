@@ -85,6 +85,7 @@ public class DefaultTbAlarmServiceTest {
         var alarm = new AlarmInfo();
         when(alarmSubscriptionService.createAlarm(any())).thenReturn(AlarmApiCallResult.builder()
                 .successful(true)
+                .modified(true)
                 .alarm(alarm)
                 .build());
         service.save(alarm, new User());
@@ -96,24 +97,26 @@ public class DefaultTbAlarmServiceTest {
     @Test
     public void testAck() throws ThingsboardException {
         var alarm = new Alarm();
-        when(alarmSubscriptionService.ackAlarm(any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
+        when(alarmSubscriptionService.acknowledgeAlarm(any(), any(), anyLong()))
+                .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).ackAlarm(any(), any(), anyLong());
+        verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
 
     @Test
     public void testClear() throws ThingsboardException {
         var alarm = new Alarm();
         alarm.setAcknowledged(true);
-        when(alarmSubscriptionService.clearAlarm(any(), any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
+        when(alarmSubscriptionService.clearAlarm(any(), any(), anyLong(), any()))
+                .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), any(), anyLong());
+        verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
 
     @Test

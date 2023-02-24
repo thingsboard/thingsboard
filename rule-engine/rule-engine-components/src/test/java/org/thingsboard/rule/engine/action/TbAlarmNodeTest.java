@@ -185,7 +185,7 @@ public class TbAlarmNodeTest {
 
         verify(ctx).createScriptEngine(ScriptLanguage.JS, "DETAILS");
         verify(ctx).getAlarmService();
-        verify(ctx, times(3)).getDbCallbackExecutor();
+        verify(ctx, times(2)).getDbCallbackExecutor();
         verify(ctx).logJsEvalRequest();
         verify(ctx).getTenantId();
         verify(alarmService).findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType");
@@ -372,7 +372,7 @@ public class TbAlarmNodeTest {
         expectedAlarm.setId(id);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findAlarmByIdAsync(tenantId, id)).thenReturn(Futures.immediateFuture(activeAlarm));
+        when(alarmService.findAlarmById(tenantId, id)).thenReturn(activeAlarm);
         when(alarmService.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)

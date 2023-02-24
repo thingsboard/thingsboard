@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_alarm_tenant_assignee_created_time ON alarm(tenan
 ALTER TABLE alarm ADD COLUMN IF NOT EXISTS acknowledged boolean;
 ALTER TABLE alarm ADD COLUMN IF NOT EXISTS cleared boolean;
 
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS status varchar; -- to avoid failure of the subsequent upgrade.
 UPDATE alarm SET acknowledged = true, cleared = true WHERE status = 'CLEARED_ACK';
 UPDATE alarm SET acknowledged = true, cleared = false WHERE status = 'ACTIVE_ACK';
 UPDATE alarm SET acknowledged = false, cleared = true WHERE status = 'CLEARED_UNACK';
@@ -44,7 +45,22 @@ DROP INDEX IF EXISTS idx_entity_alarm_entity_id_alarm_type_created_time_alarm_id
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_entity_id_alarm_type_created_time_alarm_id ON entity_alarm
 USING btree (tenant_id, entity_id, alarm_type, created_time DESC) INCLUDE(alarm_id);
 
-ALTER TABLE alarm DROP COLUMN status;
+DROP INDEX IF EXISTS idx_alarm_tenant_status_created_time;
+ALTER TABLE alarm DROP COLUMN IF EXISTS status;
+
+-- Update old alarms and set their state to clear, if there are newer alarms.
+UPDATE alarm a
+SET cleared = TRUE
+WHERE cleared = FALSE
+  AND id != (SELECT l.id
+             FROM alarm l
+             WHERE l.tenant_id = a.tenant_id
+               AND l.originator_id = a.originator_id
+               AND l.type = a.type
+             ORDER BY l.created_time DESC, l.id
+             LIMIT 1);
+
+VACUUM FULL ANALYZE alarm;
 
 -- ALARM STATUS REFACTORING END
 

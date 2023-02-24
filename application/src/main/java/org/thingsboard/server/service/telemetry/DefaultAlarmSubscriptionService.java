@@ -99,7 +99,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Override
     public AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request) {
         boolean creationEnabled = apiUsageStateService.getApiUsageState(request.getTenantId()).isAlarmCreationEnabled();
-        return withWsCallback(alarmService.createAlarm(request, creationEnabled));
+        var result = alarmService.createAlarm(request, creationEnabled);
+        if (result.isCreated()) {
+            apiUsageClient.report(request.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
+        }
+        return withWsCallback(result);
     }
 
     @Override
