@@ -119,7 +119,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
   }
 
   selected(event: MatAutocompleteSelectedEvent): void {
-    this.selectUserFormGroup.get('user').patchValue('');
+    this.clear();
     const user: User  = event.option.value;
     if (user) {
       this.assign(user);

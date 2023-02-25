@@ -4757,7 +4757,7 @@
             "display-alarm-details": "Display alarm details",
             "allow-alarms-ack": "Allow alarms acknowledgment",
             "allow-alarms-clear": "Allow alarms clear",
-            "display-alarm-comments": "Display alarm comments"
+            "display-alarm-comments": "Display alarm comments",
             "allow-alarms-assign": "Allow alarms assignment"
         },
         "value-source": {

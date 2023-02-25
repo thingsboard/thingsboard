@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 :host {
   width: 100%;
   overflow: auto;
@@ -26,7 +27,6 @@
     padding-top: 8px;
     height: 340px;
     font-size: 14px;
-
     background-color: #fff;
     .mat-form-field-wrapper {
       margin-right: 8px;
@@ -44,17 +44,12 @@
   }
 
   .tb-assignee-autocomplete {
-
     &.tb-assignee-autocomplete.mat-autocomplete-visible {
       position: relative;
       left: -8px;
       margin-top: 8px;
       box-shadow: none !important;
     }
-    .assigned {
-      background-color: rgba(0, 0, 0, 0.06);
-    }
-
     .mat-option {
       font-size: 14px;
       border: none;
@@ -84,8 +79,8 @@
       }
       .user-display-name {
         max-width: 180px;
+        overflow: hidden;
         span {
-          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }

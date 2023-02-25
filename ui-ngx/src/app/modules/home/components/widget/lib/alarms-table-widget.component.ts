@@ -1115,7 +1115,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const connectedPosition: ConnectedPosition = {
       originX: 'end',
       originY: 'bottom',
-      overlayX: 'center',
+      overlayX: 'end',
       overlayY: 'top'
     };
     config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
