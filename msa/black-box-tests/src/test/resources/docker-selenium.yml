@@ -31,5 +31,6 @@ services:
       SE_SCREEN_HEIGHT: 1080
       SE_SCREEN_DEPTH: 24
       SE_SCREEN_DPI: 74
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+# Alternative way how to connect to the host address
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
