@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,7 +33,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { UtilsService } from '@core/services/utils.service';
+import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
 
 export interface AlarmDetailsDialogData {
   alarmId?: string;
@@ -67,7 +67,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
 
   alarmUpdated = false;
 
-  assigneeInitials = '';
+  @ViewChild('alarmCommentComponent', { static: true }) alarmCommentComponent: AlarmCommentComponent;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -76,8 +76,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
               @Inject(MAT_DIALOG_DATA) public data: AlarmDetailsDialogData,
               private alarmService: AlarmService,
               public dialogRef: MatDialogRef<AlarmDetailsDialogComponent, boolean>,
-              public fb: UntypedFormBuilder,
-              private utilsService: UtilsService) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.allowAcknowledgment = data.allowAcknowledgment;
@@ -88,15 +87,12 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       {
         createdTime: [''],
         originatorName: [''],
-        assigneeId: [''],
         startTime: [''],
         endTime: [''],
         ackTime: [''],
         clearTime: [''],
-        assignTime: [''],
         type: [''],
         alarmSeverity: [''],
-        assignee: [''],
         alarmStatus: [''],
         alarmDetails: [null]
       }
@@ -122,10 +118,6 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       .patchValue(this.datePipe.transform(alarm.createdTime, 'yyyy-MM-dd HH:mm:ss'));
     this.alarmFormGroup.get('originatorName')
       .patchValue(alarm.originatorName);
-    if(alarm.assigneeId) {
-      this.alarmFormGroup.get('assigneeId')
-        .patchValue(alarm.assigneeId.id);
-    }
     if (alarm.startTs) {
       this.alarmFormGroup.get('startTime')
         .patchValue(this.datePipe.transform(alarm.startTs, 'yyyy-MM-dd HH:mm:ss'));
@@ -142,20 +134,11 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       this.alarmFormGroup.get('clearTime')
         .patchValue(this.datePipe.transform(alarm.clearTs, 'yyyy-MM-dd HH:mm:ss'));
     }
-    if (alarm.assignTs) {
-      this.alarmFormGroup.get('assignTime')
-        .patchValue(this.datePipe.transform(alarm.assignTs, 'yyyy-MM-dd HH:mm:ss'));
-    }
     this.alarmFormGroup.get('type').patchValue(alarm.type);
     this.alarmFormGroup.get('alarmSeverity')
       .patchValue(this.translate.instant(alarmSeverityTranslations.get(alarm.severity)));
     this.alarmFormGroup.get('alarmStatus')
       .patchValue(this.translate.instant(alarmStatusTranslations.get(alarm.status)));
-    if (alarm.assigneeId) {
-      this.alarmFormGroup.get('assignee').
-      patchValue(this.getUserDisplayName(alarm));
-      this.assigneeInitials = this.getUserInitials(alarm);
-    }
     this.alarmFormGroup.get('alarmDetails').patchValue(alarm.details);
   }
 
@@ -172,6 +155,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
@@ -183,48 +167,15 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
   }
 
-  getColorFromString(userDisplayName: string) {
-    return this.utilsService.stringToHslColor(userDisplayName, 40, 60);
+  onReassign(): void {
+    this.alarmUpdated = true;
+    this.loadAlarm()
+    this.alarmCommentComponent.loadAlarmComments();
   }
-
-  getUserDisplayName(entity: AlarmInfo) {
-    let displayName = '';
-    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
-      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
-      if (entity.assignee.firstName) {
-        displayName += entity.assignee.firstName;
-      }
-      if (entity.assignee.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.assignee.lastName;
-      }
-    } else {
-      displayName = entity.assignee.email;
-    }
-    return displayName;
-  }
-
-  getUserInitials(entity: AlarmInfo): string {
-    let initials = '';
-    if (entity.assignee.firstName && entity.assignee.firstName.length ||
-      entity.assignee.lastName && entity.assignee.lastName.length) {
-      if (entity.assignee.firstName) {
-        initials += entity.assignee.firstName.charAt(0);
-      }
-      if (entity.assignee.lastName) {
-        initials += entity.assignee.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.assignee.email.charAt(0);
-    }
-    return initials.toUpperCase();
-  }
-
 }

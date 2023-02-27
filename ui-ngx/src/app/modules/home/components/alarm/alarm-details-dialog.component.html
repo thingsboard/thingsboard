@@ -56,14 +56,10 @@
           <mat-label translate>alarm.status</mat-label>
           <input matInput formControlName="alarmStatus" readonly>
         </mat-form-field>
-        <mat-form-field *ngIf="alarmFormGroup.get('assignee').value" appearance="none" fxFlex class="mat-block assignee-field">
-          <mat-label translate="">alarm.assignee</mat-label>
-          <span matPrefix fxLayout="row" fxLayoutAlign="center center" class="user-avatar"
-                [style.background-color]="getColorFromString(alarmFormGroup.get('assignee').value)">
-            {{ assigneeInitials }}
-          </span>
-          <input matInput formControlName="assignee" readonly>
-        </mat-form-field>
+        <tb-alarm-assignee fxFlex style="padding-top: 9px"
+                           [alarm]="alarm$ | async"
+                           (alarmReassigned)="onReassign()">
+        </tb-alarm-assignee>
       </div>
       <mat-expansion-panel class="tb-alarm-details">
         <mat-expansion-panel-header  fxLayout="row wrap">
@@ -107,6 +103,7 @@
         </ng-template>
       </mat-expansion-panel>
     </fieldset>
+    <tb-alarm-comment #alarmCommentComponent [alarmId]="alarmId"></tb-alarm-comment>
   </div>
   <div mat-dialog-actions fxLayout="row">
     <button mat-button color="primary"

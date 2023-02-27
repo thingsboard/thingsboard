@@ -249,7 +249,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     const connectedPosition: ConnectedPosition = {
       originX: 'end',
       originY: 'bottom',
-      overlayX: 'center',
+      overlayX: 'end',
       overlayY: 'top'
     };
     config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
