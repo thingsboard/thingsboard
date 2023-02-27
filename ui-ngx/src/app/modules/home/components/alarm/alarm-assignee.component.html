@@ -1,0 +1,41 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div class="tb-assignee" fxLayout="row" fxLayoutAlign="start center"
+     (click)="openAlarmAssigneePanel($event, alarm)">
+  <span *ngIf="alarm.assigneeId" class="assigned-container">
+    <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
+      {{ getUserInitials(alarm.assignee) }}
+    </span>
+    <span [matTooltip]="getUserDisplayName(alarm.assignee)"
+          matTooltipPosition="above"
+          style="text-overflow: ellipsis">{{ getUserDisplayName(alarm.assignee) }}</span>
+  </span>
+  <span *ngIf="!alarm.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
+    <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
+    <span translate>alarm.unassigned</span>
+  </span>
+  <button fxFlexAlign="flex-end"
+          mat-icon-button
+          matTooltip="{{ 'alarm.assign' | translate }}"
+          matTooltipPosition="above">
+    <mat-icon>
+      keyboard_arrow_down
+    </mat-icon>
+  </button>
+</div>
