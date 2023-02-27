@@ -109,17 +109,20 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final Lock scriptsLock = new ReentrantLock();
 
     @PostConstruct
+    @Override
     public void init() {
         super.init();
         requestTemplate.init();
     }
 
     @PreDestroy
-    public void destroy() {
+    @Override
+    public void stop() {
         super.stop();
         if (requestTemplate != null) {
             requestTemplate.stop();
         }
+        callbackExecutor.shutdownNow();
     }
 
     @Override
