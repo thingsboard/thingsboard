@@ -123,7 +123,8 @@ public class CachedAttributesService implements AttributesService {
                     return result;
                 } catch (Throwable e) {
                     cacheTransaction.rollback();
-                    log.error("Could not find attribute from cache", e);
+                    String message = String.format("Could not find attribute from cache: [%s] [%s] [%s]", entityId, scope, attributeKey);
+                    log.warn(message, e);
                     throw e;
                 }
             });
@@ -172,7 +173,8 @@ public class CachedAttributesService implements AttributesService {
                 return mergedAttributes;
             } catch (Throwable e) {
                 cacheTransaction.rollback();
-                log.error("Could not find attributes from cache", e);
+                String message = String.format("Could not find attributes from cache: [%s] [%s] %s", entityId, scope, notFoundAttributeKeys);
+                log.warn(message, e);
                 throw e;
             }
         });
