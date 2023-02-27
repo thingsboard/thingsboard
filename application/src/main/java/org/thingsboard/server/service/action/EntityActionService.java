@@ -254,7 +254,7 @@ public class EntityActionService {
             }
         } else if (actionType.equals(ActionType.DELETED)) {
             if (tpi.isMyPartition()) {
-                alarmRuleStateService.get().processEntityDeleted(entityId);
+                alarmRuleStateService.get().processEntityDeleted(tenantId, entityId);
             } else {
                 tbClusterService.pushDeleteEntityMsgToAlarmRules(tpi, tenantId, entityId, null);
             }

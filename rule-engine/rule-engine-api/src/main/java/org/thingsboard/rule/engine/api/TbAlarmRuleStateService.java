@@ -29,7 +29,7 @@ public interface TbAlarmRuleStateService {
 
     <T extends HasProfileId<? extends EntityId>> void processEntityUpdated(TenantId tenantId, EntityId entityId, T entity);
 
-    void processEntityDeleted(EntityId entityId);
+    void processEntityDeleted(TenantId tenantId, EntityId entityId);
 
     void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
 

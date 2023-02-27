@@ -118,7 +118,8 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
     private final Map<EntityId, EntityState> entityStates = new ConcurrentHashMap<>();
     private final Map<TenantId, Map<AlarmRuleId, AlarmRule>> rules = new ConcurrentHashMap<>();
-    private final Map<AlarmRuleId, Set<EntityId>> myEntityStateIds = new ConcurrentHashMap<>();
+    private final Map<AlarmRuleId, Set<EntityId>> myEntityStateIdsPerAlarmRule = new ConcurrentHashMap<>();
+    private final Map<TenantId, Set<EntityId>> myEntityStateIds = new ConcurrentHashMap<>();
     private final Map<TenantId, Set<EntityId>> otherEntityStateIds = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -187,18 +188,15 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
         requestCtx.setRuleChainId(tbContext.getSelf().getRuleChainId());
         requestCtx.setRuleNodeId(tbContext.getSelfId());
         requestCtx.setDebugMode(tbContext.getSelf().isDebugMode());
-        process(requestCtx, tbContext.getTenantId(), msg);
+        doProcess(requestCtx, tbContext.getTenantId(), msg);
     }
 
     @Override
     public void process(TenantId tenantId, TbMsg msg) throws Exception {
-        EntityState entityState = getOrCreateEntityState(tenantId, msg.getOriginator());
-        if (entityState != null) {
-            entityState.process(null, msg);
-        }
+        doProcess(null, tenantId, msg);
     }
 
-    private void process(TbAlarmRuleRequestCtx requestCtx, TenantId tenantId, TbMsg msg) throws Exception {
+    private void doProcess(TbAlarmRuleRequestCtx requestCtx, TenantId tenantId, TbMsg msg) throws Exception {
         EntityState entityState = getOrCreateEntityState(tenantId, msg.getOriginator());
         if (entityState != null) {
             entityState.process(requestCtx, msg);
@@ -223,10 +221,11 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
                     toAdd.forEach(entityState::addAlarmRule);
                     entityState.removeAlarmRules(toRemoveIds);
-                    toRemoveIds.forEach(alarmRuleId -> myEntityStateIds.get(alarmRuleId).remove(entityId));
+                    toRemoveIds.forEach(alarmRuleId -> myEntityStateIdsPerAlarmRule.get(alarmRuleId).remove(entityId));
 
                     if (entityState.isEmpty()) {
                         entityStates.remove(entityId);
+                        myEntityStateIds.get(tenantId).remove(entityId);
                         alarmRuleEntityStateService.deleteByEntityId(tenantId, entityId);
                     }
                 }
@@ -237,11 +236,104 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
     }
 
     @Override
-    public void processEntityDeleted(EntityId entityId) {
+    public void processEntityDeleted(TenantId tenantId, EntityId entityId) {
         EntityState state = entityStates.remove(entityId);
         if (state != null) {
-            myEntityStateIds.values().forEach(ids -> ids.remove(entityId));
-            alarmRuleEntityStateService.deleteByEntityId(state.getTenantId(), entityId);
+            myEntityStateIdsPerAlarmRule.values().forEach(ids -> ids.remove(entityId));
+            myEntityStateIds.get(tenantId).remove(entityId);
+            alarmRuleEntityStateService.deleteByEntityId(tenantId, entityId);
+        }
+    }
+
+    @Override
+    public void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
+        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
+        if (alarmRule.isEnabled()) {
+            addAlarmRule(tenantId, alarmRule);
+        }
+    }
+
+    @Override
+    public void updateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
+        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
+        if (alarmRule.isEnabled()) {
+            Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+            if (tenantRules != null) {
+                if (tenantRules.containsKey(alarmRuleId)) {
+                    tenantRules.put(alarmRule.getId(), alarmRule);
+
+                    Set<EntityId> stateIds = myEntityStateIdsPerAlarmRule.get(alarmRule.getId());
+
+                    stateIds.forEach(stateId -> {
+                        EntityState entityState = entityStates.get(stateId);
+                        try {
+                            entityState.updateAlarmRule(alarmRule);
+                        } catch (Exception e) {
+                            log.error("[{}] [{}] Failed to update alarm rule!", tenantId, alarmRule.getName(), e);
+                        }
+                    });
+                } else {
+                    addAlarmRule(tenantId, alarmRule);
+                }
+            }
+        } else {
+            deleteAlarmRule(tenantId, alarmRuleId);
+        }
+    }
+
+    private void addAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
+        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+        if (tenantRules != null) {
+            tenantRules.put(alarmRule.getId(), alarmRule);
+            myEntityStateIds.get(tenantId).stream()
+                    .filter(entityId -> isEntityMatches(tenantId, entityId, alarmRule))
+                    .forEach(entityId -> {
+                                EntityState entityState = entityStates.get(entityId);
+                                myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(entityId);
+                                entityState.addAlarmRule(alarmRule);
+                            }
+                    );
+        }
+    }
+
+    @Override
+    public void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
+        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+
+        if (tenantRules == null) {
+            return;
+        }
+
+        tenantRules.remove(alarmRuleId);
+
+        Set<EntityId> stateIds = myEntityStateIdsPerAlarmRule.remove(alarmRuleId);
+
+        if (stateIds != null) {
+            stateIds.forEach(id -> {
+                EntityState entityState = entityStates.get(id);
+                Lock lock = entityState.getLock();
+                try {
+                    lock.lock();
+                    entityState.removeAlarmRule(alarmRuleId);
+                    if (entityState.isEmpty()) {
+                        entityStates.remove(entityState.getEntityId());
+                        myEntityStateIds.get(tenantId).remove(entityState.getEntityId());
+                        alarmRuleEntityStateService.deleteByEntityId(tenantId, id);
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void deleteTenant(TenantId tenantId) {
+        otherEntityStateIds.remove(tenantId);
+        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+        if (tenantRules != null) {
+            tenantRules.keySet().forEach(alarmRuleId -> deleteAlarmRule(tenantId, alarmRuleId));
+            rules.remove(tenantId);
         }
     }
 
@@ -274,7 +366,7 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
             });
 
             toRemove.forEach(entityStates::remove);
-            myEntityStateIds.values().forEach(ids -> toRemove.forEach(ids::remove));
+            myEntityStateIdsPerAlarmRule.values().forEach(ids -> toRemove.forEach(ids::remove));
 
             toAdd.forEach(ares -> createEntityState(ares.getTenantId(), ares.getEntityId(), ares));
         }
@@ -286,7 +378,7 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
         consumerExecutor.execute(() -> consumerLoop(consumer));
     }
 
-    void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> consumer) {
+    private void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToTbAlarmRuleStateServiceMsg>> consumer) {
         while (!stopped && !consumer.isStopped()) {
             List<ListenableFuture<?>> futures = new ArrayList<>();
             try {
@@ -337,7 +429,7 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
             TransportProtos.EntityDeleteMsg entityDeleteMsg = msgProto.getEntityDeleteMsg();
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityDeleteMsg.getEntityType(),
                     new UUID(entityDeleteMsg.getEntityIdMSB(), entityDeleteMsg.getEntityIdLSB()));
-            processEntityDeleted(entityId);
+            processEntityDeleted(tenantId, entityId);
         } else {
             TbMsg tbMsg = TbMsg.fromBytes(msgProto.getQueueName(), msgProto.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
             if (msgProto.hasAlarmRuleRequest()) {
@@ -349,95 +441,14 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
                 ctx.setRuleChainId(ruleChainId);
                 ctx.setRuleNodeId(ruleNodeId);
                 ctx.setDebugMode(alarmRuleRequest.getIsDebug());
-                process(ctx, tenantId, tbMsg);
+                doProcess(ctx, tenantId, tbMsg);
             } else {
                 process(tenantId, tbMsg);
             }
         }
     }
 
-    @Override
-    public void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
-        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
-        if (alarmRule.isEnabled()) {
-            Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
-            if (tenantRules != null) {
-                tenantRules.put(alarmRule.getId(), alarmRule);
-            }
-        }
-    }
-
-    @Override
-    public void updateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
-        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
-        if (alarmRule.isEnabled()) {
-            Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
-            if (tenantRules != null) {
-                tenantRules.put(alarmRule.getId(), alarmRule);
-
-                Set<EntityId> stateIds = myEntityStateIds.get(alarmRule.getId());
-
-                stateIds.forEach(stateId -> {
-                    EntityState entityState = entityStates.get(stateId);
-                    try {
-                        entityState.updateAlarmRule(alarmRule);
-                    } catch (Exception e) {
-                        log.error("[{}] [{}] Failed to update alarm rule!", tenantId, alarmRule.getName(), e);
-                    }
-                });
-            }
-        } else {
-            deleteAlarmRule(tenantId, alarmRuleId);
-        }
-    }
-
-    @Override
-    public void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
-        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
-
-        Set<EntityId> otherIds = otherEntityStateIds.get(tenantId);
-
-        if (otherIds != null) {
-            otherIds.remove(alarmRuleId);
-        }
-
-        if (tenantRules == null) {
-            return;
-        }
-
-        tenantRules.remove(alarmRuleId);
-
-        Set<EntityId> stateIds = myEntityStateIds.remove(alarmRuleId);
-
-        if (stateIds != null) {
-            stateIds.forEach(id -> {
-                EntityState entityState = entityStates.get(id);
-                Lock lock = entityState.getLock();
-                try {
-                    lock.lock();
-                    entityState.removeAlarmRule(alarmRuleId);
-                    if (entityState.isEmpty()) {
-                        entityStates.remove(entityState.getEntityId());
-                        alarmRuleEntityStateService.deleteByEntityId(tenantId, id);
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            });
-        }
-    }
-
-    @Override
-    public void deleteTenant(TenantId tenantId) {
-        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
-        if (tenantRules != null) {
-            tenantRules.keySet().forEach(alarmRuleId -> deleteAlarmRule(tenantId, alarmRuleId));
-            rules.remove(tenantId);
-            otherEntityStateIds.remove(tenantId);
-        }
-    }
-
-    protected void harvestAlarms() {
+    private void harvestAlarms() {
         long ts = System.currentTimeMillis();
         for (EntityState state : entityStates.values()) {
             try {
@@ -487,13 +498,14 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
         EntityState entityState = entityStates.get(targetEntityId);
         if (entityState == null) {
             entityState = new EntityState(tenantId, targetEntityId, getProfileId(tenantId, targetEntityId), ctx, new EntityRulesState(alarmRules), alarmRuleEntityState);
+            myEntityStateIds.computeIfAbsent(tenantId, key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
             entityStates.put(targetEntityId, entityState);
-            alarmRules.forEach(alarmRule -> myEntityStateIds.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId));
+            alarmRules.forEach(alarmRule -> myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId));
         } else {
             for (AlarmRule alarmRule : alarmRules) {
-                Set<EntityId> entityIds = myEntityStateIds.get(alarmRule.getId());
+                Set<EntityId> entityIds = myEntityStateIdsPerAlarmRule.get(alarmRule.getId());
                 if (entityIds == null || !entityIds.contains(targetEntityId)) {
-                    myEntityStateIds.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
+                    myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
                     entityState.addAlarmRule(alarmRule);
                 }
             }
@@ -528,7 +540,6 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
                         .stream()
                         .filter(rule -> alarmRuleIds.contains(rule.getId()))
                         .collect(Collectors.toList());
-
 
         getOrCreateEntityState(tenantId, entityId, filteredRules, alarmRuleEntityState);
     }
@@ -612,13 +623,5 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
     private boolean isLocalEntity(TenantId tenantId, EntityId entityId) {
         return partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId).isMyPartition();
-    }
-
-    private void removeEntityState(EntityId entityId) {
-        EntityState state = entityStates.remove(entityId);
-        if (state != null) {
-            myEntityStateIds.values().forEach(ids -> ids.remove(entityId));
-            alarmRuleEntityStateService.deleteByEntityId(state.getTenantId(), entityId);
-        }
     }
 }

@@ -190,7 +190,6 @@ class EntityState {
         }
     }
 
-    //TODO: move lock to the particular process methods
     public void process(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         lock.lock();
         try {
