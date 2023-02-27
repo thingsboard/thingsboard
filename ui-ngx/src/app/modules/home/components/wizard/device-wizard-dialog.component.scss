@@ -63,14 +63,6 @@
           height: 100%;
         }
       }
-
-      tb-device-profile-autocomplete, tb-queue-autocomplete{
-        /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-        .mat-form-field-wrapper{
-          width: 180px !important;
-        }
-      }
     }
   }
 }

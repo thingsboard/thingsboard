@@ -25,7 +25,7 @@ import { DeviceProfileId } from '../../../../shared/models/id/device-profile-id'
 @Component({
   selector: 'tb-device-table-header',
   templateUrl: './device-table-header.component.html',
-  styleUrls: ['./device-table-header.component.scss']
+  styleUrls: []
 })
 export class DeviceTableHeaderComponent extends EntityTableHeaderComponent<DeviceInfo> {
 

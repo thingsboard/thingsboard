@@ -16,11 +16,7 @@
 @import "../../../../../scss/constants";
 
 :host {
-  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-  /*TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version.
- */
-  mat-card.settings-card {
+  .mat-mdc-card.settings-card {
     @media #{$mat-md} {
       width: 90%;
     }
@@ -75,6 +71,13 @@
 }
 
 :host ::ng-deep {
+
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-infix {
+      width: 100%;
+    }
+  }
+
   .mat-expansion-panel {
     .mat-expansion-panel-content {
       font-size: 16px;

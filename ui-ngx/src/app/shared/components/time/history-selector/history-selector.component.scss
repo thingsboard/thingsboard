@@ -84,17 +84,6 @@
   width: 100%;
   padding-bottom: 16px;
   padding-left: 10px;
-  /*TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version.
- */
-  /*TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version.
- */
-  mat-slider-container {
-    /*TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version.
- */
-    mat-slider {
-      min-width: 80px;
-    }
-  }
 
   .mat-mdc-icon-button {
     width: 44px;
@@ -113,11 +102,6 @@
         width: inherit;
         height: inherit;
       }
-    }
-    /*TODO(mdc-migration): The following rule targets internal classes of select that may no longer apply for the MDC version.
- */
-    mat-select {
-      margin: 0;
     }
   }
 

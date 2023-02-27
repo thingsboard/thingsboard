@@ -16,7 +16,7 @@
 
 -->
 <section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="16px">
-  <mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'" [hideRequiredMarker]="!showLabel" [ngClass]="{'no-label': !showLabel}">
+  <mat-form-field>
     <mat-label *ngIf="showLabel">{{ dateText | translate }}</mat-label>
     <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
     <mat-datetimepicker #datePicker type="date" openOnFocus="true"></mat-datetimepicker>
@@ -26,7 +26,7 @@
            matInput [(ngModel)]="date"
            [matDatetimepicker]="datePicker" (ngModelChange)="onDateChange()">
   </mat-form-field>
-  <mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'" [hideRequiredMarker]="!showLabel" [ngClass]="{'no-label': !showLabel}">
+  <mat-form-field>
     <mat-label *ngIf="showLabel">{{ timeText | translate }}</mat-label>
     <mat-datetimepicker-toggle [for]="timePicker" matPrefix></mat-datetimepicker-toggle>
     <mat-datetimepicker #timePicker type="time" openOnFocus="true"></mat-datetimepicker>

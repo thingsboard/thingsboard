@@ -44,18 +44,3 @@
     margin-top: 0.5em;
   }
 }
-
-:host ::ng-deep {
-  mat-form-field {
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    .mat-form-field-wrapper {
-      padding-bottom: 1em;
-    }
-    /*TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.
- */
-    .mat-form-field-infix {
-      width: 100%;
-    }
-  }
-}

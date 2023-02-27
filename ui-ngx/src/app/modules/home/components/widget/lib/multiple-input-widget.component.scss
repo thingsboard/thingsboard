@@ -44,25 +44,15 @@
         margin-bottom: 5px;
       }
     }
-    /*TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.
- */
-    mat-checkbox,
-    mat-slide-toggle {
+
+    .mat-mdc-slide-toggle {
       display: block;
-      margin-top: 20px;
-      margin-bottom: 16px;
-      .label-wrapper {
-        white-space: normal;
-      }
-    }
-    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
- */
-    mat-slide-toggle {
-      height: auto;
+      margin-top: 10px;
+      margin-bottom: 8px;
     }
 
     .date-time-input {
-      mat-form-field {
+      .mat-mdc-form-field {
         width: 100%;
         margin: 2px 0;
       }
@@ -76,14 +66,12 @@
 
 :host ::ng-deep {
   .tb-multiple-input {
-    /*TODO(mdc-migration): The following rule targets internal classes of slide-toggle that may no longer apply for the MDC version.
- */
-    .mat-slide-toggle-content {
-      width: 100%;
+    .mat-mdc-slide-toggle .mdc-form-field > label {
       display: flex;
       align-items: center;
 
       .mat-icon {
+        margin-left: 8px;
         margin-right: 8px;
       }
     }

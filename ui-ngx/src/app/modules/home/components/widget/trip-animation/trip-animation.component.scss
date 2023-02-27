@@ -50,15 +50,9 @@
         min-width: 32px;
         height: 32px;
         min-height: 32px;
-        padding: 0 0 2px;
         margin: 2px;
         line-height: 24px;
         z-index: 999;
-        /*TODO(mdc-migration): The following rule targets internal classes of button that may no longer apply for the MDC version.
- */
-        &::ng-deep .mat-button-wrapper {
-          padding: 0;
-        }
 
         mat-icon {
           width: 24px;
