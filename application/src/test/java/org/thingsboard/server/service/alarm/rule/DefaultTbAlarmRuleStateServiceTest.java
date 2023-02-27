@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -1100,25 +1101,21 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         deviceProfile.setTenantId(tenantId);
         deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
 
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName("test device");
-        device.setDeviceProfileId(deviceProfile.getId());
-        device = deviceService.saveDevice(device);
+        Device device1 = new Device();
+        device1.setTenantId(tenantId);
+        device1.setName("test device 1");
+        device1.setDeviceProfileId(deviceProfile.getId());
+        device1 = deviceService.saveDevice(device1);
 
-        DeviceId deviceId = device.getId();
+        DeviceId device1Id = device1.getId();
 
-        AssetProfile assetProfile = createAssetProfile("test asset profile");
-        assetProfile.setTenantId(tenantId);
-        assetProfile = assetProfileService.saveAssetProfile(assetProfile);
+        Device device2 = new Device();
+        device2.setTenantId(tenantId);
+        device2.setName("test device 2");
+        device2.setDeviceProfileId(deviceProfile.getId());
+        device2 = deviceService.saveDevice(device2);
 
-        Asset asset = new Asset();
-        asset.setTenantId(tenantId);
-        asset.setName("test asset");
-        asset.setAssetProfileId(assetProfile.getId());
-        asset = assetService.saveAsset(asset);
-
-        AssetId assetId = asset.getId();
+        DeviceId device2Id = device2.getId();
 
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setTenantId(tenantId);
@@ -1153,7 +1150,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
 
-        AlarmRuleEntityFilter sourceFilter = new AlarmRuleEntityListEntityFilter(Arrays.asList(deviceId, assetId));
+        AlarmRuleEntityFilter sourceFilter = new AlarmRuleEntityListEntityFilter(EntityType.DEVICE, Arrays.asList(device1Id, device2Id));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
@@ -1163,14 +1160,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg deviceMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg deviceMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), device1Id, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, deviceMsg);
 
-        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(device1Id), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> deviceAlarmFuture = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        ListenableFuture<PageData<AlarmInfo>> deviceAlarmFuture = alarmService.findAlarms(tenantId, new AlarmQuery(device1Id,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, true));
 
         List<AlarmInfo> deviceAlarms = deviceAlarmFuture.get().getData();
@@ -1180,14 +1177,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Assert.equals("highTemperatureAlarm", deviceAlarm.getName());
         Assert.equals(AlarmStatus.ACTIVE_UNACK, deviceAlarm.getStatus());
 
-        TbMsg assetMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
+        TbMsg assetMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), device2Id, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, assetMsg);
 
-        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(device2Id), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> assetFuture = alarmService.findAlarms(tenantId, new AlarmQuery(assetId,
+        ListenableFuture<PageData<AlarmInfo>> assetFuture = alarmService.findAlarms(tenantId, new AlarmQuery(device2Id,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, true));
 
         List<AlarmInfo> assetAlarms = assetFuture.get().getData();

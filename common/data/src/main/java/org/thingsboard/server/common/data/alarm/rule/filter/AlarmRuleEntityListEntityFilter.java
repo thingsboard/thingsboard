@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.alarm.rule.filter;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
@@ -24,6 +25,8 @@ import java.util.List;
 public class AlarmRuleEntityListEntityFilter implements AlarmRuleEntityFilter {
 
     private static final long serialVersionUID = -1606652279198083665L;
+
+    private final EntityType entityType;
 
     private final List<EntityId> entityIds;
 
@@ -34,6 +37,6 @@ public class AlarmRuleEntityListEntityFilter implements AlarmRuleEntityFilter {
 
     @Override
     public boolean isEntityMatches(EntityId entityId) {
-        return entityIds.contains(entityId);
+        return entityType.equals(entityId.getEntityType()) && entityIds.contains(entityId);
     }
 }
