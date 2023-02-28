@@ -32,4 +32,4 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 ALTER TABLE user_credentials
-    ADD COLUMN IF NOT EXISTS additional_info varchar NULL;
+    ADD COLUMN IF NOT EXISTS additional_info varchar DEFAULT '{}';
