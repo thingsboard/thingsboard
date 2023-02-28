@@ -35,14 +35,14 @@
 
 :host ::ng-deep {
   .tb-table-widget {
-    .mat-tab-group {
+    .mat-mdc-tab-group {
       height: 100%;
       overflow: hidden;
     }
-    .mat-tab-body-wrapper {
+    .mat-mdc-tab-body-wrapper {
       height: 100%;
     }
-    .mat-tab-body-content {
+    .mat-mdc-tab-body-content {
       display: flex;
       flex-direction: column;
     }

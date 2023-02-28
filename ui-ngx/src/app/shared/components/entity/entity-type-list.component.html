@@ -15,16 +15,15 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="entityTypeListFormGroup" class="mat-block">
-  <mat-chip-list #chipList formControlName="entityTypeList">
-    <mat-chip
+<mat-form-field [formGroup]="entityTypeListFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+  <mat-chip-grid #chipList formControlName="entityTypeList">
+    <mat-chip-row
       *ngFor="let entityType of entityTypeList"
-      [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(entityType)">
       {{entityType.name}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip>
+    </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? ((!entityTypeList || !entityTypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
            style="max-width: 200px;"
            #entityTypeInput
@@ -35,7 +34,7 @@
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entityTypeAutocomplete"
            [matChipInputFor]="chipList">
-  </mat-chip-list>
+  </mat-chip-grid>
   <mat-autocomplete #entityTypeAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     [displayWith]="displayEntityTypeFn">

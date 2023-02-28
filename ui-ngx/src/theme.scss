@@ -17,6 +17,7 @@
 @import '@mat-datetimepicker/core/datetimepicker/datetimepicker-theme';
 @import './scss/constants';
 
+@include mat.all-component-typographies();
 @include mat.core();
 
 $tb-primary-color: #305680;
@@ -65,12 +66,19 @@ $background: (background: map_get(mat.$grey-palette, 200));
 
 $tb-theme-background: map_merge(mat.$light-theme-background-palette, $background);
 
-$tb-mat-theme: mat.define-light-theme(
-    $tb-primary,
-    $tb-accent
-);
+$tb-mat-theme: mat.define-light-theme((
+  color: (
+    primary: $tb-primary,
+    accent: $tb-accent
+  ),
+  typography: mat.define-typography-config(),
+  density: 0
+));
 
-$tb-theme: map_merge($tb-mat-theme, (background: $tb-theme-background));
+$color: map_get($tb-mat-theme, color);
+$color: map_merge($color, (background: $tb-theme-background));
+$tb-mat-theme: map_merge($tb-mat-theme, (color: $color));
+$tb-theme: map_merge($tb-mat-theme, $color);
 
 $primary: mat.get-color-from-palette($tb-primary);
 $accent: mat.get-color-from-palette($tb-accent);
@@ -128,21 +136,19 @@ $tb-dark-theme-background: (
   tooltip: map_get(mat.$grey-palette, 700),
 );
 
-@function get-tb-dark-theme($primary, $accent, $warn: mat.define-palette(mat.$red-palette)) {
-  @return (
-    primary: $primary,
-    accent: $accent,
-    warn: $warn,
-    is-dark: true,
-    foreground: mat.$dark-theme-foreground-palette,
-    background: $tb-dark-theme-background,
-  );
-}
+$tb-dark-theme: mat.define-dark-theme((
+  color: (
+    primary: $tb-dark-primary,
+    accent: $tb-accent
+  ),
+  typography: mat.define-typography-config(),
+  density: 0
+));
 
-$tb-dark-theme: get-tb-dark-theme(
-    $tb-dark-primary,
-    $tb-accent
-);
+$color: map_get($tb-dark-theme, color);
+$color: map_merge($color, (background: $tb-dark-theme-background));
+$tb-dark-theme: map_merge($tb-dark-theme, (color: $color));
+$tb-dark-theme: map_merge($tb-dark-theme, $color);
 
 @mixin mat-fab-toolbar-theme($theme) {
   $primary: map-get($theme, primary);
@@ -202,14 +208,14 @@ $tb-dark-theme: get-tb-dark-theme(
     mat-toolbar {
       &.mat-primary {
         @include _mat-toolbar-inverse-color($primary);
-        button.mat-icon-button {
+        button.mat-mdc-icon-button {
           mat-icon {
             color: mat.get-color-from-palette($primary);
           }
         }
       }
     }
-    .mat-fab {
+    .mat-mdc-fab {
       &.mat-primary {
         background: mat.get-color-from-palette($primary, default-contrast);
         color: mat.get-color-from-palette($primary);
@@ -234,12 +240,6 @@ $tb-dark-theme: get-tb-dark-theme(
   div.tb-dashboard-page.mobile-app {
     @include mat-fab-toolbar-inverse-theme($tb-theme);
   }
-
-  .same-color.mat-form-field-invalid {
-    .mat-form-field-suffix {
-      color: mat.get-color-from-palette($warn, text);
-    }
-  }
 }
 
 .tb-default {
@@ -249,6 +249,5 @@ $tb-dark-theme: get-tb-dark-theme(
 }
 
 .tb-dark {
-  @include mat.all-component-themes($tb-dark-theme);
+  @include mat.all-component-colors($tb-dark-theme);
 }
-

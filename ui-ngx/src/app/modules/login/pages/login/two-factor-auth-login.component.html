@@ -17,19 +17,21 @@
 -->
 <div class="tb-two-factor-auth-login-content mat-app-background tb-dark" fxLayout="row" fxLayoutAlign="center center"
      style="width: 100%;">
-  <mat-card fxFlex="initial" class="tb-two-factor-auth-login-card" >
-    <mat-card-title class="mat-headline" fxLayout="row" fxLayoutAlign="start center">
-      <button mat-icon-button type="button" (click)="cancelLogin()">
-        <mat-icon>chevron_left</mat-icon>
-      </button>
-      {{ 'login.verify-your-identity' | translate }}
-    </mat-card-title>
+  <mat-card appearance="outlined" fxFlex="initial" class="tb-two-factor-auth-login-card" >
+    <mat-card-header>
+      <mat-card-title class="mat-headline-5" fxLayout="row" fxLayoutAlign="start center">
+        <button mat-icon-button type="button" (click)="cancelLogin()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        {{ 'login.verify-your-identity' | translate }}
+      </mat-card-title>
+    </mat-card-header>
     <mat-card-content>
       <div class="providers-container tb-default" fxLayout="column" fxLayoutGap="8px" *ngIf="!selectedProvider">
         <p class="mat-body" translate>login.select-way-to-verify</p>
         <ng-container *ngFor="let provider of allowProviders">
           <button type="button" mat-stroked-button class="provider" (click)="selectProvider(provider)">
-            <mat-icon class="icon" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
             {{ providersData.get(provider).name | translate }}
           </button>
         </ng-container>
@@ -39,8 +41,7 @@
           <div tb-toast fxLayout="column">
             <p class="mat-body">{{ providerDescription }}</p>
             <div fxLayout="row" class="code-block" fxLayoutGap="8px">
-              <mat-form-field class="mat-block" fxFlex floatLabel="always" hideRequiredMarker>
-                <mat-label></mat-label>
+              <mat-form-field class="mat-block tb-appearance-transparent" fxFlex>
                 <input matInput formControlName="verificationCode"
                        required [maxlength]="maxLengthInput" type="text"
                        [attr.inputmode]="inputMode" [pattern]="pattern"
