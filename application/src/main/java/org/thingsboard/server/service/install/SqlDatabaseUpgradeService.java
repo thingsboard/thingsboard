@@ -717,16 +717,22 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             users = userService.findAllUsers(pageLink);
                             for (User user : users.getData()) {
                                 futures.add(dbUpgradeExecutor.submit(() -> {
-                                    JsonNode additionalInfo = user.getAdditionalInfo();
-                                    if (additionalInfo.isObject() && additionalInfo.has("userPasswordHistory")){
-                                        UserCredentials creds = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-                                        if (creds != null) {
-                                            creds.setAdditionalInfo(JacksonUtil.newObjectNode().set("userPasswordHistory", additionalInfo.get("userPasswordHistory")));
-                                            userService.saveUserCredentials(user.getTenantId(), creds);
+                                    try {
+                                        log.info("Migrating password history for user: " + user.getId());
+                                        JsonNode additionalInfo = user.getAdditionalInfo();
+                                        if (additionalInfo != null && additionalInfo.has("userPasswordHistory")){
+                                            UserCredentials creds = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+                                            if (creds != null) {
+                                                creds.setAdditionalInfo(JacksonUtil.newObjectNode().set("userPasswordHistory", additionalInfo.get("userPasswordHistory")));
+                                                userService.saveUserCredentials(user.getTenantId(), creds);
+                                            }
+                                            ((ObjectNode) additionalInfo).remove("userPasswordHistory");
+                                            userService.saveUser(user);
                                         }
-                                        ((ObjectNode) additionalInfo).remove("userPasswordHistory");
-                                        userService.saveUser(user);
-                                    }}));
+                                    } catch (Exception e){
+                                        log.error("Failed to migrate password history for user: " + user.getId(), e);
+                                    }
+                                }));
                             }
                             Futures.allAsList(futures).get();
                             pageLink = pageLink.nextPageLink();
