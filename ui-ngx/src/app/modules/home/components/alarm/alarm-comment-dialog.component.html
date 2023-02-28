@@ -33,23 +33,12 @@
                       [commentsHeaderEnabled]="commentsHeaderEnabled">
     </tb-alarm-comment>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <button mat-button color="primary"
+  <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end">
+    <button mat-raised-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="close()" cdkFocusInitial>
       {{ 'action.close' | translate }}
-    </button>
-    <span fxFlex></span>
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="changeSortDirection()">
-      {{ 'alarm-comment.sort-direction' | translate}}
-    </button>
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="refresh()">
-      {{ 'alarm-comment.refresh' | translate}}
     </button>
   </div>
 </div>

@@ -129,12 +129,12 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
   }
 
   assign(user: User): void {
-    this.alarmService.assignAlarm(this.alarmId, user.id.id).subscribe(
+    this.alarmService.assignAlarm(this.alarmId, user.id.id, {ignoreLoading: true}).subscribe(
       () => this.overlayRef.dispose());
   }
 
   unassign(): void {
-    this.alarmService.unassignAlarm(this.alarmId).subscribe(
+    this.alarmService.unassignAlarm(this.alarmId, {ignoreLoading: true}).subscribe(
       () => this.overlayRef.dispose());
   }
 

@@ -105,7 +105,7 @@ export class AlarmCommentComponent implements OnInit {
 
   loadAlarmComments(): void {
     this.alarmCommentService.getAlarmComments(this.alarmId, new PageLink(MAX_SAFE_PAGE_SIZE, 0, null,
-      this.alarmCommentSortOrder)).subscribe(
+      this.alarmCommentSortOrder), {ignoreLoading: true}).subscribe(
       (pagedData) => {
         this.alarmComments = pagedData.data;
         this.displayData.length = 0;
@@ -168,7 +168,7 @@ export class AlarmCommentComponent implements OnInit {
   }
 
   private doSave(comment: AlarmComment): void {
-    this.alarmCommentService.saveAlarmComment(this.alarmId, comment).subscribe(
+    this.alarmCommentService.saveAlarmComment(this.alarmId, comment, {ignoreLoading: true}).subscribe(
       () => {
         this.loadAlarmComments();
       }
@@ -200,10 +200,10 @@ export class AlarmCommentComponent implements OnInit {
       this.translate.instant('action.delete')).subscribe(
       (result) => {
         if (result) {
-          this.alarmCommentService.deleteAlarmComments(this.alarmId, commentId).subscribe(
-            () => {
-              this.loadAlarmComments();
-            }
+          this.alarmCommentService.deleteAlarmComments(this.alarmId, commentId, {ignoreLoading: true})
+            .subscribe(() => {
+                this.loadAlarmComments();
+              }
           )
         }
       }

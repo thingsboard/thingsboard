@@ -14,14 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, ViewChild } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AlarmInfo } from '@shared/models/alarm.models';
-import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
 
 export interface AlarmCommentDialogData {
   alarmId?: string;
@@ -37,9 +36,8 @@ export interface AlarmCommentDialogData {
 export class AlarmCommentDialogComponent extends DialogComponent<AlarmCommentDialogComponent, void> {
 
   alarmId: string;
-  commentsHeaderEnabled: boolean = false;
 
-  @ViewChild('alarmCommentComponent', { static: true }) alarmCommentComponent: AlarmCommentComponent;
+  commentsHeaderEnabled: boolean = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -48,14 +46,6 @@ export class AlarmCommentDialogComponent extends DialogComponent<AlarmCommentDia
     super(store, router, dialogRef);
     this.commentsHeaderEnabled = this.data.commentsHeaderEnabled
     this.alarmId = this.data.alarmId;
-  }
-
-  changeSortDirection() {
-    this.alarmCommentComponent.changeSortDirection();
-  }
-
-  refresh() {
-    this.alarmCommentComponent.loadAlarmComments();
   }
 
   close(): void {

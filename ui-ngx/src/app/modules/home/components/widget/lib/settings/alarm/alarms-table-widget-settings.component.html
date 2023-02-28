@@ -58,6 +58,9 @@
       </mat-select>
     </mat-form-field>
     <section fxLayout="column" fxLayoutGap="8px">
+      <mat-slide-toggle formControlName="displayComments">
+        {{ 'widgets.table.display-alarm-comments' | translate }}
+      </mat-slide-toggle>
       <mat-slide-toggle fxFlex formControlName="displayDetails">
         {{ 'widgets.table.display-alarm-details' | translate }}
       </mat-slide-toggle>
@@ -69,9 +72,6 @@
       </mat-slide-toggle>
       <mat-slide-toggle formControlName="allowAssign">
         {{ 'widgets.table.allow-alarms-assign' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="displayComments">
-        {{ 'widgets.table.display-alarm-comments' | translate }}
       </mat-slide-toggle>
       <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
         <mat-slide-toggle fxFlex formControlName="displayPagination">
