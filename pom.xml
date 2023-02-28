@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.4.3-SNAPSHOT</version>
+    <version>3.5.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -85,7 +85,7 @@
         <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
-        <surefire.version>3.0.0-M6</surefire.version>
+        <surefire.version>3.0.0-M9</surefire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>3.0.4</springfox-swagger.version>
         <swagger-annotations.version>1.6.3</swagger-annotations.version>
@@ -659,7 +659,7 @@
                     <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
-                            --illegal-access=permit
+                            --illegal-access=permit -Xss384k -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
                         </argLine>
                     </configuration>
                 </plugin>
@@ -818,8 +818,10 @@
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
                             <exclude>ui/**</exclude>
-                            <exclude>src/.browserslistrc</exclude>
+                            <exclude>**/.browserslistrc</exclude>
                             <exclude>**/yarn.lock</exclude>
+                            <exclude>**/.yarnrc</exclude>
+                            <exclude>**/.angular/**</exclude>
                             <exclude>**/*.raw</exclude>
                             <exclude>**/*.patch</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>

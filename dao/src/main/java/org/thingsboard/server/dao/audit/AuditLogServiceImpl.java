@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -181,6 +182,12 @@ public class AuditLogServiceImpl implements AuditLogService {
                         actionData.set("metadata", ruleChainMetaDataNode);
                     }
                 }
+                break;
+            case ADDED_COMMENT:
+            case UPDATED_COMMENT:
+            case DELETED_COMMENT:
+                AlarmComment comment = extractParameter(AlarmComment.class, additionalInfo);
+                actionData.set("comment", comment.getComment());
                 break;
             case DELETED:
             case ACTIVATED:

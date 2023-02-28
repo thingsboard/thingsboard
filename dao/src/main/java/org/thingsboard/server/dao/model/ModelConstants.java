@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,13 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_BY_USER_COLUMN_FAMILY_NAME = "user_credentials_by_user";
     public static final String USER_CREDENTIALS_BY_ACTIVATE_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_activate_token";
     public static final String USER_CREDENTIALS_BY_RESET_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_reset_token";
+
+    /**
+     * User settings constants.
+     */
+    public static final String USER_SETTINGS_COLUMN_FAMILY_NAME = "user_settings";
+    public static final String USER_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_SETTINGS_SETTINGS = "settings";
 
     /**
      * Cassandra admin_settings constants.
@@ -185,6 +192,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
+    public static final String DEVICE_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY = "default_edge_rule_chain_id";
 
     /**
      * Asset profile constants.
@@ -198,6 +206,7 @@ public class ModelConstants {
     public static final String ASSET_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
     public static final String ASSET_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
     public static final String ASSET_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
+    public static final String ASSET_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY = "default_edge_rule_chain_id";
 
     /**
      * Cassandra entityView constants.
@@ -296,6 +305,14 @@ public class ModelConstants {
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
+
+    public static final String ALARM_COMMENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_COMMENT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ALARM_COMMENT_COLUMN_FAMILY_NAME = "alarm_comment";
+    public static final String ALARM_COMMENT_ALARM_ID = "alarm_id";
+    public static final String ALARM_COMMENT_USER_ID = USER_ID_PROPERTY;
+    public static final String ALARM_COMMENT_TYPE = "type";
+    public static final String ALARM_COMMENT_COMMENT = "comment";
 
     /**
      * Cassandra entity relation constants.

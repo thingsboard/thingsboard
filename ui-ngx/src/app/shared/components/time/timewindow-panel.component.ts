@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
 
 export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelData');
@@ -64,7 +64,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   result: Timewindow;
 
-  timewindowForm: FormGroup;
+  timewindowForm: UntypedFormGroup;
 
   historyTypes = HistoryWindowType;
 
@@ -81,7 +81,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
               public overlayRef: OverlayRef,
               protected store: Store<AppState>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               private timeService: TimeService,
               public viewContainerRef: ViewContainerRef) {
     super(store);

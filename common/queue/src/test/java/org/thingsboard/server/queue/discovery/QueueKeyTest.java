@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 
@@ -29,7 +30,7 @@ class QueueKeyTest {
 
     @Test
     void testToStringSystemTenant() {
-        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "Main", TenantId.SYS_TENANT_ID);
+        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, TenantId.SYS_TENANT_ID);
         log.info("The queue key is {}",queueKey);
         assertThat(queueKey.toString()).isEqualTo("QK(Main,TB_RULE_ENGINE,system)");
     }
@@ -37,7 +38,7 @@ class QueueKeyTest {
     @Test
     void testToStringCustomTenant() {
         TenantId tenantId = TenantId.fromUUID(UUID.fromString("3ebd39eb-43d4-4911-a818-cdbf8d508f88"));
-        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "Main", tenantId);
+        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
         log.info("The queue key is {}",queueKey);
         assertThat(queueKey.toString()).isEqualTo("QK(Main,TB_RULE_ENGINE,3ebd39eb-43d4-4911-a818-cdbf8d508f88)");
     }

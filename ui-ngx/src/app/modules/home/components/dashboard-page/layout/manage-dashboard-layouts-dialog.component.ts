@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   AbstractControl,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   FormGroupDirective,
   NgForm,
   Validators
@@ -62,7 +62,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   @ViewChild('tooltip', {static: true}) tooltip: MatTooltip;
 
-  layoutsFormGroup: FormGroup;
+  layoutsFormGroup: UntypedFormGroup;
 
   layoutWidthType = LayoutWidthType;
 
@@ -81,7 +81,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
               @Inject(MAT_DIALOG_DATA) private data: ManageDashboardLayoutsDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               protected dialogRef: MatDialogRef<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
@@ -203,7 +203,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     }
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -297,6 +297,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   setFixedLayout(layout: string): void {
     if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED && this.layoutsFormGroup.get('right').value) {
       this.layoutsFormGroup.get('fixedLayout').setValue(layout);
+      this.layoutsFormGroup.get('fixedLayout').markAsDirty();
     }
   }
 

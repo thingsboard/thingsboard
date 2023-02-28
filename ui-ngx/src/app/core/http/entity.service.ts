@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -869,8 +869,26 @@ export class EntityService {
         };
         aliasInfo.currentEntity = null;
         if (!aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
-          return this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
-            {ignoreLoading: true, ignoreErrors: true}).pipe(
+          let currentEntity: EntityInfo = null;
+          if (result.stateEntity && aliasInfo.entityFilter.type === AliasFilterType.singleEntity) {
+            if (stateParams) {
+              let targetParams = stateParams;
+              if (result.entityParamName && result.entityParamName.length) {
+                targetParams = stateParams[result.entityParamName];
+              }
+              if (targetParams && targetParams.entityId && targetParams.entityName) {
+                currentEntity = {
+                  id: targetParams.entityId.id,
+                  entityType: targetParams.entityId.entityType as EntityType,
+                  name: targetParams.entityName,
+                  label: targetParams.entityLabel
+                };
+              }
+            }
+          }
+          const entityInfoObservable = currentEntity ? of(currentEntity) : this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true});
+          return entityInfoObservable.pipe(
             map((entity) => {
               aliasInfo.currentEntity = entity;
               return aliasInfo;

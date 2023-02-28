@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { PageLink } from '@shared/models/page/page-link';
 
 @Directive()
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class EntityTableHeaderComponent<T extends BaseData<HasId>,
   P extends PageLink = PageLink,
   L extends BaseData<HasId> = T,
