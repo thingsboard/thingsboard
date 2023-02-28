@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config.service;
+package org.thingsboard.monitoring.data.cmd;
 
 import lombok.Data;
-import org.thingsboard.monitoring.config.MonitoringTargetConfig;
-import org.thingsboard.monitoring.config.TransportType;
+import org.thingsboard.server.common.data.query.EntityKey;
 
 import java.util.List;
 
 @Data
-public abstract class TransportMonitoringServiceConfig {
+public class LatestValueCmd {
 
-    private int monitoringRateMs;
-    private int requestTimeoutMs;
-    private int initialDelayMs;
-
-    private List<MonitoringTargetConfig> targets;
-
-    public abstract TransportType getTransportType();
+    private List<EntityKey> keys;
 
 }

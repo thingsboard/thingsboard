@@ -29,8 +29,6 @@
     <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.thingsboard.monitoring" level="DEBUG"/>
     <logger name="org.thingsboard.monitoring.client" level="WARN"/>
-    <logger name="org.openqa.selenium" level="WARN"/>
-    <logger name="io.github.bonigarcia" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

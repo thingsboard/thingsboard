@@ -27,7 +27,7 @@ import org.thingsboard.monitoring.config.TransportType;
 @ConfigurationProperties(prefix = "monitoring.transports.mqtt")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class MqttTransportMonitoringServiceConfig extends TransportMonitoringServiceConfig {
+public class MqttTransportMonitoringConfig extends TransportMonitoringConfig {
 
     private Integer qos;
 

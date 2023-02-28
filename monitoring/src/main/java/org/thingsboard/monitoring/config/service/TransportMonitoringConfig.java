@@ -15,19 +15,19 @@
  */
 package org.thingsboard.monitoring.config.service;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import lombok.Data;
+import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
 
-@Component
-@ConditionalOnProperty(name = "monitoring.transports.coap.enabled", havingValue = "true")
-@ConfigurationProperties(prefix = "monitoring.transports.coap")
-public class CoapTransportMonitoringServiceConfig extends TransportMonitoringServiceConfig {
+import java.util.List;
 
-    @Override
-    public TransportType getTransportType() {
-        return TransportType.COAP;
-    }
+@Data
+public abstract class TransportMonitoringConfig {
+
+    private int requestTimeoutMs;
+
+    private List<MonitoringTargetConfig> targets;
+
+    public abstract TransportType getTransportType();
 
 }

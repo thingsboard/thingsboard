@@ -39,7 +39,7 @@ public class WsClientFactory {
     public WsClient createClient(String accessToken) throws Exception {
         URI uri = new URI(wsConfig.getBaseUrl() + "/api/ws/plugins/telemetry?token=" + accessToken);
         stopWatch.start();
-        WsClient wsClient = new WsClient(uri);
+        WsClient wsClient = new WsClient(uri, wsConfig.getRequestTimeoutMs());
         if (wsConfig.getBaseUrl().startsWith("wss")) {
             SSLContextBuilder builder = SSLContexts.custom();
             builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);

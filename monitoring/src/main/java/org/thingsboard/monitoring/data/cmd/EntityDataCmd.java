@@ -15,21 +15,14 @@
  */
 package org.thingsboard.monitoring.data.cmd;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class TimeseriesSubscriptionCmd {
+public class EntityDataCmd {
 
     private int cmdId;
-    private String entityType;
-    private String entityId;
-    private String keys;
-    private String scope;
+    private EntityDataQuery query;
+    private LatestValueCmd latestCmd;
 
 }

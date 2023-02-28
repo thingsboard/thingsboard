@@ -17,18 +17,19 @@ package org.thingsboard.monitoring.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.thingsboard.monitoring.service.TransportMonitoringService;
-import org.thingsboard.monitoring.service.impl.CoapTransportMonitoringService;
-import org.thingsboard.monitoring.service.impl.HttpTransportMonitoringService;
-import org.thingsboard.monitoring.service.impl.MqttTransportMonitoringService;
+import org.thingsboard.monitoring.transport.TransportHealthChecker;
+import org.thingsboard.monitoring.transport.impl.CoapTransportHealthChecker;
+import org.thingsboard.monitoring.transport.impl.HttpTransportHealthChecker;
+import org.thingsboard.monitoring.transport.impl.MqttTransportHealthChecker;
 
 @AllArgsConstructor
 @Getter
 public enum TransportType {
-    MQTT(MqttTransportMonitoringService.class),
-    COAP(CoapTransportMonitoringService.class),
-    HTTP(HttpTransportMonitoringService.class);
 
-    private final Class<? extends TransportMonitoringService<?>> monitoringServiceClass;
+    MQTT(MqttTransportHealthChecker.class),
+    COAP(CoapTransportHealthChecker.class),
+    HTTP(HttpTransportHealthChecker.class);
+
+    private final Class<? extends TransportHealthChecker<?>> serviceClass;
 
 }

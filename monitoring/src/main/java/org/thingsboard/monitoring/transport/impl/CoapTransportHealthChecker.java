@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.service.impl;
+package org.thingsboard.monitoring.transport.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
@@ -25,19 +25,19 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.service.CoapTransportMonitoringServiceConfig;
-import org.thingsboard.monitoring.service.TransportMonitoringService;
+import org.thingsboard.monitoring.config.service.CoapTransportMonitoringConfig;
+import org.thingsboard.monitoring.transport.TransportHealthChecker;
 
 import java.io.IOException;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
-public class CoapTransportMonitoringService extends TransportMonitoringService<CoapTransportMonitoringServiceConfig> {
+public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTransportMonitoringConfig> {
 
     private CoapClient coapClient;
 
-    protected CoapTransportMonitoringService(CoapTransportMonitoringServiceConfig config, MonitoringTargetConfig target) {
+    protected CoapTransportHealthChecker(CoapTransportMonitoringConfig config, MonitoringTargetConfig target) {
         super(config, target);
     }
 

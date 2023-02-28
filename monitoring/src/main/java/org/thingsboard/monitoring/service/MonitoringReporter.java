@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.data.Latency;
+import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.notification.HighLatencyNotification;
 import org.thingsboard.monitoring.data.notification.ServiceFailureNotification;
 import org.thingsboard.monitoring.data.notification.ServiceRecoveryNotification;
@@ -48,9 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MonitoringReporter {
 
-    private final TbClient tbClient;
     private final NotificationService notificationService;
-    private final ScheduledExecutorService monitoringExecutor;
 
     private final Map<String, Latency> latencies = new ConcurrentHashMap<>();
     private final Map<Object, AtomicInteger> failuresCounters = new ConcurrentHashMap<>();
@@ -65,48 +64,43 @@ public class MonitoringReporter {
     private EntityType reportingEntityType;
     @Value("${monitoring.latency.reporting_entity_id}")
     private String reportingEntityId;
-    @Value("${monitoring.latency.monitoring_rate_ms}")
-    private int latenciesMonitoringRateMs;
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void startLatenciesMonitoring() {
-        monitoringExecutor.scheduleAtFixedRate(() -> {
-            List<Latency> latencies = this.latencies.values().stream()
-                    .filter(Latency::isNotEmpty)
-                    .map(latency -> {
-                        Latency snapshot = latency.snapshot();
-                        latency.reset();
-                        return snapshot;
-                    })
-                    .collect(Collectors.toList());
-            if (latencies.isEmpty()) {
-                return;
-            }
-            log.info("Latencies:\n{}", latencies);
-            if (latencies.stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
-                HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies, latencyThresholdMs);
-                notificationService.sendNotification(highLatencyNotification);
-            }
+    public void reportLatencies(TbClient tbClient) {
+        List<Latency> latencies = this.latencies.values().stream()
+                .filter(Latency::isNotEmpty)
+                .map(latency -> {
+                    Latency snapshot = latency.snapshot();
+                    latency.reset();
+                    return snapshot;
+                })
+                .collect(Collectors.toList());
+        if (latencies.isEmpty()) {
+            return;
+        }
+        log.info("Latencies:\n{}", latencies.stream().map(latency -> latency.getKey() + ": " + latency.getAvg() + " ms")
+                .collect(Collectors.joining("\n")));
+        if (latencies.stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
+            HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies, latencyThresholdMs);
+            notificationService.sendNotification(highLatencyNotification);
+        }
 
-            if (reportingEntityType != null && StringUtils.isNotBlank(reportingEntityId)) {
+        if (reportingEntityType != null && StringUtils.isNotBlank(reportingEntityId)) {
+            try {
+                EntityId entityId;
                 try {
-                    EntityId entityId;
-                    try {
-                        entityId = EntityIdFactory.getByTypeAndUuid(reportingEntityType, reportingEntityId);
-                    } catch (Exception e) {
-                        return;
-                    }
-                    tbClient.logIn();
-                    ObjectNode msg = JacksonUtil.newObjectNode();
-                    latencies.forEach(latency -> {
-                        msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
-                    });
-                    tbClient.saveEntityTelemetry(entityId, "time", msg);
+                    entityId = EntityIdFactory.getByTypeAndUuid(reportingEntityType, reportingEntityId);
                 } catch (Exception e) {
-                    log.error("Failed to report latencies: {}", e.getMessage());
+                    return;
                 }
+                ObjectNode msg = JacksonUtil.newObjectNode();
+                latencies.forEach(latency -> {
+                    msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
+                });
+                tbClient.saveEntityTelemetry(entityId, "time", msg);
+            } catch (Exception e) {
+                log.error("Failed to report latencies: {}", e.getMessage());
             }
-        }, latenciesMonitoringRateMs, latenciesMonitoringRateMs, TimeUnit.MILLISECONDS);
+        }
     }
 
     public void reportLatency(String key, long latencyInNanos) {
@@ -127,7 +121,9 @@ public class MonitoringReporter {
 
     public void serviceIsOk(Object serviceKey) {
         ServiceRecoveryNotification notification = new ServiceRecoveryNotification(serviceKey);
-        log.info(notification.getText());
+        if (!serviceKey.equals(MonitoredServiceKey.GENERAL)) {
+            log.info(notification.getText());
+        }
         AtomicInteger failuresCounter = failuresCounters.get(serviceKey);
         if (failuresCounter != null) {
             if (failuresCounter.get() >= failuresThreshold) {

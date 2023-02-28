@@ -23,30 +23,42 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.data.cmd.CmdsWrapper;
-import org.thingsboard.monitoring.data.cmd.TimeseriesSubscriptionCmd;
-import org.thingsboard.monitoring.data.cmd.TimeseriesUpdate;
+import org.thingsboard.monitoring.data.cmd.EntityDataCmd;
+import org.thingsboard.monitoring.data.cmd.EntityDataUpdate;
+import org.thingsboard.monitoring.data.cmd.LatestValueCmd;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityListFilter;
 
 import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class WsClient extends WebSocketClient implements AutoCloseable {
 
-    public volatile String lastMsg;
+    public volatile JsonNode lastMsg;
     private CountDownLatch reply;
     private CountDownLatch update;
 
     private final Lock updateLock = new ReentrantLock();
 
-    public WsClient(URI serverUri) {
+    private long requestTimeoutMs;
+
+    public WsClient(URI serverUri, long requestTimeoutMs) {
         super(serverUri);
+        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     @Override
@@ -56,13 +68,13 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
 
     @Override
     public void onMessage(String s) {
-        log.trace("Received new msg: {}", s);
         if (s == null) {
             return;
         }
         updateLock.lock();
         try {
-            lastMsg = s;
+            lastMsg = JacksonUtil.toJsonNode(s);
+            log.trace("Received new msg: {}", lastMsg.toPrettyString());
             if (update != null) {
                 update.countDown();
             }
@@ -106,18 +118,25 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         super.send(text);
     }
 
-    public void subscribeForTelemetry(UUID deviceId, String telemetryKey) {
-        TimeseriesSubscriptionCmd subCmd = new TimeseriesSubscriptionCmd();
-        subCmd.setEntityType("DEVICE");
-        subCmd.setEntityId(deviceId.toString());
-        subCmd.setScope("LATEST_TELEMETRY");
-        subCmd.setKeys(telemetryKey);
-        subCmd.setCmdId(RandomUtils.nextInt(0, 100));
+    public WsClient subscribeForTelemetry(List<UUID> devices, String key) {
+        EntityDataCmd cmd = new EntityDataCmd();
+        cmd.setCmdId(RandomUtils.nextInt(0, 1000));
+
+        EntityListFilter devicesFilter = new EntityListFilter();
+        devicesFilter.setEntityType(EntityType.DEVICE);
+        devicesFilter.setEntityList(devices.stream().map(UUID::toString).collect(Collectors.toList()));
+        EntityDataPageLink pageLink = new EntityDataPageLink(100,0, null, null);
+        EntityDataQuery devicesQuery = new EntityDataQuery(devicesFilter, pageLink, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        cmd.setQuery(devicesQuery);
+
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        latestCmd.setKeys(List.of(new EntityKey(EntityKeyType.TIME_SERIES, key)));
+        cmd.setLatestCmd(latestCmd);
 
         CmdsWrapper wrapper = new CmdsWrapper();
-        wrapper.setTsSubCmds(List.of(subCmd));
+        wrapper.setEntityDataCmds(List.of(cmd));
         send(JacksonUtil.toString(wrapper));
-        log.trace("Subscribed for telemetry (key: {})", telemetryKey);
+        return this;
     }
 
     public JsonNode waitForUpdate(long ms) {
@@ -134,38 +153,37 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         return null;
     }
 
-    public JsonNode waitForReply(int ms) {
+    public JsonNode waitForReply() {
         try {
-            if (reply.await(ms, TimeUnit.MILLISECONDS)) {
+            if (reply.await(requestTimeoutMs, TimeUnit.MILLISECONDS)) {
                 log.trace("Waited for reply");
                 return getLastMsg();
             }
         } catch (InterruptedException e) {
             log.debug("Failed to await reply", e);
         }
-        log.trace("No reply arrived within {} ms", ms);
-        return null;
+        log.trace("No reply arrived within {} ms", requestTimeoutMs);
+        throw new IllegalStateException("No WS reply arrived within " + requestTimeoutMs + " ms");
     }
 
-    public JsonNode getLastMsg() {
-        JsonNode msg = JacksonUtil.toJsonNode(lastMsg);
-        if (msg != null) {
-            JsonNode errorMsg = msg.get("errorMsg");
+    private JsonNode getLastMsg() {
+        if (lastMsg != null) {
+            JsonNode errorMsg = lastMsg.get("errorMsg");
             if (errorMsg != null && !errorMsg.isNull() && StringUtils.isNotEmpty(errorMsg.asText())) {
                 throw new RuntimeException("WS error from server: " + errorMsg.asText());
             } else {
-                return msg;
+                return lastMsg;
             }
         } else {
             return null;
         }
     }
 
-    public Object getTelemetryKeyUpdate(String key) {
+    public Object getTelemetryUpdate(UUID deviceId, String key) {
         JsonNode lastMsg = getLastMsg();
         if (lastMsg == null || lastMsg.isNull()) return null;
-        TimeseriesUpdate update = JacksonUtil.treeToValue(lastMsg, TimeseriesUpdate.class);
-        return update.getLatest(key);
+        EntityDataUpdate update = JacksonUtil.treeToValue(lastMsg, EntityDataUpdate.class);
+        return update.getLatest(deviceId, key);
     }
 
     @Override

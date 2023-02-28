@@ -32,11 +32,11 @@ monitoring:
   send_repeated_failure_notification: '${SEND_REPEATED_FAILURE_NOTIFICATION:true}'
 
   transports:
+    monitoring_rate_ms: '${TRANSPORTS_MONITORING_RATE_MS:10000}'
+
     mqtt:
       enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:false}'
-      monitoring_rate_ms: '${MQTT_TRANSPORT_MONITORING_RATE_MS:3000}'
       request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
-      initial_delay_ms: '${MQTT_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
         - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://localhost:1883}'
@@ -45,9 +45,7 @@ monitoring:
 
     coap:
       enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:false}'
-      monitoring_rate_ms: '${COAP_TRANSPORT_MONITORING_RATE_MS:10000}'
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
-      initial_delay_ms: '${COAP_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
       targets:
         - base_url: '${COAP_TRANSPORT_BASE_URL:coap://localhost}'
           device:
@@ -55,9 +53,7 @@ monitoring:
 
     http:
       enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:false}'
-      monitoring_rate_ms: '${HTTP_TRANSPORT_MONITORING_RATE_MS:10000}'
       request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
-      initial_delay_ms: '${HTTP_TRANSPORT_MONITORING_INITIAL_DELAY_MS:0}'
       targets:
         - base_url: '${HTTP_TRANSPORT_BASE_URL:http://localhost:8080}'
           device:
@@ -69,9 +65,6 @@ monitoring:
       webhook_url: '${SLACK_WEBHOOK_URL:}'
 
   latency:
-    monitoring_rate_ms: '${LATENCY_MONITORING_RATE_MS:30000}'
     threshold_ms: '${LATENCY_THRESHOLD:2000}'
     reporting_entity_type: '${LATENCY_REPORTING_ENTITY_TYPE:ASSET}'
     reporting_entity_id: '${LATENCY_REPORTING_ENTITY_ID:}'
-
-  monitoring_executor_thread_pool_size: '${MONITORING_EXECUTOR_THREAD_POOL_SIZE:10}'

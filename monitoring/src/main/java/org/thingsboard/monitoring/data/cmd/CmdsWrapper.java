@@ -22,6 +22,6 @@ import java.util.List;
 @Data
 public class CmdsWrapper {
 
-    private List<TimeseriesSubscriptionCmd> tsSubCmds;
+    private List<EntityDataCmd> entityDataCmds;
 
 }

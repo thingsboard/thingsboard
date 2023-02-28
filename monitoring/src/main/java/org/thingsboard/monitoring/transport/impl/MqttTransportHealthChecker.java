@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.service.impl;
+package org.thingsboard.monitoring.transport.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
@@ -27,19 +27,19 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.service.MqttTransportMonitoringServiceConfig;
-import org.thingsboard.monitoring.service.TransportMonitoringService;
+import org.thingsboard.monitoring.config.service.MqttTransportMonitoringConfig;
+import org.thingsboard.monitoring.transport.TransportHealthChecker;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
-public class MqttTransportMonitoringService extends TransportMonitoringService<MqttTransportMonitoringServiceConfig> {
+public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTransportMonitoringConfig> {
 
     private MqttClient mqttClient;
 
     private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
 
-    protected MqttTransportMonitoringService(MqttTransportMonitoringServiceConfig config, MonitoringTargetConfig target) {
+    protected MqttTransportHealthChecker(MqttTransportMonitoringConfig config, MonitoringTargetConfig target) {
         super(config, target);
     }
 

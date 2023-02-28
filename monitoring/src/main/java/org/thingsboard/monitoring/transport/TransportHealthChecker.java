@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.service;
+package org.thingsboard.monitoring.transport;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.client.WsClient;
-import org.thingsboard.monitoring.client.WsClientFactory;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
 import org.thingsboard.monitoring.config.WsConfig;
-import org.thingsboard.monitoring.config.service.TransportMonitoringServiceConfig;
+import org.thingsboard.monitoring.config.service.TransportMonitoringConfig;
 import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.TransportFailureException;
 import org.thingsboard.monitoring.data.TransportInfo;
+import org.thingsboard.monitoring.service.MonitoringReporter;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public abstract class TransportMonitoringService<C extends TransportMonitoringServiceConfig> {
+public abstract class TransportHealthChecker<C extends TransportMonitoringConfig> {
 
     protected final C config;
     protected final MonitoringTargetConfig target;
@@ -49,19 +45,13 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
     private WsConfig wsConfig;
 
     @Autowired
-    private MonitoringReporter monitoringReporter;
-    @Autowired
-    private WsClientFactory wsClientFactory;
-    @Autowired
-    private ScheduledExecutorService monitoringExecutor;
-    @Autowired
-    private TbClient tbClient;
+    private MonitoringReporter reporter;
     @Autowired
     private TbStopWatch stopWatch;
 
-    protected static final String TEST_TELEMETRY_KEY = "testData";
+    public static final String TEST_TELEMETRY_KEY = "testData";
 
-    protected TransportMonitoringService(C config, MonitoringTargetConfig target) {
+    protected TransportHealthChecker(C config, MonitoringTargetConfig target) {
         this.config = config;
         this.target = target;
     }
@@ -71,16 +61,9 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
         transportInfo = new TransportInfo(getTransportType(), target.getBaseUrl());
     }
 
-    public final void startMonitoring() {
-        monitoringExecutor.scheduleWithFixedDelay(() -> {
-            check();
-        }, config.getInitialDelayMs(), config.getMonitoringRateMs(), TimeUnit.MILLISECONDS);
-        log.info("Started monitoring for transport type {} for target {}", getTransportType(), target);
-    }
-
-    private void check() {
-        log.trace("[{}] Checking", transportInfo);
-        try (WsClient wsClient = establishWsClient()) {
+    public final void check(WsClient wsClient) {
+        log.debug("[{}] Checking", transportInfo);
+        try {
             wsClient.registerWaitForUpdate();
 
             String testValue = UUID.randomUUID().toString();
@@ -95,12 +78,12 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
             log.trace("[{}] Waiting for WS update", transportInfo);
             checkWsUpdate(wsClient, testValue);
 
-            monitoringReporter.serviceIsOk(transportInfo);
-            monitoringReporter.serviceIsOk(MonitoredServiceKey.GENERAL);
+            reporter.serviceIsOk(transportInfo);
+            reporter.serviceIsOk(MonitoredServiceKey.GENERAL);
         } catch (TransportFailureException transportFailureException) {
-            monitoringReporter.serviceFailure(transportInfo, transportFailureException);
+            reporter.serviceFailure(transportInfo, transportFailureException);
         } catch (Exception e) {
-            monitoringReporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
+            reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
         }
     }
 
@@ -108,34 +91,20 @@ public abstract class TransportMonitoringService<C extends TransportMonitoringSe
         initClient();
         stopWatch.start();
         sendTestPayload(payload);
-        monitoringReporter.reportLatency(Latencies.transportRequest(getTransportType()), stopWatch.getTime());
-    }
-
-    private WsClient establishWsClient() throws Exception {
-        stopWatch.start();
-        String accessToken = tbClient.logIn();
-        log.trace("[{}] Received new access token", transportInfo);
-        monitoringReporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
-
-        WsClient wsClient = wsClientFactory.createClient(accessToken);
-        log.trace("[{}] Created WS client", transportInfo);
-        wsClient.subscribeForTelemetry(target.getDevice().getId(), TEST_TELEMETRY_KEY);
-        Optional.ofNullable(wsClient.waitForReply(wsConfig.getRequestTimeoutMs()))
-                .orElseThrow(() -> new IllegalStateException("Failed to subscribe for telemetry"));
-        return wsClient;
+        reporter.reportLatency(Latencies.transportRequest(getTransportType()), stopWatch.getTime());
     }
 
     private void checkWsUpdate(WsClient wsClient, String testValue) {
         stopWatch.start();
         wsClient.waitForUpdate(wsConfig.getResultCheckTimeoutMs());
         log.trace("[{}] Waited for WS update. Last WS msg: {}", transportInfo, wsClient.lastMsg);
-        Object update = wsClient.getTelemetryKeyUpdate(TEST_TELEMETRY_KEY);
+        Object update = wsClient.getTelemetryUpdate(target.getDevice().getId(), TEST_TELEMETRY_KEY);
         if (update == null) {
             throw new TransportFailureException("No WS update arrived within " + wsConfig.getResultCheckTimeoutMs() + " ms");
         } else if (!update.toString().equals(testValue)) {
             throw new TransportFailureException("Was expecting value " + testValue + " but got " + update);
         }
-        monitoringReporter.reportLatency(Latencies.WS_UPDATE, stopWatch.getTime());
+        reporter.reportLatency(Latencies.WS_UPDATE, stopWatch.getTime());
     }
 
 
