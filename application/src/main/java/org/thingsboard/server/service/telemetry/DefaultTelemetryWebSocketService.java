@@ -95,6 +95,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -456,6 +458,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
                 TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
+                Lock subLock = new ReentrantLock();
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
@@ -465,10 +468,24 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .allKeys(false)
                         .keyStates(subState)
                         .scope(scope)
-                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
                         .build();
-                oldSubService.addSubscription(sub);
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
+
+                subLock.lock();
+                try{
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
+                } finally {
+                    subLock.unlock();
+                }
+
             }
 
             @Override
@@ -555,6 +572,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
                 TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
+                Lock subLock = new ReentrantLock();
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
@@ -563,10 +581,24 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .entityId(entityId)
                         .allKeys(true)
                         .keyStates(subState)
-                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
-                        .scope(scope).build();
-                oldSubService.addSubscription(sub);
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
+                        .scope(scope)
+                        .build();
+
+                subLock.lock();
+                try {
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
+                } finally {
+                    subLock.unlock();
+                }
             }
 
             @Override
@@ -638,17 +670,31 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 Map<String, Long> subState = new HashMap<>(data.size());
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
+                Lock subLock = new ReentrantLock();
                 TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
-                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
                         .allKeys(true)
                         .keyStates(subState).build();
-                oldSubService.addSubscription(sub);
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
+
+                subLock.lock();
+                try {
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
+                } finally {
+                    subLock.unlock();
+                }
             }
 
             @Override
@@ -676,17 +722,31 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 keys.forEach(key -> subState.put(key, startTs));
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
+                Lock subLock = new ReentrantLock();
                 TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
-                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
                         .allKeys(false)
                         .keyStates(subState).build();
-                oldSubService.addSubscription(sub);
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
+
+                subLock.lock();
+                try{
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
+                } finally {
+                    subLock.unlock();
+                }
             }
 
             @Override
