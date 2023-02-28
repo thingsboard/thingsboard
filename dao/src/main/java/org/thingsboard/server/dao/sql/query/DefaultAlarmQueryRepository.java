@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -138,6 +139,10 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
             } else {
                 selectPart.append(" a.originator_id as entity_id ");
+                if (query.getCustomerId() != null && !EntityId.NULL_UUID.equals(query.getCustomerId().getId())) {
+                    wherePart.append(buildPermissionsQuery(query.getCustomerId(), ctx));
+                    addAnd = true;
+                }
             }
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
             String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
@@ -292,6 +297,13 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");
+        return permissionsQuery.toString();
+    }
+
+    private String buildPermissionsQuery(CustomerId customerId, QueryContext ctx) {
+        StringBuilder permissionsQuery = new StringBuilder();
+        ctx.addUuidParameter("permissions_customer_id", customerId.getId());
+        permissionsQuery.append(" a.customer_id = :permissions_customer_id ");
         return permissionsQuery.toString();
     }
 

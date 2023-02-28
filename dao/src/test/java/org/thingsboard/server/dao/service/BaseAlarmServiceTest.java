@@ -403,11 +403,15 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
     }
 
     private AlarmDataQuery toQuery(AlarmDataPageLink pageLink){
-        return toQuery(pageLink, Collections.emptyList());
+        return toQuery(pageLink, Collections.emptyList(), null);
     }
 
-    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink, List<EntityKey> alarmFields){
-        return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, alarmFields);
+    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink, CustomerId customerId){
+        return toQuery(pageLink, Collections.emptyList(), customerId);
+    }
+
+    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink, List<EntityKey> alarmFields, CustomerId customerId){
+        return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, alarmFields, customerId);
     }
 
     @Test
@@ -693,5 +697,68 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
+    }
+
+    @Test
+    public void testFilterAlarmsByCustomer() throws ExecutionException, InterruptedException {
+        Customer customer1 = new Customer();
+        customer1.setTitle("TestCustomer1");
+        customer1.setTenantId(tenantId);
+        customer1 = customerService.saveCustomer(customer1);
+
+        Customer customer2 = new Customer();
+        customer2.setTitle("TestCustomer2");
+        customer2.setTenantId(tenantId);
+        customer2 = customerService.saveCustomer(customer2);
+
+        Device customerDevice = new Device();
+        customerDevice.setName("TestCustomerDevice");
+        customerDevice.setType("default");
+        customerDevice.setTenantId(tenantId);
+        customerDevice.setCustomerId(customer1.getId());
+        customerDevice = deviceService.saveDevice(customerDevice);
+
+        long ts = System.currentTimeMillis();
+        Alarm deviceAlarm1 = Alarm.builder().tenantId(tenantId)
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        AlarmOperationResult result = alarmService.createOrUpdateAlarm(deviceAlarm1);
+        deviceAlarm1 = result.getAlarm();
+
+        customerDevice.setCustomerId(customer2.getId());
+        customerDevice = deviceService.saveDevice(customerDevice);
+
+        Alarm deviceAlarm2 = Alarm.builder().tenantId(tenantId)
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        result = alarmService.createOrUpdateAlarm(deviceAlarm2);
+        deviceAlarm2 = result.getAlarm();
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(10);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(false);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ANY));
+
+        AlarmDataQuery query1 = toQuery(pageLink, customer1.getId());
+        PageData<AlarmData> customer1Alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, query1, Collections.singletonList(customerDevice.getId()));
+        Assert.assertEquals(1, customer1Alarms.getData().size());
+        Assert.assertEquals(deviceAlarm1, customer1Alarms.getData().get(0));
+
+        AlarmDataQuery query2 = toQuery(pageLink, customer2.getId());
+        PageData<AlarmData> customer2Alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, query2, Collections.singletonList(customerDevice.getId()));
+        Assert.assertEquals(1, customer2Alarms.getData().size());
+        Assert.assertEquals(deviceAlarm2, customer2Alarms.getData().get(0));
     }
 }

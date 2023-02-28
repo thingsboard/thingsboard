@@ -181,6 +181,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) {
+        query.setCustomerId(securityUser.getCustomerId());
         EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
         PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
                 securityUser.getCustomerId(), entityDataQuery);

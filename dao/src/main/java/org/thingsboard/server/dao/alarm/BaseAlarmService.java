@@ -115,7 +115,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             }
             alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
             if (alarm.getId() == null) {
-                Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
+                boolean isCustomer = !EntityId.NULL_UUID.equals(alarm.getCustomerId().getId());
+                Alarm existing = isCustomer ?
+                        alarmDao.findCustomerLatestByOriginatorAndType(alarm.getCustomerId(), alarm.getOriginator(), alarm.getType()) :
+                        alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
                 if (existing == null || existing.getStatus().isCleared()) {
                     if (!alarmCreationEnabled) {
                         throw new ApiUsageLimitsExceededException("Alarms creation is disabled");

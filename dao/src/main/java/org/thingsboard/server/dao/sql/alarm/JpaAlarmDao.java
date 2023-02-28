@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -81,6 +82,16 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
+                originator.getId(),
+                type,
+                PageRequest.of(0, 1));
+        return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
+    }
+
+    @Override
+    public Alarm findCustomerLatestByOriginatorAndType(CustomerId customerId, EntityId originator, String type) {
+        List<AlarmEntity> latest = alarmRepository.findCustomerLatestByOriginatorAndType(
+                customerId.getId(),
                 originator.getId(),
                 type,
                 PageRequest.of(0, 1));

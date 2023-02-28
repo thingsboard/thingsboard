@@ -17,7 +17,9 @@ package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.util.List;
 
@@ -27,6 +29,11 @@ public class AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
     @Getter
     protected List<EntityKey> alarmFields;
 
+    @Getter
+    @Setter
+    @JsonIgnore
+    protected CustomerId customerId;
+
     public AlarmDataQuery() {
     }
 
@@ -34,13 +41,14 @@ public class AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
         super(entityFilter, keyFilters);
     }
 
-    public AlarmDataQuery(EntityFilter entityFilter, AlarmDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters, List<EntityKey> alarmFields) {
+    public AlarmDataQuery(EntityFilter entityFilter, AlarmDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters, List<EntityKey> alarmFields, CustomerId customerId) {
         super(entityFilter, pageLink, entityFields, latestValues, keyFilters);
         this.alarmFields = alarmFields;
+        this.customerId = customerId;
     }
 
     @JsonIgnore
     public AlarmDataQuery next() {
-        return new AlarmDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters, alarmFields);
+        return new AlarmDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters, alarmFields, customerId);
     }
 }

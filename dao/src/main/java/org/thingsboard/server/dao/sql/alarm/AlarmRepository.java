@@ -38,6 +38,16 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     List<AlarmEntity> findLatestByOriginatorAndType(@Param("originatorId") UUID originatorId,
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
+    @Query("SELECT a " +
+           "FROM AlarmEntity a " +
+           "WHERE a.customerId = :customerId " +
+           "AND a.originatorId = :originatorId " +
+           "AND a.type = :alarmType " +
+           "ORDER BY a.startTs DESC")
+    List<AlarmEntity> findCustomerLatestByOriginatorAndType(@Param("customerId") UUID customerId,
+                                                            @Param("originatorId") UUID originatorId,
+                                                            @Param("alarmType") String alarmType,
+                                                            Pageable pageable);
 
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
