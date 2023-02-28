@@ -264,10 +264,11 @@ div {
 }
 
 .tb-hint {
-  padding-bottom: 15px;
-  font-size: 12px;
-  line-height: 14px;
-  color: #808080;
+  padding: 0 16px 16px;
+  font-size: var(--mdc-typography-caption-font-size, 12px);
+  line-height: var(--mdc-typography-caption-line-height, 20px);
+  font-weight: var(--mdc-typography-caption-font-weight, 400);
+  letter-spacing: var(--mdc-typography-caption-letter-spacing, 0.0333333333em);
 }
 
 .mat-caption {
@@ -1490,5 +1491,9 @@ mat-label {
         width: auto;
       }
     }
+  }
+
+  .mat-expansion-panel {
+    color: inherit;
   }
 }

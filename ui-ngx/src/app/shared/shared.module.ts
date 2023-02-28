@@ -24,7 +24,7 @@ import { FlowInjectionToken, NgxFlowModule } from '@flowjs/ngx-flow';
 import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MAT_AUTOCOMPLETE_DEFAULT_OPTIONS, MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -198,7 +198,16 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbPopoverService,
     {
       provide: MAT_SELECT_CONFIG,
-      useValue: { overlayPanelClass: 'tb-select-overlay' }
+      useValue: {
+        overlayPanelClass: 'tb-select-overlay',
+        hideSingleSelectionIndicator: true
+      }
+    },
+    {
+      provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
+      useValue: {
+        hideSingleSelectionIndicator: true
+      }
     }
   ],
   declarations: [

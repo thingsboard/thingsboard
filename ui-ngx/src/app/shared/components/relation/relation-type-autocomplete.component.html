@@ -16,10 +16,11 @@
 
 -->
 <mat-form-field [formGroup]="relationTypeFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
-  <mat-label>{{ required  ? ('relation.relation-type' | translate) : ( !modelValue ? ('relation.any-relation-type' | translate) : ' ') }}</mat-label>
+  <mat-label *ngIf="required">{{ 'relation.relation-type' | translate }}</mat-label>
   <input matInput type="text"
          #relationTypeInput
          formControlName="relationType"
+         [placeholder]="!required ? ('relation.any-relation-type' | translate) : ''"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="relationTypeAutocomplete">

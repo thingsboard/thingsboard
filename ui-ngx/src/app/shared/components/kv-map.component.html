@@ -16,17 +16,15 @@
 
 -->
 <section fxLayout="column" class="tb-kv-map" [formGroup]="kvListFormGroup">
-  <label translate class="tb-title no-padding">{{ titleText }}</label>
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" style="max-height: 40px;"
+  <label translate class="tb-title">{{ titleText }}</label>
+  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px"
        formArrayName="keyVals"
        *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
-    <mat-form-field fxFlex class="mat-block"
-                    style="max-height: 40px;">
+    <mat-form-field fxFlex class="mat-block" subscriptSizing="{{ subscriptSizing }}">
       <input [formControl]="keyValControl.get('key')" matInput required
              placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block"
-                    style="max-height: 40px;">
+    <mat-form-field fxFlex class="mat-block" subscriptSizing="{{ subscriptSizing }}">
       <input [formControl]="keyValControl.get('value')" matInput required
              placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
     </mat-form-field>
