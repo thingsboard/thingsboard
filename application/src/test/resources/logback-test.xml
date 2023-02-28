@@ -15,6 +15,7 @@
     <logger name="org.apache.cassandra" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
     <logger name="org.eclipse.leshan" level="INFO"/>
+    <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
 
     <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
     <logger name="org.thingsboard.server.service.edge.rpc.EdgeGrpcSession" level="OFF"/>

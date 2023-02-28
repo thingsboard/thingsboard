@@ -106,6 +106,7 @@ public class ContainerTestSuite {
                     new File(targetDir + "docker-compose.yml"),
                     new File(targetDir + "docker-compose.volumes.yml"),
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
+                    new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
                     new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.yml" : "docker-compose.redis.yml")),
