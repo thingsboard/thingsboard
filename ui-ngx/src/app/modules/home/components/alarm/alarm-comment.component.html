@@ -16,10 +16,12 @@
 
 -->
 
-<div fxFlexFill [formGroup]="alarmCommentFormGroup" class="tb-alarm-comments" fxLayout="column">
-  <div *ngIf="commentsHeaderEnabled" class="tb-alarm-comments-header" fxLayout="row" fxLayoutAlign="space-between baseline">
-    <span class="tb-alarm-comments-header-title">{{ 'alarm-comment.comments' | translate }}</span>
-    <div>
+<div [formGroup]="alarmCommentFormGroup" class="tb-alarm-comments" fxLayout="column">
+  <div class="tb-alarm-comments-header" fxLayout="row" fxLayoutAlign="space-between baseline">
+    <span *ngIf="commentsHeaderEnabled" class="tb-alarm-comments-header-title">
+      {{ 'alarm-comment.comments' | translate }}
+    </span>
+    <div style="margin-left: auto">
       <button mat-icon-button
               type="button"
               (click)="changeSortDirection()"

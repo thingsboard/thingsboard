@@ -108,7 +108,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   }
 
   loadAlarm() {
-    this.alarmService.getAlarmInfo(this.alarmId).subscribe(
+    this.alarmService.getAlarmInfo(this.alarmId, {ignoreLoading: true}).subscribe(
       alarm => this.loadAlarmSubject.next(alarm)
     );
   }

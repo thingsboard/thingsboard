@@ -143,11 +143,11 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   enableSelection: boolean;
   enableStatusFilter?: boolean;
   enableFilter: boolean;
+  displayComments: boolean;
   displayDetails: boolean;
   allowAcknowledgment: boolean;
   allowClear: boolean;
   allowAssign: boolean;
-  displayComments: boolean;
 }
 
 interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
@@ -197,11 +197,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   private alarmsTitlePattern: string;
 
+  private displayComments = false;
   private displayDetails = true;
   public allowAcknowledgment = true;
   private allowClear = true;
   public allowAssign = true;
-  private displayComments = false;
 
   private defaultPageSize = 10;
   private defaultSortOrder = '-' + alarmFields.createdTime.value;
@@ -335,10 +335,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.alarmFilterAction, this.columnDisplayAction];
 
+    this.displayComments = isDefined(this.settings.displayComments) ? this.settings.displayComments : false;
     this.displayDetails = isDefined(this.settings.displayDetails) ? this.settings.displayDetails : true;
     this.allowAcknowledgment = isDefined(this.settings.allowAcknowledgment) ? this.settings.allowAcknowledgment : true;
     this.allowClear = isDefined(this.settings.allowClear) ? this.settings.allowClear : true;
-    this.displayComments = isDefined(this.settings.displayComments) ? this.settings.displayComments : false;
     this.allowAssign = isDefined(this.settings.allowAssign) ? this.settings.allowAssign : true;
 
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
@@ -464,6 +464,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
     const actionCellDescriptors: AlarmWidgetActionDescriptor[] = [];
+    if (this.displayComments) {
+      actionCellDescriptors.push(
+        {
+          displayName: this.translate.instant('alarm-comment.comments'),
+          icon: 'comment',
+          comments: true
+        } as AlarmWidgetActionDescriptor
+      );
+    }
+
     if (this.displayDetails) {
       actionCellDescriptors.push(
         {
@@ -490,16 +500,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           displayName: this.translate.instant('alarm.clear'),
           icon: 'clear',
           clear: true
-        } as AlarmWidgetActionDescriptor
-      );
-    }
-
-    if (this.displayComments) {
-      actionCellDescriptors.push(
-        {
-          displayName: this.translate.instant('alarm-comment.comments'),
-          icon: 'comment',
-          comments: true
         } as AlarmWidgetActionDescriptor
       );
     }

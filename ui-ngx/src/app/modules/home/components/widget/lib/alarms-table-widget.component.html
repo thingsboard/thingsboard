@@ -92,7 +92,9 @@
                   </span>
                   <span [matTooltip]="getUserDisplayName(alarm)"
                         matTooltipPosition="above"
-                        style="text-overflow: ellipsis">{{ getUserDisplayName(alarm) }}</span>
+                        style="text-overflow: ellipsis">
+                    {{ getUserDisplayName(alarm) }}
+                  </span>
                 </span>
                 <span *ngIf="!alarm.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
                   <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
