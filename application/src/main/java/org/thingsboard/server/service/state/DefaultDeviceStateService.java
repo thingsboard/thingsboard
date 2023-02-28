@@ -303,15 +303,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             return;
         }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        if (stateData != null) {
-            long ts = System.currentTimeMillis();
-            DeviceState state = stateData.getState();
-            state.setActive(false);
-            state.setLastInactivityAlarmTime(ts);
-            save(deviceId, ACTIVITY_STATE, false);
-            save(deviceId, INACTIVITY_ALARM_TIME, ts);
-            pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
-        }
+        reportInactivity(System.currentTimeMillis(), deviceId, stateData);
     }
 
     @Override
@@ -478,11 +470,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())
                     && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
-                    state.setActive(false);
-                    state.setLastInactivityAlarmTime(ts);
-                    save(deviceId, ACTIVITY_STATE, false);
-                    save(deviceId, INACTIVITY_ALARM_TIME, ts);
-                    pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+                    reportInactivity(ts, deviceId, stateData);
                 } else {
                     cleanupEntity(deviceId);
                 }
@@ -491,6 +479,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
             cleanupEntity(deviceId);
         }
+    }
+
+    private void reportInactivity(long ts, DeviceId deviceId, DeviceStateData stateData) {
+        DeviceState state = stateData.getState();
+        state.setActive(false);
+        state.setLastInactivityAlarmTime(ts);
+        save(deviceId, ACTIVITY_STATE, false);
+        save(deviceId, INACTIVITY_ALARM_TIME, ts);
+        pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
     }
 
     boolean isActive(long ts, DeviceState state) {
