@@ -145,6 +145,54 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
         testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED);
+
+        alarm = updatedAlarm;
+        alarm.setAcknowledged(true);
+        alarm.setAckTs(System.currentTimeMillis() - 1000);
+        updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(updatedAlarm);
+        Assert.assertTrue(updatedAlarm.isAcknowledged());
+        Assert.assertEquals(alarm.getAckTs(), updatedAlarm.getAckTs());
+
+        foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
+        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ACK);
+
+        alarm = updatedAlarm;
+        alarm.setCleared(true);
+        alarm.setClearTs(System.currentTimeMillis() - 1000);
+        updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(updatedAlarm);
+        Assert.assertTrue(updatedAlarm.isCleared());
+        Assert.assertEquals(alarm.getClearTs(), updatedAlarm.getClearTs());
+
+        foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
+        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR);
+
+        alarm = updatedAlarm;
+        alarm.setAssigneeId(tenantAdminUserId);
+        alarm.setAssignTs(System.currentTimeMillis() - 1000);
+        updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(updatedAlarm);
+        Assert.assertEquals(tenantAdminUserId, updatedAlarm.getAssigneeId());
+        Assert.assertEquals(alarm.getAssignTs(), updatedAlarm.getAssignTs());
+
+        foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
+        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ASSIGN);
+
+        alarm = updatedAlarm;
+        alarm.setAssigneeId(null);
+        alarm.setAssignTs(System.currentTimeMillis() - 1000);
+        updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(updatedAlarm);
+        Assert.assertNull(updatedAlarm.getAssigneeId());
+        Assert.assertEquals(alarm.getAssignTs(), updatedAlarm.getAssignTs());
+
+        foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
+        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_UNASSIGN);
     }
 
     @Test
@@ -490,7 +538,8 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         var response = doGetTyped(
                 "/api/alarm/" + EntityType.DEVICE + "/"
                         + customerDevice.getUuidId() + "?page=0&pageSize=" + size,
-                new TypeReference<PageData<AlarmInfo>>() {}
+                new TypeReference<PageData<AlarmInfo>>() {
+                }
         );
         var foundAlarmInfos = response.getData();
         Assert.assertNotNull("Found pageData is null", foundAlarmInfos);
@@ -556,7 +605,8 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         this.token = tokens.get("token").asText();
 
         PageData<AlarmInfo> pageData = doGetTyped(
-                "/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=1", new TypeReference<PageData<AlarmInfo>>() {}
+                "/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=1", new TypeReference<PageData<AlarmInfo>>() {
+                }
         );
 
         Assert.assertNotNull("Found pageData is null", pageData);

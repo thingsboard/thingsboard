@@ -119,7 +119,7 @@ public class AlarmController extends BaseController {
         return checkAlarmInfoId(alarmId, Operation.READ);
     }
 
-    @ApiOperation(value = "Create or update Alarm (saveAlarm)",
+    @ApiOperation(value = "Create or Update Alarm (saveAlarm)",
             notes = "Creates or Updates the Alarm. " +
                     "When creating alarm, platform generates Alarm Id as " + UUID_WIKI_LINK +
                     "The newly created Alarm id will be present in the response. Specify existing Alarm id to update the alarm. " +
@@ -193,9 +193,9 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarm/{alarmId}/assign/{assigneeId}", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public Alarm assignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
-                            @PathVariable(ALARM_ID) String strAlarmId,
-                            @ApiParam(value = ASSIGN_ID_PARAM_DESCRIPTION)
-                            @PathVariable(ASSIGNEE_ID) String strAssigneeId
+                             @PathVariable(ALARM_ID) String strAlarmId,
+                             @ApiParam(value = ASSIGN_ID_PARAM_DESCRIPTION)
+                             @PathVariable(ASSIGNEE_ID) String strAssigneeId
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         checkParameter(ASSIGNEE_ID, strAssigneeId);
@@ -203,7 +203,7 @@ public class AlarmController extends BaseController {
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
         UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
         checkUserId(assigneeId, Operation.READ);
-        return tbAlarmService.assign(alarm, getCurrentUser(), assigneeId);
+        return tbAlarmService.assign(alarm, assigneeId, System.currentTimeMillis(), getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign Alarm (unassignAlarm)",
@@ -214,12 +214,12 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarm/{alarmId}/assign", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public Alarm unassignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
-                            @PathVariable(ALARM_ID) String strAlarmId
+                               @PathVariable(ALARM_ID) String strAlarmId
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        return tbAlarmService.unassign(alarm, getCurrentUser());
+        return tbAlarmService.unassign(alarm, System.currentTimeMillis(), getCurrentUser());
     }
 
     @ApiOperation(value = "Get Alarms (getAlarms)",

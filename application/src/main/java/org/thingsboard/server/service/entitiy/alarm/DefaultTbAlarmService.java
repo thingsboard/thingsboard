@@ -53,11 +53,28 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } else {
                 result = alarmSubscriptionService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
             }
+            if (!result.isSuccessful()) {
+                throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
+            }
             actionType = result.isCreated() ? ActionType.ADDED : ActionType.UPDATED;
             if (result.isModified()) {
                 notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), actionType, user);
             }
-            return new Alarm(result.getAlarm());
+            AlarmInfo resultAlarm = result.getAlarm();
+            if (alarm.isAcknowledged() && !resultAlarm.isAcknowledged()) {
+                resultAlarm = ack(resultAlarm, alarm.getAckTs(), user);
+            }
+            if (alarm.isCleared() && !resultAlarm.isCleared()) {
+                resultAlarm = clear(resultAlarm, alarm.getClearTs(), user);
+            }
+            UserId newAssignee = alarm.getAssigneeId();
+            UserId curAssignee = resultAlarm.getAssigneeId();
+            if (newAssignee != null && !newAssignee.equals(curAssignee)) {
+                resultAlarm = assign(alarm, newAssignee, alarm.getAssignTs(), user);
+            } else if (newAssignee == null && curAssignee != null) {
+                resultAlarm = unassign(alarm, alarm.getAssignTs(), user);
+            }
+            return new Alarm(resultAlarm);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM), alarm, actionType, user, e);
             throw e;
@@ -66,7 +83,12 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public AlarmInfo ack(Alarm alarm, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.acknowledgeAlarm(alarm.getTenantId(), alarm.getId(), System.currentTimeMillis());
+        return ack(alarm, System.currentTimeMillis(), user);
+    }
+
+    @Override
+    public AlarmInfo ack(Alarm alarm, long ackTs, User user) throws ThingsboardException {
+        AlarmApiCallResult result = alarmSubscriptionService.acknowledgeAlarm(alarm.getTenantId(), alarm.getId(), getOrDefault(ackTs));
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -89,7 +111,12 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public AlarmInfo clear(Alarm alarm, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.clearAlarm(alarm.getTenantId(), alarm.getId(), System.currentTimeMillis(), null);
+        return clear(alarm, System.currentTimeMillis(), user);
+    }
+
+    @Override
+    public AlarmInfo clear(Alarm alarm, long clearTs, User user) throws ThingsboardException {
+        AlarmApiCallResult result = alarmSubscriptionService.clearAlarm(alarm.getTenantId(), alarm.getId(), getOrDefault(clearTs), null);
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -111,8 +138,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public AlarmInfo assign(Alarm alarm, User user, UserId assigneeId) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, System.currentTimeMillis());
+    public AlarmInfo assign(Alarm alarm, UserId assigneeId, long assignTs, User user) throws ThingsboardException {
+        AlarmApiCallResult result = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, getOrDefault(assignTs));
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -138,8 +165,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public AlarmInfo unassign(Alarm alarm, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), System.currentTimeMillis());
+    public AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException {
+        AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), getOrDefault(unassignTs));
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -168,5 +195,9 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         notificationEntityService.notifyDeleteAlarm(tenantId, alarm, alarm.getOriginator(), alarm.getCustomerId(),
                 relatedEdgeIds, user, JacksonUtil.toString(alarm));
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
+    }
+
+    private static long getOrDefault(long ts) {
+        return ts > 0 ? ts : System.currentTimeMillis();
     }
 }

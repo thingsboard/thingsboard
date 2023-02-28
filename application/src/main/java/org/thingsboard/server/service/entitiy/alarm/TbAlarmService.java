@@ -27,11 +27,15 @@ public interface TbAlarmService {
 
     AlarmInfo ack(Alarm alarm, User user) throws ThingsboardException;
 
+    AlarmInfo ack(Alarm alarm, long ackTs, User user) throws ThingsboardException;
+
     AlarmInfo clear(Alarm alarm, User user) throws ThingsboardException;
 
-    AlarmInfo assign(Alarm alarm, User user, UserId assigneeId) throws ThingsboardException;
+    AlarmInfo clear(Alarm alarm, long clearTs, User user) throws ThingsboardException;
 
-    AlarmInfo unassign(Alarm alarm, User user) throws ThingsboardException;
+    AlarmInfo assign(Alarm alarm, UserId assigneeId, long assignTs, User user) throws ThingsboardException;
+
+    AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
 
     Boolean delete(Alarm alarm, User user);
 }
