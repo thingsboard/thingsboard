@@ -93,6 +93,12 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
         NotificationTemplate alarmNotificationTemplate = new NotificationTemplate();
 
+        /*
+        * TODO:
+        *  rule chain start failure
+        *  alarm
+        * */
+
     }
 
 }

@@ -42,6 +42,6 @@ public class NotificationTemplate extends BaseData<NotificationTemplateId> imple
     private NotificationType notificationType;
     @Valid
     @NotNull
-    private NotificationTemplateConfig configuration; // TODO: add pg_tgrm index
+    private NotificationTemplateConfig configuration;
 
 }

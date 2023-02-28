@@ -38,8 +38,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.DaoUtil.getId;
-
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -60,8 +58,8 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
     }
 
     @Override
-    public boolean existsByTargetId(TenantId tenantId, NotificationTargetId targetId) {
-        return notificationRuleRepository.existsByRecipientsConfigContaining(targetId.getId().toString());
+    public boolean existsByTenantIdAndTargetId(TenantId tenantId, NotificationTargetId targetId) {
+        return notificationRuleRepository.existsByTenantIdAndRecipientsConfigContaining(tenantId.getId(), targetId.getId().toString());
     }
 
     @Override

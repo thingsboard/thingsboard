@@ -55,7 +55,7 @@ public class DefaultSlackService implements SlackService {
             .expireAfterWrite(20, TimeUnit.SECONDS)
             .maximumSize(100)
             .build();
-    private static final int CONVERSATIONS_LIMIT = 1000;
+    private static final int CONVERSATIONS_LOAD_LIMIT = 1000;
 
     @Override
     public void sendMessage(TenantId tenantId, String token, String conversationId, String message) {
@@ -71,7 +71,7 @@ public class DefaultSlackService implements SlackService {
         return cache.get(conversationType + ":" + token, k -> {
             if (conversationType == SlackConversationType.DIRECT) {
                 UsersListRequest request = UsersListRequest.builder()
-                        .limit(CONVERSATIONS_LIMIT)
+                        .limit(CONVERSATIONS_LOAD_LIMIT)
                         .build();
 
                 UsersListResponse response = sendRequest(token, request, MethodsClient::usersList);
@@ -89,7 +89,7 @@ public class DefaultSlackService implements SlackService {
                         .types(List.of(conversationType == SlackConversationType.PUBLIC_CHANNEL ?
                                 ConversationType.PUBLIC_CHANNEL :
                                 ConversationType.PRIVATE_CHANNEL))
-                        .limit(CONVERSATIONS_LIMIT)
+                        .limit(CONVERSATIONS_LOAD_LIMIT)
                         .excludeArchived(true)
                         .build();
 

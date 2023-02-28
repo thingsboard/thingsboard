@@ -42,7 +42,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
 
-    boolean existsByRecipientsConfigContaining(String string);
+    boolean existsByTenantIdAndRecipientsConfigContaining(UUID tenantId, String searchString);
 
     List<NotificationRuleEntity> findAllByTenantIdAndTriggerType(UUID tenantId, NotificationRuleTriggerType triggerType);
 

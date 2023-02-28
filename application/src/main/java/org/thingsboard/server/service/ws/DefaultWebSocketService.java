@@ -252,7 +252,11 @@ public class DefaultWebSocketService implements WebSocketService {
             if (cmd != null) {
                 String sessionId = sessionRef.getSessionId();
                 if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)) {
-                    cmdHandler.handle(sessionRef, cmd); // todo: handle exceptions
+                    try {
+                        cmdHandler.handle(sessionRef, cmd);
+                    } catch (Exception e) {
+                        log.error("Failed to handle WS cmd: {}", cmd, e);
+                    }
                 }
             }
         }

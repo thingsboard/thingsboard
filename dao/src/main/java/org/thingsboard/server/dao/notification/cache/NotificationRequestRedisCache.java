@@ -16,17 +16,20 @@
 package org.thingsboard.server.dao.notification.cache;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
+import org.thingsboard.server.cache.CacheSpecsMap;
+import org.thingsboard.server.cache.RedisTbTransactionalCache;
+import org.thingsboard.server.cache.TBRedisCacheConfiguration;
+import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 
-@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service
-public class NotificationRuleCaffeineCache extends CaffeineTbTransactionalCache<NotificationRuleCacheKey, NotificationRuleCacheValue> {
+public class NotificationRequestRedisCache extends RedisTbTransactionalCache<NotificationRequestCacheKey, NotificationRequestCacheValue> {
 
-    public NotificationRuleCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.NOTIFICATION_RULES_CACHE);
+    public NotificationRequestRedisCache(CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration) {
+        super(CacheConstants.NOTIFICATION_REQUESTS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());
     }
 
 }

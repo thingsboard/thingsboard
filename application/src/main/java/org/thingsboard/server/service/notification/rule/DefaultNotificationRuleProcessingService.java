@@ -122,7 +122,9 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                     processNotificationRule(rule, originatorEntityId, triggerObject);
                 });
             }
-        }, e -> {});
+        }, e -> {
+            log.error("Failed to find notification rules by trigger type {}", triggerType, e);
+        });
     }
 
     private void processNotificationRule(NotificationRule rule, EntityId originatorEntityId, Object triggerObject) {

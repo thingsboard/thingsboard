@@ -65,9 +65,9 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
                                   @Param("status") NotificationRequestStatus status,
                                   @Param("stats") JsonNode stats);
 
-    boolean existsByStatusAndTargetsContaining(NotificationRequestStatus status, String targetIdStr);
+    boolean existsByTenantIdAndStatusAndTargetsContaining(UUID tenantId, NotificationRequestStatus status, String targetIdStr);
 
-    boolean existsByStatusAndTemplateId(NotificationRequestStatus status, UUID templateId);
+    boolean existsByTenantIdAndStatusAndTemplateId(UUID tenantId, NotificationRequestStatus status, UUID templateId);
 
     @Transactional
     int deleteAllByCreatedTimeBefore(long ts);

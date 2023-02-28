@@ -68,15 +68,6 @@ public class NotificationTargetController extends BaseController {
 
     @ApiOperation(value = "Save notification target (saveNotificationTarget)",
             notes = "Create or update notification target.\n\n" +
-//                    "Examples with different configuration types:\n" +
-//                    "- USER_LIST:\n" +
-//                    "```\n{\n  \"name\": \"Special users\",\n  \"configuration\": {\n    \"type\": \"USER_LIST\",\n    \"usersIds\": [\n      \"ea31a460-3d85-11ed-9200-77fc04fa14fa\",\n      \"86f7b260-3d88-11ed-ad72-ad2ee0f70ba1\"\n    ]\n  }\n}\n```\n" +
-//                    "- CUSTOMER_USERS (not accessible to system administrator):\n" +
-//                    "```\n{\n  \"name\": \"Users of my customer\",\n  \"configuration\": {\n    \"type\": \"CUSTOMER_USERS\",\n    \"customerId\": \"ea31a460-3d85-11ed-9200-77fc04fa14fa\"\n  }\n}\n```\n" +
-//                    "or if you would like to use the target in notification rule and get customerId from alarm:\n" +
-//                    "```\n{\n  \"name\": \"Alarm's customer users\",\n  \"configuration\": {\n    \"type\": \"CUSTOMER_USERS\",\n    \"customerId\": null,\n    \"getCustomerIdFromOriginatorEntity\": true\n  }\n}\n```\n" +
-//                    "- ALL_USERS:\n" +
-//                    "```\n{\n  \"name\": \"All my users\",\n  \"configuration\": {\n    \"type\": \"ALL_USERS\"\n  }\n}\n```\n\n" +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/target")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,14 +30,19 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.notification.cache.NotificationRequestCacheKey;
+import org.thingsboard.server.dao.notification.cache.NotificationRequestCacheValue;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultNotificationRequestService implements NotificationRequestService {
+public class DefaultNotificationRequestService extends AbstractCachedEntityService<NotificationRequestCacheKey, NotificationRequestCacheValue, NotificationRequest> implements NotificationRequestService, EntityDaoService {
 
     private final NotificationRequestDao notificationRequestDao;
 
@@ -45,7 +51,14 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         notificationRequestValidator.validate(notificationRequest, NotificationRequest::getTenantId);
-        return notificationRequestDao.save(tenantId, notificationRequest);
+        try {
+            notificationRequest = notificationRequestDao.save(tenantId, notificationRequest);
+            publishEvictEvent(notificationRequest);
+        } catch (Exception e) {
+            handleEvictEvent(notificationRequest);
+            throw e;
+        }
+        return notificationRequest;
     }
 
     @Override
@@ -75,14 +88,21 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
 
     @Override
     public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
-        // FIXME: add caching
-        return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
+        NotificationRequestCacheKey cacheKey = NotificationRequestCacheKey.builder()
+                .originatorEntityId(originatorEntityId)
+                .ruleId(ruleId)
+                .build();
+        return cache.getAndPutInTransaction(cacheKey, () -> NotificationRequestCacheValue.builder()
+                        .notificationRequests(notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId))
+                        .build(), false)
+                .getNotificationRequests();
     }
 
     // ON DELETE CASCADE is used: notifications for request are deleted as well
     @Override
-    public void deleteNotificationRequestById(TenantId tenantId, NotificationRequestId id) {
-        notificationRequestDao.removeById(tenantId, id.getId());
+    public void deleteNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        publishEvictEvent(notificationRequest);
+        notificationRequestDao.removeById(tenantId, notificationRequest.getUuidId());
     }
 
     @Override
@@ -98,6 +118,27 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);
+    }
+
+    @Override
+    public void handleEvictEvent(NotificationRequest notificationRequest) {
+        if (notificationRequest.getRuleId() == null) return;
+
+        NotificationRequestCacheKey cacheKey = NotificationRequestCacheKey.builder()
+                .originatorEntityId(notificationRequest.getOriginatorEntityId())
+                .ruleId(notificationRequest.getRuleId())
+                .build();
+        cache.evict(cacheKey);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findNotificationRequestById(tenantId, new NotificationRequestId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_REQUEST;
     }
 
 

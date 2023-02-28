@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.slack.SlackService;
-import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
@@ -37,10 +35,6 @@ public class SlackNotificationChannel implements NotificationChannel<SlackConver
 
     @Override
     public ListenableFuture<Void> sendNotification(SlackConversation conversation, SlackDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
-        if (ctx.getStats().contains(NotificationDeliveryMethod.SLACK)) {
-            return Futures.immediateFailedFuture(new AlreadySentException());
-        }
-
         SlackNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.SLACK);
         return executor.submit(() -> {
             slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), conversation.getId(), processedTemplate.getBody());

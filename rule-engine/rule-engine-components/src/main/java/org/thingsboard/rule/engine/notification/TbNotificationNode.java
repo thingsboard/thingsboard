@@ -35,8 +35,8 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.EXTERNAL,
         name = "send notification",
         configClazz = TbNotificationNodeConfiguration.class,
-        nodeDescription = "Sends notification to a target",
-        nodeDetails = "Will send notification to the specified target",
+        nodeDescription = "Sends notification to targets using the template",
+        nodeDetails = "Will send notification to the specified targets",
         uiResources = {"static/rulenode/rulenode-core-config.js"}
 )
 public class TbNotificationNode implements TbNode {

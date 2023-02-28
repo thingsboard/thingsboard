@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
 import java.util.Collections;
@@ -68,10 +67,6 @@ public class NotificationRequestStats {
             key = "";
         }
         errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(key, errorMessage);
-    }
-
-    public boolean contains(NotificationDeliveryMethod deliveryMethod) {
-        return sent.containsKey(deliveryMethod) || errors.containsKey(deliveryMethod);
     }
 
     public boolean contains(NotificationDeliveryMethod deliveryMethod, Object recipientId) {

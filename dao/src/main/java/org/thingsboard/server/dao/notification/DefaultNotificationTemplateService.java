@@ -17,6 +17,9 @@ package org.thingsboard.server.dao.notification;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -25,13 +28,15 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultNotificationTemplateService extends AbstractEntityService implements NotificationTemplateService {
+public class DefaultNotificationTemplateService extends AbstractEntityService implements NotificationTemplateService, EntityDaoService {
 
     private final NotificationTemplateDao notificationTemplateDao;
     private final NotificationRequestDao notificationRequestDao;
@@ -60,7 +65,7 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
 
     @Override
     public void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
-        if (notificationRequestDao.existsByStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
+        if (notificationRequestDao.existsByTenantIdAndStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
             throw new IllegalArgumentException("Notification template is referenced by scheduled notification request");
         }
         try {
@@ -76,6 +81,16 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     @Override
     public void deleteNotificationTemplatesByTenantId(TenantId tenantId) {
         notificationTemplateDao.removeByTenantId(tenantId);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_TEMPLATE;
     }
 
 }

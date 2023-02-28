@@ -58,6 +58,7 @@ public class TbSlackNode implements TbNode {
         if (token == null) {
             throw new IllegalArgumentException("Slack token is missing");
         }
+
         String message = TbNodeUtils.processPattern(config.getMessageTemplate(), msg);
 
         ListenableFuture<?> result;

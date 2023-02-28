@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.DaoUtil.getId;
-
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -87,13 +85,13 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     }
 
     @Override
-    public boolean existsByStatusAndTargetId(TenantId tenantId, NotificationRequestStatus status, NotificationTargetId targetId) {
-        return notificationRequestRepository.existsByStatusAndTargetsContaining(status, targetId.getId().toString());
+    public boolean existsByTenantIdAndStatusAndTargetId(TenantId tenantId, NotificationRequestStatus status, NotificationTargetId targetId) {
+        return notificationRequestRepository.existsByTenantIdAndStatusAndTargetsContaining(tenantId.getId(), status, targetId.getId().toString());
     }
 
     @Override
-    public boolean existsByStatusAndTemplateId(TenantId tenantId, NotificationRequestStatus status, NotificationTemplateId templateId) {
-        return notificationRequestRepository.existsByStatusAndTemplateId(status, templateId.getId());
+    public boolean existsByTenantIdAndStatusAndTemplateId(TenantId tenantId, NotificationRequestStatus status, NotificationTemplateId templateId) {
+        return notificationRequestRepository.existsByTenantIdAndStatusAndTemplateId(tenantId.getId(), status, templateId.getId());
     }
 
     @Override

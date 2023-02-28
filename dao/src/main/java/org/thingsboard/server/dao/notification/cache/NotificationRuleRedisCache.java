@@ -25,7 +25,7 @@ import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
-@Service("notificationRuleCache")
+@Service
 public class NotificationRuleRedisCache extends RedisTbTransactionalCache<NotificationRuleCacheKey, NotificationRuleCacheValue> {
 
     public NotificationRuleRedisCache(CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration) {

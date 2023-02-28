@@ -18,8 +18,11 @@ package org.thingsboard.server.dao.notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -34,17 +37,19 @@ import org.thingsboard.server.common.data.notification.targets.platform.UsersFil
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultNotificationTargetService extends AbstractEntityService implements NotificationTargetService {
+public class DefaultNotificationTargetService extends AbstractEntityService implements NotificationTargetService, EntityDaoService {
 
     private final NotificationTargetDao notificationTargetDao;
     private final NotificationRequestDao notificationRequestDao;
@@ -133,10 +138,10 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
 
     @Override
     public void deleteNotificationTargetById(TenantId tenantId, NotificationTargetId id) {
-        if (notificationRequestDao.existsByStatusAndTargetId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
+        if (notificationRequestDao.existsByTenantIdAndStatusAndTargetId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
             throw new IllegalArgumentException("Notification target is referenced by scheduled notification request");
         }
-        if (notificationRuleDao.existsByTargetId(tenantId, id)) {
+        if (notificationRuleDao.existsByTenantIdAndTargetId(tenantId, id)) {
             throw new IllegalArgumentException("Notification target is being used in notification rule");
         }
         notificationTargetDao.removeById(tenantId, id.getId());
@@ -145,6 +150,16 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     @Override
     public void deleteNotificationTargetsByTenantId(TenantId tenantId) {
         notificationTargetDao.removeByTenantId(tenantId);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findNotificationTargetById(tenantId, new NotificationTargetId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_TARGET;
     }
 
 }

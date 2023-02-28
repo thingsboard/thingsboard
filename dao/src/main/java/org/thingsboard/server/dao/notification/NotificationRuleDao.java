@@ -33,7 +33,7 @@ public interface NotificationRuleDao extends Dao<NotificationRule> {
 
     PageData<NotificationRuleInfo> findInfosByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 
-    boolean existsByTargetId(TenantId tenantId, NotificationTargetId targetId);
+    boolean existsByTenantIdAndTargetId(TenantId tenantId, NotificationTargetId targetId);
 
     List<NotificationRule> findByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType);
 

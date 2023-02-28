@@ -172,7 +172,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     } else {
                         int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
                         sendBasicNotification(tenantId, senderId, "Notification failure",
-                                "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to request' button
+                                "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to' button
                     }
                 }
             }, dbCallbackExecutorService);
@@ -333,10 +333,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     public NotificationRequest updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         log.debug("Updating notification request {}", notificationRequest.getId());
         notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
-        // marking related notifications as unread: FIXME: causes each subscription to fetch notifications on each request update
+        // marking related notifications as unread: TODO: causes each subscription to fetch notifications on each request update
         notificationService.updateNotificationsStatusByRequestId(tenantId, notificationRequest.getId(), NotificationStatus.SENT);
 
-        // TODO: no need to update request with other than PLATFORM_USERS target type
+        // TODO: no need to send request update for other than PLATFORM_USERS target type
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequest.getId())
                 .notificationInfo(notificationRequest.getInfo())
@@ -348,9 +348,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
         log.debug("Deleting notification request {}", notificationRequestId);
-        NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, notificationRequestId);// TODO: add caching
-        notificationRequestService.deleteNotificationRequestById(tenantId, notificationRequestId);
-        // todo: check delivery method ?
+        NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, notificationRequestId);
+        notificationRequestService.deleteNotificationRequest(tenantId, notificationRequest);
+
+        // TODO: no need to send request update for other than PLATFORM_USERS target type
         if (notificationRequest.isSent()) {
             onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                     .notificationRequestId(notificationRequestId)

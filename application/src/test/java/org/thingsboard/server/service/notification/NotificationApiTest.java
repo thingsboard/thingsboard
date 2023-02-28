@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.notification.info.UserOriginatedNotifi
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -172,16 +171,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     @Test
     public void testMarkingAsRead_multipleSessions() throws Exception {
         connectOtherWsClient();
-        wsClient.subscribeForUnreadNotifications(10);
-        otherWsClient.subscribeForUnreadNotifications(10);
-        wsClient.waitForReply(true);
-        otherWsClient.waitForReply(true);
-        otherWsClient.subscribeForUnreadNotificationsCount();
-        otherWsClient.waitForReply(true);
+        wsClient.subscribeForUnreadNotifications(10).waitForReply(true);
+        otherWsClient.subscribeForUnreadNotifications(10).waitForReply(true);
 
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
         wsClient.registerWaitForUpdate();
-        otherWsClient.registerWaitForUpdate(2);
+        otherWsClient.registerWaitForUpdate();
         String notificationText1 = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), notificationText1);
         wsClient.waitForUpdate(true);
@@ -189,24 +184,22 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         Notification notification1 = wsClient.getLastDataUpdate().getUpdate();
 
         wsClient.registerWaitForUpdate();
-        otherWsClient.registerWaitForUpdate(2);
+        otherWsClient.registerWaitForUpdate();
         String notificationText2 = "Notification 2";
         submitNotificationRequest(notificationTarget.getId(), notificationText2);
         wsClient.waitForUpdate(true);
         otherWsClient.waitForUpdate(true);
         assertThat(wsClient.getLastDataUpdate().getTotalUnreadCount()).isEqualTo(2);
         assertThat(otherWsClient.getLastDataUpdate().getTotalUnreadCount()).isEqualTo(2);
-        assertThat(otherWsClient.getLastCountUpdate().getTotalUnreadCount()).isEqualTo(2);
 
         wsClient.registerWaitForUpdate();
-        otherWsClient.registerWaitForUpdate(2);
+        otherWsClient.registerWaitForUpdate();
         wsClient.markNotificationAsRead(notification1.getUuidId());
         wsClient.waitForUpdate(true);
         otherWsClient.waitForUpdate(true);
 
         checkFullNotificationsUpdate(wsClient.getLastDataUpdate(), notificationText2);
         checkFullNotificationsUpdate(otherWsClient.getLastDataUpdate(), notificationText2);
-        assertThat(otherWsClient.getLastCountUpdate().getTotalUnreadCount()).isOne();
     }
 
     @Test
@@ -300,8 +293,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void testNotificationUpdatesForALotOfUsers() throws Exception {
-        int usersCount = 80;
+    public void testNotificationUpdatesForSeveralUsers() throws Exception {
+        int usersCount = 150;
         Map<User, NotificationApiWsClient> sessions = new HashMap<>();
         List<NotificationTargetId> targets = new ArrayList<>();
 
@@ -317,23 +310,21 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
             NotificationTarget notificationTarget = createNotificationTarget(user.getId());
             targets.add(notificationTarget.getId());
 
-            wsClient.registerWaitForUpdate(2);
+            wsClient.registerWaitForUpdate();
             wsClient.subscribeForUnreadNotifications(10);
-            wsClient.subscribeForUnreadNotificationsCount();
         }
         sessions.values().forEach(wsClient -> wsClient.waitForUpdate(true));
 
         loginTenantAdmin();
 
-        sessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate(2));
+        sessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate());
         NotificationRequest notificationRequest = submitNotificationRequest(targets, "Hello, ${recipientEmail}", 0,
                 NotificationDeliveryMethod.PUSH);
         await().atMost(10, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> {
                     long receivedUpdate = sessions.values().stream()
-                            .filter(wsClient -> wsClient.getLastDataUpdate() != null
-                                    && wsClient.getLastCountUpdate() != null)
+                            .filter(wsClient -> wsClient.getLastDataUpdate() != null)
                             .count();
                     System.err.println("WS sessions received update: " + receivedUpdate);
                     return receivedUpdate == sessions.size();
@@ -341,7 +332,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         sessions.forEach((user, wsClient) -> {
             assertThat(wsClient.getLastDataUpdate().getTotalUnreadCount()).isOne();
-            assertThat(wsClient.getLastCountUpdate().getTotalUnreadCount()).isOne();
 
             Notification notification = wsClient.getLastDataUpdate().getUpdate();
             assertThat(notification.getRecipientId()).isEqualTo(user.getId());
@@ -354,13 +344,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationRequestStats stats = getStats(notificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(usersCount);
 
-        sessions.values().forEach(wsClient -> wsClient.registerWaitForUpdate(2));
+        sessions.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
         deleteNotificationRequest(notificationRequest.getId());
         sessions.values().forEach(wsClient -> {
             wsClient.waitForUpdate(true);
             assertThat(wsClient.getLastDataUpdate().getNotifications()).isEmpty();
             assertThat(wsClient.getLastDataUpdate().getTotalUnreadCount()).isZero();
-            assertThat(wsClient.getLastCountUpdate().getTotalUnreadCount()).isZero();
         });
 
         sessions.values().forEach(WebSocketClient::close);

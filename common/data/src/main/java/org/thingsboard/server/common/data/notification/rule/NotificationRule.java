@@ -50,7 +50,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     private NotificationRuleTriggerConfig triggerConfig;
     @NotNull
     @Valid
-    private NotificationRuleRecipientsConfig recipientsConfig; // todo: add pg_tgrm index (but index is 2.5x size of the column)
+    private NotificationRuleRecipientsConfig recipientsConfig;
 
     private NotificationRuleConfig additionalConfig;
 
