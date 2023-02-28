@@ -22,6 +22,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -58,7 +59,13 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
     @ApiModelProperty(position = 9, value = "JSON object with propagation details")
     private AlarmPropagationInfo propagation;
 
+    private UserId userId;
+
     public static AlarmCreateOrUpdateActiveRequest fromAlarm(Alarm a) {
+        return fromAlarm(a, null);
+    }
+
+    public static AlarmCreateOrUpdateActiveRequest fromAlarm(Alarm a, UserId userId) {
         return AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(a.getTenantId())
                 .customerId(a.getCustomerId())
@@ -73,6 +80,7 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
                         .propagateToOwner(a.isPropagateToOwner())
                         .propagateToTenant(a.isPropagateToTenant())
                         .propagateRelationTypes(a.getPropagateRelationTypes()).build())
+                .userId(userId)
                 .build();
     }
 

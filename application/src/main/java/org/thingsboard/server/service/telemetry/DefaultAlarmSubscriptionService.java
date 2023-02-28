@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -103,7 +104,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
         if (result.isCreated()) {
             apiUsageClient.report(request.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
         }
-        return withWsCallback(result);
+        return withWsCallback(request, result);
     }
 
     @Override
@@ -298,17 +299,23 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     private AlarmApiCallResult withWsCallback(AlarmApiCallResult result) {
+        return withWsCallback(null, result);
+    }
+
+    private AlarmApiCallResult withWsCallback(AlarmModificationRequest request, AlarmApiCallResult result) {
         if (result.isSuccessful() && result.isModified()) {
             Futures.addCallback(Futures.immediateFuture(result), new AlarmUpdateCallback(), wsCallBackExecutor);
             if (result.isSeverityChanged()) {
                 AlarmInfo alarm = result.getAlarm();
-                AlarmComment alarmComment = AlarmComment.builder()
+                AlarmComment.AlarmCommentBuilder alarmComment = AlarmComment.builder()
                         .alarmId(alarm.getId())
                         .type(AlarmCommentType.SYSTEM)
                         .comment(JacksonUtil.newObjectNode().put("text",
-                                String.format("Alarm severity was updated from %s to %s", result.getOldSeverity(), alarm.getSeverity())))
-                        .build();
-                alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
+                                String.format("Alarm severity was updated from %s to %s", result.getOldSeverity(), alarm.getSeverity())));
+                if (request != null && request.getUserId() != null) {
+                    alarmComment.userId(request.getUserId());
+                }
+                alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment.build());
             }
         }
         return result;

@@ -49,9 +49,9 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         try {
             AlarmApiCallResult result;
             if (alarm.getId() == null) {
-                result = alarmSubscriptionService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm));
+                result = alarmSubscriptionService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, user.getId()));
             } else {
-                result = alarmSubscriptionService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
+                result = alarmSubscriptionService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm, user.getId()));
             }
             if (!result.isSuccessful()) {
                 throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);

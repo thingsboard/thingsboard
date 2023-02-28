@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -53,7 +54,13 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
     @ApiModelProperty(position = 7, value = "JSON object with propagation details")
     private AlarmPropagationInfo propagation;
 
+    private UserId userId;
+
     public static AlarmUpdateRequest fromAlarm(Alarm a) {
+        return fromAlarm(a, null);
+    }
+
+    public static AlarmUpdateRequest fromAlarm(Alarm a, UserId userId) {
         return AlarmUpdateRequest.builder()
                 .tenantId(a.getTenantId())
                 .alarmId(a.getId())
@@ -66,6 +73,7 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
                         .propagateToOwner(a.isPropagateToOwner())
                         .propagateToTenant(a.isPropagateToTenant())
                         .propagateRelationTypes(a.getPropagateRelationTypes()).build())
+                .userId(userId)
                 .build();
     }
 }

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.alarm;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 
 public interface AlarmModificationRequest {
 
@@ -28,4 +29,6 @@ public interface AlarmModificationRequest {
     void setStartTs(long startTs);
 
     void setEndTs(long endTs);
+
+    UserId getUserId();
 }
