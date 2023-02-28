@@ -37,6 +37,8 @@ public interface DeviceStateService extends RuleEngineDeviceStateService, Applic
 
     void onDeviceInactivityTimeoutUpdate(TenantId tenantId, DeviceId deviceId, long inactivityTimeout);
 
+    void onDeviceInactivity(TenantId tenantId, DeviceId deviceId);
+
     void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto proto, TbCallback bytes);
 
 }

@@ -71,7 +71,7 @@ public class TbMsgDeviceStateNode implements TbNode {
         } else if (event.equals(DataConstants.CONNECT_EVENT)) {
             ctx.getRuleEngineDeviceStateService().onDeviceConnect(ctx.getTenantId(), (DeviceId) msg.getOriginator());
         } else if (event.equals(DataConstants.INACTIVITY_EVENT)) {
-            ctx.getRuleEngineDeviceStateService().onDeviceInactivityTimeoutUpdate(ctx.getTenantId(), (DeviceId) msg.getOriginator(), 0);
+            ctx.getRuleEngineDeviceStateService().onDeviceInactivity(ctx.getTenantId(), (DeviceId) msg.getOriginator());
         } else if (event.equals(DataConstants.DISCONNECT_EVENT)) {
             ctx.getRuleEngineDeviceStateService().onDeviceDisconnect(ctx.getTenantId(), (DeviceId) msg.getOriginator());
         }

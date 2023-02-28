@@ -298,6 +298,23 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     @Override
+    public void onDeviceInactivity(TenantId tenantId, DeviceId deviceId) {
+        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+            return;
+        }
+        DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+        if (stateData != null) {
+            long ts = System.currentTimeMillis();
+            DeviceState state = stateData.getState();
+            state.setActive(false);
+            state.setLastInactivityAlarmTime(ts);
+            save(deviceId, ACTIVITY_STATE, false);
+            save(deviceId, INACTIVITY_ALARM_TIME, ts);
+            pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+        }
+    }
+
+    @Override
     public void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto proto, TbCallback callback) {
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));

@@ -26,6 +26,6 @@ public interface RuleEngineDeviceStateService {
 
     void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId);
 
-    void onDeviceInactivityTimeoutUpdate(TenantId tenantId, DeviceId deviceId, long inactivityTimeout);
+    void onDeviceInactivity(TenantId tenantId, DeviceId deviceId);
 
 }

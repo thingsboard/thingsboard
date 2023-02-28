@@ -128,7 +128,7 @@ class TbMsgDeviceStateNodeTest {
         } else if (event.equals(DataConstants.CONNECT_EVENT)) {
             verify(ruleEngineDeviceStateService, times(1)).onDeviceConnect(tenantId, deviceId);
         } else if (event.equals(DataConstants.INACTIVITY_EVENT)) {
-            verify(ruleEngineDeviceStateService, times(1)).onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 0);
+            verify(ruleEngineDeviceStateService, times(1)).onDeviceInactivity(tenantId, deviceId);
         } else if (event.equals(DataConstants.DISCONNECT_EVENT)) {
             verify(ruleEngineDeviceStateService, times(1)).onDeviceDisconnect(tenantId, deviceId);
         }
