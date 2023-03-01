@@ -246,6 +246,7 @@ $tb-dark-theme: map_merge($tb-dark-theme, $color);
   @include mat.all-component-themes($tb-theme);
   @include mat-datetimepicker-theme($tb-theme);
   @include tb-components-theme($tb-theme);
+  @include mat.typography-hierarchy($tb-theme);
 }
 
 .tb-dark {
