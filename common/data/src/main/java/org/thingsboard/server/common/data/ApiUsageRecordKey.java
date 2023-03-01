@@ -26,7 +26,10 @@ public enum ApiUsageRecordKey {
     JS_EXEC_COUNT(ApiFeature.JS, "jsExecutionCount", "jsExecutionLimit"),
     EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit"),
     SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit"),
-    CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit");
+    CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit"),
+
+    ACTIVE_DEVICES("activeDevicesCount"),
+    INACTIVE_DEVICES("inactiveDevicesCount");
 
     private static final ApiUsageRecordKey[] JS_RECORD_KEYS = {JS_EXEC_COUNT};
     private static final ApiUsageRecordKey[] RE_RECORD_KEYS = {RE_EXEC_COUNT};
@@ -42,11 +45,21 @@ public enum ApiUsageRecordKey {
     private final String apiCountKey;
     @Getter
     private final String apiLimitKey;
+    @Getter
+    private final boolean counter;
 
     ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey) {
         this.apiFeature = apiFeature;
         this.apiCountKey = apiCountKey;
         this.apiLimitKey = apiLimitKey;
+        this.counter = true;
+    }
+
+    ApiUsageRecordKey(String apiCountKey) {
+        this.apiCountKey = apiCountKey;
+        this.apiFeature = null;
+        this.apiLimitKey = null;
+        this.counter = false;
     }
 
     public static ApiUsageRecordKey[] getKeys(ApiFeature feature) {

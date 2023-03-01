@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.apiusage;
 
 import lombok.Getter;
-import org.springframework.data.util.Pair;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -26,16 +26,16 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BaseApiUsageState {
     private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
     private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
+
+    private final Map<ApiUsageRecordKey, Map<String, Mean>> avgByServiceIdHourly = new HashMap<>();
+    private final Map<ApiUsageRecordKey, Map<String, Long>> lastByServiceIdHourly = new HashMap<>();
 
     @Getter
     private final ApiUsageState apiUsageState;
@@ -53,34 +53,59 @@ public abstract class BaseApiUsageState {
         this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
     }
 
-    public void put(ApiUsageRecordKey key, Long value) {
+    public void set(ApiUsageRecordKey key, Long value) {
         currentCycleValues.put(key, value);
     }
 
-    public void putHourly(ApiUsageRecordKey key, Long value) {
-        currentHourValues.put(key, value);
-    }
-
-    public long add(ApiUsageRecordKey key, long value) {
-        long result = currentCycleValues.getOrDefault(key, 0L) + value;
-        currentCycleValues.put(key, result);
+    public long calculate(ApiUsageRecordKey key, long value, String serviceId) {
+        long result;
+        long currentValue = get(key);
+        if (key.isCounter()) {
+            result = currentValue + value;
+        } else {
+            Map<String, Long> lastForKey = lastByServiceIdHourly.computeIfAbsent(key, k -> new HashMap<>());
+            lastForKey.put(serviceId, value);
+            // summing last values from all services
+            result = lastForKey.values().stream().mapToLong(Long::longValue).sum();
+        }
+        set(key, result);
         return result;
     }
 
-    public long get(ApiUsageRecordKey key) {
+    protected long get(ApiUsageRecordKey key) {
         return currentCycleValues.getOrDefault(key, 0L);
     }
 
-    public long addToHourly(ApiUsageRecordKey key, long value) {
-        long result = currentHourValues.getOrDefault(key, 0L) + value;
-        currentHourValues.put(key, result);
+    public void setHourly(ApiUsageRecordKey key, Long value) {
+        currentHourValues.put(key, value);
+    }
+
+    public long calculateHourly(ApiUsageRecordKey key, long value, String serviceId) {
+        long currentValue = getHourly(key);
+        long result;
+        if (key.isCounter()) {
+            result = currentValue + value;
+        } else {
+            Map<String, Mean> avgByServiceId = avgByServiceIdHourly.computeIfAbsent(key, k -> new HashMap<>());
+            Mean hourlyAvg = avgByServiceId.computeIfAbsent(serviceId, k -> new Mean());
+            hourlyAvg.increment(value);
+            // summing hourly average values from all services
+            result = (long) avgByServiceId.values().stream().mapToDouble(Mean::getResult).sum();
+        }
+        setHourly(key, result);
         return result;
+    }
+
+    protected long getHourly(ApiUsageRecordKey key) {
+        return currentHourValues.getOrDefault(key, 0L);
     }
 
     public void setHour(long currentHourTs) {
         this.currentHourTs = currentHourTs;
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             currentHourValues.put(key, 0L);
+            avgByServiceIdHourly.put(key, null);
+            lastByServiceIdHourly.put(key, null);
         }
     }
 

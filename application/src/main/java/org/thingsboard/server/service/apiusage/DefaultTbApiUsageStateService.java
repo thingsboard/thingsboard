@@ -179,11 +179,11 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             entityId = tenantId;
         }
 
-        processEntityUsageStats(tenantId, entityId, statsMsg.getValuesList());
+        processEntityUsageStats(tenantId, entityId, statsMsg.getValuesList(), statsMsg.getServiceId());
         callback.onSuccess();
     }
 
-    private void processEntityUsageStats(TenantId tenantId, EntityId entityId, List<UsageStatsKVProto> values) {
+    private void processEntityUsageStats(TenantId tenantId, EntityId entityId, List<UsageStatsKVProto> values, String serviceId) {
         if (deletedEntities.contains(entityId)) return;
 
         BaseApiUsageState usageState;
@@ -203,11 +203,14 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             Set<ApiFeature> apiFeatures = new HashSet<>();
             for (UsageStatsKVProto kvProto : values) {
                 ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(kvProto.getKey());
-                long newValue = usageState.add(recordKey, kvProto.getValue());
+                long newValue = usageState.calculate(recordKey, kvProto.getValue(), serviceId);
+                long newHourlyValue = usageState.calculateHourly(recordKey, kvProto.getValue(), serviceId);
+
                 updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
-                long newHourlyValue = usageState.addToHourly(recordKey, kvProto.getValue());
                 updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
-                apiFeatures.add(recordKey.getApiFeature());
+                if (recordKey.getApiFeature() != null) {
+                    apiFeatures.add(recordKey.getApiFeature());
+                }
             }
             if (usageState.getEntityType() == EntityType.TENANT && !usageState.getEntityId().equals(TenantId.SYS_TENANT_ID)) {
                 result = ((TenantApiUsageState) usageState).checkStateUpdatedDueToThreshold(apiFeatures);
@@ -469,14 +472,14 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                         cycleEntryFound = true;
 
                         boolean oldCount = tsKvEntry.getTs() == state.getCurrentCycleTs();
-                        state.put(key, oldCount ? tsKvEntry.getLongValue().get() : 0L);
+                        state.set(key, oldCount ? tsKvEntry.getLongValue().get() : 0L);
 
                         if (!oldCount) {
                             newCounts.add(key);
                         }
                     } else if (tsKvEntry.getKey().equals(key.getApiCountKey() + HOURLY)) {
                         hourlyEntryFound = true;
-                        state.putHourly(key, tsKvEntry.getTs() == state.getCurrentHourTs() ? tsKvEntry.getLongValue().get() : 0L);
+                        state.setHourly(key, tsKvEntry.getTs() == state.getCurrentHourTs() ? tsKvEntry.getLongValue().get() : 0L);
                     }
                     if (cycleEntryFound && hourlyEntryFound) {
                         break;

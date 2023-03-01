@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +33,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
@@ -47,6 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
     @Value("${usage.stats.report.enabled:true}")
@@ -56,18 +59,13 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     @Value("${usage.stats.report.interval:10}")
     private int interval;
 
-    private final EnumMap<ApiUsageRecordKey, ConcurrentMap<OwnerId, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
+    private final EnumMap<ApiUsageRecordKey, ConcurrentMap<ReportLevel, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
 
     private final PartitionService partitionService;
+    private final TbServiceInfoProvider serviceInfoProvider;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
-
-    public DefaultTbApiUsageReportClient(PartitionService partitionService, SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
-        this.partitionService = partitionService;
-        this.scheduler = scheduler;
-        this.producerProvider = producerProvider;
-    }
 
     @PostConstruct
     private void init() {
@@ -87,27 +85,28 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     }
 
     private void reportStats() {
-        ConcurrentMap<OwnerId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        ConcurrentMap<ReportLevel, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            ConcurrentMap<OwnerId, AtomicLong> statsForKey = stats.get(key);
-            statsForKey.forEach((ownerId, statsValue) -> {
+            ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
+            statsForKey.forEach((reportLevel, statsValue) -> {
                 long value = statsValue.get();
-                if (value == 0) return;
+                if (value == 0 && key.isCounter()) return;
 
-                ToUsageStatsServiceMsg.Builder statsMsgBuilder = report.computeIfAbsent(ownerId, id -> {
+                ToUsageStatsServiceMsg.Builder statsMsgBuilder = report.computeIfAbsent(reportLevel, id -> {
                     ToUsageStatsServiceMsg.Builder newStatsMsgBuilder = ToUsageStatsServiceMsg.newBuilder();
 
-                    TenantId tenantId = ownerId.getTenantId();
+                    TenantId tenantId = reportLevel.getTenantId();
                     newStatsMsgBuilder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
                     newStatsMsgBuilder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
 
-                    EntityId entityId = ownerId.getEntityId();
-                    if (entityId != null && entityId.getEntityType() == EntityType.CUSTOMER) {
-                        newStatsMsgBuilder.setCustomerIdMSB(entityId.getId().getMostSignificantBits());
-                        newStatsMsgBuilder.setCustomerIdLSB(entityId.getId().getLeastSignificantBits());
+                    CustomerId customerId = reportLevel.getCustomerId();
+                    if (customerId != null) {
+                        newStatsMsgBuilder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+                        newStatsMsgBuilder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
                     }
 
+                    newStatsMsgBuilder.setServiceId(serviceInfoProvider.getServiceId());
                     return newStatsMsgBuilder;
                 });
 
@@ -116,11 +115,11 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             statsForKey.clear();
         }
 
-        report.forEach(((ownerId, statsMsg) -> {
+        report.forEach(((reportLevel, statsMsg) -> {
             //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
 
-            TenantId tenantId = ownerId.getTenantId();
-            EntityId entityId = Optional.ofNullable(ownerId.getEntityId()).orElse(tenantId);
+            TenantId tenantId = reportLevel.getTenantId();
+            EntityId entityId = Optional.ofNullable((EntityId) reportLevel.getCustomerId()).orElse(tenantId);
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId).newByTopic(msgProducer.getDefaultTopic());
             msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
         }));
@@ -133,14 +132,15 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     @Override
     public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value) {
         if (enabled) {
-            ConcurrentMap<OwnerId, AtomicLong> statsForKey = stats.get(key);
-
-            statsForKey.computeIfAbsent(new OwnerId(tenantId), id -> new AtomicLong()).addAndGet(value);
-            statsForKey.computeIfAbsent(new OwnerId(TenantId.SYS_TENANT_ID), id -> new AtomicLong()).addAndGet(value);
-
-            if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
-                statsForKey.computeIfAbsent(new OwnerId(tenantId, customerId), id -> new AtomicLong()).addAndGet(value);
+            ReportLevel[] levels = new ReportLevel[3];
+            levels[0] = ReportLevel.of(tenantId);
+            if (key.isCounter()) {
+                levels[1] = ReportLevel.of(TenantId.SYS_TENANT_ID);
             }
+            if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
+                levels[2] = ReportLevel.of(tenantId, customerId);
+            }
+            report(key, value, levels);
         }
     }
 
@@ -149,18 +149,26 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         report(tenantId, customerId, key, 1);
     }
 
-    @Data
-    private static class OwnerId {
-        private TenantId tenantId;
-        private EntityId entityId;
+    private void report(ApiUsageRecordKey key, long value, ReportLevel... levels) {
+        ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
+        for (ReportLevel level : levels) {
+            if (level == null) continue;
 
-        public OwnerId(TenantId tenantId) {
-            this.tenantId = tenantId;
-        }
-
-        public OwnerId(TenantId tenantId, EntityId entityId) {
-            this.tenantId = tenantId;
-            this.entityId = entityId;
+            AtomicLong n = statsForKey.computeIfAbsent(level, k -> new AtomicLong());
+            if (key.isCounter()) {
+                n.addAndGet(value);
+            } else {
+                n.set(value);
+            }
         }
     }
+
+    @RequiredArgsConstructor(staticName = "of")
+    @AllArgsConstructor(staticName = "of")
+    @Getter
+    private static class ReportLevel {
+        private final TenantId tenantId;
+        private CustomerId customerId;
+    }
+
 }

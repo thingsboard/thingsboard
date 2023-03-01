@@ -986,6 +986,7 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
+  string serviceId = 8;
 }
 
 message ToOtaPackageStateServiceMsg {
