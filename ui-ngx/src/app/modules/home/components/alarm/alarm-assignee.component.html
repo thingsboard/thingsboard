@@ -18,15 +18,17 @@
 
 <div class="tb-assignee" fxLayout="row" fxLayoutAlign="start center"
      (click)="openAlarmAssigneePanel($event, alarm)">
-  <span *ngIf="alarm.assigneeId" class="assigned-container">
+  <span *ngIf="alarm?.assigneeId" class="assigned-container">
     <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
       {{ getUserInitials(alarm.assignee) }}
     </span>
     <span [matTooltip]="getUserDisplayName(alarm.assignee)"
           matTooltipPosition="above"
-          style="text-overflow: ellipsis">{{ getUserDisplayName(alarm.assignee) }}</span>
+          style="text-overflow: ellipsis">
+      {{ getUserDisplayName(alarm.assignee) }}
+    </span>
   </span>
-  <span *ngIf="!alarm.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
+  <span *ngIf="!alarm?.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
     <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
     <span translate>alarm.unassigned</span>
   </span>

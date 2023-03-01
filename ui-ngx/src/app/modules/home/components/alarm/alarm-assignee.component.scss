@@ -17,9 +17,9 @@
 :host {
   .tb-assignee {
     cursor: pointer;
+    max-width: 273px;
 
     .assigned-container {
-      max-width: 233px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -28,7 +28,6 @@
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        margin-right: 8px;
         border-radius: 50%;
         width: 28px;
         height: 28px;
@@ -43,7 +42,6 @@
       width: 28px;
       height: 28px;
       font-size: 28px;
-      margin-right: 8px;
       color: rgba(0, 0, 0, 0.38);
       overflow: visible;
     }
