@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Actions, Effect, ofType } from '@ngrx/effects';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { map } from 'rxjs/operators';
 
 import { NotificationActions, NotificationActionTypes } from '@app/core/notification/notification.actions';
@@ -29,23 +29,23 @@ export class NotificationEffects {
   ) {
   }
 
-  @Effect({dispatch: false})
-  dispatchNotification = this.actions$.pipe(
+  
+  dispatchNotification = createEffect(() => this.actions$.pipe(
     ofType(
       NotificationActionTypes.SHOW_NOTIFICATION,
     ),
     map(({ notification }) => {
       this.notificationService.dispatchNotification(notification);
     })
-  );
+  ), {dispatch: false});
 
-  @Effect({dispatch: false})
-  hideNotification = this.actions$.pipe(
+  
+  hideNotification = createEffect(() => this.actions$.pipe(
     ofType(
       NotificationActionTypes.HIDE_NOTIFICATION,
     ),
     map(({ hideNotification }) => {
       this.notificationService.hideNotification(hideNotification);
     })
-  );
+  ), {dispatch: false});
 }

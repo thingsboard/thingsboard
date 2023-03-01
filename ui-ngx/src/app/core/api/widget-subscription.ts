@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -83,6 +83,59 @@ import { RpcStatus } from '@shared/models/rpc.models';
 
 const moment = moment_;
 
+
+const calculateMin = (data: DataSet): number => {
+  if (data.length > 0) {
+    let result = Number(data[0][1]);
+    for (let i = 1; i < data.length; i++) {
+      result = Math.min(result, Number(data[i][1]));
+    }
+    return result;
+  } else {
+    return null;
+  }
+};
+
+const calculateMax = (data: DataSet): number => {
+  if (data.length > 0) {
+    let result = Number(data[0][1]);
+    for (let i = 1; i < data.length; i++) {
+      result = Math.max(result, Number(data[i][1]));
+    }
+    return result;
+  } else {
+    return null;
+  }
+};
+
+const calculateTotal = (data: DataSet): number => {
+  if (data.length > 0) {
+    let result = 0;
+    data.forEach((dataRow) => {
+      result += Number(dataRow[1]);
+    });
+    return result;
+  } else {
+    return null;
+  }
+};
+
+const calculateAvg = (data: DataSet): number => {
+  if (data.length > 0) {
+    return calculateTotal(data) / data.length;
+  } else {
+    return null;
+  }
+};
+
+const calculateLatest = (data: DataSet): number => {
+  if (data.length > 0) {
+    return Number(data[data.length - 1][1]);
+  } else {
+    return null;
+  }
+};
+
 export class WidgetSubscription implements IWidgetSubscription {
 
   id: string;
@@ -151,7 +204,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   targetDeviceAliasId: string;
   targetDeviceId: string;
   targetDeviceName: string;
-  executingSubjects: Array<Subject<any>>;
+  executingSubjects: Array<Subject<void>>;
 
   subscribed = false;
   hasLatestData = false;
@@ -305,7 +358,7 @@ export class WidgetSubscription implements IWidgetSubscription {
  }
 
   private initRpc(): Observable<any> {
-    const initRpcSubject = new ReplaySubject();
+    const initRpcSubject = new ReplaySubject<void>();
     if (this.targetDeviceAliasIds && this.targetDeviceAliasIds.length > 0) {
       this.targetDeviceAliasId = this.targetDeviceAliasIds[0];
       this.ctx.aliasController.resolveSingleEntityInfo(this.targetDeviceAliasId).subscribe(
@@ -354,7 +407,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private initAlarmSubscription(): Observable<any> {
-    const initAlarmSubscriptionSubject = new ReplaySubject(1);
+    const initAlarmSubscriptionSubject = new ReplaySubject<void>(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
         this.hasResolvedData = true;
@@ -387,7 +440,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private initDataSubscription(): Observable<any> {
     this.notifyDataLoading();
-    const initDataSubscriptionSubject = new ReplaySubject(1);
+    const initDataSubscriptionSubject = new ReplaySubject<void>(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
         this.configuredDatasources = deepClone(this.configuredDatasources);
@@ -459,9 +512,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         initialPageDataChanged: this.initialPageDataChanged.bind(this),
         forceReInit: this.forceReInit.bind(this),
         dataUpdated: this.dataUpdated.bind(this),
-        updateRealtimeSubscription: () => {
-          return this.updateRealtimeSubscription();
-        },
+        updateRealtimeSubscription: () => this.updateRealtimeSubscription(),
         setRealtimeSubscription: (subscriptionTimewindow) => {
           this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
         }
@@ -762,7 +813,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       if (timeout && timeout > 0) {
         requestBody.timeout = timeout;
       }
-      const rpcSubject: Subject<any> = new Subject<any>();
+      const rpcSubject: Subject<any | void> = oneWayElseTwoWay ? new Subject<void>() : new Subject<any>();
       this.executingRpcRequest = true;
       this.callbacks.rpcStateChanged(this);
       if (this.ctx.utils.widgetEditMode) {
@@ -770,7 +821,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.executingRpcRequest = false;
           this.callbacks.rpcStateChanged(this);
           if (oneWayElseTwoWay) {
-            rpcSubject.next();
+            (rpcSubject as Subject<void>).next();
             rpcSubject.complete();
           } else {
             rpcSubject.next(requestBody);
@@ -911,9 +962,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.dataLoaded(pageData, data1, datasourceIndex1, pageLink1, true);
         },
         dataUpdated: this.dataUpdated.bind(this),
-        updateRealtimeSubscription: () => {
-          return this.updateRealtimeSubscription();
-        },
+        updateRealtimeSubscription: () => this.updateRealtimeSubscription(),
         setRealtimeSubscription: (subscriptionTimewindow) => {
           this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
         }
@@ -1402,6 +1451,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     }));
     if (datasource.latestDataKeys) {
       datasourceDataArray = datasourceDataArray.concat(datasource.latestDataKeys.map((dataKey, latestKeyIndex) => {
+        dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
         const datasourceData: DatasourceData = {
           datasource,
           dataKey,
@@ -1559,7 +1609,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private loadStDiff(): Observable<any> {
-    const loadSubject = new ReplaySubject(1);
+    const loadSubject = new ReplaySubject<void>(1);
     if (this.ctx.getServerTimeDiff && this.timeWindow) {
       this.ctx.getServerTimeDiff().subscribe(
         (stDiff) => {
@@ -1581,57 +1631,5 @@ export class WidgetSubscription implements IWidgetSubscription {
       loadSubject.complete();
     }
     return loadSubject.asObservable();
-  }
-}
-
-function calculateMin(data: DataSet): number {
-  if (data.length > 0) {
-    let result = Number(data[0][1]);
-    for (let i = 1; i < data.length; i++) {
-      result = Math.min(result, Number(data[i][1]));
-    }
-    return result;
-  } else {
-    return null;
-  }
-}
-
-function calculateMax(data: DataSet): number {
-  if (data.length > 0) {
-    let result = Number(data[0][1]);
-    for (let i = 1; i < data.length; i++) {
-      result = Math.max(result, Number(data[i][1]));
-    }
-    return result;
-  } else {
-    return null;
-  }
-}
-
-function calculateAvg(data: DataSet): number {
-  if (data.length > 0) {
-    return calculateTotal(data) / data.length;
-  } else {
-    return null;
-  }
-}
-
-function calculateTotal(data: DataSet): number {
-  if (data.length > 0) {
-    let result = 0;
-    data.forEach((dataRow) => {
-      result += Number(dataRow[1]);
-    });
-    return result;
-  } else {
-    return null;
-  }
-}
-
-function calculateLatest(data: DataSet): number {
-  if (data.length > 0) {
-    return Number(data[data.length - 1][1]);
-  } else {
-    return null;
   }
 }

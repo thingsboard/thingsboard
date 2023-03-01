@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -55,7 +55,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 })
 export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnInit, Validator {
 
-  deviceProfileAlarmsFormGroup: FormGroup;
+  deviceProfileAlarmsFormGroup: UntypedFormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -77,7 +77,7 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private dialog: MatDialog) {
   }
 
@@ -94,8 +94,8 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
     });
   }
 
-  alarmsFormArray(): FormArray {
-    return this.deviceProfileAlarmsFormGroup.get('alarms') as FormArray;
+  alarmsFormArray(): UntypedFormArray {
+    return this.deviceProfileAlarmsFormGroup.get('alarms') as UntypedFormArray;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -137,7 +137,7 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
   }
 
   public removeAlarm(index: number) {
-    (this.deviceProfileAlarmsFormGroup.get('alarms') as FormArray).removeAt(index);
+    (this.deviceProfileAlarmsFormGroup.get('alarms') as UntypedFormArray).removeAt(index);
   }
 
   public addAlarm() {
@@ -152,7 +152,7 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
         }
       }
     };
-    const alarmsArray = this.deviceProfileAlarmsFormGroup.get('alarms') as FormArray;
+    const alarmsArray = this.deviceProfileAlarmsFormGroup.get('alarms') as UntypedFormArray;
     alarmsArray.push(this.fb.control(alarm, [deviceProfileAlarmValidator]));
     this.deviceProfileAlarmsFormGroup.updateValueAndValidity();
     if (!this.deviceProfileAlarmsFormGroup.valid) {
@@ -160,7 +160,7 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return (this.deviceProfileAlarmsFormGroup.valid) ? null : {
       alarms: {
         valid: false,
