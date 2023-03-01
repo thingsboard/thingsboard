@@ -37,9 +37,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private int readTimeoutMs;
     private int maxParallelRequestsCount;
     private boolean useRedisQueueForMsgPersistence;
-    private boolean trimQueue;
     private boolean trimDoubleQuotes;
-    private int maxQueueSize;
     private boolean enableProxy;
     private boolean useSystemProxyProperties;
     private String proxyHost;
@@ -60,7 +58,6 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setReadTimeoutMs(0);
         configuration.setMaxParallelRequestsCount(0);
         configuration.setUseRedisQueueForMsgPersistence(false);
-        configuration.setTrimQueue(false);
         configuration.setTrimDoubleQuotes(false);
         configuration.setEnableProxy(false);
         configuration.setCredentials(new AnonymousCredentials());
