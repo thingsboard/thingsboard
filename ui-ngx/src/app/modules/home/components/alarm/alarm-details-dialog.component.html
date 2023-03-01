@@ -31,28 +31,28 @@
   <div mat-dialog-content style="padding: 24px 0 0 0">
     <fieldset [disabled]="isLoading$ | async" style="padding: 0 24px">
       <div fxLayout="row" fxLayoutGap="6px">
-        <mat-form-field appearance="none" fxFlex class="mat-block">
+        <mat-form-field fxFlex class="mat-block">
           <mat-label translate>alarm.originator</mat-label>
           <input matInput formControlName="originatorName" readonly>
         </mat-form-field>
-        <mat-form-field appearance="none" fxFlex class="mat-block">
+        <mat-form-field fxFlex class="mat-block">
           <mat-label translate>alarm.created-time</mat-label>
           <input matInput formControlName="createdTime" readonly>
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutGap="6px">
-        <mat-form-field appearance="none" fxFlex class="mat-block">
+        <mat-form-field fxFlex class="mat-block">
           <mat-label translate>alarm.type</mat-label>
           <input matInput formControlName="type" readonly>
         </mat-form-field>
-        <mat-form-field appearance="none" fxFlex class="mat-block">
+        <mat-form-field fxFlex class="mat-block">
           <mat-label translate>alarm.severity</mat-label>
           <input matInput formControlName="alarmSeverity" readonly
                  [ngStyle]="{fontWeight: 'bold', color: alarmSeverityColorsMap.get((alarm$ | async)?.severity)}">
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutGap="6px">
-        <mat-form-field appearance="none" fxFlex class="mat-block">
+        <mat-form-field fxFlex class="mat-block">
           <mat-label translate>alarm.status</mat-label>
           <input matInput formControlName="alarmStatus" readonly>
         </mat-form-field>
@@ -72,11 +72,11 @@
         <ng-template matExpansionPanelContent>
           <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('startTime').value ||
                                  alarmFormGroup.get('endTime').value">
-            <mat-form-field *ngIf="alarmFormGroup.get('startTime').value" appearance="none" fxFlex class="mat-block">
+            <mat-form-field *ngIf="alarmFormGroup.get('startTime').value" fxFlex class="mat-block">
               <mat-label translate>alarm.start-time</mat-label>
               <input matInput formControlName="startTime" readonly>
             </mat-form-field>
-            <mat-form-field *ngIf="alarmFormGroup.get('endTime').value" appearance="none" fxFlex class="mat-block">
+            <mat-form-field *ngIf="alarmFormGroup.get('endTime').value" fxFlex class="mat-block">
               <mat-label translate>alarm.end-time</mat-label>
               <input matInput formControlName="endTime" readonly>
             </mat-form-field>
@@ -84,11 +84,11 @@
           </div>
           <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('ackTime').value ||
                                  alarmFormGroup.get('clearTime').value">
-            <mat-form-field *ngIf="alarmFormGroup.get('ackTime').value" appearance="none" fxFlex class="mat-block">
+            <mat-form-field *ngIf="alarmFormGroup.get('ackTime').value" fxFlex class="mat-block">
               <mat-label translate>alarm.ack-time</mat-label>
               <input matInput formControlName="ackTime" readonly>
             </mat-form-field>
-            <mat-form-field *ngIf="alarmFormGroup.get('clearTime').value" appearance="none" fxFlex class="mat-block">
+            <mat-form-field *ngIf="alarmFormGroup.get('clearTime').value" fxFlex class="mat-block">
               <mat-label translate>alarm.clear-time</mat-label>
               <input matInput formControlName="clearTime" readonly>
             </mat-form-field>

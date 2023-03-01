@@ -42,7 +42,7 @@
     <ng-container *ngIf="isDirectionDescending()">
       <ng-container *ngTemplateOutlet="commentInput"></ng-container>
     </ng-container>
-    <div fxFlex *ngFor="let displayDataElement of displayData; let i = index">
+    <div fxFlex *ngFor="let displayDataElement of displayData; index as i">
       <div style="margin-left: 38px"
            *ngIf="displayDataElement.isSystemComment; else userComment">
         <span class="tb-alarm-comments-system-text"
@@ -77,12 +77,12 @@
           </div>
           <div fxLayout="row" class="tb-alarm-comments-action-buttons"
                [ngClass]="{ 'show-buttons': displayDataElement.showActions }">
-            <button mat-button mat-icon-button
+            <button mat-icon-button
                     type="button"
                     (click)="editComment(displayDataElement.commentId)">
               <mat-icon class="material-icons">edit</mat-icon>
             </button>
-            <button mat-button mat-icon-button
+            <button mat-icon-button
                     type="button"
                     (click)="deleteComment(displayDataElement.commentId)">
               <mat-icon class="material-icons">delete</mat-icon>
@@ -96,7 +96,7 @@
                  [style.background-color]="displayDataElement.avatarBgColor">
               {{ getUserInitials(displayDataElement.displayName) }}
             </div>
-            <mat-form-field fxFlex appearance="standard" class="mat-block">
+            <mat-form-field fxFlex appearance="fill" class="mat-block">
               <textarea matInput
                         type="text"
                         placeholder="{{ 'alarm-comment.add' | translate }}"
@@ -136,7 +136,7 @@
            [style.background-color]="getCurrentUserBgColor(userDisplayName)">
         {{ getUserInitials(userDisplayName) }}
       </div>
-      <mat-form-field appearance="standard" fxFlex class="mat-block">
+      <mat-form-field appearance="fill" fxFlex class="mat-block">
           <textarea matInput
                     type="text"
                     placeholder="{{ 'alarm-comment.add' | translate }}"
@@ -147,8 +147,7 @@
                     (keyup.enter)="saveComment()"
                     (keydown.enter)="$event.preventDefault()">
           </textarea>
-        <button mat-button
-                mat-icon-button
+        <button mat-icon-button
                 type="button"
                 matSuffix
                 *ngIf="getAlarmCommentFormControl().value"
