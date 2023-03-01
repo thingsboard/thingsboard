@@ -488,7 +488,7 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     password varchar(255),
     reset_token varchar(255) UNIQUE,
     user_id uuid UNIQUE,
-    additional_info varchar
+    additional_info varchar DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS widget_type (

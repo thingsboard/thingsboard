@@ -117,9 +117,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private TenantService tenantService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private TenantRepository tenantRepository;
 
     @Autowired
@@ -709,34 +706,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             conn.createStatement().execute("ALTER TABLE device_profile ADD CONSTRAINT fk_default_edge_rule_chain_device_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                         } catch (Exception e) {
                         }
-
-                        PageLink pageLink = new PageLink(1000);
-                        PageData<User> users;
-                        do {
-                            List<ListenableFuture<?>> futures = new ArrayList<>();
-                            users = userService.findAllUsers(pageLink);
-                            for (User user : users.getData()) {
-                                futures.add(dbUpgradeExecutor.submit(() -> {
-                                    try {
-                                        log.info("Migrating password history for user: " + user.getId());
-                                        JsonNode additionalInfo = user.getAdditionalInfo();
-                                        if (additionalInfo != null && additionalInfo.has("userPasswordHistory")){
-                                            UserCredentials creds = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-                                            if (creds != null) {
-                                                creds.setAdditionalInfo(JacksonUtil.newObjectNode().set("userPasswordHistory", additionalInfo.get("userPasswordHistory")));
-                                                userService.saveUserCredentials(user.getTenantId(), creds);
-                                            }
-                                            ((ObjectNode) additionalInfo).remove("userPasswordHistory");
-                                            userService.saveUser(user);
-                                        }
-                                    } catch (Exception e){
-                                        log.error("Failed to migrate password history for user: " + user.getId(), e);
-                                    }
-                                }));
-                            }
-                            Futures.allAsList(futures).get();
-                            pageLink = pageLink.nextPageLink();
-                        } while (users.hasNext());
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005000;");
                     }
