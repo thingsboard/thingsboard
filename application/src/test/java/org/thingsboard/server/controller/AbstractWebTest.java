@@ -211,17 +211,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 this.mappingJackson2HttpMessageConverter);
     }
 
-    @BeforeClass
-    public static void beforeWebTestClass() throws Exception {
-
-    }
-
-    @AfterClass
-    public static void afterWebTestClass() throws Exception {
-        Mockito.clearAllCaches();
-    }
-
-
     @Before
     public void setupWebTest() throws Exception {
         log.debug("Executing web test setup");

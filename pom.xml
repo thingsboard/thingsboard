@@ -659,7 +659,7 @@
                     <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
-                            --illegal-access=permit -Xss384k -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
+                            --illegal-access=permit -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
                         </argLine>
                     </configuration>
                 </plugin>
