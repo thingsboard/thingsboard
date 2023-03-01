@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -28,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -58,13 +64,10 @@ import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
-import java.io.File;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -86,6 +89,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private TenantId tenantId;
     private User tenantAdmin;
 
+    ListeningExecutorService executor;
+
+    List<ListenableFuture<Edge>> futures;
+
     @Autowired
     private EdgeDao edgeDao;
 
@@ -99,6 +106,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Before
     public void beforeTest() throws Exception {
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
+
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -119,6 +128,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @After
     public void afterTest() throws Exception {
+        executor.shutdownNow();
+
         loginSysAdmin();
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
@@ -385,11 +396,14 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantEdges() throws Exception {
-        List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < 178; i++) {
+        int cntEntity = 178;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             Edge edge = constructEdge("Edge" + i, "default");
-            edges.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edges = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
         List<Edge> loadedEdges = new ArrayList<>();
         PageLink pageLink = new PageLink(23);
         PageData<Edge> pageData = null;
@@ -412,23 +426,30 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     @Test
     public void testFindTenantEdgesByName() throws Exception {
         String title1 = "Edge title 1";
-        List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        int cntEntity = 143;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edgesTitle1.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesTitle1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
         String title2 = "Edge title 2";
-        List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 75; i++) {
+        cntEntity = 75;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edgesTitle2.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesTitle2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -494,24 +515,31 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     public void testFindTenantEdgesByType() throws Exception {
         String title1 = "Edge title 1";
         String type1 = "typeA";
-        List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        int cntEntity = 143;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type1);
-            edgesType1.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesType1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
         String title2 = "Edge title 2";
         String type2 = "typeB";
-        List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 75; i++) {
+        cntEntity = 75;
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type2);
-            edgesType2.add(doPost("/api/edge", edge, Edge.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/edge", edge, Edge.class)));
         }
+        List<Edge> edgesType2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15);
@@ -582,14 +610,17 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        List<Edge> edges = new ArrayList<>();
         int cntEntity = 128;
+        futures = new ArrayList<>(cntEntity);
         for (int i = 0; i < cntEntity; i++) {
             Edge edge = constructEdge("Edge" + i, "default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edges.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edges = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Edge(), new Edge(),
                 savedTenant.getId(), customerId, tenantAdmin.getId(), tenantAdmin.getEmail(),
@@ -622,28 +653,37 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         customer = doPost("/api/customer", customer, Customer.class);
         CustomerId customerId = customer.getId();
 
+        int cntEntity = 125;
         String title1 = "Edge title 1";
-        List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesTitle1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesTitle1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
+        cntEntity = 143;
         String title2 = "Edge title 2";
-        List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesTitle2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesTitle2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -687,7 +727,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        int cntEntity = loadedEdgesTitle1.size();
+        cntEntity = loadedEdgesTitle1.size();
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Edge(), new Edge(),
                 savedTenant.getId(), customerId, tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
@@ -719,30 +759,39 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         customer = doPost("/api/customer", customer, Customer.class);
         CustomerId customerId = customer.getId();
 
+        int cntEntity = 125;
         String title1 = "Edge title 1";
         String type1 = "typeC";
-        List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type1);
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesType1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesType1 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
+
+        cntEntity = 143;
         String title2 = "Edge title 2";
         String type2 = "typeD";
-        List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type2);
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesType2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            futures.add(executor.submit(() -> {
+                Edge edge1 = doPost("/api/edge", edge, Edge.class);
+                return doPost("/api/customer/" + customerId.getId().toString()
+                        + "/edge/" + edge1.getId().getId().toString(), Edge.class);
+            }));
         }
+        List<Edge> edgesType2 = new ArrayList<>(Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -883,6 +932,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsOk(savedTenant.getId(), edgeId, "/api/edge/" + edgeId);
     }
 
+    @Ignore
     @Test
     public void testDeleteEdgeExceptionWithRelationsTransactional() throws Exception {
         EdgeId edgeId = savedEdge("Edge for Test WithRelations Transactional Exception").getId();

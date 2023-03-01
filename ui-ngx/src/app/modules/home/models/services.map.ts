@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { ResourceService } from '@core/http/resource.service';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -57,6 +58,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['dialogs', DialogService],
    ['customDialog', CustomDialogService],
    ['date', DatePipe],
+   ['milliSecondsToTimeString', MillisecondsToTimeStringPipe],
    ['utils', UtilsService],
    ['translate', TranslateService],
    ['http', HttpClient],

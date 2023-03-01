@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -54,7 +54,7 @@ export class AssetProfileComponent extends EntityComponent<AssetProfile> {
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: AssetProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<AssetProfile>,
-              protected fb: FormBuilder,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -67,7 +67,7 @@ export class AssetProfileComponent extends EntityComponent<AssetProfile> {
     }
   }
 
-  buildForm(entity: AssetProfile): FormGroup {
+  buildForm(entity: AssetProfile): UntypedFormGroup {
     this.assetProfileId = entity?.id ? entity.id : null;
     const form = this.fb.group(
       {

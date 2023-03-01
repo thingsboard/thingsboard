@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,8 +79,8 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
     public void reportQueueStats(long ts, TbRuleEngineConsumerStats ruleEngineStats) {
         String queueName = ruleEngineStats.getQueueName();
         ruleEngineStats.getTenantStats().forEach((id, stats) -> {
-            TenantId tenantId = TenantId.fromUUID(id);
             try {
+                TenantId tenantId = TenantId.fromUUID(id);
                 AssetId serviceAssetId = getServiceAssetId(tenantId, queueName);
                 if (stats.getTotalMsgCounter().get() > 0) {
                     List<TsKvEntry> tsList = stats.getCounters().entrySet().stream()
@@ -90,25 +90,25 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                         tsService.saveAndNotifyInternal(tenantId, serviceAssetId, tsList, CALLBACK);
                     }
                 }
-            } catch (DataValidationException e) {
-                if (!e.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
-                    throw e;
+            } catch (Exception e) {
+                if (!"Asset is referencing to non-existent tenant!".equalsIgnoreCase(e.getMessage())) {
+                    log.debug("[{}] Failed to store the statistics", id, e);
                 }
             }
         });
-        ruleEngineStats.getTenantExceptions().forEach((tenantId, exceptions) -> {
-            RuleEngineException lastException = exceptions.get(exceptions.size() - 1);
-            TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", lastException.toJsonString()));
+        ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
             try {
+                RuleEngineException lastException = e.get(e.size() - 1);
+                TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", lastException.toJsonString()));
                 tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
-            } catch (DataValidationException e2) {
-                if (!e2.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
-                    throw e2;
+            } catch (Exception e2) {
+                if (!"Asset is referencing to non-existent tenant!".equalsIgnoreCase(e2.getMessage())) {
+                    log.debug("[{}] Failed to store the statistics", tenantId, e2);
                 }
             }
-            exceptions.stream()
-                    .filter(e -> e instanceof RuleNodeException)
-                    .map(e -> (RuleNodeException) e)
+            e.stream()
+                    .filter(exception -> exception instanceof RuleNodeException)
+                    .map(exception -> (RuleNodeException) e)
                     .collect(Collectors.groupingBy(RuleNodeException::getRuleChainId, Collectors.groupingBy(RuleNodeException::getRuleNodeId)))
                     .forEach((ruleChainId, ruleNodesErrors) -> {
                         ruleNodesErrors.forEach((ruleNodeId, ruleNodeExceptions) -> {
