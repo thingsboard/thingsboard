@@ -424,7 +424,7 @@ mat-label {
   }
 }
 
-.tb-markdown-view {
+.tb-default .tb-markdown-view, .tb-dark .tb-markdown-view, .tb-markdown-view {
   display: block;
 
   $headings: h1, h2, h3, h4, h5, h6;
