@@ -67,6 +67,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataTyp
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -79,7 +80,6 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected Calendar calendar = Calendar.getInstance();
     protected ThreadLocalRandom random = ThreadLocalRandom.current();
 
-    protected static final String NAMESPACE = "spBv1.0";
     protected static final String groupId = "SparkplugBGroupId";
     protected static final String edgeNode = "SparkpluBNode";
     protected static final String keysBdSeq = "bdSeq";
@@ -114,6 +114,14 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     }
 
     public void clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
+        IMqttToken connectionResult = clientConnectWithNDEATH(ts, value);
+        MqttWireMessage response = connectionResult.getResponse();
+        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
+        MqttConnAck connAckMsg = (MqttConnAck) response;
+        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
+    }
+
+    public IMqttToken clientConnectWithNDEATH(long ts, long value, String... nameSpaceBad) throws Exception {
         String key = keysBdSeq;
         MetricDataType metricDataType = Int64;
         SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
@@ -125,18 +133,15 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         this.client.setCallback(this.mqttCallback);
         MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(gatewayAccessToken);
-        String topic = NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
+        String nameSpace = nameSpaceBad.length == 0 ? NAMESPACE : nameSpaceBad[0];
+        String topic = nameSpace + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
         MqttMessage msg = new MqttMessage();
         msg.setId(0);
         msg.setPayload(deathBytes);
         options.setWill(topic, msg);
-        IMqttToken connectionResult = client.connect(options);
-
-        MqttWireMessage response = connectionResult.getResponse();
-        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
-        MqttConnAck connAckMsg = (MqttConnAck) response;
-        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
+        return client.connect(options);
     }
+
     protected List<Device> connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(int cntDevices, long ts) throws Exception {
         List<Device> devices = new ArrayList<>();
         clientWithCorrectNodeAccessTokenWithNDEATH();

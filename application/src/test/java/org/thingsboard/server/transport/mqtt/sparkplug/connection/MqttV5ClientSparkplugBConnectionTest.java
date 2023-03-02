@@ -49,6 +49,10 @@ public class MqttV5ClientSparkplugBConnectionTest extends AbstractMqttV5ClientSp
         processClientWithCorrectNodeAccessTokenWithoutNDEATH_Test();
     }
 
+    @Test
+    public void testClientWithCorrectNodeAccessTokenNameSpaceInvalid() throws Exception {
+        processClientWithCorrectNodeAccessTokenNameSpaceInvalid_Test();
+    }
 
     @Test
     public void testClientWithCorrectAccessTokenWithNDEATHCreatedOneDevice() throws Exception {

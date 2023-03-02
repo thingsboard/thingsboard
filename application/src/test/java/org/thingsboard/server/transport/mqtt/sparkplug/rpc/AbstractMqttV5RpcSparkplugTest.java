@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.exception.ThingsboardErrorCode.INVALID_ARGUMENTS;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DCMD;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NCMD;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
 
 @Slf4j
 public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttV5ClientSparkplugTest {
