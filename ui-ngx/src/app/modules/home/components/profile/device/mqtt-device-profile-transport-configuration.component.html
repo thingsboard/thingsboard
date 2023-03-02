@@ -24,19 +24,19 @@
   <mat-form-field floatLabel="always" class="mat-block" style="padding-top: 8px;"
                   *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
     <mat-label translate>device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names</mat-label>
-    <mat-chip-list #attrMetricNamesChipList formControlName="sparkPlugAttributesMetricNames">
-      <mat-chip
+    <mat-chip-grid #attrMetricNamesChipList formControlName="sparkPlugAttributesMetricNames">
+      <mat-chip-row
         *ngFor="let name of mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;"
         (removed)="removeAttributeMetricName(name)">
         {{name}}
         <mat-icon matChipRemove>close</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input matInput type="text" placeholder="{{'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate}}"
              [matChipInputFor]="attrMetricNamesChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              matChipInputAddOnBlur
              (matChipInputTokenEnd)="addAttributeMetricName($event)">
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-hint innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"></mat-hint>
   </mat-form-field>
 </form>
