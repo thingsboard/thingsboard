@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 ALTER TABLE user_credentials
-    ADD COLUMN IF NOT EXISTS additional_info varchar DEFAULT '{}';
+    ADD COLUMN IF NOT EXISTS additional_info varchar NOT NULL DEFAULT '{}';
 
 UPDATE user_credentials
     SET additional_info = json_build_object('userPasswordHistory', (u.additional_info::json -> 'userPasswordHistory'))
