@@ -41,7 +41,7 @@ import { Filter } from '@shared/models/query/query.models';
 @Component({
   selector: 'tb-filter-select',
   templateUrl: './filter-select.component.html',
-  styleUrls: ['./filter-select.component.scss'],
+  styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => FilterSelectComponent),

@@ -44,7 +44,7 @@ import { isEqual } from '@core/utils';
 @Component({
   selector: 'tb-entity-autocomplete',
   templateUrl: './entity-autocomplete.component.html',
-  styleUrls: ['./entity-autocomplete.component.scss'],
+  styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => EntityAutocompleteComponent),
@@ -98,7 +98,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   requiredText: string;
 
   @Input()
-  appearance: MatFormFieldAppearance = 'legacy';
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

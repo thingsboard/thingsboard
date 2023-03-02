@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="smppSmsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
   <div fxLayout="row wrap" fxLayoutGap="6px">
-    <mat-form-field fxFlex.lt-sm="100" fxFlex.gt-sm="15" class="mat-block">
+    <mat-form-field fxFlex.lt-sm="100" fxFlex.gt-xs="25" class="mat-block">
       <mat-label translate>admin.smpp-provider.smpp-version</mat-label>
       <mat-select formControlName="protocolVersion">
         <mat-option *ngFor="let smppVersion of smppVersions" [value]="smppVersion.value">
@@ -32,7 +32,7 @@
         {{'admin.smpp-provider.smpp-host-required' | translate}}
       </mat-error>
     </mat-form-field>
-    <mat-form-field fxFlex.lt-sm="100" fxFlex.gt-sm="30" class="mat-block">
+    <mat-form-field fxFlex.lt-sm="100" fxFlex.gt-xs="25" class="mat-block">
       <mat-label translate>admin.smpp-provider.smpp-port</mat-label>
       <input required matInput type="number" formControlName="port">
       <mat-error *ngIf="smppSmsProviderConfigurationFormGroup.get('port').hasError('required')">

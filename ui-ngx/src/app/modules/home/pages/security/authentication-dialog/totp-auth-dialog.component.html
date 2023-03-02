@@ -35,8 +35,8 @@
     <mat-step>
       <ng-template matStepLabel>{{ 'security.2fa.dialog.totp-step-label' | translate }}</ng-template>
       <div>
-        <p class="mat-body-1" translate>security.2fa.dialog.totp-step-description-open</p>
-        <p class="mat-body-1" translate>security.2fa.dialog.totp-step-description-install</p>
+        <p class="mat-body-2" translate>security.2fa.dialog.totp-step-description-open</p>
+        <p class="mat-body-2" translate>security.2fa.dialog.totp-step-description-install</p>
         <div fxLayout="row" fxLayoutAlign="end center">
           <button mat-raised-button
                   type="button"
@@ -53,8 +53,7 @@
         <p class="mat-body qr-code-description" translate>security.2fa.dialog.scan-qr-code</p>
         <canvas fxFlex #canvas [ngStyle]="{display: totpAuthURL ? 'block' : 'none'}"></canvas>
         <p class="mat-body qr-code-description" style="margin-top: 30px;" translate>security.2fa.dialog.enter-verification-code</p>
-        <mat-form-field fxFlex class="mat-block code-container" floatLabel="always" hideRequiredMarker>
-          <mat-label></mat-label>
+        <mat-form-field fxFlex class="mat-block code-container">
           <input matInput formControlName="verificationCode"
                  maxlength="6" type="text" required
                  inputmode="numeric" pattern="[0-9]*"

@@ -21,7 +21,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 @Component({
   selector: 'tb-datetime',
   templateUrl: './datetime.component.html',
-  styleUrls: ['./datetime.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

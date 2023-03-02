@@ -98,7 +98,6 @@ import * as LogoComponent from '@shared/components/logo.component';
 import * as FooterFabButtonsComponent from '@shared/components/footer-fab-buttons.component';
 import * as FullscreenDirective from '@shared/components/fullscreen.directive';
 import * as CircularProgressDirective from '@shared/components/circular-progress.directive';
-import * as MatChipDraggableDirective from '@shared/components/mat-chip-draggable.directive';
 import * as TbHotkeysDirective from '@shared/components/hotkeys.directive';
 import * as TbAnchorComponent from '@shared/components/tb-anchor.component';
 import * as TbPopoverComponent from '@shared/components/popover.component';
@@ -387,7 +386,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/footer-fab-buttons.component': FooterFabButtonsComponent,
     '@shared/components/fullscreen.directive': FullscreenDirective,
     '@shared/components/circular-progress.directive': CircularProgressDirective,
-    '@shared/components/mat-chip-draggable.directive': MatChipDraggableDirective,
     '@shared/components/hotkeys.directive': TbHotkeysDirective,
     '@shared/components/tb-anchor.component': TbAnchorComponent,
     '@shared/components/popover.component': TbPopoverComponent,

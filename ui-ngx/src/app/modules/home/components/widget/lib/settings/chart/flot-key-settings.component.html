@@ -18,16 +18,16 @@
 <section class="tb-widget-settings" [formGroup]="flotKeySettingsFormGroup" fxLayout="column">
   <fieldset class="fields-group" fxLayout="column">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
-    <mat-checkbox formControlName="hideDataByDefault" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="hideDataByDefault">
       {{ 'widgets.chart.data-is-hidden-by-default' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="disableDataHiding" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="disableDataHiding">
       {{ 'widgets.chart.disable-data-hiding' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="removeFromLegend" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="removeFromLegend">
       {{ 'widgets.chart.remove-from-legend' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="excludeFromStacking" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="excludeFromStacking">
       {{ 'widgets.chart.exclude-from-stacking' | translate }}
     </mat-checkbox>
   </fieldset>
@@ -46,12 +46,12 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section class="row-fill" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <section fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.chart.line-width</mat-label>
             <input matInput type="number" min="0" formControlName="lineWidth">
           </mat-form-field>
-          <mat-checkbox fxFlex formControlName="fillLines" style="margin-bottom: 16px;">
+          <mat-checkbox fxFlex formControlName="fillLines">
             {{ 'widgets.chart.fill-line' | translate }}
           </mat-checkbox>
         </section>
@@ -74,7 +74,7 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <section fxLayout="column">
-          <section class="row-fill" fxFlex fxLayout="row" fxLayoutGap="8px">
+          <section fxFlex fxLayout="row" fxLayoutGap="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.chart.points-line-width</mat-label>
               <input matInput type="number" min="0" formControlName="showPointsLineWidth">
@@ -211,13 +211,13 @@
     <legend class="group-title" translate>widgets.chart.comparison-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value">
       <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-title>
+        <mat-panel-title fxFlex="60">
           <mat-slide-toggle formControlName="showValuesForComparison" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.show-values-for-comparison' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
