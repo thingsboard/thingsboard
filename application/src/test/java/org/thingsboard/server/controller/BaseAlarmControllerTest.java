@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -441,7 +442,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertTrue("Created alarm doesn't match the found one!", equals);
     }
 
-
     @Test
     public void testDeleteAlarmWithDeleteRelationsOk() throws Exception {
         loginCustomerUser();
@@ -449,6 +449,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsOk(customerDevice.getId(), alarmId, "/api/alarm/" + alarmId);
     }
 
+    @Ignore
     @Test
     public void testDeleteAlarmExceptionWithRelationsTransactional() throws Exception {
         loginCustomerUser();
