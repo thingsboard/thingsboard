@@ -40,6 +40,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -68,6 +69,16 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     protected void processClientWithCorrectNodeAccessTokenWithoutNDEATH_Test() throws Exception {
         this.client = new MqttV5TestClient();
         MqttException actualException = Assert.assertThrows(MqttException.class, () -> client.connectAndWait(gatewayAccessToken));
+        String expectedMessage = "Server unavailable.";
+        int expectedReasonCode = 136;
+        Assert.assertEquals(expectedMessage, actualException.getMessage());
+        Assert.assertEquals(expectedReasonCode, actualException.getReasonCode());
+    }
+
+    protected void processClientWithCorrectNodeAccessTokenNameSpaceInvalid_Test() throws Exception {
+        long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+        long value = bdSeq = 0;
+        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientConnectWithNDEATH(ts, value, "spBv1.2"));
         String expectedMessage = "Server unavailable.";
         int expectedReasonCode = 136;
         Assert.assertEquals(expectedMessage, actualException.getMessage());

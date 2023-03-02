@@ -30,6 +30,7 @@ public class SparkplugTopicUtil {
 
     private static final Map<String, String[]> SPLIT_TOPIC_CACHE = new HashMap<String, String[]>();
     private static final String TOPIC_INVALID_NUMBER = "Invalid number of topic elements: ";
+    public static final String NAMESPACE = "spBv1.0";
 
     public static String[] getSplitTopic(String topic) {
         String[] splitTopic = SPLIT_TOPIC_CACHE.get(topic);
@@ -93,13 +94,23 @@ public class SparkplugTopicUtil {
         } else {
             SparkplugMessageType type;
             String namespace, edgeNodeId, groupId, deviceId;
-            namespace = splitTopic[0];
+            namespace = validateNameSpace(splitTopic[0]);
             groupId = length > 1 ? splitTopic[1] : null;
             type = length > 2 ? SparkplugMessageType.parseMessageType(splitTopic[2]) : null;
             edgeNodeId = length > 3 ? splitTopic[3] : null;
 			deviceId = length > 4 ? splitTopic[4] : null;
 			return new SparkplugTopic(namespace, groupId, edgeNodeId, deviceId, type);
         }
+    }
+
+    /**
+     * For the Sparkplug™ B version of the specification, the UTF-8 string constant for the namespace element will be: "spBv1.0"
+     * @param nameSpace
+     * @return
+     */
+    private static String validateNameSpace(String nameSpace)  throws ThingsboardException {
+        if ("spBv1.0".equals(nameSpace)) return nameSpace;
+        throw new ThingsboardException("The namespace [" + nameSpace + "] is not valid and must be [spBv1.0] for the Sparkplug™ B version.", ThingsboardErrorCode.INVALID_ARGUMENTS);
     }
 
 }
