@@ -655,15 +655,6 @@ public class ModelConstants {
     public static final String ALARM_RULE_CONFIGURATION_PROPERTY = "configuration";
     public static final String ALARM_RULE_DESCRIPTION_PROPERTY = "description";
 
-    /**
-     * Alarm rule entity constants.
-     */
-    public static final String ALARM_RULE_ENTITY_STATE_COLUMN_FAMILY_NAME = "alarm_rule_entity_state";
-    public static final String ALARM_RULE_ENTITY_STATE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String ALARM_RULE_ENTITY_STATE_ENTITY_ID_PROPERTY = "entity_id";
-    public static final String ALARM_RULE_ENTITY_STATE_ENTITY_TYPE_PROPERTY = "entity_type";
-    public static final String ALARM_RULE_ENTITY_STATE_DATA_PROPERTY = "data";
-
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN), max(TS_COLUMN)};

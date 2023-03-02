@@ -25,14 +25,6 @@ CREATE TABLE IF NOT EXISTS alarm_rule (
     description varchar
 );
 
-CREATE TABLE IF NOT EXISTS alarm_rule_entity_state (
-    tenant_id uuid NOT NULL,
-    entity_id uuid NOT NULL,
-    entity_type varchar(255) NOT NULL,
-    data varchar(16384),
-    CONSTRAINT entity_state_pkey PRIMARY KEY (entity_id)
-);
-
 CREATE TABLE IF NOT EXISTS alarm_comment (
     id uuid NOT NULL,
     created_time bigint NOT NULL,

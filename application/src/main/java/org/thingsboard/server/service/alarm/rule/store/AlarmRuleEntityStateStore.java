@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.service.alarm.rule.store;
 
-import org.thingsboard.server.dao.service.BaseAlarmRuleEntityStateServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
-@DaoSqlTest
-public class AlarmRuleServiceEntityStateSqlTest extends BaseAlarmRuleEntityStateServiceTest {
+import java.util.List;
+
+public interface AlarmRuleEntityStateStore {
+
+    void put(PersistedEntityState entityState);
+
+    void remove(TenantId tenantId, EntityId entityId);
+
+    List<PersistedEntityState> getAll(TopicPartitionInfo tpi);
 }

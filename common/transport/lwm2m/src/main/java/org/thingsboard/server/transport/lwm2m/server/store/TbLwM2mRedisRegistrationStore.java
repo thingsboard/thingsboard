@@ -21,12 +21,12 @@ import org.eclipse.californium.elements.EndpointContext;
 import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
+import org.eclipse.leshan.core.californium.ObserveUtil;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
-import org.eclipse.leshan.core.californium.ObserveUtil;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
@@ -39,12 +39,10 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.eclipse.leshan.server.registration.UpdatedRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
+import org.thingsboard.server.cache.RedisUtil;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -52,7 +50,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -104,7 +101,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
     public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, long cleanPeriodInSec, long lifetimeGracePeriodInSec, int cleanLimit) {
         this(connectionFactory, Executors.newScheduledThreadPool(1,
-                new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
+                        new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
                 cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit);
     }
 
@@ -299,24 +296,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     @Override
     public Iterator<Registration> getAllRegistrations() {
         try (var connection = connectionFactory.getConnection()) {
-            Collection<Registration> list = new LinkedList<>();
-            ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(REG_EP + "*").build();
-            List<Cursor<byte[]>> scans = new ArrayList<>();
-            if (connection instanceof RedisClusterConnection) {
-                ((RedisClusterConnection) connection).clusterGetNodes().forEach(node -> {
-                    scans.add(((RedisClusterConnection) connection).scan(node, scanOptions));
-                });
-            } else {
-                scans.add(connection.scan(scanOptions));
-            }
-
-            scans.forEach(scan -> {
-                scan.forEachRemaining(key -> {
-                    byte[] element = connection.get(key);
-                    list.add(deserializeReg(element));
-                });
-            });
-            return list.iterator();
+            return RedisUtil.getAll(connection, REG_EP, this::deserializeReg).listIterator();
         }
     }
 
@@ -457,7 +437,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 // cancel existing observations for the same path and registration id.
                 for (Observation obs : getObservations(connection, registrationId)) {
                     //TODO: should be able to use CompositeObservation
-                    if (((SingleObservation)observation).getPath().equals(((SingleObservation)obs).getPath())
+                    if (((SingleObservation) observation).getPath().equals(((SingleObservation) obs).getPath())
                             && !Arrays.equals(observation.getId(), obs.getId())) {
                         removed.add(obs);
                         unsafeRemoveObservation(connection, registrationId, obs.getId());

@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.AlarmRuleEntity;
 import org.thingsboard.server.dao.model.sql.AlarmRuleInfoEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID> {
@@ -45,4 +46,15 @@ public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID
     Page<AlarmRuleEntity> findByTenantIdAndEnabled(@Param("tenantId") UUID tenantId,
                                          @Param("searchText") String searchText,
                                          Pageable pageable);
+
+    @Query(value = "SELECT cast(to_json(r) as varchar) FROM (" +
+            "SELECT rns.entity_id, rns.rule_node_id, rn.debug_mode, rns.state_data FROM rule_node_state rns " +
+            "INNER JOIN rule_node rn ON rns.rule_node_id = rn.id " +
+            "WHERE rn.type = :type " +
+            "AND rn.rule_chain_id = :ruleChainId " +
+            "AND (SELECT d.device_profile_id FROM device d WHERE d.id = rns.entity_id) = :deviceProfileId) r;",
+            nativeQuery = true)
+    List<String> findRuleNodeStatesByRuleChainIdAndRuleNodeType(@Param("deviceProfileId") UUID deviceProfileId,
+                                                                @Param("ruleChainId") UUID ruleChainId,
+                                                                @Param("type") String type);
 }
