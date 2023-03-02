@@ -38,6 +38,18 @@ As result, in REPOSITORY column, next images should be present:
 
         mvn clean install -DblackBoxTests.skip=false -Dsuite=uiTests
 
+- To run only ui smoke rule chains tests in the [msa/black-box-tests](../black-box-tests) directory:
+
+        mvn clean install -DblackBoxTests.skip=false -Dsuite=smokesRuleChain
+
+- To run only ui smoke customers tests in the [msa/black-box-tests](../black-box-tests) directory:
+
+        mvn clean install -DblackBoxTests.skip=false -Dsuite=smokesCustomer
+
+- To run only ui smoke profiles tests in the [msa/black-box-tests](../black-box-tests) directory:
+
+        mvn clean install -DblackBoxTests.skip=false -Dsuite=smokesPrifiles
+
 - To run all tests (black-box and ui) in the [msa/black-box-tests](../black-box-tests) directory:
 
         mvn clean install -DblackBoxTests.skip=false -Dsuite=all 
