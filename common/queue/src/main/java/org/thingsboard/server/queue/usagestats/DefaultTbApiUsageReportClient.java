@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +38,6 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import javax.annotation.PostConstruct;
 import java.util.EnumMap;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,7 +83,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     }
 
     private void reportStats() {
-        ConcurrentMap<ReportLevel, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
@@ -93,34 +91,40 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 long value = statsValue.get();
                 if (value == 0 && key.isCounter()) return;
 
-                ToUsageStatsServiceMsg.Builder statsMsgBuilder = report.computeIfAbsent(reportLevel, id -> {
-                    ToUsageStatsServiceMsg.Builder newStatsMsgBuilder = ToUsageStatsServiceMsg.newBuilder();
+                ToUsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
+                    ToUsageStatsServiceMsg.Builder newStatsMsg = ToUsageStatsServiceMsg.newBuilder();
 
-                    TenantId tenantId = reportLevel.getTenantId();
-                    newStatsMsgBuilder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-                    newStatsMsgBuilder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+                    TenantId tenantId = parent.getTenantId();
+                    newStatsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+                    newStatsMsg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
 
-                    CustomerId customerId = reportLevel.getCustomerId();
+                    CustomerId customerId = parent.getCustomerId();
                     if (customerId != null) {
-                        newStatsMsgBuilder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-                        newStatsMsgBuilder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+                        newStatsMsg.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+                        newStatsMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
                     }
 
-                    newStatsMsgBuilder.setServiceId(serviceInfoProvider.getServiceId());
-                    return newStatsMsgBuilder;
+                    newStatsMsg.setServiceId(serviceInfoProvider.getServiceId());
+                    return newStatsMsg;
                 });
 
-                statsMsgBuilder.addValues(UsageStatsKVProto.newBuilder().setKey(key.name()).setValue(value).build());
+                UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
+                        .setKey(key.name())
+                        .setValue(value);
+                EntityId entityId = reportLevel.getEntityId();
+                if (entityId != null) {
+                    statsItem.setEntityIdMSB(entityId.getId().getMostSignificantBits());
+                    statsItem.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
+                }
+                statsMsg.addValues(statsItem.build());
             });
             statsForKey.clear();
         }
 
-        report.forEach(((reportLevel, statsMsg) -> {
+        report.forEach(((parent, statsMsg) -> {
             //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
-
-            TenantId tenantId = reportLevel.getTenantId();
-            EntityId entityId = Optional.ofNullable((EntityId) reportLevel.getCustomerId()).orElse(tenantId);
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId).newByTopic(msgProducer.getDefaultTopic());
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, parent.getTenantId(), parent.getId())
+                    .newByTopic(msgProducer.getDefaultTopic());
             msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
         }));
 
@@ -131,22 +135,34 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
     @Override
     public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value) {
-        if (enabled) {
-            ReportLevel[] levels = new ReportLevel[3];
-            levels[0] = ReportLevel.of(tenantId);
-            if (key.isCounter()) {
-                levels[1] = ReportLevel.of(TenantId.SYS_TENANT_ID);
-            }
-            if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
-                levels[2] = ReportLevel.of(tenantId, customerId);
-            }
-            report(key, value, levels);
-        }
+        report(tenantId, customerId, null, key, value);
     }
 
     @Override
     public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key) {
         report(tenantId, customerId, key, 1);
+    }
+
+    @Override
+    public void report(TenantId tenantId, CustomerId customerId, EntityId entityId, ApiUsageRecordKey key, long value) {
+        if (!enabled) return;
+
+        ReportLevel[] reportLevels = new ReportLevel[4];
+        reportLevels[0] = ReportLevel.of(tenantId);
+        if (key.isCounter()) {
+            reportLevels[1] = ReportLevel.of(TenantId.SYS_TENANT_ID);
+        }
+        if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
+            reportLevels[2] = ReportLevel.of(tenantId, customerId);
+        }
+        if (entityId != null) {
+            if (key.isCountPerEntity()) {
+                reportLevels[3] = ReportLevel.of(tenantId, entityId);
+            } else {
+                log.warn("Per-entity stats are not supported for {}", key);
+            }
+        }
+        report(key, value, reportLevels);
     }
 
     private void report(ApiUsageRecordKey key, long value, ReportLevel... levels) {
@@ -163,12 +179,37 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         }
     }
 
-    @RequiredArgsConstructor(staticName = "of")
-    @AllArgsConstructor(staticName = "of")
-    @Getter
+    @Data
     private static class ReportLevel {
         private final TenantId tenantId;
-        private CustomerId customerId;
+        private final CustomerId customerId;
+        private final EntityId entityId;
+
+        public static ReportLevel of(TenantId tenantId) {
+            return new ReportLevel(tenantId, null, null);
+        }
+
+        public static ReportLevel of(TenantId tenantId, CustomerId customerId) {
+            return new ReportLevel(tenantId, customerId, null);
+        }
+
+        public static ReportLevel of(TenantId tenantId, EntityId entityId) {
+            return new ReportLevel(tenantId, null, entityId);
+        }
+
+        public ParentEntity getParentEntity() {
+            return new ParentEntity(tenantId, customerId);
+        }
+    }
+
+    @Data
+    private static class ParentEntity {
+        private final TenantId tenantId;
+        private final CustomerId customerId;
+
+        public EntityId getId() {
+            return customerId != null ? customerId : tenantId;
+        }
     }
 
 }

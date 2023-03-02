@@ -31,8 +31,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BaseApiUsageState {
-    private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
-    private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
+    private final Map<ApiStatsKey, Long> currentCycleValues = new ConcurrentHashMap<>();
+    private final Map<ApiStatsKey, Long> currentHourValues = new ConcurrentHashMap<>();
 
     private final Map<ApiUsageRecordKey, Map<String, Mean>> avgByServiceIdHourly = new HashMap<>();
     private final Map<ApiUsageRecordKey, Map<String, Long>> lastByServiceIdHourly = new HashMap<>();
@@ -53,17 +53,17 @@ public abstract class BaseApiUsageState {
         this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
     }
 
-    public void set(ApiUsageRecordKey key, Long value) {
+    public void set(ApiStatsKey key, Long value) {
         currentCycleValues.put(key, value);
     }
 
-    public long calculate(ApiUsageRecordKey key, long value, String serviceId) {
+    public long calculate(ApiStatsKey key, long value, String serviceId) {
         long result;
         long currentValue = get(key);
-        if (key.isCounter()) {
+        if (key.getRecordKey().isCounter()) {
             result = currentValue + value;
         } else {
-            Map<String, Long> lastForKey = lastByServiceIdHourly.computeIfAbsent(key, k -> new HashMap<>());
+            Map<String, Long> lastForKey = lastByServiceIdHourly.computeIfAbsent(key.getRecordKey(), k -> new HashMap<>());
             lastForKey.put(serviceId, value);
             // summing last values from all services
             result = lastForKey.values().stream().mapToLong(Long::longValue).sum();
@@ -72,21 +72,21 @@ public abstract class BaseApiUsageState {
         return result;
     }
 
-    protected long get(ApiUsageRecordKey key) {
+    protected long get(ApiStatsKey key) {
         return currentCycleValues.getOrDefault(key, 0L);
     }
 
-    public void setHourly(ApiUsageRecordKey key, Long value) {
+    public void setHourly(ApiStatsKey key, Long value) {
         currentHourValues.put(key, value);
     }
 
-    public long calculateHourly(ApiUsageRecordKey key, long value, String serviceId) {
+    public long calculateHourly(ApiStatsKey key, long value, String serviceId) {
         long currentValue = getHourly(key);
         long result;
-        if (key.isCounter()) {
+        if (key.getRecordKey().isCounter()) {
             result = currentValue + value;
         } else {
-            Map<String, Mean> avgByServiceId = avgByServiceIdHourly.computeIfAbsent(key, k -> new HashMap<>());
+            Map<String, Mean> avgByServiceId = avgByServiceIdHourly.computeIfAbsent(key.getRecordKey(), k -> new HashMap<>());
             Mean hourlyAvg = avgByServiceId.computeIfAbsent(serviceId, k -> new Mean());
             hourlyAvg.increment(value);
             // summing hourly average values from all services
@@ -96,25 +96,21 @@ public abstract class BaseApiUsageState {
         return result;
     }
 
-    protected long getHourly(ApiUsageRecordKey key) {
+    protected long getHourly(ApiStatsKey key) {
         return currentHourValues.getOrDefault(key, 0L);
     }
 
     public void setHour(long currentHourTs) {
         this.currentHourTs = currentHourTs;
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            currentHourValues.put(key, 0L);
-            avgByServiceIdHourly.put(key, null);
-            lastByServiceIdHourly.put(key, null);
-        }
+        currentHourValues.clear();
+        avgByServiceIdHourly.clear();
+        lastByServiceIdHourly.clear();
     }
 
     public void setCycles(long currentCycleTs, long nextCycleTs) {
         this.currentCycleTs = currentCycleTs;
         this.nextCycleTs = nextCycleTs;
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            currentCycleValues.put(key, 0L);
-        }
+        currentCycleValues.clear();
     }
 
     public ApiUsageStateValue getFeatureValue(ApiFeature feature) {

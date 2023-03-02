@@ -67,7 +67,6 @@ import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,12 +82,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
 public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService<EntityId> implements TbApiUsageStateService {
 
-    public static final String HOURLY = "Hourly";
     public static final FutureCallback<Integer> VOID_CALLBACK = new FutureCallback<Integer>() {
         @Override
         public void onSuccess(@Nullable Integer result) {
@@ -172,19 +171,19 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         ToUsageStatsServiceMsg statsMsg = msg.getValue();
 
         TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
-        EntityId entityId;
+        EntityId ownerId;
         if (statsMsg.getCustomerIdMSB() != 0 && statsMsg.getCustomerIdLSB() != 0) {
-            entityId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
+            ownerId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
         } else {
-            entityId = tenantId;
+            ownerId = tenantId;
         }
 
-        processEntityUsageStats(tenantId, entityId, statsMsg.getValuesList(), statsMsg.getServiceId());
+        processEntityUsageStats(tenantId, ownerId, statsMsg.getValuesList(), statsMsg.getServiceId());
         callback.onSuccess();
     }
 
-    private void processEntityUsageStats(TenantId tenantId, EntityId entityId, List<UsageStatsKVProto> values, String serviceId) {
-        if (deletedEntities.contains(entityId)) return;
+    private void processEntityUsageStats(TenantId tenantId, EntityId ownerId, List<UsageStatsKVProto> values, String serviceId) {
+        if (deletedEntities.contains(ownerId)) return;
 
         BaseApiUsageState usageState;
         List<TsKvEntry> updatedEntries;
@@ -192,7 +191,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
 
         updateLock.lock();
         try {
-            usageState = getOrFetchState(tenantId, entityId);
+            usageState = getOrFetchState(tenantId, ownerId);
             long ts = usageState.getCurrentCycleTs();
             long hourTs = usageState.getCurrentHourTs();
             long newHourTs = SchedulerUtils.getStartOfCurrentHour();
@@ -201,13 +200,25 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             }
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
             Set<ApiFeature> apiFeatures = new HashSet<>();
-            for (UsageStatsKVProto kvProto : values) {
-                ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(kvProto.getKey());
-                long newValue = usageState.calculate(recordKey, kvProto.getValue(), serviceId);
-                long newHourlyValue = usageState.calculateHourly(recordKey, kvProto.getValue(), serviceId);
+            for (UsageStatsKVProto statsItem : values) {
+                ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
+                ApiStatsKey statsKey;
+                if (statsItem.getEntityIdMSB() != 0 && statsItem.getEntityIdLSB() != 0) {
+                    if (!recordKey.isCountPerEntity()) {
+                        log.warn("Per-entity stats not supported for {}", recordKey);
+                        continue;
+                    }
+                    UUID entityId = new UUID(statsItem.getEntityIdMSB(), statsItem.getEntityIdLSB());
+                    statsKey = ApiStatsKey.of(recordKey, entityId);
+                } else {
+                    statsKey = ApiStatsKey.of(recordKey);
+                }
 
-                updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
-                updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                long newValue = usageState.calculate(statsKey, statsItem.getValue(), serviceId);
+                long newHourlyValue = usageState.calculateHourly(statsKey, statsItem.getValue(), serviceId);
+
+                updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(statsKey.getEntryKey(false), newValue)));
+                updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(statsKey.getEntryKey(true), newHourlyValue)));
                 if (recordKey.getApiFeature() != null) {
                     apiFeatures.add(recordKey.getApiFeature());
                 }
@@ -380,7 +391,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         for (ApiUsageRecordKey apiUsageRecordKey : ApiUsageRecordKey.getKeys(apiFeature)) {
             long threshold = state.getProfileThreshold(apiUsageRecordKey);
             long warnThreshold = state.getProfileWarnThreshold(apiUsageRecordKey);
-            long value = state.get(apiUsageRecordKey);
+            long value = state.get(ApiStatsKey.of(apiUsageRecordKey));
             if (checker.check(threshold, warnThreshold, value)) {
                 return new ApiUsageStateMailMessage(apiUsageRecordKey, threshold, value);
             }
@@ -414,7 +425,8 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             myUsageStates.values().forEach(state -> {
                 if ((state.getNextCycleTs() < now) && (now - state.getNextCycleTs() < TimeUnit.HOURS.toMillis(1))) {
                     state.setCycles(state.getNextCycleTs(), SchedulerUtils.getStartOfNextNextMonth());
-                    saveNewCounts(state, Arrays.asList(ApiUsageRecordKey.values()));
+                    saveNewCounts(state, Stream.of(ApiUsageRecordKey.values())
+                            .map(ApiStatsKey::of).collect(Collectors.toList()));
                     if (state.getEntityType() == EntityType.TENANT && !state.getEntityId().equals(TenantId.SYS_TENANT_ID)) {
                         TenantId tenantId = state.getTenantId();
                         updateTenantState((TenantApiUsageState) state, tenantProfileCache.get(tenantId));
@@ -426,34 +438,34 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         }
     }
 
-    private void saveNewCounts(BaseApiUsageState state, List<ApiUsageRecordKey> keys) {
+    private void saveNewCounts(BaseApiUsageState state, List<ApiStatsKey> keys) {
         List<TsKvEntry> counts = keys.stream()
-                .map(key -> new BasicTsKvEntry(state.getCurrentCycleTs(), new LongDataEntry(key.getApiCountKey(), 0L)))
+                .map(key -> new BasicTsKvEntry(state.getCurrentCycleTs(), new LongDataEntry(key.getEntryKey(false), 0L)))
                 .collect(Collectors.toList());
 
         tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), counts, VOID_CALLBACK);
     }
 
-    BaseApiUsageState getOrFetchState(TenantId tenantId, EntityId entityId) {
-        if (entityId == null || entityId.isNullUid()) {
-            entityId = tenantId;
+    BaseApiUsageState getOrFetchState(TenantId tenantId, EntityId ownerId) {
+        if (ownerId == null || ownerId.isNullUid()) {
+            ownerId = tenantId;
         }
-        BaseApiUsageState state = myUsageStates.get(entityId);
+        BaseApiUsageState state = myUsageStates.get(ownerId);
         if (state != null) {
             return state;
         }
 
-        ApiUsageState storedState = apiUsageStateService.findApiUsageStateByEntityId(entityId);
+        ApiUsageState storedState = apiUsageStateService.findApiUsageStateByEntityId(ownerId);
         if (storedState == null) {
             try {
-                storedState = apiUsageStateService.createDefaultApiUsageState(tenantId, entityId);
+                storedState = apiUsageStateService.createDefaultApiUsageState(tenantId, ownerId);
             } catch (Exception e) {
-                storedState = apiUsageStateService.findApiUsageStateByEntityId(entityId);
+                storedState = apiUsageStateService.findApiUsageStateByEntityId(ownerId);
             }
         }
-        if (entityId.getEntityType() == EntityType.TENANT) {
-            if (!entityId.equals(TenantId.SYS_TENANT_ID)) {
-                state = new TenantApiUsageState(tenantProfileCache.get((TenantId) entityId), storedState);
+        if (ownerId.getEntityType() == EntityType.TENANT) {
+            if (!ownerId.equals(TenantId.SYS_TENANT_ID)) {
+                state = new TenantApiUsageState(tenantProfileCache.get((TenantId) ownerId), storedState);
             } else {
                 state = new TenantApiUsageState(storedState);
             }
@@ -461,37 +473,44 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             state = new CustomerApiUsageState(storedState);
         }
 
-        List<ApiUsageRecordKey> newCounts = new ArrayList<>();
+        List<ApiStatsKey> newCounts = new ArrayList<>();
         try {
             List<TsKvEntry> dbValues = tsService.findAllLatest(tenantId, storedState.getId()).get();
+            // limit for current month ?
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-                boolean cycleEntryFound = false;
-                boolean hourlyEntryFound = false;
                 for (TsKvEntry tsKvEntry : dbValues) {
-                    if (tsKvEntry.getKey().equals(key.getApiCountKey())) {
-                        cycleEntryFound = true;
+                    String entryKey = tsKvEntry.getKey();
+                    Long value = tsKvEntry.getLongValue().orElse(0L);
+                    UUID entityId = ApiStatsKey.getEntityId(entryKey);
 
-                        boolean oldCount = tsKvEntry.getTs() == state.getCurrentCycleTs();
-                        state.set(key, oldCount ? tsKvEntry.getLongValue().get() : 0L);
-
-                        if (!oldCount) {
-                            newCounts.add(key);
+                    if (ApiStatsKey.isMonthly(key, entryKey)) {
+                        boolean outdated = tsKvEntry.getTs() != state.getCurrentCycleTs();
+                        if (outdated) {
+                            newCounts.add(ApiStatsKey.of(key));
+                            continue;
                         }
-                    } else if (tsKvEntry.getKey().equals(key.getApiCountKey() + HOURLY)) {
-                        hourlyEntryFound = true;
-                        state.setHourly(key, tsKvEntry.getTs() == state.getCurrentHourTs() ? tsKvEntry.getLongValue().get() : 0L);
-                    }
-                    if (cycleEntryFound && hourlyEntryFound) {
-                        break;
+                        if (entityId == null) {
+                            state.set(ApiStatsKey.of(key), value);
+                        } else {
+                            state.set(ApiStatsKey.of(key, entityId), value);
+                        }
+                    } else if (ApiStatsKey.isHourly(key, entryKey)) {
+                        boolean outdated = tsKvEntry.getTs() != state.getCurrentHourTs();
+                        if (outdated) continue;
+                        if (entityId == null) {
+                            state.setHourly(ApiStatsKey.of(key), value);
+                        } else {
+                            state.setHourly(ApiStatsKey.of(key, entityId), value);
+                        }
                     }
                 }
             }
-            log.debug("[{}] Initialized state: {}", entityId, storedState);
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+            log.debug("[{}] Initialized state: {}", ownerId, storedState);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, ownerId);
             if (tpi.isMyPartition()) {
                 addEntityState(tpi, state);
             } else {
-                otherUsageStates.put(entityId, state.getApiUsageState());
+                otherUsageStates.put(ownerId, state.getApiUsageState());
             }
             saveNewCounts(state, newCounts);
         } catch (InterruptedException | ExecutionException e) {

@@ -976,6 +976,8 @@ message ToTransportMsg {
 message UsageStatsKVProto{
   string key = 1;
   int64 value = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
 }
 
 message ToUsageStatsServiceMsg {

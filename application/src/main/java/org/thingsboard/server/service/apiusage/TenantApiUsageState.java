@@ -62,7 +62,7 @@ public class TenantApiUsageState extends BaseApiUsageState {
     private Pair<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(ApiFeature feature) {
         ApiUsageStateValue featureValue = ApiUsageStateValue.ENABLED;
         for (ApiUsageRecordKey recordKey : ApiUsageRecordKey.getKeys(feature)) {
-            long value = get(recordKey);
+            long value = get(ApiStatsKey.of(recordKey));
             long threshold = getProfileThreshold(recordKey);
             long warnThreshold = getProfileWarnThreshold(recordKey);
             ApiUsageStateValue tmpValue;
