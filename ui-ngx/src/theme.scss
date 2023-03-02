@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 @use '@angular/material' as mat;
-@import '@mat-datetimepicker/core/datetimepicker/datetimepicker-theme';
+@import '../theme/datepicker-theme';
 @import './scss/constants';
 
 @include mat.all-component-typographies();

@@ -1830,10 +1830,10 @@
   resolved "https://registry.yarnpkg.com/@leichtgewicht/ip-codec/-/ip-codec-2.0.4.tgz#b2ac626d6cb9c8718ab459166d4bb405b8ffa78b"
   integrity sha512-Hcv+nVC0kZnQ3tD9GVu5xSMR4VVYOteQIr/hwFPVEvPdlXqgGEuRjiheChHgdM+JyqdgNcmzZOX/tnl0JOiI7A==
 
-"@mat-datetimepicker/core@~11.0.2":
-  version "11.0.2"
-  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-11.0.2.tgz#d89cf5f60a95567ca6e193fcc16a60e91172abdb"
-  integrity sha512-qZeiDWjSQ8OmjrQ7hDR3ynYHAFCTFHViNr38RaemNpfvTWvnYD+rRfD5/dWDo0VqLzkJjpQe0oFXgMkHqDFgzg==
+"@mat-datetimepicker/core@~11.0.3":
+  version "11.0.3"
+  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-11.0.3.tgz#8a3958a603d1d2ed8ddc443f0b10e89f1b8d16d6"
+  integrity sha512-1M9sPoB3TfRb8hREDnv5R6uTi0iMlaY6oskxew0a+HVNTzZOBhwWWdKnlect8u+pXCmRBZI0QdMwx8nazeBdnA==
   dependencies:
     tslib "^2.4.0"
 
