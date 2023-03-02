@@ -82,6 +82,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -100,7 +101,6 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
     private final TbAlarmRuleContext ctx;
     private final AlarmRuleService alarmRuleService;
-    //    private final AlarmRuleEntityStateService alarmRuleEntityStateService;
     private final AlarmRuleEntityStateStore stateStore;
     private final PartitionService partitionService;
     //    private final RelationService relationService;
@@ -311,11 +311,13 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         if (ServiceType.TB_ALARM_RULES_EXECUTOR.equals(event.getServiceType())) {
-            log.info("PartitionChangeEvent: [{}]", event);
+            Set<TopicPartitionInfo> addedPartitions = diffSets(myPartitions, event.getPartitions());
+            Set<TopicPartitionInfo> removedPartitions = diffSets(event.getPartitions(), myPartitions);
 
-            Set<TopicPartitionInfo> newPartitions = diffSets(myPartitions, event.getPartitions());
-            myPartitions.clear();
+            myPartitions.removeAll(removedPartitions);
             myPartitions.addAll(event.getPartitions());
+
+            log.info("calculated removedPartitions: {}", removedPartitions);
 
             List<EntityId> toRemove = new ArrayList<>();
             entityStates.values().forEach(entityState -> {
@@ -326,14 +328,24 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
                 }
             });
 
+            log.info("calculated removedEntityStates: {}", toRemove.size());
+
+
             toRemove.forEach(entityStates::remove);
             myEntityStateIdsPerAlarmRule.values().forEach(ids -> toRemove.forEach(ids::remove));
 
-            newPartitions.forEach(tpi -> {
+            log.info("calculated addedPartitions: {}", addedPartitions);
+
+            AtomicInteger addedEntityStates = new AtomicInteger(0);
+
+            addedPartitions.forEach(tpi -> {
                         List<PersistedEntityState> states = stateStore.getAll(tpi);
+                        addedEntityStates.addAndGet(states.size());
                         states.forEach(ares -> createEntityState(ares.getTenantId(), ares.getEntityId(), ares));
                     }
             );
+
+            log.info("calculated addedEntityStates: {}", addedEntityStates.get());
 
             consumer.subscribe(event.getPartitions());
         }
@@ -342,7 +354,6 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
     @EventListener(ApplicationReadyEvent.class)
     @Order(value = 2)
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        log.info("Starting AR consumer!");
         consumerExecutor.execute(() -> consumerLoop(consumer));
     }
 
