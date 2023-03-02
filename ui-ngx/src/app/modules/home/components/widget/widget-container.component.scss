@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-
-}
 
 tb-widget.tb-widget {
   position: relative;
@@ -92,6 +89,10 @@ div.tb-widget {
         min-height: 20px;
         font-size: 20px;
         line-height: 20px;
+        svg {
+          width: 20px;
+          height: 20px;
+        }
       }
     }
   }
