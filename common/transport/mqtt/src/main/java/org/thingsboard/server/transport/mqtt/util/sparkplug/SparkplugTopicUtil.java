@@ -109,8 +109,8 @@ public class SparkplugTopicUtil {
      * @return
      */
     private static String validateNameSpace(String nameSpace)  throws ThingsboardException {
-        if ("spBv1.0".equals(nameSpace)) return nameSpace;
-        throw new ThingsboardException("The namespace [" + nameSpace + "] is not valid and must be [spBv1.0] for the Sparkplug™ B version.", ThingsboardErrorCode.INVALID_ARGUMENTS);
+        if (NAMESPACE.equals(nameSpace)) return nameSpace;
+        throw new ThingsboardException("The namespace [" + nameSpace + "] is not valid and must be [" + NAMESPACE + "] for the Sparkplug™ B version.", ThingsboardErrorCode.INVALID_ARGUMENTS);
     }
 
 }
