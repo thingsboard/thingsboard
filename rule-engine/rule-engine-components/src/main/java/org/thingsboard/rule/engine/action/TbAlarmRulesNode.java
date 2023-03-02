@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -43,24 +44,20 @@ import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "device profile",
+        name = "alarm rules",
         customRelations = true,
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
-        configClazz = TbDeviceProfileNodeConfiguration.class,
-        nodeDescription = "Process device messages based on device profile settings",
-        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
+        configClazz = EmptyNodeConfiguration.class,
+        nodeDescription = "Process device or asset messages based on alarm rules.",
+        nodeDetails = "Create and clear alarms based on alarm rules. The output relation type is either " +
                 "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbDeviceProfileConfig"
+        configDirective = "tbNodeEmptyConfig"
 )
-public class TbDeviceProfileNode implements TbNode {
-
-    private TbDeviceProfileNodeConfiguration config;
+public class TbAlarmRulesNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbDeviceProfileNodeConfiguration.class);
-
     }
 
     @Override

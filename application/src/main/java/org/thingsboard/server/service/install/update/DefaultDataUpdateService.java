@@ -28,8 +28,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
-import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
-import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
+import org.thingsboard.rule.engine.action.TbAlarmRulesNode;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
@@ -421,18 +420,17 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             }
 
                             RuleNode oldFirstNode = md.getNodes().get(oldIdx);
-                            if (oldFirstNode.getType().equals(TbDeviceProfileNode.class.getName())) {
+                            if (oldFirstNode.getType().equals(TbAlarmRulesNode.class.getName())) {
                                 // No need to update the rule node twice.
                                 return;
                             }
 
                             RuleNode ruleNode = new RuleNode();
                             ruleNode.setRuleChainId(ruleChain.getId());
-                            ruleNode.setName("Device Profile Node");
-                            ruleNode.setType(TbDeviceProfileNode.class.getName());
+                            ruleNode.setName("Alarm Rules Node");
+                            ruleNode.setType(TbAlarmRulesNode.class.getName());
                             ruleNode.setDebugMode(false);
-                            TbDeviceProfileNodeConfiguration ruleNodeConfiguration = new TbDeviceProfileNodeConfiguration().defaultConfiguration();
-                            ruleNode.setConfiguration(JacksonUtil.valueToTree(ruleNodeConfiguration));
+
                             ObjectNode additionalInfo = JacksonUtil.newObjectNode();
                             additionalInfo.put("description", "Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \"Success\" relation type.");
                             additionalInfo.put("layoutX", 204);

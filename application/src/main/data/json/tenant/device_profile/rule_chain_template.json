@@ -94,13 +94,10 @@
           "layoutX": 209,
           "layoutY": 307
         },
-        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
-        "name": "Device Profile Node",
+        "type": "org.thingsboard.rule.engine.action.TbAlarmRulesNode",
+        "name": "Alarm Rules Node",
         "debugMode": false,
-        "configuration": {
-          "persistAlarmRulesState": false,
-          "fetchAlarmRulesStateOnStart": false
-        }
+        "configuration": {}
       }
     ],
     "connections": [
