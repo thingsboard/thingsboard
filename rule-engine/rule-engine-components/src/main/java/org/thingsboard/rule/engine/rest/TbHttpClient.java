@@ -192,11 +192,7 @@ public class TbHttpClient {
             config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
-            String data = msg.getData();
-            if (config.isTrimDoubleQuotes()) {
-                data = trimDoubleQuotes(data);
-            }
-            entity = new HttpEntity<>(data, headers);
+            entity = new HttpEntity<>(getData(msg), headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
@@ -245,6 +241,18 @@ public class TbHttpClient {
         }
 
         return uri;
+    }
+
+    private String getData(TbMsg msg) {
+        String data = msg.getData();
+
+        if (config.isTrimDoubleQuotes()) {
+            final String dataBefore = data;
+            data = data.replaceAll("^\"|\"$", "");;
+            log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
+        }
+
+        return data;
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
@@ -336,13 +344,6 @@ public class TbHttpClient {
         if (proxyPort < 0 || proxyPort > 65535) {
             throw new TbNodeException("Proxy port out of range:" + proxyPort);
         }
-    }
-
-    private static String trimDoubleQuotes(String s) {
-        if (s.startsWith("\"") && s.endsWith("\"")) {
-            return s.substring(1, s.length() - 1);
-        }
-        return s;
     }
 
 }
