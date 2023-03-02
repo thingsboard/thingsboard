@@ -36,7 +36,7 @@
     <button mat-button
             color="primary"
             class="tb-help-popup-text-button"
-            [ngClass]="{'mat-stroked-button': popoverVisible && popoverReady}">
+            [ngClass]="{'mat-mdc-outlined-button mdc-button--outlined': popoverVisible && popoverReady}">
       <span>
         <ng-container *ngIf="triggerSafeHtml">
           <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
