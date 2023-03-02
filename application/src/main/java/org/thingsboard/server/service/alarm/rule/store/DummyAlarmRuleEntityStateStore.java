@@ -17,10 +17,10 @@ package org.thingsboard.server.service.alarm.rule.store;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
 public class DummyAlarmRuleEntityStateStore implements AlarmRuleEntityStateStore {
 
     @Override
-    public void put(AlarmRuleEntityState entityState) {
+    public void put(PersistedEntityState entityState) {
     }
 
     @Override
@@ -38,7 +38,7 @@ public class DummyAlarmRuleEntityStateStore implements AlarmRuleEntityStateStore
     }
 
     @Override
-    public List<AlarmRuleEntityState> getAll(TopicPartitionInfo tpi) {
+    public List<PersistedEntityState> getAll(TopicPartitionInfo tpi) {
         return Collections.emptyList();
     }
 }

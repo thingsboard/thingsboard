@@ -15,18 +15,18 @@
  */
 package org.thingsboard.server.service.alarm.rule.store;
 
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
 import java.util.List;
 
 public interface AlarmRuleEntityStateStore {
 
-    void put(AlarmRuleEntityState entityState);
+    void put(PersistedEntityState entityState);
 
     void remove(TenantId tenantId, EntityId entityId);
 
-    List<AlarmRuleEntityState> getAll(TopicPartitionInfo tpi);
+    List<PersistedEntityState> getAll(TopicPartitionInfo tpi);
 }

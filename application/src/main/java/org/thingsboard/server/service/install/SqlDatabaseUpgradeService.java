@@ -17,7 +17,6 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +27,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
@@ -51,8 +48,7 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateDao;
-import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleDao;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -67,6 +63,7 @@ import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
+import org.thingsboard.server.service.alarm.rule.store.RedisAlarmRuleEntityStateStore;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -137,10 +134,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private TenantService tenantService;
 
     @Autowired
-    private AlarmRuleService alarmRuleService;
+    private AlarmRuleDao alarmRuleService;
 
     @Autowired
-    private AlarmRuleEntityStateDao alarmRuleEntityStateDao;
+    private Optional<RedisAlarmRuleEntityStateStore> stateStore;
 
     @Autowired
     private RuleChainService ruleChainService;
@@ -786,7 +783,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                             configuration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
                                                             alarmRule.setConfiguration(configuration);
 
-                                                            AlarmRule savedRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+                                                            AlarmRule savedRule = alarmRuleService.save(tenantId, alarmRule);
 
                                                             alarmRuleIdMapping.put(alarm.get("id").asText(), savedRule.getId().toString());
                                                         } catch (Exception e) {
@@ -796,22 +793,20 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                     RuleChainId ruleChainId =
                                                             Optional.ofNullable(deviceProfile.getDefaultRuleChainId()).map(RuleChainId::new).orElse(rootRuleChainId);
 
-                                                    if (rootRuleChainId == null) {
+                                                    if (rootRuleChainId == null || stateStore.isEmpty()) {
                                                         continue;
                                                     }
 
-                                                    List<JsonNode> states = alarmRuleEntityStateDao.findRuleNodeStatesByRuleChainIdAndType(new DeviceProfileId(deviceProfile.getId()), ruleChainId, "org.thingsboard.rule.engine.profile.TbDeviceProfileNode");
+                                                    List<JsonNode> states = alarmRuleService.findRuleNodeStatesByRuleChainIdAndType(new DeviceProfileId(deviceProfile.getId()), ruleChainId, "org.thingsboard.rule.engine.profile.TbDeviceProfileNode");
                                                     states.forEach(stateNode -> {
                                                         Map<String, PersistedAlarmState> alarmStates = new HashMap<>();
                                                         DeviceId deviceId = new DeviceId(UUID.fromString(stateNode.get("entity_id").asText()));
                                                         RuleNodeId ruleNodeId = new RuleNodeId(UUID.fromString(stateNode.get("rule_node_id").asText()));
                                                         boolean debugMode = stateNode.get("debug_mode").asBoolean();
 
-                                                        AlarmRuleEntityState entityState = new AlarmRuleEntityState();
-                                                        entityState.setTenantId(tenantId);
-                                                        entityState.setEntityId(deviceId);
-
                                                         PersistedEntityState persistedEntityState = JacksonUtil.fromString(stateNode.get("state_data").asText(), PersistedEntityState.class);
+                                                        persistedEntityState.setTenantId(tenantId);
+                                                        persistedEntityState.setEntityId(deviceId);
 
                                                         persistedEntityState.getAlarmStates().forEach((id, alarmState) -> {
                                                             String newId = alarmRuleIdMapping.get(id);
@@ -823,8 +818,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                                                         persistedEntityState.setAlarmStates(alarmStates);
 
-                                                        entityState.setData(JacksonUtil.toString(persistedEntityState));
-                                                        alarmRuleEntityStateDao.saveAlarmRuleEntityState(tenantId, entityState);
+                                                        stateStore.get().put(persistedEntityState);
                                                     });
                                                 }
                                             } catch (Exception e) {

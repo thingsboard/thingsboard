@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.dao.alarm.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AlarmRuleDao extends Dao<AlarmRule> {
@@ -30,5 +34,7 @@ public interface AlarmRuleDao extends Dao<AlarmRule> {
     PageData<AlarmRule> findAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
 
     PageData<AlarmRule> findEnabledAlarmRulesByTenantId(UUID tenantId, PageLink pageLink);
+
+    List<JsonNode> findRuleNodeStatesByRuleChainIdAndType(DeviceProfileId deviceProfileId, RuleChainId ruleChainId, String type);
 
 }

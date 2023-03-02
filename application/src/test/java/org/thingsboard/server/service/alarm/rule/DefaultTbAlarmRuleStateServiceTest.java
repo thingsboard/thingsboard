@@ -21,15 +21,10 @@ import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -91,7 +86,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -115,7 +109,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 @DaoSqlTest
-@ContextConfiguration(classes = DefaultTbAlarmRuleStateServiceTest.Configuration.class)
 public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
     @Autowired
@@ -149,17 +142,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
     private DefaultTbClusterService clusterService;
 
     private TbContext ctx;
-
-    @TestConfiguration
-    static class Configuration {
-        @Bean
-        @Primary
-        public AlarmRuleEntityStateService alarmRuleEntityStateService() {
-            AlarmRuleEntityStateService alarmRuleEntityStateService = Mockito.mock(AlarmRuleEntityStateService.class);
-            Mockito.when(alarmRuleEntityStateService.findAll(any())).thenReturn(new PageData<>());
-            return alarmRuleEntityStateService;
-        }
-    }
 
     @Before
     public void setup() {

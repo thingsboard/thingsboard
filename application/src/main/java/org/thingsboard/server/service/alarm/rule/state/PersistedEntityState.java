@@ -17,12 +17,13 @@ package org.thingsboard.server.service.alarm.rule.state;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Map;
 
 @Data
 public class PersistedEntityState {
-
+    private TenantId tenantId;
+    private EntityId entityId;
     Map<String, PersistedAlarmState> alarmStates;
-
 }

@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleEntityState;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
@@ -68,7 +67,6 @@ class EntityState {
     private final EntityId profileId;
     private final TbAlarmRuleContext ctx;
     private final EntityRulesState entityRulesState;
-    private final AlarmRuleEntityState state;
     private final PersistedEntityState pes;
     private DataSnapshot latestValues;
     private final ConcurrentMap<AlarmRuleId, AlarmState> alarmStates = new ConcurrentHashMap<>();
@@ -76,7 +74,7 @@ class EntityState {
     @Getter
     private final Lock lock = new ReentrantLock();
 
-    EntityState(TenantId tenantId, EntityId entityId, EntityId profileId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, AlarmRuleEntityState state) {
+    EntityState(TenantId tenantId, EntityId entityId, EntityId profileId, TbAlarmRuleContext ctx, EntityRulesState entityRulesState, PersistedEntityState pes) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.profileId = profileId;
@@ -85,21 +83,18 @@ class EntityState {
 
         this.dynamicPredicateValueCtx = new DynamicPredicateValueCtxImpl(tenantId, entityId, ctx);
 
-        if (state != null) {
-            this.state = state;
-            this.pes = JacksonUtil.fromString(this.state.getData(), PersistedEntityState.class);
+        if (pes != null) {
+            this.pes = pes;
 
             for (AlarmRule alarmRule : entityRulesState.getAlarmRules().values()) {
                 alarmStates.computeIfAbsent(alarmRule.getId(),
                         a -> new AlarmState(entityRulesState, tenantId, entityId, alarmRule, getOrInitPersistedAlarmState(alarmRule), dynamicPredicateValueCtx));
             }
         } else {
-            this.state = new AlarmRuleEntityState();
-            this.state.setTenantId(tenantId);
-            this.state.setEntityId(entityId);
-
-            pes = new PersistedEntityState();
-            pes.setAlarmStates(new HashMap<>());
+            this.pes = new PersistedEntityState();
+            this.pes.setTenantId(tenantId);
+            this.pes.setEntityId(entityId);
+            this.pes.setAlarmStates(new HashMap<>());
         }
     }
 
@@ -227,8 +222,7 @@ class EntityState {
     }
 
     private void saveState() {
-        state.setData(JacksonUtil.toString(pes));
-        ctx.getStateService().save(tenantId, state);
+        ctx.getStateStore().put(pes);
     }
 
     private boolean processDeviceActivityEvent(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -467,7 +461,7 @@ class EntityState {
             case JSON:
                 return EntityKeyValue.fromJson(entry.getJsonValue().get());
             default:
-                throw new RuntimeException("Can't parse entry: " + entry.getDataType());
+                throw new RuntimeException("Can't parse entry:* " + entry.getDataType());
         }
     }
 

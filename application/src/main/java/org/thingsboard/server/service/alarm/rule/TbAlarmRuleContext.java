@@ -21,12 +21,12 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.dao.alarm.rule.AlarmRuleEntityStateService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
+import org.thingsboard.server.service.alarm.rule.store.AlarmRuleEntityStateStore;
 
 @Data
 @RequiredArgsConstructor
@@ -40,5 +40,5 @@ public class TbAlarmRuleContext {
     private final RuleEngineAlarmService alarmService;
     private final TbClusterService clusterService;
     private final ActorSystemContext actorSystemContext;
-    private final AlarmRuleEntityStateService stateService;
+    private final AlarmRuleEntityStateStore stateStore;
 }
