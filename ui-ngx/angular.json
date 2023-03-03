@@ -141,7 +141,7 @@
               "ace-builds",
               "diff-match-patch",
               "tv4",
-              "@messageformat/parse"
+              "@messageformat/parser"
             ]
           },
           "configurations": {
