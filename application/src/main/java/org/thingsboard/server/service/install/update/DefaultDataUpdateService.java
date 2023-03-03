@@ -65,7 +65,6 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -110,9 +109,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private EntityViewService entityViewService;
-
-    @Autowired
-    private DashboardService dashboardService;
 
     @Autowired
     private TimeseriesService tsService;
@@ -684,4 +680,5 @@ public class DefaultDataUpdateService implements DataUpdateService {
             return Boolean.parseBoolean(env);
         }
     }
+
 }

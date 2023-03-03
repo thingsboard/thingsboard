@@ -71,4 +71,5 @@ public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEnti
                                                       @Param("edgeId") UUID edgeId,
                                                       @Param("searchText") String searchText,
                                                       Pageable pageable);
+
 }

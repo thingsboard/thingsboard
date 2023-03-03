@@ -15,11 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.query.EntityFilterType;
-
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * @author Andrew Shvayka
  */
@@ -130,4 +125,5 @@ public class DataConstants {
     public static final String HP_QUEUE_TOPIC = "tb_rule_engine.hp";
     public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
     public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
+
 }

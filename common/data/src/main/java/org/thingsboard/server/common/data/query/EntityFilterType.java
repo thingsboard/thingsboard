@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Getter;
-
 public enum EntityFilterType {
     SINGLE_ENTITY("singleEntity"),
     ENTITY_LIST("entityList"),
@@ -33,7 +31,6 @@ public enum EntityFilterType {
     EDGE_SEARCH_QUERY("edgeSearchQuery"),
     API_USAGE_STATE("apiUsageState");
 
-    @Getter
     private final String label;
 
     EntityFilterType(String label) {
