@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ContainerTestSuite;
-import org.thingsboard.server.msa.WebDriverFactory;
 
 import java.io.ByteArrayInputStream;
 import java.net.URL;
