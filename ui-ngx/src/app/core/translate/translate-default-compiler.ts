@@ -20,7 +20,7 @@ import {
   TranslateMessageFormatCompiler
 } from 'ngx-translate-messageformat-compiler';
 import { Inject, Injectable, Optional } from '@angular/core';
-import messageFormatParser from 'messageformat-parser';
+import { parse } from '@messageformat/parser';
 
 @Injectable({ providedIn: 'root' })
 export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
@@ -44,7 +44,12 @@ export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
   private defaultCompile(src: any, lang: string): any {
     if (typeof src !== 'object') {
       if (this.checkIsPlural(src)) {
-        return super.compile(src, lang);
+        try {
+          return super.compile(src, lang);
+        } catch (e) {
+          console.warn('Failed compile translate:', src, e);
+          return src;
+        }
       } else {
         return src;
       }
@@ -60,7 +65,7 @@ export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
   private checkIsPlural(src: string): boolean {
     let tokens: any[];
     try {
-      tokens = messageFormatParser.parse(src.replace(/\{\{/g, '{').replace(/\}\}/g, '}'),
+      tokens = parse(src.replace(/\{\{/g, '{').replace(/\}\}/g, '}'),
         {cardinal: [], ordinal: []});
     } catch (e) {
       console.warn(`Failed to parse source: ${src}`);
