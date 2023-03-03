@@ -86,25 +86,37 @@ export interface StateEntityFilter {
 }
 
 export interface AssetTypeFilter {
-  assetType?: string; // deprecated
+  /**
+   * @deprecated
+   */
+  assetType?: string;
   assetTypes?: string[];
   assetNameFilter?: string;
 }
 
 export interface DeviceTypeFilter {
-  deviceType?: string; // deprecated
+  /**
+   * @deprecated
+   */
+  deviceType?: string;
   deviceTypes?: string[];
   deviceNameFilter?: string;
 }
 
 export interface EdgeTypeFilter {
-  edgeType?: string; // deprecated
+  /**
+   * @deprecated
+   */
+  edgeType?: string;
   edgeTypes?: string[];
   edgeNameFilter?: string;
 }
 
 export interface EntityViewFilter {
-  entityViewType?: string; // deprecated
+  /**
+   * @deprecated
+   */
+  entityViewType?: string;
   entityViewTypes?: string[];
   entityViewNameFilter?: string;
 }
