@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -372,7 +373,7 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = "Script language: JS or TBEL")
             @RequestParam(required = false) ScriptLanguage scriptLang,
             @ApiParam(value = "Test JS request. See API call description above.")
-            @RequestBody JsonNode inputParams) throws ThingsboardException {
+            @RequestBody JsonNode inputParams) throws ThingsboardException, JsonProcessingException {
         String script = inputParams.get("script").asText();
         String scriptType = inputParams.get("scriptType").asText();
         JsonNode argNamesJson = inputParams.get("argNames");

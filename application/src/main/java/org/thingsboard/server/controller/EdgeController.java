@@ -465,19 +465,7 @@ public class EdgeController extends BaseController {
             try {
                 accessControlService.checkPermission(user, Resource.EDGE, Operation.READ, edge.getId(), edge);
                 return true;
-            }            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            if (isEdgesEnabled()) {
-                EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-                edgeId = checkNotNull(edgeId);
-                SecurityUser user = getCurrentUser();
-                TenantId tenantId = user.getTenantId();
-                ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
-                edgeRpcService.processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
-            } else {
-                throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
-            }
-            return response;
- catch (ThingsboardException e) {
+            } catch (ThingsboardException e) {
                 return false;
             }
         }).collect(Collectors.toList());
@@ -504,7 +492,7 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
-                         @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
+                                                   @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
         if (isEdgesEnabled()) {
