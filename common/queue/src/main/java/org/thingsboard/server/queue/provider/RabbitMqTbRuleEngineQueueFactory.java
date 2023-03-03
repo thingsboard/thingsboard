@@ -31,6 +31,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
@@ -43,6 +44,7 @@ import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqQueueArguments;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -62,11 +64,13 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
     private final TbRabbitMqSettings rabbitMqSettings;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public RabbitMqTbRuleEngineQueueFactory(NotificationsTopicService notificationsTopicService, TbQueueCoreSettings coreSettings,
                                             TbQueueRuleEngineSettings ruleEngineSettings,
@@ -74,7 +78,7 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
                                             TbRabbitMqSettings rabbitMqSettings,
                                             TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                             TbQueueTransportNotificationSettings transportNotificationSettings,
-                                            TbRabbitMqQueueArguments queueArguments) {
+                                            TbQueueAlarmRulesSettings arSettings, TbRabbitMqQueueArguments queueArguments) {
         this.notificationsTopicService = notificationsTopicService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -82,11 +86,13 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
         this.rabbitMqSettings = rabbitMqSettings;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getCoreArgs());
         this.ruleEngineAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getRuleEngineArgs());
         this.jsExecutorAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getJsExecutorArgs());
         this.notificationAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getNotificationsArgs());
+        this.arAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getArArgs());
     }
 
     @Override
@@ -162,14 +168,14 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbRabbitMqProducerTemplate<>(arAdmin, rabbitMqSettings, arSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
-        //TODO: adovh
-        return null;
+        TbQueueMsgDecoder<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> decoder =
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToTbAlarmRuleStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders());
+        return new TbRabbitMqConsumerTemplate<>(arAdmin, rabbitMqSettings, arSettings.getTopic(), decoder);
     }
 
     @PreDestroy

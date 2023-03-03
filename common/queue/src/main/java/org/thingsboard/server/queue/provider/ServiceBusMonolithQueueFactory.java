@@ -34,6 +34,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusAdmin;
@@ -46,6 +47,7 @@ import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -69,6 +71,7 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
     private final TbServiceBusSettings serviceBusSettings;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueVersionControlSettings vcSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
@@ -76,6 +79,7 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin vcAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public ServiceBusMonolithQueueFactory(NotificationsTopicService notificationsTopicService, TbQueueCoreSettings coreSettings,
                                           TbQueueRuleEngineSettings ruleEngineSettings,
@@ -85,7 +89,7 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
                                           TbServiceBusSettings serviceBusSettings,
                                           TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                           TbQueueVersionControlSettings vcSettings,
-                                          TbServiceBusQueueConfigs serviceBusQueueConfigs) {
+                                          TbQueueAlarmRulesSettings arSettings, TbServiceBusQueueConfigs serviceBusQueueConfigs) {
         this.notificationsTopicService = notificationsTopicService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -95,6 +99,7 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
         this.serviceBusSettings = serviceBusSettings;
         this.jsInvokeSettings = jsInvokeSettings;
         this.vcSettings = vcSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getCoreConfigs());
         this.ruleEngineAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getRuleEngineConfigs());
@@ -102,6 +107,7 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
         this.transportApiAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getTransportApiConfigs());
         this.notificationAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getNotificationsConfigs());
         this.vcAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getVcConfigs());
+        this.arAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getArConfigs());
     }
 
     @Override
@@ -225,14 +231,15 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbServiceBusProducerTemplate<>(arAdmin, serviceBusSettings, arSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createToAlarmRulesMsgConsumer() {
-        //TODO: adovh
-        return null;
+        TbQueueMsgDecoder<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> decoder =
+                msg -> new TbProtoQueueMsg<>(msg.getKey(),
+                        TransportProtos.ToTbAlarmRuleStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders());
+        return new TbServiceBusConsumerTemplate<>(arAdmin, serviceBusSettings, arSettings.getTopic(), decoder);
     }
 
     @PreDestroy

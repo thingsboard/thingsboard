@@ -40,6 +40,7 @@ import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.settings.TbQueueAlarmRulesSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -68,6 +69,7 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbQueueVersionControlSettings vcSettings;
+    private final TbQueueAlarmRulesSettings arSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
@@ -76,6 +78,7 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin otaAdmin;
     private final TbQueueAdmin vcAdmin;
+    private final TbQueueAdmin arAdmin;
 
     public AwsSqsTbCoreQueueFactory(TbAwsSqsSettings sqsSettings,
                                     TbQueueCoreSettings coreSettings,
@@ -86,7 +89,7 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
                                     TbServiceInfoProvider serviceInfoProvider,
                                     TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                     TbAwsSqsQueueAttributes sqsQueueAttributes,
-                                    TbQueueTransportNotificationSettings transportNotificationSettings) {
+                                    TbQueueTransportNotificationSettings transportNotificationSettings, TbQueueAlarmRulesSettings arSettings) {
         this.sqsSettings = sqsSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
@@ -96,6 +99,7 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.vcSettings = vcSettings;
+        this.arSettings = arSettings;
 
         this.coreAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getCoreAttributes());
         this.ruleEngineAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getRuleEngineAttributes());
@@ -104,6 +108,7 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
         this.notificationAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getNotificationsAttributes());
         this.otaAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getOtaAttributes());
         this.vcAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getVcAttributes());
+        this.arAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getArAttributes());
     }
 
     @Override
@@ -207,8 +212,7 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbAlarmRuleStateServiceMsg>> createAlarmRulesMsgProducer() {
-        //TODO: adovh
-        return null;
+        return new TbAwsSqsProducerTemplate<>(arAdmin, sqsSettings, arSettings.getTopic());
     }
 
     @PreDestroy

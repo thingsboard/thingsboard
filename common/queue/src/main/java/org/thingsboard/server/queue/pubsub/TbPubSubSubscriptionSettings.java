@@ -40,6 +40,8 @@ public class TbPubSubSubscriptionSettings {
     private String jsExecutorProperties;
     @Value("${queue.pubsub.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.pubsub.queue-properties.alarm-rules:}")
+    private String arProperties;
 
     @Getter
     private Map<String, String> coreSettings;
@@ -53,6 +55,8 @@ public class TbPubSubSubscriptionSettings {
     private Map<String, String> jsExecutorSettings;
     @Getter
     private Map<String, String> vcSettings;
+    @Getter
+    private Map<String, String> arSettings;
 
     @PostConstruct
     private void init() {
@@ -62,6 +66,7 @@ public class TbPubSubSubscriptionSettings {
         notificationsSettings = getSettings(notificationsProperties);
         jsExecutorSettings = getSettings(jsExecutorProperties);
         vcSettings = getSettings(vcProperties);
+        arSettings = getSettings(arProperties);
     }
 
     private Map<String, String> getSettings(String properties) {

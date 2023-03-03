@@ -40,6 +40,8 @@ public class TbServiceBusQueueConfigs {
     private String jsExecutorProperties;
     @Value("${queue.service-bus.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.service-bus.queue-properties.alarm-rules:}")
+    private String arProperties;
     @Getter
     private Map<String, String> coreConfigs;
     @Getter
@@ -52,6 +54,8 @@ public class TbServiceBusQueueConfigs {
     private Map<String, String> jsExecutorConfigs;
     @Getter
     private Map<String, String> vcConfigs;
+    @Getter
+    private Map<String, String> arConfigs;
 
     @PostConstruct
     private void init() {
@@ -61,6 +65,7 @@ public class TbServiceBusQueueConfigs {
         notificationsConfigs = getConfigs(notificationsProperties);
         jsExecutorConfigs = getConfigs(jsExecutorProperties);
         vcConfigs = getConfigs(vcProperties);
+        arConfigs = getConfigs(arProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {
