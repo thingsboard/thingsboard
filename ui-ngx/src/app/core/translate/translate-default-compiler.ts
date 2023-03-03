@@ -45,7 +45,7 @@ export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
     if (typeof src !== 'object') {
       if (this.checkIsPlural(src)) {
         try {
-          return super.compile(src, lang);
+          return super.compile(src, lang.replace('_', '-'));
         } catch (e) {
           console.warn('Failed compile translate:', src, e);
           return src;
