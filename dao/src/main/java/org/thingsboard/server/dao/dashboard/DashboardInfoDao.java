@@ -76,7 +76,4 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
     PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
 
     DashboardInfo findFirstByTenantIdAndName(UUID tenantId, String name);
-
-    PageData<DashboardInfo> findByTenantIdAndConfigurationText(UUID tenantId, String searchText, PageLink pageLink);
-
 }

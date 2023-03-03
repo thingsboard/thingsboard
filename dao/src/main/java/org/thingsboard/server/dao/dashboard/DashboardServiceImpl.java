@@ -108,36 +108,10 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing saveDashboard [{}]", dashboard);
         dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         try {
-            for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
-                updateDashboardFilterIfRequired(entityAlias);
-            }
             return dashboardDao.save(dashboard.getTenantId(), dashboard);
         } catch (Exception e) {
             checkConstraintViolation(e, "dashboard_external_id_unq_key", "Dashboard with such external id already exists!");
             throw e;
-        }
-    }
-
-    private static void updateDashboardFilterIfRequired(JsonNode entityAlias) {
-        JsonNode filter = entityAlias.get("filter");
-        if (filter == null || filter.get("type") == null) {
-            return;
-        }
-        for (String filterTypeForUpdate : DataConstants.DASHBOARD_FILTER_TYPES_FOR_UPDATE) {
-            updateFilterByTypeIfRequired(filter, filterTypeForUpdate);
-        }
-    }
-
-    private static void updateFilterByTypeIfRequired(JsonNode filter, String filterTypeSingularLabel) {
-        if (filter.get(filterTypeSingularLabel) == null) {
-            return;
-        }
-        if (filterTypeSingularLabel.equals(filter.get("type").asText())) {
-            ArrayNode filterTypes = JacksonUtil.OBJECT_MAPPER.createArrayNode();
-            filterTypes.add(filter.get(filterTypeSingularLabel).asText());
-            final String filterTypesPluralLabel = String.format("%ss", filterTypeSingularLabel);
-            ((ObjectNode) filter).set(filterTypesPluralLabel, filterTypes);
-            ((ObjectNode) filter).remove(filterTypeSingularLabel);
         }
     }
 
@@ -327,12 +301,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public List<Dashboard> findTenantDashboardsByTitle(TenantId tenantId, String title) {
         return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
     }
-
-    @Override
-    public PageData<DashboardInfo> findDashboardsByTenantIdAndConfigurationText(TenantId tenantId, String searchText, PageLink pageLink) {
-        return dashboardInfoDao.findByTenantIdAndConfigurationText(tenantId.getId(), searchText, pageLink);
-    }
-
     private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
             new PaginatedRemover<TenantId, DashboardInfo>() {
 

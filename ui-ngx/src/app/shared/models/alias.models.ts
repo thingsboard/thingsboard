@@ -86,21 +86,25 @@ export interface StateEntityFilter {
 }
 
 export interface AssetTypeFilter {
+  assetType?: string; // deprecated
   assetTypes?: string[];
   assetNameFilter?: string;
 }
 
 export interface DeviceTypeFilter {
+  deviceType?: string; // deprecated
   deviceTypes?: string[];
   deviceNameFilter?: string;
 }
 
 export interface EdgeTypeFilter {
+  edgeType?: string; // deprecated
   edgeTypes?: string[];
   edgeNameFilter?: string;
 }
 
 export interface EntityViewFilter {
+  entityViewType?: string; // deprecated
   entityViewTypes?: string[];
   entityViewNameFilter?: string;
 }

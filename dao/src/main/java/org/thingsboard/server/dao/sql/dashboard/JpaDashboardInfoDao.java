@@ -118,14 +118,4 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     public DashboardInfo findFirstByTenantIdAndName(UUID tenantId, String name) {
         return DaoUtil.getData(dashboardInfoRepository.findFirstByTenantIdAndTitle(tenantId, name));
     }
-
-    @Override
-    public PageData<DashboardInfo> findByTenantIdAndConfigurationText(UUID tenantId, String searchText, PageLink pageLink) {
-        log.debug("Try to find dashboards by tenantId [{}], configuration text [{}] and pageLink [{}]", tenantId, searchText, pageLink);
-        return DaoUtil.toPageData(dashboardInfoRepository
-                .findByTenantIdAndConfigurationText(
-                        tenantId,
-                        searchText,
-                        DaoUtil.toPageable(pageLink)));
-    }
 }
