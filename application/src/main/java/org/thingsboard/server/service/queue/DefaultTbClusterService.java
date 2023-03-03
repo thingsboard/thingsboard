@@ -172,7 +172,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public <T> void pushUpdateEntityMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, T entity, TbQueueCallback callback) {
-        log.trace("PUSHING entity delete: {} to:{}", entityId, tpi);
+        log.trace("PUSHING entity update: {} to:{}", entityId, tpi);
         TransportProtos.EntityUpdateMsg entityUpdateMsg = TransportProtos.EntityUpdateMsg.newBuilder()
                 .setEntityType(entityId.getEntityType().name())
                 .setData(ByteString.copyFrom(encodingService.encode(entity)))

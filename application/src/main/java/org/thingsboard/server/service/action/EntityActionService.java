@@ -82,9 +82,11 @@ public class EntityActionService {
                 break;
             case ASSIGNED_TO_CUSTOMER:
                 msgType = DataConstants.ENTITY_ASSIGNED;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case UNASSIGNED_FROM_CUSTOMER:
                 msgType = DataConstants.ENTITY_UNASSIGNED;
+                sendEventToAlarmRuleStateService = true;
                 break;
             case ATTRIBUTES_UPDATED:
                 msgType = DataConstants.ATTRIBUTES_UPDATED;

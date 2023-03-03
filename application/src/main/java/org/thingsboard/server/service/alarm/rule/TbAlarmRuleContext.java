@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.alarm.rule;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -28,7 +28,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.alarm.rule.store.AlarmRuleEntityStateStore;
 
-@Data
+@Getter
 @RequiredArgsConstructor
 @Service
 @TbRuleEngineComponent

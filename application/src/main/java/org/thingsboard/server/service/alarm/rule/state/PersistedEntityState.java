@@ -25,5 +25,5 @@ import java.util.Map;
 public class PersistedEntityState {
     private TenantId tenantId;
     private EntityId entityId;
-    Map<String, PersistedAlarmState> alarmStates;
+    private Map<String, PersistedAlarmState> alarmStates;
 }
