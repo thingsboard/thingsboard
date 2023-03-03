@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   createLabelFromDatasource,
-  deepClone,
+  deepClone, formattedDataFormDatasourceData,
   insertVariable,
   isDefined,
   isDefinedAndNotNull,
@@ -28,7 +28,14 @@ import {
   isUndefined
 } from '@app/core/utils';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { DataKey, Datasource, DatasourceData, DatasourceType, widgetType } from '@app/shared/models/widget.models';
+import {
+  DataKey,
+  Datasource,
+  DatasourceData,
+  DatasourceType,
+  FormattedData,
+  widgetType
+} from '@app/shared/models/widget.models';
 import {
   ChartType,
   TbFlotAxisOptions,
@@ -87,6 +94,8 @@ export class TbFlot {
   private predefinedThresholds: TbFlotThresholdMarking[];
   private latestDataThresholds: TbFlotThresholdMarking[];
   private attributesThresholds: TbFlotThresholdMarking[];
+
+  private latestData: FormattedData[];
 
   private labelPatternsSourcesSubscription: IWidgetSubscription;
   private labelPatternsSourcesData: DatasourceData[];
@@ -153,13 +162,13 @@ export class TbFlot {
         autoHighlight: this.tooltipIndividual === true,
         markings: []
       },
-      selection : { mode : 'x' },
       legend : {
         show: false
       }
     };
 
     if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+      this.options.selection = { mode : 'x' };
       this.options.xaxes = [];
       this.xaxis = {
         mode: 'time',
@@ -379,7 +388,7 @@ export class TbFlot {
     let tooltipValueFormatFunction: TooltipValueFormatFunction = null;
     if (this.settings.tooltipValueFormatter && this.settings.tooltipValueFormatter.length) {
       try {
-        tooltipValueFormatFunction = new Function('value', this.settings.tooltipValueFormatter) as TooltipValueFormatFunction;
+        tooltipValueFormatFunction = new Function('value', 'latestData', this.settings.tooltipValueFormatter) as TooltipValueFormatFunction;
       } catch (e) {
         tooltipValueFormatFunction = null;
       }
@@ -392,7 +401,7 @@ export class TbFlot {
       series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
       if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
         try {
-          series.dataKey.tooltipValueFormatFunction = new Function('value',
+          series.dataKey.tooltipValueFormatFunction = new Function('value', 'latestData',
             keySettings.tooltipValueFormatter) as TooltipValueFormatFunction;
         } catch (e) {
           series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
@@ -546,6 +555,13 @@ export class TbFlot {
       }
       this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
       this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
+      if (this.subscription.latestData) {
+        this.latestData = formattedDataFormDatasourceData(this.subscription.latestData);
+      } else {
+        this.latestData = [];
+      }
+    } else if (this.chartType === 'pie') {
+      this.latestData = formattedDataFormDatasourceData(this.subscription.data);
     }
 
     this.checkMouseEvents();
@@ -653,6 +669,7 @@ export class TbFlot {
             this.updateData();
           }
         } else if (this.chartType === 'pie') {
+          this.latestData = formattedDataFormDatasourceData(this.subscription.data);
           if (this.animatedPie) {
             this.nextPieDataAnimation(true);
           } else {
@@ -683,10 +700,23 @@ export class TbFlot {
             this.plot.getOptions().grid.markings = this.options.grid.markings;
             this.updateData();
           }
+          if (this.subscription.latestData) {
+            this.latestData = formattedDataFormDatasourceData(this.subscription.latestData);
+          } else {
+            this.latestData = [];
+          }
         }
       } else if (this.isMouseInteraction && this.plot) {
         this.latestUpdateTimeoutHandle = setTimeout(this.latestDataUpdate.bind(this), 30);
       }
+    }
+  }
+
+  private latestDataByDataIndex(index: number): FormattedData {
+    if (this.latestData[index]) {
+      return this.latestData[index];
+    } else {
+      return {} as FormattedData;
     }
   }
 
@@ -879,39 +909,50 @@ export class TbFlot {
                                        isLatest = false): TbFlotThresholdMarking[] {
     const thresholds: TbFlotThresholdMarking[] = [];
     data.forEach((keyData) => {
-      let skip = false;
-      let latestSettings: TbFlotLatestKeySettings;
-      if (isLatest) {
-        latestSettings = keyData.dataKey.settings;
-        if (!latestSettings.useAsThreshold) {
-          skip = true;
-        }
-      }
+      const skip = isLatest && !keyData.dataKey.settings.useAsThreshold;
       if (!skip && keyData && keyData.data && keyData.data[0]) {
-        const attrValue = keyData.data[0][1];
-        if (isNumeric(attrValue) && isFinite(attrValue)) {
-          let yaxis: number;
-          let lineWidth: number;
-          let color: string;
-          if (isLatest) {
-            yaxis = 1;
-            lineWidth = latestSettings.thresholdLineWidth;
-            color = latestSettings.thresholdColor || keyData.dataKey.color;
-          } else {
-            const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
-            yaxis = settings.yaxis;
-            lineWidth = settings.lineWidth;
-            color = settings.color || keyData.dataKey.color;
-          }
-          const colorIndex = this.subscription.data.length + existingThresholds.length;
-          const threshold = this.generateThreshold(existingThresholds, yaxis, lineWidth, color, colorIndex, attrValue);
+        const values = this.parseThresholdData(keyData.data[0][1]);
+        values.forEach(v => {
+          const threshold = this.processSingleDataValue(v, keyData, keyData.dataKey.settings, existingThresholds, isLatest);
           if (threshold != null) {
             thresholds.push(threshold);
           }
-        }
+        });
       }
     });
     return thresholds;
+  }
+
+  private parseThresholdData(value: any): Array<any> {
+    let values;
+    try {
+      const parsedData = JSON.parse(value);
+      values = Array.isArray(parsedData) ? parsedData : [parsedData];
+    } catch (e) {
+      values = [value];
+    }
+    return values;
+  }
+
+  private processSingleDataValue(attrValue: number, keyData: DatasourceData, latestSettings: TbFlotLatestKeySettings,
+                                 existingThresholds: TbFlotThresholdMarking[], isLatest = false) {
+    if (isNumeric(attrValue) && isFinite(attrValue)) {
+      let yaxis: number;
+      let lineWidth: number;
+      let color: string;
+      if (isLatest) {
+        yaxis = 1;
+        lineWidth = latestSettings.thresholdLineWidth;
+        color = latestSettings.thresholdColor || keyData.dataKey.color;
+      } else {
+        const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
+        yaxis = settings.yaxis;
+        lineWidth = settings.lineWidth;
+        color = settings.color || keyData.dataKey.color;
+      }
+      const colorIndex = this.subscription.data.length + existingThresholds.length;
+      return this.generateThreshold(existingThresholds, yaxis, lineWidth, color, colorIndex, attrValue);
+    }
   }
 
   private generateThreshold(existingThresholds: TbFlotThresholdMarking[], yaxis: number, lineWidth: number,
@@ -1004,7 +1045,8 @@ export class TbFlot {
 
   private seriesInfoDiv(label: string, color: string, value: any,
                         units: string, trackDecimals: number, active: boolean,
-                        percent: number, valueFormatFunction: TooltipValueFormatFunction): JQuery<HTMLElement> {
+                        percent: number, seriesIndex: number,
+                        valueFormatFunction: TooltipValueFormatFunction): JQuery<HTMLElement> {
     const divElement = $('<div></div>');
     divElement.css({
       display: 'flex',
@@ -1034,7 +1076,7 @@ export class TbFlot {
     divElement.append(labelSpan);
     let valueContent: string;
     if (valueFormatFunction) {
-      valueContent = valueFormatFunction(value);
+      valueContent = valueFormatFunction(value, this.latestDataByDataIndex(seriesIndex));
     } else {
       valueContent = this.ctx.utils.formatValue(value, trackDecimals, units);
     }
@@ -1059,7 +1101,8 @@ export class TbFlot {
     const units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : this.trackUnits;
     const decimals = isDefinedAndNotNull(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : this.trackDecimals;
     const divElement = this.seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
-      seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
+      seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.index,
+      seriesHoverInfo.tooltipValueFormatFunction);
     return divElement.prop('outerHTML');
   }
 
@@ -1086,7 +1129,8 @@ export class TbFlot {
     const units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : this.trackUnits;
     const decimals = isDefinedAndNotNull(item.series.dataKey.decimals) ? item.series.dataKey.decimals : this.trackDecimals;
     const divElement = this.seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
-      item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction);
+      item.datapoint[1][0][1], units, decimals, true, item.series.percent, 0,
+      item.series.dataKey.tooltipValueFormatFunction);
     return divElement.prop('outerHTML');
   }
 
@@ -1206,10 +1250,12 @@ export class TbFlot {
   private enableMouseEvents() {
     this.$element.css('pointer-events', '');
     this.$element.addClass('mouse-events');
-    this.options.selection = { mode : 'x' };
+    if (this.chartType !== 'pie') {
+      this.options.selection = {mode: 'x'};
+      this.$element.bind('plotselected', this.flotSelectHandler);
+      this.$element.bind('dblclick', this.dblclickHandler);
+    }
     this.$element.bind('plothover', this.flotHoverHandler);
-    this.$element.bind('plotselected', this.flotSelectHandler);
-    this.$element.bind('dblclick', this.dblclickHandler);
     this.$element.bind('mousedown', this.mousedownHandler);
     this.$element.bind('mouseup', this.mouseupHandler);
     this.$element.bind('mouseleave', this.mouseleaveHandler);
@@ -1219,10 +1265,12 @@ export class TbFlot {
   private disableMouseEvents() {
     this.$element.css('pointer-events', 'none');
     this.$element.removeClass('mouse-events');
-    this.options.selection = { mode : null };
+    if (this.chartType !== 'pie') {
+      this.options.selection = {mode: null};
+      this.$element.unbind('plotselected', this.flotSelectHandler);
+      this.$element.unbind('dblclick', this.dblclickHandler);
+    }
     this.$element.unbind('plothover', this.flotHoverHandler);
-    this.$element.unbind('plotselected', this.flotSelectHandler);
-    this.$element.unbind('dblclick', this.dblclickHandler);
     this.$element.unbind('mousedown', this.mousedownHandler);
     this.$element.unbind('mouseup', this.mouseupHandler);
     this.$element.unbind('mouseleave', this.mouseleaveHandler);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,26 +40,8 @@ import java.util.function.Predicate;
  */
 public class GuavaDriverContext extends DefaultDriverContext {
 
-    public GuavaDriverContext(
-            DriverConfigLoader configLoader,
-            List<TypeCodec<?>> typeCodecs,
-            NodeStateListener nodeStateListener,
-            SchemaChangeListener schemaChangeListener,
-            RequestTracker requestTracker,
-            Map<String, String> localDatacenters,
-            Map<String, Predicate<Node>> nodeFilters,
-            ClassLoader classLoader) {
-        super(
-                configLoader,
-                ProgrammaticArguments.builder()
-                        .addTypeCodecs(typeCodecs.toArray(new TypeCodec<?>[0]))
-                        .withNodeStateListener(nodeStateListener)
-                        .withSchemaChangeListener(schemaChangeListener)
-                        .withRequestTracker(requestTracker)
-                        .withLocalDatacenters(localDatacenters)
-                        .withNodeFilters(nodeFilters)
-                        .withClassLoader(classLoader)
-                        .build());
+    public GuavaDriverContext(DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+        super(configLoader, programmaticArguments);
     }
 
     @Override

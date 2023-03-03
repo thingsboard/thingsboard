@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,4 +69,11 @@ export class LoginComponent extends PageComponent implements OnInit {
     }
   }
 
+  getOAuth2Uri(oauth2Client: OAuth2ClientInfo): string {
+    let result = "";
+    if (this.authService.redirectUrl) {
+      result += "?prevUri=" + this.authService.redirectUrl;
+    }
+    return oauth2Client.url + result;
+  }
 }

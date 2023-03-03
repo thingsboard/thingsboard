@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,10 +69,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             log.debug(errMsg);
             ctx.tellFailure(msg, new RuntimeException(errMsg));
         }
-    }
-
-    @Override
-    public void destroy() {
     }
 
     protected S buildEvent(TbMsg msg, TbContext ctx) {
@@ -146,8 +142,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else {
+        } else if (DataConstants.ATTRIBUTES_DELETED.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
+        } else {
+            log.warn("Unsupported msg type [{}]", msgType);
+            throw new IllegalArgumentException("Unsupported msg type: " + msgType);
         }
         return actionType;
     }
@@ -169,6 +168,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             case DASHBOARD:
             case TENANT:
             case CUSTOMER:
+            case USER:
             case EDGE:
                 return true;
             default:

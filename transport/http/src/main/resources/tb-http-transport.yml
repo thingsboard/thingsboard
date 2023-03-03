@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ server:
         key_password: "${SSL_PEM_KEY_PASSWORD:server_key_password}"
       # Keystore server credentials
       keystore:
-        # Type of the key store
+        # Type of the key store (JKS or PKCS12)
         type: "${SSL_KEY_STORE_TYPE:PKCS12}"
         # Path to the key store that holds the SSL certificate
         store_file: "${SSL_KEY_STORE:classpath:keystore/keystore.p12}"

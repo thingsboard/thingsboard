@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -155,6 +155,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
   hideDetailsTabsOnEdit = true;
+  rowPointer = false;
   actionsColumnTitle = null;
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource<T>;
@@ -217,6 +218,20 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
       this.table.updateData(closeDetails);
     } else if (this.entityDetailsPage) {
       this.entityDetailsPage.reload();
+    }
+  }
+
+  toggleEntityDetails($event: Event, entity: T) {
+    if (this.table) {
+      this.table.toggleEntityDetails($event, entity);
+    }
+  }
+
+  isDetailsOpen(): boolean {
+    if (this.table) {
+      return this.table.isDetailsOpen;
+    } else {
+      return false;
     }
   }
 

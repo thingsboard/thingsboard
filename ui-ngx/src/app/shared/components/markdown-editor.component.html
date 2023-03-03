@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,25 +17,30 @@
 -->
 <div class="markdown-content" [ngClass]="{'tb-edit-mode': !readonly}"
      tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
-  <div *ngIf="label" fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
+  <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
     <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>
+    <span fxFlex></span>
+    <button [fxShow]="!editorMode"
+            class="panel-button"
+            type="button"
+            mat-button (click)="toggleEditMode()">{{ 'markdown.edit' | translate }}</button>
+    <button [fxShow]="editorMode"
+            class="panel-button"
+            type="button"
+            mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
+    <div *ngIf = "helpId" [tb-help-popup]="helpId"></div>
+    <fieldset style="width: initial">
+      <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           (click)="fullscreen = !fullscreen">
+        <button type='button' mat-button mat-icon-button class="tb-mat-32 panel-button">
+          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </fieldset>
   </div>
   <div [fxShow]="!readonly && !disabled" class="markdown-content-editor">
-    <div class="buttons-panel">
-      <button [fxShow]="!editorMode"
-              class="edit-toggle"
-              type="button"
-              mat-button (click)="toggleEditMode()">{{ 'markdown.edit' | translate }}</button>
-      <button [fxShow]="editorMode"
-              class="edit-toggle"
-              type="button"
-              mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
-      <button mat-button mat-icon-button (click)="fullscreen = !fullscreen"
-              matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-              matTooltipPosition="above">
-        <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-      </button>
-    </div>
     <div [fxShow]="editorMode" #markdownEditor class="tb-markdown-editor"></div>
     <div [fxShow]="!editorMode" class="tb-markdown-view-container">
       <tb-markdown [data]="renderValue" lineNumbers fallbackToPlainMarkdown></tb-markdown>

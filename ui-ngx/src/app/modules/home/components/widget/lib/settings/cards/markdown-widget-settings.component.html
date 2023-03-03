@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,13 +22,14 @@
   <tb-js-func [fxShow]="markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
               formControlName="markdownTextFunction"
               [globalVariables]="functionScopeVariables"
-              [functionArgs]="['data']"
+              [functionArgs]="['data', 'ctx']"
               functionTitle="{{ 'widgets.markdown.markdown-text-function' | translate }}"
               helpId="widget/lib/markdown/markdown_text_fn">
   </tb-js-func>
   <tb-markdown-editor [fxShow]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
                       formControlName="markdownTextPattern"
-                      label="{{ 'widgets.markdown.markdown-text-pattern' | translate }}">
+                      label="{{ 'widgets.markdown.markdown-text-pattern' | translate }}"
+                      helpId="widget/editor/widget_js_markdown_pattern">
   </tb-markdown-editor>
   <tb-css formControlName="markdownCss"
           label="{{ 'widgets.markdown.markdown-css' | translate }}">

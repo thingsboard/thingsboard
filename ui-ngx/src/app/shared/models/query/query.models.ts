@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -738,7 +738,6 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
 }
 
 export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);
-export const defaultEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1024);
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
@@ -761,12 +760,19 @@ export interface AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
 export interface TsValue {
   ts: number;
   value: string;
+  count?: number;
+}
+
+export interface ComparisonTsValue {
+  current?: TsValue;
+  previous?: TsValue;
 }
 
 export interface EntityData {
   entityId: EntityId;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
+  aggLatest?: {[id: number]: ComparisonTsValue};
 }
 
 export interface AlarmData extends AlarmInfo {

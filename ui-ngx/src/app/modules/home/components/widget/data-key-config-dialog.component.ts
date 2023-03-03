@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DataKey, Widget } from '@shared/models/widget.models';
+import { DataKey, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
 import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
@@ -35,6 +35,7 @@ export interface DataKeyConfigDialogData {
   dashboard: Dashboard;
   aliasController: IAliasController;
   widget: Widget;
+  widgetType: widgetType;
   entityAliasId?: string;
   showPostProcessing?: boolean;
   callbacks?: DataKeysCallbacks;

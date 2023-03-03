@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,30 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.service.mail.TestMailService;
 
 import java.util.ArrayList;
@@ -47,11 +56,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
+@ContextConfiguration(classes = {BaseUserControllerTest.Config.class})
 public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
+
+    @Autowired
+    private UserDao userDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public UserDao userDao(UserDao userDao) {
+            return Mockito.mock(UserDao.class, AdditionalAnswers.delegatesTo(userDao));
+        }
+    }
+
+    @After
+    public void afterTest() throws Exception {
+        loginSysAdmin();
+    }
 
     @Test
     public void testSaveUser() throws Exception {
@@ -81,7 +107,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 ActionType.ADDED, ActionType.ADDED, 1, 1, 1);
         Mockito.reset(tbClusterService, auditLogService);
 
-        logout();
+        resetTokens();
         doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
@@ -98,7 +124,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
                 .andExpect(jsonPath("$.email", is(email)));
 
-        logout();
+        resetTokens();
 
         login(email, "testPassword");
 
@@ -115,9 +141,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         doDelete("/api/user/" + savedUser.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundUser, foundUser.getId(), foundUser.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, foundUser.getId().getId().toString());
+                ActionType.DELETED, SYSTEM_TENANT.getId().toString());
     }
 
     @Test
@@ -131,7 +157,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(tenantId);
         user.setEmail(email);
-        user.setFirstName(RandomStringUtils.randomAlphabetic(300));
+        user.setFirstName(StringUtils.randomAlphabetic(300));
         user.setLastName("Downs");
         String msgError = msgErrorFieldLength("first name");
         doPost("/api/user", user)
@@ -145,7 +171,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         user.setFirstName("Normal name");
         msgError = msgErrorFieldLength("last name");
-        user.setLastName(RandomStringUtils.randomAlphabetic(300));
+        user.setLastName(StringUtils.randomAlphabetic(300));
         doPost("/api/user", user)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -193,7 +219,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setLastName("Downs");
 
         User savedUser = createUserAndLogin(user, "testPassword1");
-        logout();
+        resetTokens();
 
         JsonNode resetPasswordByEmailRequest = new ObjectMapper().createObjectNode()
                 .put("email", email);
@@ -219,7 +245,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
                 .andExpect(jsonPath("$.email", is(email)));
 
-        logout();
+        resetTokens();
 
         login(email, "testPassword2");
         doGet("/api/auth/user")
@@ -436,11 +462,13 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String email1 = "testEmail1";
         List<User> tenantAdminsEmail1 = new ArrayList<>();
 
-        for (int i = 0; i < 124; i++) {
+        final int NUMBER_OF_USERS = 124;
+
+        for (int i = 0; i < NUMBER_OF_USERS; i++) {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -454,7 +482,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -507,7 +535,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         testManyUser.setTenantId(tenantId);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, ActionType.DELETED, cntEntity, 0, cntEntity, new String());
+                ActionType.DELETED, ActionType.DELETED, cntEntity, NUMBER_OF_USERS, cntEntity, new String());
 
         pageLink = new PageLink(4, 0, email1);
         pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
@@ -605,7 +633,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setCustomerId(customerId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -619,7 +647,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setCustomerId(customerId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -687,5 +715,41 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         doDelete("/api/customer/" + customerId.getId().toString())
                 .andExpect(status().isOk());
+    }
+
+
+    @Test
+    public void testDeleteUserWithDeleteRelationsOk() throws Exception {
+        UserId userId = createUser().getId();
+        testEntityDaoWithRelationsOk(tenantId, userId, "/api/user/" + userId);
+    }
+
+    @Test
+    public void testDeleteUserExceptionWithRelationsTransactional() throws Exception {
+        UserId userId = createUser().getId();
+        testEntityDaoWithRelationsTransactionalException(userDao, tenantId, userId, "/api/user/" + userId);
+    }
+
+    @Test
+    public void givenInvalidPageLink_thenReturnError() throws Exception {
+        loginTenantAdmin();
+
+        String invalidSortProperty = "abc(abc)";
+
+        ResultActions result = doGet("/api/users?page={page}&pageSize={pageSize}&sortProperty={sortProperty}", 0, 100, invalidSortProperty)
+                .andExpect(status().isBadRequest());
+        assertThat(getErrorMessage(result)).containsIgnoringCase("invalid sort property");
+    }
+
+    private User createUser() throws Exception {
+        loginSysAdmin();
+        String email = "tenant2@thingsboard.org";
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(tenantId);
+        user.setEmail(email);
+        user.setFirstName("Joe");
+        user.setLastName("Downs");
+        return doPost("/api/user", user, User.class);
     }
 }

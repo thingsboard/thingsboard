@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
     private String scope;
 
     private Boolean notifyDevice;
+    private boolean sendAttributesUpdatedNotification;
 
     @Override
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
         TbMsgAttributesNodeConfiguration configuration = new TbMsgAttributesNodeConfiguration();
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setNotifyDevice(false);
+        configuration.setSendAttributesUpdatedNotification(false);
         return configuration;
     }
 }

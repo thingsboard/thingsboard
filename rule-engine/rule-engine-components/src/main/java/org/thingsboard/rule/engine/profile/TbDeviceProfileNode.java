@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,9 +210,13 @@ public class TbDeviceProfileNode implements TbNode {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState != null) {
             DeviceProfileId currentProfileId = deviceState.getProfileId();
-            Device device = JacksonUtil.fromString(deviceJson, Device.class);
-            if (!currentProfileId.equals(device.getDeviceProfileId())) {
-                removeDeviceState(deviceId);
+            try {
+                Device device = JacksonUtil.fromString(deviceJson, Device.class);
+                if (!currentProfileId.equals(device.getDeviceProfileId())) {
+                    removeDeviceState(deviceId);
+                }
+            } catch (IllegalArgumentException e) {
+                log.debug("[{}] Received device update notification with non-device msg body: [{}][{}]", ctx.getSelfId(), deviceId, e);
             }
         }
     }

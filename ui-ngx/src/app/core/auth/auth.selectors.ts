@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -58,6 +58,11 @@ export const selectUserTokenAccessEnabled = createSelector(
 export const selectHasRepository = createSelector(
   selectAuthState,
   (state: AuthState) => state.hasRepository
+);
+
+export const selectTbelEnabled = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.tbelEnabled
 );
 
 export function getCurrentAuthState(store: Store<AppState>): AuthState {

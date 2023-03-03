@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
            style="display: flex; z-index: 1; pointer-events: none;"
            class="mat-headline tb-absolute-fill">
-    <span *ngIf="!isEdit">
+    <span *ngIf="!isEdit" style="text-align: center;">
       {{'dashboard.no-widgets' | translate}}
     </span>
     <button mat-button *ngIf="isEdit && !widgetEditMode" class="tb-add-new-widget"
             (click)="addWidget($event)">
       <mat-icon class="tb-mat-96">add</mat-icon>
-      {{ 'dashboard.add-widget' | translate }}
+      <span>{{ 'dashboard.add-widget' | translate }}</span>
     </button>
   </section>
   <tb-dashboard #dashboard [dashboardStyle]="dashboardStyle"
@@ -58,6 +58,7 @@
                 [isRemoveActionEnabled]="isEdit && !widgetEditMode"
                 [callbacks]="this"
                 [ignoreLoading]="layoutCtx.ignoreLoading"
-                [parentDashboard]="parentDashboard">
+                [parentDashboard]="parentDashboard"
+                [popoverComponent]="popoverComponent">
   </tb-dashboard>
 </div>

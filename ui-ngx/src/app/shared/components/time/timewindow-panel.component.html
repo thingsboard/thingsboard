@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,32 +29,57 @@
             </section>
             <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideInterval">
               <div formGroupName="realtime" class="mat-content mat-padding" style="padding-top: 8px;">
-                <mat-radio-group formControlName="realtimeType">
+                <mat-radio-group *ngIf="!quickIntervalOnly" [fxShow]="isEdit || (!timewindow.hideLastInterval && !timewindow.hideQuickInterval)"
+                                 formControlName="realtimeType">
                   <mat-radio-button [value]="realtimeTypes.LAST_INTERVAL" color="primary">
-                    <section fxLayout="column">
-                      <span translate>timewindow.last</span>
-                      <tb-timeinterval
-                        formControlName="timewindowMs"
-                        predefinedName="timewindow.last"
-                        [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
-                        [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
-                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
-                        style="padding-top: 8px;"></tb-timeinterval>
+                    <section fxLayout="row">
+                      <section *ngIf="isEdit" fxLayout="column" style="padding-right: 8px;">
+                        <label class="tb-small hide-label" translate>timewindow.hide</label>
+                        <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideLastInterval"
+                                      (ngModelChange)="onHideLastIntervalChanged()"></mat-checkbox>
+                      </section>
+                      <section fxLayout="column">
+                        <span translate>timewindow.last</span>
+                        <tb-timeinterval
+                          formControlName="timewindowMs"
+                          predefinedName="timewindow.last"
+                          [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+                          [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                                  timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+                          style="padding-top: 8px;"></tb-timeinterval>
+                      </section>
                     </section>
                   </mat-radio-button>
                   <mat-radio-button [value]="realtimeTypes.INTERVAL" color="primary">
-                    <section fxLayout="column">
-                      <span translate>timewindow.interval</span>
-                      <tb-quick-time-interval
-                        formControlName="quickInterval"
-                        onlyCurrentInterval="true"
-                        [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
-                        [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
-                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
-                        style="padding-top: 8px"></tb-quick-time-interval>
+                    <section fxLayout="row">
+                      <section *ngIf="isEdit" fxLayout="column" style="padding-right: 8px;">
+                        <label class="tb-small hide-label" translate>timewindow.hide</label>
+                        <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideQuickInterval"
+                                      (ngModelChange)="onHideQuickIntervalChanged()"></mat-checkbox>
+                      </section>
+                      <section fxLayout="column">
+                        <span translate>timewindow.interval</span>
+                        <tb-quick-time-interval
+                          formControlName="quickInterval"
+                          onlyCurrentInterval="true"
+                          [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+                          [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                                  timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+                          style="padding-top: 8px"></tb-quick-time-interval>
+                      </section>
                     </section>
                   </mat-radio-button>
                 </mat-radio-group>
+                <tb-timeinterval *ngIf="!isEdit && !timewindow.hideLastInterval && timewindow.hideQuickInterval"
+                  formControlName="timewindowMs"
+                  predefinedName="timewindow.last"
+                  required
+                  style="padding-top: 8px;"></tb-timeinterval>
+                <tb-quick-time-interval *ngIf="quickIntervalOnly || !isEdit && timewindow.hideLastInterval && !timewindow.hideQuickInterval"
+                  formControlName="quickInterval"
+                  onlyCurrentInterval="true"
+                  required
+                  style="padding-top: 8px"></tb-quick-time-interval>
               </div>
             </section>
           </section>

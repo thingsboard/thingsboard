@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { Datasource } from '@shared/models/widget.models';
 import { isDefined, isUndefined } from '@core/utils';
 import { EntityRelationsQuery, EntitySearchDirection, RelationTypeGroup } from '@shared/models/relation.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 export interface EntitiesHierarchyWidgetSettings {
   nodeRelationQueryFunction: string;
@@ -57,13 +58,13 @@ export interface HierarchyNodeIconInfo {
   materialIcon?: string;
 }
 
-export type NodeRelationQueryFunction = (nodeCtx: HierarchyNodeContext) => EntityRelationsQuery | 'default';
-export type NodeTextFunction = (nodeCtx: HierarchyNodeContext) => string;
-export type NodeDisabledFunction = (nodeCtx: HierarchyNodeContext) => boolean;
-export type NodeIconFunction = (nodeCtx: HierarchyNodeContext) => HierarchyNodeIconInfo | 'default';
-export type NodeOpenedFunction = (nodeCtx: HierarchyNodeContext) => boolean;
-export type NodeHasChildrenFunction = (nodeCtx: HierarchyNodeContext) => boolean;
-export type NodesSortFunction = (nodeCtx1: HierarchyNodeContext, nodeCtx2: HierarchyNodeContext) => number;
+export type NodeRelationQueryFunction = (widgetCtx: WidgetContext, nodeCtx: HierarchyNodeContext) => EntityRelationsQuery | 'default';
+export type NodeTextFunction = (widgetCtx: WidgetContext, nodeCtx: HierarchyNodeContext) => string;
+export type NodeDisabledFunction = (widgetCtx: WidgetContext, nodeCtx: HierarchyNodeContext) => boolean;
+export type NodeIconFunction = (widgetCtx: WidgetContext, nodeCtx: HierarchyNodeContext) => HierarchyNodeIconInfo | 'default';
+export type NodeOpenedFunction = (widgetCtx: WidgetContext, nodeCtx: HierarchyNodeContext) => boolean;
+export type NodeHasChildrenFunction = (widgetCtx: WidgetContext, nodeCtx: HierarchyNodeContext) => boolean;
+export type NodesSortFunction = (widgetCtx: WidgetContext, nodeCtx1: HierarchyNodeContext, nodeCtx2: HierarchyNodeContext) => number;
 
 export function loadNodeCtxFunction<F extends (...args: any[]) => any>(functionBody: string, argNames: string, ...args: any[]): F {
   let nodeCtxFunction: F = null;
@@ -89,7 +90,7 @@ export function iconUrlHtml(iconUrl: string): string {
   return '<div class="node-icon" style="background-image: url(' + iconUrl + ');">&nbsp;</div>';
 }
 
-export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = nodeCtx => {
+export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = (widgetContext, nodeCtx) => {
   const entity = nodeCtx.entity;
   const query: EntityRelationsQuery = {
     parameters: {
@@ -109,7 +110,7 @@ export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = nodeC
   return query;
 };
 
-export const defaultNodeIconFunction: NodeIconFunction = nodeCtx => {
+export const defaultNodeIconFunction: NodeIconFunction = (widgetContext, nodeCtx) => {
   let materialIcon = 'insert_drive_file';
   const entity = nodeCtx.entity;
   if (entity && entity.id && entity.id.entityType) {
@@ -148,11 +149,11 @@ export const defaultNodeIconFunction: NodeIconFunction = nodeCtx => {
   };
 };
 
-export const defaultNodeOpenedFunction: NodeOpenedFunction = nodeCtx => {
+export const defaultNodeOpenedFunction: NodeOpenedFunction = (widgetCtx, nodeCtx) => {
   return nodeCtx.level <= 4;
 };
 
-export const defaultNodesSortFunction: NodesSortFunction = (nodeCtx1, nodeCtx2) => {
+export const defaultNodesSortFunction: NodesSortFunction = (widgetCtx, nodeCtx1, nodeCtx2) => {
   let result = 0;
   if (!nodeCtx1.entity.id.entityType || !nodeCtx2.entity.id.entityType ) {
     if (nodeCtx1.entity.id.entityType) {

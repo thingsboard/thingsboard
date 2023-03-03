@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -42,11 +43,11 @@ import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -76,7 +77,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final AttributesService attrService;
     private final TimeseriesService tsService;
     private final TbEntityViewService tbEntityViewService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
@@ -86,7 +87,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService,
-                                               TbApiUsageClient apiUsageClient,
+                                               TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.attrService = attrService;
@@ -113,6 +114,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             tsCallBackExecutor.shutdownNow();
         }
         super.shutdownExecutor();
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAndNotify(TenantId tenantId, EntityId entityId, TsKvEntry ts) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAndNotify(tenantId, entityId, Collections.singletonList(ts), new VoidFutureCallback(future));
+        return future;
     }
 
     @Override
@@ -263,14 +271,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        deleteAndNotifyInternal(tenantId, entityId, scope, keys, callback);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, false, callback);
     }
 
     @Override
-    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addVoidCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice));
     }
 
     @Override
@@ -332,6 +346,34 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 , System.currentTimeMillis())), callback);
     }
 
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, long value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, String value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, double value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, boolean value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
     private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
@@ -346,16 +388,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
+                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }
         } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }
@@ -433,6 +475,24 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private void checkInternalEntity(EntityId entityId) {
         if (EntityType.API_USAGE_STATE.equals(entityId.getEntityType())) {
             throw new RuntimeException("Can't update API Usage State!");
+        }
+    }
+
+    private static class VoidFutureCallback implements FutureCallback<Void> {
+        private final SettableFuture<Void> future;
+
+        public VoidFutureCallback(SettableFuture<Void> future) {
+            this.future = future;
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            future.set(null);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            future.setException(t);
         }
     }
 

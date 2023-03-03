@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,6 +41,14 @@
             <mat-label translate>admin.default-branch</mat-label>
             <input matInput formControlName="defaultBranch">
           </mat-form-field>
+          <mat-checkbox formControlName="readOnly">
+            {{ 'admin.repository-read-only' | translate }}
+          </mat-checkbox>
+          <div>
+            <mat-checkbox formControlName="showMergeCommits">
+              {{ 'admin.show-merge-commits' | translate }}
+            </mat-checkbox>
+          </div>
           <fieldset [disabled]="isLoading$ | async" class="fields-group">
             <legend class="group-title" translate>admin.authentication-settings</legend>
             <mat-form-field fxFlex class="mat-block">
@@ -58,7 +66,7 @@
                        autocomplete="new-username"/>
               </mat-form-field>
               <mat-checkbox *ngIf="showChangePassword" (change)="changePasswordChanged()"
-                            [(ngModel)]="changePassword" [ngModelOptions]="{ standalone: true }" style="padding-bottom: 16px;">
+                            [(ngModel)]="changePassword" [ngModelOptions]="{ standalone: true }">
                 {{ 'admin.change-password-access-token' | translate }}
               </mat-checkbox>
               <mat-form-field class="mat-block" *ngIf="changePassword || !showChangePassword">
@@ -78,7 +86,7 @@
                              (fileNameChanged)="repositorySettingsForm.get('privateKeyFileName').patchValue($event)">
               </tb-file-input>
               <mat-checkbox *ngIf="showChangePrivateKeyPassword" (change)="changePrivateKeyPasswordChanged()"
-                            [(ngModel)]="changePrivateKeyPassword" [ngModelOptions]="{ standalone: true }" style="padding-bottom: 16px;">
+                            [(ngModel)]="changePrivateKeyPassword" [ngModelOptions]="{ standalone: true }">
                 {{ 'admin.change-passphrase' | translate }}
               </mat-checkbox>
               <mat-form-field class="mat-block" *ngIf="changePrivateKeyPassword || !showChangePrivateKeyPassword">

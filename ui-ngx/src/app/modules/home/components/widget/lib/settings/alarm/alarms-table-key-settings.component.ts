@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected defaultSettings(): WidgetSettings {
     return {
+      customTitle: '',
       columnWidth: '0px',
       useCellStyleFunction: false,
       cellStyleFunction: '',
@@ -52,6 +53,7 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.alarmsTableKeySettingsForm = this.fb.group({
+      customTitle: [settings.customTitle, []],
       columnWidth: [settings.columnWidth, []],
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],

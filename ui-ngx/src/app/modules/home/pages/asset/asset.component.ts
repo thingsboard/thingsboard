@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
     return this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
-        type: [entity ? entity.type : null, [Validators.required, Validators.maxLength(255)]],
+        assetProfileId: [entity ? entity.assetProfileId : null, [Validators.required]],
         label: [entity ? entity.label : '', Validators.maxLength(255)],
         additionalInfo: this.fb.group(
           {
@@ -80,7 +80,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
 
   updateForm(entity: AssetInfo) {
     this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({type: entity.type});
+    this.entityForm.patchValue({assetProfileId: entity.assetProfileId});
     this.entityForm.patchValue({label: entity.label});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
@@ -95,5 +95,9 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  onAssetProfileUpdated() {
+    this.entitiesTableConfig.updateData(false);
   }
 }

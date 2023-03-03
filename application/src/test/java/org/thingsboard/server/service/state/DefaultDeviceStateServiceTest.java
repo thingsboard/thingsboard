@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,29 @@
  */
 package org.thingsboard.server.service.state;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+
+import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,6 +45,7 @@ import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultDeviceStateServiceTest {
@@ -81,6 +91,42 @@ public class DefaultDeviceStateServiceTest {
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
         assertThat(deviceStateData, is(deviceStateDataMock));
         Mockito.verify(service, times(1)).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+    }
+
+    @Test
+    public void givenPersistToTelemetryAndDefaultInactivityTimeoutFetched_whenTransformingToDeviceStateData_thenTryGetInactivityFromAttribute() {
+        var defaultInactivityTimeoutInSec = 60L;
+        var latest =
+                Map.of(
+                        EntityKeyType.TIME_SERIES, Map.of(INACTIVITY_TIMEOUT, new TsValue(0, Long.toString(defaultInactivityTimeoutInSec * 1000))),
+                        EntityKeyType.SERVER_ATTRIBUTE, Map.of(INACTIVITY_TIMEOUT, new TsValue(0, Long.toString(5000L)))
+                );
+
+        process(latest, defaultInactivityTimeoutInSec);
+    }
+
+    @Test
+    public void givenPersistToTelemetryAndNoInactivityTimeoutFetchedFromTimeSeries_whenTransformingToDeviceStateData_thenTryGetInactivityFromAttribute() {
+        var defaultInactivityTimeoutInSec = 60L;
+        var latest =
+                Map.of(
+                        EntityKeyType.SERVER_ATTRIBUTE, Map.of(INACTIVITY_TIMEOUT, new TsValue(0, Long.toString(5000L)))
+                );
+
+        process(latest, defaultInactivityTimeoutInSec);
+    }
+
+    private void process(Map<EntityKeyType, Map<String, TsValue>> latest, long defaultInactivityTimeoutInSec) {
+        service.setDefaultInactivityTimeoutInSec(defaultInactivityTimeoutInSec);
+        service.setDefaultInactivityTimeoutMs(defaultInactivityTimeoutInSec * 1000);
+        service.setPersistToTelemetry(true);
+
+        var deviceUuid = UUID.randomUUID();
+        var deviceId = new DeviceId(deviceUuid);
+
+        DeviceStateData deviceStateData = service.toDeviceStateData(new EntityData(deviceId, latest, Map.of()), new DeviceIdInfo(TenantId.SYS_TENANT_ID.getId(), UUID.randomUUID(), deviceUuid));
+
+        Assert.assertEquals(5000L, deviceStateData.getState().getInactivityTimeout());
     }
 
 }

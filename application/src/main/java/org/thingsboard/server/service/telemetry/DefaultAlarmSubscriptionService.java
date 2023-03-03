@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,11 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
@@ -61,13 +61,13 @@ import java.util.Optional;
 public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService implements AlarmSubscriptionService {
 
     private final AlarmService alarmService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     public DefaultAlarmSubscriptionService(TbClusterService clusterService,
                                            PartitionService partitionService,
                                            AlarmService alarmService,
-                                           TbApiUsageClient apiUsageClient,
+                                           TbApiUsageReportClient apiUsageClient,
                                            TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.alarmService = alarmService;
@@ -127,6 +127,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Override
     public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId) {
         return alarmService.findAlarmByIdAsync(tenantId, alarmId);
+    }
+
+    @Override
+    public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
+        return alarmService.findAlarmById(tenantId, alarmId);
     }
 
     @Override

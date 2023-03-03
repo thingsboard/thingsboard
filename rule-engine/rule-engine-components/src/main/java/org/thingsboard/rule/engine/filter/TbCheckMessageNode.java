@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,13 @@ import java.util.Map;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "check existence fields",
+        name = "check fields presence",
         relationTypes = {"True", "False"},
         configClazz = TbCheckMessageNodeConfiguration.class,
-        nodeDescription = "Checks the existence of the selected keys from message data and metadata.",
-        nodeDetails = "If selected checkbox 'Check that all selected keys are present'\" and all keys in message data and metadata are exist - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.\n" +
-                "Else if the checkbox is not selected, and at least one of the keys from data or metadata of the message exists - send Message via <b>True</b> chain, otherwise, <b>False</b> chain is used. ",
+        nodeDescription = "Checks the presence of the specified fields in the message and/or metadata.",
+        nodeDetails = "Checks the presence of the specified fields in the message and/or metadata. " +
+                "By default, the rule node checks that all specified fields need to be present. " +
+                "Uncheck the 'Check that all specified fields are present' if the presence of at least one field is sufficient.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckMessageConfig")
 public class TbCheckMessageNode implements TbNode {
@@ -66,10 +67,6 @@ public class TbCheckMessageNode implements TbNode {
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }
-    }
-
-    @Override
-    public void destroy() {
     }
 
     private boolean allKeysData(TbMsg msg) {

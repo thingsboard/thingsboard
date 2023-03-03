@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         int alarmCountAfterSave = alarmDao.find(TenantId.fromUUID(tenantId)).size();
         assertEquals(3, alarmCountAfterSave - alarmCountBeforeSave);
         ListenableFuture<Alarm> future = alarmDao
-                .findLatestByOriginatorAndType(TenantId.fromUUID(tenantId), new DeviceId(originator1Id), "TEST_ALARM");
+                .findLatestByOriginatorAndTypeAsync(TenantId.fromUUID(tenantId), new DeviceId(originator1Id), "TEST_ALARM");
         Alarm alarm = future.get(30, TimeUnit.SECONDS);
         assertNotNull(alarm);
         assertEquals(alarm2Id, alarm.getId().getId());

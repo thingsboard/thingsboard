@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -76,7 +76,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                     existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
                     existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                     existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
-                    existentAlarm.setDetails(mapper.readTree(alarmUpdateMsg.getDetails()));
+                    existentAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
                     alarmService.createOrUpdateAlarm(existentAlarm);
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
@@ -86,7 +86,8 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:
                     if (existentAlarm != null) {
-                        alarmService.clearAlarm(tenantId, existentAlarm.getId(), mapper.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
+                        alarmService.clearAlarm(tenantId, existentAlarm.getId(),
+                                JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
@@ -115,10 +116,11 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
-    public DownlinkMsg processAlarmToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent) {
         AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ALARM_ACK:
@@ -128,7 +130,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                     if (alarm != null) {
                         downlinkMsg = DownlinkMsg.newBuilder()
                                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                                .addAlarmUpdateMsg(alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
+                                .addAlarmUpdateMsg(alarmMsgConstructor.constructAlarmUpdatedMsg(edgeEvent.getTenantId(), msgType, alarm))
                                 .build();
                     }
                 } catch (Exception e) {
@@ -136,9 +138,9 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                Alarm alarm = mapper.convertValue(edgeEvent.getBody(), Alarm.class);
+                Alarm alarm = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), Alarm.class);
                 AlarmUpdateMsg alarmUpdateMsg =
-                        alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm);
+                        alarmMsgConstructor.constructAlarmUpdatedMsg(edgeEvent.getTenantId(), msgType, alarm);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAlarmUpdateMsg(alarmUpdateMsg)
@@ -154,8 +156,8 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         switch (actionType) {
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-                Alarm deletedAlarm = mapper.readValue(edgeNotificationMsg.getBody(), Alarm.class);
-                return saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, actionType, alarmId, mapper.valueToTree(deletedAlarm));
+                Alarm deletedAlarm = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), Alarm.class);
+                return saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, actionType, alarmId, JacksonUtil.OBJECT_MAPPER.valueToTree(deletedAlarm));
             default:
                 ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);
                 return Futures.transformAsync(alarmFuture, alarm -> {

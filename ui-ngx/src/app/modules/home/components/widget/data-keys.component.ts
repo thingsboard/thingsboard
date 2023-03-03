@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKey, DatasourceType, Widget, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
 import { alarmFields } from '@shared/models/alarm.models';
@@ -62,6 +62,8 @@ import {
 import { deepClone } from '@core/utils';
 import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AggregationType } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-data-keys',
@@ -173,6 +175,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
               private dialogs: DialogService,
               private dialog: MatDialog,
               private fb: FormBuilder,
+              private sanitizer: DomSanitizer,
               public truncate: TruncatePipe) {
   }
 
@@ -247,7 +250,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
           this.secondaryPlaceholder = '+' + this.translate.instant('datakey.latest-key-function');
         } else if (this.widgetType === widgetType.alarm) {
           this.placeholder = this.translate.instant('datakey.alarm-key-functions');
-          this.secondaryPlaceholder = '+' + this.translate.instant('alarm-key-function');
+          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.alarm-key-function');
         } else {
           this.placeholder = this.translate.instant('datakey.timeseries-key-functions');
           this.secondaryPlaceholder = '+' + this.translate.instant('datakey.timeseries-key-function');
@@ -424,6 +427,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
           dashboard: this.dashboard,
           aliasController: this.aliasController,
           widget: this.widget,
+          widgetType: this.widgetType,
           entityAliasId: this.entityAliasId,
           showPostProcessing: this.widgetType !== widgetType.alarm,
           callbacks: this.callbacks
@@ -444,6 +448,36 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   displayKeyFn(key?: DataKey): string | undefined {
     return key ? key.name : undefined;
+  }
+
+  displayDataKeyNameFn(key: DataKey): SafeHtml {
+    let keyName = key.name;
+    if (this.widgetType === widgetType.latest && key.type === DataKeyType.timeseries
+      && key.aggregationType && key.aggregationType !== AggregationType.NONE) {
+      let aggFuncName: string;
+      switch (key.aggregationType) {
+        case AggregationType.MIN:
+          aggFuncName = 'MIN';
+          break;
+        case AggregationType.MAX:
+          aggFuncName = 'MAX';
+          break;
+        case AggregationType.AVG:
+          aggFuncName = 'AVG';
+          break;
+        case AggregationType.SUM:
+          aggFuncName = 'SUM';
+          break;
+        case AggregationType.COUNT:
+          aggFuncName = 'COUNT';
+          break;
+      }
+      keyName = `<span class="tb-agg-func">${aggFuncName}</span>(${keyName})`;
+    }
+    if (this.datasourceType !== DatasourceType.function && key.postFuncBody) {
+      keyName = `f(${keyName})`;
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(`<strong>${keyName}</strong>`);
   }
 
   private fetchKeys(searchText?: string): Observable<Array<DataKey>> {

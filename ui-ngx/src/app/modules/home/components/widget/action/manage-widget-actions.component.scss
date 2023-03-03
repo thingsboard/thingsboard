@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,5 +40,18 @@
 :host ::ng-deep {
   .mat-sort-header-sorted .mat-sort-header-arrow {
     opacity: 1 !important;
+  }
+
+  .tb-draggable {
+    &.cdk-drag-placeholder {
+      opacity: 0;
+    }
+    &.cdk-drag-preview {
+      box-sizing: border-box;
+      border-radius: 4px;
+      box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+      0 8px 10px 1px rgba(0, 0, 0, 0.14),
+      0 3px 14px 2px rgba(0, 0, 0, 0.12);
+    }
   }
 }

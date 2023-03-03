@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -25,6 +27,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class EdgeEvent extends BaseData<EdgeEventId> {
 
     private TenantId tenantId;
@@ -42,9 +46,4 @@ public class EdgeEvent extends BaseData<EdgeEventId> {
     public EdgeEvent(EdgeEventId id) {
         super(id);
     }
-
-    public EdgeEvent(EdgeEvent event) {
-        super(event);
-    }
-
 }

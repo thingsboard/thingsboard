@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.rules.ExternalResource;
 import org.testcontainers.utility.Base58;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
-public class ThingsBoardDbInstaller extends ExternalResource {
+public class ThingsBoardDbInstaller {
 
     final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
@@ -129,8 +128,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
         return env;
     }
 
-    @Override
-    protected void before() throws Throwable {
+    public void createVolumes()  {
         try {
 
             dockerCompose.withCommand("volume create " + postgresDataVolume);
@@ -192,8 +190,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
         }
     }
 
-    @Override
-    protected void after() {
+    public void savaLogsAndRemoveVolumes() {
         copyLogs(tbLogVolume, "./target/tb-logs/");
         copyLogs(tbCoapTransportLogVolume, "./target/tb-coap-transport-logs/");
         copyLogs(tbLwm2mTransportLogVolume, "./target/tb-lwm2m-transport-logs/");
@@ -215,7 +212,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
         File tbLogsDir = new File(targetDir);
         tbLogsDir.mkdirs();
 
-        String logsContainerName = "tb-logs-container-" + RandomStringUtils.randomAlphanumeric(10);
+        String logsContainerName = "tb-logs-container-" + StringUtils.randomAlphanumeric(10);
 
         dockerCompose.withCommand("run -d --rm --name " + logsContainerName + " -v " + volumeName + ":/root alpine tail -f /dev/null");
         dockerCompose.invokeDocker();

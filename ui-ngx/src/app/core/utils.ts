@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
-import { letterSpacing } from 'html2canvas/dist/types/css/property-descriptors/letter-spacing';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
 
@@ -479,6 +478,18 @@ export function flatFormattedData(input: FormattedData[]): FormattedData {
   return result;
 }
 
+export function flatDataWithoutOverride(input: FormattedData[]): FormattedData {
+  const result: FormattedData = {} as FormattedData;
+  input.forEach((data) => {
+    Object.keys(data).forEach((key) => {
+      if (!isDefinedAndNotNull(result[key]) || isEmptyStr(result[key])) {
+        result[key] = data[key];
+      }
+    });
+  });
+  return result;
+}
+
 export function mergeFormattedData(first: FormattedData[], second: FormattedData[]): FormattedData[] {
   const merged = first.concat(second);
   return _(merged).groupBy(el => el.$datasource)
@@ -717,4 +728,38 @@ function prepareMessageFromData(data): string {
   } else {
     return data;
   }
+}
+
+export function genNextLabel(name: string, datasources: Datasource[]): string {
+  let label = name;
+  let i = 1;
+  let matches = false;
+  if (datasources) {
+    do {
+      matches = false;
+      datasources.forEach((datasource) => {
+        if (datasource) {
+          if (datasource.dataKeys) {
+            datasource.dataKeys.forEach((dataKey) => {
+              if (dataKey.label === label) {
+                i++;
+                label = name + ' ' + i;
+                matches = true;
+              }
+            });
+          }
+          if (datasource.latestDataKeys) {
+            datasource.latestDataKeys.forEach((dataKey) => {
+              if (dataKey.label === label) {
+                i++;
+                label = name + ' ' + i;
+                matches = true;
+              }
+            });
+          }
+        }
+      });
+    } while (matches);
+  }
+  return label;
 }

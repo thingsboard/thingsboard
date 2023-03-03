@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
         put(Resource.EDGE, customerEntityPermissionChecker);
         put(Resource.RPC, rpcPermissionChecker);
-        put(Resource.DEVICE_PROFILE, deviceProfilePermissionChecker);
+        put(Resource.DEVICE_PROFILE, profilePermissionChecker);
+        put(Resource.ASSET_PROFILE, profilePermissionChecker);
     }
 
     private static final PermissionChecker customerAlarmPermissionChecker = new PermissionChecker() {
@@ -154,7 +155,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         }
     };
 
-    private static final PermissionChecker deviceProfilePermissionChecker = new PermissionChecker.GenericPermissionChecker(Operation.READ) {
+    private static final PermissionChecker profilePermissionChecker = new PermissionChecker.GenericPermissionChecker(Operation.READ) {
 
         @Override
         @SuppressWarnings("unchecked")

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -85,6 +85,9 @@ export const HelpLinks = {
     ruleNodeGpsGeofencingFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#gps-geofencing-filter-node',
     ruleNodeJsFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#script-filter-node',
     ruleNodeJsSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#switch-node',
+    ruleNodeAssetProfileSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#asset-profile-switch',
+    ruleNodeDeviceProfileSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#device-profile-switch',
+    ruleNodeCheckAlarmStatus: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-alarm-status',
     ruleNodeMessageTypeFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#message-type-filter-node',
     ruleNodeMessageTypeSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#message-type-switch-node',
     ruleNodeOriginatorTypeFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#originator-type-filter-node',
@@ -127,12 +130,14 @@ export const HelpLinks = {
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
+    ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
     deviceProfiles: helpBaseUrl + '/docs/user-guide/ui/device-profiles',
+    assetProfiles: helpBaseUrl + '/docs/user-guide/ui/asset-profiles',
     edges: helpBaseUrl + '/docs/user-guide/ui/edges',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',

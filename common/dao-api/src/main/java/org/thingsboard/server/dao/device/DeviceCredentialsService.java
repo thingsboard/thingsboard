@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package org.thingsboard.server.dao.device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public interface DeviceCredentialsService {
 
@@ -32,6 +31,8 @@ public interface DeviceCredentialsService {
     DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
     void formatCredentials(DeviceCredentials deviceCredentials);
+
+    JsonNode toCredentialsInfo(DeviceCredentials deviceCredentials);
 
     void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 

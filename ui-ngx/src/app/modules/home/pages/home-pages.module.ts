@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,13 +31,13 @@ import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module'
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
 import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
-import { MODULES_MAP } from '@shared/public-api';
-import { modulesMap } from '../../common/modules-map';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
 import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
 import { VcModule } from '@home/pages/vc/vc.module';
+import { AssetProfileModule } from '@home/pages/asset-profile/asset-profile.module';
+import { ProfilesModule } from '@home/pages/profiles/profiles.module';
 
 @NgModule({
   exports: [
@@ -48,6 +48,8 @@ import { VcModule } from '@home/pages/vc/vc.module';
     TenantProfileModule,
     TenantModule,
     DeviceProfileModule,
+    AssetProfileModule,
+    ProfilesModule,
     DeviceModule,
     AssetModule,
     EdgeModule,
@@ -61,12 +63,6 @@ import { VcModule } from '@home/pages/vc/vc.module';
     OtaUpdateModule,
     UserModule,
     VcModule
-  ],
-  providers: [
-    {
-      provide: MODULES_MAP,
-      useValue: modulesMap
-    }
   ]
 })
 export class HomePagesModule { }

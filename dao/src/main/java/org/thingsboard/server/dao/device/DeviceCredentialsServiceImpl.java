@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
@@ -134,6 +136,17 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
                 formatAndValidateSimpleLwm2mCredentials(deviceCredentials);
                 break;
         }
+    }
+
+    @Override
+    public JsonNode toCredentialsInfo(DeviceCredentials deviceCredentials) {
+        switch (deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                return JacksonUtil.valueToTree(deviceCredentials.getCredentialsId());
+            case X509_CERTIFICATE:
+                return JacksonUtil.valueToTree(deviceCredentials.getCredentialsValue());
+        }
+        return JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), JsonNode.class);
     }
 
     private void formatSimpleMqttCredentials(DeviceCredentials deviceCredentials) {

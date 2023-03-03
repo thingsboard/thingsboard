@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import {
 } from '@shared/components/popover.models';
 import { distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
+import { animate, AnimationBuilder, AnimationMetadata, style } from '@angular/animations';
 
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 
@@ -304,6 +305,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       <div #popoverRoot [@popoverMotion]="tbAnimationState"
            (@popoverMotion.done)="animationDone()">
         <div
+          #popover
           class="tb-popover"
           [class.tb-popover-rtl]="dir === 'rtl'"
           [ngClass]="classMap"
@@ -340,6 +342,7 @@ export class TbPopoverComponent implements OnDestroy, OnInit {
 
   @ViewChild('overlay', { static: false }) overlay!: CdkConnectedOverlay;
   @ViewChild('popoverRoot', { static: false }) popoverRoot!: ElementRef<HTMLElement>;
+  @ViewChild('popover', { static: false }) popover!: ElementRef<HTMLElement>;
 
   tbContent: string | TemplateRef<void> | null = null;
   tbComponentFactory: ComponentFactory<any> | null = null;
@@ -442,6 +445,7 @@ export class TbPopoverComponent implements OnDestroy, OnInit {
   constructor(
     public cdr: ChangeDetectorRef,
     private renderer: Renderer2,
+    private animationBuilder: AnimationBuilder,
     @Optional() private directionality: Directionality
   ) {}
 
@@ -530,6 +534,35 @@ export class TbPopoverComponent implements OnDestroy, OnInit {
       this.updatePosition();
       this.updateVisibilityByContent();
     });
+  }
+
+  resize(width: string, height: string, animationDurationMs?: number) {
+    if (animationDurationMs && animationDurationMs > 0) {
+      const prevWidth = this.popover.nativeElement.offsetWidth;
+      const prevHeight = this.popover.nativeElement.offsetHeight;
+      const animationMetadata: AnimationMetadata[] = [style({width: prevWidth + 'px', height: prevHeight + 'px'}),
+        animate(animationDurationMs + 'ms', style({width, height}))];
+      const factory = this.animationBuilder.build(animationMetadata);
+      const player = factory.create(this.popover.nativeElement);
+      player.play();
+      const resize$ = new ResizeObserver(() => {
+        this.updatePosition();
+      });
+      resize$.observe(this.popover.nativeElement);
+      player.onDone(() => {
+        player.destroy();
+        resize$.disconnect();
+        this.setSize(width, height);
+      });
+    } else {
+      this.setSize(width, height);
+    }
+  }
+
+  private setSize(width: string, height: string) {
+    this.renderer.setStyle(this.popover.nativeElement, 'width', width);
+    this.renderer.setStyle(this.popover.nativeElement, 'height', height);
+    this.updatePosition();
   }
 
   updatePosition(): void {

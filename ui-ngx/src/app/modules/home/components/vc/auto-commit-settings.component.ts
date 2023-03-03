@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import { AdminService } from '@core/http/admin.service';
 import { AutoCommitSettings, AutoVersionCreateConfig } from '@shared/models/settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
-import { catchError, mergeMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { catchError, map, mergeMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 import { EntityTypeVersionCreateConfig, exportableEntityTypes } from '@shared/models/vc.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -40,6 +40,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   settings: AutoCommitSettings = null;
 
   entityTypes = EntityType;
+
+  isReadOnly: Observable<boolean>;
 
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
@@ -71,6 +73,7 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
         this.autoCommitSettingsForm.setControl('entityTypes',
           this.prepareEntityTypesFormArray(settings), {emitEvent: false});
       });
+    this.isReadOnly = this.adminService.getRepositorySettingsInfo().pipe(map(settings => settings.readOnly));
   }
 
   entityTypesFormGroupArray(): FormGroup[] {

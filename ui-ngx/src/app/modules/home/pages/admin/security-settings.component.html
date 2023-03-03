@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,144 +15,239 @@
     limitations under the License.
 
 -->
-<div>
-  <mat-card class="settings-card">
-    <mat-card-title>
-      <div fxLayout="row">
-        <span class="mat-headline" translate>admin.security-settings</span>
-        <span fxFlex></span>
-        <div tb-help="securitySettings"></div>
-      </div>
-    </mat-card-title>
-    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-    </mat-progress-bar>
-    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-    <mat-card-content style="padding-top: 16px;">
-      <form [formGroup]="securitySettingsFormGroup" (ngSubmit)="save()" autocomplete="off">
-        <fieldset [disabled]="isLoading$ | async">
-          <div class="mat-accordion-container">
-            <mat-accordion multi="true">
-              <mat-expansion-panel [expanded]="true">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <div class="tb-panel-title" translate>admin.general-policy</div>
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <mat-form-field class="mat-block">
-                  <mat-label translate>admin.max-failed-login-attempts</mat-label>
-                  <input matInput type="number"
-                         formControlName="maxFailedLoginAttempts"
-                         step="1"
-                         min="0"/>
-                  <mat-error *ngIf="securitySettingsFormGroup.get('maxFailedLoginAttempts').hasError('min')">
-                    {{ 'admin.minimum-max-failed-login-attempts-range' | translate }}
-                  </mat-error>
-                </mat-form-field>
-                <mat-form-field class="mat-block">
-                  <mat-label translate>admin.user-lockout-notification-email</mat-label>
-                  <input matInput type="email"
-                         formControlName="userLockoutNotificationEmail"/>
-                </mat-form-field>
-              </mat-expansion-panel>
-              <mat-expansion-panel [expanded]="true">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <div class="tb-panel-title" translate>admin.password-policy</div>
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <section formGroupName="passwordPolicy">
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.minimum-password-length</mat-label>
-                    <input matInput type="number"
-                           formControlName="minimumLength"
-                           step="1"
-                           min="5"
-                           max="50"
-                           required/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('required')">
-                      {{ 'admin.minimum-password-length-required' | translate }}
-                    </mat-error>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('min')">
-                      {{ 'admin.minimum-password-length-range' | translate }}
-                    </mat-error>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('max')">
-                      {{ 'admin.minimum-password-length-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.minimum-uppercase-letters</mat-label>
-                    <input matInput type="number"
-                           formControlName="minimumUppercaseLetters"
-                           step="1"
-                           min="0"/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumUppercaseLetters').hasError('min')">
-                      {{ 'admin.minimum-uppercase-letters-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.minimum-lowercase-letters</mat-label>
-                    <input matInput type="number"
-                           formControlName="minimumLowercaseLetters"
-                           step="1"
-                           min="0"/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLowercaseLetters').hasError('min')">
-                      {{ 'admin.minimum-lowercase-letters-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.minimum-digits</mat-label>
-                    <input matInput type="number"
-                           formControlName="minimumDigits"
-                           step="1"
-                           min="0"/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumDigits').hasError('min')">
-                      {{ 'admin.minimum-digits-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.minimum-special-characters</mat-label>
-                    <input matInput type="number"
-                           formControlName="minimumSpecialCharacters"
-                           step="1"
-                           min="0"/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumSpecialCharacters').hasError('min')">
-                      {{ 'admin.minimum-special-characters-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.password-expiration-period-days</mat-label>
-                    <input matInput type="number"
-                           formControlName="passwordExpirationPeriodDays"
-                           step="1"
-                           min="0"/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.passwordExpirationPeriodDays').hasError('min')">
-                      {{ 'admin.password-expiration-period-days-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>admin.password-reuse-frequency-days</mat-label>
-                    <input matInput type="number"
-                           formControlName="passwordReuseFrequencyDays"
-                           step="1"
-                           min="0"/>
-                    <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.passwordReuseFrequencyDays').hasError('min')">
-                      {{ 'admin.password-reuse-frequency-days-range' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-checkbox formControlName = "allowWhitespaces" >
-                    <mat-label translate>admin.allow-whitespace</mat-label>
-                  </mat-checkbox>
-                </section>
-              </mat-expansion-panel>
-            </mat-accordion>
-          </div>
-          <div fxLayout="row" fxLayoutAlign="end center" style="width: 100%;" class="layout-wrap">
-            <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || securitySettingsFormGroup.invalid || !securitySettingsFormGroup.dirty"
-                    type="submit">{{'action.save' | translate}}
-            </button>
-          </div>
+<mat-card class="settings-card">
+  <mat-card-title>
+    <div fxLayout="row">
+      <span class="mat-headline" translate>admin.security-settings</span>
+      <span fxFlex></span>
+      <div tb-help="securitySettings"></div>
+    </div>
+  </mat-card-title>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <mat-card-content style="padding-top: 16px;">
+    <form [formGroup]="securitySettingsFormGroup" (ngSubmit)="save()" autocomplete="off">
+      <fieldset [disabled]="isLoading$ | async">
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>admin.general-policy</legend>
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.max-failed-login-attempts</mat-label>
+            <input matInput type="number"
+                   formControlName="maxFailedLoginAttempts"
+                   step="1"
+                   min="0"/>
+            <mat-error *ngIf="securitySettingsFormGroup.get('maxFailedLoginAttempts').hasError('min')">
+              {{ 'admin.minimum-max-failed-login-attempts-range' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.user-lockout-notification-email</mat-label>
+            <input matInput type="email"
+                   formControlName="userLockoutNotificationEmail"/>
+          </mat-form-field>
         </fieldset>
-      </form>
-    </mat-card-content>
-  </mat-card>
-</div>
+
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>admin.password-policy</legend>
+          <section formGroupName="passwordPolicy">
+            <mat-form-field class="mat-block">
+              <mat-label translate>admin.minimum-password-length</mat-label>
+              <input matInput type="number"
+                     formControlName="minimumLength"
+                     step="1"
+                     min="5"
+                     max="50"
+                     required/>
+              <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('required')">
+                {{ 'admin.minimum-password-length-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('min')">
+                {{ 'admin.minimum-password-length-range' | translate }}
+              </mat-error>
+              <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('max')">
+                {{ 'admin.minimum-password-length-range' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.minimum-uppercase-letters</mat-label>
+                <input matInput type="number"
+                       formControlName="minimumUppercaseLetters"
+                       step="1"
+                       min="0"/>
+                <mat-error
+                  *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumUppercaseLetters').hasError('min')">
+                  {{ 'admin.minimum-uppercase-letters-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.minimum-lowercase-letters</mat-label>
+                <input matInput type="number"
+                       formControlName="minimumLowercaseLetters"
+                       step="1"
+                       min="0"/>
+                <mat-error
+                  *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLowercaseLetters').hasError('min')">
+                  {{ 'admin.minimum-lowercase-letters-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.minimum-digits</mat-label>
+                <input matInput type="number"
+                       formControlName="minimumDigits"
+                       step="1"
+                       min="0"/>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumDigits').hasError('min')">
+                  {{ 'admin.minimum-digits-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.minimum-special-characters</mat-label>
+                <input matInput type="number"
+                       formControlName="minimumSpecialCharacters"
+                       step="1"
+                       min="0"/>
+                <mat-error
+                  *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumSpecialCharacters').hasError('min')">
+                  {{ 'admin.minimum-special-characters-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.password-expiration-period-days</mat-label>
+                <input matInput type="number"
+                       formControlName="passwordExpirationPeriodDays"
+                       step="1"
+                       min="0"/>
+                <mat-error
+                  *ngIf="securitySettingsFormGroup.get('passwordPolicy.passwordExpirationPeriodDays').hasError('min')">
+                  {{ 'admin.password-expiration-period-days-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.password-reuse-frequency-days</mat-label>
+                <input matInput type="number"
+                       formControlName="passwordReuseFrequencyDays"
+                       step="1"
+                       min="0"/>
+                <mat-error
+                  *ngIf="securitySettingsFormGroup.get('passwordPolicy.passwordReuseFrequencyDays').hasError('min')">
+                  {{ 'admin.password-reuse-frequency-days-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <mat-checkbox formControlName="allowWhitespaces" style="margin-bottom: 16px">
+              <mat-label translate>admin.allow-whitespace</mat-label>
+            </mat-checkbox>
+          </section>
+        </fieldset>
+        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap" style="margin-top: 16px">
+          <button mat-button color="primary"
+                  [disabled]="securitySettingsFormGroup.pristine"
+                  (click)="discardSetting()"
+                  type="button">{{'action.undo' | translate}}
+          </button>
+          <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || securitySettingsFormGroup.invalid || !securitySettingsFormGroup.dirty"
+                  type="submit">{{'action.save' | translate}}
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  </mat-card-content>
+</mat-card>
+<mat-card class="settings-card">
+  <mat-card-title>
+    <div fxLayout="row">
+      <span class="mat-headline" translate>admin.jwt.security-settings</span>
+    </div>
+  </mat-card-title>
+  <mat-card-content style="padding-top: 16px;">
+    <form [formGroup]="jwtSecuritySettingsFormGroup" (ngSubmit)="saveJwtSettings()" autocomplete="off">
+      <fieldset [disabled]="isLoading$ | async" fxLayout="column" fxLayoutGap="8px">
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>admin.jwt.issuer-name</mat-label>
+            <input matInput required formControlName="tokenIssuer"/>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenIssuer').hasError('required')">
+              {{ 'admin.jwt.issuer-name-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>admin.jwt.signings-key</mat-label>
+            <input matInput (focus)="markAsTouched()" required formControlName="tokenSigningKey"/>
+            <button type="button"
+                    style="line-height: 32px"
+                    matSuffix
+                    mat-button
+                    (click)="generateSigningKey()"
+                    color="primary">
+              {{ 'admin.jwt.generate-key' | translate }}
+            </button>
+            <mat-hint translate>admin.jwt.signings-key-hint</mat-hint>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenSigningKey').hasError('required')">
+              {{ 'admin.jwt.signings-key-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenSigningKey').hasError('base64')">
+              {{ 'admin.jwt.signings-key-base64' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenSigningKey').hasError('minLength')">
+              {{ 'admin.jwt.signings-key-min-length' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>admin.jwt.expiration-time</mat-label>
+            <input matInput type="number" required
+                   formControlName="tokenExpirationTime"
+                   step="1"
+                   min="0"/>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('required')">
+              {{ 'admin.jwt.expiration-time-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('pattern')">
+              {{ 'admin.jwt.expiration-time-pattern' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('min')">
+              {{ 'admin.jwt.expiration-time-min' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>admin.jwt.refresh-expiration-time</mat-label>
+            <input matInput type="number" required
+                   formControlName="refreshTokenExpTime"
+                   step="1"
+                   min="0"/>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('required')">
+              {{ 'admin.jwt.refresh-expiration-time-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('pattern')">
+              {{ 'admin.jwt.refresh-expiration-time-pattern' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('min')">
+              {{ 'admin.jwt.refresh-expiration-time-min' | translate }}
+            </mat-error>
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('lessToken')">
+              {{ 'admin.jwt.refresh-expiration-time-less-token' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
+          <button mat-button color="primary"
+                  [disabled]="jwtSecuritySettingsFormGroup.pristine"
+                  (click)="discardJwtSetting()"
+                  type="button">{{'action.undo' | translate}}
+          </button>
+          <button mat-raised-button color="primary"
+                  [disabled]="(isLoading$ | async) || jwtSecuritySettingsFormGroup.invalid || !jwtSecuritySettingsFormGroup.dirty"
+                  type="submit">{{'action.save' | translate}}
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  </mat-card-content>
+</mat-card>

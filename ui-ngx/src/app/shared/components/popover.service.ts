@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
 
 import {
   ComponentFactory,
-  ComponentFactoryResolver, ElementRef, Inject,
-  Injectable, Injector,
+  ComponentFactoryResolver,
+  ComponentRef,
+  ElementRef,
+  Inject,
+  Injectable,
+  Injector,
   Renderer2,
   Type,
   ViewContainerRef
@@ -53,11 +57,23 @@ export class TbPopoverService {
     }
   }
 
+  createPopoverRef(hostView: ViewContainerRef): ComponentRef<TbPopoverComponent> {
+    return hostView.createComponent(this.componentFactory);
+  }
+
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
                     componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top', hideOnClickOutside = true,
                     injector?: Injector, context?: any, overlayStyle: any = {}, popoverStyle: any = {}, style?: any,
                     showCloseButton = true): TbPopoverComponent {
-    const componentRef = hostView.createComponent(this.componentFactory);
+    const componentRef = this.createPopoverRef(hostView);
+    return this.displayPopoverWithComponentRef(componentRef, trigger, renderer, componentType, preferredPlacement, hideOnClickOutside,
+      injector, context, overlayStyle, popoverStyle, style, showCloseButton);
+  }
+
+  displayPopoverWithComponentRef<T>(componentRef: ComponentRef<TbPopoverComponent>, trigger: Element, renderer: Renderer2,
+                                    componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top',
+                                    hideOnClickOutside = true, injector?: Injector, context?: any, overlayStyle: any = {},
+                                    popoverStyle: any = {}, style?: any, showCloseButton = true): TbPopoverComponent {
     const component = componentRef.instance;
     this.popoverWithTriggers.push({
       trigger,

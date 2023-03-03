@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@
         <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center end">
           <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
                   #createVersionButton
-                  [disabled]="(isLoading$ | async)"
+                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
                   (click)="toggleCreateVersion($event, createVersionButton)">
             <mat-icon>update</mat-icon>
             {{'version-control.create-version' | translate }}
           </button>
           <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
                   #complexCreateVersionButton
-                  [disabled]="(isLoading$ | async)"
+                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
                   (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
             <mat-icon>update</mat-icon>
             {{'version-control.create-entities-version' | translate }}

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Inject, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, Renderer2, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -54,7 +54,7 @@ export interface ImportDialogCsvData {
   styleUrls: ['./import-dialog-csv.component.scss']
 })
 export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvComponent, boolean>
-  implements AfterViewInit {
+  implements AfterViewInit, OnDestroy {
 
   @ViewChild('importStepper', {static: true}) importStepper: MatVerticalStepper;
 
@@ -90,6 +90,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
 
   isImportData = false;
   statistical: BulkImportResult;
+
+  aceEditor: Ace.Editor;
 
   private allowAssignColumn: ImportEntityColumnType[];
   private initEditorComponent = false;
@@ -129,6 +131,13 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
       columns = columns.concat(this.columnsAssignmentComponent.columnDeviceCredentials);
     }
     this.allowAssignColumn = columns.map(column => column.value);
+  }
+
+  ngOnDestroy(): void {
+    if (this.aceEditor) {
+      this.aceEditor.destroy();
+    }
+    super.ngOnDestroy();
   }
 
   cancel(): void {
@@ -271,10 +280,10 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     const content = contents.map(error => error.replace('\n', '')).join('\n');
     getAce().subscribe(
       (ace) => {
-        const editor = ace.edit(editorElement, editorOptions);
-        editor.session.setUseWrapMode(false);
-        editor.setValue(content, -1);
-        this.updateEditorSize(editorElement, content, editor);
+        this.aceEditor = ace.edit(editorElement, editorOptions);
+        this.aceEditor.session.setUseWrapMode(false);
+        this.aceEditor.setValue(content, -1);
+        this.updateEditorSize(editorElement, content, this.aceEditor);
       }
     );
   }

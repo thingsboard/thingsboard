@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 const tinycolor = tinycolor_;
 
-type ColumnVisibilityOptions = 'visible' | 'hidden';
+type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
 type ColumnSelectionOptions = 'enabled' | 'disabled';
 
@@ -43,6 +43,7 @@ export interface TableWidgetSettings {
 }
 
 export interface TableWidgetDataKeySettings {
+  customTitle?: string;
   columnWidth?: string;
   useCellStyleFunction: boolean;
   cellStyleFunction?: string;
@@ -302,8 +303,9 @@ export function widthStyle(width: string): any {
   return widthStyleObj;
 }
 
-export function getColumnDefaultVisibility(keySettings: TableWidgetDataKeySettings): boolean {
-  return !(isDefined(keySettings.defaultColumnVisibility) && keySettings.defaultColumnVisibility === 'hidden');
+export function getColumnDefaultVisibility(keySettings: TableWidgetDataKeySettings, ctx?: WidgetContext): boolean {
+  return !(isDefined(keySettings.defaultColumnVisibility) && (keySettings.defaultColumnVisibility === 'hidden' ||
+      (ctx && ctx.isMobile && keySettings.defaultColumnVisibility === 'hidden-mobile')));
 }
 
 export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySettings): boolean {
@@ -473,4 +475,11 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     'color: ' + mdDarkSecondary + ';\n' +
     '}';
   return cssString;
+}
+
+export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings, utils: UtilsService) {
+  if (isDefined(keySettings.customTitle) && isNotEmptyStr(keySettings.customTitle)) {
+    return utils.customTranslation(keySettings.customTitle, keySettings.customTitle);
+  }
+  return dataKey.label;
 }

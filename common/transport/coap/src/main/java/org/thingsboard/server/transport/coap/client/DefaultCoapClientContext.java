@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -45,6 +46,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.transport.DeviceDeletedEvent;
+import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
@@ -52,6 +55,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.DeviceProfileUpdatedEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
@@ -95,6 +99,45 @@ public class DefaultCoapClientContext implements CoapClientContext {
         this.transportService = transportService;
         this.profileCache = profileCache;
         this.partitionService = partitionService;
+    }
+
+    @EventListener(DeviceProfileUpdatedEvent.class)
+    public void onApplicationEvent(DeviceProfileUpdatedEvent event) {
+        var deviceProfile = event.getDeviceProfile();
+        clients.values().stream().filter(state -> state.getSession() == null).forEach(state -> {
+            state.lock();
+            try {
+                if (deviceProfile.getId().equals(state.getProfileId())) {
+                    initStateAdaptor(deviceProfile, state);
+                }
+            } catch (AdaptorException e) {
+                log.trace("[{}] Failed to update client state due to: ", state.getDeviceId(), e);
+            } finally {
+                state.unlock();
+            }
+        });
+    }
+
+    @EventListener(DeviceUpdatedEvent.class)
+    public void onApplicationEvent(DeviceUpdatedEvent event) {
+        var device = event.getDevice();
+        var state = clients.get(device.getId());
+        if (state == null) {
+            return;
+        }
+        state.lock();
+        try {
+            if (state.getSession() == null) {
+                clients.remove(device.getId());
+            }
+        } finally {
+            state.unlock();
+        }
+    }
+
+    @EventListener(DeviceDeletedEvent.class)
+    public void onApplicationEvent(DeviceDeletedEvent event) {
+        clients.remove(event.getDeviceId());
     }
 
     @Override

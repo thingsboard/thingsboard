@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package org.thingsboard.server.transport.mqtt.credentials;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -102,8 +102,8 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         mqttTestClient4.connectAndWait(USER_NAME2, PASSWORD);
 
         // Also correct. Random clientId and password, but matches access token
-        MqttTestClient mqttTestClient5 = new MqttTestClient(RandomStringUtils.randomAlphanumeric(10));
-        mqttTestClient5.connectAndWait(USER_NAME2, RandomStringUtils.randomAlphanumeric(10));
+        MqttTestClient mqttTestClient5 = new MqttTestClient(StringUtils.randomAlphanumeric(10));
+        mqttTestClient5.connectAndWait(USER_NAME2, StringUtils.randomAlphanumeric(10));
 
         testTelemetryIsDelivered(accessTokenDevice, mqttTestClient1);
         testTelemetryIsDelivered(clientIdDevice, mqttTestClient2);
@@ -131,7 +131,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
     }
 
     private void testTelemetryIsDelivered(Device device, MqttTestClient client, boolean ok) throws Exception {
-        String randomKey = RandomStringUtils.randomAlphanumeric(10);
+        String randomKey = StringUtils.randomAlphanumeric(10);
         List<String> expectedKeys = Arrays.asList(randomKey);
         client.publishAndWait(DEVICE_TELEMETRY_TOPIC, JacksonUtil.toString(JacksonUtil.newObjectNode().put(randomKey, true)).getBytes());
 

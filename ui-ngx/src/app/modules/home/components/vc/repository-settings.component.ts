@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -74,6 +74,8 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
     this.repositorySettingsForm = this.fb.group({
       repositoryUri: [null, [Validators.required]],
       defaultBranch: ['main', []],
+      readOnly: [false, []],
+      showMergeCommits: [false, []],
       authMethod: [RepositoryAuthMethod.USERNAME_PASSWORD, [Validators.required]],
       username: [null, []],
       password: [null, []],

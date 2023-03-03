@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,12 @@ public enum MsgType {
     /**
      * Message that is sent on Edge Event to Edge Session
      */
-    EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG;
+    EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG,
+
+    /**
+     * Messages that are sent to and from edge session to start edge synchronization process
+     */
+    EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG,
+    EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
 
 }

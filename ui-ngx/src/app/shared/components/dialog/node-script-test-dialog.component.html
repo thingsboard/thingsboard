@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <form class="tb-node-script-test-dialog"
       [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
   <mat-toolbar fxLayout="row" color="primary">
-    <h2>{{ 'rulenode.test-script-function' | translate }}</h2>
+    <h2>{{ 'rulenode.test-script-function' | translate }} ({{ (scriptLang === scriptLanguage.JS ? 'rulenode.script-lang-java-script' : 'rulenode.script-lang-tbel') | translate }})</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
             (click)="cancel()"
@@ -77,6 +77,7 @@
               functionName="{{ data.functionName }}"
               [functionArgs]="data.argNames"
               [validationArgs]="[data.msg, data.metadata, data.msgType]"
+              [disableUndefinedCheck]="scriptLang === scriptLanguage.TBEL"
               resultType="object"
               [helpId]="data.helpId"
               [fillHeight]="true">

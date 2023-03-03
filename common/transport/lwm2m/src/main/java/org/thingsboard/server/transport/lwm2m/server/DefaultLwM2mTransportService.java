@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,12 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
@@ -127,13 +131,13 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setSecurityStore(securityStore);
         builder.setRegistrationStore(registrationStore);
 
-
         /* Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
-        dtlsConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
         dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
+        dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeout(), MILLISECONDS);
+        dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
 
         /*  Create credentials */
         this.setServerWithCredentials(builder, dtlsConfig);

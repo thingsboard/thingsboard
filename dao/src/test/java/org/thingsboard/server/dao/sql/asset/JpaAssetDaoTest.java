@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.asset.AssetDao;
+import org.thingsboard.server.dao.asset.AssetProfileDao;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -57,6 +63,11 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private AssetDao assetDao;
 
+    @Autowired
+    private AssetProfileDao assetProfileDao;
+
+    private Map<String, AssetProfileId> savedAssetProfiles = new HashMap<>();
+
     @Before
     public void setUp() {
         tenantId1 = Uuids.timeBased();
@@ -67,7 +78,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             UUID assetId = Uuids.timeBased();
             UUID tenantId = i % 2 == 0 ? tenantId1 : tenantId2;
             UUID customerId = i % 2 == 0 ? customerId1 : customerId2;
-            assets.add(saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1"));
+            assets.add(saveAsset(assetId, tenantId, customerId, "ASSET_" + i));
         }
         assertEquals(assets.size(), assetDao.find(TenantId.fromUUID(tenantId1)).size());
     }
@@ -78,6 +89,10 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             assetDao.removeById(asset.getTenantId(), asset.getUuidId());
         }
         assets.clear();
+        for (AssetProfileId assetProfileId : savedAssetProfiles.values()) {
+            assetProfileDao.removeById(TenantId.SYS_TENANT_ID, assetProfileId.getId());
+        }
+        savedAssetProfiles.clear();
     }
 
     @Test
@@ -146,7 +161,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
     public void testFindAssetsByTenantIdAndName() {
         UUID assetId = Uuids.timeBased();
         String name = "TEST_ASSET";
-        assets.add(saveAsset(assetId, tenantId2, customerId2, name, "TYPE_1"));
+        assets.add(saveAsset(assetId, tenantId2, customerId2, name));
 
         Optional<Asset> assetOpt1 = assetDao.findAssetsByTenantIdAndName(tenantId2, name);
         assertTrue("Optional expected to be non-empty", assetOpt1.isPresent());
@@ -197,7 +212,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         List<EntitySubtype> tenant2Types = assetDao.findTenantAssetTypesAsync(tenantId2).get(30, TimeUnit.SECONDS);
         assertNotNull(tenant2Types);
 
-        List<String> types = List.of("TYPE_1", "TYPE_2", "TYPE_3", "TYPE_4");
+        List<String> types = List.of("default", "TYPE_1", "TYPE_2", "TYPE_3", "TYPE_4");
         assertEquals(getDifferentTypesCount(types, tenant1Types), tenant1Types.size());
         assertEquals(getDifferentTypesCount(types, tenant2Types), tenant2Types.size());
     }
@@ -206,13 +221,36 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         return foundedAssetsTypes.stream().filter(type -> types.contains(type.getType())).count();
     }
 
+    private Asset saveAsset(UUID id, UUID tenantId, UUID customerId, String name) {
+        return saveAsset(id, tenantId, customerId, name, null);
+    }
+
     private Asset saveAsset(UUID id, UUID tenantId, UUID customerId, String name, String type) {
+        if (type == null) {
+            type = "default";
+        }
         Asset asset = new Asset();
         asset.setId(new AssetId(id));
         asset.setTenantId(TenantId.fromUUID(tenantId));
         asset.setCustomerId(new CustomerId(customerId));
         asset.setName(name);
         asset.setType(type);
+        asset.setAssetProfileId(assetProfileId(type));
         return assetDao.save(TenantId.fromUUID(tenantId), asset);
     }
+
+    private AssetProfileId assetProfileId(String type) {
+        AssetProfileId assetProfileId = savedAssetProfiles.get(type);
+        if (assetProfileId == null) {
+            AssetProfile assetProfile = new AssetProfile();
+            assetProfile.setName(type);
+            assetProfile.setTenantId(TenantId.SYS_TENANT_ID);
+            assetProfile.setDescription("Test");
+            AssetProfile savedAssetProfile = assetProfileDao.save(TenantId.SYS_TENANT_ID, assetProfile);
+            assetProfileId = savedAssetProfile.getId();
+            savedAssetProfiles.put(type, assetProfileId);
+        }
+        return assetProfileId;
+    }
+
 }

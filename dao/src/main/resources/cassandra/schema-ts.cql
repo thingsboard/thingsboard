@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2022 The Thingsboard Authors
+-- Copyright © 2016-2023 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,12 +13,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
-
-CREATE KEYSPACE IF NOT EXISTS thingsboard
-WITH replication = {
-	'class' : 'SimpleStrategy',
-	'replication_factor' : 1
-};
 
 CREATE TABLE IF NOT EXISTS thingsboard.ts_kv_cf (
     entity_type text, // (DEVICE, CUSTOMER, TENANT)

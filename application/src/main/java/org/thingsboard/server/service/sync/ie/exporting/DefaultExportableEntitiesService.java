@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -183,7 +185,7 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     @Autowired
     private void setRemovers(CustomerService customerService, AssetService assetService, RuleChainService ruleChainService,
                              DashboardService dashboardService, DeviceProfileService deviceProfileService,
-                             DeviceService deviceService, WidgetsBundleService widgetsBundleService) {
+                             AssetProfileService assetProfileService, DeviceService deviceService, WidgetsBundleService widgetsBundleService) {
         removers.put(EntityType.CUSTOMER, (tenantId, entityId) -> {
             customerService.deleteCustomer(tenantId, (CustomerId) entityId);
         });
@@ -198,6 +200,9 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         });
         removers.put(EntityType.DEVICE_PROFILE, (tenantId, entityId) -> {
             deviceProfileService.deleteDeviceProfile(tenantId, (DeviceProfileId) entityId);
+        });
+        removers.put(EntityType.ASSET_PROFILE, (tenantId, entityId) -> {
+            assetProfileService.deleteAssetProfile(tenantId, (AssetProfileId) entityId);
         });
         removers.put(EntityType.DEVICE, (tenantId, entityId) -> {
             deviceService.deleteDevice(tenantId, (DeviceId) entityId);

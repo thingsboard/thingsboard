@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.thingsboard.server.service.security.auth.mfa.provider.impl;
 
 import lombok.Data;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.thingsboard.server.common.data.CacheConstants;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.mfa.account.OtpBasedTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.OtpBasedTwoFaProviderConfig;
@@ -40,7 +40,7 @@ public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfi
 
     @Override
     public final void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {
-        String verificationCode = RandomStringUtils.randomNumeric(6);
+        String verificationCode = StringUtils.randomNumeric(6);
         sendVerificationCode(user, verificationCode, providerConfig, accountConfig);
         verificationCodesCache.put(user.getId(), new Otp(System.currentTimeMillis(), verificationCode, accountConfig));
     }

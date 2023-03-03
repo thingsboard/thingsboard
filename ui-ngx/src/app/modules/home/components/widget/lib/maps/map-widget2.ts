@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -250,6 +250,7 @@ export class MapWidgetController implements MapWidgetInterface {
             parsedCircleFillColorFunction: parseFunction(settings.circleFillColorFunction, functionParams),
             parsedCircleTooltipFunction: parseFunction(settings.circleTooltipFunction, functionParams),
             parsedMarkerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
+            parsedClusterMarkerFunction: parseFunction(settings.clusterMarkerFunction, ['data', 'childCount']),
             // labelColor: this.ctx.widgetConfig.color,
             // polygonLabelColor: this.ctx.widgetConfig.color,
             polygonKeyName: (settings as any).polKeyName ? (settings as any).polKeyName : settings.polygonKeyName,
