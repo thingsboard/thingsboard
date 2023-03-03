@@ -1095,7 +1095,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     switch (type) {
       case WidgetActionType.openDashboardState:
       case WidgetActionType.updateDashboardState:
-        const params = deepClone(this.widgetContext.stateController.getStateParams());
+        const params = deepClone(this.widgetContext.dashboard.stateController.getStateParams());
         updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
           if (descriptor.openInPopover) {
