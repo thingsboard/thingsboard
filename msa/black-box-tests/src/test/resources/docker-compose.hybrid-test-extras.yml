@@ -14,23 +14,10 @@
 # limitations under the License.
 #
 
-version: '3'
+version: '3.0'
+
 services:
-  selenium-chrome:
-    restart: always
-    image: selenium/standalone-chrome
-    ports:
-      - '4444:4444'
-      - '7900:7900'
-    shm_size: 2gb
+  cassandra:
     environment:
-      SE_NODE_MAX_SESSIONS: 8
-      SE_NODE_OVERRIDE_MAX_SESSIONS: 'true'
-      SE_NODE_SESSION_TIMEOUT: 5000
-      SE_SCREEN_WIDTH: 1920
-      SE_SCREEN_HEIGHT: 1080
-      SE_SCREEN_DEPTH: 24
-      SE_SCREEN_DPI: 74
-# Alternative way how to connect to the host address
-#    extra_hosts:
-#      - "host.docker.internal:host-gateway"
+      HEAP_NEWSIZE: 128M
+      MAX_HEAP_SIZE: 1024M

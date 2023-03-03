@@ -66,7 +66,7 @@ public class CachedAttributesService implements AttributesService {
     private final TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache;
     private ListeningExecutorService cacheExecutor;
 
-    @Value("${cache.type}")
+    @Value("${cache.type:caffeine}")
     private String cacheType;
 
     public CachedAttributesService(AttributesDao attributesDao,

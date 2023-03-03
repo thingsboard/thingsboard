@@ -550,7 +550,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         SingleEntityFilter entityFilter = new SingleEntityFilter();
         entityFilter.setSingleEntity(tenantId);
 
-        assertThatNoException().isThrownBy(() -> {
+        assertThatNoException().as("subscribeForAttributes").isThrownBy(() -> {
             JsonNode update = getWsClient().subscribeForAttributes(tenantId, TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
             assertThat(update.get("errorMsg").isNull()).isTrue();
             assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
@@ -562,7 +562,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
                 new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", expectedAttrValue))
         ));
         JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
-        assertThat(update).isNotNull();
+        assertThat(update).as("waitForUpdate").isNotNull();
         assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
     }
 
@@ -599,15 +599,17 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         tsService.saveAndNotify(device.getTenantId(), null, device.getId(), tsData, 0, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
+                log.debug("sendTelemetry callback onSuccess");
                 latch.countDown();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Failed to send telemetry", t);
                 latch.countDown();
             }
         });
-        latch.await(3, TimeUnit.SECONDS);
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendTelemetry callback");
     }
 
     private void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
@@ -619,14 +621,16 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         tsService.saveAndNotify(tenantId, entityId, scope.name(), attrData, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
+                log.debug("sendAttributes callback onSuccess");
                 latch.countDown();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Failed to sendAttributes", t);
                 latch.countDown();
             }
         });
-        latch.await(3, TimeUnit.SECONDS);
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendAttributes callback").isTrue();
     }
 }
