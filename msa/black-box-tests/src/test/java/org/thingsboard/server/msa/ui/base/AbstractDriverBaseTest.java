@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.msa.ui.base;
 
-import com.google.common.io.Files;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import io.qameta.allure.Attachment;
+import io.qameta.allure.Allure;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
@@ -43,8 +41,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ContainerTestSuite;
+import org.thingsboard.server.msa.WebDriverFactory;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.net.URL;
 import java.time.Duration;
 import java.util.stream.Collectors;
@@ -67,7 +66,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     @SneakyThrows
     @BeforeMethod
-    public void openBrowser() {
+    public void startUp() {
         log.info("===>>> Setup driver");
         testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         ChromeOptions options = new ChromeOptions();
@@ -85,7 +84,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     @AfterMethod
-    public void closeBrowser() {
+    public void teardown() {
+        captureScreen(driver);
         log.info("<<<=== Teardown");
         driver.quit();
     }
@@ -157,11 +157,11 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    @SneakyThrows
-    @Attachment(value = "Page screenshot", type = "image/png")
-    public static byte[] captureScreen(WebDriver driver, String dirPath) {
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(screenshot, new File("./target/allure-results/screenshots/" + dirPath + "//" + screenshot.getName()));
-        return Files.toByteArray(screenshot);
+
+    public static void captureScreen(WebDriver driver) {
+        if (driver != null) {
+            Allure.addAttachment("Page screenshot",
+                    new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+        }
     }
 }
