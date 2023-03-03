@@ -16,17 +16,17 @@
 
 -->
 <mat-form-field [formGroup]="colorFormGroup">
-  <mat-label>
+  <mat-label *ngIf="icon || label">
     <mat-icon *ngIf="icon">{{icon}}</mat-icon>
     <span *ngIf="label">{{label}}</span>
   </mat-label>
-  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker()" style="margin-right: 5px;">
+  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker()">
     <div class="tb-color-result" [ngStyle]="{background: colorFormGroup.get('color').value}"></div>
   </div>
   <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker()" [required]="required">
   <button *ngIf="colorClearButton && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

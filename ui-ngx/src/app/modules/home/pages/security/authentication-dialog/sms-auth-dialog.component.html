@@ -58,8 +58,7 @@
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: smsConfigForm.get('phone').value} }}
         </p>
         <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="space-between center" fxLayoutAlign.xs="start end">
-          <mat-form-field fxFlex class="mat-block code-container full-width-xs" floatLabel="always" hideRequiredMarker>
-            <mat-label></mat-label>
+          <mat-form-field fxFlex class="mat-block code-container full-width-xs">
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text" required
                    inputmode="numeric" pattern="[0-9]*"

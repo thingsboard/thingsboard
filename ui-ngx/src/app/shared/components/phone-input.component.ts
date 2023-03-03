@@ -69,7 +69,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   floatLabel: FloatLabelType = 'auto';
 
   @Input()
-  appearance: MatFormFieldAppearance = 'legacy';
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   placeholder;

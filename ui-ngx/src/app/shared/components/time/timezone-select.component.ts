@@ -46,7 +46,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   defaultTimezoneId: string = null;
 
   @Input()
-  appearance: MatFormFieldAppearance = 'legacy';
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   set defaultTimezone(timezone: string) {

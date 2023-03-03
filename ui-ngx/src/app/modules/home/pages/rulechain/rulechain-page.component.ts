@@ -17,21 +17,31 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef, EventEmitter,
+  ElementRef,
+  EventEmitter,
   HostBinding,
   Inject,
   OnDestroy,
   OnInit,
-  QueryList, Renderer2,
+  QueryList,
+  Renderer2,
   SkipSelf,
   ViewChild,
-  ViewChildren, ViewContainerRef,
+  ViewChildren,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import {
+  FormGroupDirective,
+  NgForm,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorStateMatcher } from '@angular/material/core';
@@ -54,7 +64,9 @@ import {
   FcRuleNode,
   FcRuleNodeType,
   getRuleNodeHelpLink,
-  LinkLabel, outputNodeClazz, ruleChainNodeClazz,
+  LinkLabel,
+  outputNodeClazz,
+  ruleChainNodeClazz,
   RuleNode,
   RuleNodeComponentDescriptor,
   RuleNodeType,
@@ -74,12 +86,10 @@ import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
 import { Hotkey } from 'angular2-hotkeys';
 import { DebugEventType, EventType } from '@shared/models/event.models';
-import Timeout = NodeJS.Timeout;
-import { MatButton } from '@angular/material/button';
+import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
-import { VersionCreationResult } from '@shared/models/vc.models';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
+import Timeout = NodeJS.Timeout;
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -1534,7 +1544,7 @@ export class RuleChainPageComponent extends PageComponent
     }).afterClosed();
   }
 
-  toggleVersionControl($event: Event, versionControlButton: MatButton) {
+  toggleVersionControl($event: Event, versionControlButton: MatMiniFabButton) {
     if ($event) {
       $event.stopPropagation();
     }

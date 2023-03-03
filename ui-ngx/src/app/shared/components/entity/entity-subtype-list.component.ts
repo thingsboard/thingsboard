@@ -23,7 +23,7 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { DeviceService } from '@core/http/device.service';
@@ -35,7 +35,7 @@ import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 @Component({
   selector: 'tb-entity-subtype-list',
   templateUrl: './entity-subtype-list.component.html',
-  styleUrls: ['./entity-subtype-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -71,7 +71,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
 
   @ViewChild('entitySubtypeInput') entitySubtypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entitySubtypeAutocomplete') entitySubtypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   entitySubtypeList: Array<string> = [];
   filteredEntitySubtypeList: Observable<Array<string>>;

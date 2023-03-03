@@ -24,7 +24,7 @@
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">skip_previous</mat-icon>
         </button>
         <div fxLayout="column" fxFlex="100">
-            <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (input)="changeIndex($event.value)">
+            <mat-slider [min]="minTimeIndex" [max]="maxTimeIndex" #ngSlider><input matSliderThumb [(ngModel)]="index"  (input)="changeIndex({source: ngSliderThumb, parent: ngSlider, value: ngSliderThumb.value}.value)" #ngSliderThumb="matSliderThumb" />
             </mat-slider>
             <div class="panel-timer">
                 <span *ngIf="this.currentTime">{{ this.currentTime | date:'medium'}}</span>
