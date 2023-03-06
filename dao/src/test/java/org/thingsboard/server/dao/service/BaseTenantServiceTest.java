@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
@@ -55,9 +53,6 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantDao;
@@ -84,19 +79,6 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
     @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
-
-    Tenant savedTenant;
-    TenantProfile savedTenantProfile;
-
-    @After
-    public void tearDown() throws Exception {
-        if (savedTenant != null) {
-            tenantService.deleteTenant(savedTenant.getId());
-        }
-        if (savedTenantProfile != null) {
-            tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile.getId());
-        }
-    }
 
     @Test
     public void testSaveTenant() {
@@ -320,27 +302,6 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-    }
-
-    @Ignore // because Tenant validator have no such validation since queue config feature
-    @Test
-    public void testSaveTenantWithIsolatedProfileInMonolithSetup() {
-        TenantProfile tenantProfile = new TenantProfile();
-        tenantProfile.setName("Isolated Tenant Profile");
-        TenantProfileData profileData = new TenantProfileData();
-        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
-        tenantProfile.setProfileData(profileData);
-        tenantProfile.setDefault(false);
-        tenantProfile.setIsolatedTbRuleEngine(true);
-        BaseTenantProfileServiceTest.addMainQueueConfig(tenantProfile);
-        this.savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Tenant with isolated profile");
-        tenant.setTenantProfileId(savedTenantProfile.getId());
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            this.savedTenant = tenantService.saveTenant(tenant);
-        });
     }
 
     @Test
