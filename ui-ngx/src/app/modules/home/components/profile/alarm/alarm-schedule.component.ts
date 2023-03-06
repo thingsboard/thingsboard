@@ -137,7 +137,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     if (this.disabled) {
       this.alarmScheduleForm.disable({emitEvent: false});
     } else {
-      this.alarmScheduleForm.enable({emitEvent: false});
+      this.updateValidators(this.alarmScheduleForm.get('type').value);
     }
   }
 

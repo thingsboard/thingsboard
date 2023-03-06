@@ -26,15 +26,3 @@
     }
   }
 }
-
-:host ::ng-deep {
-  .mat-form-field-wrapper {
-    padding-bottom: 0;
-  }
-  .mat-form-field-infix {
-    border-top: 0;
-  }
-  .mat-form-field-underline {
-    bottom: 0;
-  }
-}
