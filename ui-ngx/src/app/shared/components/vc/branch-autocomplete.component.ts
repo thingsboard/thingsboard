@@ -35,6 +35,7 @@ import { BranchInfo } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { isNotEmptyStr } from '@core/utils';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-branch-autocomplete',
@@ -52,6 +53,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   branchFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   private requiredValue: boolean;
 
@@ -91,7 +95,7 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @ViewChild('branchAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('branchInput', { read: MatAutocompleteTrigger, static: true }) autoCompleteTrigger: MatAutocompleteTrigger;
-  @ViewChild('branchInput', {static: true}) branchInput: ElementRef;
+  @ViewChild('branchInput', {static: true}) branchInput: ElementRef<HTMLInputElement>;
 
   filteredBranches: Observable<Array<BranchInfo>>;
 
@@ -264,9 +268,7 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
     this.searchText = searchText;
     return this.getBranches().pipe(
       map(branches => {
-          let res = branches.filter(branch => {
-            return searchText ? branch.name.toUpperCase().startsWith(searchText.toUpperCase()) : true;
-          });
+          let res = branches.filter(branch => searchText ? branch.name.toUpperCase().startsWith(searchText.toUpperCase()) : true);
           if (!this.selectionMode && isNotEmptyStr(searchText) && !res.find(b => b.name === searchText)) {
             res = [{name: searchText, default: false}, ...res];
           }

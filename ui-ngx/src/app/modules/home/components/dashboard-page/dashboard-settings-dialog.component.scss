@@ -27,9 +27,6 @@
 }
 
 :host ::ng-deep {
-  .mat-slide-toggle-content {
-    white-space: normal;
-  }
   .mat-expansion-panel {
     &.tb-settings {
       box-shadow: none;

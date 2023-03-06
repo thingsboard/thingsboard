@@ -31,6 +31,15 @@ CREATE TABLE IF NOT EXISTS user_settings (
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
 );
 
+ALTER TABLE user_credentials
+    ADD COLUMN IF NOT EXISTS additional_info varchar NOT NULL DEFAULT '{}';
+
+UPDATE user_credentials
+    SET additional_info = json_build_object('userPasswordHistory', (u.additional_info::json -> 'userPasswordHistory'))
+    FROM tb_user u WHERE user_credentials.user_id = u.id AND u.additional_info::jsonb ? 'userPasswordHistory';
+
+UPDATE tb_user SET additional_info = tb_user.additional_info::jsonb - 'userPasswordHistory';
+
 CREATE TABLE IF NOT EXISTS entity_statistics (
     entity_id uuid NOT NULL,
     entity_type varchar(32) NOT NULL,
