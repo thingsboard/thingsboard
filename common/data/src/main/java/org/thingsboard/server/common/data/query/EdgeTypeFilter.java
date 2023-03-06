@@ -15,11 +15,18 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 
-@Data
+@ToString
+@EqualsAndHashCode
+@Setter
 public class EdgeTypeFilter implements EntityFilter {
 
     /**
@@ -30,6 +37,14 @@ public class EdgeTypeFilter implements EntityFilter {
 
     private List<String> edgeTypes;
 
+    public List<String> getEdgeTypes() {
+        if (CollectionUtils.isEmpty(edgeTypes)) {
+            edgeTypes = Collections.singletonList(edgeType);
+        }
+        return edgeTypes;
+    }
+
+    @Getter
     private String edgeNameFilter;
 
     @Override

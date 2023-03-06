@@ -16,14 +16,21 @@
 package org.thingsboard.server.common.data.query;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@ToString
+@EqualsAndHashCode
+@Setter
 public class DeviceTypeFilter implements EntityFilter {
 
     /**
@@ -34,6 +41,14 @@ public class DeviceTypeFilter implements EntityFilter {
 
     private List<String> deviceTypes;
 
+    public List<String> getDeviceTypes() {
+        if (CollectionUtils.isEmpty(deviceTypes)) {
+            deviceTypes = Collections.singletonList(deviceType);
+        }
+        return deviceTypes;
+    }
+
+    @Getter
     private String deviceNameFilter;
 
     public DeviceTypeFilter(List<String> deviceTypes, String deviceNameFilter) {

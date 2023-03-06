@@ -15,11 +15,18 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 
-@Data
+@ToString
+@EqualsAndHashCode
+@Setter
 public class EntityViewTypeFilter implements EntityFilter {
 
     /**
@@ -30,6 +37,14 @@ public class EntityViewTypeFilter implements EntityFilter {
 
     private List<String> entityViewTypes;
 
+    public List<String> getEntityViewTypes() {
+        if (CollectionUtils.isEmpty(entityViewTypes)) {
+            entityViewTypes = Collections.singletonList(entityViewType);
+        }
+        return entityViewTypes;
+    }
+
+    @Getter
     private String entityViewNameFilter;
 
     @Override

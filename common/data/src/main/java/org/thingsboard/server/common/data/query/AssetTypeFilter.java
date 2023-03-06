@@ -15,11 +15,18 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 
-@Data
+@ToString
+@EqualsAndHashCode
+@Setter
 public class AssetTypeFilter implements EntityFilter {
 
     /**
@@ -30,6 +37,14 @@ public class AssetTypeFilter implements EntityFilter {
 
     private List<String> assetTypes;
 
+    public List<String> getAssetTypes() {
+        if (CollectionUtils.isEmpty(assetTypes)) {
+            assetTypes = Collections.singletonList(assetType);
+        }
+        return assetTypes;
+    }
+
+    @Getter
     private String assetNameFilter;
 
     @Override
