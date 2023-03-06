@@ -73,7 +73,7 @@ export class StringItemsListComponent implements ControlValueAccessor{
   floatLabel: FloatLabelType = 'auto';
 
   @Input()
-  appearance: MatFormFieldAppearance = 'standard';
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   @coerceBoolean()

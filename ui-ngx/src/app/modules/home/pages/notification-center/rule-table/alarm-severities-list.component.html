@@ -18,14 +18,13 @@
 <section [formGroup]="alarmSeveritiesForm">
   <mat-form-field fxFlex class="mat-block" [floatLabel]="flotLabel">
     <mat-label translate>alarm.alarm-severity-list</mat-label>
-    <mat-chip-list #severitiesChipList formControlName="alarmSeverities" [required]="required">
-      <mat-chip *ngFor="let severity of alarmSeveritiesForm.get('alarmSeverities').value"
-                [selectable]="!disabled"
+    <mat-chip-grid #severitiesChipList formControlName="alarmSeverities" [required]="required">
+      <mat-chip-row *ngFor="let severity of alarmSeveritiesForm.get('alarmSeverities').value"
                 [removable]="!disabled"
                 (removed)="onSeverityRemoved(severity)">
         {{ alarmSeverityTranslationMap.get(severity) | translate }}
         <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input matInput
              type="text"
              formControlName="alarmSeverity"
@@ -39,7 +38,7 @@
              [matChipInputFor]="severitiesChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              (matChipInputTokenEnd)="addSeverityFromChipInput($event)">
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-autocomplete #severityAutocomplete="matAutocomplete"
                       class="tb-autocomplete"
                       (optionSelected)="addSeverityFromAutocomplete($event)"

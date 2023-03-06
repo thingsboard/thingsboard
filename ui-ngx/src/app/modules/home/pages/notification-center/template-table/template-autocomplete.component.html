@@ -25,7 +25,7 @@
          [matAutocomplete]="templateAutocomplete">
   <button *ngIf="selectTemplateFormGroup.get('templateName').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
@@ -41,11 +41,11 @@
                     >
     <mat-option *ngFor="let template of filteredTemplate | async" [value]="template" class="template-option">
       <span class="template-option-name" [innerHTML]="template.name | highlight:searchText"></span>
-      <mat-chip-list>
-        <mat-chip disabled *ngFor="let method of template.configuration.deliveryMethodsTemplates | keyvalue">
+      <mat-chip-grid>
+        <mat-chip-row disabled *ngFor="let method of template.configuration.deliveryMethodsTemplates | keyvalue">
           {{ notificationDeliveryMethodTranslateMap.get(method.key) | translate }}
-        </mat-chip>
-      </mat-chip-list>
+        </mat-chip-row>
+      </mat-chip-grid>
     </mat-option>
     <mat-option *ngIf="!(filteredTemplate | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
