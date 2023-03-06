@@ -294,7 +294,7 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         return tenantProfile;
     }
 
-    private void addMainQueueConfig(TenantProfile tenantProfile) {
+    public static void addMainQueueConfig(TenantProfile tenantProfile) {
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
         mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
         mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
