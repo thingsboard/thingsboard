@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public void evict(Collection<K> keys) {
+        //Redis expects at least 1 key to delete. Otherwise - ERR wrong number of arguments for 'del' command
+        if (keys.isEmpty()) {
+            return;
+        }
         try (var connection = connectionFactory.getConnection()) {
             connection.del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
         }

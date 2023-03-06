@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface JsonObjectEditDialogData {
@@ -35,7 +35,7 @@ export interface JsonObjectEditDialogData {
 })
 export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEditDialogComponent, object> implements OnInit {
 
-  jsonFormGroup: FormGroup;
+  jsonFormGroup: UntypedFormGroup;
   title: string;
 
   submitted = false;
@@ -44,7 +44,7 @@ export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEdi
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: JsonObjectEditDialogData,
               public dialogRef: MatDialogRef<JsonObjectEditDialogComponent, object>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               private translate: TranslateService) {
     super(store, router, dialogRef);
   }

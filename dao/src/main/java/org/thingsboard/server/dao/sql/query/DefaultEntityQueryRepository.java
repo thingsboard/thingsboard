@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -805,6 +805,11 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String entityNameQuery(QueryContext ctx, EntityNameFilter filter) {
         ctx.addStringParameter("entity_filter_name_filter", filter.getEntityNameFilter());
+
+        if (filter.getEntityNameFilter().startsWith("%") || filter.getEntityNameFilter().endsWith("%")) {
+            return "lower(e.search_text) like lower(:entity_filter_name_filter)";
+        }
+
         return "lower(e.search_text) like lower(concat(:entity_filter_name_filter, '%%'))";
     }
 
@@ -833,6 +838,11 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
         ctx.addStringParameter("entity_filter_type_query_type", type);
         ctx.addStringParameter("entity_filter_type_query_name", name);
+
+        if (name.startsWith("%") || name.endsWith("%")) {
+            return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(:entity_filter_type_query_name)";
+        }
+
         return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
     }
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
     limitations under the License.
 
 -->
-
 <section *ngIf="!versionCreateResult$" fxLayout="column" style="height: 100%;">
   <mat-toolbar>
     <h2>{{ 'version-control.create-entities-version' | translate }}</h2>
@@ -70,7 +69,7 @@
 </section>
 <section *ngIf="versionCreateResult$">
   <section *ngIf="resultMessage">
-    <div class="mat-title vc-result-message" [innerHtml]="resultMessage"></div>
+    <div class="mat-headline-6 vc-result-message" [innerHtml]="resultMessage"></div>
   </section>
   <div *ngIf="(versionCreateResult$ | async)?.done || hasError; else progress" fxLayoutAlign="end center" fxLayoutGap="8px">
     <button mat-button color="primary"
@@ -82,7 +81,7 @@
   </div>
   <ng-template #progress>
     <section fxLayout="column" fxLayoutAlign="center center">
-      <div class="mat-title vc-result-message progress">
+      <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.creating-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>

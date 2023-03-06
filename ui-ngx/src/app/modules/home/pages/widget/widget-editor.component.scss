@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,16 @@ tb-widget-editor {
   mat-form-field.resource-field {
     max-height: 40px;
     margin: 10px 0 0;
-    .mat-form-field-wrapper {
+    .mat-mdc-text-field-wrapper {
       padding-bottom: 0;
-      .mat-form-field-flex {
+      .mat-mdc-form-field-flex {
         max-height: 40px;
-        .mat-form-field-infix {
+        .mat-mdc-form-field-infix {
           border: 0;
+          padding-top: 7px;
+          padding-bottom: 7px;
+          min-height: 32px;
         }
-      }
-      .mat-form-field-underline {
-        bottom: 0;
       }
     }
   }
@@ -91,21 +91,20 @@ tb-widget-editor {
     width: 100%;
     height: 100%;
   }
-
-  .mat-tab-label[aria-labelledby='hidden'] {
-    width: 0px !important;
-    min-width: 0px;
-    padding:  0px;
+  .mdc-tab[aria-labelledby='hidden'] {
+    width: 0 !important;
+    min-width: 0;
+    padding:  0;
+    overflow: hidden;
   }
 
 }
 
 .tb-split-vertical {
-  mat-tab-group {
-    .mat-tab-body-wrapper {
+  .mat-mdc-tab-group {
+    .mat-mdc-tab-body-wrapper {
       height: calc(100% - 49px);
-
-      mat-tab-body {
+      .mat-mdc-tab-body {
         height: 100%;
 
         & > div {
@@ -137,7 +136,7 @@ div.tb-editor-area-title-panel {
     border-radius: 5px;
   }
 
-  button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+  button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
     align-items: center;
     vertical-align: middle;
     min-width: 32px;
@@ -149,6 +148,9 @@ div.tb-editor-area-title-panel {
     &:not(.tb-help-popup-button) {
       color: #7b7b7b;
     }
+  }
+  button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+    height: 23px;
   }
   .tb-help-popup-button-loading {
     background: #f3f3f3;
@@ -171,13 +173,14 @@ mat-toolbar.tb-edit-toolbar {
   min-height: $edit-toolbar-height !important;
   max-height: $edit-toolbar-height !important;
 
-  button.mat-button-base:not(.mat-icon-button) {
+  button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
     font-size: 12px;
     line-height: 28px;
     padding: 0 8px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    height: 28px;
 
     mat-icon {
       height: 20px;
@@ -186,14 +189,11 @@ mat-toolbar.tb-edit-toolbar {
     }
   }
 
-  mat-form-field {
-    input, mat-select {
+  .mat-mdc-form-field {
+    input, .mat-mdc-select {
       font-size: 1.1rem;
       font-weight: 400;
       letter-spacing: .005em;
-    }
-    div.mat-form-field-infix {
-      padding-bottom: 5px;
     }
     &.tb-widget-title {
       min-width: 250px;
@@ -201,7 +201,7 @@ mat-toolbar.tb-edit-toolbar {
   }
 
   @media #{$mat-lt-lg} {
-    mat-form-field.tb-widget-title {
+    .mat-mdc-form-field.tb-widget-title {
       min-width: 0;
     }
   }

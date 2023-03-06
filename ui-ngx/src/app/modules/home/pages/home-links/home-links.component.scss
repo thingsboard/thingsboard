@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,23 @@
 
 :host ::ng-deep {
   .tb-home-links {
-    .mat-headline {
+    .mat-headline-5 {
       font-size: 20px;
       @media #{$mat-gt-xmd} {
         font-size: 24px;
       }
     }
-    mat-card {
+    .mat-mdc-card {
       padding: 0;
       margin: 8px;
-      mat-card-title {
+      .mat-mdc-card-title {
         margin: 0;
         padding: 24px 16px 16px;
       }
-      mat-card-title+mat-card-content {
+      .mat-mdc-card-title+.mat-mdc-card-content {
         padding-top: 0;
       }
-      mat-card-content {
+      .mat-mdc-card-content {
         padding: 16px;
       }
     }
@@ -52,28 +52,25 @@
       &:focus {
         border-bottom: none;
       }
-      .mat-button-wrapper {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        mat-icon {
-          margin: auto;
-        }
-        span {
-          height: 18px;
-          min-height: 36px;
-          max-height: 36px;
-          padding: 0 0 20px 0;
-          margin: auto;
-          font-size: 18px;
-          font-weight: 400;
-          line-height: 18px;
-          white-space: normal;
-        }
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      mat-icon {
+        margin: auto;
       }
-      &.mat-raised-button.mat-primary {
+      span.mdc-button__label {
+        height: 18px;
+        min-height: 36px;
+        max-height: 36px;
+        padding: 0 0 20px 0;
+        margin: auto;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 18px;
+        white-space: normal;
+        text-align: center;
+      }
+      &.mat-mdc-raised-button.mat-primary {
         .mat-ripple-element {
           opacity: 0.3;
           background-color: rgba(255, 255, 255, 0.3);

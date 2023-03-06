@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import {
   DEFAULT_EDRX_CYCLE,
   DEFAULT_PAGING_TRANSMISSION_WINDOW, DEFAULT_PSM_ACTIVITY_TIMER,
@@ -35,10 +35,10 @@ export class PowerModeSettingComponent implements OnInit, OnDestroy {
   powerMods = Object.values(PowerMode);
   powerModeTranslationMap = PowerModeTranslationMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   @Input()
-  parentForm: FormGroup;
+  parentForm: UntypedFormGroup;
 
   @Input()
   isDeviceSetting = false;

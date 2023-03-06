@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 
 public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
@@ -36,9 +35,7 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         customerPage = new CustomerPageHelper(driver);
     }
@@ -46,8 +43,8 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 10, groups = "smoke")
     @Description
     public void canDeleteSeveralCustomersByTopBtn() {
-        String title1 = ENTITY_NAME + "1";
-        String title2 = ENTITY_NAME + "2";
+        String title1 = ENTITY_NAME + random() + "1";
+        String title2 = ENTITY_NAME + random() + "2";
         testRestClient.postCustomer(defaultCustomerPrototype(title1));
         testRestClient.postCustomer(defaultCustomerPrototype(title2));
 
@@ -76,8 +73,8 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description
     public void deleteSeveralCustomersByTopBtnWithoutRefresh() {
-        String title1 = ENTITY_NAME + "1";
-        String title2 = ENTITY_NAME + "2";
+        String title1 = ENTITY_NAME + random() + "1";
+        String title2 = ENTITY_NAME + random() + "2";
         testRestClient.postCustomer(defaultCustomerPrototype(title1));
         testRestClient.postCustomer(defaultCustomerPrototype(title2));
 

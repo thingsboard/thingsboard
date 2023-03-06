@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,18 +36,18 @@
   </mat-form-field>
   <mat-form-field fxFlex class="mat-block" floatLabel="always">
     <mat-label translate>alarm.alarm-type-list</mat-label>
-    <mat-chip-list #alarmTypeChipList formControlName="alarmTypeList">
-      <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
+    <mat-chip-grid #alarmTypeChipList formControlName="alarmTypeList">
+      <mat-chip-row *ngFor="let type of alarmTypeList()"
                 [removable]="true" (removed)="removeAlarmType(type)">
         {{type}}
         <mat-icon matChipRemove>cancel</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input placeholder="{{ !alarmFilterFormGroup.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
              [matChipInputFor]="alarmTypeChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              matChipInputAddOnBlur
              (matChipInputTokenEnd)="addAlarmType($event)">
-    </mat-chip-list>
+    </mat-chip-grid>
   </mat-form-field>
   <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
     <button type="button"

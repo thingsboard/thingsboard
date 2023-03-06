@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-@use '~@angular/material' as mat;
+@use '@angular/material' as mat;
 @import '../theme.scss';
 
 $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
@@ -60,7 +59,7 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
         transition-property: max-width;
         position: relative;
 
-        .mat-icon-button {
+        .mat-mdc-icon-button {
           align-self: end;
         }
       }
@@ -125,41 +124,16 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
 }
 
 :host ::ng-deep {
-  .mat-slider-wrapper {
-    .mat-slider-thumb-container {
-      .mat-slider-thumb-label {
-        width: 35px;
-        height: 35px;
-      }
-    }
-  }
-
   .mat-button-toggle-group {
     width: 100%;
     min-width: 354px;
     border: 2px solid rgba(0, 0, 0, 0.06);
-
     .mat-button-toggle-checked  {
       background: rgba(0, 0, 0, 0.06);
     }
-
     .mat-button-toggle {
       border: none !important;
     }
-  }
-
-  /* Make mat-slider tooltip always visible */
-  .mat-slider-thumb-label {
-    transform: rotate(45deg) !important;
-    border-radius: 50% 50% 0 !important;
-  }
-
-  .mat-slider-thumb {
-    transform: scale(0) !important;
-  }
-
-  .mat-slider-thumb-label-text {
-    opacity: 1 !important;
   }
 }
 

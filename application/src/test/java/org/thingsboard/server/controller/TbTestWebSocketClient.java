@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbTestWebSocketClient extends WebSocketClient {
 
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     private volatile String lastMsg;
     private volatile CountDownLatch reply;
     private volatile CountDownLatch update;
@@ -87,12 +88,14 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public void registerWaitForUpdate(int count) {
+        log.debug("registerWaitForUpdate [{}]", count);
         lastMsg = null;
         update = new CountDownLatch(count);
     }
 
     @Override
     public void send(String text) throws NotYetConnectedException {
+        log.debug("send [{}]", text);
         reply = new CountDownLatch(1);
         super.send(text);
     }
@@ -110,21 +113,31 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public String waitForUpdate() {
-        return waitForUpdate(TimeUnit.SECONDS.toMillis(3));
+        return waitForUpdate(TIMEOUT);
     }
 
     public String waitForUpdate(long ms) {
+        log.debug("waitForUpdate [{}]", ms);
         try {
-            update.await(ms, TimeUnit.MILLISECONDS);
+            if (!update.await(ms, TimeUnit.MILLISECONDS)) {
+                log.warn("Failed to await update (waiting time [{}]ms elapsed)", ms, new RuntimeException("stacktrace"));
+            }
         } catch (InterruptedException e) {
-            log.warn("Failed to await reply", e);
+            log.warn("Failed to await update", e);
         }
         return lastMsg;
     }
 
     public String waitForReply() {
+        return waitForReply(TIMEOUT);
+    }
+
+    public String waitForReply(long ms) {
+        log.debug("waitForReply [{}]", ms);
         try {
-            reply.await(3, TimeUnit.SECONDS);
+            if (!reply.await(ms, TimeUnit.MILLISECONDS)) {
+                log.warn("Failed to await reply (waiting time [{}]ms elapsed)", ms, new RuntimeException("stacktrace"));
+            }
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }

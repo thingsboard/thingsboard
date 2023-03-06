@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.LocalFileDetector;
@@ -35,6 +37,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -46,6 +50,8 @@ import java.time.Duration;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
+import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 
 @Slf4j
 abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
@@ -57,11 +63,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
     protected static final PageLink pageLink = new PageLink(10);
     private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
+    private JavascriptExecutor js;
 
     @SneakyThrows
     @BeforeMethod
     public void openBrowser() {
         log.info("===>>> Setup driver");
+        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         ChromeOptions options = new ChromeOptions();
         options.setAcceptInsecureCerts(true);
         if (instance.isActive()) {
@@ -73,6 +81,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
+        openLocalhost();
     }
 
     @AfterMethod
@@ -103,14 +112,49 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         return driver.getCurrentUrl().contains(urlPath);
     }
 
+    public void jsClick(WebElement element) {
+        js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].click();", element);
+    }
+
     public static RuleChain getRuleChainByName(String name) {
-        return testRestClient.getRuleChains(pageLink).getData().stream()
-                .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
+        try {
+            return testRestClient.getRuleChains(pageLink).getData().stream()
+                    .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such rule chain with name: " + name);
+            return null;
+        }
     }
 
     public static Customer getCustomerByName(String name) {
-        return testRestClient.getCustomers(pageLink).getData().stream()
-                .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        try {
+            return testRestClient.getCustomers(pageLink).getData().stream()
+                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such customer with name: " + name);
+            return null;
+        }
+    }
+
+    public static DeviceProfile getDeviceProfileByName(String name) {
+        try {
+            return testRestClient.getDeviceProfiles(pageLink).getData().stream()
+                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such device profile with name: " + name);
+            return null;
+        }
+    }
+
+    public static AssetProfile getAssetProfileByName(String name) {
+        try {
+            return testRestClient.getAssetProfiles(pageLink).getData().stream()
+                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such asset profile with name: " + name);
+            return null;
+        }
     }
 
     @SneakyThrows

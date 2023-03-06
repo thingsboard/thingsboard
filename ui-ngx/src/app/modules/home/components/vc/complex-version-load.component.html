@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
     limitations under the License.
 
 -->
-
 <section *ngIf="!versionLoadResult$" fxLayout="column" style="height: 100%;">
   <mat-toolbar>
     <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
@@ -45,11 +44,11 @@
   </div>
 </section>
 <section *ngIf="versionLoadResult$">
-  <div *ngIf="(versionLoadResult$ | async)?.done && !entityTypeLoadResults?.length && !errorMessage" class="mat-title vc-result-message">
+  <div *ngIf="(versionLoadResult$ | async)?.done && !entityTypeLoadResults?.length && !errorMessage" class="mat-headline-6 vc-result-message">
     {{ 'version-control.no-entities-restored' | translate }}
   </div>
-  <div *ngIf="errorMessage" class="mat-title vc-result-message error" [innerHTML]="errorMessage"></div>
-  <div *ngFor="let entityTypeLoadResult of entityTypeLoadResults" class="mat-title vc-result-message">{{ entityTypeLoadResultMessage(entityTypeLoadResult) }}</div>
+  <div *ngIf="errorMessage" class="mat-headline-6 vc-result-message error" [innerHTML]="errorMessage"></div>
+  <div *ngFor="let entityTypeLoadResult of entityTypeLoadResults" class="mat-headline-6 vc-result-message">{{ entityTypeLoadResultMessage(entityTypeLoadResult) }}</div>
   <div *ngIf="(versionLoadResult$ | async)?.done || hasError; else progress"  fxLayoutAlign="end center" fxLayoutGap="8px">
     <button mat-button color="primary"
             type="button"
@@ -60,7 +59,7 @@
   </div>
   <ng-template #progress>
     <section fxLayout="column" fxLayoutAlign="center center">
-      <div class="mat-title vc-result-message progress">
+      <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.restoring-entities-from-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
