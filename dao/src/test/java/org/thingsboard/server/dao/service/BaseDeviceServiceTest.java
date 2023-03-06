@@ -286,13 +286,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         device.setName("My device");
         device.setType("default");
         device.setTenantId(tenantId);
-        Device saveDevice = deviceService.saveDevice(device);
+        Device savedDevice = deviceService.saveDevice(device);
         try {
             Assertions.assertThrows(DataValidationException.class, () -> {
-                deviceService.assignDeviceToCustomer(tenantId, saveDevice.getId(), new CustomerId(Uuids.timeBased()));
+                deviceService.assignDeviceToCustomer(tenantId, savedDevice.getId(), new CustomerId(Uuids.timeBased()));
             });
         } finally {
-            deviceService.deleteDevice(tenantId, saveDevice.getId());
+            deviceService.deleteDevice(tenantId, savedDevice.getId());
         }
     }
 
