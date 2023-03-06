@@ -52,12 +52,8 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     @LocalServerPort
     protected int wsPort;
 
-<<<<<<< HEAD
-    private TbTestWebSocketClient wsClient; // lazy
-    private TbTestWebSocketClient anotherWsClient; // lazy
-=======
     private volatile TbTestWebSocketClient wsClient; // lazy
->>>>>>> upstream/develop/3.5
+    private volatile TbTestWebSocketClient anotherWsClient; // lazy
 
     public TbTestWebSocketClient getWsClient() {
         if (wsClient == null) {

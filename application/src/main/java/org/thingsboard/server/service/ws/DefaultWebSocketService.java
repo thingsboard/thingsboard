@@ -218,7 +218,6 @@ public class DefaultWebSocketService implements WebSocketService {
         }
 
         try {
-<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
             switch (sessionRef.getSessionType()) {
                 case TELEMETRY:
                     processTelemetryCmds(sessionRef, msg);
@@ -226,45 +225,6 @@ public class DefaultWebSocketService implements WebSocketService {
                 case NOTIFICATIONS:
                     processNotificationCmds(sessionRef, msg);
                     break;
-=======
-            TelemetryPluginCmdsWrapper cmdsWrapper = JacksonUtil.OBJECT_MAPPER.readValue(msg, TelemetryPluginCmdsWrapper.class);
-            if (cmdsWrapper != null) {
-                if (cmdsWrapper.getAttrSubCmds() != null) {
-                    cmdsWrapper.getAttrSubCmds().forEach(cmd -> {
-                        if (processSubscription(sessionRef, cmd)) {
-                            handleWsAttributesSubscriptionCmd(sessionRef, cmd);
-                        }
-                    });
-                }
-                if (cmdsWrapper.getTsSubCmds() != null) {
-                    cmdsWrapper.getTsSubCmds().forEach(cmd -> {
-                        if (processSubscription(sessionRef, cmd)) {
-                            handleWsTimeseriesSubscriptionCmd(sessionRef, cmd);
-                        }
-                    });
-                }
-                if (cmdsWrapper.getHistoryCmds() != null) {
-                    cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityDataCmds() != null) {
-                    cmdsWrapper.getEntityDataCmds().forEach(cmd -> handleWsEntityDataCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getAlarmDataCmds() != null) {
-                    cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityCountCmds() != null) {
-                    cmdsWrapper.getEntityCountCmds().forEach(cmd -> handleWsEntityCountCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
-                    cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getAlarmDataUnsubscribeCmds() != null) {
-                    cmdsWrapper.getAlarmDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityCountUnsubscribeCmds() != null) {
-                    cmdsWrapper.getEntityCountUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
-                }
->>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
             }
         } catch (IOException e) {
             log.warn("Failed to decode subscription cmd: {}", e.getMessage(), e);
@@ -272,9 +232,8 @@ public class DefaultWebSocketService implements WebSocketService {
         }
     }
 
-
     private void processTelemetryCmds(WebSocketSessionRef sessionRef, String msg) throws JsonProcessingException {
-        TelemetryPluginCmdsWrapper cmdsWrapper = jsonMapper.readValue(msg, TelemetryPluginCmdsWrapper.class);
+        TelemetryPluginCmdsWrapper cmdsWrapper = JacksonUtil.fromString(msg, TelemetryPluginCmdsWrapper.class);
         if (cmdsWrapper == null) {
             return;
         }
@@ -287,7 +246,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void processNotificationCmds(WebSocketSessionRef sessionRef, String msg) throws IOException {
-        NotificationCmdsWrapper cmdsWrapper = jsonMapper.readValue(msg, NotificationCmdsWrapper.class);
+        NotificationCmdsWrapper cmdsWrapper = JacksonUtil.fromString(msg, NotificationCmdsWrapper.class);
         for (WsCmdHandler<NotificationCmdsWrapper, ? extends WsCmd> cmdHandler : notificationCmdsHandlers) {
             WsCmd cmd = cmdHandler.extractCmd(cmdsWrapper);
             if (cmd != null) {
@@ -526,18 +485,14 @@ public class DefaultWebSocketService implements WebSocketService {
                         .allKeys(false)
                         .keyStates(subState)
                         .scope(scope)
-<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
-                        .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
-=======
-                        .updateConsumer((sessionId, update) -> {
+                        .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendWsMsg(sessionId, update);
+                                sendWsMsg(subscription.getSessionId(), update);
                             } finally {
                                 subLock.unlock();
                             }
                         })
->>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
                         .build();
 
                 subLock.lock();
@@ -643,15 +598,10 @@ public class DefaultWebSocketService implements WebSocketService {
                         .entityId(entityId)
                         .allKeys(true)
                         .keyStates(subState)
-<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
-                        .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
-                        .scope(scope).build();
-                oldSubService.addSubscription(sub);
-=======
-                        .updateConsumer((sessionId, update) -> {
+                        .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendWsMsg(sessionId, update);
+                                sendWsMsg(subscription.getSessionId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -666,7 +616,6 @@ public class DefaultWebSocketService implements WebSocketService {
                 } finally {
                     subLock.unlock();
                 }
->>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
             }
 
             @Override
@@ -749,20 +698,17 @@ public class DefaultWebSocketService implements WebSocketService {
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
-<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
-                        .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
-=======
-                        .updateConsumer((sessionId, update) -> {
+                        .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendWsMsg(sessionId, update);
+                                sendWsMsg(subscription.getSessionId(), update);
                             } finally {
                                 subLock.unlock();
                             }
                         })
->>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
                         .allKeys(true)
-                        .keyStates(subState).build();
+                        .keyStates(subState)
+                        .build();
 
                 subLock.lock();
                 try {
@@ -805,20 +751,17 @@ public class DefaultWebSocketService implements WebSocketService {
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
-<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
-                        .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
-=======
-                        .updateConsumer((sessionId, update) -> {
+                        .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendWsMsg(sessionId, update);
+                                sendWsMsg(subscription.getSessionId(), update);
                             } finally {
                                 subLock.unlock();
                             }
                         })
->>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
                         .allKeys(false)
-                        .keyStates(subState).build();
+                        .keyStates(subState)
+                        .build();
 
                 subLock.lock();
                 try{
