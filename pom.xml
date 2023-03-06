@@ -147,7 +147,7 @@
         <selenium.version>4.6.0</selenium.version>
         <webdrivermanager.version>5.2.0</webdrivermanager.version>
         <allure-testng.version>2.21.0</allure-testng.version>
-        <allure-maven.version>2.10.0</allure-maven.version>
+        <allure-maven.version>2.12.0</allure-maven.version>
     </properties>
 
     <modules>
