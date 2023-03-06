@@ -80,7 +80,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       const cssParser = new cssjs();
       cssParser.testMode = false;
       this.markdownClass += '-' + hashCode(cssString);
-      cssParser.cssPreviewNamespace = this.markdownClass;
+      cssParser.cssPreviewNamespace = 'tb-default .' + this.markdownClass;
       cssParser.createStyleElement(this.markdownClass, cssString);
     }
     const pageSize = isDefinedAndNotNull(this.ctx.widgetConfig.pageSize) &&
