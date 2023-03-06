@@ -65,20 +65,20 @@
         <section *ngIf="alarmFormGroup.get('propagate').value === true" style="padding-bottom: 1em;">
           <mat-form-field floatLabel="always" class="mat-block">
             <mat-label translate>device-profile.alarm-rule-relation-types-list</mat-label>
-            <mat-chip-list #relationTypesChipList [disabled]="disabled">
-              <mat-chip
+            <mat-chip-grid #relationTypesChipList [disabled]="disabled">
+              <mat-chip-row
                 *ngFor="let key of alarmFormGroup.get('propagateRelationTypes').value;"
                 (removed)="removeRelationType(key)">
                 {{key}}
                 <mat-icon matChipRemove>close</mat-icon>
-              </mat-chip>
+              </mat-chip-row>
               <input matInput type="text" placeholder="{{'device-profile.alarm-rule-relation-types-list' | translate}}"
                      style="max-width: 200px;"
                      [matChipInputFor]="relationTypesChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                      matChipInputAddOnBlur
                      (matChipInputTokenEnd)="addRelationType($event)">
-            </mat-chip-list>
+            </mat-chip-grid>
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>
         </section>

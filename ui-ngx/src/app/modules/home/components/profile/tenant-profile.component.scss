@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  .mat-form-field-infix {
+  .mat-mdc-form-field-infix {
     width: 100% !important;
   }
 
-  .mat-checkbox{
+  .mat-mdc-checkbox{
     &.hinted-checkbox {
-      .mat-checkbox-inner-container {
-        margin-top: 4px;
+      .mdc-checkbox {
+        margin-top: -28px;
       }
     }
-
-    .mat-checkbox-layout{
+    .mdc-form-field {
       white-space: normal;
     }
   }
@@ -42,6 +41,9 @@
 
   .mat-expansion-panel-header {
     height: 48px;
+    &.mat-expanded {
+      height: 48px;
+    }
   }
   .expansion-panel-block {
     padding-bottom: 16px;

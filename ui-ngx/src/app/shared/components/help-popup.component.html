@@ -36,12 +36,14 @@
     <button mat-button
             color="primary"
             class="tb-help-popup-text-button"
-            [ngClass]="{'mat-stroked-button': popoverVisible && popoverReady}">
-      <ng-container *ngIf="triggerSafeHtml">
-        <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
-      </ng-container>
-      <mat-icon *ngIf="!popoverVisible || popoverReady" class="tb-mat-16">open_in_new</mat-icon>
-      <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" diameter="16" strokeWidth="2"></mat-spinner>
+            [ngClass]="{'mat-mdc-outlined-button mdc-button--outlined': popoverVisible && popoverReady}">
+      <span>
+        <ng-container *ngIf="triggerSafeHtml">
+          <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
+        </ng-container>
+        <mat-icon *ngIf="!popoverVisible || popoverReady" class="tb-mat-16">open_in_new</mat-icon>
+        <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" diameter="16" strokeWidth="2"></mat-spinner>
+      </span>
     </button>
   </div>
 </fieldset>

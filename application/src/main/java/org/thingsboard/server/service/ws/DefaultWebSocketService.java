@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -27,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
@@ -98,6 +98,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -117,7 +119,6 @@ public class DefaultWebSocketService implements WebSocketService {
     private static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
     private static final String PROCESSING_MSG = "[{}] Processing: {}";
-    private static final ObjectMapper jsonMapper = new ObjectMapper();
     private static final String FAILED_TO_FETCH_DATA = "Failed to fetch data!";
     private static final String FAILED_TO_FETCH_ATTRIBUTES = "Failed to fetch attributes!";
     private static final String SESSION_META_DATA_NOT_FOUND = "Session meta-data not found!";
@@ -217,6 +218,7 @@ public class DefaultWebSocketService implements WebSocketService {
         }
 
         try {
+<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
             switch (sessionRef.getSessionType()) {
                 case TELEMETRY:
                     processTelemetryCmds(sessionRef, msg);
@@ -224,6 +226,45 @@ public class DefaultWebSocketService implements WebSocketService {
                 case NOTIFICATIONS:
                     processNotificationCmds(sessionRef, msg);
                     break;
+=======
+            TelemetryPluginCmdsWrapper cmdsWrapper = JacksonUtil.OBJECT_MAPPER.readValue(msg, TelemetryPluginCmdsWrapper.class);
+            if (cmdsWrapper != null) {
+                if (cmdsWrapper.getAttrSubCmds() != null) {
+                    cmdsWrapper.getAttrSubCmds().forEach(cmd -> {
+                        if (processSubscription(sessionRef, cmd)) {
+                            handleWsAttributesSubscriptionCmd(sessionRef, cmd);
+                        }
+                    });
+                }
+                if (cmdsWrapper.getTsSubCmds() != null) {
+                    cmdsWrapper.getTsSubCmds().forEach(cmd -> {
+                        if (processSubscription(sessionRef, cmd)) {
+                            handleWsTimeseriesSubscriptionCmd(sessionRef, cmd);
+                        }
+                    });
+                }
+                if (cmdsWrapper.getHistoryCmds() != null) {
+                    cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getEntityDataCmds() != null) {
+                    cmdsWrapper.getEntityDataCmds().forEach(cmd -> handleWsEntityDataCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getAlarmDataCmds() != null) {
+                    cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getEntityCountCmds() != null) {
+                    cmdsWrapper.getEntityCountCmds().forEach(cmd -> handleWsEntityCountCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
+                    cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getAlarmDataUnsubscribeCmds() != null) {
+                    cmdsWrapper.getAlarmDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getEntityCountUnsubscribeCmds() != null) {
+                    cmdsWrapper.getEntityCountUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+                }
+>>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
             }
         } catch (IOException e) {
             log.warn("Failed to decode subscription cmd: {}", e.getMessage(), e);
@@ -468,7 +509,6 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
 
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, 0L));
@@ -476,6 +516,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
                 TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
+                Lock subLock = new ReentrantLock();
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
@@ -485,9 +526,28 @@ public class DefaultWebSocketService implements WebSocketService {
                         .allKeys(false)
                         .keyStates(subState)
                         .scope(scope)
+<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
                         .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
+=======
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
+>>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
                         .build();
-                oldSubService.addSubscription(sub);
+
+                subLock.lock();
+                try{
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
+                } finally {
+                    subLock.unlock();
+                }
+
             }
 
             @Override
@@ -568,13 +628,13 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
 
                 Map<String, Long> subState = new HashMap<>(attributesData.size());
                 attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
+                Lock subLock = new ReentrantLock();
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
@@ -583,9 +643,30 @@ public class DefaultWebSocketService implements WebSocketService {
                         .entityId(entityId)
                         .allKeys(true)
                         .keyStates(subState)
+<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
                         .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
                         .scope(scope).build();
                 oldSubService.addSubscription(sub);
+=======
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
+                        .scope(scope)
+                        .build();
+
+                subLock.lock();
+                try {
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
+                } finally {
+                    subLock.unlock();
+                }
+>>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
             }
 
             @Override
@@ -658,20 +739,38 @@ public class DefaultWebSocketService implements WebSocketService {
         FutureCallback<List<TsKvEntry>> callback = new FutureCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
                 Map<String, Long> subState = new HashMap<>(data.size());
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
+                Lock subLock = new ReentrantLock();
                 TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
+<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
                         .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
+=======
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
+>>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
                         .allKeys(true)
                         .keyStates(subState).build();
-                oldSubService.addSubscription(sub);
+
+                subLock.lock();
+                try {
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
+                } finally {
+                    subLock.unlock();
+                }
             }
 
             @Override
@@ -695,21 +794,39 @@ public class DefaultWebSocketService implements WebSocketService {
         return new FutureCallback<>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
-                sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startTs));
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
+                Lock subLock = new ReentrantLock();
                 TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
+<<<<<<< HEAD:application/src/main/java/org/thingsboard/server/service/ws/DefaultWebSocketService.java
                         .updateProcessor((subscription, update) -> sendWsMsg(subscription.getSessionId(), update))
+=======
+                        .updateConsumer((sessionId, update) -> {
+                            subLock.lock();
+                            try {
+                                sendWsMsg(sessionId, update);
+                            } finally {
+                                subLock.unlock();
+                            }
+                        })
+>>>>>>> upstream/develop/3.5:application/src/main/java/org/thingsboard/server/service/telemetry/DefaultTelemetryWebSocketService.java
                         .allKeys(false)
                         .keyStates(subState).build();
-                oldSubService.addSubscription(sub);
+
+                subLock.lock();
+                try{
+                    oldSubService.addSubscription(sub);
+                    sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
+                } finally {
+                    subLock.unlock();
+                }
             }
 
             @Override
@@ -815,7 +932,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
     private void sendWsMsg(WebSocketSessionRef sessionRef, int cmdId, Object update) {
         try {
-            String msg = jsonMapper.writeValueAsString(update);
+            String msg = JacksonUtil.OBJECT_MAPPER.writeValueAsString(update);
             executor.submit(() -> {
                 try {
                     msgEndpoint.send(sessionRef, cmdId, msg);

@@ -15,17 +15,16 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="entityListFormGroup" class="mat-block" floatLabel="always">
+<mat-form-field [formGroup]="entityListFormGroup" class="mat-block tb-chip-list">
   <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
-  <mat-chip-list #chipList formControlName="entities" [required]="required">
-    <mat-chip
+  <mat-chip-grid #chipList formControlName="entities">
+    <mat-chip-row
       *ngFor="let entity of entities"
-      [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(entity)">
       {{entity.name}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip>
+    </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? placeholderText : '' }}"
            style="max-width: 200px;"
            #entityInput
@@ -36,7 +35,7 @@
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entityAutocomplete"
            [matChipInputFor]="chipList">
-  </mat-chip-list>
+  </mat-chip-grid>
   <mat-autocomplete #entityAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     [displayWith]="displayEntityFn">

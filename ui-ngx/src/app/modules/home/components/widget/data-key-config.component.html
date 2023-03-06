@@ -81,9 +81,8 @@
           <legend class="group-title" translate>datakey.delta-calculation</legend>
           <mat-expansion-panel class="tb-settings comparison" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
             <mat-expansion-panel-header fxLayout="row wrap">
-              <mat-panel-title fxLayout="column">
-                <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+              <mat-panel-title fxLayout="column" fxLayoutAlign="center start">
+                <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
                   {{ 'datakey.enable-delta-calculation' | translate }}
                 </mat-slide-toggle>
                 <mat-hint class="tb-hint" style="line-height: 15px; padding-left: 45px;">{{ 'datakey.enable-delta-calculation-hint' | translate }}</mat-hint>

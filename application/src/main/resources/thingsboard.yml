@@ -73,6 +73,8 @@ server:
       min_timeout: "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
       # Default value of the server side RPC timeout.
       default_timeout: "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
+    rate_limits:
+      reset_password_per_user: "${RESET_PASSWORD_PER_USER_RATE_LIMIT_CONFIGURATION:5:3600}"
 
 # Application info
 app:
@@ -583,6 +585,7 @@ spring:
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
+      registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
 
 # Audit log parameters
 audit-log:
@@ -1224,3 +1227,4 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+

@@ -42,7 +42,7 @@ public class OtherPageElements extends AbstractBasePage {
     private static final String MARKS_CHECKBOX = "//mat-row[contains (@class,'mat-selected')]//mat-checkbox[contains(@class, 'checked')]";
     private static final String SELECT_ALL_CHECKBOX = "//thead//mat-checkbox";
     private static final String ALL_ENTITY = "//mat-row[@class='mat-row cdk-row mat-row-select ng-star-inserted']";
-    private static final String EDIT_PENCIL_BTN = "//mat-icon[contains(text(),'edit')]/ancestor::button";
+    private static final String EDIT_PENCIL_BTN = "//tb-details-panel//mat-icon[contains(text(),'edit')]/ancestor::button";
     private static final String NAME_FIELD_EDIT_VIEW = "//input[@formcontrolname='name']";
     private static final String HEADER_NAME_VIEW = "//header//div[@class='tb-details-title']/span";
     private static final String DONE_BTN_EDIT_VIEW = "//mat-icon[contains(text(),'done')]/ancestor::button";

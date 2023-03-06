@@ -15,14 +15,15 @@
  */
 :host {
   .predicate-list {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     max-height: 350px;
     .no-data-found {
       height: 50px;
     }
   }
   .filters-operation {
-    margin-top: -40px;
+    margin-top: -18px;
     color: #666;
     font-weight: 500;
   }
