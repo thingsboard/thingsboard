@@ -455,7 +455,7 @@ public class AdminController extends BaseController {
     @ResponseBody
     public String getMailProcessingUrl() throws ThingsboardException {
          accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-         return "\"" + mailOAuth2Configuration.getLoginProcessingUrl() + "\"";
+         return "\"/api/admin/mail/oauth2/code\"";
     }
 
     @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in " +

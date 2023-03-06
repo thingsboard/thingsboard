@@ -131,7 +131,6 @@ security:
 mail:
   oauth2:
     refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}" # Number of seconds (1 day).
-    loginProcessingUrl: "${MAIL_OAUTH2_LOGIN_PROCESSING_URL:/api/admin/mail/oauth2/code}"
     providers:
       - name: "${GOOGLE_PROVIDER_NAME:GOOGLE}"
         authUri: "${GOOGLE_AUTH_URL:https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&access_type=offline}"

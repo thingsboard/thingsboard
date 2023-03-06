@@ -180,6 +180,7 @@ public class DefaultMailService implements MailService {
         boolean oauth2Enabled = jsonConfig.has("enableOauth2") && jsonConfig.get("enableOauth2").asBoolean();
         if (oauth2Enabled) {
             javaMailProperties.put(MAIL_PROP + protocol + ".auth.mechanisms", "XOAUTH2");
+            javaMailProperties.put("oauth2", true);
         }
         return javaMailProperties;
     }
@@ -495,8 +496,7 @@ public class DefaultMailService implements MailService {
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
         try {
             Properties javaMailProperties = ((JavaMailSenderImpl) mailSender).getJavaMailProperties();
-            Object protocol = javaMailProperties.get("mail.transport.protocol");
-            if ("XOAUTH2".equals(javaMailProperties.get(MAIL_PROP + protocol + ".auth.mechanisms"))){
+            if (Boolean.TRUE.equals(javaMailProperties.get("oauth2"))){
                 ((JavaMailSenderImpl)mailSender).setPassword(getAccessToken());
             }
             mailExecutorService.submit(() -> mailSender.send(msg)).get(timeout, TimeUnit.MILLISECONDS);
