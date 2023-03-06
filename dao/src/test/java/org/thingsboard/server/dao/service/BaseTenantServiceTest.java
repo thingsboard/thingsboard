@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
@@ -321,6 +322,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
     }
 
+    @Ignore // because Tenant validator have no such validation since queue config feature
     @Test
     public void testSaveTenantWithIsolatedProfileInMonolithSetup() {
         TenantProfile tenantProfile = new TenantProfile();
