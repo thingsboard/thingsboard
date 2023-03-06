@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
@@ -54,17 +55,21 @@ public abstract class BaseAdminSettingsServiceTest extends AbstractServiceTest {
         Assert.assertEquals(adminSettings.getJsonValue(), savedAdminSettings.getJsonValue());
     }
     
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveAdminSettingsWithEmptyKey() {
         AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         adminSettings.setKey(null);
-        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
+        });
     }
     
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testChangeAdminSettingsKey() {
         AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         adminSettings.setKey("newKey");
-        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
+        });
     }
 }
