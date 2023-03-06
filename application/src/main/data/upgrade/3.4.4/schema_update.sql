@@ -14,6 +14,18 @@
 -- limitations under the License.
 --
 
+-- USER CREDENTIALS START
+
+ALTER TABLE user_credentials
+    ADD COLUMN IF NOT EXISTS additional_info varchar NOT NULL DEFAULT '{}';
+
+UPDATE user_credentials
+    SET additional_info = json_build_object('userPasswordHistory', (u.additional_info::json -> 'userPasswordHistory'))
+    FROM tb_user u WHERE user_credentials.user_id = u.id AND u.additional_info::jsonb ? 'userPasswordHistory';
+
+UPDATE tb_user SET additional_info = tb_user.additional_info::jsonb - 'userPasswordHistory';
+
+-- USER CREDENTIALS END
 
 -- ALARM ASSIGN TO USER START
 

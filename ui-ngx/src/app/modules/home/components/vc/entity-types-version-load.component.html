@@ -52,7 +52,7 @@
               [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
             </tb-entity-type-select>
             <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" fxLayoutGap.xs="8px" formGroupName="config">
-              <div fxFlex fxLayout="column" fxLayoutGap="8px">
+              <div fxFlex fxLayout="column">
                 <mat-checkbox #removeOtherEntitiesCheckbox
                               formControlName="removeOtherEntities"
                               (click)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup, $event)">
@@ -62,7 +62,7 @@
                   {{ 'version-control.find-existing-entity-by-name' | translate }}
                 </mat-checkbox>
               </div>
-              <div fxFlex fxLayout="column" fxLayoutGap="8px">
+              <div fxFlex fxLayout="column">
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="loadCredentials">
                   {{ 'version-control.load-credentials' | translate }}
                 </mat-checkbox>

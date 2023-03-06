@@ -88,57 +88,6 @@ a:focus {
   border-bottom: 1px solid #4054b2;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  &, &.mat-headline-5 {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-  }
-}
-
-h1 {
-  font-size: 3.4rem;
-  font-weight: 400;
-  line-height: 4rem;
-}
-
-h2 {
-  font-size: 2.4rem;
-  font-weight: 400;
-  line-height: 3.2rem;
-}
-
-h3 {
-  font-size: 2rem;
-  font-weight: 500;
-  letter-spacing: .005em;
-}
-
-h4 {
-  font-size: 1.6rem;
-  font-weight: 400;
-  line-height: 2.4rem;
-  letter-spacing: .01em;
-}
-
-h5 {
-  font-size: 1.4rem;
-  font-weight: 400;
-  line-height: 2rem;
-  letter-spacing: .01em;
-}
-
-h6 {
-  font-size: 1.2rem;
-  font-weight: 400;
-  line-height: 1.6rem;
-  letter-spacing: .01em;
-}
-
 p {
   margin: .8em 0 1.6em;
   font-size: 1.6rem;
@@ -475,7 +424,7 @@ mat-label {
   }
 }
 
-.tb-markdown-view {
+.tb-default .tb-markdown-view, .tb-dark .tb-markdown-view, .tb-markdown-view {
   display: block;
 
   $headings: h1, h2, h3, h4, h5, h6;
@@ -864,6 +813,57 @@ mat-label {
   /*********************************
    * MATERIAL DESIGN CUSTOMIZATIONS
    ********************************/
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    &, &.mat-headline-5 {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+  }
+
+  h1 {
+    font-size: 3.4rem;
+    font-weight: 400;
+    line-height: 4rem;
+  }
+
+  h2 {
+    font-size: 2.4rem;
+    font-weight: 400;
+    line-height: 3.2rem;
+  }
+
+  h3 {
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: .005em;
+  }
+
+  h4 {
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 2.4rem;
+    letter-spacing: .01em;
+  }
+
+  h5 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    line-height: 2rem;
+    letter-spacing: .01em;
+  }
+
+  h6 {
+    font-size: 1.2rem;
+    font-weight: 400;
+    line-height: 1.6rem;
+    letter-spacing: .01em;
+  }
 
   .mat-mdc-tooltip {
     white-space: pre-line;
