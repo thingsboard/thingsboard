@@ -18,6 +18,10 @@ package org.thingsboard.server.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -86,11 +90,13 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     }
 
     @Before
+    @BeforeEach
     public void beforeWsTest() throws Exception {
         // placeholder
     }
 
     @After
+    @AfterEach
     public void afterWsTest() throws Exception {
         if (wsClient != null) {
             wsClient.close();
@@ -112,5 +118,10 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         }
         return wsClient;
     }
+
+    //placeholder to not fire issue when no tests found for junit4 during migration period (possibly to set a general setting to suppress that warning)
+    @Ignore
+    @Test
+    public void initJunit4WorkaroundIgnoredTest(){}
 
 }

@@ -31,6 +31,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
@@ -275,6 +277,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 this.mappingJackson2HttpMessageConverter);
     }
 
+    @BeforeEach
     @Before
     public void setupWebTest() throws Exception {
         log.debug("Executing web test setup");
@@ -344,6 +347,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }).when(mailService).sendResetPasswordEmailAsync(anyString(), anyString());
     }
 
+    @AfterEach
     @After
     public void teardownWebTest() throws Exception {
         log.debug("Executing web test teardown");
