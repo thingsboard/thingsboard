@@ -70,6 +70,8 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
 
+    PageData<DeviceId> findDevicesIdsByTenantId(TenantId tenantId, PageLink pageLink);
+
     PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
     PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type, PageLink pageLink);
@@ -119,4 +121,7 @@ public interface DeviceService extends EntityDaoService {
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
 
     long countByTenantId(TenantId tenantId);
+
+    long count();
+
 }

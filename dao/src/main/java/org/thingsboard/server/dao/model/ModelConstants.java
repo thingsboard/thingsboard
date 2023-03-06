@@ -46,6 +46,7 @@ public class ModelConstants {
     public static final String ALIAS_PROPERTY = "alias";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
+    public static final String ENTITY_ID_PROPERTY = "entity_id";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
 
     public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
@@ -660,6 +661,13 @@ public class ModelConstants {
     public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
+
+    /**
+     * Entity statistics constants
+     */
+    public static final String ENTITY_STATISTICS_COLUMN_FAMILY_NAME = "entity_statistics";
+    public static final String ENTITY_STATISTICS_LATEST_VALUE_PROPERTY = "latest_value";
+    public static final String ENTITY_STATISTICS_TS_PROPERTY = "ts";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

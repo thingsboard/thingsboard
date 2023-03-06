@@ -796,3 +796,12 @@ CREATE TABLE IF NOT EXISTS user_settings (
     settings varchar(10000),
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS entity_statistics (
+    entity_id uuid NOT NULL,
+    entity_type varchar(32) NOT NULL,
+    tenant_id uuid,
+    latest_value jsonb,
+    ts bigint NOT NULL,
+    CONSTRAINT entity_statistics_pkey PRIMARY KEY (entity_id, entity_type)
+);

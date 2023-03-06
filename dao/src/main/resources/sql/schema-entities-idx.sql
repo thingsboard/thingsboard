@@ -81,3 +81,5 @@ CREATE INDEX IF NOT EXISTS idx_rule_node_type ON rule_node(type);
 CREATE INDEX IF NOT EXISTS idx_api_usage_state_entity_id ON api_usage_state(entity_id);
 
 CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
+
+CREATE INDEX IF NOT EXISTS idx_entity_statistics_tenant_id_entity_type ON entity_statistics(tenant_id, entity_type);

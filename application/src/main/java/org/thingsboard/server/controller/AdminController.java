@@ -26,34 +26,49 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
-import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.stats.device.DevicesStatisticsService;
+import org.thingsboard.server.service.stats.device.DevicesSummaryStatistics;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
 import org.thingsboard.server.service.update.UpdateService;
 
-import static org.thingsboard.server.controller.ControllerConstants.*;
+import java.util.UUID;
+
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -85,6 +100,9 @@ public class AdminController extends BaseController {
 
     @Autowired
     private TbAutoCommitSettingsService autoCommitSettingsService;
+
+    @Autowired(required = false)
+    private DevicesStatisticsService devicesStatisticsService;
 
     @Autowired
     private UpdateService updateService;
@@ -383,6 +401,16 @@ public class AdminController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @GetMapping("/statistics/devices")
+    public DevicesSummaryStatistics getDevicesSummaryStatistics(@RequestParam(value = "tenantId", required = false) UUID tenantUuid) {
+        if (devicesStatisticsService == null) {
+            throw new IllegalArgumentException("Devices statistics calculation is disabled. Use 'usage.stats.devices.enabled' ('DEVICES_STATS_ENABLED') property to enable");
+        }
+        TenantId tenantId = tenantUuid != null && !tenantUuid.equals(EntityId.NULL_UUID) ? TenantId.fromUUID(tenantUuid) : null;
+        return devicesStatisticsService.getSummaryStatistics(tenantId);
     }
 
     @ApiOperation(value = "Check for new Platform Releases (checkUpdates)",

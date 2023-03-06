@@ -54,6 +54,8 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private boolean enabled;
     @Value("${usage.stats.report.enabled_per_customer:false}")
     private boolean enabledPerCustomer;
+    @Value("${usage.stats.report.enabled_per_entity:false}")
+    private boolean enabledPerEntity;
     @Value("${usage.stats.report.interval:10}")
     private int interval;
 
@@ -123,9 +125,13 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
         report.forEach(((parent, statsMsg) -> {
             //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, parent.getTenantId(), parent.getId())
-                    .newByTopic(msgProducer.getDefaultTopic());
-            msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
+            try {
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, parent.getTenantId(), parent.getId())
+                        .newByTopic(msgProducer.getDefaultTopic());
+                msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
+            } catch (Exception e) {
+                log.warn("Failed to report usage stats for tenant {}", parent.getTenantId(), e);
+            }
         }));
 
         if (!report.isEmpty()) {
@@ -155,7 +161,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
             reportLevels[2] = ReportLevel.of(tenantId, customerId);
         }
-        if (entityId != null) {
+        if (enabledPerEntity && entityId != null) {
             if (key.isCountPerEntity()) {
                 reportLevels[3] = ReportLevel.of(tenantId, entityId);
             } else {

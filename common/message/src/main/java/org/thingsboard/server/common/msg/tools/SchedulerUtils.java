@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.common.msg.tools;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
@@ -70,6 +73,18 @@ public class SchedulerUtils {
 
     public static TemporalAdjuster firstDayOfNextNextMonth() {
         return (temporal) -> temporal.with(DAY_OF_MONTH, 1).plus(2, MONTHS);
+    }
+
+    public static long getStartOfPreviousDay() {
+        return toMillis(LocalDate.now(UTC).minusDays(1).atStartOfDay(UTC));
+    }
+
+    public static long getEndOfPreviousDay() {
+        return toMillis(LocalDateTime.now(UTC).minusDays(1).with(LocalTime.MAX).atZone(UTC));
+    }
+
+    private static long toMillis(ZonedDateTime zonedDateTime) {
+        return zonedDateTime.toInstant().toEpochMilli();
     }
 
 }

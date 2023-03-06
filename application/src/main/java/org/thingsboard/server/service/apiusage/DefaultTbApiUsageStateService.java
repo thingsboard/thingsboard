@@ -331,6 +331,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         long ts = System.currentTimeMillis();
         List<TsKvEntry> profileThresholds = new ArrayList<>();
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            if (key.getApiLimitKey() == null) continue;
             long newProfileThreshold = newData.getProfileThreshold(key);
             if (oldData == null || oldData.getProfileThreshold(key) != newProfileThreshold) {
                 log.info("[{}] Updating profile threshold [{}]:[{}]", tenantId, key, newProfileThreshold);

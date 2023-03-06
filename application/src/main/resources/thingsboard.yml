@@ -135,9 +135,12 @@ usage:
     report:
       enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      enabled_per_entity: "${USAGE_STATS_REPORT_PER_ENTITY_ENABLED:false}"
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
     check:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
+    devices:
+      enabled: "${DEVICES_STATS_ENABLED:false}"
 
 # UI parameters
 ui:

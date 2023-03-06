@@ -71,6 +71,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.stats.EntityStatisticsDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -109,6 +110,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private EntityStatisticsDao entityStatisticsDao;
 
     @Autowired
     private DataValidator<Device> deviceValidator;
@@ -324,6 +328,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             deviceCredentialsService.deleteDeviceCredentials(tenantId, deviceCredentials);
         }
         deleteEntityRelations(tenantId, deviceId);
+        entityStatisticsDao.deleteByEntityId(tenantId, deviceId);
 
         deviceDao.removeById(tenantId, deviceId.getId());
 
@@ -352,6 +357,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         log.trace("Executing findTenantDeviceIdPairs, pageLink [{}]", pageLink);
         validatePageLink(pageLink);
         return deviceDao.findDeviceIdInfos(pageLink);
+    }
+
+    @Override
+    public PageData<DeviceId> findDevicesIdsByTenantId(TenantId tenantId, PageLink pageLink) {
+        return deviceDao.findDevicesIdsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -679,6 +689,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public long countByTenantId(TenantId tenantId) {
         return deviceDao.countByTenantId(tenantId);
+    }
+
+    @Override
+    public long count() {
+        return deviceDao.count();
     }
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =

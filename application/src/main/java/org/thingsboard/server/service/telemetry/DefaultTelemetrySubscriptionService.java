@@ -445,6 +445,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private <S> void addVoidCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
+        if (callback == null) return;
         Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
             public void onSuccess(@Nullable S result) {
