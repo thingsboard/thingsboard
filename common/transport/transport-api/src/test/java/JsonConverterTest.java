@@ -18,6 +18,7 @@ import com.google.gson.JsonSyntaxException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -88,15 +89,19 @@ public class JsonConverterTest {
         Assert.assertEquals("10000000000000000000", result.get(0L).get(0).getStrValue().get());
     }
 
-    @Test(expected = JsonSyntaxException.class)
+    @Test
     public void testParseBigDecimalOutOfLongRangeWithoutParsing() {
         JsonConverter.setTypeCastEnabled(false);
-        JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 89701010051400054084}"), 0L);
+        Assertions.assertThrows(JsonSyntaxException.class, () -> {
+            JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 89701010051400054084}"), 0L);
+        });
     }
 
-    @Test(expected = JsonSyntaxException.class)
+    @Test
     public void testParseBigDecimalOutOfLongRangeWithoutParsing2() {
         JsonConverter.setTypeCastEnabled(false);
-        JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 9.9701010061400066E19}"), 0L);
+        Assertions.assertThrows(JsonSyntaxException.class, () -> {
+            JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 9.9701010061400066E19}"), 0L);
+        });
     }
 }
