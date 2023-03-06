@@ -16,21 +16,18 @@
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 
-@RunWith(MockitoJUnitRunner.class)
 public class JsonConverterTest {
 
-    private static final JsonParser JSON_PARSER = new JsonParser();
+    private final JsonParser JSON_PARSER = new JsonParser();
 
-    @Before
+    @BeforeEach
     public void before() {
         JsonConverter.setTypeCastEnabled(true);
     }
