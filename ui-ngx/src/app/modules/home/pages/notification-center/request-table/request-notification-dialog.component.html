@@ -55,7 +55,7 @@
         <ng-template #scratchTemplate>
           <section formGroupName="template">
             <section formGroupName="configuration">
-              <mat-form-field class="mat-block tb-form-fields">
+              <mat-form-field class="mat-block" subscriptSizing="dynamic">
                 <mat-label translate>notification.subject</mat-label>
                 <input matInput formControlName="notificationSubject" required>
                 <mat-error *ngIf="notificationRequestForm.get('template.configuration.notificationSubject').hasError('required')">
@@ -63,7 +63,7 @@
                 </mat-error>
                 <mat-hint>{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).hint | translate }}</mat-hint>
               </mat-form-field>
-              <mat-form-field class="mat-block tb-form-fields">
+              <mat-form-field class="mat-block tb-form-fields" subscriptSizing="dynamic">
                 <mat-label translate>notification.message</mat-label>
                 <input matInput formControlName="defaultTextTemplate" required>
                 <mat-error *ngIf="notificationRequestForm.get('template.configuration.defaultTextTemplate').hasError('required')">
@@ -75,7 +75,7 @@
                      [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
                 {{ "notification.delivery-methods" | translate }}
               </label>
-              <section formGroupName="deliveryMethodsTemplates" fxLayout="row warap">
+              <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap">
                 <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
                          [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
                   <mat-slide-toggle class="delivery-method" formControlName="enabled">
@@ -97,7 +97,7 @@
           <button #createTargetButton
                   mat-button color="primary" matSuffix
                   (click)="createTarget($event, createTargetButton)">
-            {{ 'notification.create-new' | translate }}
+            <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
           </button>
         </tb-entity-list>
         <section formGroupName="additionalConfig" class="additional-config-group">
@@ -146,7 +146,8 @@
             <mat-slide-toggle formControlName="enabled" class="toggle">
               {{ 'icon.icon' | translate }}
             </mat-slide-toggle>
-            <div *ngIf="pushTemplateForm.get('additionalConfig.icon.enabled').value" fxLayout="row" fxLayoutGap="12px">
+            <div *ngIf="pushTemplateForm.get('additionalConfig.icon.enabled').value"
+                 fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
               <tb-material-icon-select formControlName="icon" required fxFlex>
               </tb-material-icon-select>
               <tb-color-input formControlName="color" fxFlex>
@@ -158,7 +159,7 @@
               {{ 'notification.action-button' | translate }}
             </mat-slide-toggle>
             <div *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
-              <div fxLayout="row" fxLayoutGap="8px">
+              <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
                 <mat-form-field class="mat-block" fxFlex>
                   <mat-label translate>notification.button-text</mat-label>
                   <input matInput formControlName="text" required>
@@ -169,8 +170,8 @@
                 <tb-color-input formControlName="color" fxFlex>
                 </tb-color-input>
               </div>
-              <div fxLayout="row" fxLayoutGap="8px">
-                <mat-form-field fxFlex="30">
+              <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+                <mat-form-field fxFlex="30" fxFlex.xs="100">
                   <mat-label translate>notification.action-type</mat-label>
                   <mat-select formControlName="linkType">
                     <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes" [value]="actionButtonLinkType">
@@ -188,11 +189,11 @@
                 </mat-form-field>
                 <ng-template #dashboardSelector>
                   <tb-dashboard-autocomplete
-                    fxFlex="35"
+                    fxFlex="35" fxFlex.xs="100"
                     required
                     formControlName="dashboardId">
                   </tb-dashboard-autocomplete>
-                  <tb-dashboard-state-autocomplete fxFlex="35"
+                  <tb-dashboard-state-autocomplete fxFlex="35" fxFlex.xs="100"
                                                    [dashboardId]="pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').value"
                                                    formControlName="dashboardState">
                   </tb-dashboard-state-autocomplete>

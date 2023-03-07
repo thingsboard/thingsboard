@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-::ng-deep {
-  .template-option {
-    .mat-option-text {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      margin-bottom: 4px;
-    }
+.template-option {
+  .mdc-list-item__primary-text {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
 
-    .template-option-name {
-      margin-right: 8px;
-    }
+  .template-option-name {
+    margin-right: 8px;
+  }
 
-    .mat-chip {
-      &.mat-standard-chip {
-        padding: 4px 8px;
-        border-radius: 14px;
-        min-height: 28px;
-
-        &.mat-chip-disabled {
-          opacity: 1;
-        }
-      }
-    }
+  .mat-mdc-standard-chip.mdc-evolution-chip--disabled {
+    opacity: 1;
   }
 }

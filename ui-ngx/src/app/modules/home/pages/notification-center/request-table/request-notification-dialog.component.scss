@@ -16,9 +16,13 @@
 @import "../../../../../../scss/constants";
 @import "../../../../../../theme";
 
-:host-context(.tb-fullscreen-dialog .mat-dialog-container) {
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
   width: 800px;
+  height: 100%;
+  max-width: 100%;
   max-height: 100vh;
+  display: flex;
+  flex-direction: column;
 
   .tb-form-fields {
     margin-bottom: 8px;
@@ -70,11 +74,7 @@
     border-radius: 4px;
 
     &.notification {
-      background-color: #F3F6FA; //map_get($tb-mat-indigo, 50);
-    }
-
-    .mat-icon {
-      color: rgba(0, 0, 0, 0.38);
+      background-color: #F3F6FA;
     }
 
     .group-title {
@@ -135,16 +135,10 @@
       }
     }
   }
-
-  @media #{$mat-gt-xs} {
-    .mat-dialog-content {
-      max-height: 75vh;
-    }
-  }
 }
 
 :host ::ng-deep {
-  .mat-dialog-content {
+  .mat-mdc-dialog-content {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -159,15 +153,6 @@
         flex: 1 1 100%;
       }
 
-      @media #{$mat-lt-sm} {
-        .mat-step-label {
-          white-space: normal;
-          overflow: visible;
-          .mat-step-text-label {
-            overflow: visible;
-          }
-        }
-      }
       .mat-horizontal-content-container {
         height: 600px;
         max-height: 100%;
@@ -177,10 +162,6 @@
         @media #{$mat-gt-sm} {
           min-width: 500px;
         }
-      }
-      .mat-horizontal-stepper-content[aria-expanded=true] {
-        height: 100%;
-        position: relative;
       }
     }
   }
@@ -236,28 +217,6 @@
 
     .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
       opacity: .01;
-    }
-  }
-
-  .mat-form-field {
-    .mat-form-field-wrapper {
-      padding-bottom: 0;
-
-      .mat-form-field-underline {
-        position: initial !important;
-        display: block;
-        margin-top: -1px;
-      }
-
-      .mat-form-field-subscript-wrapper,
-      .mat-form-field-ripple {
-        position: initial !important;
-        display: table;
-      }
-
-      .mat-form-field-subscript-wrapper {
-        min-height: calc(1em + 1px);
-      }
     }
   }
 

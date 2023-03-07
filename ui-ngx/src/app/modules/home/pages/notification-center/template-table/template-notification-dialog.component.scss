@@ -16,9 +16,13 @@
 @import "../../../../../../scss/constants";
 @import "../../../../../../theme";
 
-:host-context(.tb-fullscreen-dialog .mat-dialog-container) {
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
   width: 830px;
+  height: 100%;
+  max-width: 100%;
   max-height: 100vh;
+  display: flex;
+  flex-direction: column;
 
   .tb-form-fields {
     margin-bottom: 8px;
@@ -66,16 +70,10 @@
       margin-bottom: 12px;
     }
   }
-
-  @media #{$mat-gt-xs} {
-    .mat-dialog-content {
-      max-height: 75vh;
-    }
-  }
 }
 
 :host ::ng-deep {
-  .mat-dialog-content {
+  .mat-mdc-dialog-content {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -90,15 +88,6 @@
         flex: 1 1 100%;
       }
 
-      @media #{$mat-lt-sm} {
-        .mat-step-label {
-          white-space: normal;
-          overflow: visible;
-          .mat-step-text-label {
-            overflow: visible;
-          }
-        }
-      }
       .mat-horizontal-content-container {
         height: 550px;
         max-height: 100%;
@@ -108,58 +97,6 @@
         @media #{$mat-gt-sm} {
           min-width: 500px;
         }
-      }
-      .mat-horizontal-stepper-content[aria-expanded=true] {
-        height: 100%;
-        position: relative;
-      }
-    }
-  }
-
-  .mat-radio-group {
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 8px;
-
-    .mat-radio-button {
-      flex: 1 1 100%;
-      padding: 14px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-
-      .mat-radio-label {
-        white-space: break-spaces;
-        align-items: start;
-      }
-
-      &:not(:last-child){
-        margin-bottom: 8px;
-      }
-
-      &.mat-radio-checked {
-        border-color: map_get($tb-accent, 500);
-      }
-    }
-  }
-
-  .mat-form-field {
-    .mat-form-field-wrapper {
-      padding-bottom: 0px;
-
-      .mat-form-field-underline {
-        position: initial !important;
-        display: block;
-        margin-top: -1px;
-      }
-
-      .mat-form-field-subscript-wrapper,
-      .mat-form-field-ripple {
-        position: initial !important;
-        display: table;
-      }
-
-      .mat-form-field-subscript-wrapper {
-        min-height: calc(1em + 1px);
       }
     }
   }

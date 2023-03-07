@@ -18,13 +18,11 @@
 
 :host {
   width: 700px;
+  height: 100%;
+  max-width: 100%;
   max-height: 100vh;
-
-  @media #{$mat-gt-xs} {
-    .mat-dialog-content {
-      max-height: 75vh;
-    }
-  }
+  display: flex;
+  flex-direction: column;
 
   .tb-hint {
     margin-top: -1.25em;
@@ -53,7 +51,7 @@
 
   ::ng-deep {
 
-    .mat-dialog-content {
+    .mat-mdc-dialog-content {
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -68,17 +66,6 @@
           flex: 1 1 100%;
         }
 
-        @media #{$mat-lt-sm} {
-          .mat-step-label {
-            white-space: normal;
-            overflow: visible;
-
-            .mat-step-text-label {
-              overflow: visible;
-            }
-          }
-        }
-
         .mat-horizontal-content-container {
           height: 550px;
           max-height: 100%;
@@ -88,11 +75,6 @@
           @media #{$mat-gt-sm} {
             min-width: 500px;
           }
-        }
-
-        .mat-horizontal-stepper-content[aria-expanded=true] {
-          height: 100%;
-          position: relative;
         }
       }
     }

@@ -136,14 +136,17 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     this.pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
-      if (value === ActionButtonLinkType.LINK) {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
-      } else {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
+      const isEnabled = this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value;
+      if (isEnabled) {
+        if (value === ActionButtonLinkType.LINK) {
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
+        } else {
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
+        }
       }
     });
 

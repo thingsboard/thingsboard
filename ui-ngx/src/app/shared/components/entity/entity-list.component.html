@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityListFormGroup" class="mat-block tb-chip-list">
+<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [ngClass]="{'tb-chip-list': !labelText}" [subscriptSizing]="subscriptSizing">
   <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
   <mat-chip-grid #chipList formControlName="entities">
     <mat-chip-row
@@ -26,7 +26,6 @@
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? placeholderText : '' }}"
-           style="max-width: 200px;"
            #entityInput
            (focusin)="onFocus()"
            formControlName="entity"
@@ -48,6 +47,9 @@
       </span>
     </mat-option>
   </mat-autocomplete>
+  <mat-hint *ngIf="hint">
+    {{ hint }}
+  </mat-hint>
   <mat-error *ngIf="entityListFormGroup.get('entities').hasError('required')">
     {{ requiredText }}
   </mat-error>

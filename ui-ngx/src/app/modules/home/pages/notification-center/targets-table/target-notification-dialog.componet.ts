@@ -35,6 +35,10 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { deepTrim, isDefined } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { Authority } from '@shared/models/authority.enum';
+import { AuthState } from '@core/auth/auth.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
 
 export interface TargetsNotificationDialogData {
   target?: NotificationTarget;
@@ -48,6 +52,9 @@ export interface TargetsNotificationDialogData {
 })
 export class TargetNotificationDialogComponent extends
   DialogComponent<TargetNotificationDialogComponent, NotificationTarget> implements OnDestroy {
+
+  private authState: AuthState = getCurrentAuthState(this.store);
+  private authUser: AuthUser = this.authState.authUser;
 
   targetNotificationForm: FormGroup;
   notificationTargetType = NotificationTargetType;
@@ -81,7 +88,7 @@ export class TargetNotificationDialogComponent extends
       configuration: this.fb.group({
         type: [NotificationTargetType.PLATFORM_USERS],
         usersFilter: this.fb.group({
-          type: [NotificationTargetConfigType.ALL_USERS],
+          type: [{value: NotificationTargetConfigType.ALL_USERS, disabled: !this.isTenantAdmin()}],
           usersIds: [{value: null, disabled: true}, Validators.required],
           customerId: [{value: null, disabled: true}, Validators.required]
         }),
@@ -97,8 +104,10 @@ export class TargetNotificationDialogComponent extends
       this.targetNotificationForm.get('configuration').disable({emitEvent: false});
       switch (type) {
         case NotificationTargetType.PLATFORM_USERS:
-          this.targetNotificationForm.get('configuration.usersFilter').enable({emitEvent: false});
-          this.targetNotificationForm.get('configuration.usersFilter.type').updateValueAndValidity({onlySelf: true});
+          if (this.isTenantAdmin()) {
+            this.targetNotificationForm.get('configuration.usersFilter').enable({emitEvent: false});
+            this.targetNotificationForm.get('configuration.usersFilter.type').updateValueAndValidity({onlySelf: true});
+          }
           break;
         case NotificationTargetType.SLACK:
           this.targetNotificationForm.get('configuration.conversationType').enable({emitEvent: false});
@@ -148,5 +157,9 @@ export class TargetNotificationDialogComponent extends
     this.notificationService.saveNotificationTarget(formValue).subscribe(
       (target) => this.dialogRef.close(target)
     );
+  }
+
+  public isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
   }
 }

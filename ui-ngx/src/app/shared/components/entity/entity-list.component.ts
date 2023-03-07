@@ -38,6 +38,7 @@ import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-list',
@@ -87,6 +88,12 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed'
+
+  @Input()
+  hint: string
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;

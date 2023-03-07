@@ -23,6 +23,10 @@ import {
   NotificationTableComponent
 } from '@home/pages/notification-center/notification-table/notification-table.component';
 import { EntityType } from '@shared/models/entity-type.models';
+import { Authority } from '@shared/models/authority.enum';
+import { AuthState } from '@core/auth/auth.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
 
 @Component({
   selector: 'tb-notification-center',
@@ -31,11 +35,14 @@ import { EntityType } from '@shared/models/entity-type.models';
 })
 export class NotificationCenterComponent extends PageComponent {
 
+  private authState: AuthState = getCurrentAuthState(this.store);
+  private authUser: AuthUser = this.authState.authUser;
+
   entityType = EntityType;
 
-  @ViewChild('matTabGroup', {static: true}) matTabs: MatTabGroup;
-  @ViewChild('requestTab', {static: true}) requestTab: MatTab;
-  @ViewChild('notificationRequest', {static: true}) notificationRequestTable: NotificationTableComponent;
+  @ViewChild('matTabGroup') matTabs: MatTabGroup;
+  @ViewChild('requestTab') requestTab: MatTab;
+  @ViewChild('notificationRequest') notificationRequestTable: NotificationTableComponent;
   @ViewChildren(NotificationTableComponent) tableComponent: QueryList<NotificationTableComponent>;
 
 
@@ -58,5 +65,13 @@ export class NotificationCenterComponent extends PageComponent {
 
   sendNotification($event: Event) {
     this.notificationRequestTable.entityTableConfig.onEntityAction({event: $event, action: this.requestTab.isActive ? 'add' : 'add-without-update', entity: null});
+  }
+
+  public isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
+  }
+
+  public isCustomerUser(): boolean {
+    return this.authUser.authority === Authority.CUSTOMER_USER;
   }
 }

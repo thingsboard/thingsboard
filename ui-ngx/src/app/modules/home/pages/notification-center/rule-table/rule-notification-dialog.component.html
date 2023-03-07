@@ -70,7 +70,7 @@
             <button #createTargetButton
                     mat-button color="primary" matSuffix
                     (click)="createTarget($event, createTargetButton)">
-              {{ 'notification.create-new' | translate }}
+              <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
             </button>
           </tb-entity-list>
         </section>
@@ -98,8 +98,7 @@
             </tb-string-items-list>
 
             <tb-alarm-severities-list formControlName="alarmSeverities"
-                                      flotLabel="always"
-                                      required>
+                                      flotLabel="always">
             </tb-alarm-severities-list>
           </fieldset>
 
@@ -144,20 +143,22 @@
           <ng-container *ngIf="deviceInactivityTemplateForm.get('triggerConfig.filterByDevice').value; else deviceProfile">
             <tb-entity-list
               formControlName="devices"
+              subscriptSizing="dynamic"
               labelText="{{ 'notification.devices' | translate }}"
               placeholderText="{{ 'notification.devices' | translate }}"
+              hint="{{ 'notification.device-list-rule-hint' | translate }}"
               [entityType]="entityType.DEVICE">
             </tb-entity-list>
-            <div class="tb-hint" translate>notification.device-list-rule-hint</div>
           </ng-container>
           <ng-template #deviceProfile>
             <tb-entity-list
               formControlName="deviceProfiles"
+              subscriptSizing="dynamic"
               labelText="{{ 'notification.device-profiles' | translate }}"
               placeholderText="{{ 'notification.device-profiles' | translate }}"
+              hint="{{ 'notification.device-profiles-list-rule-hint' | translate }}"
               [entityType]="entityType.DEVICE_PROFILE">
             </tb-entity-list>
-            <div class="tb-hint" translate>notification.device-profiles-list-rule-hint</div>
           </ng-template>
         </section>
       </form>

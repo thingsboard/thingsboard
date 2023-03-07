@@ -52,14 +52,14 @@
 }
 
 :host ::ng-deep {
-  .mat-form-field {
+  .mat-mdc-form-field {
     min-width: 100px;
 
-    .mat-form-field-infix {
+    .mat-mdc-form-field-infix {
       width: 100%;
     }
 
-    .mat-select {
+    .mat-mdc-select {
       min-width: 110px !important;
     }
   }

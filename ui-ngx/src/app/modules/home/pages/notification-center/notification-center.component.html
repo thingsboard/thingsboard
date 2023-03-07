@@ -18,45 +18,52 @@
 <div class="tb-notification-center">
   <div class="tb-notification-center-content">
     <div class="tabs-container">
-      <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()">
-        <mat-tab label="{{ 'notification.inbox' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.sent' | translate }}" #requestTab="matTab">
-          <tb-notification-table
-            #notificationRequest
-            [notificationType]="entityType.NOTIFICATION_REQUEST">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.templates' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION_TEMPLATE">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.targets' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION_TARGET">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab label="{{ 'notification.rules' | translate }}">
-          <tb-notification-table
-            [notificationType]="entityType.NOTIFICATION_RULE">
-          </tb-notification-table>
-        </mat-tab>
-        <mat-tab disabled>
-          <ng-template mat-tab-label>
-            <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
-              <button mat-flat-button color="primary" (click)="sendNotification($event)">
-                <div fxLayout="row" fxLayoutAlign="start center">
-                  <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
+      <ng-container *ngIf="isCustomerUser(); else notificationTabs">
+        <tb-notification-table
+          [notificationType]="entityType.NOTIFICATION">
+        </tb-notification-table>
+      </ng-container>
+      <ng-template #notificationTabs>
+          <mat-tab-group #matTabGroup (selectedIndexChange)="updateData()" mat-stretch-tabs="false">
+            <mat-tab label="{{ 'notification.inbox' | translate }}">
+              <tb-notification-table
+                [notificationType]="entityType.NOTIFICATION">
+              </tb-notification-table>
+            </mat-tab>
+            <mat-tab label="{{ 'notification.sent' | translate }}" #requestTab="matTab">
+              <tb-notification-table
+                #notificationRequest
+                [notificationType]="entityType.NOTIFICATION_REQUEST">
+              </tb-notification-table>
+            </mat-tab>
+            <mat-tab label="{{ 'notification.templates' | translate }}">
+              <tb-notification-table
+                [notificationType]="entityType.NOTIFICATION_TEMPLATE">
+              </tb-notification-table>
+            </mat-tab>
+            <mat-tab label="{{ 'notification.targets' | translate }}">
+              <tb-notification-table
+                [notificationType]="entityType.NOTIFICATION_TARGET">
+              </tb-notification-table>
+            </mat-tab>
+            <mat-tab label="{{ 'notification.rules' | translate }}" *ngIf="isTenantAdmin()">
+              <tb-notification-table
+                [notificationType]="entityType.NOTIFICATION_RULE">
+              </tb-notification-table>
+            </mat-tab>
+            <mat-tab disabled>
+              <ng-template mat-tab-label>
+                <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
+                  <button mat-flat-button color="primary" (click)="sendNotification($event)">
+                    <div fxLayout="row" fxLayoutAlign="start center">
+                      <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
+                    </div>
+                  </button>
                 </div>
-              </button>
-            </div>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
+              </ng-template>
+            </mat-tab>
+          </mat-tab-group>
+      </ng-template>
     </div>
   </div>
 </div>

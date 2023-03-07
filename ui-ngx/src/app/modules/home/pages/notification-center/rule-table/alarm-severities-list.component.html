@@ -19,7 +19,7 @@
   <mat-form-field fxFlex class="mat-block" [floatLabel]="flotLabel">
     <mat-label translate>alarm.alarm-severity-list</mat-label>
     <mat-chip-grid #severitiesChipList formControlName="alarmSeverities" [required]="required">
-      <mat-chip-row *ngFor="let severity of alarmSeveritiesForm.get('alarmSeverities').value"
+      <mat-chip-row *ngFor="let severity of alarmSeverities"
                 [removable]="!disabled"
                 (removed)="onSeverityRemoved(severity)">
         {{ alarmSeverityTranslationMap.get(severity) | translate }}

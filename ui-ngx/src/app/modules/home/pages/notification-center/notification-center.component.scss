@@ -34,22 +34,6 @@
       display: flex;
       flex-direction: column;
 
-      .title-container {
-        padding: 16px 16px 0;
-
-        .title {
-          margin: 8px;
-          letter-spacing: 0.1px;
-          font-size: 24px;
-          line-height: 24px;
-          font-weight: 400;
-        }
-
-        .action-buttons {
-          color: rgba(0, 0, 0, .54);
-        }
-      }
-
       .tabs-container {
         position: relative;
         flex-direction: column;
@@ -57,39 +41,24 @@
       }
     }
   }
-
-  @media #{$mat-xs} {
-    .tb-notification-center {
-      .tb-notification-center-content {
-        .title-container {
-          padding: 8px;
-
-          .title {
-            margin: 4px 0;
-          }
-        }
-      }
-    }
-  }
 }
 
 :host ::ng-deep {
   .tabs-container {
-    .mat-tab-group {
-      > .mat-tab-body-wrapper {
+    > .mat-mdc-tab-group {
+      > .mat-mdc-tab-body-wrapper {
         position: absolute;
         top: 49px;
         left: 0;
         right: 0;
         bottom: 0;
       }
-      > .mat-tab-header {
-        .mat-tab-label {
-          min-width: 40px;
 
-          &.mat-tab-disabled {
+      > .mat-mdc-tab-header {
+        .mat-mdc-tab {
+          &.mat-mdc-tab-disabled {
             opacity: 1;
-            width: 100%;
+            //width: 100%;
 
             .mat-tab-label-content {
               width: 100%;
@@ -106,21 +75,21 @@
         height: 56px;
       }
 
-      .mat-toolbar-single-row {
-        padding: 0 24px 0 12px;
+      .mat-toolbar-tools > div {
+        width: 100%;
       }
 
-      .title-container {
-        width: 100%;
+      .mat-toolbar-single-row {
+        padding: 0 24px 0 12px;
       }
     }
   }
 
   @media #{$mat-xs} {
     .tabs-container {
-      .mat-tab-group {
-        > .mat-tab-header {
-          .mat-tab-label {
+      > .mat-mdc-tab-group {
+        > .mat-mdc-tab-header {
+          .mat-mdc-tab {
             &.mat-tab-disabled {
               width: auto;
             }
