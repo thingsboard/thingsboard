@@ -41,10 +41,10 @@
             <mat-label translate>admin.default-branch</mat-label>
             <input matInput formControlName="defaultBranch">
           </mat-form-field>
-          <mat-checkbox formControlName="readOnly">
-            {{ 'admin.repository-read-only' | translate }}
-          </mat-checkbox>
-          <div>
+          <div fxLayout="column">
+            <mat-checkbox formControlName="readOnly">
+              {{ 'admin.repository-read-only' | translate }}
+            </mat-checkbox>
             <mat-checkbox formControlName="showMergeCommits">
               {{ 'admin.show-merge-commits' | translate }}
             </mat-checkbox>
