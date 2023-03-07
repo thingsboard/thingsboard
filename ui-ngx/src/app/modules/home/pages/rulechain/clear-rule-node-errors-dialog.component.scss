@@ -16,39 +16,72 @@
 @import '../../../../../../src/theme';
 
 :host ::ng-deep {
-  .tb-acknowledge-rule-node-error-header-buttons {
-    display: flex;
-    padding: 0 16px;
-    gap: 4px;
+  font-size: 11px;
+  color: #949494;
+
+  .dialog-body {
+    padding: 8px 24px 8px 24px;
   }
 
-  .tb-acknowledge-rule-node-error-details {
-    color: #949494;
+  .message-details {
+    display: flex;
+    gap: 4px;
 
-    a {
-      cursor: pointer;
+    span:first-child {
+      margin-top: auto;
     }
 
-    .errors-count {
+    button {
+      border-radius: 50%;
+      height: 28px;
+      width: 28px;
+      border: none;
+      background-color: #F4F4F4;
+      color: #787878;
+      padding: 0;
+      font-size: 11px;
+    }
+
+    button:hover {
+      background-color: #E3EBFF;
+      font-weight: 500;
+      color: #5B49CB;
+      border: 0.2px solid #5B49CB;
+    }
+  }
+
+  .logged-errors {
+    padding: 16px 0 16px 0;
+
+    span:first-child {
       color: $tb-primary-color;
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 600;
     }
 
-    .last-message-container {
-      width: 100%;
-      background-color: rgba(0,0,0, 0.05) !important;
-      padding: 20px;
-
-      .last-message-title {
-        color: #4A4A4A;
-        font-style: italic;
-      }
+    a {
+      cursor: pointer;
+      color: #5B49CB !important;
+      font-weight: 500;
     }
   }
 
-  .mat-mini-fab {
-    color: #949494 !important;
-    background-color: rgba(0,0,0, 0.05) !important;
+  .last-message-title {
+    display: block;
+    padding-bottom: 4px;
+    font-style: italic;
+    font-weight: 500;
+    color: #4A4A4A;
+  }
+
+  .last-message {
+    padding-bottom: 16px;
+
+    div {
+      width: 100%;
+      background-color: #F8F8F8;
+      padding: 20px;
+      font-size: 13px;
+    }
   }
 }

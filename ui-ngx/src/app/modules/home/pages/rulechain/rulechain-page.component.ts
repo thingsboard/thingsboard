@@ -1321,11 +1321,8 @@ export class RuleChainPageComponent extends PageComponent
       }
       tooltipContent += '</div>' +
         '</div>';
-      if (this.showErrorsStatus) {
-        if (this.isRuleNodeHasErrors(node)) {
-          tooltipContent += this.addRuleNodeErrorTooltip(node);
-          tooltipContent = '<div class="tb-rule-node-tooltip-error-container">' + tooltipContent + '</div>';
-        }
+      if (this.showErrorsStatus && this.isRuleNodeHasErrors(node)) {
+        tooltipContent = this.getRuleNodeErrorTooltip(node, desc);
       }
       this.displayTooltip(event, tooltipContent);
     }
@@ -1708,21 +1705,27 @@ export class RuleChainPageComponent extends PageComponent
     };
   }
 
-  private addRuleNodeErrorTooltip(node: FcRuleNode): string {
+  private getRuleNodeErrorTooltip(node: FcRuleNode, desc: string): string {
     const errorsCount = this.translate.instant('rulenode.errors-count', {count: node.stats.errorsCount});
     const sinceLastAcknowledge = this.translate.instant('rulenode.since-last-acknowledge');
     const lastErrorMessageTitle = this.translate.instant('rulenode.last-error-title');
     const lastErrorMessageText = node.stats?.lastErrorMsg ? node.stats.lastErrorMsg : '-';
-    return '<div class="tb-rule-node-tooltip-error">' +
-      '<section>' +
-      '<div class="error-count">' + errorsCount + '</div>' +
-      '<div class="error-details">' + sinceLastAcknowledge + '</div>' +
-      '</section>'+
-      '<section>' +
-      '<div>' + lastErrorMessageTitle + ':'+ '</div>' +
-      '<div class="error-details">' + lastErrorMessageText + '</div>' +
-      '</section>' +
-      '</div>';
+    return '<div class="tb-rule-node-tooltip-error-container">' +
+      '<div class="tb-rule-node-tooltip">' +
+      '<div id="tb-node-content">' +
+      '<div class="tb-node-description">' + desc +
+      '</div></div></div>' +
+      '<div class="tb-rule-node-tooltip-error">' +
+        '<section>' +
+          '<div class="error-count">' + errorsCount + '</div>' +
+          '<div class="error-details">' + sinceLastAcknowledge + '</div>' +
+        '</section>'+
+        '<section>' +
+          '<div>' + lastErrorMessageTitle + ':'+ '</div>' +
+          '<div class="error-details">' + lastErrorMessageText + '</div>' +
+        '</section>' +
+      '</div>'+
+    '</div>';
   }
 }
 

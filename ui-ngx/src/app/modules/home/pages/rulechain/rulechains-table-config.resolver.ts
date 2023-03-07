@@ -621,16 +621,18 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   private errorsStatusContentCell(entity: RuleChainInfo): string {
-    let icon, iconColor;
+    let icon, color, background;
     if (entity) {
       if (entity.errorPresent) {
-        icon = 'error_outline';
-        iconColor = '#D7503D';
+        icon = 'error';
+        color = '#FAEAE7';
+        background = '#D7503D';
       } else {
-        icon = 'check_circle_outline';
-        iconColor = '#1E8134';
+        icon = 'check_circle';
+        color = '#E2FFE7';
+        background = '#1E8134';
       }
-      return `<mat-icon class="material-icons mat-icon" style="cursor:default; color:${iconColor}">${icon}</mat-icon>`;
+      return `<mat-icon class="material-icons mat-icon" style="color:${color}; background:${background}; border-radius: 15px; cursor:default">${icon}</mat-icon>`;
     }
     return '';
   }

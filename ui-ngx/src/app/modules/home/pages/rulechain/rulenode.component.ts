@@ -142,4 +142,8 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
   isRuleNodeHasErrors(node: FcRuleNode) {
     return node?.stats ? !!node.stats.errorsCount : false;
   }
+
+  nodeSelected(node: FcRuleNode) {
+    return !this.modelservice.selectedObjects.find(el => el.id === node.id);
+  }
 }

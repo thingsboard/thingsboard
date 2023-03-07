@@ -2977,6 +2977,7 @@
         "name": "Name",
         "name-required": "Name is required.",
         "name-max-length": "Name should be less than 256",
+        "node-name": "Node name",
         "type": "Type",
         "description": "Description",
         "delete": "Delete rule node",

@@ -59,12 +59,15 @@
       &times;
     </div>
   </section>
-  <section *ngIf="(showErrorsStatus | async) && isRuleNodeHasErrors(node)">
-    <mat-icon svgIcon="mdi:message-alert-outline"
-              class="material-icons icon fc-error-icon"
-              [ngClass]="{'fc-error-icon-readonly': !modelservice.isEditable() || node.readonly}"
-              (click)="openClearErrorStatsDialog($event, node)">
-    </mat-icon>
+  <section *ngIf="(showErrorsStatus | async) && isRuleNodeHasErrors(node) && nodeSelected(node)">
+    <svg class="fc-error-icon" width="24" height="26" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg"
+         [ngClass]="{'fc-error-icon-readonly': !modelservice.isEditable() || node.readonly}"
+         (click)="openClearErrorStatsDialog($event, node)">
+      <path d="M11.567 24.25C11.7594 24.5833 12.2406 24.5833 12.433 24.25L21.0933 9.25C21.2857 8.91666 21.0452 8.5 20.6603 8.5H3.33975C2.95485 8.5 2.71428 8.91667 2.90673 9.25L11.567 24.25Z" fill="#FAEAE7" stroke="#D7503D"/>
+      <rect x="0.5" y="1.5" width="23" height="17" rx="2.5" fill="#FAEAE7" stroke="#D7503D"/>
+      <path d="M11.134 22.5C11.5189 23.1667 12.4811 23.1667 12.866 22.5L21.5263 7.5C21.9112 6.83333 21.4301 6 20.6603 6H3.33975C2.56995 6 2.08882 6.83333 2.47372 7.5L11.134 22.5Z" fill="#FAEAE7"/>
+      <path d="M12.666 4.75781L12.4819 11.2261H11.0664L10.8823 4.75781H12.666ZM10.8315 13.2192C10.8315 12.9696 10.9162 12.7601 11.0854 12.5908C11.259 12.4173 11.4917 12.3306 11.7837 12.3306C12.0757 12.3306 12.3063 12.4173 12.4756 12.5908C12.6491 12.7601 12.7358 12.9696 12.7358 13.2192C12.7358 13.4647 12.6491 13.672 12.4756 13.8413C12.3063 14.0106 12.0757 14.0952 11.7837 14.0952C11.4917 14.0952 11.259 14.0106 11.0854 13.8413C10.9162 13.672 10.8315 13.4647 10.8315 13.2192Z" fill="#CE3D20"/>
+    </svg>
   </section>
   <section *ngIf="node.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode && modelservice.isEditable()">
     <div class="fc-nodeopen" (click)="openRuleChain($event, node)" (mouseenter)="displayOpenRuleChainTooltip($event, node)">
