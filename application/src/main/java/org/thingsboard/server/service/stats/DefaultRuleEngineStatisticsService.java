@@ -108,7 +108,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
             }
             e.stream()
                     .filter(exception -> exception instanceof RuleNodeException)
-                    .map(exception -> (RuleNodeException) e)
+                    .map(exception -> (RuleNodeException) exception)
                     .collect(Collectors.groupingBy(RuleNodeException::getRuleChainId, Collectors.groupingBy(RuleNodeException::getRuleNodeId)))
                     .forEach((ruleChainId, ruleNodesErrors) -> {
                         ruleNodesErrors.forEach((ruleNodeId, ruleNodeExceptions) -> {
