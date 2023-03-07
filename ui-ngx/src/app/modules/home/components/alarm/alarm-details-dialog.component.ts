@@ -100,7 +100,9 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       this.loadAlarm();
     } else {
       this.alarmId = this.data.alarm?.id?.id;
-      this.loadAlarmSubject.next(this.data.alarm);
+      setTimeout(() => {
+        this.loadAlarmSubject.next(this.data.alarm);
+      }, 0);
     }
   }
 
