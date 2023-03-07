@@ -301,7 +301,7 @@ export class RuleChainPageComponent extends PageComponent
     this.initHotKeys();
     this.isImport = this.route.snapshot.data.import;
     this.ruleChainType = this.route.snapshot.data.ruleChainType;
-    this.showErrorsStatus = this.route.snapshot.data.user?.additionalInfo?.showErrorsStatus;
+    this.showErrorsStatus = this.route.snapshot.data.user?.additionalInfo?.showErrorsStatus || true;
     if (this.isImport) {
       const ruleChainImport: RuleChainImport = this.itembuffer.getRuleChainImport();
       this.ruleChain = ruleChainImport.ruleChain;

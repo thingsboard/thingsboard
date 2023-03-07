@@ -107,7 +107,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       map((user) => {
         const edgeId = route.params?.edgeId;
         const ruleChainScope = route.data?.ruleChainsType ? route.data?.ruleChainsType : 'tenant';
-        const showErrorsStatus = user.additionalInfo?.showErrorsStatus;
+        const showErrorsStatus = user.additionalInfo?.showErrorsStatus || true;
         this.config.componentsData = {
           ruleChainScope,
           edgeId,
