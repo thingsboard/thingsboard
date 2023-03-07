@@ -60,6 +60,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.service.apiusage.BaseApiUsageState.StatsCalculationResult;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
@@ -214,8 +215,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                     statsKey = ApiStatsKey.of(recordKey);
                 }
 
-                long newValue = usageState.calculate(statsKey, statsItem.getValue(), serviceId);
-                long newHourlyValue = usageState.calculateHourly(statsKey, statsItem.getValue(), serviceId);
+                StatsCalculationResult calculationResult = usageState.calculate(statsKey, statsItem.getValue(), serviceId);
+                long newValue = calculationResult.getNewValue();
+                long newHourlyValue = calculationResult.getNewHourlyValue();
 
                 updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(statsKey.getEntryKey(false), newValue)));
                 updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(statsKey.getEntryKey(true), newHourlyValue)));
@@ -525,6 +527,12 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     protected void onRepartitionEvent() {
         otherUsageStates.entrySet().removeIf(entry ->
                 partitionService.resolve(ServiceType.TB_CORE, entry.getValue().getTenantId(), entry.getKey()).isMyPartition());
+        updateLock.lock();
+        try {
+            myUsageStates.values().forEach(BaseApiUsageState::onRepartitionEvent);
+        } finally {
+            updateLock.unlock();
+        }
     }
 
     @Override

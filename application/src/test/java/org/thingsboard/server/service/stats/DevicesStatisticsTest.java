@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.stats.EntityStatisticsDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.apiusage.ApiStatsKey;
+import org.thingsboard.server.service.apiusage.BaseApiUsageState;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.stats.device.DeviceClass;
 import org.thingsboard.server.service.stats.device.DeviceStats;
@@ -63,8 +64,8 @@ import static org.thingsboard.server.common.data.ApiUsageRecordKey.INACTIVE_DEVI
         "usage.stats.report.enabled_per_entity=true",
         "usage.stats.devices.enabled=true",
         "transport.http.enabled=true",
-        "state.defaultStateCheckIntervalInSec=5",
-        "usage.stats.report.interval=10"
+        "state.defaultStateCheckIntervalInSec=2",
+        "usage.stats.report.interval=2"
 })
 public class DevicesStatisticsTest extends AbstractControllerTest {
 
@@ -144,6 +145,7 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
 
     @Test
     public void testDevicesActivityStats() throws Exception {
+        setStaticFieldValue(BaseApiUsageState.class, "gaugeReportInterval", TimeUnit.SECONDS.toMillis(1));
         int activeDevicesCount = 5;
         List<Device> activeDevices = new ArrayList<>();
         for (int i = 1; i <= activeDevicesCount; i++) {
@@ -159,7 +161,7 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
             inactiveDevices.add(device);
         }
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(15, TimeUnit.SECONDS)
                 .until(() -> Long.valueOf(0).equals(getLatestStats(ApiStatsKey.of(ACTIVE_DEVICES), false)) &&
                         Long.valueOf(activeDevicesCount + inactiveDevicesCount)
                                 .equals(getLatestStats(ApiStatsKey.of(INACTIVE_DEVICES), false)));
