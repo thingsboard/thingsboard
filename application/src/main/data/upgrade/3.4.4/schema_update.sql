@@ -23,7 +23,7 @@ UPDATE user_credentials
     SET additional_info = json_build_object('userPasswordHistory', (u.additional_info::json -> 'userPasswordHistory'))
     FROM tb_user u WHERE user_credentials.user_id = u.id AND u.additional_info::jsonb ? 'userPasswordHistory';
 
-UPDATE tb_user SET additional_info = tb_user.additional_info::jsonb - 'userPasswordHistory';
+UPDATE tb_user SET additional_info = tb_user.additional_info::jsonb - 'userPasswordHistory' WHERE additional_info::jsonb ? 'userPasswordHistory';
 
 -- USER CREDENTIALS END
 
