@@ -254,14 +254,14 @@
                 </div>
               </fieldset>
             </section>
-            <section fxLayout="row" fxLayoutAlign="space-between center" *ngIf="mailSettings.get('enableOauth2').value">
+            <section fxLayout="row" fxLayout.xs="column" fxLayoutAlign.gt-xs="space-between center" *ngIf="mailSettings.get('enableOauth2').value">
               <div>
                 <span class="token-status" translate>admin.oauth2.access-token-status</span>
                 <span>
                   {{ accessTokenStatus }}
                 </span>
               </div>
-              <button mat-raised-button type="button" color="primary" style="width: min-content;"
+              <button mat-raised-button type="button" color="primary"
                       [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
                       (click)="generateAccessToken()">
                 {{ accessTokenButtonName }}
