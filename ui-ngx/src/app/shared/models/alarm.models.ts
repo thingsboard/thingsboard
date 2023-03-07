@@ -263,18 +263,18 @@ export class AlarmQuery {
   pageLink: TimePageLink;
   searchStatus: AlarmSearchStatus;
   status: AlarmStatus;
-  assigneeId: UserId;
   fetchOriginator: boolean;
+  assigneeId?: UserId;
 
   constructor(entityId: EntityId, pageLink: TimePageLink,
               searchStatus: AlarmSearchStatus, status: AlarmStatus,
-              assigneeId: UserId, fetchOriginator: boolean) {
+              fetchOriginator: boolean, assigneeId?: UserId) {
     this.affectedEntityId = entityId;
     this.pageLink = pageLink;
     this.searchStatus = searchStatus;
     this.status = status;
-    this.assigneeId = assigneeId;
     this.fetchOriginator = fetchOriginator;
+    this.assigneeId = assigneeId;
   }
 
   public toQuery(): string {
@@ -284,11 +284,12 @@ export class AlarmQuery {
       query += `&searchStatus=${this.searchStatus}`;
     } else if (this.status) {
       query += `&status=${this.status}`;
-    } else if (this.assigneeId) {
-      query += `&assigneeId=${this.assigneeId.id}`;
     }
     if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
       query += `&fetchOriginator=${this.fetchOriginator}`;
+    }
+    if (typeof this.assigneeId !== 'undefined' && this.assigneeId !== null) {
+      query += `&assigneeId=${this.assigneeId.id}`;
     }
     return query;
   }
