@@ -304,7 +304,7 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
     (target as any[]).forEach((v) => { cp.push(v); });
     return cp.map((n: any) => deepClone<any>(n)) as any;
   }
-  if (typeof target === 'object' && Object.keys(target).length) {
+  if (typeof target === 'object') {
     const cp = {...(target as { [key: string]: any })} as { [key: string]: any };
     Object.keys(cp).forEach(k => {
       if (!ignoreFields || ignoreFields.indexOf(k) === -1) {
