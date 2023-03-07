@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
@@ -40,7 +40,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class AliasesEntityAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  selectEntityInfoFormGroup: FormGroup;
+  selectEntityInfoFormGroup: UntypedFormGroup;
 
   modelValue: EntityInfo | null;
 
@@ -73,7 +73,7 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.selectEntityInfoFormGroup = this.fb.group({
       entityInfo: [null]
     });

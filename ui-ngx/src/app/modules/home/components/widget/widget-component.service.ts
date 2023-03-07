@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ export class WidgetComponentService {
           }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle', undefined
         );
       }
-      const initSubject = new ReplaySubject();
+      const initSubject = new ReplaySubject<void>();
       this.init$ = initSubject.asObservable();
 
       const w = (this.window as any);
@@ -340,7 +340,7 @@ export class WidgetComponentService {
               factories: modulesWithFactoriesList.map(mf => mf.factories).flat()
             };
             if (modules && modules.length) {
-              resModulesWithFactories.modules.concat(modules);
+              resModulesWithFactories.modules = resModulesWithFactories.modules.concat(modules);
             }
             return resModulesWithFactories;
           }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -82,7 +82,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: DeviceProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceProfile>,
-              protected fb: FormBuilder,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -95,7 +95,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     }
   }
 
-  buildForm(entity: DeviceProfile): FormGroup {
+  buildForm(entity: DeviceProfile): UntypedFormGroup {
     this.deviceProfileId = entity?.id ? entity.id : null;
     this.displayProfileConfiguration = entity && entity.type &&
       deviceProfileTypeConfigurationInfoMap.get(entity.type).hasProfileConfiguration;
@@ -137,7 +137,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     return form;
   }
 
-  private checkIsNewDeviceProfile(entity: DeviceProfile, form: FormGroup) {
+  private checkIsNewDeviceProfile(entity: DeviceProfile, form: UntypedFormGroup) {
     if (entity && !entity.id) {
       form.get('type').patchValue(DeviceProfileType.DEFAULT, {emitEvent: true});
       form.get('transportType').patchValue(DeviceTransportType.DEFAULT, {emitEvent: true});
@@ -145,7 +145,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     }
   }
 
-  private deviceProfileTypeChanged(form: FormGroup) {
+  private deviceProfileTypeChanged(form: UntypedFormGroup) {
     const deviceProfileType: DeviceProfileType = form.get('type').value;
     this.displayProfileConfiguration = deviceProfileType &&
       deviceProfileTypeConfigurationInfoMap.get(deviceProfileType).hasProfileConfiguration;
@@ -160,7 +160,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     form.patchValue({profileData});
   }
 
-  private deviceProfileTransportTypeChanged(form: FormGroup) {
+  private deviceProfileTransportTypeChanged(form: UntypedFormGroup) {
     const deviceTransportType: DeviceTransportType = form.get('transportType').value;
     this.displayTransportConfiguration = deviceTransportType &&
       deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;

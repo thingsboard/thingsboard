@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
@@ -36,11 +36,11 @@ export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsCompon
   @ViewChild('filterItemAutocomplete') filterItemAutocomplete: MatAutocomplete;
   @ViewChild('filterItemInput') filterItemInput: ElementRef<HTMLInputElement>;
 
-  filterItems: Array<string> = ['/devices', '/assets', '/deviceProfiles'];
+  filterItems: Array<string> = ['/devices', '/assets', '/profiles/deviceProfiles'];
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
-  navigationCardsWidgetSettingsForm: FormGroup;
+  navigationCardsWidgetSettingsForm: UntypedFormGroup;
 
   filteredFilterItems: Observable<Array<string>>;
 
@@ -49,7 +49,7 @@ export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsCompon
   filterItemInputChange = new Subject<string>();
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
     this.filteredFilterItems = this.filterItemInputChange
       .pipe(
@@ -60,7 +60,7 @@ export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsCompon
       );
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.navigationCardsWidgetSettingsForm;
   }
 
