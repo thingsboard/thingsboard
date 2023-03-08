@@ -632,7 +632,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         color = '#E2FFE7';
         background = '#1E8134';
       }
-      return `<mat-icon class="material-icons mat-icon" style="color:${color}; background:${background}; border-radius: 15px; cursor:default">${icon}</mat-icon>`;
+      return `<mat-icon class="material-icons mat-icon" style="color:${color}; background:${background}; border-radius: 15px;">${icon}</mat-icon>`;
     }
     return '';
   }
