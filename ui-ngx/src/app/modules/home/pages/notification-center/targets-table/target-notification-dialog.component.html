@@ -55,23 +55,25 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <tb-entity-list
-          required
-          formControlName="usersIds"
-          [entityType]="entityType.USER"
-          labelText="{{ 'user.user-list' | translate }}"
-          placeholderText="{{ 'user.user' | translate }}"
-          requiredText="{{ 'user.user-list-required' | translate }}"
-          *ngIf="targetNotificationForm.get('configuration.usersFilter.type').value === notificationTargetConfigType.USER_LIST">
-        </tb-entity-list>
-        <section
-          *ngIf="targetNotificationForm.get('configuration.usersFilter.type').value === notificationTargetConfigType.CUSTOMER_USERS">
-          <tb-entity-autocomplete
-            required
-            formControlName="customerId"
-            [entityType]="entityType.CUSTOMER">
-          </tb-entity-autocomplete>
-        </section>
+        <ng-container [ngSwitch]="targetNotificationForm.get('configuration.usersFilter.type').value">
+          <ng-container *ngSwitchCase="notificationTargetConfigType.USER_LIST">
+            <tb-entity-list
+              required
+              formControlName="usersIds"
+              [entityType]="entityType.USER"
+              labelText="{{ 'user.user-list' | translate }}"
+              placeholderText="{{ 'user.user' | translate }}"
+              requiredText="{{ 'user.user-list-required' | translate }}">
+            </tb-entity-list>
+          </ng-container>
+          <ng-container *ngSwitchCase="notificationTargetConfigType.CUSTOMER_USERS">
+            <tb-entity-autocomplete
+              required
+              formControlName="customerId"
+              [entityType]="entityType.CUSTOMER">
+            </tb-entity-autocomplete>
+          </ng-container>
+        </ng-container>
       </section>
       <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.SLACK">
         <label class="tb-title">{{ 'notification.recipient-type' | translate }}</label>
