@@ -237,7 +237,7 @@ export function initModelFromDefaultTimewindow(value: Timewindow, quickIntervalO
     model.hideAggInterval = value.hideAggInterval;
     model.hideTimezone = value.hideTimezone;
     model.selectedTab = getTimewindowType(value);
-    if (model.selectedTab === TimewindowType.REALTIME) {
+    if (isDefined(value.realtime)) {
       if (isDefined(value.realtime.interval)) {
         model.realtime.interval = value.realtime.interval;
       }
@@ -250,12 +250,14 @@ export function initModelFromDefaultTimewindow(value: Timewindow, quickIntervalO
       } else {
         model.realtime.realtimeType = value.realtime.realtimeType;
       }
-      if (model.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
+      if (isDefined(value.realtime.quickInterval)) {
         model.realtime.quickInterval = value.realtime.quickInterval;
-      } else {
+      }
+      if (isDefined(value.realtime.timewindowMs)) {
         model.realtime.timewindowMs = value.realtime.timewindowMs;
       }
-    } else {
+    }
+    if (isDefined(value.history)) {
       if (isDefined(value.history.interval)) {
         model.history.interval = value.history.interval;
       }
