@@ -16,13 +16,7 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
-import com.google.api.client.auth.oauth2.RefreshTokenRequest;
-import com.google.api.client.auth.oauth2.TokenResponse;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
@@ -57,28 +51,20 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import javax.annotation.PostConstruct;
 import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.thingsboard.server.config.MailOauth2Provider.MICROSOFT;
 
 @Service
 @Slf4j
 public class DefaultMailService implements MailService {
 
-    public static final String MAIL_PROP = "mail.";
     public static final String TARGET_EMAIL = "targetEmail";
     public static final String UTF_8 = "UTF-8";
     public static final int _10K = 10000;
     public static final int _1M = 1000000;
-    public static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
 
     private final MessageSource messages;
     private final Configuration freemarkerConfig;
@@ -97,7 +83,10 @@ public class DefaultMailService implements MailService {
     @Autowired
     private PasswordResetExecutorService passwordResetExecutorService;
 
-    private JavaMailSenderImpl mailSender;
+    @Autowired
+    private TbMailContextComponent tbMailContextComponent;
+
+    private TbMailSender tbMailSender;
 
     private String mailFrom;
 
@@ -120,7 +109,7 @@ public class DefaultMailService implements MailService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
-            mailSender = createMailSender(jsonConfig);
+            tbMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
             timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
         } else {
@@ -128,79 +117,14 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private JavaMailSenderImpl createMailSender(JsonNode jsonConfig) {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(jsonConfig.get("smtpHost").asText());
-        mailSender.setPort(parsePort(jsonConfig.get("smtpPort").asText()));
-        mailSender.setUsername(jsonConfig.get("username").asText());
-        Optional.ofNullable(jsonConfig.get("password")).ifPresent(password -> mailSender.setPassword(password.asText()));
-        mailSender.setJavaMailProperties(createJavaMailProperties(jsonConfig));
-        return mailSender;
-    }
-
-    private Properties createJavaMailProperties(JsonNode jsonConfig) {
-        Properties javaMailProperties = new Properties();
-        String protocol = jsonConfig.get("smtpProtocol").asText();
-        javaMailProperties.put("mail.transport.protocol", protocol);
-        javaMailProperties.put(MAIL_PROP + protocol + ".host", jsonConfig.get("smtpHost").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".port", jsonConfig.get("smtpPort").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", jsonConfig.get("timeout").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(jsonConfig.get("username").asText())));
-        boolean enableTls = false;
-        if (jsonConfig.has("enableTls")) {
-            if (jsonConfig.get("enableTls").isBoolean() && jsonConfig.get("enableTls").booleanValue()) {
-                enableTls = true;
-            } else if (jsonConfig.get("enableTls").isTextual()) {
-                enableTls = "true".equalsIgnoreCase(jsonConfig.get("enableTls").asText());
-            }
-        }
-        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", enableTls);
-        if (enableTls && jsonConfig.has("tlsVersion") && !jsonConfig.get("tlsVersion").isNull()) {
-            String tlsVersion = jsonConfig.get("tlsVersion").asText();
-            if (StringUtils.isNoneEmpty(tlsVersion)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", tlsVersion);
-            }
-        }
-
-        boolean enableProxy = jsonConfig.has("enableProxy") && jsonConfig.get("enableProxy").asBoolean();
-
-        if (enableProxy) {
-            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", jsonConfig.get("proxyHost").asText());
-            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", jsonConfig.get("proxyPort").asText());
-            String proxyUser = jsonConfig.get("proxyUser").asText();
-            if (StringUtils.isNoneEmpty(proxyUser)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", proxyUser);
-            }
-            String proxyPassword = jsonConfig.get("proxyPassword").asText();
-            if (StringUtils.isNoneEmpty(proxyPassword)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", proxyPassword);
-            }
-        }
-
-        boolean oauth2Enabled = jsonConfig.has("enableOauth2") && jsonConfig.get("enableOauth2").asBoolean();
-        if (oauth2Enabled) {
-            javaMailProperties.put(MAIL_PROP + protocol + ".auth.mechanisms", "XOAUTH2");
-            javaMailProperties.put("oauth2", true);
-        }
-        return javaMailProperties;
-    }
-
-    private int parsePort(String strPort) {
-        try {
-            return Integer.valueOf(strPort);
-        } catch (NumberFormatException e) {
-            throw new IncorrectParameterException(String.format("Invalid smtp port value: %s", strPort));
-        }
-    }
-
     @Override
     public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        JavaMailSenderImpl testMailSender = createMailSender(jsonConfig);
+        TbMailSender tbMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
@@ -210,7 +134,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("test.ftl", model);
 
-        sendMail(testMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -224,7 +148,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("activation.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -238,7 +162,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.activated.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -252,7 +176,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("reset.password.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -277,12 +201,12 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("password.was.reset.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout);
+        sendMail(tenantId, customerId, tbEmail, this.tbMailSender, timeout);
     }
 
     @Override
@@ -338,7 +262,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -350,7 +274,7 @@ public class DefaultMailService implements MailService {
                 "expirationTimeSeconds", expirationTimeSeconds
         ));
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -377,12 +301,12 @@ public class DefaultMailService implements MailService {
                 message = mergeTemplateIntoString("state.disabled.ftl", model);
                 break;
         }
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
     public void testConnection(TenantId tenantId) throws Exception {
-        mailSender.testConnection();
+        tbMailSender.testConnection();
     }
 
     private String toEnabledValueLabel(ApiFeature apiFeature) {
@@ -495,42 +419,12 @@ public class DefaultMailService implements MailService {
 
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
         try {
-            Properties javaMailProperties = ((JavaMailSenderImpl) mailSender).getJavaMailProperties();
-            if (Boolean.TRUE.equals(javaMailProperties.get("oauth2"))){
-                ((JavaMailSenderImpl)mailSender).setPassword(getAccessToken());
-            }
             mailExecutorService.submit(() -> mailSender.send(msg)).get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");
         } catch (Exception e) {
             throw new RuntimeException(ExceptionUtils.getRootCause(e));
-        }
-    }
-
-    public String getAccessToken() throws ThingsboardException {
-        try {
-            AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-            JsonNode jsonValue = settings.getJsonValue();
-            String clientId = jsonValue.get("clientId").asText();
-            String clientSecret = jsonValue.get("clientSecret").asText();
-            String refreshToken = jsonValue.get("refreshToken").asText();
-            String tokenUri = jsonValue.get("tokenUri").asText();
-            String providerId = jsonValue.get("providerId").asText();
-
-            TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
-                    new GenericUrl(tokenUri), refreshToken)
-                    .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
-                    .execute();
-            if (MICROSOFT.name().equals(providerId)) {
-                ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-                ((ObjectNode)jsonValue).put("expiresIn", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
-                adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
-            }
-            return tokenResponse.getAccessToken();
-        } catch (Exception e) {
-            log.warn("Unable to retrieve access token: {}", e.getMessage());
-            throw new ThingsboardException("Error while requesting access token" + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
     }
 
