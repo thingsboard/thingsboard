@@ -25,7 +25,7 @@ public class RuleChainsPageElements extends OtherPageElementsHelper {
         super(driver);
     }
 
-    private static final String MAKE_ROOT_BTN = ENTITY + "/../..//mat-icon[contains(text(),' flag')]/../..";
+    private static final String MAKE_ROOT_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),'flag')]/ancestor::button";
     private static final String ROOT = ENTITY + "/../..//mat-icon[text() = 'check_box']";
     private static final String ROOT_DISABLE = ENTITY + "/../..//mat-icon[text() = 'check_box_outline_blank']";
     private static final String CREATED_TIME = ENTITY + "/../..//mat-cell/span[contains(text(),'%s')]";

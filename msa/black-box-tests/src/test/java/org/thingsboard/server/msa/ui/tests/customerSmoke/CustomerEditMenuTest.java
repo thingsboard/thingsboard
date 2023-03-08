@@ -137,14 +137,14 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         dashboardPage.assignedCustomer(customerName);
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
+        jsClick(customerPage.editPencilBtn());
         customerPage.chooseDashboard();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(customerName).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
-        customerPage.userLoginBtn().click();
+        jsClick(customerPage.userLoginBtn());
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -163,14 +163,14 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         customerPage.assignedDashboard();
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
+        jsClick(customerPage.editPencilBtn());
         customerPage.chooseDashboard();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(customerName).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
-        customerPage.userLoginBtn().click();
+        jsClick(customerPage.userLoginBtn());
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -189,15 +189,15 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         customerPage.assignedDashboard();
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
+        jsClick(customerPage.editPencilBtn());
         customerPage.chooseDashboard();
         customerPage.hideHomeDashboardToolbarCheckbox().click();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(customerName).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
-        customerPage.userLoginBtn().click();
+        jsClick(customerPage.userLoginBtn());
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -233,11 +233,9 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.entityTitles().get(0).click();
         customerPage.editPencilBtn().click();
-        customerPage.phoneNumberEntityView().sendKeys(number);
-        boolean doneBtnIsEnable = customerPage.doneBtnEditViewVisible().isEnabled();
-        customerPage.doneBtnEditViewVisible().click();
+        customerPage.enterPhoneNumber(number);
 
-        Assert.assertFalse(doneBtnIsEnable);
+        Assert.assertFalse(customerPage.doneBtnEditViewVisible().isEnabled());
         Assert.assertNotNull(customerPage.errorMessage());
         Assert.assertTrue(customerPage.errorMessage().isDisplayed());
         Assert.assertEquals(customerPage.errorMessage().getText(), PHONE_NUMBER_ERROR_MESSAGE);
