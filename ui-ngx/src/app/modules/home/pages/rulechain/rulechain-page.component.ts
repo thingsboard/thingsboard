@@ -1705,20 +1705,20 @@ export class RuleChainPageComponent extends PageComponent
   private getRuleNodeErrorTooltip(node: FcRuleNode, desc: string): string {
     const errorsCount = this.translate.instant('rulenode.errors-count', {count: node.stats.errorsCount});
     const sinceLastAcknowledge = this.translate.instant('rulenode.since-last-acknowledge');
-    const lastErrorMessageTitle = this.translate.instant('rulenode.last-error-title');
+    const lastErrorMessageTitle = this.translate.instant('rulenode.last-error-title') + ':';
     const lastErrorMessageText = node.stats?.lastErrorMsg ? node.stats.lastErrorMsg : '-';
-    return '<div class="tb-rule-node-tooltip-error-container">' +
+    return '<div class="tb-node-tooltip-error-container">' +
       '<div class="tb-rule-node-tooltip">' +
       '<div id="tb-node-content">' +
       '<div class="tb-node-description">' + desc +
       '</div></div></div>' +
-      '<div class="tb-rule-node-tooltip-error">' +
+      '<div class="tb-node-tooltip-error-content">' +
         '<section>' +
           '<div class="error-count">' + errorsCount + '</div>' +
           '<div class="error-details">' + sinceLastAcknowledge + '</div>' +
         '</section>'+
         '<section>' +
-          '<div>' + lastErrorMessageTitle + ':'+ '</div>' +
+          '<div>' + lastErrorMessageTitle + '</div>' +
           '<div class="error-details">' + lastErrorMessageText + '</div>' +
         '</section>' +
       '</div>'+
