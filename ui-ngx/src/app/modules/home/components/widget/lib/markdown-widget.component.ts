@@ -40,13 +40,14 @@ interface MarkdownWidgetSettings {
   markdownTextPattern: string;
   useMarkdownTextFunction: boolean;
   markdownTextFunction: string;
+  applyDefaultMarkdownStyle: boolean;
   markdownCss: string;
 }
 
 type MarkdownTextFunction = (data: FormattedData[], ctx: WidgetContext) => string;
 
 @Component({
-  selector: 'tb-markdown-widget ',
+  selector: 'tb-markdown-widget',
   templateUrl: './markdown-widget.component.html'
 })
 export class MarkdownWidgetComponent extends PageComponent implements OnInit {
@@ -63,6 +64,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
 
   additionalStyles: string[];
 
+  applyDefaultMarkdownStyle = true;
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
@@ -85,6 +87,9 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       cssString = cssParser.applyNamespacing(cssString);
       cssString = cssParser.getCSSForEditor(cssString);
       this.additionalStyles = [cssString];
+    }
+    if (isDefinedAndNotNull(this.settings.applyDefaultMarkdownStyle)) {
+      this.applyDefaultMarkdownStyle = this.settings.applyDefaultMarkdownStyle;
     }
     const pageSize = isDefinedAndNotNull(this.ctx.widgetConfig.pageSize) &&
                       this.ctx.widgetConfig.pageSize > 0 ? this.ctx.widgetConfig.pageSize : 16384;
