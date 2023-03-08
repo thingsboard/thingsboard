@@ -42,7 +42,7 @@
     <section class="last-message-text">
       <textarea disabled #lastMessage matInput cdkTextareaAutosize cols="1" cdkAutosizeMinRows="1"></textarea>
     </section>
-    <div class="dialog-actions" mat-dialog-actions fxLayoutAlign="end center" style="padding-top: 16px;">
+    <div class="dialog-actions" mat-dialog-actions fxLayoutAlign="end center" style="padding: 16px 0;">
       <button mat-button cdkFocusInitial
               (click)="cancel()" [disabled]="isLoading$ | async">
         {{ 'action.cancel' | translate }}

@@ -23,7 +23,7 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FcRuleNode } from "@shared/models/rule-node.models";
 import { ContentType } from "@shared/models/constants";
-import { sortObjectKeys } from "@core/utils";
+import { objToBase64URI, sortObjectKeys } from "@core/utils";
 import {
   EventContentDialogComponent,
   EventContentDialogData
@@ -77,7 +77,17 @@ export class ClearRuleNodeErrorsDialogComponent extends DialogComponent<ClearRul
     if ($event) {
       $event.stopPropagation();
     }
-    const urlApiUsage = 'usage?state=W3siaWQiOiJkZWZhdWx0IiwicGFyYW1zIjp7fX0seyJpZCI6InJ1bGVfZW5naW5lX3N0YXRpc3RpY3MiLCJwYXJhbXMiOnt9fV0%253D';
+    const state = objToBase64URI([
+      {
+        id:"default",
+        params: {}
+      },
+      {
+        id:"rule_engine_statistics",
+        params: {}
+      }
+    ]);
+    const urlApiUsage = `usage?state=${state}`;
     window.open(urlApiUsage, '_blank');
   }
 
