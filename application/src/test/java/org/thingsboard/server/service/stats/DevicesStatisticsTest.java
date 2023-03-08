@@ -92,20 +92,24 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
         Device deviceM = createDevice("M", "m");
 
         long msgCountS = DeviceClass.S.getMaxDailyMsgCount() - 1;
+        long dpCountS = msgCountS * 2;
         for (long i = 0; i < msgCountS; i++) {
             String telemetry = "{\"dp1\": 1, \"dp2\": 2}";
             postTelemetry("s", telemetry);
         }
 
         long msgCountM = DeviceClass.M.getMaxDailyMsgCount() - 1;
+        long dpCountM = msgCountM * 2;
         for (long i = 0; i < msgCountM; i++) {
             String telemetry = "{\"dp1\": 1, \"dp2\": 2}";
             postTelemetry("m", telemetry);
         }
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_MSG_COUNT, deviceS.getUuidId()), true) != null &&
-                        getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_DP_COUNT, deviceS.getUuidId()), true) != null);
+                .until(() -> Long.valueOf(msgCountS).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_MSG_COUNT, deviceS.getUuidId()), true)) &&
+                        Long.valueOf(dpCountS).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_DP_COUNT, deviceS.getUuidId()), true)) &&
+                        Long.valueOf(msgCountM).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_MSG_COUNT, deviceM.getUuidId()), true)) &&
+                        Long.valueOf(dpCountM).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_DP_COUNT, deviceM.getUuidId()), true)));
 
         when(((BaseEntitiesStatisticsService) statisticsService).getCalculationPeriod())
                 .thenReturn(Pair.of(
@@ -119,13 +123,13 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
         assertThat(devicesStats.get(deviceS.getId())).extracting(EntityStatistics::getLatestValue).asInstanceOf(type(DeviceStats.class))
                 .satisfies(stats -> {
                     assertThat(stats.getDailyMsgCount()).isEqualTo(msgCountS);
-                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(msgCountS * 2);
+                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(dpCountS);
                     assertThat(stats.getDeviceClass()).isEqualTo(DeviceClass.S);
                 });
         assertThat(devicesStats.get(deviceM.getId())).extracting(EntityStatistics::getLatestValue).asInstanceOf(type(DeviceStats.class))
                 .satisfies(stats -> {
                     assertThat(stats.getDailyMsgCount()).isEqualTo(msgCountM);
-                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(msgCountM * 2);
+                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(dpCountM);
                     assertThat(stats.getDeviceClass()).isEqualTo(DeviceClass.M);
                 });
 
