@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+:host::ng-deep {
   width: 100%;
   height: 100%;
   display: block;
@@ -25,6 +25,42 @@
       .mat-mdc-row {
         &.invisible {
           visibility: hidden;
+        }
+        .mat-mdc-cell {
+          .assignee-cell {
+            .assigned-container {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              .user-avatar {
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                margin-right: 8px;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                min-width: 28px;
+                min-height: 28px;
+                color: white;
+                font-size: 13px;
+                font-weight: 700;
+              }
+            }
+            .unassigned-container {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              .material-icons.unassigned-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 28px;
+                margin-right: 8px;
+                color: rgba(0, 0, 0, 0.38);
+                overflow: visible;
+              }
+            }
+          }
         }
       }
     }

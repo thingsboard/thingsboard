@@ -87,6 +87,12 @@ public class EntityActionService {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case ALARM_ASSIGN:
+                msgType = DataConstants.ALARM_ASSIGN;
+                break;
+            case ALARM_UNASSIGN:
+                msgType = DataConstants.ALARM_UNASSIGN;
+                break;
             case ALARM_DELETE:
                 msgType = DataConstants.ALARM_DELETE;
                 break;

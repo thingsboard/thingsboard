@@ -457,6 +457,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '}\n' +
     '.mat-mdc-table .mat-mdc-cell {\n' +
     'color: ' + mdDark + ';\n' +
+    'background-color: rgba(0, 0, 0, 0);\n' +
     '}\n' +
     '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button mat-icon {\n' +
     'color: ' + mdDarkSecondary + ';\n' +

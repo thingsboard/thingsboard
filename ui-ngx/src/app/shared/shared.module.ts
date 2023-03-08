@@ -190,6 +190,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
+    DateAgoPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -321,7 +322,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     BranchAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
-    NotificationComponent
+    NotificationComponent,
+    DateAgoPipe
   ],
   imports: [
     CommonModule,
@@ -532,7 +534,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     BranchAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
-    NotificationComponent
+    NotificationComponent,
+    DateAgoPipe
   ]
 })
 export class SharedModule { }

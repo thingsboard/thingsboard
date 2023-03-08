@@ -655,9 +655,7 @@ public abstract class BaseController {
     }
 
     AlarmInfo checkAlarmInfoId(AlarmId alarmId, Operation operation) throws ThingsboardException {
-        return checkEntityId(alarmId, (tenantId, id) -> {
-            return alarmService.findAlarmInfoByIdAsync(tenantId, alarmId).get();
-        }, operation);
+        return checkEntityId(alarmId, alarmService::findAlarmInfoById, operation);
     }
 
     AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {

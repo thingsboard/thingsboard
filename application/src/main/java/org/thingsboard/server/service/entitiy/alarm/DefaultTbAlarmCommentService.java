@@ -38,8 +38,9 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
     @Override
     public AlarmComment saveAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException {
         ActionType actionType = alarmComment.getId() == null ? ActionType.ADDED_COMMENT : ActionType.UPDATED_COMMENT;
-        UserId userId = user.getId();
-        alarmComment.setUserId(userId);
+        if (user != null) {
+            alarmComment.setUserId(user.getId());
+        }
         try {
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment));
             notificationEntityService.notifyAlarmComment(alarm, savedAlarmComment, actionType, user);

@@ -41,6 +41,7 @@ public class ModelConstants {
     public static final String USER_ID_PROPERTY = "user_id";
     public static final String TENANT_ID_PROPERTY = "tenant_id";
     public static final String CUSTOMER_ID_PROPERTY = "customer_id";
+    public static final String ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String DEVICE_ID_PROPERTY = "device_id";
     public static final String TITLE_PROPERTY = "title";
     public static final String NAME_PROPERTY = "name";
@@ -82,6 +83,7 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_PASSWORD_PROPERTY = "password"; //NOSONAR, the constant used to identify password column name (not password value itself)
     public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY = "activate_token";
     public static final String USER_CREDENTIALS_RESET_TOKEN_PROPERTY = "reset_token";
+    public static final String USER_CREDENTIALS_ADDITIONAL_PROPERTY = "additional_info";
 
     public static final String USER_CREDENTIALS_BY_USER_COLUMN_FAMILY_NAME = "user_credentials_by_user";
     public static final String USER_CREDENTIALS_BY_ACTIVATE_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_activate_token";
@@ -287,23 +289,34 @@ public class ModelConstants {
      */
     public static final String ENTITY_ALARM_COLUMN_FAMILY_NAME = "entity_alarm";
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
+    public static final String ALARM_VIEW_NAME = "alarm_info";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ALARM_TYPE_PROPERTY = "type";
-    public static final String ALARM_DETAILS_PROPERTY = "details";
+    public static final String ALARM_DETAILS_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String ALARM_STATUS_PROPERTY = "status";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
     public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
+    public static final String ALARM_ORIGINATOR_LABEL_PROPERTY = "originator_label";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
-    public static final String ALARM_STATUS_PROPERTY = "status";
+    public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
+    public static final String ALARM_ASSIGNEE_FIRST_NAME_PROPERTY = "assignee_first_name";
+    public static final String ALARM_ASSIGNEE_LAST_NAME_PROPERTY = "assignee_last_name";
+    public static final String ALARM_ASSIGNEE_EMAIL_PROPERTY = "assignee_email";
     public static final String ALARM_START_TS_PROPERTY = "start_ts";
     public static final String ALARM_END_TS_PROPERTY = "end_ts";
+    public static final String ALARM_ACKNOWLEDGED_PROPERTY = "acknowledged";
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
+    public static final String ALARM_CLEARED_PROPERTY = "cleared";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
+    public static final String ALARM_ASSIGN_TS_PROPERTY = "assign_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
     public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
     public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
+
+    public static final String ALARM_OPERATION_RESULT_PROPERTY = "operation_result";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
 

@@ -443,9 +443,19 @@
         "originator": "Originator",
         "originator-type": "Originator type",
         "details": "Details",
+        "originator-label": "Originator label",
+        "assign": "Assign",
+        "assignments": "Assignments",
+        "assignee": "Assignee",
+        "assignee-id": "Assignee id",
+        "assignee-first-name": "Assignee first name",
+        "assignee-last-name": "Assignee last name",
+        "assignee-email": "Assignee email",
+        "unassigned": "Unassigned",
         "status": "Status",
         "alarm-details": "Alarm details",
         "start-time": "Start time",
+        "assign-time": "Assign time",
         "end-time": "End time",
         "ack-time": "Acknowledged time",
         "clear-time": "Cleared time",
@@ -482,7 +492,17 @@
         "fetch-size-error-min": "Minimum value is 10.",
         "alarm-type-list": "Alarm type list",
         "any-type": "Any type",
-        "search-propagated-alarms": "Search propagated alarms"
+        "search-propagated-alarms": "Search propagated alarms",
+        "comments": "Alarm comments",
+        "advanced-info": "Advanced info"
+    },
+    "alarm-comment": {
+        "add": "Add a comment...",
+        "alarm-comment": "Alarm comment",
+        "comments": "Comments",
+        "delete-alarm-comment": "Do you want to delete this comment?",
+        "refresh": "Refresh",
+        "sort-direction": "Sort direction"
     },
     "alias": {
         "add": "Add alias",
@@ -736,6 +756,8 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
+        "type-alarm-assign": "Assigned",
+        "type-alarm-unassign": "Unassigned",
         "type-added-comment": "Added comment",
         "type-updated-comment": "Updated comment",
         "type-deleted-comment": "Deleted comment",
@@ -4934,7 +4956,9 @@
             "enable-alarm-filter": "Enable alarm filter",
             "display-alarm-details": "Display alarm details",
             "allow-alarms-ack": "Allow alarms acknowledgment",
-            "allow-alarms-clear": "Allow alarms clear"
+            "allow-alarms-clear": "Allow alarms clear",
+            "display-alarm-comments": "Display alarm comments",
+            "allow-alarms-assign": "Allow alarms assignment"
         },
         "value-source": {
             "value-source": "Value source",

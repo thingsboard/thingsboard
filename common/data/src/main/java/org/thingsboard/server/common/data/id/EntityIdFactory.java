@@ -25,6 +25,14 @@ import java.util.UUID;
  */
 public class EntityIdFactory {
 
+    public static EntityId getByTypeAndUuid(int type, String uuid) {
+        return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));
+    }
+
+    public static EntityId getByTypeAndUuid(String type, String uuid) {
+        return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
+    }
+
     public static EntityId getByTypeAndId(String type, String uuid) {
         return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
     }
