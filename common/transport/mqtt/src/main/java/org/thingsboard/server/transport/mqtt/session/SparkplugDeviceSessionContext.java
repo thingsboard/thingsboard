@@ -23,18 +23,24 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugRpcRequestHeader;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProto;
 
 @Slf4j
 public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionContext<SparkplugNodeSessionHandler> {
+
+    private final Map<String, SparkplugBProto.Payload.Metric> deviceBirthMetrics = new ConcurrentHashMap<>();
 
     public SparkplugDeviceSessionContext(SparkplugNodeSessionHandler parent,
                                          TransportDeviceInfo deviceInfo,
@@ -44,6 +50,16 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
                                          TransportService transportService) {
         super(parent, deviceInfo, deviceProfile, mqttQoSMap, transportService);
     }
+
+    public  Map<String, SparkplugBProto.Payload.Metric> getDeviceBirthMetrics() {
+        return deviceBirthMetrics;
+    }
+
+    public void setDeviceBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
+        this.deviceBirthMetrics.putAll(metrics.stream()
+                .collect(Collectors.toMap(SparkplugBProto.Payload.Metric::getName, metric -> metric)));
+    }
+
 
     @Override
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
@@ -64,20 +80,7 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
     public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
         log.trace("[{}] Received RPC Request notification to sparkplug device", sessionId);
         try {
-            /**
-             *  DCMD {"metricName":"MyDeviceMetricText","value":"MyNodeMetric05_String_Value"}
-             *  DCMD {"metricName":"MyNodeMetric02_LongInt64","value":2814119464032075444}
-             *  DCMD {"metricName":"MyNodeMetric03_Double","value":6336935578763180333}
-             *  DCMD {"metricName":"MyNodeMetric04_Float","value":413.18222}
-             *  DCMD {"metricName":"Node Control/Rebirth","value":false}
-             *  DCMD {"metricName":"MyNodeMetric06_Json_Bytes", "value":[40,47,-49]}
-             */
             SparkplugMessageType messageType = SparkplugMessageType.parseMessageType(rpcRequest.getMethodName());
-            if (messageType == null) {
-                parent.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
-                        ThingsboardErrorCode.INVALID_ARGUMENTS, "Unsupported SparkplugMessageType: " + rpcRequest.getMethodName() + rpcRequest.getParams());
-                return;
-            }
             SparkplugRpcRequestHeader header = JacksonUtil.fromString(rpcRequest.getParams(), SparkplugRpcRequestHeader.class);
             header.setMessageType(messageType.name());
             TransportProtos.TsKvProto tsKvProto = getTsKvProto(header.getMetricName(), header.getValue(), new Date().getTime());

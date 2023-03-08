@@ -392,21 +392,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         int msgId = mqttMsg.variableHeader().packetId();
         try {
             SparkplugTopic sparkplugTopic = parseTopicPublish(topicName);
-            String deviceName = sparkplugTopic.isNode() ? deviceSessionCtx.getDeviceInfo().getDeviceName() : sparkplugTopic.getDeviceId();
             if (sparkplugTopic.isNode()) {
                 // A node topic
                 SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
                 switch (sparkplugTopic.getType()) {
-                    case STATE:
-                        // TODO
-                        break;
                     case NBIRTH:
                     case NCMD:
                     case NDATA:
-                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, deviceName, sparkplugTopic);
-                        break;
-                    case NRECORD:
-                        // TODO
+                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopic);
                         break;
                     default:
                 }
@@ -414,30 +407,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 // A device topic
                 SparkplugBProto.Payload sparkplugBProtoDevice = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
                 switch (sparkplugTopic.getType()) {
-                    case STATE:
-                        // TODO
-                        break;
                     case DBIRTH:
                     case DCMD:
                     case DDATA:
-                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoDevice, deviceName, sparkplugTopic);
+                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoDevice, sparkplugTopic.getDeviceId(), sparkplugTopic);
                         break;
-                    /**
-                     * TODO
-                     *  7.3.2. Device Death Certificate (DDEATH)
-                     * The Sparkplug™ Topic Namespace for a device Death Certificate is:
-                     * namespace/group_id/DDEATH/edge_node_id/device_id
-                     * It is the responsibility of the MQTT EoN node to indicate the real-time state of either physical legacy device using
-                     * poll/response protocols and/or local logical devices. If the device becomes unavailable for any reason (no
-                     * response, CRC error, etc.) it is the responsibility of the EoN node to publish a DDEATH on behalf of the end device.
-                     * Immediately upon reception of a DDEATH, any MQTT client subscribed to this device should set the data quality of
-                     * all metrics to “STALE” and should note the time stamp when the DDEATH message was received.
-                     */
                     case DDEATH:
-                        sparkplugSessionHandler.onDeviceDisconnect(mqttMsg, deviceName);
-                        break;
-                    case DRECORD:
-                        // TODO
+                        sparkplugSessionHandler.onDeviceDisconnect(mqttMsg, sparkplugTopic.getDeviceId());
                         break;
                     default:
                 }
@@ -1083,16 +1059,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             log.trace("[{}][{}] Failed to fetch device additional info", sessionId, device.getDeviceName(), e);
         }
     }
-
-    /**
-     * Sparkplug™ Specification Version 2.2
-     * 7.1.1. EoN Node Death Certificate (NDEATH)
-     * The Death Certificate topic for an MQTT EoN node is:
-     * namespace/group_id/NDEATH/edge_node_id
-     * The Death Certificate topic and payload described here are not “published” as an MQTT message by a client, but
-     * provided as parameters within the MQTT CONNECT control packet when this MQTT EoN node first establishes the
-     * MQTT Client session.
-     */
 
     private void checkSparkplugNodeSession(MqttConnectMessage connectMessage, ChannelHandlerContext ctx) {
         try {

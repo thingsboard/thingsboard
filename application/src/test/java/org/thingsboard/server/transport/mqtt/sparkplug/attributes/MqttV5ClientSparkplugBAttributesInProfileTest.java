@@ -31,8 +31,8 @@ public class MqttV5ClientSparkplugBAttributesInProfileTest extends AbstractMqttV
 
     @Before
     public void beforeTest() throws Exception {
-        sparkPlugAttributesMetricNames = new HashSet<>();
-        sparkPlugAttributesMetricNames.add(metricBirthName_Int32);
+        sparkplugAttributesMetricNames = new HashSet<>();
+        sparkplugAttributesMetricNames.add(metricBirthName_Int32);
         beforeSparkplugTest();
     }
 

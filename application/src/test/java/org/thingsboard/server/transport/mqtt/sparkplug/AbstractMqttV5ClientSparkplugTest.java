@@ -95,13 +95,13 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     //*BIRTH
     protected static final MetricDataType metricBirthDataType_Int32 = Int32;
     protected static final String metricBirthName_Int32 = "Device Metric int32";
-    protected Set<String> sparkPlugAttributesMetricNames;
+    protected Set<String> sparkplugAttributesMetricNames;
 
     public void beforeSparkplugTest() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName("Test Connect Sparkplug client node")
-                .isSparkPlug(true)
-                .sparkPlugAttributesMetricNames(sparkPlugAttributesMetricNames)
+                .isSparkplug(true)
+                .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .build();
         processBeforeTest(configProperties);

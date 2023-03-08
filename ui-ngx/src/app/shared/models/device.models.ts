@@ -242,7 +242,7 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
-  sparkPlug?: boolean;
+  sparkplug?: boolean;
   sendAckOnValidationException?: boolean;
   transportPayloadTypeConfiguration?: {
     transportPayloadType?: TransportPayloadType;
@@ -360,7 +360,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          sparkPlug: false,
+          sparkplug: false,
           sendAckOnValidationException: false,
           transportPayloadTypeConfiguration: {
             transportPayloadType: TransportPayloadType.JSON,

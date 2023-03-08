@@ -29,8 +29,8 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
     @NoXss
     private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
-    private boolean sparkPlug;
-    private Set<String> sparkPlugAttributesMetricNames;
+    private boolean sparkplug;
+    private Set<String> sparkplugAttributesMetricNames;
     private boolean sendAckOnValidationException;
 
     @Override

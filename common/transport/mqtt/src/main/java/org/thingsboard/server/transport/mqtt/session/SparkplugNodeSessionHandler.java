@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.mqtt.session;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
@@ -65,7 +66,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopi
  * Created by nickAS21 on 12.12.22
  */
 @Slf4j
-public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
+public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<SparkplugDeviceSessionContext> {
 
     private final SparkplugTopic sparkplugTopicNode;
     private final Map<String, SparkplugBProto.Payload.Metric> nodeBirthMetrics;
@@ -81,7 +82,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
 
     public void setNodeBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
         this.nodeBirthMetrics.putAll(metrics.stream()
-                .collect(Collectors.toMap(metric -> metric.getName(), metric -> metric)));
+                .collect(Collectors.toMap(SparkplugBProto.Payload.Metric::getName, metric -> metric)));
     }
 
     public Map<String, SparkplugBProto.Payload.Metric> getNodeBirthMetrics() {
@@ -102,24 +103,28 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
 
     public void onAttributesTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
         checkDeviceName(deviceName);
-        ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture = topic.isNode() ?
-                Futures.immediateFuture(this.deviceSessionCtx) : onDeviceConnectProto(deviceName);
-        try {
-            if (topic.isType(NBIRTH) || topic.isType(DBIRTH)) {
-                // add Msg Telemetry: key STATE type: String value: ONLINE ts: sparkplugBProto.getTimestamp()
-                sendSparkplugStateOnTelemetry(contextListenableFuture.get().getSessionInfo(), deviceName, ONLINE,
-                        sparkplugBProto.getTimestamp());
-            }
+
+        ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture;
+        if (topic.isNode()) {
             if (topic.isType(NBIRTH)) {
+                sendSparkplugStateOnTelemetry(this.deviceSessionCtx.getSessionInfo(), deviceName, ONLINE,
+                        sparkplugBProto.getTimestamp());
                 setNodeBirthMetrics(sparkplugBProto.getMetricsList());
-            } else if (topic.isType(DBIRTH)) {
-                contextListenableFuture.get().setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
             }
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("Failed add Metrics or change SparkplugConnectionState. MessageType *BIRTH.", e);
+            contextListenableFuture = Futures.immediateFuture(this.deviceSessionCtx);
+        } else {
+            ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = onDeviceConnectProto(deviceName);
+            contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
+                if (topic.isType(DBIRTH)) {
+                    sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), deviceName, ONLINE,
+                            sparkplugBProto.getTimestamp());
+                    ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
+                }
+                return ctx;
+            }, MoreExecutors.directExecutor());
         }
         Set<String> attributesMetricNames = ((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
-                .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkPlugAttributesMetricNames();
+                .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkplugAttributesMetricNames();
         if (attributesMetricNames != null) {
             List<TransportApiProtos.AttributesMsg> attributesMsgList = convertToPostAttributes(sparkplugBProto, attributesMetricNames, deviceName);
             onDeviceAttributesProto(contextListenableFuture, msgId, attributesMsgList, deviceName);
@@ -213,7 +218,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler {
         }
     }
 
-    private ListenableFuture<MqttDeviceAwareSessionContext> onDeviceConnectProto(String deviceName) throws ThingsboardException {
+    private ListenableFuture<SparkplugDeviceSessionContext> onDeviceConnectProto(String deviceName) throws ThingsboardException {
         try {
             String deviceType = this.gateway.getDeviceType() + "-node";
             return onDeviceConnect(deviceName, deviceType);

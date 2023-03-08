@@ -16,17 +16,17 @@
 
 -->
 <form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-top: 8px;">
-  <mat-checkbox formControlName="sparkPlug">
+  <mat-checkbox formControlName="sparkplug">
     {{ 'device-profile.mqtt-device-topic-filters-spark-plug' | translate }}
   </mat-checkbox>
-  <div *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value"
+  <div *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
        class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
   <mat-form-field floatLabel="always" class="mat-block" style="padding-top: 8px;"
-                  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
+                  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value">
     <mat-label translate>device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names</mat-label>
-    <mat-chip-list #attrMetricNamesChipList formControlName="sparkPlugAttributesMetricNames">
+    <mat-chip-list #attrMetricNamesChipList formControlName="sparkplugAttributesMetricNames">
       <mat-chip
-        *ngFor="let name of mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlugAttributesMetricNames').value;"
+        *ngFor="let name of mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplugAttributesMetricNames').value;"
         (removed)="removeAttributeMetricName(name)">
         {{name}}
         <mat-icon matChipRemove>close</mat-icon>
@@ -40,7 +40,7 @@
     <mat-hint innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"></mat-hint>
   </mat-form-field>
 </form>
-<form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkPlug').value">
+<form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value">
   <fieldset class="fields-group">
     <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
     <div fxLayoutGap="8px" fxLayout="column">

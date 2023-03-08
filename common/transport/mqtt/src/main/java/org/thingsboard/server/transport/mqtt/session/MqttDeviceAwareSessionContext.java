@@ -32,28 +32,14 @@ import java.util.stream.Collectors;
 public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionContext {
 
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
-    private Map<String, SparkplugBProto.Payload.Metric> deviceBirthMetrics;
 
     public MqttDeviceAwareSessionContext(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(sessionId);
         this.mqttQoSMap = mqttQoSMap;
-        this.deviceBirthMetrics = null;
     }
 
     public ConcurrentMap<MqttTopicMatcher, Integer> getMqttQoSMap() {
         return mqttQoSMap;
-    }
-
-    public  Map<String, SparkplugBProto.Payload.Metric> getDeviceBirthMetrics() {
-        return deviceBirthMetrics;
-    }
-
-    public void setDeviceBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
-        if  (this.deviceBirthMetrics == null) {
-            this.deviceBirthMetrics = new ConcurrentHashMap<>();
-        }
-        this.deviceBirthMetrics.putAll(metrics.stream()
-                .collect(Collectors.toMap(metric -> metric.getName(), metric -> metric)));
     }
 
     public MqttQoS getQoSForTopic(String topic) {

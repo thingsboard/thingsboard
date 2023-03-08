@@ -103,8 +103,8 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             if (StringUtils.hasLength(config.getAttributesTopicFilter())) {
                 mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(config.getAttributesTopicFilter());
             }
-            mqttDeviceProfileTransportConfiguration.setSparkPlug(config.isSparkPlug());
-            mqttDeviceProfileTransportConfiguration.setSparkPlugAttributesMetricNames(config.sparkPlugAttributesMetricNames);
+            mqttDeviceProfileTransportConfiguration.setSparkplug(config.isSparkplug());
+            mqttDeviceProfileTransportConfiguration.setSparkplugAttributesMetricNames(config.sparkplugAttributesMetricNames);
             mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(config.isSendAckOnValidationException());
             TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
             if (TransportPayloadType.JSON.equals(transportPayloadType)) {

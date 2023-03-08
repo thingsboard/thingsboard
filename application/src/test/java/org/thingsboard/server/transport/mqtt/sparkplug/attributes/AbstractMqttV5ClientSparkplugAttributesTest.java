@@ -41,11 +41,6 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopi
 @Slf4j
 public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends AbstractMqttV5ClientSparkplugTest {
 
-    /**
-     * "sparkPlugAttributesMetricNames": ["SN node", "SN device", "Firmware version", "Date version", "Last date update"]
-     * @throws Exception
-     */
-
     protected void processClientWithCorrectAccessTokenPublishNCMDReBirth() throws Exception {
         clientWithCorrectNodeAccessTokenWithNDEATH();
         List<String> listKeys = connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());

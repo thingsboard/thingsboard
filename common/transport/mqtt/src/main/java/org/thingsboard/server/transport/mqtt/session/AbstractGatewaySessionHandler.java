@@ -83,7 +83,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMess
  * Created by ashvayka on 19.01.17.
  */
 @Slf4j
-public abstract class AbstractGatewaySessionHandler {
+public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDeviceSessionContext> {
 
     protected static final String DEFAULT_DEVICE_TYPE = "default";
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
@@ -94,8 +94,8 @@ public abstract class AbstractGatewaySessionHandler {
     protected final TransportDeviceInfo gateway;
     protected final UUID sessionId;
     private final ConcurrentMap<String, Lock> deviceCreationLockMap;
-    private final ConcurrentMap<String, MqttDeviceAwareSessionContext> devices;
-    private final ConcurrentMap<String, ListenableFuture<MqttDeviceAwareSessionContext>> deviceFutures;
+    private final ConcurrentMap<String, T> devices;
+    private final ConcurrentMap<String, ListenableFuture<T>> deviceFutures;
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
@@ -206,9 +206,9 @@ public abstract class AbstractGatewaySessionHandler {
 
     protected void processOnConnect(MqttPublishMessage msg, String deviceName, String deviceType) {
         log.trace("[{}] onDeviceConnect: {}", sessionId, deviceName);
-        Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<MqttDeviceAwareSessionContext>() {
+        Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<>() {
             @Override
-            public void onSuccess(@Nullable MqttDeviceAwareSessionContext result) {
+            public void onSuccess(@Nullable T result) {
                 ack(msg, ReturnCode.SUCCESS);
                 log.trace("[{}] onDeviceConnectOk: {}", sessionId, deviceName);
             }
@@ -221,8 +221,8 @@ public abstract class AbstractGatewaySessionHandler {
         }, context.getExecutor());
     }
 
-    ListenableFuture<MqttDeviceAwareSessionContext> onDeviceConnect(String deviceName, String deviceType) {
-        MqttDeviceAwareSessionContext result = devices.get(deviceName);
+    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
+        T result = devices.get(deviceName);
         if (result == null) {
             Lock deviceCreationLock = deviceCreationLockMap.computeIfAbsent(deviceName, s -> new ReentrantLock());
             deviceCreationLock.lock();
@@ -241,9 +241,9 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    private ListenableFuture<MqttDeviceAwareSessionContext> getDeviceCreationFuture(String deviceName, String deviceType) {
-        final SettableFuture<MqttDeviceAwareSessionContext> futureToSet = SettableFuture.create();
-        ListenableFuture<MqttDeviceAwareSessionContext> future = deviceFutures.putIfAbsent(deviceName, futureToSet);
+    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType) {
+        final SettableFuture<T> futureToSet = SettableFuture.create();
+        ListenableFuture<T> future = deviceFutures.putIfAbsent(deviceName, futureToSet);
         if (future != null) {
             return future;
         }
@@ -258,7 +258,7 @@ public abstract class AbstractGatewaySessionHandler {
                     new TransportServiceCallback<>() {
                         @Override
                         public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                            AbstractGatewayDeviceSessionContext deviceSessionCtx = newDeviceSessionCtx(msg);
+                            T deviceSessionCtx = newDeviceSessionCtx(msg);
                             if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                 log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                 SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
@@ -288,7 +288,7 @@ public abstract class AbstractGatewaySessionHandler {
         }
     }
 
-    protected abstract AbstractGatewayDeviceSessionContext newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg);
+    protected abstract T newDeviceSessionCtx(GetOrCreateDeviceFromGatewayResponse msg);
 
     protected int getMsgId(MqttPublishMessage mqttMsg) {
         return mqttMsg.variableHeader().packetId();
@@ -341,7 +341,7 @@ public abstract class AbstractGatewaySessionHandler {
                 Futures.addCallback(checkDeviceConnected(deviceName),
                         new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                            public void onSuccess(@Nullable T deviceCtx) {
                                 if (!deviceEntry.getValue().isJsonArray()) {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
@@ -375,7 +375,7 @@ public abstract class AbstractGatewaySessionHandler {
                     Futures.addCallback(checkDeviceConnected(deviceName),
                             new FutureCallback<>() {
                                 @Override
-                                public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                                public void onSuccess(@Nullable T deviceCtx) {
                                     TransportProtos.PostTelemetryMsg msg = telemetryMsg.getMsg();
                                     try {
                                         TransportProtos.PostTelemetryMsg postTelemetryMsg = ProtoConverter.validatePostTelemetryMsg(msg.toByteArray());
@@ -425,7 +425,7 @@ public abstract class AbstractGatewaySessionHandler {
                 Futures.addCallback(checkDeviceConnected(deviceName),
                         new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                            public void onSuccess(@Nullable T deviceCtx) {
                                 if (!deviceEntry.getValue().isJsonObject()) {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
@@ -459,7 +459,7 @@ public abstract class AbstractGatewaySessionHandler {
                     Futures.addCallback(checkDeviceConnected(deviceName),
                             new FutureCallback<>() {
                                 @Override
-                                public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                                public void onSuccess(@Nullable T deviceCtx) {
                                     TransportApiProtos.ClaimDevice claimRequest = claimDeviceMsg.getClaimRequest();
                                     if (claimRequest == null) {
                                         throw new IllegalArgumentException("Claim request for device: " + deviceName + " is null!");
@@ -501,7 +501,7 @@ public abstract class AbstractGatewaySessionHandler {
                 Futures.addCallback(checkDeviceConnected(deviceName),
                         new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                            public void onSuccess(@Nullable T deviceCtx) {
                                 if (!deviceEntry.getValue().isJsonObject()) {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
@@ -530,7 +530,7 @@ public abstract class AbstractGatewaySessionHandler {
                     Futures.addCallback(checkDeviceConnected(deviceName),
                             new FutureCallback<>() {
                                 @Override
-                                public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                                public void onSuccess(@Nullable T deviceCtx) {
                                     TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
                                     if (kvListProto == null) {
                                         throw new IllegalArgumentException("Attributes List for device: " + deviceName + " is empty!");
@@ -609,7 +609,7 @@ public abstract class AbstractGatewaySessionHandler {
             Futures.addCallback(checkDeviceConnected(deviceName),
                     new FutureCallback<>() {
                         @Override
-                        public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                        public void onSuccess(@Nullable T deviceCtx) {
                             Integer requestId = jsonObj.get("id").getAsInt();
                             String data = jsonObj.get("data").toString();
                             TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
@@ -634,7 +634,7 @@ public abstract class AbstractGatewaySessionHandler {
             Futures.addCallback(checkDeviceConnected(deviceName),
                     new FutureCallback<>() {
                         @Override
-                        public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                        public void onSuccess(@Nullable T deviceCtx) {
                             Integer requestId = gatewayRpcResponseMsg.getId();
                             String data = gatewayRpcResponseMsg.getData();
                             TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
@@ -661,7 +661,7 @@ public abstract class AbstractGatewaySessionHandler {
         Futures.addCallback(checkDeviceConnected(deviceName),
                 new FutureCallback<>() {
                     @Override
-                    public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                    public void onSuccess(@Nullable T deviceCtx) {
                         transportService.process(deviceCtx.getSessionInfo(), requestMsg, getPubAckCallback(channel, deviceName, msgId, requestMsg));
                     }
 
@@ -685,8 +685,8 @@ public abstract class AbstractGatewaySessionHandler {
         return result.build();
     }
 
-    protected ListenableFuture<MqttDeviceAwareSessionContext> checkDeviceConnected(String deviceName) {
-        MqttDeviceAwareSessionContext ctx = devices.get(deviceName);
+    protected ListenableFuture<T> checkDeviceConnected(String deviceName) {
+        T ctx = devices.get(deviceName);
         if (ctx == null) {
             log.debug("[{}] Missing device [{}] for the gateway session", sessionId, deviceName);
             return onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
@@ -729,7 +729,6 @@ public abstract class AbstractGatewaySessionHandler {
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
         if (this.deviceSessionCtx.isSparkplug()) {
-            // add Msg Telemetry: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
             sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
@@ -744,7 +743,6 @@ public abstract class AbstractGatewaySessionHandler {
         keyValueProtoBuilder.setType(TransportProtos.KeyValueType.STRING_V);
         keyValueProtoBuilder.setStringV(connectionState.name());
         TransportProtos.PostTelemetryMsg postTelemetryMsg = postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
-
         transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(channel, deviceName, -1, postTelemetryMsg));
     }
 
