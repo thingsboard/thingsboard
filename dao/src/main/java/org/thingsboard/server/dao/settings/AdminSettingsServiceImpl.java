@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.Optional;
-
 @Service
 @Slf4j
 public class AdminSettingsServiceImpl implements AdminSettingsService {
@@ -72,7 +70,7 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
                 if (!newJsonValue.has("refreshToken") && oldJsonValue.has("refreshToken")){
                     ((ObjectNode) newJsonValue).put("refreshToken", oldJsonValue.get("refreshToken").asText());
                 }
-                dropRefreshTokenIfProviderInfoChanged(newJsonValue, oldJsonValue);
+                dropTokenIfProviderInfoChanged(newJsonValue, oldJsonValue);
             }
         }
         if (adminSettings.getTenantId() == null) {
@@ -93,15 +91,18 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
         adminSettingsDao.removeByTenantId(tenantId.getId());
     }
 
-    private void dropRefreshTokenIfProviderInfoChanged(JsonNode newJsonValue, JsonNode oldJsonValue) {
+    private void dropTokenIfProviderInfoChanged(JsonNode newJsonValue, JsonNode oldJsonValue) {
         if (newJsonValue.has("enableOauth2") && newJsonValue.get("enableOauth2").asBoolean()){
             if (!newJsonValue.get("providerId").equals(oldJsonValue.get("providerId")) ||
                     !newJsonValue.get("clientId").equals(oldJsonValue.get("clientId")) ||
                     !newJsonValue.get("clientSecret").equals(oldJsonValue.get("clientSecret")) ||
                     !newJsonValue.get("redirectUri").equals(oldJsonValue.get("redirectUri")) ||
                     (newJsonValue.has("providerTenantId") && !newJsonValue.get("providerTenantId").equals(oldJsonValue.get("providerTenantId")))){
-                ((ObjectNode) newJsonValue).put("refreshTokenGenerated", false);
+                ((ObjectNode) newJsonValue).put("tokenGenerated", false);
                 ((ObjectNode) newJsonValue).remove("refreshToken");
+                ((ObjectNode) newJsonValue).remove("accessToken");
+                ((ObjectNode) newJsonValue).remove("tokenExpires");
+                ((ObjectNode) newJsonValue).remove("refreshTokenExpires");
             }
         }
     }

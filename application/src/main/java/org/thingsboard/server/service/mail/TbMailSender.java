@@ -115,29 +115,38 @@ public class TbMailSender extends JavaMailSenderImpl {
         return javaMailProperties;
     }
 
-    public String getAccessToken() throws ThingsboardException {
+    public synchronized String getAccessToken() throws ThingsboardException {
         try {
             AdminSettings settings = ctx.getAdminSettingsService().findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
             JsonNode jsonValue = settings.getJsonValue();
-            String clientId = jsonValue.get("clientId").asText();
-            String clientSecret = jsonValue.get("clientSecret").asText();
-            String refreshToken = jsonValue.get("refreshToken").asText();
-            String tokenUri = jsonValue.get("tokenUri").asText();
-            String providerId = jsonValue.get("providerId").asText();
+            long tokenExpires = jsonValue.get("tokenExpires").asLong();
 
-            TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
-                    new GenericUrl(tokenUri), refreshToken)
-                    .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
-                    .execute();
-            if (MailOauth2Provider.MICROSOFT.name().equals(providerId)) {
-                ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-                ((ObjectNode)jsonValue).put("expiresIn", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+            if (System.currentTimeMillis() > tokenExpires) {
+                String clientId = jsonValue.get("clientId").asText();
+                String clientSecret = jsonValue.get("clientSecret").asText();
+                String refreshToken = jsonValue.get("refreshToken").asText();
+                String tokenUri = jsonValue.get("tokenUri").asText();
+                String providerId = jsonValue.get("providerId").asText();
+
+                TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
+                        new GenericUrl(tokenUri), refreshToken)
+                        .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
+                        .execute();
+                if (MailOauth2Provider.MICROSOFT.name().equals(providerId)) {
+                    ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+                    ((ObjectNode)jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+                }
+                ((ObjectNode)jsonValue).put("accessToken", tokenResponse.getAccessToken());
+                tokenExpires = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds().intValue() * 1000);
+                ((ObjectNode)jsonValue).put("tokenExpires", tokenExpires);
+
                 ctx.getAdminSettingsService().saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                return tokenResponse.getAccessToken();
             }
-            return tokenResponse.getAccessToken();
+            else return jsonValue.get("accessToken").asText();
         } catch (Exception e) {
             log.warn("Unable to retrieve access token: {}", e.getMessage());
-            throw new ThingsboardException("Error while requesting access token" + e.getMessage(), ThingsboardErrorCode.GENERAL);
+            throw new ThingsboardException("Error while retrieving access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
     }
 

@@ -57,7 +57,7 @@ export interface MailServerSettings {
   tokenUri?: string;
   scope?: string;
   redirectUri?: string;
-  refreshTokenGenerated?: boolean;
+  tokenGenerated?: boolean;
 }
 
 export interface GeneralSettings {
