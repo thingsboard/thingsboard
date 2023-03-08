@@ -520,6 +520,13 @@ export default abstract class LeafletMap {
         this.createdControlButtonTooltip();
     }
 
+    resetState() {
+      if (this.options.initDragMode) {
+        this.initDragModeIgnoreUpdateBoundsSet = false;
+        this.ignoreUpdateBounds = false;
+      }
+    }
+
     private createdControlButtonTooltip() {
       import('tooltipster').then(() => {
         if ($.tooltipster) {
