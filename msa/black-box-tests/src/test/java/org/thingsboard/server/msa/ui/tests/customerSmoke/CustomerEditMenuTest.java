@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.tests.customerSmoke;
 import io.qameta.allure.Description;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
@@ -38,16 +39,18 @@ import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustom
 public class CustomerEditMenuTest extends AbstractDriverBaseTest {
 
     private SideBarMenuViewElements sideBarMenuView;
+    private LoginPageHelper loginPage;
     private CustomerPageHelper customerPage;
     private DashboardPageHelper dashboardPage;
     private String customerName;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
-        new LoginPageHelper(driver).authorizationTenant();
+        loginPage = new LoginPageHelper(driver);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         customerPage = new CustomerPageHelper(driver);
         dashboardPage = new DashboardPageHelper(driver);
+        loginPage.authorizationTenant();
     }
 
     @AfterMethod
@@ -55,6 +58,13 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         if (customerName != null) {
             testRestClient.deleteCustomer(getCustomerByName(customerName).getId());
             customerName = null;
+        }
+    }
+
+    @BeforeMethod
+    public void reLogin() {
+        if (getUrl().contains("/login")) {
+            loginPage.authorizationTenant();
         }
     }
 
