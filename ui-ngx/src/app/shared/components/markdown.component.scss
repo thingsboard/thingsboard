@@ -357,6 +357,50 @@
       background: 0 0;
       padding: 8px 16px;
       color: #212529;
+
+      .token.atrule, .token.attr-value, .token.keyword {
+        color: #2a7dec;
+      }
+
+      .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted {
+        color: #eb5757;
+      }
+
+      .token.punctuation {
+        color: #212529;
+      }
+
+      &.line-numbers {
+        padding-left: 66px;
+
+        & > code {
+          span.line-numbers-rows {
+            top: -12px;
+            bottom: -12px;
+            left: -66px;
+            width: 50px;
+            border: none;
+            padding: 8px 12px 8px 18px;
+            text-align: right;
+            background: #f9fbff;
+
+            & > span:before {
+              color: rgba(33, 37, 41, .6);
+              padding-right: 0;
+            }
+          }
+        }
+
+        &.no-line-numbers {
+          padding-left: 16px;
+
+          & > code {
+            span.line-numbers-rows {
+              display: none;
+            }
+          }
+        }
+      }
     }
   }
 }

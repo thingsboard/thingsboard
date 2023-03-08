@@ -18,4 +18,5 @@
 <tb-markdown [data]="markdownText" [additionalCompileModules]="[ homeComponentsModule ]"
              [additionalStyles]="additionalStyles"
              [containerClass]="markdownClass"
+             [applyDefaultMarkdownStyle]="applyDefaultMarkdownStyle"
              [context]="{ ctx: ctx }" lineNumbers fallbackToPlainMarkdown (click)="markdownClick($event)"></tb-markdown>
