@@ -2966,7 +2966,7 @@
         "show-errors-status": "Show errors status",
         "errors-status": "Status",
         "status-has-errors": "Has errors",
-        "status-success": "Success"
+        "status-success": "Has no errors"
     },
     "rulenode": {
         "details": "Details",
