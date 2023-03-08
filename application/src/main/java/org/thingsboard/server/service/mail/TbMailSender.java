@@ -23,7 +23,6 @@ import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -39,13 +38,13 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import javax.mail.internet.MimeMessage;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.Properties;
 
 @Slf4j
 public class TbMailSender extends JavaMailSenderImpl {
-    public static final String MAIL_PROP = "mail.";
-    public static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
+
+    private static final String MAIL_PROP = "mail.";
+    private static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
     private final TbMailContextComponent ctx;
     private Boolean oauth2Enabled;
 

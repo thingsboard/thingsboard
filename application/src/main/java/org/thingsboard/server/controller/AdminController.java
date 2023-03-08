@@ -87,11 +87,13 @@ import static org.thingsboard.server.controller.ControllerConstants.*;
 @Slf4j
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
+
     private static final String PREV_URI_PATH_PARAMETER = "prevUri";
     private static final String PREV_URI_COOKIE_NAME = "prev_uri";
     private static final String STATE_COOKIE_NAME = "state";
     private static final String MAIL_SETTINGS_KEY = "mail";
     private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
+
     @Autowired
     private MailService mailService;
 
@@ -470,7 +472,8 @@ public class AdminController extends BaseController {
         CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
 
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");        JsonNode jsonValue = adminSettings.getJsonValue();
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");
+        JsonNode jsonValue = adminSettings.getJsonValue();
 
         String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
         String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
@@ -530,21 +533,18 @@ public class AdminController extends BaseController {
     }
 
     private void updateSettingsWithOauth2ProviderTemplateInfo(AdminSettings adminSettings) throws ThingsboardException {
-        MailOauth2Provider providerId;
         try {
-             providerId = MailOauth2Provider.valueOf(checkNotNull(adminSettings.getJsonValue().get("providerId"),
-                    "ProviderId should be configured for oauth2 type of authentication").asText());
-        } catch (IllegalArgumentException e) {
-            throw new ThingsboardException("Unsupported providerId for oauth2 type of authentication. Possible variants are: "
-                    + Arrays.toString(MailOauth2Provider.values()), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-        MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
-        if (providerConfig != null) {
-            ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
-            JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
-            settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
-            settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
-            settings.put("scope", providerConfig.getScope());
+            MailOauth2Provider providerId = MailOauth2Provider.valueOf(adminSettings.getJsonValue().get("providerId").asText());
+            MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
+            if (providerConfig != null) {
+                ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
+                JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
+                settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
+                settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
+                settings.put("scope", providerConfig.getScope());
+            }
+        } catch (Exception e) {
+            throw new ThingsboardException(String.format("Unable to retrieve provider info: %s", e.getMessage()), ThingsboardErrorCode.GENERAL);
         }
     }
 }

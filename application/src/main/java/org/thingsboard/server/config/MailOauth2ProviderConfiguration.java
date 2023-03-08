@@ -19,6 +19,7 @@ import lombok.Data;
 
 @Data
 public class MailOauth2ProviderConfiguration {
+
     private String name;
     private String authUri;
     private String tokenUri;
