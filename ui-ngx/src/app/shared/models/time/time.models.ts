@@ -270,13 +270,19 @@ export function initModelFromDefaultTimewindow(value: Timewindow, quickIntervalO
       } else {
         model.history.historyType = value.history.historyType;
       }
-      if (model.history.historyType === HistoryWindowType.LAST_INTERVAL) {
+      if (isDefined(value.history.timewindowMs)) {
         model.history.timewindowMs = value.history.timewindowMs;
-      } else if (model.history.historyType === HistoryWindowType.INTERVAL) {
+      }
+      if (isDefined(value.history.quickInterval)) {
         model.history.quickInterval = value.history.quickInterval;
-      } else {
-        model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
-        model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
+      }
+      if (isDefined(value.history.fixedTimewindow)) {
+        if (isDefined(value.history.fixedTimewindow.startTimeMs)) {
+          model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
+        }
+        if (isDefined(value.history.fixedTimewindow.endTimeMs)) {
+          model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
+        }
       }
     }
     if (value.aggregation) {
