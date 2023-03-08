@@ -416,8 +416,8 @@ export class WidgetContext {
     return new TimePageLink(pageSize, page, textSearch, sortOrder, startTime, endTime);
   }
 
-  alarmQuery(entityId: EntityId, pageLink: TimePageLink, searchStatus: AlarmSearchStatus, status: AlarmStatus, assigneeId: UserId, fetchOriginator: boolean) {
-    return new AlarmQuery(entityId, pageLink, searchStatus, status, assigneeId, fetchOriginator);
+  alarmQuery(entityId: EntityId, pageLink: TimePageLink, searchStatus: AlarmSearchStatus, status: AlarmStatus, fetchOriginator: boolean, assigneeId: UserId) {
+    return new AlarmQuery(entityId, pageLink, searchStatus, status, fetchOriginator, assigneeId);
   }
 }
 
