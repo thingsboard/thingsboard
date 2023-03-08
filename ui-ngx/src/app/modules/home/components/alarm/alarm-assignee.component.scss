@@ -13,37 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
 
 :host {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  min-width: 150px;
-}
+  .tb-assignee {
+    cursor: pointer;
+    max-width: 273px;
 
-:host ::ng-deep {
-  tb-asset-profile-autocomplete {
-    width: 100%;
+    .assigned-container {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
 
-    mat-form-field {
-      font-size: 16px;
-
-      .mat-form-field-wrapper {
-        padding-bottom: 0;
+      .user-avatar {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
       }
-
-      .mat-form-field-underline {
-        bottom: 0;
-      }
-
-      @media #{$mat-xs} {
-        width: 100%;
-
-        .mat-form-field-infix {
-          width: auto !important;
-        }
-      }
+    }
+    .material-icons.unassigned-icon {
+      width: 28px;
+      height: 28px;
+      font-size: 28px;
+      color: rgba(0, 0, 0, 0.38);
+      overflow: visible;
     }
   }
 }

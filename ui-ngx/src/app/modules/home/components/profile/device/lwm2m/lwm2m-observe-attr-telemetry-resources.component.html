@@ -55,8 +55,7 @@
                       matTooltipPosition="above">
         </mat-checkbox>
       </div>
-      <mat-form-field fxFlex="33" hideRequiredMarker>
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="33">
         <input matInput type="text" formControlName="keyName" required>
         <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required') ||
                             resourceLwM2M.get('keyName').hasError('pattern')">

@@ -13,37 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.common.data.alarm;
 
-:host {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  min-width: 150px;
-}
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 
-:host ::ng-deep {
-  tb-device-profile-autocomplete {
-    width: 100%;
+public interface AlarmModificationRequest {
 
-    mat-form-field {
-      font-size: 16px;
+    TenantId getTenantId();
 
-      .mat-form-field-wrapper {
-        padding-bottom: 0;
-      }
+    long getStartTs();
 
-      .mat-form-field-underline {
-        bottom: 0;
-      }
+    long getEndTs();
 
-      @media #{$mat-xs} {
-        width: 100%;
+    void setStartTs(long startTs);
 
-        .mat-form-field-infix {
-          width: auto !important;
-        }
-      }
-    }
-  }
+    void setEndTs(long endTs);
+
+    UserId getUserId();
 }

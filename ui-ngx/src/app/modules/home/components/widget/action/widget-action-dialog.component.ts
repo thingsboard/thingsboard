@@ -79,7 +79,7 @@ const stateDisplayTypesTranslations = new Map<stateDisplayType, string>(
   selector: 'tb-widget-action-dialog',
   templateUrl: './widget-action-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: WidgetActionDialogComponent}],
-  styleUrls: ['./widget-action-dialog.component.scss']
+  styleUrls: []
 })
 export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDialogComponent,
                                                  WidgetActionDescriptorInfo> implements OnInit, ErrorStateMatcher {

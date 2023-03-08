@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .mat-checkbox-label {
-    white-space: normal;
-  }
+package org.thingsboard.server.common.data.id;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public class NameLabelAndCustomerDetails {
+    private final String name;
+    private final String label;
+    private final CustomerId customerId;
 }

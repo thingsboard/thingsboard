@@ -31,6 +31,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Subscription } from 'rxjs';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-key-val-map',
@@ -60,6 +61,9 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   @Input() valuePlaceholderText: string;
 
   @Input() noDataText: string;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   kvListFormGroup: UntypedFormGroup;
 

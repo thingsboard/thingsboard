@@ -13,37 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.common.data;
 
-:host {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  min-width: 150px;
-}
+public interface HasTitle {
 
-:host ::ng-deep {
-  tb-entity-subtype-select {
-    width: 100%;
+    String getTitle();
 
-    mat-form-field {
-      font-size: 16px;
-
-      .mat-form-field-wrapper {
-        padding-bottom: 0;
-      }
-
-      .mat-form-field-underline {
-        bottom: 0;
-      }
-
-      @media #{$mat-xs} {
-        width: 100%;
-
-        .mat-form-field-infix {
-          width: auto !important;
-        }
-      }
-    }
-  }
 }

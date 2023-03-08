@@ -31,6 +31,7 @@ import { QueueService } from '@core/http/queue.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-queue-autocomplete',
@@ -56,6 +57,9 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
 
   @Input()
   autocompleteHint: string;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   private requiredValue: boolean;
   get required(): boolean {

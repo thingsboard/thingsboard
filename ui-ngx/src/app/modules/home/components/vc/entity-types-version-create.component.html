@@ -62,7 +62,7 @@
                   </mat-option>
                 </mat-select>
               </mat-form-field>
-              <div fxFlex fxLayout="column" fxLayoutGap="8px">
+              <div fxFlex fxLayout="column">
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
                   {{ 'version-control.export-credentials' | translate }}
                 </mat-checkbox>

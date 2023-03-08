@@ -166,6 +166,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected TenantId differentTenantId;
     protected CustomerId differentCustomerId;
     protected UserId customerUserId;
+    protected UserId differentCustomerUserId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -212,17 +213,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Assert.assertNotNull("the JSON message converter must not be null",
                 this.mappingJackson2HttpMessageConverter);
     }
-
-    @BeforeClass
-    public static void beforeWebTestClass() throws Exception {
-
-    }
-
-    @AfterClass
-    public static void afterWebTestClass() throws Exception {
-        Mockito.clearAllCaches();
-    }
-
 
     @Before
     public void setupWebTest() throws Exception {
@@ -376,7 +366,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             differentCustomerUser.setCustomerId(savedDifferentCustomer.getId());
             differentCustomerUser.setEmail(DIFFERENT_CUSTOMER_USER_EMAIL);
 
-            createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentCustomerUser = createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentCustomerUserId = differentCustomerUser.getId();
         }
     }
 

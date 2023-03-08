@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 :host {
-  .mat-form-field {
+  .mat-mdc-form-field {
     width: 100%;
   }
 }
 
 :host ::ng-deep {
-  .mat-form-field-infix {
+  .mat-mdc-form-field-infix {
      width: 100%;
   }
-  .mat-select-value {
-    max-width: 200px;
+  .mat-mdc-select-value {
     min-width: 100px;
   }
 }
