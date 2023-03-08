@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../src/theme';
 
 :host ::ng-deep {
+  --dialog-primary-color: #D7503D;
+  --dialog-secondary-color: #5B49CB;
+
   font-size: 11px;
   color: #949494;
 
-  .dialog-body {
-    padding: 8px 24px 8px 24px;
+  .mat-accent-dark {
+    background-color: var(--dialog-primary-color);
+    color: #fff;
+  }
+
+  button, a {
+    cursor: pointer;
   }
 
   .message-details {
@@ -32,21 +39,19 @@
     }
 
     button {
-      border-radius: 50%;
+      border-radius: 10px;
       height: 28px;
-      width: 28px;
       border: none;
       background-color: #F4F4F4;
       color: #787878;
-      padding: 0;
       font-size: 11px;
     }
 
     button:hover {
       background-color: #E3EBFF;
       font-weight: 500;
-      color: #5B49CB;
-      border: 0.2px solid #5B49CB;
+      color: var(--dialog-secondary-color);
+      border: 0.2px solid var(--dialog-secondary-color);
     }
   }
 
@@ -54,34 +59,28 @@
     padding: 16px 0 16px 0;
 
     span:first-child {
-      color: $tb-primary-color;
+      color: var(--dialog-primary-color);
       font-size: 20px;
       font-weight: 600;
     }
 
     a {
-      cursor: pointer;
-      color: #5B49CB !important;
+      color: var(--dialog-secondary-color) !important;
       font-weight: 500;
     }
   }
 
   .last-message-title {
-    display: block;
     padding-bottom: 4px;
     font-style: italic;
     font-weight: 500;
     color: #4A4A4A;
   }
 
-  .last-message {
-    padding-bottom: 16px;
-
-    div {
-      width: 100%;
-      background-color: #F8F8F8;
-      padding: 20px;
-      font-size: 13px;
-    }
+  .last-message-text {
+    width: 100%;
+    background-color: #F8F8F8;
+    padding: 20px;
+    font-size: 13px;
   }
 }

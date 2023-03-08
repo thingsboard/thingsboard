@@ -16,21 +16,21 @@
 
 -->
 <section style="min-width: 480px;">
-  <mat-toolbar fxFlex color="primary" fxLayoutAlign="center center">
+  <mat-toolbar fxFlex fxLayoutAlign="center center" color="accent-dark">
     <h2>{{'rulenode.clear-node-errors-title' | translate }}</h2>
   </mat-toolbar>
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
-  <div class="dialog-body">
+  <div style="padding: 8px 24px 8px 24px">
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <section class="message-details">
       <span>{{'rulenode.node-name' | translate}}: {{node.name}}</span>
       <span fxFlex></span>
       <button matTooltip="{{ 'rulenode.last-message-data' | translate }}" (click)="showData($event)">
-        &#123;D&#125;
+        &#123; {{'event.data' | translate}} &#125;
       </button>
       <button matTooltip="{{ 'rulenode.last-message-metadata' | translate }}" (click)="showMetadata($event)">
-        <span>&#123;M&#125;</span>
+        &#123; {{'event.metadata' | translate}} &#125;
       </button>
     </section>
     <section class="logged-errors" fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="4px">
@@ -39,21 +39,16 @@
       <a aria-label="View on dashboard" (click)="viewOnDashboard($event)">{{ 'rulenode.view-on-dashboard' | translate }} &#8594;</a>
     </section>
     <span class="last-message-title">{{ 'rulenode.last-error-message-title' | translate }}:</span>
-    <section class="last-message">
-      <div>
-        <textarea disabled #lastMessage matInput cdkTextareaAutosize cols="1" cdkAutosizeMinRows="1"></textarea>
-      </div>
+    <section class="last-message-text">
+      <textarea disabled #lastMessage matInput cdkTextareaAutosize cols="1" cdkAutosizeMinRows="1"></textarea>
     </section>
-    <div mat-dialog-actions fxLayoutAlign="end center" style="padding: 0;">
-      <button mat-button color="primary"
-              type="button"
-              [disabled]="isLoading$ | async"
-              (click)="cancel()" cdkFocusInitial>
+    <div class="dialog-actions" mat-dialog-actions fxLayoutAlign="end center" style="padding-top: 16px;">
+      <button mat-button cdkFocusInitial
+              (click)="cancel()" [disabled]="isLoading$ | async">
         {{ 'action.cancel' | translate }}
       </button>
-      <button mat-raised-button color="primary"
-              (click)="acknowledge()"
-              [disabled]="isLoading$ | async">
+      <button mat-raised-button color="accent-dark"
+              (click)="acknowledge()" [disabled]="isLoading$ | async">
         {{ 'rulenode.acknowledge' | translate }}
       </button>
     </div>
