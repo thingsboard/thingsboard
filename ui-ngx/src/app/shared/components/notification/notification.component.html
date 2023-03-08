@@ -38,7 +38,7 @@
   </div>
   <div class="description" fxLayout="column" fxLayoutAlign="start end">
     <div fxLayout="row" fxLayoutAlign="end center" class="mark-read">
-      <span class="time" *ngIf="!preview">{{ notification.createdTime | dateAgo }}</span>
+      <span class="time">{{ notification.createdTime ?? currentDate | dateAgo }}</span>
       <button mat-icon-button class="tb-mat-28" (click)="markRead($event)">
         <mat-icon>check_circle_outline</mat-icon>
       </button>

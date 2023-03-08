@@ -69,14 +69,14 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.columns.push(
-      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRequestInfo>('status', 'notification.status', '15%',
         request => this.requestStatus(request.status), request => this.requestStatusStyle(request.status)),
-      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '35%',
+      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '15%',
         (request) => request.deliveryMethods
           .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodTranslateMap.get(deliveryMethod))).join(', '),
         () => ({}), false),
-      new EntityTableColumn<NotificationRequest>('templateName', 'notification.template', '50%')
+      new EntityTableColumn<NotificationRequest>('templateName', 'notification.template', '70%')
     );
   }
 
@@ -131,7 +131,7 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
         backgroundColor = 'rgba(212, 125, 24, 0.08)';
         break;
     }
-    return `<div style="border-radius: 16px; height: 32px; line-height: 32px; padding: 0 12px; width: fit-content; background-color: ${backgroundColor}">
+    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: fit-content; background-color: ${backgroundColor}">
                 ${this.translate.instant(translateKey)}
             </div>`;
   }

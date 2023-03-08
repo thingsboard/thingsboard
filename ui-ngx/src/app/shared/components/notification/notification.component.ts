@@ -24,11 +24,11 @@ import {
 } from '@shared/models/notification.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { alarmSeverityTranslations } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-notification',
@@ -46,14 +46,9 @@ export class NotificationComponent implements OnInit {
   @Output()
   markAsRead = new EventEmitter<string>();
 
-  private previewValue = false;
-  get preview(): boolean {
-    return this.previewValue;
-  }
   @Input()
-  set preview(value: boolean) {
-    this.previewValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  preview = false;
 
   showIcon = false;
   showButton = false;
@@ -64,6 +59,8 @@ export class NotificationComponent implements OnInit {
   notificationType = NotificationType;
   notificationTypeIcons = NotificationTypeIcons;
   alarmSeverityTranslations = alarmSeverityTranslations;
+
+  currentDate = Date.now();
 
   constructor(
     private utils: UtilsService,

@@ -66,7 +66,7 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     }];
 
     this.columns.push(
-      new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<Notification>('type', 'notification.type', '10%', (notification) =>
         this.translate.instant(NotificationTemplateTypeTranslateMap.get(notification.type).name)),
       new EntityTableColumn<Notification>('subject', 'notification.subject', '30%'),

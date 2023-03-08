@@ -37,7 +37,7 @@
         left: 2px;
         right: 2px;
         bottom: 2px;
-        border-radius: 12px;
+        border-radius: 14px;
       }
     }
 
@@ -60,8 +60,9 @@
 
     .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
       line-height: 24px;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 500;
+      letter-spacing: .25px;
     }
 
     .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {

@@ -72,6 +72,7 @@
                  [ngClass]="{'tb-error': templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
             {{ "notification.delivery-methods" | translate }}
           </label>
+          <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
           <section formGroupName="deliveryMethodsTemplates" fxLayout="row warap">
             <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
                      [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
@@ -80,7 +81,6 @@
               </mat-slide-toggle>
             </section>
           </section>
-          <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
         </section>
       </form>
     </mat-step>
