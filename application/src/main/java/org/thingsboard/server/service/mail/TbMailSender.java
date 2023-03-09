@@ -49,12 +49,17 @@ public class TbMailSender extends JavaMailSenderImpl {
     private static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
     private final TbMailContextComponent ctx;
     private final Lock lock;
-    private Boolean oauth2Enabled;
+    private final Boolean oauth2Enabled;
+    private volatile String accessToken;
+    private volatile long tokenExpires;
 
     public TbMailSender(TbMailContextComponent ctx, JsonNode jsonConfig) {
         super();
         this.lock = new ReentrantLock();
+        this.tokenExpires = 0L;
         this.ctx = ctx;
+        this.oauth2Enabled = jsonConfig.has("enableOauth2") && jsonConfig.get("enableOauth2").asBoolean();
+
         setHost(jsonConfig.get("smtpHost").asText());
         setPort(parsePort(jsonConfig.get("smtpPort").asText()));
         setUsername(jsonConfig.get("username").asText());
@@ -67,8 +72,9 @@ public class TbMailSender extends JavaMailSenderImpl {
     @SneakyThrows
     @Override
     public void doSend(MimeMessage[] mimeMessages, @Nullable Object[] originalMessages) {
-        if (oauth2Enabled){
-            setPassword(getAccessToken());
+        if (oauth2Enabled && (System.currentTimeMillis() > tokenExpires)){
+            refreshAccessToken();
+            setPassword(accessToken);
         }
         super.doSend(mimeMessages, originalMessages);
     }
@@ -112,21 +118,19 @@ public class TbMailSender extends JavaMailSenderImpl {
             }
         }
 
-        oauth2Enabled = jsonConfig.has("enableOauth2") && jsonConfig.get("enableOauth2").asBoolean();
         if (oauth2Enabled) {
             javaMailProperties.put(MAIL_PROP + protocol + ".auth.mechanisms", "XOAUTH2");
         }
         return javaMailProperties;
     }
 
-    public String getAccessToken() throws ThingsboardException {
+    public void refreshAccessToken() throws ThingsboardException {
         lock.lock();
         try {
-            AdminSettings settings = ctx.getAdminSettingsService().findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-            JsonNode jsonValue = settings.getJsonValue();
-            long tokenExpires = jsonValue.get("tokenExpires").asLong();
-
             if (System.currentTimeMillis() > tokenExpires) {
+                AdminSettings settings = ctx.getAdminSettingsService().findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
+                JsonNode jsonValue = settings.getJsonValue();
+
                 String clientId = jsonValue.get("clientId").asText();
                 String clientSecret = jsonValue.get("clientSecret").asText();
                 String refreshToken = jsonValue.get("refreshToken").asText();
@@ -140,15 +144,11 @@ public class TbMailSender extends JavaMailSenderImpl {
                 if (MailOauth2Provider.MICROSOFT.name().equals(providerId)) {
                     ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
                     ((ObjectNode)jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+                    ctx.getAdminSettingsService().saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
                 }
-                ((ObjectNode)jsonValue).put("accessToken", tokenResponse.getAccessToken());
+                accessToken = tokenResponse.getAccessToken();
                 tokenExpires = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds().intValue() * 1000);
-                ((ObjectNode)jsonValue).put("tokenExpires", tokenExpires);
-
-                ctx.getAdminSettingsService().saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
-                return tokenResponse.getAccessToken();
             }
-            else return jsonValue.get("accessToken").asText();
         } catch (Exception e) {
             log.warn("Unable to retrieve access token: {}", e.getMessage());
             throw new ThingsboardException("Error while retrieving access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
