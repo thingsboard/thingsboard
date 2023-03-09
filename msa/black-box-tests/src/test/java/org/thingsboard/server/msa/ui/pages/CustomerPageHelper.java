@@ -114,9 +114,7 @@ public class CustomerPageHelper extends CustomerPageElements {
 
     public void chooseDashboard() {
         editMenuDashboardField().click();
-        sleep(0.5);
         editMenuDashboard().click();
-        sleep(0.5);
     }
 
     public void createCustomersUser() {

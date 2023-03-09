@@ -56,7 +56,7 @@ public class ManageCustomersUsersTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersUserBtnView().click();
+        jsClick(customerPage.manageCustomersUserBtnView());
 
         Assert.assertTrue(urlContains("user"));
         Assert.assertNotNull(customerPage.customerUserIconHeader());
