@@ -146,8 +146,8 @@
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
         <selenium.version>4.6.0</selenium.version>
         <webdrivermanager.version>5.2.0</webdrivermanager.version>
-        <allure-testng.version>2.19.0</allure-testng.version>
-        <allure-maven.version>2.8</allure-maven.version>
+        <allure-testng.version>2.21.0</allure-testng.version>
+        <allure-maven.version>2.12.0</allure-maven.version>
         <slack-api.version>1.12.1</slack-api.version>
     </properties>
 

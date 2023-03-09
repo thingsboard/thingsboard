@@ -4901,6 +4901,7 @@
             "use-markdown-text-function": "Use markdown/HTML value function",
             "markdown-text-function": "Markdown/HTML value function",
             "markdown-text-pattern": "Markdown/HTML pattern (markdown or HTML with variables, for ex. '${entityName} or ${keyName} - some text.')",
+            "apply-default-markdown-style": "Apply default markdown style",
             "markdown-css": "Markdown/HTML CSS"
         },
         "simple-card": {
