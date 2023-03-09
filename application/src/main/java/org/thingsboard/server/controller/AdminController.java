@@ -42,6 +42,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -75,7 +76,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -87,11 +87,7 @@ import static org.thingsboard.server.controller.ControllerConstants.*;
 @Slf4j
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
-    private static final String PREV_URI_PATH_PARAMETER = "prevUri";
-    private static final String PREV_URI_COOKIE_NAME = "prev_uri";
-    private static final String STATE_COOKIE_NAME = "state";
-    private static final String MAIL_SETTINGS_KEY = "mail";
-    private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
+
     @Autowired
     private MailService mailService;
 
@@ -123,6 +119,12 @@ public class AdminController extends BaseController {
 
     @Autowired
     private MailOAuth2Configuration mailOAuth2Configuration;
+
+    private static final String PREV_URI_PATH_PARAMETER = "prevUri";
+    private static final String PREV_URI_COOKIE_NAME = "prev_uri";
+    private static final String STATE_COOKIE_NAME = "state";
+    private static final String MAIL_SETTINGS_KEY = "mail";
+    private static final StringKeyGenerator SECURE_KEY_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -448,8 +450,7 @@ public class AdminController extends BaseController {
 
     @ApiOperation(value = "Get OAuth2 log in processing URL (getMailProcessingUrl)", notes = "Returns the URL enclosed in " +
             "double quotes. After successful authentication with OAuth2 provider and user consent for requested scope, it makes a redirect to this path so that the platform can do " +
-            "further log in processing and generatin access tokens. This URL may be configured as 'mail.oauth2.loginProcessingUrl' property in yml configuration file, or " +
-            "as 'MAIL_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/mail/oauth2/code/'" + SYSTEM_AUTHORITY_PARAGRAPH)
+            "further log in processing and generating access tokens. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/mail/oauth2/loginProcessingUrl", method = RequestMethod.GET)
     @ResponseBody
@@ -458,19 +459,20 @@ public class AdminController extends BaseController {
          return "\"/api/admin/mail/oauth2/code\"";
     }
 
-    @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in " +
+    @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in and provided access" +
             "provider sends authorization code to specified redirect uri.)" )
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/mail/oauth2/authorize", method = RequestMethod.GET, produces = "application/text")
-    public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
-        String state = this.secureKeyGenerator.generateKey();
+    public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
+        String state = this.SECURE_KEY_GENERATOR.generateKey();
         if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
             CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
         }
         CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
 
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");        JsonNode jsonValue = adminSettings.getJsonValue();
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, MAIL_SETTINGS_KEY), "No Administration mail settings found");
+        JsonNode jsonValue = adminSettings.getJsonValue();
 
         String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
         String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
@@ -509,42 +511,39 @@ public class AdminController extends BaseController {
         String tokenUri = checkNotNull(jsonValue.get("tokenUri"), "No authorization uri was configured").asText();
 
         TokenResponse tokenResponse;
-        try{
+        try {
             tokenResponse = new AuthorizationCodeTokenRequest(new NetHttpTransport(), new GsonFactory(), new GenericUrl(tokenUri), code)
                     .setRedirectUri(clientRedirectUri)
                     .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
                     .execute();
-        }catch (IOException e) {
-            log.warn("Unable to retrieve refresh token: {}", e.getMessage());
-            throw new ThingsboardException("Error while requesting refresh token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
+        } catch (IOException e) {
+            log.warn("Unable to retrieve access token: {}", e.getMessage());
+            throw new ThingsboardException("Error while requesting access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
 
-        String refreshToken = tokenResponse.getRefreshToken();
-        if (refreshToken == null) {
-            throw new ThingsboardException("Refresh token was not found in provider response. ", ThingsboardErrorCode.GENERAL);
-        }
-        ((ObjectNode)jsonValue).put("refreshToken", refreshToken);
-        ((ObjectNode)jsonValue).put("refreshTokenGenerated", true);
+        ((ObjectNode)jsonValue).put("accessToken", tokenResponse.getAccessToken());
+        long tokenExpires = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds().intValue() * 1000);
+        ((ObjectNode)jsonValue).put("tokenExpires", tokenExpires);
+        ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+        ((ObjectNode)jsonValue).put("tokenGenerated", true);
+
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);
     }
 
     private void updateSettingsWithOauth2ProviderTemplateInfo(AdminSettings adminSettings) throws ThingsboardException {
-        MailOauth2Provider providerId;
         try {
-             providerId = MailOauth2Provider.valueOf(checkNotNull(adminSettings.getJsonValue().get("providerId"),
-                    "ProviderId should be configured for oauth2 type of authentication").asText());
-        } catch (IllegalArgumentException e) {
-            throw new ThingsboardException("Unsupported providerId for oauth2 type of authentication. Possible variants are: "
-                    + Arrays.toString(MailOauth2Provider.values()), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-        MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
-        if (providerConfig != null) {
-            ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
-            JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
-            settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
-            settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
-            settings.put("scope", providerConfig.getScope());
+            MailOauth2Provider providerId = MailOauth2Provider.valueOf(adminSettings.getJsonValue().get("providerId").asText());
+            MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
+            if (providerConfig != null) {
+                ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
+                JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
+                settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
+                settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
+                settings.put("scope", providerConfig.getScope());
+            }
+        } catch (Exception e) {
+            throw new ThingsboardException(String.format("Unable to retrieve provider info: %s", e.getMessage()), ThingsboardErrorCode.GENERAL);
         }
     }
 }

@@ -319,13 +319,13 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
 
   get accessTokenButtonName() {
     return this.translate.instant(
-      this.adminSettings.jsonValue.refreshTokenGenerated ? 'admin.oauth2.update-access-token' : 'admin.oauth2.generate-access-token'
+      this.adminSettings.jsonValue.tokenGenerated ? 'admin.oauth2.update-access-token' : 'admin.oauth2.generate-access-token'
     );
   }
 
   get accessTokenStatus() {
     return this.translate.instant(
-      this.adminSettings.jsonValue.refreshTokenGenerated ? 'admin.oauth2.token-status-generated' : 'admin.oauth2.token-status-not-generated'
+      this.adminSettings.jsonValue.tokenGenerated ? 'admin.oauth2.token-status-generated' : 'admin.oauth2.token-status-not-generated'
     );
   }
 

@@ -41,9 +41,9 @@ public class RefreshTokenExpCheckService {
             JsonNode jsonValue = settings.getJsonValue();
             if (MICROSOFT.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("expiresIn")) {
                 long expiresIn = jsonValue.get("expiresIn").longValue();
-                if ((expiresIn - System.currentTimeMillis()) < 604800000L) { //less thant 7 days
-                    log.info("Refresh token expires in less then 7 days.");
-                    // TODO: create admin notification
+                if ((expiresIn - System.currentTimeMillis()) < 604800000L) { //less than 7 days
+                    log.info("Refresh token expires in less than 7 days.");
+                    // TODO: create notification for sys admin
                 }
             }
         }

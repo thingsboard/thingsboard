@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.service.mail;
 
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
+@Component
+@TbCoreComponent
 @Data
-public class MailOauth2ProviderConfiguration {
+@Lazy
+public class TbMailContextComponent {
 
-    private String name;
-    private String authUri;
-    private String tokenUri;
-    private String scope;
+    @Autowired
+    private AdminSettingsService adminSettingsService;
 }

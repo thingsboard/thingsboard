@@ -25,7 +25,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "mail.oauth2")
 @Data
 public class MailOAuth2Configuration {
-    private String loginProcessingUrl;
+
     private List<MailOauth2ProviderConfiguration> providers;
 
     public MailOauth2ProviderConfiguration getProviderConfig(MailOauth2Provider mailOauth2Provider) {
