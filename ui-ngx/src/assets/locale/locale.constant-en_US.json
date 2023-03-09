@@ -3064,7 +3064,7 @@
         "acknowledge-all-errors": "Acknowledge all errors",
         "clear-node-errors-title": "Acknowledge errors on the rule node",
         "clear-node-errors-text": "Clear error statistics?",
-        "errors-count": "{ count, plural, 1 {1 logged error} other {# logged errors} }",
+        "errors-count": "{ count, plural, =1 {1 logged error} other {# logged errors} }",
         "last-error-title": "Last error",
         "last-error-message-title": "Last error message",
         "last-message-data": "Last message data",
