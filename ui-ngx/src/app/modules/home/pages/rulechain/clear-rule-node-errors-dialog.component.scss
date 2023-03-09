@@ -82,5 +82,11 @@
     background-color: #F8F8F8;
     padding: 20px;
     font-size: 13px;
+
+    textarea:disabled {
+      width: 100%;
+      border: none;
+      overflow: hidden;
+    }
   }
 }
