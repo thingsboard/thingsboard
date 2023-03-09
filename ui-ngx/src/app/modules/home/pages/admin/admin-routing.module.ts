@@ -94,10 +94,7 @@ const routes: Routes = [
             label: 'admin.outgoing-mail',
             icon: 'mail'
           }
-        },
-        // resolve: {
-        //   loginProcessingUrl: OAuth2MailProcessingUrlResolver
-        // }
+        }
       },
       {
         path: 'sms-provider',

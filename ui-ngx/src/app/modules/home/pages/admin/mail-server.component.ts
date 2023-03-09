@@ -287,7 +287,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
         this.adminSettings = adminSettings;
         this.showChangePassword = true;
         this.mailSettings.reset(this.adminSettings.jsonValue);
-        this.domainForm.reset();
+        this.domainForm.reset(this.domainForm.value);
         this.parseUrl(this.adminSettings.jsonValue.redirectUri);
       }
     );
