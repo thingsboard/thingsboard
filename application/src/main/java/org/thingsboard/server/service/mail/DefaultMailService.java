@@ -86,7 +86,7 @@ public class DefaultMailService implements MailService {
     @Autowired
     private TbMailContextComponent tbMailContextComponent;
 
-    private TbMailSender tbMailSender;
+    private TbMailSender mailSender;
 
     private String mailFrom;
 
@@ -109,7 +109,7 @@ public class DefaultMailService implements MailService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
-            tbMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
+            mailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
             timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
         } else {
@@ -119,12 +119,12 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        TbMailSender tbMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
+        TbMailSender testMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
@@ -134,7 +134,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("test.ftl", model);
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(testMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -148,7 +148,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("activation.ftl", model);
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -162,7 +162,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.activated.ftl", model);
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -176,7 +176,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("reset.password.ftl", model);
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -201,12 +201,12 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("password.was.reset.ftl", model);
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, this.tbMailSender, timeout);
+        sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout);
     }
 
     @Override
@@ -262,7 +262,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -274,7 +274,7 @@ public class DefaultMailService implements MailService {
                 "expirationTimeSeconds", expirationTimeSeconds
         ));
 
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -301,12 +301,12 @@ public class DefaultMailService implements MailService {
                 message = mergeTemplateIntoString("state.disabled.ftl", model);
                 break;
         }
-        sendMail(tbMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
     public void testConnection(TenantId tenantId) throws Exception {
-        tbMailSender.testConnection();
+        mailSender.testConnection();
     }
 
     private String toEnabledValueLabel(ApiFeature apiFeature) {

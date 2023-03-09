@@ -124,7 +124,6 @@ public class AdminController extends BaseController {
     private static final String PREV_URI_COOKIE_NAME = "prev_uri";
     private static final String STATE_COOKIE_NAME = "state";
     private static final String MAIL_SETTINGS_KEY = "mail";
-    private static final StringKeyGenerator SECURE_KEY_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -464,7 +463,7 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/mail/oauth2/authorize", method = RequestMethod.GET, produces = "application/text")
     public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
-        String state = this.SECURE_KEY_GENERATOR.generateKey();
+        String state = StringUtils.generateSafeToken();
         if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
             CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
         }
@@ -485,6 +484,7 @@ public class AdminController extends BaseController {
                 .setRedirectUri(redirectUri)
                 .build() + "\"";
     }
+
     @RequestMapping(value = "/mail/oauth2/code", params = {"code", "state"}, method = RequestMethod.GET)
     public void codeProcessingUrl(
             @RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
@@ -497,7 +497,7 @@ public class AdminController extends BaseController {
 
         if (cookieState.isEmpty() || !cookieState.get().getValue().equals(state)) {
             CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);
-            throw new ThingsboardException("Access token was not generated, invalid state param", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            throw new ThingsboardException("Refresh token was not generated, invalid state param", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);
         CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
@@ -517,13 +517,9 @@ public class AdminController extends BaseController {
                     .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
                     .execute();
         } catch (IOException e) {
-            log.warn("Unable to retrieve access token: {}", e.getMessage());
+            log.warn("Unable to retrieve refresh token: {}", e.getMessage());
             throw new ThingsboardException("Error while requesting access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
-
-        ((ObjectNode)jsonValue).put("accessToken", tokenResponse.getAccessToken());
-        long tokenExpires = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds().intValue() * 1000);
-        ((ObjectNode)jsonValue).put("tokenExpires", tokenExpires);
         ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
         ((ObjectNode)jsonValue).put("tokenGenerated", true);
 
