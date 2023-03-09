@@ -84,13 +84,9 @@ public final class TransportMonitoringService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startMonitoring() {
-       scheduleCheck(0);
-    }
-
-    private void scheduleCheck(int delay) {
-        log.debug("Scheduling next check for {} ms", delay);
-        scheduler.schedule(() -> {
+        scheduler.scheduleWithFixedDelay(() -> {
             try {
+                log.debug("Starting transports check");
                 stopWatch.start();
                 String accessToken = tbClient.logIn();
                 reporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
@@ -103,11 +99,15 @@ public final class TransportMonitoringService {
                     }
                 }
                 reporter.reportLatencies(tbClient);
-            } catch (Exception e) {
-                reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
+                log.debug("Finished transports check");
+            } catch (Throwable error) {
+                try {
+                    reporter.serviceFailure(MonitoredServiceKey.GENERAL, error);
+                } catch (Throwable reportError) {
+                    log.error("Error occurred during service failure reporting", reportError);
+                }
             }
-            scheduleCheck(monitoringRateMs);
-        }, delay, TimeUnit.MILLISECONDS);
+        }, 0, monitoringRateMs, TimeUnit.MILLISECONDS);
     }
 
     private void checkMonitoringTarget(TransportMonitoringConfig config, MonitoringTargetConfig target, TbClient tbClient) {

@@ -21,8 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.client.TbClient;
@@ -39,8 +37,6 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -110,7 +106,10 @@ public class MonitoringReporter {
         latencies.computeIfAbsent(latencyKey, k -> new Latency(latencyKey)).report(latencyInMs);
     }
 
-    public void serviceFailure(Object serviceKey, Exception error) {
+    public void serviceFailure(Object serviceKey, Throwable error) {
+        if (log.isDebugEnabled()) {
+            log.error("Error occurred", error);
+        }
         int failuresCount = failuresCounters.computeIfAbsent(serviceKey, k -> new AtomicInteger()).incrementAndGet();
         ServiceFailureNotification notification = new ServiceFailureNotification(serviceKey, error, failuresCount);
         log.error(notification.getText());
