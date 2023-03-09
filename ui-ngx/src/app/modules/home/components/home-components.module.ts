@@ -175,6 +175,7 @@ import { AssetProfileDialogComponent } from '@home/components/profile/asset-prof
 import { AssetProfileAutocompleteComponent } from '@home/components/profile/asset-profile-autocomplete.component';
 import { MODULES_MAP } from '@shared/models/constants';
 import { modulesMap } from '@modules/common/modules-map';
+import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assignee-panel.component';
 
 @NgModule({
   declarations:
@@ -197,6 +198,7 @@ import { modulesMap } from '@modules/common/modules-map';
       RelationFiltersComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
+      AlarmAssigneePanelComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
@@ -344,6 +346,7 @@ import { modulesMap } from '@modules/common/modules-map';
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,
+    AlarmAssigneePanelComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
     AliasesEntityAutocompleteComponent,

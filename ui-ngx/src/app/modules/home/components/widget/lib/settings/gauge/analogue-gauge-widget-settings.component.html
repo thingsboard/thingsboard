@@ -31,7 +31,7 @@
   </tb-color-input>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.ticks-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.min-value</mat-label>
         <input matInput type="number" formControlName="minValue">
@@ -294,7 +294,7 @@
 <ng-template #radialGauge let-settingsForm="settingsForm">
   <fieldset class="fields-group" [formGroup]="settingsForm">
     <legend class="group-title" translate>widgets.gauge.radial-gauge-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.start-ticks-angle</mat-label>
         <input matInput type="number" min="0" max="360" formControlName="startAngle">
@@ -314,7 +314,7 @@
 <ng-template #linearGauge let-settingsForm="settingsForm">
   <fieldset class="fields-group" [formGroup]="settingsForm">
     <legend class="group-title" translate>widgets.gauge.linear-gauge-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.bar-stroke-width</mat-label>
         <input matInput type="number" min="0" formControlName="barStrokeWidth">

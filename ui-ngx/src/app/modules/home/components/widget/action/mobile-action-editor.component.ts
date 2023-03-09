@@ -158,6 +158,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     }
     this.mobileActionTypeFormGroup = this.fb.group({});
     if (type) {
+      let processLaunchResultFunction;
       switch (type) {
         case WidgetMobileActionType.takePictureFromGallery:
         case WidgetMobileActionType.takePhoto:
@@ -177,7 +178,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         case WidgetMobileActionType.mapDirection:
         case WidgetMobileActionType.mapLocation:
           let getLocationFunction = action?.getLocationFunction;
-          let processLaunchResultFunction = action?.processLaunchResultFunction;
+          processLaunchResultFunction = action?.processLaunchResultFunction;
           if (changed) {
             const defaultGetLocationFunction = getDefaultGetLocationFunction();
             if (defaultGetLocationFunction !== getLocationFunction) {

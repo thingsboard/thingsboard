@@ -43,6 +43,7 @@ export class MarkdownWidgetSettingsComponent extends WidgetSettingsComponent {
       useMarkdownTextFunction: false,
       markdownTextPattern: '# Markdown/HTML card \\n - **Current entity**: **${entityName}**. \\n - **Current value**: **${Random}**.',
       markdownTextFunction: 'return \'# Some title\\\\n - Entity name: \' + data[0][\'entityName\'];',
+      applyDefaultMarkdownStyle: true,
       markdownCss: ''
     };
   }
@@ -52,6 +53,7 @@ export class MarkdownWidgetSettingsComponent extends WidgetSettingsComponent {
       useMarkdownTextFunction: [settings.useMarkdownTextFunction, []],
       markdownTextPattern: [settings.markdownTextPattern, []],
       markdownTextFunction: [settings.markdownTextFunction, []],
+      applyDefaultMarkdownStyle: [settings.applyDefaultMarkdownStyle, []],
       markdownCss: [settings.markdownCss, []]
     });
   }
