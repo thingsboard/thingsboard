@@ -41,10 +41,10 @@
     button {
       border-radius: 10px;
       height: 28px;
-      border: none;
       background-color: #F4F4F4;
       color: #787878;
       font-size: 11px;
+      border: 0.2px solid transparent;
     }
 
     button:hover {
@@ -78,15 +78,16 @@
   }
 
   .last-message-text {
-    width: 100%;
     background-color: #F8F8F8;
     padding: 20px;
-    font-size: 13px;
 
     textarea:disabled {
       width: 100%;
       border: none;
       overflow: hidden;
+      font-size: 13px;
+      line-height: 20px;
+      color: #949494;
     }
   }
 }
