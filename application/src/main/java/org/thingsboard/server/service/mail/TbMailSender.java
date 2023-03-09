@@ -39,6 +39,8 @@ import javax.mail.internet.MimeMessage;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Properties;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class TbMailSender extends JavaMailSenderImpl {
@@ -46,10 +48,12 @@ public class TbMailSender extends JavaMailSenderImpl {
     private static final String MAIL_PROP = "mail.";
     private static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
     private final TbMailContextComponent ctx;
+    private final Lock lock;
     private Boolean oauth2Enabled;
 
     public TbMailSender(TbMailContextComponent ctx, JsonNode jsonConfig) {
         super();
+        this.lock = new ReentrantLock();
         this.ctx = ctx;
         setHost(jsonConfig.get("smtpHost").asText());
         setPort(parsePort(jsonConfig.get("smtpPort").asText()));
@@ -115,7 +119,8 @@ public class TbMailSender extends JavaMailSenderImpl {
         return javaMailProperties;
     }
 
-    public synchronized String getAccessToken() throws ThingsboardException {
+    public String getAccessToken() throws ThingsboardException {
+        lock.lock();
         try {
             AdminSettings settings = ctx.getAdminSettingsService().findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
             JsonNode jsonValue = settings.getJsonValue();
@@ -147,6 +152,8 @@ public class TbMailSender extends JavaMailSenderImpl {
         } catch (Exception e) {
             log.warn("Unable to retrieve access token: {}", e.getMessage());
             throw new ThingsboardException("Error while retrieving access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
+        } finally {
+            lock.unlock();
         }
     }
 
