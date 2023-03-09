@@ -15,7 +15,7 @@
  */
 :host {
   display: flex;
-  a.mat-button {
+  a.mat-mdc-button {
     &:hover, &:focus {
       border-bottom: none;
     }

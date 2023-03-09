@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .mat-form-field {
-    .mat-form-field-infix {
-      border-top: none;
-    }
-  }
+package org.thingsboard.server.common.data;
+
+public interface HasLabel extends HasName {
+
+    String getLabel();
+
 }

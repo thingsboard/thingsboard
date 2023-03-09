@@ -54,3 +54,10 @@ export interface AuthUser {
   isPublic: boolean;
   authority: Authority;
 }
+
+export interface UserEmailInfo {
+  id: UserId;
+  email: string;
+  firstName: string;
+  lastName: string;
+}

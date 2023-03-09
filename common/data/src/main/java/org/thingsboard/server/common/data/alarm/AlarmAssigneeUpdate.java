@@ -13,37 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.common.data.alarm;
 
-:host {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  min-width: 150px;
-}
+import lombok.Data;
 
-:host ::ng-deep {
-  tb-entity-subtype-select {
-    width: 100%;
+import java.io.Serializable;
 
-    mat-form-field {
-      font-size: 16px;
+@Data
+public class AlarmAssigneeUpdate implements Serializable {
 
-      .mat-form-field-wrapper {
-        padding-bottom: 0;
-      }
+    private static final long serialVersionUID = -2391676304697483808L;
 
-      .mat-form-field-underline {
-        bottom: 0;
-      }
+    private final boolean deleted;
+    private final AlarmAssignee assignee;
 
-      @media #{$mat-xs} {
-        width: 100%;
-
-        .mat-form-field-infix {
-          width: auto !important;
-        }
-      }
-    }
-  }
 }

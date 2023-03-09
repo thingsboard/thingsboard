@@ -30,7 +30,7 @@
           </tb-profile-lwm2m-attributes>
           <button type="button"
                   *ngIf="!disabled && objectLwM2M.get('multiple').value"
-                  mat-button mat-icon-button (click)="addInstances($event, objectLwM2M)"
+                  mat-icon-button (click)="addInstances($event, objectLwM2M)"
                   matTooltip="{{'device-profile.lwm2m.add-new-instances' | translate}}"
                   matTooltipPosition="above">
             <mat-icon class="material-icons">note_add</mat-icon>

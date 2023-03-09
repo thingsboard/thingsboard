@@ -15,7 +15,7 @@
  */
 :host {
   .tb-table-widget {
-    .mat-table, .mat-paginator, mat-toolbar.mat-table-toolbar:not([color="primary"]) {
+    .mat-mdc-table, .mat-mdc-paginator, mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) {
       background: transparent;
     }
     mat-toolbar {
@@ -30,13 +30,13 @@
       overflow: auto;
     }
 
-    .mat-row:not(.mat-row-select), .mat-header-row:not(.mat-row-select) {
+    .mat-mdc-row:not(.mat-row-select), .mat-mdc-header-row:not(.mat-row-select) {
       mat-cell:nth-child(n+2):nth-last-child(n+2), mat-footer-cell:nth-child(n+2):nth-last-child(n+2), mat-header-cell:nth-child(n+2):nth-last-child(n+2) {
         padding: 0 5px;
       }
     }
 
-    .mat-row.mat-row-select, .mat-header-row.mat-row-select {
+    .mat-mdc-row.mat-row-select, .mat-mdc-header-row.mat-row-select {
       mat-cell:nth-child(2), mat-footer-cell:nth-child(2), mat-header-cell:nth-child(2) {
         padding: 0 5px;
       }

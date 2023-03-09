@@ -94,7 +94,7 @@ public abstract class CassandraAbstractDao {
             log.debug("Execute cassandra async statement {}", statementToString(statement));
         }
         if (statement.getConsistencyLevel() == null) {
-            statement.setConsistencyLevel(level);
+            statement = statement.setConsistencyLevel(level);
         }
         return rateExecutor.submit(new CassandraStatementTask(tenantId, getSession(), statement));
     }

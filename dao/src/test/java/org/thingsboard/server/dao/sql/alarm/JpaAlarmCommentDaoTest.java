@@ -76,7 +76,6 @@ public class JpaAlarmCommentDaoTest extends AbstractJpaDaoTest {
         alarm.setPropagate(true);
         alarm.setStartTs(System.currentTimeMillis());
         alarm.setEndTs(System.currentTimeMillis());
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         alarmDao.save(TenantId.fromUUID(tenantId), alarm);
     }
     private void saveAlarmComment(UUID id, UUID alarmId, UUID userId, AlarmCommentType type) {

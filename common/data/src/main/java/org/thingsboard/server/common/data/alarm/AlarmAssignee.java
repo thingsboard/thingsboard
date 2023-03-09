@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .mat-form-field-wrapper {
-    padding-bottom: 8px;
-  }
-  .mat-form-field-underline {
-    bottom: 8px;
-  }
-  .mat-form-field-infix {
-    width: auto;
-    min-width: 100px;
-  }
-  mat-form-field {
-    &.no-label {
-      .mat-form-field-infix {
-        border-top-width: 0.2em;
-      }
-    }
-  }
+package org.thingsboard.server.common.data.alarm;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.UserId;
+
+import java.io.Serializable;
+
+@Builder
+@AllArgsConstructor
+@Data
+public class AlarmAssignee implements Serializable {
+
+    private static final long serialVersionUID = 6628286223963972860L;
+
+    private final UserId id;
+    private final String firstName;
+    private final String lastName;
+    private final String email;
+
 }

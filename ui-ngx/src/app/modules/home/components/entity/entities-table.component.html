@@ -35,7 +35,7 @@
   <mat-drawer-content>
     <div class="mat-padding tb-entity-table tb-absolute-fill">
       <div fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-        <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
+        <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
               <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
@@ -107,7 +107,7 @@
             </button>
           </div>
         </mat-toolbar>
-        <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
+        <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <button mat-icon-button
                     matTooltip="{{ translations.search | translate }}"
@@ -127,7 +127,7 @@
             </button>
           </div>
         </mat-toolbar>
-        <mat-toolbar *ngIf="entitiesTableConfig.selectionEnabled" class="mat-table-toolbar" color="primary" [fxShow]="!dataSource.selection.isEmpty()">
+        <mat-toolbar *ngIf="entitiesTableConfig.selectionEnabled" class="mat-mdc-table-toolbar" color="primary" [fxShow]="!dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <span class="tb-entity-table-info">
               {{ translations.selectedEntities | translate:{count: dataSource.selection.selected.length} }}
@@ -146,7 +146,7 @@
           <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
                      matSort [matSortActive]="pageLink.sortOrder?.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
             <ng-container matColumnDef="select" sticky>
-              <mat-header-cell *matHeaderCellDef style="width: 30px;">
+              <mat-header-cell *matHeaderCellDef style="width: 40px;">
                 <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
                               [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
                               [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
@@ -215,14 +215,14 @@
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>
-              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px',
-                                                                    maxWidth: (cellActionDescriptors.length * 40) + 'px',
-                                                                    width: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 48) + 'px',
+                                                                    maxWidth: (cellActionDescriptors.length * 48) + 'px',
+                                                                    width: (cellActionDescriptors.length * 48) + 'px' }">
                 {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
               </mat-header-cell>
-              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px',
-                                                                    maxWidth: (cellActionDescriptors.length * 40) + 'px',
-                                                                    width: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 48) + 'px',
+                                                                    maxWidth: (cellActionDescriptors.length * 48) + 'px',
+                                                                    width: (cellActionDescriptors.length * 48) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-icon-button [disabled]="(isLoading$ | async) || !actionDescriptor.isEnabled(entity)"
                           *ngFor="let actionDescriptor of cellActionDescriptors"
