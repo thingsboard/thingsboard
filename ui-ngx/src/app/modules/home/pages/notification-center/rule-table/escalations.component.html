@@ -25,7 +25,7 @@
                         [formControl]="escalationControl"
                         [systemEscalation]="$index === 0">
     </tb-escalation-form>
-    <span *ngIf="$index === 0" style="width: 40px;"></span>
+    <span *ngIf="$index === 0" style="width: 48px;"></span>
     <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
             type="button"
             (click)="removeEscalation($index)"

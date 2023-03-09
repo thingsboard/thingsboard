@@ -36,7 +36,7 @@
       formControlName="targets"
       subscriptSizing="dynamic"
       [entityType]="entityType.NOTIFICATION_TARGET"
-      placeholderText="{{ 'notification.add-target' | translate }}">
+      [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-target' | translate)">
       <button #createTargetButton
               mat-button [fxHide]="disabled" matSuffix
               (click)="createTarget($event, createTargetButton)">

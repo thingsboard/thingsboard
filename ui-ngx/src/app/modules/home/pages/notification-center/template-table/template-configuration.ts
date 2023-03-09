@@ -96,7 +96,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       additionalConfig: this.fb.group({
         icon: this.fb.group({
           enabled: [false],
-          icon: [{value: '', disabled: true}, Validators.required],
+          icon: [{value: 'notifications', disabled: true}, Validators.required],
           color: ['#757575']
         }),
         actionButtonConfig: this.fb.group({

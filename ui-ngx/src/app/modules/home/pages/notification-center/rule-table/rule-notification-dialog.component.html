@@ -102,7 +102,7 @@
             </tb-alarm-severities-list>
           </fieldset>
 
-          <fieldset class="fields-group tb-margin" formGroupName="clearRule">
+          <fieldset class="fields-group tb-margin-2" formGroupName="clearRule">
             <legend translate>notification.clear-rule</legend>
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
@@ -208,7 +208,7 @@
 
       </form>
       <form [formGroup]="ruleNotificationForm">
-        <section formGroupName="additionalConfig">;
+        <section formGroupName="additionalConfig">
           <mat-form-field class="mat-block">
             <mat-label translate>notification.description</mat-label>
             <input matInput formControlName="description">

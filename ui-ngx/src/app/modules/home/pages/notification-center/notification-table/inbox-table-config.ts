@@ -70,7 +70,7 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
       new EntityTableColumn<Notification>('type', 'notification.type', '10%', (notification) =>
         this.translate.instant(NotificationTemplateTypeTranslateMap.get(notification.type).name)),
       new EntityTableColumn<Notification>('subject', 'notification.subject', '30%'),
-      new EntityTableColumn<Notification>('text', 'notification.text', '60%')
+      new EntityTableColumn<Notification>('text', 'notification.message', '60%')
     );
 
   }
