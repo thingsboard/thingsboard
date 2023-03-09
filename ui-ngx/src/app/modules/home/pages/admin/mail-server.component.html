@@ -208,10 +208,10 @@
                   </mat-error>
                 </mat-form-field>
               </section>
-              <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px" [formGroup]="domainForm">
+              <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
                 <legend class="group-title" translate>admin.oauth2.redirect-uri</legend>
                 <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
-                  <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
+                  <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50" [formGroup]="domainForm">
                     <div fxLayout="row" fxLayout.xs="column" fxLayout.md="column" fxLayoutGap="8px" fxLayoutGap.md="0px">
                       <mat-form-field fxFlex="30" fxFlex.md fxFlex.xs class="mat-block">
                         <mat-label translate>admin.oauth2.protocol</mat-label>
@@ -240,11 +240,11 @@
                   <div fxFlex fxLayout="column">
                     <mat-form-field fxFlex class="mat-block">
                       <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
-                      <input matInput [value]="redirectURI()" readonly>
+                      <input matInput formControlName="redirectUri" readonly>
                       <tb-copy-button
                         matSuffix
                         color="primary"
-                        [copyText]="redirectURI()"
+                        [copyText]="mailSettings.get('redirectUri').value"
                         tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                         tooltipPosition="above"
                         mdiIcon="mdi:clipboard-arrow-left">

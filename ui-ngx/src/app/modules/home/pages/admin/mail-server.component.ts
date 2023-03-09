@@ -26,7 +26,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
-import { Subject } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   DomainSchema,
@@ -111,11 +111,12 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   ngOnInit() {
-    this.loginProcessingUrl = this.route.snapshot.data.loginProcessingUrl;
     this.mailServerSettingsForm();
+    this.domainFormConfiguration();
 
-    this.adminService.getAdminSettings<MailServerSettings>('mail').subscribe(
-      (adminSettings) => {
+    forkJoin([this.adminService.getLoginProcessingUrl(), this.adminService.getAdminSettings<MailServerSettings>('mail')]).subscribe(
+      ([loginProcessingUrl, adminSettings]) => {
+        this.loginProcessingUrl = loginProcessingUrl;
         this.adminSettings = adminSettings;
         if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
           this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
@@ -130,6 +131,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
         if (this.adminSettings.jsonValue.enableOauth2) {
           this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
           this.parseUrl(this.adminSettings.jsonValue.redirectUri);
+          this.mailSettings.get('redirectUri').patchValue(this.adminSettings.jsonValue.redirectUri, {emitEvent: false});
         } else {
           this.mailSettings.get('enableOauth2').patchValue(false, {emitEvent: false});
         }
@@ -167,11 +169,33 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
 
     this.mailSettings.get('enableOauth2').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe( value => this.enableOauth2(value));
+    ).subscribe( value => {
+      this.enableOauth2(value);
+      if (value && !this.mailSettings.get('redirectUri').value) {
+        this.mailSettings.get('redirectUri').patchValue(this.redirectURI(), {emitEvent: false});
+        this.mailSettings.get('providerId').patchValue(MailServerOauth2Provider.GOOGLE, {emitEvent: false});
+      }
+    });
 
     this.mailSettings.get('providerId').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe( value => this.enableProviderIdChanged(value));
+  }
+
+  private domainFormConfiguration(): void {
+    this.domainForm.get('name').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(
+      value => this.mailSettings.get('redirectUri').patchValue(
+        this.redirectURI(this.domainForm.get('scheme').value, value),
+        {emitEvent: false}
+      )
+    );
+    this.domainForm.get('scheme').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(
+      (value) => this.mailSettings.get('redirectUri').patchValue(this.redirectURI(value), {emitEvent: false})
+    );
   }
 
   private uniqueDomainValidator(control: FormGroup): { [key: string]: boolean } | null {
@@ -248,7 +272,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   sendTestMail(): void {
-    this.assignSettings();
+    this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.mailSettingsFormValue};
     this.adminService.sendTestMail(this.adminSettings).subscribe(
       () => this.store.dispatch(new ActionNotificationShow({ message: this.translate.instant('admin.test-mail-sent'),
           type: 'success' })),
@@ -257,7 +281,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   save(): void {
-    this.assignSettings();
+    this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.mailSettingsFormValue};
     this.adminService.saveAdminSettings(this.adminSettings).subscribe(
       (adminSettings) => {
         this.adminSettings = adminSettings;
@@ -269,29 +293,18 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     );
   }
 
-  private assignSettings(): void {
-    this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.mailSettingsFormValue};
-    if (this.adminSettings.jsonValue.enableOauth2) {
-      this.adminSettings.jsonValue.redirectUri = this.redirectURI();
-    }
-  }
-
   generateAccessToken() {
     this.adminService.generateAccessToken().subscribe(
       uri => this.window.location.href = uri
     );
   }
 
-  redirectURI(schema?: DomainSchema): string {
-    const domainInfo = this.domainForm.getRawValue();
+  redirectURI(schema?: DomainSchema, name?: string): string {
+    const domainInfo = this.domainForm.value;
     if (domainInfo.name !== '') {
-      let protocol;
-      if (isDefined(schema)) {
-        protocol = schema.toLowerCase();
-      } else {
-        protocol = domainInfo.scheme.toLowerCase();
-      }
-      return `${protocol}://${domainInfo.name}${this.loginProcessingUrl}`;
+      const protocol = isDefined(schema) ? schema.toLowerCase() : domainInfo.scheme.toLowerCase();
+      const domainName = isDefined(name) ? name : domainInfo.name;
+      return `${protocol}://${domainName}${this.loginProcessingUrl}`;
     }
     return '';
   }
@@ -299,7 +312,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   private parseUrl(value: string) {
     const url = new URL(value);
     this.domainForm.get('scheme').patchValue(
-      url.protocol.includes('https:') ? DomainSchema.HTTPS : DomainSchema.HTTP, {emitEvent: false}
+      url.protocol.startsWith('https') ? DomainSchema.HTTPS : DomainSchema.HTTP, {emitEvent: false}
     );
     this.domainForm.get('name').patchValue(url.host, {emitEvent: false});
   }
