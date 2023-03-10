@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -142,32 +143,40 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         userService.deleteUser(tenantId, savedUser.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithSameEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("sysadmin@thingsboard.org");
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithInvalidEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("tenant_thingsboard.org");
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithEmptyEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail(null);
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithoutTenant() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setTenantId(null);
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
     @Test

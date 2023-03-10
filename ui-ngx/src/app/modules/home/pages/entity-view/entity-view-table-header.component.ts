@@ -24,7 +24,7 @@ import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 @Component({
   selector: 'tb-entity-view-table-header',
   templateUrl: './entity-view-table-header.component.html',
-  styleUrls: ['./entity-view-table-header.component.scss']
+  styleUrls: []
 })
 export class EntityViewTableHeaderComponent extends EntityTableHeaderComponent<EntityViewInfo> {
 

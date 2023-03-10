@@ -58,7 +58,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
 
         alarm = Alarm.builder().tenantId(tenantId).originator(new AssetId(Uuids.timeBased()))
                 .type(TEST_ALARM)
-                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
                 .startTs(System.currentTimeMillis()).build();
         alarm = alarmService.createOrUpdateAlarm(alarm).getAlarm();
 

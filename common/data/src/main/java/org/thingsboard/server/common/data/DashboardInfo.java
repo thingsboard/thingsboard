@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId {
+public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId, HasTitle {
 
     private TenantId tenantId;
     @NoXss

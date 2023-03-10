@@ -13,16 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  mat-radio-button {
-    display: block;
-    margin-bottom: 16px;
-    .mat-radio-label {
-      width: 100%;
-      align-items: start;
-      .mat-radio-label-content {
-        width: 100%;
-      }
-    }
-  }
+:host {
 }

@@ -21,12 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.service.mail.DefaultMailService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -35,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,12 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 public abstract class BaseAdminControllerTest extends AbstractControllerTest {
     final JwtSettings defaultJwtSettings = new JwtSettings(9000, 604800, "thingsboard.io", "thingsboardDefaultSigningKey");
-
-    @Autowired
-    MailService mailService;
-
-    @Autowired
-    DefaultMailService defaultMailService;
 
     @Test
     public void testFindAdminSettingsByKey() throws Exception {
@@ -118,10 +111,12 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSendTestMail() throws Exception {
+        Mockito.doNothing().when(mailService).sendTestMail(any(), anyString());
         loginSysAdmin();
         AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
         doPost("/api/admin/settings/testMail", adminSettings)
                 .andExpect(status().isOk());
+        Mockito.verify(mailService).sendTestMail(Mockito.any(), Mockito.anyString());
     }
 
     @Test
@@ -137,15 +132,8 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
 
         adminSettings.setJsonValue(objectNode);
 
-        Mockito.doAnswer((invocations) -> {
-            var jsonConfig = (JsonNode) invocations.getArgument(0);
-            var email = (String) invocations.getArgument(1);
-
-            defaultMailService.sendTestMail(jsonConfig, email);
-            return null;
-        }).when(mailService).sendTestMail(Mockito.any(), Mockito.anyString());
         doPost("/api/admin/settings/testMail", adminSettings).andExpect(status().is5xxServerError());
-        Mockito.doNothing().when(mailService).sendTestMail(Mockito.any(), Mockito.any());
+        Mockito.verify(mailService).sendTestMail(Mockito.any(), Mockito.anyString());
     }
 
     void resetJwtSettingsToDefault() throws Exception {

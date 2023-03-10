@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -86,57 +87,67 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         edgeService.deleteEdge(tenantId, savedEdge.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveEdgeWithEmptyName() {
         Edge edge = new Edge();
         edge.setType("default");
         edge.setTenantId(tenantId);
-        edgeService.saveEdge(edge);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            edgeService.saveEdge(edge);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveEdgeWithEmptyTenant() {
         Edge edge = new Edge();
         edge.setName("My edge");
         edge.setType("default");
-        edgeService.saveEdge(edge);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            edgeService.saveEdge(edge);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveEdgeWithInvalidTenant() {
         Edge edge = new Edge();
         edge.setName("My edge");
         edge.setType("default");
         edge.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        edgeService.saveEdge(edge);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            edgeService.saveEdge(edge);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testAssignEdgeToNonExistentCustomer() {
         Edge edge = constructEdge("My edge", "default");
-        edge = edgeService.saveEdge(edge);
+        Edge savedEdge = edgeService.saveEdge(edge);
         try {
-            edgeService.assignEdgeToCustomer(tenantId, edge.getId(), new CustomerId(Uuids.timeBased()));
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                edgeService.assignEdgeToCustomer(tenantId, savedEdge.getId(), new CustomerId(Uuids.timeBased()));
+            });
         } finally {
-            edgeService.deleteEdge(tenantId, edge.getId());
+            edgeService.deleteEdge(tenantId, savedEdge.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testAssignEdgeToCustomerFromDifferentTenant() {
         Edge edge = constructEdge("My edge", "default");
-        edge = edgeService.saveEdge(edge);
+        Edge savedEdge = edgeService.saveEdge(edge);
         Tenant tenant = new Tenant();
         tenant.setTitle("Test different tenant");
         tenant = tenantService.saveTenant(tenant);
         Customer customer = new Customer();
         customer.setTenantId(tenant.getId());
         customer.setTitle("Test different customer");
-        customer = customerService.saveCustomer(customer);
+        Customer savedCustomer = customerService.saveCustomer(customer);
         try {
-            edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customer.getId());
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                edgeService.assignEdgeToCustomer(tenantId, savedEdge.getId(), savedCustomer.getId());
+            });
         } finally {
-            edgeService.deleteEdge(tenantId, edge.getId());
+            edgeService.deleteEdge(tenantId, savedEdge.getId());
             tenantService.deleteTenant(tenant.getId());
         }
     }
