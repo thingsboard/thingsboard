@@ -164,6 +164,10 @@ fieldset {
   border: none;
 }
 
+.fields-group {
+  display: grid;
+}
+
 section.tb-header-buttons {
   position: absolute;
   top: 86px;
@@ -1486,8 +1490,7 @@ mat-label {
   }
 
   @media #{$mat-lt-md} {
-    .mat-mdc-form-field.mat-mdc-form-field-has-icon-suffix,
-    .mat-mdc-form-field.mat-mdc-form-field-has-icon-prefix{
+    .mat-mdc-form-field {
       .mat-mdc-form-field-infix {
         width: auto;
       }

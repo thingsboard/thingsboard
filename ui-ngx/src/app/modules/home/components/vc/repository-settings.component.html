@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<div>
-  <mat-card appearance="outlined" class="repository-settings" [ngClass]="{'settings-card': !detailsMode}" [ngStyle]="popoverComponent ? {boxShadow: 'none', width: '800px'} : {}">
+<div style="height: min-content; max-height: 80vh;">
+  <mat-card appearance="outlined" class="repository-settings"
+            [ngClass]="{'settings-card': !detailsMode}"
+            [ngStyle]="popoverComponent ? {boxShadow: 'none', maxWidth: '100%', minWidth: '100%', width: '800px'} : {}">
     <mat-card-header>
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.repository-settings</span>
