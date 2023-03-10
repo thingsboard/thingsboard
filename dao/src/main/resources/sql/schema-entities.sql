@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     propagate boolean,
     severity varchar(255),
     start_ts bigint,
-    assign_ts bigint,
+    assign_ts bigint DEFAULT 0,
     assignee_id uuid,
     tenant_id uuid,
     customer_id uuid,

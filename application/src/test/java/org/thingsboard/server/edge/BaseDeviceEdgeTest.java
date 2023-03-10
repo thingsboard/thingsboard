@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
@@ -668,6 +669,7 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         client.connectAndWait(deviceCredentials.getCredentialsId());
         MqttTestCallback onUpdateCallback = new MqttTestCallback();
         client.setCallback(onUpdateCallback);
+
         client.subscribeAndWait("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE);
 
         edgeImitator.expectResponsesAmount(1);

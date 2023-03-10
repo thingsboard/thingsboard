@@ -29,7 +29,7 @@ UPDATE tb_user SET additional_info = tb_user.additional_info::jsonb - 'userPassw
 
 -- ALARM ASSIGN TO USER START
 
-ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assign_ts BIGINT;
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assign_ts BIGINT DEFAULT 0;
 ALTER TABLE alarm ADD COLUMN IF NOT EXISTS assignee_id UUID;
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_assignee_created_time ON alarm(tenant_id, assignee_id, created_time DESC);
