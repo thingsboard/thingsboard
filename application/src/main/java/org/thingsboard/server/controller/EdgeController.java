@@ -557,13 +557,9 @@ public class EdgeController extends BaseController {
             @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("edgeId") String strEdgeId,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            edgeId = checkNotNull(edgeId);
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-            return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        edgeId = checkNotNull(edgeId);
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
+        return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
     }
 }
