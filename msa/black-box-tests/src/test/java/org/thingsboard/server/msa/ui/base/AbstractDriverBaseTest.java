@@ -71,6 +71,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         ChromeOptions options = new ChromeOptions();
         options.setAcceptInsecureCerts(true);
+        options.addArguments("-remote-allow-origins=*"); //temporary fix after updating google chrome
         if (instance.isActive()) {
             RemoteWebDriver remoteWebDriver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_HOST), options);
             remoteWebDriver.setFileDetector(new LocalFileDetector());
