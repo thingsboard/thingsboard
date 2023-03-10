@@ -19,6 +19,7 @@ import {
   ActionButtonLinkType,
   AlarmSeverityNotificationColors,
   Notification,
+  NotificationStatus,
   NotificationType,
   NotificationTypeIcons
 } from '@shared/models/notification.models';
@@ -53,6 +54,7 @@ export class NotificationComponent implements OnInit {
   showIcon = false;
   showButton = false;
   buttonLabel = '';
+  hideMarkAsReadButton = false;
 
   tinycolor = tinycolor_;
 
@@ -71,6 +73,7 @@ export class NotificationComponent implements OnInit {
   ngOnInit() {
     this.showIcon = this.notification.additionalConfig?.icon?.enabled;
     this.showButton = this.notification.additionalConfig?.actionButtonConfig?.enabled;
+    this.hideMarkAsReadButton = this.notification.status === NotificationStatus.READ;
     if (this.showButton) {
       this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text,
                                                       this.notification.additionalConfig.actionButtonConfig.text);
@@ -96,7 +99,13 @@ export class NotificationComponent implements OnInit {
         let state = null;
         if (this.notification.additionalConfig.actionButtonConfig.dashboardState) {
           const stateObject: StateObject = {};
-          stateObject.params = {};
+          if (this.notification.additionalConfig.actionButtonConfig.setEntityIdInState) {
+            stateObject.params = {
+              entityId: this.notification.info.originatorId ?? null
+            };
+          } else {
+            stateObject.params = {};
+          }
           stateObject.id = this.notification.additionalConfig.actionButtonConfig.dashboardState;
           state = objToBase64URI([ stateObject ]);
         }

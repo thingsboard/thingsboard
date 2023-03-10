@@ -56,7 +56,7 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
   }
 
   ngOnInit() {
-    this.notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone);
+    this.notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone, 6);
     this.notifications$ = this.notificationSubscriber.notifications$.pipe(
       share({
         connector: () => new ReplaySubject(1)

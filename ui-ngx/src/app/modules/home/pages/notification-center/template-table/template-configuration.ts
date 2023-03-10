@@ -102,11 +102,11 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
         actionButtonConfig: this.fb.group({
           enabled: [false],
           text: [{value: '', disabled: true}, Validators.required],
-          color: ['#305680'],
           linkType: [ActionButtonLinkType.LINK],
           link: [{value: '', disabled: true}, Validators.required],
           dashboardId: [{value: null, disabled: true}, Validators.required],
-          dashboardState: [{value: null, disabled: true}]
+          dashboardState: [{value: null, disabled: true}],
+          setEntityIdInState: [{value: true, disabled: true}],
         }),
       })
     });
@@ -142,10 +142,12 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
           this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
           this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
           this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').disable({emitEvent: false});
         } else {
           this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
           this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
           this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
+          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').enable({emitEvent: false});
         }
       }
     });

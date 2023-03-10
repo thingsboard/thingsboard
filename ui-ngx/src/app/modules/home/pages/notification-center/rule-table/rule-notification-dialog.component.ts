@@ -36,7 +36,12 @@ import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper'
 import { MatStepper } from '@angular/material/stepper';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { AlarmStatus, alarmStatusTranslations } from '@shared/models/alarm.models';
+import {
+  AlarmSearchStatus,
+  alarmSearchStatusTranslations,
+  AlarmSeverity,
+  alarmSeverityTranslations
+} from '@shared/models/alarm.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
   TargetNotificationDialogComponent,
@@ -72,8 +77,16 @@ export class RuleNotificationDialogComponent extends
   triggerTypes: TriggerType[] = Object.values(TriggerType);
   triggerTypeTranslationMap = TriggerTypeTranslationMap;
 
-  alarmSearchStatuses: AlarmStatus[] = Object.values(AlarmStatus);
-  alarmSearchStatusTranslationMap = alarmStatusTranslations;
+  alarmSearchStatuses = [
+    AlarmSearchStatus.ACTIVE,
+    AlarmSearchStatus.CLEARED,
+    AlarmSearchStatus.ACK,
+    AlarmSearchStatus.UNACK
+  ];
+  alarmSearchStatusTranslationMap = alarmSearchStatusTranslations;
+
+  alarmSeverityTranslationMap = alarmSeverityTranslations;
+  alarmSeverities = Object.keys(AlarmSeverity) as Array<AlarmSeverity>;
 
   entityType = EntityType;
   entityTypes: EntityType[] = Object.values(EntityType);
@@ -136,9 +149,9 @@ export class RuleNotificationDialogComponent extends
     this.alarmTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
         alarmTypes: [null],
-        alarmSeverities: [null],
+        alarmSeverities: [[]],
         clearRule: this.fb.group({
-          alarmStatus: [null]
+          alarmStatus: [[]]
         })
       })
     });
@@ -172,7 +185,13 @@ export class RuleNotificationDialogComponent extends
       })
     });
 
-    this.alarmCommentTemplateForm = this.fb.group({ });
+    this.alarmCommentTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        alarmTypes: [null],
+        alarmSeverities: [[]],
+        alarmStatus: [[]]
+      })
+    });
 
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],

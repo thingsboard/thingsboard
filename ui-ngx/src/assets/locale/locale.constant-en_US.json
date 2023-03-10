@@ -2749,12 +2749,16 @@
         "delivery-method": "Delivery method",
         "delivery-method-type": {
             "email": "Email",
+            "email-failed-sent": "Email messages failed sent",
             "email-preview": "Email notification preview",
             "push": "Web",
+            "push-failed-sent": "Web messages failed sent",
             "push-preview": "Web notification preview",
             "slack": "Slack",
+            "slack-failed-sent": "Slack messages failed sent",
             "slack-preview": "Slack notification preview",
             "sms": "SMS",
+            "sms-failed-sent": "SMS messages failed sent",
             "sms-preview": "SMS notification preview"
         },
         "delivery-methods": "Delivery methods",
@@ -2773,6 +2777,8 @@
         "email-settings": "Email settings",
         "entity-action-trigger-settings": "Entity action trigger settings",
         "entity-type": "Entity type",
+        "failed-send": "Failed send",
+        "fails": "Fails",
         "filter": "Filter",
         "first-recipient": "First recipient",
         "hierarchy-of-receiving": "Hierarchy of receiving notifications",
@@ -2827,6 +2833,7 @@
         "send-notification": "Send notification",
         "sent": "Sent",
         "settings": "Notification settings",
+        "set-entity-from-notification": "Set entity from notification to dashboard state",
         "slack": "Slack",
         "slack-chanel-type": "Slack chanel type",
         "slack-chanel-types": {

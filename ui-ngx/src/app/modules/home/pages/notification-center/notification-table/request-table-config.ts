@@ -24,6 +24,7 @@ import {
   NotificationDeliveryMethodTranslateMap,
   NotificationRequest,
   NotificationRequestInfo,
+  NotificationRequestStats,
   NotificationRequestStatus,
   NotificationRequestStatusTranslateMap,
   NotificationTemplate
@@ -40,6 +41,10 @@ import {
   RequestNotificationDialogData
 } from '@home/pages/notification-center/request-table/request-notification-dialog.componet';
 import { PageLink } from '@shared/models/page/page-link';
+import {
+  NotificationRequestErrorDialogComponent,
+  NotificationRequestErrorDialogData
+} from '@home/pages/notification-center/request-table/notification-request-error-dialog.component';
 
 export class RequestTableConfig extends EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> {
 
@@ -66,12 +71,21 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
 
     this.onEntityAction = action => this.onRequestAction(action);
 
+    this.handleRowClick = (event, entity) => {
+      const path = (event as any).path || (event.composedPath && event.composedPath());
+      if ((event.target as HTMLElement).getElementsByClassName('stats').length || (event.target as HTMLElement).className === 'stats') {
+        this.openStatsErrorDialog(event, entity);
+      }
+      return true;
+    };
+
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.columns.push(
       new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRequestInfo>('status', 'notification.status', '15%',
-        request => this.requestStatus(request.status), request => this.requestStatusStyle(request.status)),
+        request => `<span style="display: flex;">${this.requestStatus(request.status)}${this.requestStats(request.stats)}</span>`,
+          request => this.requestStatusStyle(request.status)),
       new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '15%',
         (request) => request.deliveryMethods
           .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodTranslateMap.get(deliveryMethod))).join(', '),
@@ -136,6 +150,18 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
             </div>`;
   }
 
+  private requestStats(stats: NotificationRequestStats): string {
+    let countError = 0;
+    Object.keys(stats.errors).forEach(method => countError += Object.keys(stats.errors[method]).length);
+    if (countError === 0) {
+      return ''
+    }
+    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content; background-color: #D12730;
+                        color: #fff; font-weight: 500; margin-left: 8px" class="stats">
+                ${countError} ${this.translate.instant('notification.fails')} >
+            </div>`;
+  }
+
   private requestStatusStyle(status: NotificationRequestStatus): object {
     const styleObj = {
       fontSize: '14px',
@@ -151,5 +177,19 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
         break;
     }
     return styleObj;
+  }
+
+  private openStatsErrorDialog($event: Event, notificationRequest: NotificationRequest) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<NotificationRequestErrorDialogComponent, NotificationRequestErrorDialogData,
+      void>(NotificationRequestErrorDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        notificationRequest
+      }
+    }).afterClosed().subscribe(() => {});
   }
 }

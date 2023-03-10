@@ -131,8 +131,6 @@
                     {{ 'notification.button-text-required' | translate }}
                   </mat-error>
                 </mat-form-field>
-                <tb-color-input formControlName="color" fxFlex>
-                </tb-color-input>
               </div>
               <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
                 <mat-form-field fxFlex="30" fxFlex.xs="100">
@@ -163,6 +161,10 @@
                   </tb-dashboard-state-autocomplete>
                 </ng-template>
               </div>
+              <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
+                                *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.DASHBOARD">
+                {{ 'notification.set-entity-from-notification' | translate }}
+              </mat-slide-toggle>
             </div>
           </section>
         </section>
