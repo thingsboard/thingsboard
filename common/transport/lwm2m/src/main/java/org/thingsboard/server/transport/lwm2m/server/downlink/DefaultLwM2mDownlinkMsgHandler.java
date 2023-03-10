@@ -85,6 +85,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -522,16 +523,22 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void handleDownlinkError(LwM2mClient client, R request, DownlinkRequestCallback<R, T> callback, Exception e) {
         log.trace("[{}] Received downlink error: {}.", client.getEndpoint(), e);
-        client.updateLastUplinkTime();
-        executor.submit(() -> {
-            if (e instanceof TimeoutException || e instanceof ClientSleepingException) {
-                log.trace("[{}] Received {}, client is probably sleeping", client.getEndpoint(), e.getClass().getSimpleName());
-                clientContext.asleep(client);
-            } else {
-                log.trace("[{}] Received {}", client.getEndpoint(), e.getClass().getSimpleName());
-            }
-            callback.onError(toString(request), e);
-        });
+        try {
+            client.updateLastUplinkTime();
+            executor.submit(() -> {
+                if (e instanceof TimeoutException || e instanceof ClientSleepingException) {
+                    log.trace("[{}] Received {}, client is probably sleeping", client.getEndpoint(), e.getClass().getSimpleName());
+                    clientContext.asleep(client);
+                } else {
+                    log.trace("[{}] Received {}", client.getEndpoint(), e.getClass().getSimpleName());
+                }
+                callback.onError(toString(request), e);
+            });
+        } catch (RejectedExecutionException ree) {
+            log.warn("[{}] Can not handle downlink error. Executor already down", client.getEndpoint(), ree);
+        } catch (Exception exception) {
+            log.warn("[{}] Can not handle downlink error", client.getEndpoint(), exception);
+        }
     }
 
     private WriteRequest getWriteRequestSingleResource(ResourceModel.Type type, ContentFormat contentFormat, int objectId, int instanceId, int resourceId, Object value) {
