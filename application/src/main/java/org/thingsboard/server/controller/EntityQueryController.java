@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
+import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
@@ -83,6 +85,11 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the alarm data query. See API call notes above for more details.")
             @RequestBody AlarmDataQuery query) throws ThingsboardException {
         checkNotNull(query);
+        checkNotNull(query.getPageLink());
+        UserId assigneeId = query.getPageLink().getAssigneeId();
+        if (assigneeId != null) {
+            checkUserId(assigneeId, Operation.READ);
+        }
         return this.entityQueryService.findAlarmDataByQuery(getCurrentUser(), query);
     }
 

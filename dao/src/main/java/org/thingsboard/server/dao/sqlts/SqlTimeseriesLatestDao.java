@@ -228,7 +228,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
 
         long ts = latest.getTs();
         ListenableFuture<Boolean> removedLatestFuture;
-        if (ts > query.getStartTs() && ts <= query.getEndTs()) {
+        if (ts >= query.getStartTs() && ts < query.getEndTs()) {
             TsKvLatestEntity latestEntity = new TsKvLatestEntity();
             latestEntity.setEntityId(entityId.getId());
             latestEntity.setKey(getOrSaveKeyId(query.getKey()));

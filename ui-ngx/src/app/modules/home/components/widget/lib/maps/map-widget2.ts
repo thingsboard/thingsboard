@@ -83,6 +83,9 @@ export class MapWidgetController implements MapWidgetInterface {
           dynamic: true
         };
         this.map.setLoading(true);
+        this.ctx.defaultSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
+          this.map.resetState();
+        });
         this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
     }
 

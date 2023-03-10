@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="subTypeFormGroup" class="mat-block">
+<mat-form-field [formGroup]="subTypeFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
   <mat-label *ngIf="showLabel">{{ entitySubtypeTitle | translate }}</mat-label>
   <mat-select [fxShow]="subTypesLoaded" class="tb-entity-subtype-select" formControlName="subType">
     <mat-option *ngFor="let subType of subTypesOptions | async" [value]="subType">
