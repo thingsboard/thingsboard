@@ -449,6 +449,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 } while (pageData != null && pageData.hasNext());
             }
         }
+        clearRuleChainStats(tenantId, ruleChainId);
         checkRuleNodesAndDelete(tenantId, ruleChainId);
     }
 
@@ -753,6 +754,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNodeId> ruleNodeIds = ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList());
         for (var node : ruleNodes) {
             deleteEntityRelations(tenantId, node.getId());
+            clearRuleNodeStats(tenantId, node.getId());
         }
         ruleNodeDao.deleteByIdIn(ruleNodeIds);
     }
