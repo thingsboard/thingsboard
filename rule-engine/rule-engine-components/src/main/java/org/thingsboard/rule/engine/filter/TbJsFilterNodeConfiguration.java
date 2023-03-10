@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@ public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilter
 
     private ScriptLanguage scriptLang;
     private String jsScript;
-    private String mvelScript;
+    private String tbelScript;
 
     @Override
     public TbJsFilterNodeConfiguration defaultConfiguration() {
         TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setScriptLang(ScriptLanguage.MVEL);
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setJsScript("return msg.temperature > 20;");
-        configuration.setMvelScript("return msg.temperature > 20;");
+        configuration.setTbelScript("return msg.temperature > 20;");
         return configuration;
     }
 }

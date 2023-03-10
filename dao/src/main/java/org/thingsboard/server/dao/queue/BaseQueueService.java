@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -35,8 +38,9 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.List;
+import java.util.Optional;
 
-@Service
+@Service("QueueDaoService")
 @Slf4j
 @RequiredArgsConstructor
 public class BaseQueueService extends AbstractEntityService implements QueueService {
@@ -117,6 +121,16 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueuesByTenantId(TenantId tenantId) {
         Validator.validateId(tenantId, "Incorrect tenant id for delete queues request.");
         tenantQueuesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findQueueById(tenantId, new QueueId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.QUEUE;
     }
 
     private PaginatedRemover<TenantId, Queue> tenantQueuesRemover =

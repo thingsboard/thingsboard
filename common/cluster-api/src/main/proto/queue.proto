@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,6 +186,7 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
   int64 gatewayIdLSB = 2;
   string deviceName = 3;
   string deviceType = 4;
+  bool sparkplug = 5;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {
@@ -600,6 +601,7 @@ message TbAttributeDeleteProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated string keys = 7;
+  bool notifyDevice = 8;
 }
 
 message TbTimeSeriesDeleteProto {

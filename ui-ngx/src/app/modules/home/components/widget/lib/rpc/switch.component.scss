@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,58 +88,67 @@ $error-height: 14px !default;
   .tb-switch {
     .switch {
       z-index: 1;
-
-      mat-slide-toggle {
+      .mat-mdc-slide-toggle {
         position: absolute;
         top: 0;
         right: 0;
         bottom: 0;
         left: 0;
         margin: 0;
-
-        .mat-slide-toggle-bar {
-          top: 0;
-          left: 0;
+        &.mat-mdc-slide-toggle-checked {
+          .mdc-form-field {
+            .mdc-switch {
+              .mdc-switch__track {
+                background: $thumb-bar-checked-img no-repeat;
+                background-size: contain;
+              }
+              .mdc-switch__handle-track {
+                .mdc-switch__handle {
+                  background: $thumb-checked-img no-repeat;
+                  background-size: contain;
+                }
+              }
+            }
+          }
+        }
+        .mdc-form-field {
           width: 100%;
           height: 100%;
-          background: $thumb-bar-img no-repeat;
-          background-size: contain;
-          border-radius: 0;
-        }
+          .mdc-switch {
+            width: 100%;
+            height: 100%;
+            .mdc-switch__track {
+              width: 100%;
+              height: 100%;
+              background: $thumb-bar-img no-repeat;
+              background-size: contain;
+              border-radius: 0;
+              &:before, &:after {
+                content: none;
+              }
+            }
+            .mdc-switch__handle-track {
+              top: 5%;
+              left: .25%;
+              width: 50%;
+              height: 90%;
+              .mdc-switch__handle {
+                width: 100%;
+                height: 100%;
+                background: $thumb-img no-repeat;
+                background-size: contain;
+                border-radius: 0;
+                box-shadow: none;
 
-        .mat-slide-toggle-thumb-container {
-          top: 5%;
-          left: .25%;
-          width: 50%;
-          height: 90%;
-        }
+                &:before, &:after {
+                  content: none;
+                }
 
-        .mat-slide-toggle-label{
-          height: 100%;
-        }
-        .mat-slide-toggle-thumb {
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: $thumb-img no-repeat;
-          background-size: contain;
-          border-radius: 0;
-          box-shadow: none;
-        }
-
-        &.mat-checked {
-          .mat-slide-toggle-thumb-container {
-            transform: translate3d(100%,0,0);
-          }
-          .mat-slide-toggle-bar {
-            background: $thumb-bar-checked-img no-repeat;
-            background-size: contain;
-          }
-
-          .mat-slide-toggle-thumb {
-            background: $thumb-checked-img no-repeat;
-            background-size: contain;
+                & > * {
+                  display: none;
+                }
+              }
+            }
           }
         }
       }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,8 @@
 
 :host ::ng-deep {
   .tb-datakey-config {
-    .mat-tab-body.mat-tab-body-active {
-      .mat-tab-body-content > div {
+    .mat-mdc-tab-body.mat-mdc-tab-body-active {
+      .mat-mdc-tab-body-content > div {
         height: calc(65vh - 50px);
         overflow: initial;
         @media #{$mat-xs} {
@@ -123,10 +123,6 @@
 
     .mat-slide {
       margin: 8px 0;
-    }
-
-    .mat-slide-toggle-content {
-      white-space: normal;
     }
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -195,18 +195,22 @@ export class AuthService {
       ));
   }
 
-  public logout(captureLastUrl: boolean = false) {
+  public logout(captureLastUrl: boolean = false, ignoreRequest = false) {
     if (captureLastUrl) {
       this.redirectUrl = this.router.url;
     }
-    this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
-      .subscribe(() => {
-          this.clearJwtToken();
-        },
-        () => {
-          this.clearJwtToken();
-        }
-      );
+    if (!ignoreRequest) {
+      this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
+        .subscribe(() => {
+            this.clearJwtToken();
+          },
+          () => {
+            this.clearJwtToken();
+          }
+        );
+    } else {
+      this.clearJwtToken();
+    }
   }
 
   private notifyUserLoaded(isUserLoaded: boolean) {
@@ -478,9 +482,9 @@ export class AuthService {
     }
   }
 
-  private loadMvelEnabled(authUser: AuthUser): Observable<boolean> {
+  private loadTbelEnabled(authUser: AuthUser): Observable<boolean> {
     if (authUser.authority === Authority.TENANT_ADMIN) {
-      return this.http.get<boolean>('/api/ruleChain/mvelEnabled', defaultHttpOptions());
+      return this.http.get<boolean>('/api/ruleChain/tbelEnabled', defaultHttpOptions());
     } else {
       return of(false);
     }
@@ -491,7 +495,7 @@ export class AuthService {
                      this.fetchAllowedDashboardIds(authPayload),
                      this.loadIsEdgesSupportEnabled(),
                      this.loadHasRepository(authPayload.authUser),
-                     this.loadMvelEnabled(authPayload.authUser),
+                     this.loadTbelEnabled(authPayload.authUser),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
@@ -499,8 +503,8 @@ export class AuthService {
         const allowedDashboardIds: string[] = data[1] as string[];
         const edgesSupportEnabled: boolean = data[2] as boolean;
         const hasRepository: boolean = data[3] as boolean;
-        const mvelEnabled: boolean = data[4] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, mvelEnabled};
+        const tbelEnabled: boolean = data[4] as boolean;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled};
       }, catchError((err) => {
         return of({});
       })));

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -64,7 +64,7 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private translate: TranslateService,
               private datePipe: DatePipe) {
   }

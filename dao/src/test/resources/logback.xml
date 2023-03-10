@@ -8,9 +8,7 @@
     </appender>
 
     <logger name="org.thingsboard.server.dao" level="WARN"/>
-    <logger name="org.apache.cassandra" level="WARN"/>
-    <logger name="org.cassandraunit" level="WARN" />
-    <logger name="org.apache.cassandra" level="WARN" />
+    <logger name="org.testcontainers" level="INFO" />
 
     <root level="WARN">
         <appender-ref ref="console"/>

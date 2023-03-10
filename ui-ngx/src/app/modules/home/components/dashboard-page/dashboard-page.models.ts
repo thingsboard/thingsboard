@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,6 +23,13 @@ import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/da
 import { Observable } from 'rxjs';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
+
+export interface DashboardPageInitData {
+  dashboard: Dashboard;
+  currentDashboardId?: string;
+  widgetEditMode?: boolean;
+  singlePageMode?: boolean;
+}
 
 export interface DashboardContext {
   instanceId: string;

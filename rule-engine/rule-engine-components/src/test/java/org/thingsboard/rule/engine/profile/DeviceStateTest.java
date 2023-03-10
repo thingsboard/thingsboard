@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -42,6 +44,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 
@@ -77,11 +80,15 @@ public class DeviceStateTest {
         when(ctx.getAttributesService()).thenReturn(attributesService);
 
         RuleEngineAlarmService alarmService = mock(RuleEngineAlarmService.class);
-        when(alarmService.findLatestByOriginatorAndType(any(), any(), any())).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.createOrUpdateAlarm(any())).thenAnswer(invocationOnMock -> {
-            Alarm alarm = invocationOnMock.getArgument(0);
-            alarm.setId(new AlarmId(UUID.randomUUID()));
-            return alarm;
+        when(alarmService.findLatestActiveByOriginatorAndType(any(), any(), any())).thenReturn(null);
+        when(alarmService.createAlarm(any())).thenAnswer(invocationOnMock -> {
+            AlarmCreateOrUpdateActiveRequest request = invocationOnMock.getArgument(0);
+            return AlarmApiCallResult.builder()
+                    .successful(true)
+                    .created(true)
+                    .modified(true)
+                    .alarm(new AlarmInfo(new Alarm(new AlarmId(UUID.randomUUID()))))
+                    .build();
         });
         when(ctx.getAlarmService()).thenReturn(alarmService);
 

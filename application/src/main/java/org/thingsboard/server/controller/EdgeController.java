@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -63,6 +64,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -492,7 +494,7 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
-                         @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
+                                                   @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
         if (isEdgesEnabled()) {
@@ -543,5 +545,21 @@ public class EdgeController extends BaseController {
         }
 
         return edgeBulkImportService.processBulkImport(request, user);
+    }
+
+    @ApiOperation(value = "Get Edge Docker Install Instructions (getEdgeDockerInstallInstructions)",
+            notes = "Get a docker install instructions for provided edge id." + TENANT_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/instructions/{edgeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public EdgeInstallInstructions getEdgeDockerInstallInstructions(
+            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("edgeId") String strEdgeId,
+            HttpServletRequest request) throws ThingsboardException {
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        edgeId = checkNotNull(edgeId);
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
+        return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
     }
 }

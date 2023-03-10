@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,6 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
         Device device = findDeviceByName("Edge Device 1");
         Alarm alarm = new Alarm();
         alarm.setOriginator(device.getId());
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         alarm.setType("alarm");
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         edgeImitator.expectMessageAmount(1);

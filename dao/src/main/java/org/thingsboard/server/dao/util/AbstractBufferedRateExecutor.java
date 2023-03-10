@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -326,11 +327,12 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                     counter.clear();
                     if (printTenantNames) {
                         String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
+                            String defaultName = "N/A";
                             try {
-                                return entityService.fetchEntityNameAsync(TenantId.SYS_TENANT_ID, tenantId).get();
+                                return entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId).orElse(defaultName);
                             } catch (Exception e) {
                                 log.error("[{}] Failed to get tenant name", tenantId, e);
-                                return "N/A";
+                                return defaultName;
                             }
                         });
                         log.info("[{}][{}] Rate limited requests: {}", tenantId, name, rateLimitedRequests);

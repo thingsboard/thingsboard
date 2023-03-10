@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,10 +59,11 @@ export class DynamicComponentFactoryService {
                      template: string,
                      modules?: Type<any>[],
                      preserveWhitespaces?: boolean,
-                     compileAttempt = 1): Observable<ComponentFactory<T>> {
+                     compileAttempt = 1,
+                     styles?: string[]): Observable<ComponentFactory<T>> {
     return from(import('@angular/compiler')).pipe(
       mergeMap(() => {
-        const comp = this.createDynamicComponent(componentType, template, preserveWhitespaces);
+        const comp = this.createDynamicComponent(componentType, template, preserveWhitespaces, styles);
         let moduleImports: Type<any>[] = [CommonModule];
         if (modules) {
           moduleImports = [...moduleImports, ...modules];
@@ -91,7 +92,7 @@ export class DynamicComponentFactoryService {
           catchError((error) => {
             if (compileAttempt === 1) {
               ɵresetCompiledComponents();
-              return this.createDynamicComponentFactory(componentType, template, modules, preserveWhitespaces, ++compileAttempt);
+              return this.createDynamicComponentFactory(componentType, template, modules, preserveWhitespaces, ++compileAttempt, styles);
             } else {
               throw error;
             }
@@ -110,11 +111,12 @@ export class DynamicComponentFactoryService {
     }
   }
 
-  private createDynamicComponent<T>(componentType: Type<T>, template: string, preserveWhitespaces?: boolean): Type<T> {
+  private createDynamicComponent<T>(componentType: Type<T>, template: string, preserveWhitespaces?: boolean, styles?: string[]): Type<T> {
     // noinspection AngularMissingOrInvalidDeclarationInModule
     return Component({
       template,
-      preserveWhitespaces
+      preserveWhitespaces,
+      styles
     })(componentType);
   }
 

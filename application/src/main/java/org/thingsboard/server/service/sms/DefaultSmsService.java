@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,11 +114,7 @@ public class DefaultSmsService implements SmsService {
     @Override
     public void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException {
         SmsSender testSmsSender;
-        try {
-            testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration());
         this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
         testSmsSender.destroy();
     }
@@ -129,11 +125,7 @@ public class DefaultSmsService implements SmsService {
     }
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
-        try {
-            return smsSender.sendSms(numberTo, message);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return smsSender.sendSms(numberTo, message);
     }
 
     private ThingsboardException handleException(Exception exception) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadAlarmNodeConfig(configuration);
         scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
-                ScriptLanguage.MVEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildMvel() : config.getAlarmDetailsBuildJs());
+                ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildTbel() : config.getAlarmDetailsBuildJs());
     }
 
     protected abstract C loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;

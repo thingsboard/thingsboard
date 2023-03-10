@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
@@ -64,6 +65,24 @@ public class UserDataValidator extends DataValidator<User> {
             long maxUsers = profileConfiguration.getMaxUsers();
             validateNumberOfEntitiesPerTenant(tenantId, userDao, maxUsers, EntityType.USER);
         }
+    }
+
+    @Override
+    protected User validateUpdate(TenantId tenantId, User user) {
+        User old = userDao.findById(user.getTenantId(), user.getId().getId());
+        if (old == null) {
+            throw new DataValidationException("Can't update non existing user!");
+        }
+        if (!old.getTenantId().equals(user.getTenantId())) {
+            throw new DataValidationException("Can't update user tenant id!");
+        }
+        if (!old.getAuthority().equals(user.getAuthority())) {
+            throw new DataValidationException("Can't update user authority!");
+        }
+        if (!old.getCustomerId().equals(user.getCustomerId())) {
+            throw new DataValidationException("Can't update user customer id!");
+        }
+        return old;
     }
 
     @Override

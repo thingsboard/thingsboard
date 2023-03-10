@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -32,8 +37,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -41,12 +49,19 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -56,6 +71,11 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
@@ -84,6 +104,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class UserController extends BaseController {
 
     public static final String USER_ID = "userId";
+    public static final String PATHS = "paths";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
 
@@ -96,6 +117,9 @@ public class UserController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
     private final TbUserService tbUserService;
+
+    @Autowired
+    private EntityQueryService entityQueryService;
 
     @ApiOperation(value = "Get User (getUserById)",
             notes = "Fetch the User object based on the provided User Id. " +
@@ -141,7 +165,7 @@ public class UserController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/user/{userId}/token", method = RequestMethod.GET)
     @ResponseBody
-    public JwtTokenPair getUserToken(
+    public JwtPair getUserToken(
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
@@ -174,7 +198,7 @@ public class UserController extends BaseController {
             @RequestBody User user,
             @ApiParam(value = "Send activation email (or use activation link)", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail, HttpServletRequest request) throws ThingsboardException {
-        if (Authority.TENANT_ADMIN.equals(getCurrentUser().getAuthority())) {
+        if (!Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
@@ -275,6 +299,44 @@ public class UserController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Find users by query (findUsersByQuery)",
+            notes = "Returns page of user data objects. Search is been executed by email, firstName and " +
+                    "lastName fields. " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/users/info", method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<UserEmailInfo> findUsersByQuery(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = USER_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = USER_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        SecurityUser securityUser = getCurrentUser();
+
+        EntityTypeFilter entityFilter = new EntityTypeFilter();
+        entityFilter.setEntityType(EntityType.USER);
+        EntityDataPageLink pageLink = new EntityDataPageLink(pageSize, page, textSearch, createEntityDataSortOrder(sortProperty, sortOrder));
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(ENTITY_FIELD, "firstName"),
+                new EntityKey(ENTITY_FIELD, "lastName"),
+                new EntityKey(ENTITY_FIELD, "email"));
+
+        EntityDataQuery query = new EntityDataQuery(entityFilter, pageLink, entityFields, null, null);
+
+        return entityQueryService.findEntityDataByQuery(securityUser, query).mapData(entityData ->
+        {
+            Map<String, TsValue> fieldValues = entityData.getLatest().get(ENTITY_FIELD);
+            return new UserEmailInfo(UserId.fromString(entityData.getEntityId().getId().toString()),
+                    fieldValues.get("email").getValue(),
+                    fieldValues.get("firstName").getValue(),
+                    fieldValues.get("lastName").getValue());
+        });
+    }
+
     @ApiOperation(value = "Get Tenant Users (getTenantAdmins)",
             notes = "Returns a page of users owned by tenant. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
@@ -344,6 +406,54 @@ public class UserController extends BaseController {
         if (!userCredentialsEnabled) {
             eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         }
+    }
+
+    @ApiOperation(value = "Save user settings (saveUserSettings)",
+            notes = "Save user settings represented in json format for authorized user. " )
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/user/settings")
+    public JsonNode saveUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+
+        UserSettings userSettings = new UserSettings();
+        userSettings.setSettings(settings);
+        userSettings.setUserId(currentUser.getId());
+        return userSettingsService.saveUserSettings(currentUser.getTenantId(), userSettings).getSettings();
+    }
+
+    @ApiOperation(value = "Update user settings (saveUserSettings)",
+            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
+                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
+                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PutMapping(value = "/user/settings")
+    public void putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), settings);
+    }
+
+    @ApiOperation(value = "Get user settings (getUserSettings)",
+            notes = "Fetch the User settings based on authorized user. " )
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/settings")
+    public JsonNode getUserSettings() throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+
+        UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId());
+        return userSettings == null ? JacksonUtil.newObjectNode(): userSettings.getSettings();
+    }
+
+    @ApiOperation(value = "Delete user settings (deleteUserSettings)",
+            notes = "Delete user settings by specifying list of json element xpaths. \n " +
+                    "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter" )
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/user/settings/{paths}", method = RequestMethod.DELETE)
+    public void deleteUserSettings(@ApiParam(value = PATHS)
+                                        @PathVariable(PATHS) String paths) throws ThingsboardException {
+        checkParameter(USER_ID, paths);
+
+        SecurityUser currentUser = getCurrentUser();
+        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(paths.split(",")));
     }
 
 }

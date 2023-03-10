@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -28,6 +29,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 public final class EdgeUtils {
+
+    private static final int STACK_TRACE_LIMIT = 10;
 
     private EdgeUtils() {
     }
@@ -92,5 +95,21 @@ public final class EdgeUtils {
         }
         edgeEvent.setBody(body);
         return edgeEvent;
+    }
+
+    public static String createErrorMsgFromRootCauseAndStackTrace(Throwable t) {
+        Throwable rootCause = Throwables.getRootCause(t);
+        StringBuilder errorMsg = new StringBuilder(rootCause.getMessage() != null ? rootCause.getMessage() : "");
+        if (rootCause.getStackTrace().length > 0) {
+            int idx = 0;
+            for (StackTraceElement stackTraceElement : rootCause.getStackTrace()) {
+                errorMsg.append("\n").append(stackTraceElement.toString());
+                idx++;
+                if (idx > STACK_TRACE_LIMIT) {
+                    break;
+                }
+            }
+        }
+        return errorMsg.toString();
     }
 }

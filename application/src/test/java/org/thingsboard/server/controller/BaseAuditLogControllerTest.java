@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -200,6 +201,21 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
             long partitionEndTs = partitionsStart + partitionDurationInMs;
             assertThat(partitionEndTs).isGreaterThan(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(auditLogsTtlInSec));
         });
+    }
+
+    @Test
+    public void whenSavingAuditLogAndPartitionSaveErrorOccurred_thenSaveAuditLogAnyway() throws Exception {
+        // creating partition bigger than sql.audit_logs.partition_size
+        partitioningRepository.createPartitionIfNotExists("audit_log", System.currentTimeMillis(), TimeUnit.DAYS.toMillis(7));
+        List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
+        assertThat(partitions).size().isOne();
+        partitioningRepository.cleanupPartitionsCache("audit_log", System.currentTimeMillis(), 0);
+
+        assertDoesNotThrow(() -> {
+            // expecting partition overlap error on partition save
+            createAuditLog(ActionType.LOGIN, tenantAdminUserId);
+        });
+        assertThat(partitioningRepository.fetchPartitions("audit_log")).isEqualTo(partitions);
     }
 
     private AuditLog createAuditLog(ActionType actionType, EntityId entityId) {

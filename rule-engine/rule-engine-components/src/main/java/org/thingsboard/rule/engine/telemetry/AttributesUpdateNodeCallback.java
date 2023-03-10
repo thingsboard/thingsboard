@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import java.util.List;
 
 public class AttributesUpdateNodeCallback extends TelemetryNodeCallback {
 
-    private String scope;
-    private List<AttributeKvEntry> attributes;
+    private final String scope;
+    private final List<AttributeKvEntry> attributes;
 
     public AttributesUpdateNodeCallback(TbContext ctx, TbMsg msg, String scope, List<AttributeKvEntry> attributes) {
         super(ctx, msg);

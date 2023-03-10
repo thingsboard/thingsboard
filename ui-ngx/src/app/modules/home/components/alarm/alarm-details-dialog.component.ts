@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Observable, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
@@ -33,6 +33,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
 
 export interface AlarmDetailsDialogData {
   alarmId?: string;
@@ -45,12 +46,12 @@ export interface AlarmDetailsDialogData {
 @Component({
   selector: 'tb-alarm-details-dialog',
   templateUrl: './alarm-details-dialog.component.html',
-  styleUrls: []
+  styleUrls: ['./alarm-details-dialog.component.scss']
 })
 export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> implements OnInit {
 
   alarmId: string;
-  alarmFormGroup: FormGroup;
+  alarmFormGroup: UntypedFormGroup;
 
   allowAcknowledgment: boolean;
   allowClear: boolean;
@@ -66,6 +67,8 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
 
   alarmUpdated = false;
 
+  @ViewChild('alarmCommentComponent', { static: true }) alarmCommentComponent: AlarmCommentComponent;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private datePipe: DatePipe,
@@ -73,7 +76,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
               @Inject(MAT_DIALOG_DATA) public data: AlarmDetailsDialogData,
               private alarmService: AlarmService,
               public dialogRef: MatDialogRef<AlarmDetailsDialogComponent, boolean>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.allowAcknowledgment = data.allowAcknowledgment;
@@ -100,12 +103,14 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       this.loadAlarm();
     } else {
       this.alarmId = this.data.alarm?.id?.id;
-      this.loadAlarmSubject.next(this.data.alarm);
+      setTimeout(() => {
+        this.loadAlarmSubject.next(this.data.alarm);
+      }, 0);
     }
   }
 
   loadAlarm() {
-    this.alarmService.getAlarmInfo(this.alarmId).subscribe(
+    this.alarmService.getAlarmInfo(this.alarmId, {ignoreLoading: true}).subscribe(
       alarm => this.loadAlarmSubject.next(alarm)
     );
   }
@@ -152,6 +157,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
@@ -163,9 +169,15 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         () => {
           this.alarmUpdated = true;
           this.loadAlarm();
+          this.alarmCommentComponent.loadAlarmComments();
         }
       );
     }
   }
 
+  onReassign(): void {
+    this.alarmUpdated = true;
+    this.loadAlarm()
+    this.alarmCommentComponent.loadAlarmComments();
+  }
 }

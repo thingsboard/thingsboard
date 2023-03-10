@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,6 +47,11 @@ export enum ActionType {
   RELATIONS_DELETED = 'RELATIONS_DELETED',
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
+  ALARM_ASSIGN = 'ALARM_ASSIGN',
+  ALARM_UNASSIGN = 'ALARM_UNASSIGN',
+  ADDED_COMMENT = 'ADDED_COMMENT',
+  UPDATED_COMMENT = 'UPDATED_COMMENT',
+  DELETED_COMMENT = 'DELETED_COMMENT',
   LOGIN = 'LOGIN',
   LOGOUT = 'LOGOUT',
   LOCKOUT = 'LOCKOUT',
@@ -85,6 +90,11 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.RELATIONS_DELETED, 'audit-log.type-relations-delete'],
     [ActionType.ALARM_ACK, 'audit-log.type-alarm-ack'],
     [ActionType.ALARM_CLEAR, 'audit-log.type-alarm-clear'],
+    [ActionType.ALARM_ASSIGN, 'audit-log.type-alarm-assign'],
+    [ActionType.ALARM_UNASSIGN, 'audit-log.type-alarm-unassign'],
+    [ActionType.ADDED_COMMENT, 'audit-log.type-added-comment'],
+    [ActionType.UPDATED_COMMENT, 'audit-log.type-updated-comment'],
+    [ActionType.DELETED_COMMENT, 'audit-log.type-deleted-comment'],
     [ActionType.LOGIN, 'audit-log.type-login'],
     [ActionType.LOGOUT, 'audit-log.type-logout'],
     [ActionType.LOCKOUT, 'audit-log.type-lockout'],

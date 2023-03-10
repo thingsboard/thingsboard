@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectQueueFormGroup" class="mat-block autocomplete-queue">
-  <input matInput type="text" placeholder="{{ 'queue.queue-name' | translate }}"
+<mat-form-field [formGroup]="selectQueueFormGroup"
+                class="mat-block autocomplete-queue" subscriptSizing="{{subscriptSizing}}">
+  <mat-label>{{ 'queue.queue-name' | translate }}</mat-label>
+  <input matInput type="text"
          #queueInput
          formControlName="queueName"
          (focusin)="onFocus()"
@@ -24,7 +26,7 @@
          [matAutocomplete]="queueAutocomplete">
   <button *ngIf="selectQueueFormGroup.get('queueName').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
@@ -50,6 +52,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
+  <mat-hint *ngIf = "autocompleteHint">{{ autocompleteHint | translate }}</mat-hint>
   <mat-error *ngIf="selectQueueFormGroup.get('queueName').hasError('required')">
     {{ 'queue.queue-required' | translate }}
   </mat-error>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,14 +271,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        deleteAndNotifyInternal(tenantId, entityId, scope, keys, callback);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, false, callback);
     }
 
     @Override
-    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addVoidCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice));
     }
 
     @Override
@@ -382,16 +388,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
+                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }
         } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }

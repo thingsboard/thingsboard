@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,15 @@
 
   .tb-multiple-input {
     height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+
+    .tb-multiple-input-container {
+      padding: 0 8px;
+      flex: 1 1 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
 
     .fields-group {
       padding: 0 8px;
@@ -38,22 +45,14 @@
       }
     }
 
-    mat-checkbox,
-    mat-slide-toggle {
+    .mat-mdc-slide-toggle {
       display: block;
-      margin-top: 20px;
-      margin-bottom: 16px;
-      .label-wrapper {
-        white-space: normal;
-      }
-    }
-
-    mat-slide-toggle {
-      height: auto;
+      margin-top: 10px;
+      margin-bottom: 8px;
     }
 
     .date-time-input {
-      mat-form-field {
+      .mat-mdc-form-field {
         width: 100%;
         margin: 2px 0;
       }
@@ -67,13 +66,17 @@
 
 :host ::ng-deep {
   .tb-multiple-input {
-    .mat-slide-toggle-content {
+    .mat-mdc-slide-toggle .mdc-form-field {
       width: 100%;
-      display: flex;
-      align-items: center;
-
-      .mat-icon {
-        margin-right: 8px;
+      & > label {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin: 0;
+        .mat-icon {
+          margin-left: 8px;
+          margin-right: 8px;
+        }
       }
     }
   }

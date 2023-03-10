@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,8 +53,10 @@ public class DeviceAttributesEventNotificationMsg implements ToDeviceActorNotifi
         return new DeviceAttributesEventNotificationMsg(tenantId, deviceId, null, scope, values, false);
     }
 
-    public static DeviceAttributesEventNotificationMsg onDelete(TenantId tenantId, DeviceId deviceId, Set<AttributeKey> keys) {
-        return new DeviceAttributesEventNotificationMsg(tenantId, deviceId, keys, null, null, true);
+    public static DeviceAttributesEventNotificationMsg onDelete(TenantId tenantId, DeviceId deviceId, String scope, List<String> keys) {
+        Set<AttributeKey> keysToNotify = new HashSet<>();
+        keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
+        return new DeviceAttributesEventNotificationMsg(tenantId, deviceId, keysToNotify, null, null, true);
     }
 
     @Override

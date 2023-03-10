@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -41,17 +42,19 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.ResetPasswordEmailRequest;
 import org.thingsboard.server.service.security.model.ResetPasswordRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -62,6 +65,8 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @RestController
 @TbCoreComponent
@@ -69,6 +74,10 @@ import java.net.URISyntaxException;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthController extends BaseController {
+
+    @Value("${server.rest.rate_limits.reset_password_per_user:5:3600}")
+    private String defaultLimitsConfiguration;
+    private final ConcurrentMap<UserId, TbRateLimits> resetPasswordRateLimits = new ConcurrentHashMap<>();
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenFactory tokenFactory;
     private final MailService mailService;
@@ -199,7 +208,12 @@ public class AuthController extends BaseController {
         HttpStatus responseStatus;
         String resetURI = "/login/resetPassword";
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
+
         if (userCredentials != null) {
+            TbRateLimits tbRateLimits = getTbRateLimits(userCredentials.getUserId());
+            if (!tbRateLimits.tryConsume()) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+            }
             try {
                 URI location = new URI(resetURI + "?resetToken=" + resetToken);
                 headers.setLocation(location);
@@ -224,7 +238,7 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/activate", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
-    public JwtTokenPair activateUser(
+    public JwtPair activateUser(
             @ApiParam(value = "Activate user request.")
             @RequestBody ActivateUserRequest activateRequest,
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
@@ -262,7 +276,7 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/resetPassword", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
-    public JwtTokenPair resetPassword(
+    public JwtPair resetPassword(
             @ApiParam(value = "Reset password request.")
             @RequestBody ResetPasswordRequest resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {
@@ -298,5 +312,10 @@ public class AuthController extends BaseController {
         var user = getCurrentUser();
         systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGOUT, null);
         eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
+    }
+
+    private TbRateLimits getTbRateLimits(UserId userId) {
+        return resetPasswordRateLimits.computeIfAbsent(userId,
+                key -> new TbRateLimits(defaultLimitsConfiguration, true));
     }
 }

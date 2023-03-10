@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="flotSettingsFormGroup" fxLayout="column">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
-    <mat-checkbox formControlName="stack" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="stack">
       {{ 'widgets.chart.enable-stacking-mode' | translate }}
     </mat-checkbox>
     <section *ngIf="chartType === 'graph'" fxLayout="column" fxLayout.gt-xs="row"
@@ -27,7 +27,7 @@
         <mat-label translate>widgets.chart.line-shadow-size</mat-label>
         <input matInput type="number" min="0" formControlName="shadowSize">
       </mat-form-field>
-      <mat-checkbox fxFlex formControlName="smoothLines" style="margin-bottom: 16px;">
+      <mat-checkbox fxFlex formControlName="smoothLines">
         {{ 'widgets.chart.display-smooth-lines' | translate }}
       </mat-checkbox>
     </section>
@@ -106,10 +106,10 @@
   </fieldset>
   <fieldset class="fields-group" formGroupName="grid">
     <legend class="group-title" translate>widgets.chart.grid-settings</legend>
-    <mat-checkbox formControlName="verticalLines" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="verticalLines">
       {{ 'widgets.chart.show-vertical-lines' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="horizontalLines" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="horizontalLines">
       {{ 'widgets.chart.show-horizontal-lines' | translate }}
     </mat-checkbox>
     <mat-form-field fxFlex class="mat-block">
@@ -291,13 +291,13 @@
     <legend class="group-title" translate>widgets.chart.custom-legend-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
       <mat-expansion-panel-header fxLayout="row" style="height: 100%; min-height: 48px;">
-        <mat-panel-title>
+        <mat-panel-title fxFlex="60">
           <mat-slide-toggle formControlName="customLegendEnabled" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center" style="height: 100%;">
             {{ 'widgets.chart.enable-custom-legend' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description style="white-space: nowrap;" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description fxFlex="40" style="white-space: nowrap;" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
