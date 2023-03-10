@@ -25,6 +25,8 @@
     <logger name="org.thingsboard.server.transport.lwm2m.server.downlink.DefaultLwM2mDownlinkMsgHandler" level="TRACE"/>
     <logger name="org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler" level="TRACE"/>
     <logger name="org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService" level="TRACE"/>
+    <logger name="org.thingsboard.server.transport.lwm2m.server" level="INFO"/>
+    <logger name="org.eclipse.californium.core" level="INFO"/>
 
     <root level="WARN">
         <appender-ref ref="console"/>
