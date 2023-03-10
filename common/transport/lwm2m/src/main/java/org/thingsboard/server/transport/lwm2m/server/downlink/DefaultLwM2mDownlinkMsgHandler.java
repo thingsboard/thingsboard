@@ -103,7 +103,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.ge
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.validateVersionedId;
 
 @Slf4j
-@Service
+@Service("lwM2mDownlinkMsgHandler")
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
 public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService implements LwM2mDownlinkMsgHandler {
@@ -124,6 +124,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @PreDestroy
     public void destroy() {
+        log.trace("Destroying {}", getClass().getSimpleName());
         super.destroy();
     }
 

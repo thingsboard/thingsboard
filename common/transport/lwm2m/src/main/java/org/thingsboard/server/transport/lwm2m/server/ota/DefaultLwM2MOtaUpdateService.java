@@ -146,6 +146,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
 
     @PreDestroy
     public void destroy() {
+        log.info("Destroying {}", getClass().getSimpleName());
         super.destroy();
     }
 
