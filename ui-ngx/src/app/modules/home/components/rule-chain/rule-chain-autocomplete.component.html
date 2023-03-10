@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectRuleChainFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ labelText | translate }}"
+  <mat-label>{{ labelText | translate }}</mat-label>
+  <input matInput type="text"
          #ruleChainInput
          formControlName="ruleChainId"
          (focusin)="onFocus()"
@@ -24,7 +25,7 @@
          [matAutocomplete]="ruleChainAutocomplete">
   <button *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

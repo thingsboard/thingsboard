@@ -33,10 +33,10 @@
       box-sizing: border-box;
     }
 
-    mat-tab-group {
-      .mat-tab-body-wrapper {
+    .mat-mdc-tab-group {
+      .mat-mdc-tab-body-wrapper {
         height: 100%;
-        mat-tab-body {
+        .mat-mdc-tab-body {
           height: 100%;
           & > div {
             height: 100%;
@@ -81,20 +81,20 @@
     &.tb-fullscreen-editor {
       position: relative;
       right: 0;
-      .mat-button {
+     /* .mat-mdc-button {
         .mat-icon {
           margin-right: 5px;
         }
-      }
+      } */
     }
 
-    .mat-button {
+   /* .mat-mdc-button {
       min-width: 36px;
       padding: 0;
       .mat-icon {
         margin-right: 0;
       }
-    }
+    } */
   }
 
   .tb-custom-action-editor {

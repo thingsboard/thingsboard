@@ -46,8 +46,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @TestPropertySource(properties = {
+        "service.integrations.supported=ALL",
         "transport.mqtt.enabled=true",
-        "js.evaluator=mock",
 })
 @Slf4j
 public abstract class AbstractMqttIntegrationTest extends AbstractTransportIntegrationTest {

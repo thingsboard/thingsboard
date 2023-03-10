@@ -33,10 +33,6 @@
 
   .interval-section {
     min-height: 66px;
-    .interval-label {
-      margin-bottom: 7px;
-      margin-top: -1px;
-    }
   }
 
   @media #{$mat-xs} {
@@ -47,8 +43,8 @@
 
 :host ::ng-deep {
   .number-input {
-    .mat-form-field-infix {
-      width: 70px;
+    .mat-mdc-form-field-infix {
+      width: 50px;
     }
   }
 }
