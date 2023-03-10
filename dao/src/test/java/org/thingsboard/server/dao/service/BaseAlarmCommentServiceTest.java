@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
@@ -28,13 +29,15 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +45,13 @@ import java.util.concurrent.ExecutionException;
 import static org.thingsboard.server.common.data.alarm.AlarmCommentType.OTHER;
 
 public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
+
+    @Autowired
+    AlarmService alarmService;
+    @Autowired
+    AlarmCommentService alarmCommentService;
+    @Autowired
+    UserService userService;
 
     public static final String TEST_ALARM = "TEST_ALARM";
     private TenantId tenantId;

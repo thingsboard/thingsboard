@@ -19,13 +19,18 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 
 
 public abstract class BaseApiUsageStateServiceTest extends AbstractServiceTest {
+
+    @Autowired
+    ApiUsageStateService apiUsageStateService;
 
     private TenantId tenantId;
 

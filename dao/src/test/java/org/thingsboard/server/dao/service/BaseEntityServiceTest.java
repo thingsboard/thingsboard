@@ -73,8 +73,13 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
@@ -100,15 +105,24 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     static final int ENTITY_COUNT = 5;
 
     @Autowired
-    private AttributesService attributesService;
-
+    AssetService assetService;
     @Autowired
-    private TimeseriesService timeseriesService;
+    AttributesService attributesService;
+    @Autowired
+    DeviceService deviceService;
+    @Autowired
+    EdgeService edgeService;
+    @Autowired
+    EntityService entityService;
+    @Autowired
+    RelationRepository relationRepository;
+    @Autowired
+    RelationService relationService;
+    @Autowired
+    TimeseriesService timeseriesService;
 
     private TenantId tenantId;
 
-    @Autowired
-    private RelationRepository relationRepository;
 
     @Before
     public void before() {

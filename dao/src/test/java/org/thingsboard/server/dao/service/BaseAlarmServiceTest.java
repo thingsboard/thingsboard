@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -38,7 +39,6 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -52,7 +52,12 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
+import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,8 +66,20 @@ import java.util.concurrent.ExecutionException;
 
 public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
-    public static final String TEST_ALARM = "TEST_ALARM";
+    @Autowired
+    AlarmService alarmService;
+    @Autowired
+    AssetService assetService;
+    @Autowired
+    CustomerService customerService;
+    @Autowired
+    DeviceService deviceService;
+    @Autowired
+    RelationService relationService;
+    @Autowired
+    UserService userService;
 
+    public static final String TEST_ALARM = "TEST_ALARM";
     private static final String TEST_TENANT_EMAIL = "testtenant@thingsboard.org";
     private static final String TEST_TENANT_FIRST_NAME = "testtenantfirstname";
     private static final String TEST_TENANT_LAST_NAME = "testtenantlastname";

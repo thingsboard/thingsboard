@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -33,6 +34,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
@@ -42,7 +46,14 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
-    
+
+    @Autowired
+    CustomerService customerService;
+    @Autowired
+    DashboardService dashboardService;
+    @Autowired
+    EdgeService edgeService;
+
     private IdComparator<DashboardInfo> idComparator = new IdComparator<>();
     
     private TenantId tenantId;

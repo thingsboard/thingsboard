@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,6 +37,9 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
+
+    @Autowired
+    WidgetsBundleService widgetsBundleService;
 
     private IdComparator<WidgetsBundle> idComparator = new IdComparator<>();
 
