@@ -21,6 +21,11 @@
     <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
     <logger name="org.thingsboard.server.service.edge.rpc.EdgeGrpcSession" level="OFF"/>
 
+    <!--    LwM2m lifecycle debug for the test scope -->
+    <logger name="org.thingsboard.server.transport.lwm2m.server.downlink.DefaultLwM2mDownlinkMsgHandler" level="TRACE"/>
+    <logger name="org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler" level="TRACE"/>
+    <logger name="org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService" level="TRACE"/>
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>
