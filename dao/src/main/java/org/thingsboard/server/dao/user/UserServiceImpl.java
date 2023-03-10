@@ -28,15 +28,19 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -45,12 +49,13 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
-@Service
+@Service("UserDaoService")
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl extends AbstractEntityService implements UserService {
@@ -72,6 +77,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
     private final UserAuthSettingsDao userAuthSettingsDao;
+    private final UserSettingsDao userSettingsDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -396,5 +402,15 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             deleteUser(tenantId, new UserId(entity.getUuidId()));
         }
     };
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.USER;
+    }
 
 }

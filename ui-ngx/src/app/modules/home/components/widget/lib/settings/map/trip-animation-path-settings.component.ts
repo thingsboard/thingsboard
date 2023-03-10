@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator, Validators
@@ -63,7 +63,7 @@ export class TripAnimationPathSettingsComponent extends PageComponent implements
 
   private propagateChange = null;
 
-  public tripAnimationPathSettingsFormGroup: FormGroup;
+  public tripAnimationPathSettingsFormGroup: UntypedFormGroup;
 
   polylineDecoratorSymbols = Object.values(PolylineDecoratorSymbol);
 
@@ -72,7 +72,7 @@ export class TripAnimationPathSettingsComponent extends PageComponent implements
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -131,7 +131,7 @@ export class TripAnimationPathSettingsComponent extends PageComponent implements
     this.updateValidators(false);
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.tripAnimationPathSettingsFormGroup.valid ? null : {
       tripAnimationPathSettings: {
         valid: false,

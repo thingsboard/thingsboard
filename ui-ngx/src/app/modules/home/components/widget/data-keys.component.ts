@@ -29,9 +29,9 @@ import {
 } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   FormGroupDirective,
   NG_VALUE_ACCESSOR,
   NgForm,
@@ -87,7 +87,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   widgetTypes = widgetType;
   dataKeyTypes = DataKeyType;
 
-  keysListFormGroup: FormGroup;
+  keysListFormGroup: UntypedFormGroup;
 
   modelValue: Array<DataKey> | null;
 
@@ -174,7 +174,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
               private utils: UtilsService,
               private dialogs: DialogService,
               private dialog: MatDialog,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private sanitizer: DomSanitizer,
               public truncate: TruncatePipe) {
   }
@@ -314,7 +314,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     }
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = this.required && !this.modelValue;
     return originalErrorState || customErrorState;

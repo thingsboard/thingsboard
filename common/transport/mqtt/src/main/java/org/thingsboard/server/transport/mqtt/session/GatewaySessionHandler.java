@@ -53,6 +53,7 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.util.ReturnCode;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -220,7 +221,7 @@ public class GatewaySessionHandler {
         Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<GatewayDeviceSessionCtx>() {
             @Override
             public void onSuccess(@Nullable GatewayDeviceSessionCtx result) {
-                ack(msg);
+                ack(msg, ReturnCode.SUCCESS);
                 log.trace("[{}] onDeviceConnectOk: {}", sessionId, deviceName);
             }
 
@@ -336,7 +337,7 @@ public class GatewaySessionHandler {
 
     private void processOnDisconnect(MqttPublishMessage msg, String deviceName) {
         deregisterSession(deviceName);
-        ack(msg);
+        ack(msg, ReturnCode.SUCCESS);
     }
 
     private void onDeviceTelemetryJson(int msgId, ByteBuf payload) throws AdaptorException {
@@ -663,7 +664,7 @@ public class GatewaySessionHandler {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        ack(mqttMsg);
+                        ack(mqttMsg, ReturnCode.IMPLEMENTATION_SPECIFIC);
                         log.debug("[{}] Failed to process device attributes request command: {}", sessionId, deviceName, t);
                     }
                 }, context.getExecutor());
@@ -716,10 +717,10 @@ public class GatewaySessionHandler {
         return ProtoMqttAdaptor.toBytes(payload);
     }
 
-    private void ack(MqttPublishMessage msg) {
+    private void ack(MqttPublishMessage msg, ReturnCode returnCode) {
         int msgId = getMsgId(msg);
         if (msgId > 0) {
-            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msgId));
+            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, returnCode));
         }
     }
 
@@ -735,7 +736,7 @@ public class GatewaySessionHandler {
             public void onSuccess(Void dummy) {
                 log.trace("[{}][{}] Published msg: {}", sessionId, deviceName, msg);
                 if (msgId > 0) {
-                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msgId));
+                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, ReturnCode.SUCCESS));
                 }
             }
 

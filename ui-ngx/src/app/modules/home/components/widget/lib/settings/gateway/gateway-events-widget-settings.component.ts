@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MatChipInputEvent } from '@angular/material/chips';
@@ -31,14 +31,14 @@ export class GatewayEventsWidgetSettingsComponent extends WidgetSettingsComponen
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
-  gatewayEventsWidgetSettingsForm: FormGroup;
+  gatewayEventsWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.gatewayEventsWidgetSettingsForm;
   }
 

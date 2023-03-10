@@ -26,7 +26,7 @@ import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { ThemePalette } from '@angular/material/core/common-behaviors/color';
+import { ThemePalette } from '@angular/material/core';
 
 const switchAspectRation = 2.7893;
 

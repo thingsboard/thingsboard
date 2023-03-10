@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -66,11 +66,11 @@ export class CommonMapSettingsComponent extends PageComponent implements OnInit,
 
   private propagateChange = null;
 
-  public commonMapSettingsFormGroup: FormGroup;
+  public commonMapSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -130,7 +130,7 @@ export class CommonMapSettingsComponent extends PageComponent implements OnInit,
     this.updateValidators(false);
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.commonMapSettingsFormGroup.valid ? null : {
       commonMapSettings: {
         valid: false,

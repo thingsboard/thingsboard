@@ -103,6 +103,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
@@ -613,6 +614,22 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }
 
+    protected <T> T doPut(String urlTemplate, T content, Class<T> responseClass, String... params) {
+        try {
+            return readResponse(doPut(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T> ResultActions doPut(String urlTemplate, T content, String... params) throws Exception {
+        MockHttpServletRequestBuilder postRequest = put(urlTemplate, params);
+        setJwtToken(postRequest);
+        String json = json(content);
+        postRequest.contentType(contentType).content(json);
+        return mockMvc.perform(postRequest);
+    }
+
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doDelete(urlTemplate, params).andExpect(status().isOk()), responseClass);
     }
@@ -702,16 +719,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Edge constructEdge(String name, String type) {
-        return constructEdge(tenantId, name, type);
+        return constructEdge(tenantId, name, type, StringUtils.randomAlphanumeric(20), StringUtils.randomAlphanumeric(20));
     }
 
-    protected Edge constructEdge(TenantId tenantId, String name, String type) {
+    protected Edge constructEdge(TenantId tenantId, String name, String type, String routingKey, String secret) {
         Edge edge = new Edge();
         edge.setTenantId(tenantId);
         edge.setName(name);
         edge.setType(type);
-        edge.setSecret(StringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(routingKey);
+        edge.setSecret(secret);
         return edge;
     }
 

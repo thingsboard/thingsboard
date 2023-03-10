@@ -562,7 +562,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         while (hasNext) {
             for (Alarm alarm : alarms.getData()) {
                 if (alarm.getCustomerId() == null && alarm.getOriginator() != null) {
-                    alarm.setCustomerId(entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()));
+                    alarm.setCustomerId(entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).get());
                     alarmDao.save(tenantId, alarm);
                 }
                 if (processed.incrementAndGet() % 1000 == 0) {

@@ -81,6 +81,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -3130,6 +3131,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
+    public Optional<EdgeInstallInstructions> getEdgeDockerInstallInstructions(EdgeId edgeId) {
+        ResponseEntity<EdgeInstallInstructions> edgeInstallInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/{edgeId}", EdgeInstallInstructions.class, edgeId.getId());
+        return Optional.ofNullable(edgeInstallInstructionsResult.getBody());
+    }
+
     public UUID saveEntitiesVersion(VersionCreateRequest request) {
         return restTemplate.postForEntity(baseURL + "/api/entities/vc/version", request, UUID.class).getBody();
     }
@@ -3146,6 +3153,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             }
         }
     }
+
     public PageData<EntityVersion> listEntityVersions(EntityId externalEntityId, String branch, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", externalEntityId.getEntityType().name());
