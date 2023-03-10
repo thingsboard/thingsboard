@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -26,6 +26,8 @@ import { AlarmSearchStatus, AlarmsMode } from '@shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { Overlay } from '@angular/cdk/overlay';
+import { UtilsService } from '@core/services/utils.service';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -76,6 +78,10 @@ export class AlarmTableComponent implements OnInit {
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private store: Store<AppState>,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
+              private cd: ChangeDetectorRef,
+              private utilsService: UtilsService,
               private route: ActivatedRoute) {
   }
 
@@ -98,6 +104,10 @@ export class AlarmTableComponent implements OnInit {
       this.entityIdValue,
       AlarmSearchStatus.ANY,
       this.store,
+      this.viewContainerRef,
+      this.overlay,
+      this.cd,
+      this.utilsService,
       pageMode
     );
   }

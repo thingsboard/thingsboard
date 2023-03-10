@@ -18,14 +18,18 @@ import {
   ChangeDetectorRef,
   Component,
   ComponentFactory,
-  ComponentRef, ElementRef,
+  ComponentRef,
+  ElementRef,
   EventEmitter,
   Inject,
   Injector,
-  Input, OnChanges,
+  Input,
+  OnChanges,
   Output,
+  Renderer2,
   SimpleChanges,
-  Type, ViewChild,
+  Type,
+  ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import { HelpService } from '@core/services/help.service';
@@ -33,12 +37,15 @@ import { MarkdownService, PrismPlugin } from 'ngx-markdown';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
+
+let defaultMarkdownStyle;
 
 @Component({
   selector: 'tb-markdown',
-  templateUrl: './markdown.component.html'
+  templateUrl: './markdown.component.html',
+  styleUrls: ['./markdown.component.scss']
 })
 export class TbMarkdownComponent implements OnChanges {
 
@@ -53,7 +60,13 @@ export class TbMarkdownComponent implements OnChanges {
 
   @Input() markdownClass: string | undefined;
 
+  @Input() containerClass: string | undefined;
+
   @Input() style: { [klass: string]: any } = {};
+
+  @Input() applyDefaultMarkdownStyle = true;
+
+  @Input() additionalStyles: string[];
 
   @Input()
   get lineNumbers(): boolean { return this.lineNumbersValue; }
@@ -79,7 +92,8 @@ export class TbMarkdownComponent implements OnChanges {
               private cd: ChangeDetectorRef,
               public markdownService: MarkdownService,
               @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
-              private dynamicComponentFactoryService: DynamicComponentFactoryService) {}
+              private dynamicComponentFactoryService: DynamicComponentFactoryService,
+              private renderer: Renderer2) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (isDefinedAndNotNull(this.data)) {
@@ -89,18 +103,42 @@ export class TbMarkdownComponent implements OnChanges {
 
   private render(markdown: string) {
     const compiled = this.markdownService.parse(markdown, { decodeHtml: false });
-    let template = this.sanitizeCurlyBraces(compiled);
     let markdownClass = 'tb-markdown-view';
     if (this.markdownClass) {
       markdownClass += ` ${this.markdownClass}`;
     }
-    template = `<div [ngStyle]="style" class="${markdownClass}">${template}</div>`;
+    let template = `<div [ngStyle]="style" class="${markdownClass}">${compiled}</div>`;
+    if (this.containerClass) {
+      template = `<div class="${this.containerClass}" style="width: 100%; height: 100%;">${template}</div>`;
+    }
+    const element: HTMLDivElement = this.renderer.createElement('div');
+    element.innerHTML = template;
+    this.handlePlugins(element);
+    this.markdownService.highlight(element);
+    const preElements = element.querySelectorAll('pre');
+    const matches = Array.from(template.matchAll(/<pre[\S\s]+?(?=<\/pre>)<\/pre>/g));
+    for (let i = 0; i < preElements.length; i++) {
+      const preHtml = preElements.item(i).outerHTML.replace('ngnonbindable=""', 'ngNonBindable');
+      template = template.replace(matches[i][0], preHtml);
+    }
+    template = this.sanitizeCurlyBraces(template);
     this.markdownContainer.clear();
     const parent = this;
     let readyObservable: Observable<void>;
     let compileModules = [this.sharedModule];
     if (this.additionalCompileModules) {
       compileModules = compileModules.concat(this.additionalCompileModules);
+    }
+    let styles: string[] = [];
+    if (this.applyDefaultMarkdownStyle) {
+      if (!defaultMarkdownStyle) {
+        defaultMarkdownStyle = deepClone(TbMarkdownComponent['ɵcmp'].styles)[0].replace(/\[_nghost\-%COMP%\]/g, '')
+          .replace(/\[_ngcontent\-%COMP%\]/g, '');
+      }
+      styles.push(defaultMarkdownStyle);
+    }
+    if (this.additionalStyles) {
+      styles = styles.concat(this.additionalStyles);
     }
     this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class TbMarkdownInstance {
@@ -110,7 +148,7 @@ export class TbMarkdownComponent implements OnChanges {
       },
       template,
       compileModules,
-      true
+      true, 1, styles
     ).subscribe((factory) => {
       this.tbMarkdownInstanceComponentFactory = factory;
       const injector: Injector = Injector.create({providers: [], parent: this.markdownContainer.injector});
@@ -123,20 +161,18 @@ export class TbMarkdownComponent implements OnChanges {
           }
         }
         this.tbMarkdownInstanceComponentRef.instance.style = this.style;
-        this.handlePlugins(this.tbMarkdownInstanceComponentRef.location.nativeElement);
-        this.markdownService.highlight(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         readyObservable = this.handleImages(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         this.cd.detectChanges();
         this.error = null;
       } catch (error) {
-        readyObservable = this.handleError(compiled, error);
+        readyObservable = this.handleError(template, error, styles);
       }
       readyObservable.subscribe(() => {
         this.ready.emit();
       });
     },
     (error) => {
-      readyObservable = this.handleError(compiled, error);
+      readyObservable = this.handleError(template, error, styles);
       this.cd.detectChanges();
       readyObservable.subscribe(() => {
         this.ready.emit();
@@ -144,14 +180,24 @@ export class TbMarkdownComponent implements OnChanges {
     });
   }
 
-  private handleError(template: string, error): Observable<void> {
+  private handleError(template: string, error, styles?: string[]): Observable<void> {
     this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
     this.markdownContainer.clear();
     if (this.fallbackToPlainMarkdownValue) {
       const element = this.fallbackElement.nativeElement;
+      let styleElement;
+      if (styles?.length) {
+        const markdownClass = 'tb-markdown-view-' + guid();
+        let innerStyle = styles.join('\n');
+        innerStyle = innerStyle.replace(/\.tb-markdown-view/g, '.' + markdownClass);
+        template = template.replace(/tb-markdown-view/g, markdownClass);
+        styleElement = this.renderer.createElement('style');
+        styleElement.innerHTML = innerStyle;
+      }
       element.innerHTML = template;
-      this.handlePlugins(element);
-      this.markdownService.highlight(element);
+      if (styleElement) {
+        this.renderer.appendChild(element, styleElement);
+      }
       return this.handleImages(element);
     } else {
       return of(null);

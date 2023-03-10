@@ -55,8 +55,7 @@
              fxFlex class="mat-toolbar-tools">
         </tb-breadcrumb>
         <div [fxShow]="displaySearchMode()" fxFlex fxLayout="row" class="tb-dark">
-          <mat-form-field fxFlex floatLabel="always">
-            <mat-label></mat-label>
+          <mat-form-field fxFlex class="tb-appearance-transparent">
             <input #searchInput matInput
                    [(ngModel)]="searchText"
                    placeholder="{{ 'common.enter-search' | translate }}"/>

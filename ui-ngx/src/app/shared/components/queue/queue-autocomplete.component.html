@@ -16,8 +16,9 @@
 
 -->
 <mat-form-field [formGroup]="selectQueueFormGroup"
-                class="mat-block autocomplete-queue">
-  <input matInput type="text" placeholder="{{ 'queue.queue-name' | translate }}"
+                class="mat-block autocomplete-queue" subscriptSizing="{{subscriptSizing}}">
+  <mat-label>{{ 'queue.queue-name' | translate }}</mat-label>
+  <input matInput type="text"
          #queueInput
          formControlName="queueName"
          (focusin)="onFocus()"
@@ -25,7 +26,7 @@
          [matAutocomplete]="queueAutocomplete">
   <button *ngIf="selectQueueFormGroup.get('queueName').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

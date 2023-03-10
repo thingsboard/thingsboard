@@ -96,7 +96,7 @@
         <mat-label translate>dashboard.public-link</mat-label>
         <input matInput disabled [ngModel]="publicLink">
       </mat-form-field>
-      <button mat-button mat-icon-button style="margin-top: 8px;"
+      <button mat-icon-button style="margin-top: 8px;"
               ngxClipboard
               (cbOnSuccess)="onPublicLinkCopied($event)"
               cbContent="{{ publicLink }}"

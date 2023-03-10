@@ -124,6 +124,16 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   activeComponentChanged(activeComponent: any) {
+    if (!this.activeComponent) {
+      setTimeout(() => {
+        this.updateActiveComponent(activeComponent);
+      }, 0);
+    } else {
+      this.updateActiveComponent(activeComponent);
+    }
+  }
+
+  private updateActiveComponent(activeComponent: any) {
     this.showSearch = false;
     this.searchText = '';
     this.activeComponent = activeComponent;

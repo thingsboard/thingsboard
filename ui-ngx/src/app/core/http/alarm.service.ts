@@ -60,6 +60,14 @@ export class AlarmService {
     return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
   }
 
+  public assignAlarm(alarmId: string, assigneeId: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/alarm/${alarmId}/assign/${assigneeId}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
+    return this.http.delete<void>(`/api/alarm/${alarmId}/assign`, defaultHttpOptionsFromConfig(config));
+  }
+
   public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
     return this.http.delete<void>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
   }

@@ -17,7 +17,7 @@
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
   <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="mode === 'default' && !textSearchMode && dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="mode === 'default' && !textSearchMode && dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
@@ -58,7 +58,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="mode === 'default' && textSearchMode && dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="mode === 'default' && textSearchMode && dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
@@ -78,7 +78,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'default' && !dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'default' && !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools" fxLayout.xs="row wrap">
         <span class="tb-entity-table-info">
           {{ (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY ?
@@ -104,7 +104,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'widget'">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'widget'">
       <div class="mat-toolbar-tools" fxLayoutGap="8px" fxLayout.xs="row wrap">
         <div fxFlex fxLayout="row" fxLayoutAlign="start">
           <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
@@ -170,7 +170,7 @@
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
             <div fxLayout="row" style="align-items: center">
-              <span fxFlex>{{attribute.value | tbJson}}</span>
+              <span style="overflow: hidden;text-overflow: ellipsis;" fxFlex>{{attribute.value | tbJson}}</span>
               <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>
@@ -249,10 +249,10 @@
                            widgetBundleSet"
           fxFlex fxLayoutAlign="center center"
           style="display: flex;"
-          class="mat-headline">widgets-bundle.empty</span>
+          class="mat-headline-5">widgets-bundle.empty</span>
     <span translate *ngIf="mode === 'widget' && !widgetBundleSet"
           fxFlex fxLayoutAlign="center center"
           style="display: flex;"
-          class="mat-headline">widget.select-widgets-bundle</span>
+          class="mat-headline-5">widget.select-widgets-bundle</span>
   </div>
 </div>
