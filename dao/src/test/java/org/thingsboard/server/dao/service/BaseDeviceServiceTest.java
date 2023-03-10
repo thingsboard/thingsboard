@@ -73,13 +73,10 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
     TenantProfileService tenantProfileService;
 
     private IdComparator<Device> idComparator = new IdComparator<>();
-
-    private TenantId tenantId;
     private TenantId anotherTenantId;
 
     @Before
     public void before() {
-        tenantId = createTenant();
         anotherTenantId = createTenant();
     }
 
@@ -409,12 +406,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDevicesByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
             Device device = new Device();
@@ -446,8 +437,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -608,12 +597,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDevicesByTenantIdAndCustomerId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
@@ -652,8 +635,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         pageData = deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test

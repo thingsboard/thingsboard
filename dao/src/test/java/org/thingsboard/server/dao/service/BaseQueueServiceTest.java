@@ -91,7 +91,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        tenant.setTenantProfileId(tenantProfileId);
+        tenant.setTenantProfileId(tenantProfileId); //custom profile
         Tenant savedTenant = tenantService.saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();

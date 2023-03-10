@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -65,8 +64,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
 
-    private TenantId tenantId;
-
     private DeviceProfileId deviceProfileId;
 
     @Autowired
@@ -80,12 +77,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
         Assert.assertNotNull(savedDeviceProfile);

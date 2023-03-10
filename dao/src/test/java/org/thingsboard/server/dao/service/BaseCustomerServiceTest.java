@@ -51,24 +51,14 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
     ListeningExecutorService executor;
 
-    private TenantId tenantId;
-
     @Before
     public void before() {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
+      }
 
     @After
     public void after() {
         executor.shutdownNow();
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -158,11 +148,6 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindCustomersByTenantId() throws Exception {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
 
         List<ListenableFuture<Customer>> futures = new ArrayList<>(135);
         for (int i = 0; i < 135; i++) {
@@ -193,8 +178,6 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test

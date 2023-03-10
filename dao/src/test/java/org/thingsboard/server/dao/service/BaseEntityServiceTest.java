@@ -21,9 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -31,7 +29,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -120,24 +117,6 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     RelationService relationService;
     @Autowired
     TimeseriesService timeseriesService;
-
-    private TenantId tenantId;
-
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
-
 
     @Test
     public void testCountEntitiesByQuery() throws InterruptedException {

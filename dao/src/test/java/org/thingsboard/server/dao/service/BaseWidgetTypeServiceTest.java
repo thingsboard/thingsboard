@@ -18,13 +18,10 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -47,22 +44,6 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
     WidgetTypeService widgetTypeService;
 
     private IdComparator<WidgetType> idComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveWidgetType() throws IOException {

@@ -19,9 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -32,9 +30,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -48,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,22 +60,6 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveDeviceProfile() {

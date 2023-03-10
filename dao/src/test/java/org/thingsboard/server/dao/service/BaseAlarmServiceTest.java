@@ -16,15 +16,12 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
@@ -37,7 +34,6 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -83,23 +79,6 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
     private static final String TEST_TENANT_EMAIL = "testtenant@thingsboard.org";
     private static final String TEST_TENANT_FIRST_NAME = "testtenantfirstname";
     private static final String TEST_TENANT_LAST_NAME = "testtenantlastname";
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
-
 
     @Test
     public void testSaveAndFetchAlarm() throws ExecutionException, InterruptedException {

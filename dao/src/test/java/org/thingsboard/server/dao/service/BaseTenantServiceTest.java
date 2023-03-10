@@ -177,6 +177,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTenants() {
+        tenantService.deleteTenants();
         List<Tenant> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<Tenant> pageData = tenantService.findTenants(pageLink);
@@ -291,7 +292,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTenantInfos() {
-
+        tenantService.deleteTenants();
         List<TenantInfo> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<TenantInfo> pageData = tenantService.findTenantInfos(pageLink);

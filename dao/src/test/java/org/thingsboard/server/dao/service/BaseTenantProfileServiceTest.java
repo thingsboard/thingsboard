@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.service;
 import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,14 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<TenantProfile> idComparator = new IdComparator<>();
     private IdComparator<EntityInfo> tenantProfileInfoIdComparator = new IdComparator<>();
+
+    @Before
+    public void before() {
+        //this test requires no Tenants in the database
+        tenantId = null;
+        tenantService.deleteTenants();
+        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
+    }
 
     @After
     public void after() {

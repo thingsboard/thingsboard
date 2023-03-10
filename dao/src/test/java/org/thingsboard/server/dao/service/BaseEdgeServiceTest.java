@@ -17,9 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,22 +57,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
     RuleChainService ruleChainService;
 
     private IdComparator<Edge> idComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveEdge() {
@@ -215,12 +197,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindEdgesByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
             Edge edge = constructEdge(tenantId, "Edge " + i, "default");
@@ -249,8 +225,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -399,12 +373,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindEdgesByTenantIdAndCustomerId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
@@ -440,8 +408,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
