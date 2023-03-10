@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   forwardRef,
   Injector,
   Input,
@@ -179,6 +180,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
               private millisecondsToTimeStringPipe: MillisecondsToTimeStringPipe,
               private datePipe: DatePipe,
               private cd: ChangeDetectorRef,
+              private nativeElement: ElementRef,
               public viewContainerRef: ViewContainerRef,
               public breakpointObserver: BreakpointObserver) {
   }
@@ -193,20 +195,22 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    const config = new OverlayConfig({
+      panelClass: 'tb-timewindow-panel',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      maxHeight: '80vh',
+      height: 'min-content'
+    });
     config.hasBackdrop = true;
     const connectedPosition: ConnectedPosition = {
-      originX: 'end',
+      originX: 'start',
       originY: 'bottom',
-      overlayX: 'end',
+      overlayX: 'start',
       overlayY: 'top'
     };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(this.nativeElement)
       .withPositions([connectedPosition]);
-    config.maxHeight = '70vh';
-    config.height = 'min-content';
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
