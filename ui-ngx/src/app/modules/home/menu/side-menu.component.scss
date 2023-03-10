@@ -53,12 +53,19 @@
     mat-icon {
       margin-right: 8px;
       margin-left: 0;
+      min-width: 1.125rem;
+      min-height: 1.125rem;
     }
     span.mdc-button__label {
       width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      display: inline-flex;
+      & > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
       .tb-toggle-icon {
         padding-top: 12px;
         padding-bottom: 12px;

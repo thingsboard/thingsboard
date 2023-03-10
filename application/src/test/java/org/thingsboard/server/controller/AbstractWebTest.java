@@ -26,6 +26,7 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
@@ -49,6 +50,7 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -57,9 +59,15 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.actors.DefaultTbActorSystem;
+import org.thingsboard.server.actors.TbActorId;
+import org.thingsboard.server.actors.TbActorMailbox;
+import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.device.DeviceActor;
+import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
+import org.thingsboard.server.actors.device.SessionInfo;
+import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -79,6 +87,7 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -89,9 +98,11 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
@@ -103,6 +114,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -167,6 +182,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected TenantId differentTenantId;
     protected CustomerId differentCustomerId;
     protected UserId customerUserId;
+    protected UserId differentCustomerUserId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -179,6 +195,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     private TenantProfileService tenantProfileService;
+
+    @Autowired
+    public TimeseriesService tsService;
+
+    @Autowired
+    protected DefaultActorService actorService;
 
     @SpyBean
     protected MailService mailService;
@@ -210,17 +232,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Assert.assertNotNull("the JSON message converter must not be null",
                 this.mappingJackson2HttpMessageConverter);
     }
-
-    @BeforeClass
-    public static void beforeWebTestClass() throws Exception {
-
-    }
-
-    @AfterClass
-    public static void afterWebTestClass() throws Exception {
-        Mockito.clearAllCaches();
-    }
-
 
     @Before
     public void setupWebTest() throws Exception {
@@ -374,7 +385,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             differentCustomerUser.setCustomerId(savedDifferentCustomer.getId());
             differentCustomerUser.setEmail(DIFFERENT_CUSTOMER_USER_EMAIL);
 
-            createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentCustomerUser = createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentCustomerUserId = differentCustomerUser.getId();
         }
     }
 
@@ -839,6 +851,39 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         return (T) field.get(target);
+    }
+
+    protected int getDeviceActorSubscriptionCount(DeviceId deviceId, FeatureType featureType) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
+        return subscriptions.size();
+    }
+
+    protected void awaitForDeviceActorToReceiveSubscription(DeviceId deviceId, FeatureType featureType, int subscriptionCount) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
+        Awaitility.await("Device actor received subscription command from the transport").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> subscriptions.size() == subscriptionCount);
+    }
+
+    protected static String getMapName(FeatureType featureType) {
+        switch (featureType) {
+            case ATTRIBUTES:
+                return "attributeSubscriptions";
+            case RPC:
+                return "rpcSubscriptions";
+            default:
+                throw new RuntimeException("Not supported feature " + featureType + "!");
+        }
+    }
+
+    protected DeviceActorMessageProcessor getDeviceActorProcessor(DeviceId deviceId) {
+        DefaultTbActorSystem actorSystem = (DefaultTbActorSystem) ReflectionTestUtils.getField(actorService, "system");
+        ConcurrentMap<TbActorId, TbActorMailbox> actors = (ConcurrentMap<TbActorId, TbActorMailbox>) ReflectionTestUtils.getField(actorSystem, "actors");
+        Awaitility.await("Device actor was created").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> actors.containsKey(new TbEntityActorId(deviceId)));
+        TbActorMailbox actorMailbox = actors.get(new TbEntityActorId(deviceId));
+        DeviceActor actor = (DeviceActor) ReflectionTestUtils.getField(actorMailbox, "actor");
+        return (DeviceActorMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
     }
 
 }
