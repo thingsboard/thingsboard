@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceTransportType;
 
 @Data
-public class DefaultDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class SparkplugRpcResponseBody {
 
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.DEFAULT;
-    }
+    private String result;
+    private String value;
+    private String error;
 
 }
