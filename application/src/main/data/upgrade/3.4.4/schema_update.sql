@@ -353,7 +353,7 @@ $$;
 
 ALTER TABLE device_profile
     ADD COLUMN IF NOT EXISTS certificate_hash varchar,
-DROP CONSTRAINT IF EXISTS device_profile_credentials_hash_unq_key,
+    DROP CONSTRAINT IF EXISTS device_profile_credentials_hash_unq_key,
     ADD CONSTRAINT device_profile_credentials_hash_unq_key UNIQUE (certificate_hash);
 
 -- DEVICE PROFILE CERTIFICATE END
