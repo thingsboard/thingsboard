@@ -16,20 +16,19 @@
 
 -->
 <div fxFlex fxLayout="column" style="width: 100%;">
-  <nav mat-tab-nav-bar class="tb-router-tabs">
+  <nav mat-tab-nav-bar mat-stretch-tabs="false" class="tb-router-tabs" [tabPanel]="tabPanel">
     <a *ngFor="let tab of tabs$ | async"
        routerLink="{{tab.path}}"
        routerLinkActive
        #rla="routerLinkActive"
        mat-tab-link
-       [ngClass]="{'tb-active': rla.isActive}"
        [active]="rla.isActive">
       <mat-icon *ngIf="!tab.isMdiIcon && tab.icon !== null" class="tb-mat-18">{{tab.icon}}</mat-icon>
       <mat-icon *ngIf="tab.isMdiIcon && tab.icon !== null" [svgIcon]="tab.icon" class="tb-mat-18"></mat-icon>
       <span>{{tab.name | translate}}</span>
     </a>
   </nav>
-  <div fxFlex fxLayout="column" class="tb-router-tabs-content">
+  <mat-tab-nav-panel #tabPanel fxFlex fxLayout="column" class="tb-router-tabs-content">
     <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
-  </div>
+  </mat-tab-nav-panel>
 </div>

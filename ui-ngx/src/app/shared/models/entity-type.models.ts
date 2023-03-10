@@ -28,7 +28,6 @@ export enum EntityType {
   DEVICE_PROFILE = 'DEVICE_PROFILE',
   ASSET_PROFILE = 'ASSET_PROFILE',
   ALARM = 'ALARM',
-  ALARM_RULE = 'ALARM_RULE',
   RULE_CHAIN = 'RULE_CHAIN',
   RULE_NODE = 'RULE_NODE',
   EDGE = 'EDGE',
@@ -259,19 +258,6 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
-      EntityType.ALARM_RULE,
-      {
-        type: 'entity.type-alarm-rule',
-        typePlural: 'entity.type-alarm-rules',
-        list: 'entity.list-of-alarm-rules',
-        nameStartsWith: 'entity.alarm-rule-name-starts-with',
-        details: 'alarm-rule.alarm-rule-details',
-        noEntities: 'alarm-rule.no-alarm-rules-prompt',
-        search: 'alarm-rule.search',
-        selectedEntities: 'alarm-rule.selected-alarm-rules'
-      }
-    ],
-    [
       EntityType.API_USAGE_STATE,
       {
         type: 'entity.type-api-usage-state'
@@ -400,12 +386,6 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.ASSET,
       {
         helpLinkId: 'assets'
-      }
-    ],
-    [
-      EntityType.ALARM_RULE,
-      {
-        helpLinkId: 'alarmRules'
       }
     ],
     [

@@ -306,24 +306,8 @@ export class MenuService {
         id: guid(),
         name: 'alarm.alarms',
         type: 'link',
-        path: '/alarm',
-        icon: 'notifications',
-        pages: [
-          {
-            id: guid(),
-            name: 'alarm.all-alarms',
-            type: 'link',
-            path: '/alarm/alarms',
-            icon: 'notifications'
-          },
-          {
-            id: guid(),
-            name: 'alarm-rule.rules',
-            type: 'link',
-            path: '/alarm/rules',
-            icon: 'edit_notifications'
-          }
-        ]
+        path: '/alarms',
+        icon: 'notifications'
       },
       {
         id: guid(),
