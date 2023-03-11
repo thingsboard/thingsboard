@@ -31,10 +31,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -58,6 +56,7 @@ import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -195,20 +194,20 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     public RestClient(RestTemplate restTemplate, String baseURL) {
         this.restTemplate = restTemplate;
         this.baseURL = baseURL;
+        this.restTemplate.getInterceptors().add(this);
     }
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
-        HttpRequest wrapper = new HttpRequestWrapper(request);
-        wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-        ClientHttpResponse response = execution.execute(wrapper, bytes);
-        if (response.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-            synchronized (this) {
-                restTemplate.getInterceptors().remove(this);
-                refreshToken();
-                wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-                return execution.execute(wrapper, bytes);
-            }
+        if (token != null) {
+            request.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
+        }
+        ClientHttpResponse response = execution.execute(request, bytes);
+        if (response.getStatusCode() == HttpStatus.UNAUTHORIZED && !request.getURI().getPath().endsWith("/api/auth/token")) {
+            token = null;
+            refreshToken();
+            request.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
+            return execution.execute(request, bytes);
         }
         return response;
     }
@@ -243,7 +242,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private void setTokenInfo(JsonNode tokenInfo) {
         this.token = tokenInfo.get("token").asText();
         this.refreshToken = tokenInfo.get("refreshToken").asText();
-        restTemplate.getInterceptors().add(this);
     }
 
     public Optional<AdminSettings> getAdminSettings(String key) {
@@ -3146,6 +3144,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             }
         }
     }
+
     public PageData<EntityVersion> listEntityVersions(EntityId externalEntityId, String branch, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", externalEntityId.getEntityType().name());
