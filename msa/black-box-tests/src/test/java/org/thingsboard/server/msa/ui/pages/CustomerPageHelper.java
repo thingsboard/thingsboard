@@ -112,9 +112,9 @@ public class CustomerPageHelper extends CustomerPageElements {
         titleFieldEntityView().sendKeys(newTitle);
     }
 
-    public void chooseDashboard() {
+    public void chooseDashboard(String dashboardName) {
         editMenuDashboardField().click();
-        editMenuDashboard().click();
+        editMenuDashboard(dashboardName).click();
     }
 
     public void createCustomersUser() {

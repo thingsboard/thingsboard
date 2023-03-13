@@ -148,7 +148,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
         jsClick(customerPage.editPencilBtn());
-        customerPage.chooseDashboard();
+        customerPage.chooseDashboard(dashboardPage.getDashboardTitle());
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
@@ -174,7 +174,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
         jsClick(customerPage.editPencilBtn());
-        customerPage.chooseDashboard();
+        customerPage.chooseDashboard(customerPage.getDashboard());
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
@@ -200,7 +200,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
         jsClick(customerPage.editPencilBtn());
-        customerPage.chooseDashboard();
+        customerPage.chooseDashboard(customerPage.getDashboard());
         customerPage.hideHomeDashboardToolbarCheckbox().click();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
