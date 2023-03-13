@@ -34,7 +34,6 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -58,6 +57,7 @@ import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -1582,6 +1582,13 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Long countEntitiesByQuery(EntityCountQuery query) {
         return restTemplate.postForObject(baseURL + "/api/entitiesQuery/count", query, Long.class);
+    }
+
+    public Map<Long, EntityType> countEntitiesByTypes(List<EntityType> entityTypes) {
+        return restTemplate.exchange(
+                baseURL + "/api/entitiesTypes/count",
+                HttpMethod.POST, new HttpEntity<>(entityTypes), new ParameterizedTypeReference<Map<Long, EntityType>>() {
+                }).getBody();
     }
 
     public PageData<EntityData> findEntityDataByQuery(EntityDataQuery query) {
