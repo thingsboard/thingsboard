@@ -67,8 +67,9 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
-    public static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
     private static final String EMPTY_DATA = "";
+    private static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
+    private static final int DEFAULT_PARTITION = -999999;
     private static final TbMsgMetaData EMPTY_META_DATA = new TbMsgMetaData();
 
     private TbMsgDeduplicationNodeConfiguration config;
@@ -145,21 +146,18 @@ public class TbMsgDeduplicationNode implements TbNode {
         ctx.getRuleNodeCacheService().getEntityIds(DEDUPLICATION_IDS_CACHE_KEY).forEach(id -> {
             TopicPartitionInfo tpi = ctx.getEntityTopicPartition(id);
             if (tpi.isMyPartition()) {
-                tpi.getPartition().ifPresentOrElse(
-                        partition -> {
-                            Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
-                            boolean added = entityIds.add(id);
-                            if (added) {
-                                List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id, partition));
-                                DeduplicationData deduplicationData = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
-                                if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
-                                    return;
-                                }
-                                deduplicationData.addAll(tbMsgs);
-                                scheduleTickMsg(ctx, id, deduplicationData, 0);
-                            }
-                        },
-                        () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id));
+                Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
+                Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
+                boolean added = entityIds.add(id);
+                if (added) {
+                    List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id, partition));
+                    DeduplicationData deduplicationData = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
+                    if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
+                        return;
+                    }
+                    deduplicationData.addAll(tbMsgs);
+                    scheduleTickMsg(ctx, id, deduplicationData, 0);
+                }
             } else {
                 log.trace("[{}][{}][{}] Ignore entity that doesn't belong to my partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
             }
@@ -170,28 +168,23 @@ public class TbMsgDeduplicationNode implements TbNode {
         EntityId id = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getEntityTopicPartition(id);
         if (tpi.isMyPartition()) {
-            // todo: check if we should use -999999 partition instead of orElse runnable.
-            tpi.getPartition().ifPresentOrElse(
-                    partition -> {
-                        Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
-                        boolean entityIdAdded = entityIds.add(id);
-                        DeduplicationData deduplicationMsgs = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
-                        if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
-                            log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
-                            if (entityIdAdded) {
-                                ctx.getRuleNodeCacheService().add(DEDUPLICATION_IDS_CACHE_KEY, id);
-                            }
-                            deduplicationMsgs.add(msg);
-                            ctx.getRuleNodeCacheService().add(id, partition, msg);
-                            ctx.ack(msg);
-                            scheduleTickMsg(ctx, id, deduplicationMsgs);
-                        } else {
-                            log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
-                            ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
-                        }
-                    },
-                    () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), id)
-            );
+            Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
+            Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
+            boolean entityIdAdded = entityIds.add(id);
+            DeduplicationData deduplicationMsgs = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
+            if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
+                log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
+                if (entityIdAdded) {
+                    ctx.getRuleNodeCacheService().add(DEDUPLICATION_IDS_CACHE_KEY, id);
+                }
+                deduplicationMsgs.add(msg);
+                ctx.getRuleNodeCacheService().add(id, partition, msg);
+                ctx.ack(msg);
+                scheduleTickMsg(ctx, id, deduplicationMsgs);
+            } else {
+                log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
+                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
+            }
         } else {
             log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
         }
@@ -202,70 +195,66 @@ public class TbMsgDeduplicationNode implements TbNode {
         if (!tpi.isMyPartition()) {
             return;
         }
-        // todo: check if we should use -999999 partition instead of orElse runnable.
-        tpi.getPartition().ifPresentOrElse(partition -> {
-                    DeduplicationData data = entityIdDeduplicationMsgsMap.get(deduplicationId);
-                    if (data == null) {
-                        return;
+        Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
+        DeduplicationData data = entityIdDeduplicationMsgsMap.get(deduplicationId);
+        if (data == null) {
+            return;
+        }
+        data.setTickScheduled(false);
+        if (data.isEmpty()) {
+            return;
+        }
+        long deduplicationTimeoutMs = System.currentTimeMillis();
+        try {
+            List<TbPair<TbMsg, List<TbMsg>>> deduplicationResults = new ArrayList<>();
+            List<TbMsg> msgList = data.getMsgList();
+            Optional<TbPair<Long, Long>> packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
+            while (packBoundsOpt.isPresent()) {
+                TbPair<Long, Long> packBounds = packBoundsOpt.get();
+                List<TbMsg> pack = new ArrayList<>();
+                if (DeduplicationStrategy.ALL.equals(config.getStrategy())) {
+                    for (Iterator<TbMsg> iterator = msgList.iterator(); iterator.hasNext(); ) {
+                        TbMsg msg = iterator.next();
+                        long msgTs = msg.getMetaDataTs();
+                        if (msgTs >= packBounds.getFirst() && msgTs < packBounds.getSecond()) {
+                            pack.add(msg);
+                            iterator.remove();
+                        }
                     }
-                    data.setTickScheduled(false);
-                    if (data.isEmpty()) {
-                        return;
-                    }
-                    long deduplicationTimeoutMs = System.currentTimeMillis();
-                    try {
-                        List<TbPair<TbMsg, List<TbMsg>>> deduplicationResults = new ArrayList<>();
-                        List<TbMsg> msgList = data.getMsgList();
-                        Optional<TbPair<Long, Long>> packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
-                        while (packBoundsOpt.isPresent()) {
-                            TbPair<Long, Long> packBounds = packBoundsOpt.get();
-                            List<TbMsg> pack = new ArrayList<>();
-                            if (DeduplicationStrategy.ALL.equals(config.getStrategy())) {
-                                for (Iterator<TbMsg> iterator = msgList.iterator(); iterator.hasNext(); ) {
-                                    TbMsg msg = iterator.next();
-                                    long msgTs = msg.getMetaDataTs();
-                                    if (msgTs >= packBounds.getFirst() && msgTs < packBounds.getSecond()) {
-                                        pack.add(msg);
-                                        iterator.remove();
-                                    }
-                                }
-                                deduplicationResults.add(new TbPair<>(TbMsg.newMsg(
-                                        config.getQueueName(),
-                                        config.getOutMsgType(),
-                                        deduplicationId,
-                                        getMetadata(packBounds.getFirst()),
-                                        getMergedData(pack)), pack));
-                            } else {
-                                TbMsg resultMsg = null;
-                                boolean searchMin = DeduplicationStrategy.FIRST.equals(config.getStrategy());
-                                for (Iterator<TbMsg> iterator = msgList.iterator(); iterator.hasNext(); ) {
-                                    TbMsg msg = iterator.next();
-                                    long msgTs = msg.getMetaDataTs();
-                                    if (msgTs >= packBounds.getFirst() && msgTs < packBounds.getSecond()) {
-                                        pack.add(msg);
-                                        iterator.remove();
-                                        if (resultMsg == null
-                                                || (searchMin && msg.getMetaDataTs() < resultMsg.getMetaDataTs())
-                                                || (!searchMin && msg.getMetaDataTs() > resultMsg.getMetaDataTs())) {
-                                            resultMsg = msg;
-                                        }
-                                    }
-                                }
-                                if (resultMsg != null) {
-                                    deduplicationResults.add(new TbPair<>(resultMsg, pack));
-                                }
+                    deduplicationResults.add(new TbPair<>(TbMsg.newMsg(
+                            config.getQueueName(),
+                            config.getOutMsgType(),
+                            deduplicationId,
+                            getMetadata(packBounds.getFirst()),
+                            getMergedData(pack)), pack));
+                } else {
+                    TbMsg resultMsg = null;
+                    boolean searchMin = DeduplicationStrategy.FIRST.equals(config.getStrategy());
+                    for (Iterator<TbMsg> iterator = msgList.iterator(); iterator.hasNext(); ) {
+                        TbMsg msg = iterator.next();
+                        long msgTs = msg.getMetaDataTs();
+                        if (msgTs >= packBounds.getFirst() && msgTs < packBounds.getSecond()) {
+                            pack.add(msg);
+                            iterator.remove();
+                            if (resultMsg == null
+                                    || (searchMin && msg.getMetaDataTs() < resultMsg.getMetaDataTs())
+                                    || (!searchMin && msg.getMetaDataTs() > resultMsg.getMetaDataTs())) {
+                                resultMsg = msg;
                             }
-                            packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
-                        }
-                        deduplicationResults.forEach(result -> enqueueForTellNextWithRetry(ctx, partition, result, 0));
-                    } finally {
-                        if (!data.isEmpty()) {
-                            scheduleTickMsg(ctx, deduplicationId, data);
                         }
                     }
-                },
-                () -> log.trace("[{}][{}][{}] Ignore msg from entity that belong to invalid partition!", ctx.getSelfId(), tpi.getFullTopicName(), deduplicationId)
-        );
+                    if (resultMsg != null) {
+                        deduplicationResults.add(new TbPair<>(resultMsg, pack));
+                    }
+                }
+                packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
+            }
+            deduplicationResults.forEach(result -> enqueueForTellNextWithRetry(ctx, partition, result, 0));
+        } finally {
+            if (!data.isEmpty()) {
+                scheduleTickMsg(ctx, deduplicationId, data);
+            }
+        }
     }
 
     private void scheduleTickMsg(TbContext ctx, EntityId deduplicationId, DeduplicationData data, long delayMs) {
