@@ -69,10 +69,10 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
 
     this.columns.push(
       new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
-      new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '40%',
+      new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '20%',
         (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.configuration.type)),
         () => ({}), false),
-      new EntityTableColumn<NotificationTarget>('configuration.description', 'notification.description', '40%',
+      new EntityTableColumn<NotificationTarget>('configuration.description', 'notification.description', '60%',
       (target) => target.configuration.description || '',
       () => ({}), false)
     );

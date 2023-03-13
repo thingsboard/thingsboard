@@ -58,10 +58,10 @@
         .mat-mdc-tab {
           &.mat-mdc-tab-disabled {
             opacity: 1;
-            //width: 100%;
+            flex: 1;
 
-            .mat-tab-label-content {
-              width: 100%;
+            .mdc-tab__content, .mdc-tab__text-label {
+              flex: 1;
             }
           }
         }

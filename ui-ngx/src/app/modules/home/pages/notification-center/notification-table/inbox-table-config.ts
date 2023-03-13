@@ -32,14 +32,20 @@ import { NotificationService } from '@core/http/notification.service';
 import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  InboxNotificationDialogComponent, InboxNotificationDialogData
+} from '@home/pages/notification-center/inbox-table/inbox-notification-dialog.component';
 
 export class InboxTableConfig extends EntityTableConfig<Notification> {
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
+              private dialog: MatDialog,
               private datePipe: DatePipe) {
     super();
     this.entitiesDeleteEnabled = false;
+    this.rowPointer = true;
     this.entityTranslations = {
       noEntities: 'notification.no-inbox-notification',
       search: 'notification.search-notification'
@@ -49,6 +55,11 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     this.entitiesFetchFunction = pageLink => this.notificationService.getNotifications(pageLink, this.componentsData.unreadOnly);
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+
+    this.handleRowClick = ($event, notification) => {
+      this.showNotification($event, notification)
+      return true;
+    }
 
     this.componentsData = {
       unreadOnly: true
@@ -66,11 +77,11 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     }];
 
     this.columns.push(
-      new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<Notification>('type', 'notification.type', '10%', (notification) =>
         this.translate.instant(NotificationTemplateTypeTranslateMap.get(notification.type).name)),
       new EntityTableColumn<Notification>('subject', 'notification.subject', '30%'),
-      new EntityTableColumn<Notification>('text', 'notification.text', '60%')
+      new EntityTableColumn<Notification>('text', 'notification.message', '60%')
     );
 
   }
@@ -114,6 +125,24 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
       } else {
         entity.status = NotificationStatus.READ;
         this.getTable().detectChanges();
+      }
+    });
+  }
+
+  private showNotification($event: Event, notification: Notification) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<InboxNotificationDialogComponent, InboxNotificationDialogData,
+      string>(InboxNotificationDialogComponent, {
+      disableClose: false,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        notification
+      }
+    }).afterClosed().subscribe(res => {
+      if (res) {
+        this.markAsRead(null, notification);
       }
     });
   }

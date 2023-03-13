@@ -14,18 +14,13 @@
 /// limitations under the License.
 ///
 
-import {
-  NotificationDeliveryMethod,
-  NotificationDeliveryMethodTranslateMap,
-  NotificationTemplate,
-  NotificationType
-} from '@shared/models/notification.models';
+import { NotificationDeliveryMethod, NotificationTemplate, NotificationType } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';

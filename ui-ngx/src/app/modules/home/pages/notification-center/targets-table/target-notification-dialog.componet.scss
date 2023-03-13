@@ -18,7 +18,7 @@
 
 :host {
   form.tb-dialog-container {
-    min-width: 580px;
+    min-width: 600px;
     max-height: 100vh;
   }
 
@@ -36,13 +36,13 @@
   .mat-mdc-radio-group {
     display: flex;
     flex-direction: row;
-    margin-bottom: 14px;
-    gap: 8px;
+    margin-bottom: 22px;
+    gap: 12px;
 
     .mat-mdc-radio-button {
       flex: 1 1 100%;
       padding: 4px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 6px;
 
       &.mat-mdc-radio-checked {

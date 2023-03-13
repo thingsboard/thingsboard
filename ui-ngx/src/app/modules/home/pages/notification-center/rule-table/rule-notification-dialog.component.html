@@ -97,18 +97,23 @@
               formControlName="alarmTypes">
             </tb-string-items-list>
 
-            <tb-alarm-severities-list formControlName="alarmSeverities"
-                                      flotLabel="always">
-            </tb-alarm-severities-list>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-severity-list</mat-label>
+              <mat-select formControlName="alarmSeverities" multiple
+                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                  {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
           </fieldset>
 
-          <fieldset class="fields-group tb-margin" formGroupName="clearRule">
+          <fieldset class="fields-group tb-margin-2" formGroupName="clearRule">
             <legend translate>notification.clear-rule</legend>
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
-              <mat-select formControlName="alarmStatus"
-                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatus').value ? ('alarm.any-status' | translate) : '' }}">
-                <mat-option [value]="null">{{ 'alarm.any-status' | translate }}</mat-option>
+              <mat-select formControlName="alarmStatus" multiple
+                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatus').value?.length ? ('alarm.any-status' | translate) : '' }}">
                 <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
                   {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
                 </mat-option>
@@ -205,10 +210,40 @@
               [stepControl]="alarmCommentTemplateForm">
       <ng-template matStepLabel>{{ 'notification.alarm-comment-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="alarmCommentTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.filter</legend>
+            <tb-string-items-list
+              editable
+              label="{{ 'alarm.alarm-type-list' | translate }}"
+              placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
+              floatLabel="always"
+              formControlName="alarmTypes">
+            </tb-string-items-list>
 
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-severity-list</mat-label>
+              <mat-select formControlName="alarmSeverities" multiple
+                          placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                  {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-status-list</mat-label>
+              <mat-select formControlName="alarmStatus" multiple
+                          placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatus').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                  {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+        </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
-        <section formGroupName="additionalConfig">;
+        <section formGroupName="additionalConfig">
           <mat-form-field class="mat-block">
             <mat-label translate>notification.description</mat-label>
             <input matInput formControlName="description">

@@ -17,7 +17,7 @@
 @import "../../../../../../scss/constants";
 
 :host {
-  width: 700px;
+  width: 900px;
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
@@ -30,12 +30,16 @@
   }
 
   .fields-group {
-    padding: 0 16px 8px;
+    padding: 0 16px;
     border: 1px groove rgba(0, 0, 0, .25);
     border-radius: 4px;
 
     &.tb-margin {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    &.tb-margin-2 {
+      margin-bottom: 24px;
     }
 
     &.tb-hierarchy {

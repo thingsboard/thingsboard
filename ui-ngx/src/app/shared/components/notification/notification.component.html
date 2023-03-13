@@ -30,16 +30,15 @@
   <div class="content" fxFlex>
     <div class="title" [innerHTML]="(notification.subject | safe: 'html' )"></div>
     <div class="message" [innerHTML]="(notification.text  | safe: 'html' )"></div>
-    <button *ngIf="showButton" mat-stroked-button class="button"
-            [ngStyle]="{color: notification.additionalConfig.actionButtonConfig.color}"
+    <button *ngIf="showButton" mat-stroked-button class="button" color="primary"
             (click)="navigate($event)">
       {{ buttonLabel }}
     </button>
   </div>
   <div class="description" fxLayout="column" fxLayoutAlign="start end">
     <div fxLayout="row" fxLayoutAlign="end center" class="mark-read">
-      <span class="time" *ngIf="!preview">{{ notification.createdTime | dateAgo }}</span>
-      <button mat-icon-button class="tb-mat-28" (click)="markRead($event)">
+      <span class="time">{{ notification.createdTime ?? currentDate | dateAgo }}</span>
+      <button mat-icon-button class="tb-mat-28" (click)="markRead($event)" *ngIf="!hideMarkAsReadButton">
         <mat-icon>check_circle_outline</mat-icon>
       </button>
     </div>

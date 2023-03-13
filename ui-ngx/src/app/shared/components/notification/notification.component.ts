@@ -19,16 +19,17 @@ import {
   ActionButtonLinkType,
   AlarmSeverityNotificationColors,
   Notification,
+  NotificationStatus,
   NotificationType,
   NotificationTypeIcons
 } from '@shared/models/notification.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { alarmSeverityTranslations } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-notification',
@@ -46,24 +47,22 @@ export class NotificationComponent implements OnInit {
   @Output()
   markAsRead = new EventEmitter<string>();
 
-  private previewValue = false;
-  get preview(): boolean {
-    return this.previewValue;
-  }
   @Input()
-  set preview(value: boolean) {
-    this.previewValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  preview = false;
 
   showIcon = false;
   showButton = false;
   buttonLabel = '';
+  hideMarkAsReadButton = false;
 
   tinycolor = tinycolor_;
 
   notificationType = NotificationType;
   notificationTypeIcons = NotificationTypeIcons;
   alarmSeverityTranslations = alarmSeverityTranslations;
+
+  currentDate = Date.now();
 
   constructor(
     private utils: UtilsService,
@@ -74,6 +73,7 @@ export class NotificationComponent implements OnInit {
   ngOnInit() {
     this.showIcon = this.notification.additionalConfig?.icon?.enabled;
     this.showButton = this.notification.additionalConfig?.actionButtonConfig?.enabled;
+    this.hideMarkAsReadButton = this.notification.status === NotificationStatus.READ;
     if (this.showButton) {
       this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text,
                                                       this.notification.additionalConfig.actionButtonConfig.text);
@@ -99,7 +99,13 @@ export class NotificationComponent implements OnInit {
         let state = null;
         if (this.notification.additionalConfig.actionButtonConfig.dashboardState) {
           const stateObject: StateObject = {};
-          stateObject.params = {};
+          if (this.notification.additionalConfig.actionButtonConfig.setEntityIdInState) {
+            stateObject.params = {
+              entityId: this.notification.info.originatorId ?? null
+            };
+          } else {
+            stateObject.params = {};
+          }
           stateObject.id = this.notification.additionalConfig.actionButtonConfig.dashboardState;
           state = objToBase64URI([ stateObject ]);
         }

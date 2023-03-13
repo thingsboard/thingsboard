@@ -28,7 +28,7 @@
 </mat-progress-bar>
 <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
 <div mat-dialog-content>
-  <mat-horizontal-stepper [linear]="true" labelPosition="end" #createNotification
+  <mat-horizontal-stepper [linear]="true" #createNotification
                           [orientation]="(stepperOrientation | async)"
                           (selectionChange)="changeStep($event)">
     <ng-template matStepperIcon="edit">
@@ -41,8 +41,8 @@
           <mat-button-toggle-group class="tb-notification-use-template-toggle-group"
                                    style="width: 320px;"
                                    formControlName="useTemplate">
-            <mat-button-toggle fxFlex [value]=true>{{ 'notification.use-template' | translate }}</mat-button-toggle>
             <mat-button-toggle fxFlex [value]=false>{{ 'notification.start-from-scratch' | translate }}</mat-button-toggle>
+            <mat-button-toggle fxFlex [value]=true>{{ 'notification.use-template' | translate }}</mat-button-toggle>
           </mat-button-toggle-group>
         </div>
         <tb-template-autocomplete
@@ -75,7 +75,8 @@
                      [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
                 {{ "notification.delivery-methods" | translate }}
               </label>
-              <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap">
+              <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
+              <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap" style="margin-bottom: 12px;">
                 <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
                          [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
                   <mat-slide-toggle class="delivery-method" formControlName="enabled">
@@ -83,7 +84,6 @@
                   </mat-slide-toggle>
                 </section>
               </section>
-              <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
             </section>
           </section>
         </ng-template>
@@ -167,8 +167,6 @@
                     {{ 'notification.button-text-required' | translate }}
                   </mat-error>
                 </mat-form-field>
-                <tb-color-input formControlName="color" fxFlex>
-                </tb-color-input>
               </div>
               <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
                 <mat-form-field fxFlex="30" fxFlex.xs="100">
@@ -199,6 +197,10 @@
                   </tb-dashboard-state-autocomplete>
                 </ng-template>
               </div>
+              <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
+                                *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.DASHBOARD">
+                {{ 'notification.set-entity-from-notification' | translate }}
+              </mat-slide-toggle>
             </div>
           </section>
         </section>
@@ -270,7 +272,7 @@
       <div *ngIf="preview" style="padding-bottom: 16px">
         <section class="preview-group notification" *ngIf="preview.processedTemplates.PUSH?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon svgIcon="mdi:bell-badge"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="mdi:bell-badge"></mat-icon>
             <div class="group-title" translate>notification.delivery-method-type.push-preview</div>
           </div>
           <div class="web-preview">
@@ -279,7 +281,7 @@
         </section>
         <section class="preview-group notification" *ngIf="preview.processedTemplates.EMAIL?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon svgIcon="mdi:email"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="mdi:email"></mat-icon>
             <div class="group-title" translate>notification.delivery-method-type.email-preview</div>
           </div>
           <div class="notification-content">
@@ -290,7 +292,7 @@
         </section>
         <section class="preview-group notification" *ngIf="preview.processedTemplates.SMS?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon svgIcon="mdi:message-processing"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="mdi:message-processing"></mat-icon>
             <div class="group-title" translate>notification.delivery-method-type.sms-preview</div>
           </div>
           <div class="notification-content">
@@ -299,7 +301,7 @@
         </section>
         <section class="preview-group notification" *ngIf="preview.processedTemplates.SLACK?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon svgIcon="mdi:slack"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="mdi:slack"></mat-icon>
             <div class="group-title" translate>notification.delivery-method-type.slack-preview</div>
           </div>
           <div class="notification-content">
@@ -308,7 +310,7 @@
         </section>
         <section class="preview-group">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon>supervisor_account</mat-icon>
+            <mat-icon  class="tb-mat-18">supervisor_account</mat-icon>
             <div class="group-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
           </div>
           <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value.length > 1">

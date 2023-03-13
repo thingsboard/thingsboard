@@ -71,6 +71,7 @@ export class NotificationTableComponent implements OnInit {
         return new InboxTableConfig(
           this.notificationService,
           this.translate,
+          this.dialog,
           this.datePipe
         );
       case EntityType.NOTIFICATION_TEMPLATE:
