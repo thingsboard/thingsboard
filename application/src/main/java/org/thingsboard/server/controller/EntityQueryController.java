@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
+import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
@@ -61,11 +63,7 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the entity count query. See API call notes above for more details.")
             @RequestBody EntityCountQuery query) throws ThingsboardException {
         checkNotNull(query);
-        try {
-            return this.entityQueryService.countEntitiesByQuery(getCurrentUser(), query);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return this.entityQueryService.countEntitiesByQuery(getCurrentUser(), query);
     }
 
     @ApiOperation(value = "Find Entity Data by Query", notes = ENTITY_DATA_QUERY_DESCRIPTION)
@@ -76,11 +74,7 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the entity data query. See API call notes above for more details.")
             @RequestBody EntityDataQuery query) throws ThingsboardException {
         checkNotNull(query);
-        try {
-            return this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query);
     }
 
     @ApiOperation(value = "Find Alarms by Query", notes = ALARM_DATA_QUERY_DESCRIPTION)
@@ -91,11 +85,12 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the alarm data query. See API call notes above for more details.")
             @RequestBody AlarmDataQuery query) throws ThingsboardException {
         checkNotNull(query);
-        try {
-            return this.entityQueryService.findAlarmDataByQuery(getCurrentUser(), query);
-        } catch (Exception e) {
-            throw handleException(e);
+        checkNotNull(query.getPageLink());
+        UserId assigneeId = query.getPageLink().getAssigneeId();
+        if (assigneeId != null) {
+            checkUserId(assigneeId, Operation.READ);
         }
+        return this.entityQueryService.findAlarmDataByQuery(getCurrentUser(), query);
     }
 
     @ApiOperation(value = "Find Entity Keys by Query",
@@ -112,15 +107,11 @@ public class EntityQueryController extends BaseController {
             @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
         TenantId tenantId = getTenantId();
         checkNotNull(query);
-        try {
-            EntityDataPageLink pageLink = query.getPageLink();
-            if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
-                pageLink.setPageSize(MAX_PAGE_SIZE);
-            }
-            return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
-        } catch (Exception e) {
-            throw handleException(e);
+        EntityDataPageLink pageLink = query.getPageLink();
+        if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
+            pageLink.setPageSize(MAX_PAGE_SIZE);
         }
+        return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
     }
 
 }

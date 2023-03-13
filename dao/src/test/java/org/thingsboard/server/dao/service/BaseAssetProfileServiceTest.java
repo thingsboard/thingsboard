@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -150,22 +151,26 @@ public abstract class BaseAssetProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedAssetProfile2.getId(), defaultAssetProfile.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveAssetProfileWithEmptyName() {
         AssetProfile assetProfile = new AssetProfile();
         assetProfile.setTenantId(tenantId);
-        assetProfileService.saveAssetProfile(assetProfile);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetProfileService.saveAssetProfile(assetProfile);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveAssetProfileWithSameName() {
         AssetProfile assetProfile = this.createAssetProfile(tenantId, "Asset Profile");
         assetProfileService.saveAssetProfile(assetProfile);
         AssetProfile assetProfile2 = this.createAssetProfile(tenantId, "Asset Profile");
-        assetProfileService.saveAssetProfile(assetProfile2);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetProfileService.saveAssetProfile(assetProfile2);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testDeleteAssetProfileWithExistingAsset() {
         AssetProfile assetProfile = this.createAssetProfile(tenantId, "Asset Profile");
         AssetProfile savedAssetProfile = assetProfileService.saveAssetProfile(assetProfile);
@@ -174,7 +179,9 @@ public abstract class BaseAssetProfileServiceTest extends AbstractServiceTest {
         asset.setName("Test asset");
         asset.setAssetProfileId(savedAssetProfile.getId());
         assetService.saveAsset(asset);
-        assetProfileService.deleteAssetProfile(tenantId, savedAssetProfile.getId());
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetProfileService.deleteAssetProfile(tenantId, savedAssetProfile.getId());
+        });
     }
 
     @Test

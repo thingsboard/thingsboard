@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,24 +17,27 @@
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
   Input,
   OnChanges,
   OnInit,
+  Renderer2,
   SimpleChanges,
   SkipSelf,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
   FormGroupDirective,
   NG_VALUE_ACCESSOR,
   NgForm,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -43,7 +46,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
+import { MatChipGrid, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
@@ -59,11 +62,11 @@ import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
 } from '@home/components/widget/data-key-config-dialog.component';
-import { deepClone } from '@core/utils';
-import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
+import { deepClone, guid, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AggregationType } from '@shared/models/time/time.models';
+import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-data-keys',
@@ -79,7 +82,8 @@ import { AggregationType } from '@shared/models/time/time.models';
       provide: ErrorStateMatcher,
       useExisting: DataKeysComponent
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
 export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges, ErrorStateMatcher {
 
@@ -87,7 +91,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   widgetTypes = widgetType;
   dataKeyTypes = DataKeyType;
 
-  keysListFormGroup: FormGroup;
+  keysListFormGroup: UntypedFormGroup;
 
   modelValue: Array<DataKey> | null;
 
@@ -145,7 +149,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   @ViewChild('keyInput') keyInput: ElementRef<HTMLInputElement>;
   @ViewChild('keyAutocomplete') matAutocomplete: MatAutocomplete;
-  @ViewChild('chipList') chipList: MatChipList;
+  @ViewChild('chipList') chipList: MatChipGrid;
 
   keys: Array<DataKey> = [];
   filteredKeys: Observable<Array<DataKey>>;
@@ -161,6 +165,11 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   requiredText: string;
 
   searchText = '';
+
+  dndId = guid();
+
+  dragIndex: number;
+
   private latestSearchTextResult: Array<DataKey> = null;
   private fetchObservable$: Observable<Array<DataKey>> = null;
 
@@ -174,8 +183,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
               private utils: UtilsService,
               private dialogs: DialogService,
               private dialog: MatDialog,
-              private fb: FormBuilder,
-              private sanitizer: DomSanitizer,
+              private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef,
+              private renderer: Renderer2,
               public truncate: TruncatePipe) {
   }
 
@@ -250,7 +260,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
           this.secondaryPlaceholder = '+' + this.translate.instant('datakey.latest-key-function');
         } else if (this.widgetType === widgetType.alarm) {
           this.placeholder = this.translate.instant('datakey.alarm-key-functions');
-          this.secondaryPlaceholder = '+' + this.translate.instant('alarm-key-function');
+          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.alarm-key-function');
         } else {
           this.placeholder = this.translate.instant('datakey.timeseries-key-functions');
           this.secondaryPlaceholder = '+' + this.translate.instant('datakey.timeseries-key-function');
@@ -314,13 +324,22 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     }
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = this.required && !this.modelValue;
     return originalErrorState || customErrorState;
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void {
+    this.chipList._chips.forEach((chip) => {
+      chip._mousedown = () => {};
+    });
+    this.chipList._chips.changes.subscribe(() => {
+      this.chipList._chips.forEach((chip) => {
+        chip._mousedown = () => {};
+      });
+    });
+  }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
@@ -395,12 +414,24 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     }
   }
 
-  onChipDrop(event: MatChipDropEvent) {
-    const from = event.from;
-    const to = event.to;
-    this.keys.splice(to, 0, this.keys.splice(from, 1)[0]);
+  chipDragStart(index: number, chipRow: MatChipRow, placeholderChipRow: MatChipRow) {
+    this.renderer.setStyle(placeholderChipRow._elementRef.nativeElement, 'width', chipRow._elementRef.nativeElement.offsetWidth + 'px');
+    this.dragIndex = index;
+  }
+
+  chipDragEnd() {
+    this.dragIndex = -1;
+  }
+
+  onChipDrop(event: DndDropEvent) {
+    let index = event.index;
+    if (isUndefined(index)) {
+      index = this.keys.length;
+    }
+    moveItemInArray(this.keys, this.dragIndex, index);
     this.keysListFormGroup.get('keys').setValue(this.keys);
-    this.modelValue.splice(to, 0, this.modelValue.splice(from, 1)[0]);
+    moveItemInArray(this.modelValue, this.dragIndex, index);
+    this.dragIndex = -1;
     this.propagateChange(this.modelValue);
   }
 
@@ -450,34 +481,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     return key ? key.name : undefined;
   }
 
-  displayDataKeyNameFn(key: DataKey): SafeHtml {
-    let keyName = key.name;
-    if (this.widgetType === widgetType.latest && key.type === DataKeyType.timeseries
-      && key.aggregationType && key.aggregationType !== AggregationType.NONE) {
-      let aggFuncName: string;
-      switch (key.aggregationType) {
-        case AggregationType.MIN:
-          aggFuncName = 'MIN';
-          break;
-        case AggregationType.MAX:
-          aggFuncName = 'MAX';
-          break;
-        case AggregationType.AVG:
-          aggFuncName = 'AVG';
-          break;
-        case AggregationType.SUM:
-          aggFuncName = 'SUM';
-          break;
-        case AggregationType.COUNT:
-          aggFuncName = 'COUNT';
-          break;
-      }
-      keyName = `<span class="tb-agg-func">${aggFuncName}</span>(${keyName})`;
-    }
-    if (this.datasourceType !== DatasourceType.function && key.postFuncBody) {
-      keyName = `f(${keyName})`;
-    }
-    return this.sanitizer.bypassSecurityTrustHtml(`<strong>${keyName}</strong>`);
+  dataKeyHasAggregation(key: DataKey): boolean {
+    return this.widgetType === widgetType.latest && key.type === DataKeyType.timeseries
+      && key.aggregationType && key.aggregationType !== AggregationType.NONE;
+  }
+
+  dataKeyHasPostprocessing(key: DataKey): boolean {
+    return this.datasourceType !== DatasourceType.function && !!key.postFuncBody;
   }
 
   private fetchKeys(searchText?: string): Observable<Array<DataKey>> {

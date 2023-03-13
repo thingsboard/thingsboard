@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -58,6 +58,14 @@ export class AlarmService {
 
   public clearAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
     return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public assignAlarm(alarmId: string, assigneeId: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/alarm/${alarmId}/assign/${assigneeId}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
+    return this.http.delete<void>(`/api/alarm/${alarmId}/assign`, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<void> {

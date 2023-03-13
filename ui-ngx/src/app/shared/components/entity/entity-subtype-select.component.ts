@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, Subscription, throwError } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, startWith, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -27,6 +27,7 @@ import { BroadcastService } from '@app/core/services/broadcast.service';
 import { AssetService } from '@core/http/asset.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-subtype-select',
@@ -40,9 +41,12 @@ import { EntityViewService } from '@core/http/entity-view.service';
 })
 export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  subTypeFormGroup: FormGroup;
+  subTypeFormGroup: UntypedFormGroup;
 
   modelValue: string | null = '';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   entityType: EntityType;
@@ -81,7 +85,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               private assetService: AssetService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.subTypeFormGroup = this.fb.group({
       subType: ['']
     });

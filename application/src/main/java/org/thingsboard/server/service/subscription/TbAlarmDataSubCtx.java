@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -63,10 +65,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
     private final AlarmService alarmService;
     @Getter
-    @Setter
     private final LinkedHashMap<EntityId, EntityData> entitiesMap;
     @Getter
-    @Setter
     private final HashMap<AlarmId, AlarmData> alarmsMap;
 
     private final int maxEntitiesPerAlarmSubscription;
@@ -225,8 +225,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             boolean matchesFilter = filter(alarm);
             if (onCurrentPage) {
                 if (matchesFilter) {
-                    AlarmData updated = new AlarmData(alarm, current.getOriginatorName(), current.getEntityId());
-                    updated.getLatest().putAll(current.getLatest());
+                    AlarmData updated = new AlarmData(subscriptionUpdate.getAlarm(), current);
                     alarmsMap.put(alarmId, updated);
                     sendWsMsg(new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), maxEntitiesPerAlarmSubscription, data.getTotalElements()));
                 } else {
@@ -270,8 +269,24 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         if (filter.getStatusList() != null && !filter.getStatusList().isEmpty()) {
             boolean matches = false;
             for (AlarmSearchStatus status : filter.getStatusList()) {
-                if (status.getStatuses().contains(alarm.getStatus())) {
-                    matches = true;
+                switch (status) {
+                    case ANY:
+                        matches = true;
+                        break;
+                    case ACK:
+                        matches = alarm.isAcknowledged();
+                        break;
+                    case UNACK:
+                        matches = !alarm.isAcknowledged();
+                        break;
+                    case CLEARED:
+                        matches = alarm.isCleared();
+                        break;
+                    case ACTIVE:
+                        matches = !alarm.isCleared();
+                        break;
+                }
+                if (matches) {
                     break;
                 }
             }

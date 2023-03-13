@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@
         margin-right: 4px;
       }
     }
-    button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+    button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
       background: rgba(220, 220, 220, .35);
       align-items: center;
       vertical-align: middle;
@@ -57,6 +57,9 @@
       &:not(.tb-help-popup-button) {
         color: #7b7b7b;
       }
+    }
+    button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+      height: 23px;
     }
     .tb-help-popup-button-loading {
       background: #f3f3f3;

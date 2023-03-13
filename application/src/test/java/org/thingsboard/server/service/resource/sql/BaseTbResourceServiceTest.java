@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -237,7 +238,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resourceService.delete(savedResource, null);
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveTbResourceWithExistsFileName() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
@@ -256,23 +257,27 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setData("Test Data");
 
         try {
-            resourceService.save(resource2);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                resourceService.save(resource2);
+            });
         } finally {
             resourceService.delete(savedResource, null);
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveTbResourceWithEmptyTitle() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
-        resourceService.save(resource);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            resourceService.save(resource);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveTbResourceWithInvalidTenant() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
@@ -280,7 +285,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
-        resourceService.save(resource);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            resourceService.save(resource);
+        });
     }
 
     @Test

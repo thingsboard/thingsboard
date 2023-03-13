@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,11 +19,10 @@
   <mat-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
     <div class="tb-custom-action-editor-container" style="background-color: #fff;">
       <div class="mat-padding">
-        <div fxFlex fxLayout="row" style="max-height: 40px;"
+        <div fxFlex fxLayout="row"
              fxLayoutAlign="start center"
-             *ngFor="let resource of action.customResources; let i = index" >
-          <mat-form-field fxFlex class="mat-block resource-field" floatLabel="never"
-                          style="margin: 10px 0 0; max-height: 40px;">
+             *ngFor="let resource of action.customResources; let i = index" style="padding-top: 10px;">
+          <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
             <input required matInput [(ngModel)]="resource.url"
                    (ngModelChange)="notifyActionUpdated()"
                    placeholder="{{ 'widget.resource-url' | translate }}"/>
@@ -37,7 +36,7 @@
             <mat-icon>close</mat-icon>
           </button>
         </div>
-        <div style="margin-top: 6px;">
+        <div style="margin-top: 18px;">
           <button mat-button mat-raised-button color="primary"
                   [disabled]="isLoading$ | async"
                   type="button"
@@ -58,8 +57,7 @@
                 (click)="beautifyCss()">
           {{ 'widget.tidy' | translate }}
         </button>
-        <button mat-button
-                type="button"
+        <button type="button"
                 mat-icon-button class="tb-mat-32"
                 (click)="cssFullscreen = !cssFullscreen"
                 matTooltip="{{(cssFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
@@ -77,8 +75,7 @@
                 type="button" (click)="beautifyHtml()">
           {{ 'widget.tidy' | translate }}
         </button>
-        <button mat-button
-                type="button"
+        <button type="button"
                 mat-icon-button class="tb-mat-32"
                 (click)="htmlFullscreen = !htmlFullscreen"
                 matTooltip="{{(htmlFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"

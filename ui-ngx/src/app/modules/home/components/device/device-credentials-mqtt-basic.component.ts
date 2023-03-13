@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -52,12 +52,12 @@ export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor
   @Input()
   disabled: boolean;
 
-  deviceCredentialsMqttFormGroup: FormGroup;
+  deviceCredentialsMqttFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
-  constructor(public fb: FormBuilder) {
+  constructor(public fb: UntypedFormBuilder) {
     this.deviceCredentialsMqttFormGroup = this.fb.group({
       clientId: [null],
       userName: [null],
@@ -119,7 +119,7 @@ export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor
   }
 
   private atLeastOne(validator: ValidatorFn, controls: string[] = null) {
-    return (group: FormGroup): ValidationErrors | null => {
+    return (group: UntypedFormGroup): ValidationErrors | null => {
       if (!controls) {
         controls = Object.keys(group.controls);
       }

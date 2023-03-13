@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ import java.util.stream.Collectors;
  * @author Andrew Shvayka
  */
 @Slf4j
-class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
+public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     static final String SESSION_TIMEOUT_MESSAGE = "session timeout!";
     final TenantId tenantId;

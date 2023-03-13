@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,14 @@ import java.util.UUID;
  * Created by ashvayka on 25.04.17.
  */
 public class EntityIdFactory {
+
+    public static EntityId getByTypeAndUuid(int type, String uuid) {
+        return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));
+    }
+
+    public static EntityId getByTypeAndUuid(String type, String uuid) {
+        return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
+    }
 
     public static EntityId getByTypeAndId(String type, String uuid) {
         return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));

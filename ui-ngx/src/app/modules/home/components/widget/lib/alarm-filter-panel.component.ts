@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import {
   AlarmSeverity,
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { OverlayRef } from '@angular/cdk/overlay';
@@ -43,7 +43,7 @@ export class AlarmFilterPanelComponent {
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
-  alarmFilterFormGroup: FormGroup;
+  alarmFilterFormGroup: UntypedFormGroup;
 
   result: AlarmFilterPanelData;
 
@@ -62,7 +62,7 @@ export class AlarmFilterPanelComponent {
   constructor(@Inject(ALARM_FILTER_PANEL_DATA)
               public data: AlarmFilterPanelData,
               public overlayRef: OverlayRef,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.alarmFilterFormGroup = this.fb.group(
       {
         alarmStatusList: [this.data.statusList],
@@ -87,7 +87,7 @@ export class AlarmFilterPanelComponent {
   }
 
   public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const types: string[] = this.alarmFilterFormGroup.get('alarmTypeList').value;

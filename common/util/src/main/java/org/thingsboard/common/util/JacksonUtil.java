@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,14 @@ public class JacksonUtil {
 
     public static ObjectNode newObjectNode(ObjectMapper mapper) {
         return mapper.createObjectNode();
+    }
+
+    public static ArrayNode newArrayNode() {
+        return newArrayNode(OBJECT_MAPPER);
+    }
+
+    public static ArrayNode newArrayNode(ObjectMapper mapper) {
+        return mapper.createArrayNode();
     }
 
     public static <T> T clone(T value) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 ///
 
 import {
+  CellActionDescriptorType,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -48,6 +49,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
+import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import {
+  ALARM_ASSIGNEE_PANEL_DATA, AlarmAssigneePanelComponent,
+  AlarmAssigneePanelData
+} from '@home/components/alarm/alarm-assignee-panel.component';
+import { ComponentPortal } from '@angular/cdk/portal';
+import { isDefinedAndNotNull } from '@core/utils';
+import { UtilsService } from '@core/services/utils.service';
 
 export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink> {
 
@@ -62,7 +72,11 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
               private dialog: MatDialog,
               public entityId: EntityId = null,
               private defaultSearchStatus: AlarmSearchStatus = AlarmSearchStatus.ANY,
-              private store: Store<AppState>) {
+              private store: Store<AppState>,
+              private viewContainerRef: ViewContainerRef,
+              private overlay: Overlay,
+              private cd: ChangeDetectorRef,
+              private utilsService: UtilsService) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -97,10 +111,35 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('severity', 'alarm.severity', '25%',
         (entity) => this.translate.instant(alarmSeverityTranslations.get(entity.severity)),
-          entity => ({
-            fontWeight: 'bold',
-            color: alarmSeverityColors.get(entity.severity)
-          })));
+        entity => ({
+          fontWeight: 'bold',
+          color: alarmSeverityColors.get(entity.severity)
+        })));
+    this.columns.push(
+      new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '200px',
+        (entity) => {
+          return this.getAssigneeTemplate(entity)
+        },
+        (entity) => {
+          return {
+            display: 'flex',
+            justifyContent: 'start',
+            alignItems: 'center',
+            height: 'inherit'
+          }
+        },
+        false,
+        () => ({}),
+        (entity) => undefined,
+        false,
+        {
+          icon: 'keyboard_arrow_down',
+          type: CellActionDescriptorType.DEFAULT,
+          isEnabled: (entity) => true,
+          name: this.translate.instant('alarm.assign'),
+          onAction: ($event, entity) => this.openAlarmAssigneePanel($event, entity)
+        })
+    )
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('status', 'alarm.status', '25%',
         (entity) => this.translate.instant(alarmStatusTranslations.get(entity.status))));
@@ -116,7 +155,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
-    const query = new AlarmQuery(this.entityId, pageLink, this.searchStatus, null, true);
+    const query = new AlarmQuery(this.entityId, pageLink, this.searchStatus, null, true, null);
     return this.alarmService.getAlarms(query);
   }
 
@@ -142,4 +181,100 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       }
     );
   }
+
+  getAssigneeTemplate(entity: AlarmInfo): string {
+    return `
+      <span class="assignee-cell">
+      ${isDefinedAndNotNull(entity.assigneeId) ?
+        `<span class="assigned-container">
+          <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity)}">
+            ${this.getUserInitials(entity)}
+          </span>
+          <span class="user-display-name">${this.getUserDisplayName(entity)}</span>
+        </span>`
+        :
+        `<mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
+        <span>${this.translate.instant('alarm.unassigned')}</span>`
+      }
+      </span>`
+  }
+
+  getUserDisplayName(entity: AlarmInfo) {
+    let displayName = '';
+    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
+      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
+      if (entity.assignee.firstName) {
+        displayName += entity.assignee.firstName;
+      }
+      if (entity.assignee.lastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += entity.assignee.lastName;
+      }
+    } else {
+      displayName = entity.assignee.email;
+    }
+    return displayName;
+  }
+
+  getUserInitials(entity: AlarmInfo): string {
+    let initials = '';
+    if (entity.assignee.firstName && entity.assignee.firstName.length ||
+      entity.assignee.lastName && entity.assignee.lastName.length) {
+      if (entity.assignee.firstName) {
+        initials += entity.assignee.firstName.charAt(0);
+      }
+      if (entity.assignee.lastName) {
+        initials += entity.assignee.lastName.charAt(0);
+      }
+    } else {
+      initials += entity.assignee.email.charAt(0);
+    }
+    return initials.toUpperCase();
+  }
+
+  getAvatarBgColor(entity: AlarmInfo) {
+    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  }
+
+  openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+    config.minWidth = '260px';
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+    const providers: StaticProvider[] = [
+      {
+        provide: ALARM_ASSIGNEE_PANEL_DATA,
+        useValue: {
+          alarmId: entity.id.id,
+          assigneeId: entity.assigneeId?.id
+        } as AlarmAssigneePanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
+      this.viewContainerRef, injector)).onDestroy(() => this.updateData());
+  }
+
 }
