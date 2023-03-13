@@ -38,7 +38,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void add(RuleNodeId ruleNodeId, Integer partition, String key, TbMsg value) {
+    public void add(RuleNodeId ruleNodeId, Integer partition, EntityId key, TbMsg value) {
     }
 
     @Override
@@ -50,7 +50,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, String key, List<TbMsg> values) {
+    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, EntityId key, List<TbMsg> values) {
     }
 
     @Override
@@ -64,7 +64,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, String key) {
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
         return Collections.emptySet();
     }
 
@@ -73,7 +73,7 @@ public class DefaultRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void evict(RuleNodeId ruleNodeId, Integer partition, String key) {
+    public void evict(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
 
     }
 

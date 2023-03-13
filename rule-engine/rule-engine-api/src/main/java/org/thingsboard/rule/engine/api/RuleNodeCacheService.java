@@ -27,21 +27,21 @@ public interface RuleNodeCacheService {
 
     void add(String key, EntityId id);
 
-    void add(String key, Integer partition, TbMsg value);
+    void add(EntityId key, Integer partition, TbMsg value);
 
     void removeStringList(String key, List<String> values);
 
     void removeEntityIdList(String key, List<EntityId> values);
 
-    void removeTbMsgList(String key, Integer partition, List<TbMsg> values);
+    void removeTbMsgList(EntityId key, Integer partition, List<TbMsg> values);
 
     Set<String> getStrings(String key);
 
     Set<EntityId> getEntityIds(String key);
 
-    Set<TbMsg> getTbMsgs(String key, Integer partition);
+    Set<TbMsg> getTbMsgs(EntityId key, Integer partition);
 
-    void evictTbMsgs(String key, Integer partition);
+    void evictTbMsgs(EntityId key, Integer partition);
 
     void evict(String key);
 

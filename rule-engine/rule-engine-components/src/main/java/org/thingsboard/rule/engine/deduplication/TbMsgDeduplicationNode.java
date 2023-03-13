@@ -104,7 +104,7 @@ public class TbMsgDeduplicationNode implements TbNode {
         if (ComponentLifecycleEvent.DELETED.equals(reason)) {
             if (!partitionsEntityIdsMap.isEmpty()) {
                 partitionsEntityIdsMap.forEach((partition, entityIds) ->
-                        entityIds.forEach(id -> ctx.getRuleNodeCacheService().evictTbMsgs(id.toString(), partition)));
+                        entityIds.forEach(id -> ctx.getRuleNodeCacheService().evictTbMsgs(id, partition)));
             }
             ctx.getRuleNodeCacheService().evict(DEDUPLICATION_IDS_CACHE_KEY);
         }
@@ -150,7 +150,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                             Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
                             boolean added = entityIds.add(id);
                             if (added) {
-                                List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), partition));
+                                List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id, partition));
                                 DeduplicationData deduplicationData = entityIdDeduplicationMsgsMap.computeIfAbsent(id, k -> new DeduplicationData());
                                 if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
                                     return;
@@ -182,7 +182,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                                 ctx.getRuleNodeCacheService().add(DEDUPLICATION_IDS_CACHE_KEY, id);
                             }
                             deduplicationMsgs.add(msg);
-                            ctx.getRuleNodeCacheService().add(id.toString(), partition, msg);
+                            ctx.getRuleNodeCacheService().add(id, partition, msg);
                             ctx.ack(msg);
                             scheduleTickMsg(ctx, id, deduplicationMsgs);
                         } else {
@@ -299,7 +299,7 @@ public class TbMsgDeduplicationNode implements TbNode {
             ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
-                        ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator().toString(), partition, msgsToRemoveFromCache);
+                        ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache);
                     },
                     throwable -> {
                         log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt, throwable);
@@ -307,7 +307,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                     });
         } else {
             log.trace("[{}][{}] Removing deduplication messages pack due to max enqueue retry attempts exhausted!", ctx.getSelfId(), outMsg.getOriginator());
-            ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator().toString(), partition, msgsToRemoveFromCache);
+            ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache);
         }
     }
 

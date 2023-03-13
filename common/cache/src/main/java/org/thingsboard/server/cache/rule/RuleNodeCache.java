@@ -28,21 +28,21 @@ public interface RuleNodeCache {
 
     void add(RuleNodeId ruleNodeId, String key, EntityId value);
 
-    void add(RuleNodeId ruleNodeId, Integer partition, String key, TbMsg value);
+    void add(RuleNodeId ruleNodeId, Integer partition, EntityId key, TbMsg value);
 
     void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values);
 
     void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values);
 
-    void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, String key, List<TbMsg> values);
+    void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, EntityId key, List<TbMsg> values);
 
     Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key);
 
     Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key);
 
-    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, String key);
+    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, EntityId key);
 
     void evict(RuleNodeId ruleNodeId, String key);
 
-    void evict(RuleNodeId ruleNodeId, Integer partition, String key);
+    void evict(RuleNodeId ruleNodeId, Integer partition, EntityId key);
 }

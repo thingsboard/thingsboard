@@ -111,7 +111,7 @@ public class TbMsgDelayNodeTest {
         when(tpi.getPartition()).thenReturn(Optional.of(0));
         when(tpi.isMyPartition()).thenReturn(true);
         when(ruleNodeCacheService.getEntityIds(DELAYED_ORIGINATOR_IDS_CACHE_KEY)).thenReturn(Collections.emptySet());
-        when(ruleNodeCacheService.getTbMsgs(anyString(), any())).thenReturn(Collections.emptySet());
+        when(ruleNodeCacheService.getTbMsgs(any(), any())).thenReturn(Collections.emptySet());
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
             String type = (String) (invocationOnMock.getArguments())[1];
@@ -147,7 +147,7 @@ public class TbMsgDelayNodeTest {
     }
 
     @Test
-    public void given_100_messages_then_verifyOutput() throws TbNodeException, ExecutionException, InterruptedException {
+    public void given_100_messages_then_verifyOutput() throws TbNodeException, InterruptedException {
         int msgCount = 5;
         awaitTellSelfLatch = new CountDownLatch(msgCount);
         invokeTellSelf(msgCount);
@@ -174,7 +174,7 @@ public class TbMsgDelayNodeTest {
 
         verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
         verify(ruleNodeCacheService, times(1)).add(eq(DELAYED_ORIGINATOR_IDS_CACHE_KEY), eq(deviceId));
-        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId.toString()), any(), any(TbMsg.class));
+        verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         verify(node, times(msgCount * 2 + 1)).onMsg(eq(ctx), any());
 
@@ -185,14 +185,14 @@ public class TbMsgDelayNodeTest {
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
             valueCaptor.run();
         }
-        verify(ruleNodeCacheService, times(msgCount)).removeTbMsgList(eq(deviceId.toString()), any(), anyList());
+        verify(ruleNodeCacheService, times(msgCount)).removeTbMsgList(eq(deviceId), any(), anyList());
 
         List<ByteString> expectedMsgs = inputMsgs.stream().map(TbMsg::toByteString).collect(Collectors.toList());
         List<ByteString> actualMsgs = newMsgCaptor.getAllValues().stream().map(TbMsg::toByteString).collect(Collectors.toList());
         Assertions.assertEquals(expectedMsgs, actualMsgs);
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(anyString(), any());
+        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
         verify(ruleNodeCacheService, times(1)).evict(eq(DELAYED_ORIGINATOR_IDS_CACHE_KEY));
 
     }

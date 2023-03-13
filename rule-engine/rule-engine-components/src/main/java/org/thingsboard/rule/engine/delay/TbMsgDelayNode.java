@@ -107,7 +107,7 @@ public class TbMsgDelayNode implements TbNode {
                             Set<EntityId> partitionEntityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
                             boolean added = partitionEntityIds.add(id);
                             if (added) {
-                                Set<TbMsg> pendingMsgs = ctx.getRuleNodeCacheService().getTbMsgs(id.toString(), partition);
+                                Set<TbMsg> pendingMsgs = ctx.getRuleNodeCacheService().getTbMsgs(id, partition);
                                 if (!pendingMsgs.isEmpty()) {
                                     Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdPendingMsgs.computeIfAbsent(id, k -> new HashMap<>());
                                     pendingMsgs.forEach(pendingMsg -> {
@@ -170,7 +170,7 @@ public class TbMsgDelayNode implements TbNode {
                             TbMsg transformedMsg = TbMsg.transformMsg(msg, metaDataCopy);
                             TbMsg added = originatorPendingMsgsMap.put(msgId, transformedMsg);
                             if (added == null) {
-                                ctx.getRuleNodeCacheService().add(id.toString(), partition, transformedMsg);
+                                ctx.getRuleNodeCacheService().add(id, partition, transformedMsg);
                             }
                             scheduleTickMsg(ctx, delay, id, msgId);
                             ctx.ack(msg);
@@ -204,7 +204,7 @@ public class TbMsgDelayNode implements TbNode {
         ctx.enqueueForTellNext(TbMsg.transformMsg(pendingMsg, metaData), SUCCESS,
                 () -> log.trace("[{}][{}] Successfully enqueue delayed message!", ctx.getSelfId(), originator),
                 throwable -> log.trace("[{}][{}][{}] Failed to enqueue delayed message due to: ", ctx.getSelfId(), originator, throwable));
-        ctx.getRuleNodeCacheService().removeTbMsgList(originator.toString(), partition, Collections.singletonList(pendingMsg));
+        ctx.getRuleNodeCacheService().removeTbMsgList(originator, partition, Collections.singletonList(pendingMsg));
     }
 
     private void scheduleTickMsg(TbContext ctx, long delay, EntityId originator, UUID msgId) {
@@ -236,7 +236,7 @@ public class TbMsgDelayNode implements TbNode {
         if (ComponentLifecycleEvent.DELETED.equals(reason)) {
             if (!partitionsEntityIdsMap.isEmpty()) {
                 partitionsEntityIdsMap.forEach((partition, entityIds) ->
-                        entityIds.forEach(id -> ctx.getRuleNodeCacheService().evictTbMsgs(id.toString(), partition)));
+                        entityIds.forEach(id -> ctx.getRuleNodeCacheService().evictTbMsgs(id, partition)));
             }
             ctx.getRuleNodeCacheService().evict(DELAYED_ORIGINATOR_IDS_CACHE_KEY);
         }

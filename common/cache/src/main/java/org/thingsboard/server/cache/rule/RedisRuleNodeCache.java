@@ -49,8 +49,8 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void add(RuleNodeId ruleNodeId, Integer partition, String key, TbMsg value) {
-        processAdd(ruleNodeId, partition, key, TbMsg.toByteArray(value));
+    public void add(RuleNodeId ruleNodeId, Integer partition, EntityId key, TbMsg value) {
+        processAdd(ruleNodeId, partition, key.getId().toString(), TbMsg.toByteArray(value));
     }
 
     @Override
@@ -64,8 +64,8 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, String key, List<TbMsg> values) {
-        processRemove(ruleNodeId, partition, key, tbMsgListToBytes(values));
+    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, EntityId key, List<TbMsg> values) {
+        processRemove(ruleNodeId, partition, key.getId().toString(), tbMsgListToBytes(values));
     }
 
     @Override
@@ -79,20 +79,18 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, String key) {
-        return toTbMsgSet(processGetMembers(ruleNodeId, partition, key));
+    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
+        return toTbMsgSet(processGetMembers(ruleNodeId, partition, key.getId().toString()));
     }
 
     @Override
     public void evict(RuleNodeId ruleNodeId, String key) {
-        evict(ruleNodeId, null, key);
+        processEvict(toRuleNodeCacheKey(ruleNodeId, null, key));
     }
 
     @Override
-    public void evict(RuleNodeId ruleNodeId, Integer partition, String key) {
-        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.del(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes());
-        }
+    public void evict(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
+        processEvict(toRuleNodeCacheKey(ruleNodeId, partition, key.getId().toString()));
     }
 
     private void processAdd(RuleNodeId ruleNodeId, String key, byte[] value) {
@@ -129,6 +127,12 @@ public class RedisRuleNodeCache implements RuleNodeCache {
                 return Collections.emptySet();
             }
             return bytes;
+        }
+    }
+
+    private void processEvict(String ruleNodeId) {
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
+            connection.del(ruleNodeId.getBytes());
         }
     }
 

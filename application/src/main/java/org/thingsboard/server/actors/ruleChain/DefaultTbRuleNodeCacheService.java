@@ -44,12 +44,12 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
     }
 
     @Override
-    public void add(String key, Integer partition, TbMsg value) {
+    public void add(EntityId key, Integer partition, TbMsg value) {
         cache.add(ruleNodeId, partition, key, value);
     }
 
     @Override
-    public void removeTbMsgList(String key, Integer partition, List<TbMsg> values) {
+    public void removeTbMsgList(EntityId key, Integer partition, List<TbMsg> values) {
         cache.removeTbMsgList(ruleNodeId, partition, key, values);
     }
 
@@ -74,12 +74,12 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
     }
 
     @Override
-    public Set<TbMsg> getTbMsgs(String key, Integer partition) {
+    public Set<TbMsg> getTbMsgs(EntityId key, Integer partition) {
         return cache.getTbMsgSetByKey(ruleNodeId, partition, key);
     }
 
     @Override
-    public void evictTbMsgs(String key, Integer partition) {
+    public void evictTbMsgs(EntityId key, Integer partition) {
         cache.evict(ruleNodeId, partition, key);
     }
 
