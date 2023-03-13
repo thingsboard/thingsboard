@@ -100,8 +100,6 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
                     (newJsonValue.has("providerTenantId") && !newJsonValue.get("providerTenantId").equals(oldJsonValue.get("providerTenantId")))){
                 ((ObjectNode) newJsonValue).put("tokenGenerated", false);
                 ((ObjectNode) newJsonValue).remove("refreshToken");
-                ((ObjectNode) newJsonValue).remove("accessToken");
-                ((ObjectNode) newJsonValue).remove("tokenExpires");
                 ((ObjectNode) newJsonValue).remove("refreshTokenExpires");
             }
         }
