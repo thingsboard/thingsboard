@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -40,6 +41,9 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.permission.Operation;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
@@ -64,6 +68,17 @@ public class EntityQueryController extends BaseController {
             @RequestBody EntityCountQuery query) throws ThingsboardException {
         checkNotNull(query);
         return this.entityQueryService.countEntitiesByQuery(getCurrentUser(), query);
+    }
+
+    @ApiOperation(value = "Count Entities by Entity Types")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/entitiesTypes/count", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<EntityType, Long> countEntitiesByQuery(
+            @ApiParam(value = "A JSON value representing the entity types array.")
+            @RequestBody List<EntityType> entityTypes) throws ThingsboardException {
+        checkNotNull(entityTypes);
+        return this.entityQueryService.countEntitiesByTypes(getCurrentUser(), entityTypes);
     }
 
     @ApiOperation(value = "Find Entity Data by Query", notes = ENTITY_DATA_QUERY_DESCRIPTION)

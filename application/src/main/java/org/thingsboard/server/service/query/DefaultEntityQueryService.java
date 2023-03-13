@@ -103,6 +103,11 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     @Override
+    public Map<EntityType, Long> countEntitiesByTypes(SecurityUser securityUser, List<EntityType> entityTypes) {
+        return entityService.countEntitiesByTypes(securityUser.getTenantId(), securityUser.getCustomerId(), entityTypes);
+    }
+
+    @Override
     public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) {
         if (query.getKeyFilters() != null) {
             resolveDynamicValuesInPredicates(
