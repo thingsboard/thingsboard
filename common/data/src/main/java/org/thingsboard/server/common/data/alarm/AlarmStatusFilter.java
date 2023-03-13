@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public class AlarmStatusFilter {
@@ -94,19 +94,19 @@ public class AlarmStatusFilter {
     }
 
 
-    public static AlarmStatusFilter fromList(List<AlarmSearchStatus> list) {
-        if (list == null || list.isEmpty() || list.contains(AlarmSearchStatus.ANY)) {
+    public static AlarmStatusFilter from(Collection<AlarmSearchStatus> statuses) {
+        if (statuses == null || statuses.isEmpty() || statuses.contains(AlarmSearchStatus.ANY)) {
             return EMPTY;
         }
-        boolean clearFilter = list.contains(AlarmSearchStatus.CLEARED);
-        boolean activeFilter = list.contains(AlarmSearchStatus.ACTIVE);
+        boolean clearFilter = statuses.contains(AlarmSearchStatus.CLEARED);
+        boolean activeFilter = statuses.contains(AlarmSearchStatus.ACTIVE);
         Optional<Boolean> clear = Optional.empty();
         if (clearFilter && !activeFilter || !clearFilter && activeFilter) {
             clear = Optional.of(clearFilter);
         }
 
-        boolean ackFilter = list.contains(AlarmSearchStatus.ACK);
-        boolean unackFilter = list.contains(AlarmSearchStatus.UNACK);
+        boolean ackFilter = statuses.contains(AlarmSearchStatus.ACK);
+        boolean unackFilter = statuses.contains(AlarmSearchStatus.UNACK);
         Optional<Boolean> ack = Optional.empty();
         if (ackFilter && !unackFilter || !ackFilter && unackFilter) {
             ack = Optional.of(ackFilter);
@@ -114,5 +114,9 @@ public class AlarmStatusFilter {
         return new AlarmStatusFilter(clear, ack);
     }
 
+    public boolean matches(Alarm alarm) {
+        return ackFilter.map(ackFilter -> ackFilter.equals(alarm.isAcknowledged())).orElse(true) &&
+                clearFilter.map(clearedFilter -> clearedFilter.equals(alarm.isCleared())).orElse(true);
+    }
 
 }

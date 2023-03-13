@@ -16,8 +16,8 @@
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 
 import java.util.Set;
 
@@ -35,7 +35,7 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
 
     @Data
     public static class ClearRule {
-        private AlarmStatus alarmStatus;
+        private Set<AlarmSearchStatus> alarmStatuses;
     }
 
 }

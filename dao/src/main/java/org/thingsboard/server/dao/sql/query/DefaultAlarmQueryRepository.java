@@ -19,12 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,11 +38,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -248,7 +243,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 wherePart.append("a.severity in (:alarmSeverities)");
             }
 
-            AlarmStatusFilter asf = AlarmStatusFilter.fromList(pageLink.getStatusList());
+            AlarmStatusFilter asf = AlarmStatusFilter.from(pageLink.getStatusList());
             if (asf.hasAnyFilter()) {
                 if (asf.hasAckFilter()) {
                     addAndIfNeeded(wherePart, addAnd);

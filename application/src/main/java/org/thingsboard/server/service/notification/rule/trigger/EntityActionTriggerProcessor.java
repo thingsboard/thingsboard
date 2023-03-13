@@ -59,8 +59,7 @@ public class EntityActionTriggerProcessor implements NotificationRuleTriggerProc
                                 msgType.equals(DataConstants.ENTITY_UPDATED) ? ActionType.UPDATED :
                                 msgType.equals(DataConstants.ENTITY_DELETED) ? ActionType.DELETED : null;
         return EntityActionNotificationInfo.builder()
-                .entityType(entityId.getEntityType())
-                .entityId(entityId.getId())
+                .entityId(entityId)
                 .entityName(ruleEngineMsg.getMetaData().getValue("entityName"))
                 .actionType(actionType)
                 .originatorUserId(UUID.fromString(ruleEngineMsg.getMetaData().getValue("userId")))

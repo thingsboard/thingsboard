@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
@@ -234,7 +235,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         clients.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
-        alarmSubscriptionService.ackAlarm(tenantId, alarm.getId(), System.currentTimeMillis());
+        alarmSubscriptionService.acknowledgeAlarm(tenantId, alarm.getId(), System.currentTimeMillis());
         AlarmStatus expectedStatus = AlarmStatus.ACTIVE_ACK;
         AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
         clients.values().forEach(wsClient -> {
@@ -270,7 +271,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         triggerConfig.setAlarmSeverities(null);
 
         AlarmNotificationRuleTriggerConfig.ClearRule clearRule = new AlarmNotificationRuleTriggerConfig.ClearRule();
-        clearRule.setAlarmStatus(AlarmStatus.CLEARED_UNACK);
+        clearRule.setAlarmStatuses(Set.of(AlarmSearchStatus.CLEARED, AlarmSearchStatus.UNACK));
         triggerConfig.setClearRule(clearRule);
         notificationRule.setTriggerConfig(triggerConfig);
 
@@ -308,7 +309,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
 
         getWsClient().registerWaitForUpdate();
-        alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), null, System.currentTimeMillis());
+        alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
         getWsClient().waitForUpdate(true);
         notification = getWsClient().getLastDataUpdate().getNotifications().iterator().next();
         assertThat(notification.getSubject()).isEqualTo("CRITICAL alarm '" + alarmType + "' is CLEARED_UNACK");

@@ -16,9 +16,17 @@
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+
+import java.util.Set;
 
 @Data
 public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    private Set<String> alarmTypes;
+    private Set<AlarmSeverity> alarmSeverities;
+    private Set<AlarmSearchStatus> alarmStatuses;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {

@@ -57,4 +57,9 @@ public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
         );
     }
 
+    @Override
+    public EntityId getStateEntityId() {
+        return alarmOriginator;
+    }
+
 }

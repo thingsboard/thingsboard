@@ -17,9 +17,9 @@ package org.thingsboard.server.service.notification.rule.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
@@ -27,14 +27,17 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotific
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.service.notification.rule.trigger.AlarmTriggerProcessor.AlarmTriggerObject;
 
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+
 @Service
 public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmTriggerObject, AlarmNotificationRuleTriggerConfig> {
 
     @Override
     public boolean matchesFilter(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
         Alarm alarm = triggerObject.getAlarm();
-        return (CollectionUtils.isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
-                (CollectionUtils.isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity()));
+        return (isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
+                (isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity()));
     }
 
     @Override
@@ -45,8 +48,8 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
         Alarm alarm = triggerObject.getAlarm();
         ClearRule clearRule = triggerConfig.getClearRule();
         if (clearRule != null) {
-            if (clearRule.getAlarmStatus() != null) {
-                return clearRule.getAlarmStatus().equals(alarm.getStatus());
+            if (isNotEmpty(clearRule.getAlarmStatuses())) {
+                return AlarmStatusFilter.from(clearRule.getAlarmStatuses()).matches(alarm);
             }
         }
         return false;
