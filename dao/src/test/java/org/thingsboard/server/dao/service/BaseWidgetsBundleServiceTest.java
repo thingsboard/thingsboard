@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -77,22 +78,26 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetsBundleWithEmptyTitle() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
-        widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetsBundleWithInvalidTenant() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
         widgetsBundle.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetsBundleTenant() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
@@ -100,13 +105,15 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
         savedWidgetsBundle.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         try {
-            widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetsBundleAlias() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
@@ -114,7 +121,9 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
         savedWidgetsBundle.setAlias("new_alias");
         try {
-            widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }

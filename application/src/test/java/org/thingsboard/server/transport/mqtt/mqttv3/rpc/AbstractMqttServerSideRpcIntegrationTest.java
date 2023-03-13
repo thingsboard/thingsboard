@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
@@ -82,7 +83,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         client.connectAndWait(accessToken);
         MqttTestCallback callback = new MqttTestCallback(rpcSubTopic.replace("+", "0"));
         client.setCallback(callback);
-        client.subscribeAndWait(rpcSubTopic, MqttQoS.AT_MOST_ONCE);
+        subscribeAndWait(client, rpcSubTopic, savedDevice.getId(), FeatureType.RPC);
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String result = doPostAsync("/api/rpc/oneway/" + savedDevice.getId(), setGpioRequest, String.class, status().isOk());
@@ -119,7 +120,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
     protected void processJsonTwoWayRpcTest(String rpcSubTopic) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
-        client.subscribeAndWait(rpcSubTopic, MqttQoS.AT_LEAST_ONCE);
+        subscribeAndWait(client, rpcSubTopic, savedDevice.getId(), FeatureType.RPC);
         MqttTestRpcJsonCallback callback = new MqttTestRpcJsonCallback(client, rpcSubTopic.replace("+", "0"));
         client.setCallback(callback);
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
@@ -133,7 +134,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
     protected void processProtoTwoWayRpcTest(String rpcSubTopic) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
-        client.subscribeAndWait(rpcSubTopic, MqttQoS.AT_LEAST_ONCE);
+        subscribeAndWait(client, rpcSubTopic, savedDevice.getId(), FeatureType.RPC);
 
         MqttTestRpcProtoCallback callback = new MqttTestRpcProtoCallback(client, rpcSubTopic.replace("+", "0"));
         client.setCallback(callback);
@@ -194,7 +195,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         client.enableManualAcks();
         MqttTestSequenceCallback callback = new MqttTestSequenceCallback(client, 10, result);
         client.setCallback(callback);
-        client.subscribeAndWait(DEVICE_RPC_REQUESTS_SUB_TOPIC, MqttQoS.AT_LEAST_ONCE);
+        subscribeAndWait(client, DEVICE_RPC_REQUESTS_SUB_TOPIC, savedDevice.getId(), FeatureType.RPC);
 
         callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertEquals(expected, result);
@@ -223,6 +224,8 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         MqttTestCallback  callback = new MqttTestCallback(GATEWAY_RPC_TOPIC);
         client.setCallback(callback);
         client.subscribeAndWait(GATEWAY_RPC_TOPIC, MqttQoS.AT_MOST_ONCE);
+        subscribeAndCheckSubscription(client, GATEWAY_RPC_TOPIC, savedDevice.getId(), FeatureType.RPC);
+
         String setGpioRequest = "{\"method\": \"toggle_gpio\", \"params\": {\"pin\":1}}";
         String deviceId = savedDevice.getId().getId().toString();
         String result = doPostAsync("/api/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
@@ -269,7 +272,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
         MqttTestRpcJsonCallback callback = new MqttTestRpcJsonCallback(client, GATEWAY_RPC_TOPIC);
         client.setCallback(callback);
-        client.subscribeAndWait(GATEWAY_RPC_TOPIC, MqttQoS.AT_MOST_ONCE);
+        subscribeAndCheckSubscription(client, GATEWAY_RPC_TOPIC, savedDevice.getId(), FeatureType.RPC);
 
         String setGpioRequest = "{\"method\": \"toggle_gpio\", \"params\": {\"pin\":1}}";
         String deviceId = savedDevice.getId().getId().toString();
@@ -292,7 +295,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
         MqttTestRpcProtoCallback callback = new MqttTestRpcProtoCallback(client, GATEWAY_RPC_TOPIC);
         client.setCallback(callback);
-        client.subscribeAndWait(GATEWAY_RPC_TOPIC, MqttQoS.AT_MOST_ONCE);
+        subscribeAndCheckSubscription(client, GATEWAY_RPC_TOPIC, savedDevice.getId(), FeatureType.RPC);
 
         String setGpioRequest = "{\"method\": \"toggle_gpio\", \"params\": {\"pin\":1}}";
         String deviceId = savedDevice.getId().getId().toString();
