@@ -70,7 +70,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -108,7 +108,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
     @SpyBean
-    DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
+    LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
 
     @Autowired
     private LwM2mClientContext clientContextTest;
