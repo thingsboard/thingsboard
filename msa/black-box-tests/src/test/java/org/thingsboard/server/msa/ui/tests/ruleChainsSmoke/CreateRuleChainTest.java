@@ -179,6 +179,6 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         ruleChainsPage.detailsBtn(ruleChainsPage.getRuleChainName()).click();
         ruleChainsPage.goToHelpPage();
 
-        Assert.assertTrue(urlContains(urlPath));
+        Assert.assertTrue(urlContains(urlPath), "URL contains " + urlPath);
     }
 }

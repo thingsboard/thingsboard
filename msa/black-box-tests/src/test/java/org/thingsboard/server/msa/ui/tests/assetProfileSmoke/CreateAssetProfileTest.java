@@ -186,6 +186,6 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         profilesPage.allEntity().get(0).click();
         profilesPage.goToProfileHelpPage();
 
-        Assert.assertTrue(urlContains(urlPath));
+        Assert.assertTrue(urlContains(urlPath), "URL not contains " + urlPath);
     }
 }

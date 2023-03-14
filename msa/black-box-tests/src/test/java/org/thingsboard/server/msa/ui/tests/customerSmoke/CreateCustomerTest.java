@@ -194,6 +194,6 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
         customerPage.customer(customerPage.getCustomerName()).click();
         customerPage.goToHelpPage();
 
-        Assert.assertTrue(urlContains(urlPath));
+        Assert.assertTrue(urlContains(urlPath), "URL contains " + urlPath);
     }
 }
