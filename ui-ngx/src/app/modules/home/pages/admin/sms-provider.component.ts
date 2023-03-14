@@ -19,7 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { AdminSettings, SmsProviderConfiguration } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
@@ -33,14 +33,14 @@ import { SendTestSmsDialogComponent, SendTestSmsDialogData } from '@home/pages/a
 })
 export class SmsProviderComponent extends PageComponent implements OnInit, HasConfirmForm {
 
-  smsProvider: FormGroup;
+  smsProvider: UntypedFormGroup;
   adminSettings: AdminSettings<SmsProviderConfiguration>;
 
   constructor(protected store: Store<AppState>,
               private router: Router,
               private adminService: AdminService,
               private dialog: MatDialog,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -88,7 +88,7 @@ export class SmsProviderComponent extends PageComponent implements OnInit, HasCo
     );
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.smsProvider;
   }
 

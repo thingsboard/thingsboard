@@ -72,6 +72,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -598,6 +599,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleEngineAlarmService getAlarmService() {
         return mainCtx.getAlarmService();
+    }
+
+    @Override
+    public AlarmCommentService getAlarmCommentService() {
+        return mainCtx.getAlarmCommentService();
     }
 
     @Override

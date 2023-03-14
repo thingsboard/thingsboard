@@ -76,7 +76,6 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
         Device device = findDeviceByName("Edge Device 1");
         Alarm alarm = new Alarm();
         alarm.setOriginator(device.getId());
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         alarm.setType("alarm");
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         edgeImitator.expectMessageAmount(1);

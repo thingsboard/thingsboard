@@ -19,16 +19,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -40,6 +44,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
     private IdComparator<User> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
+    private UserSettings userSettings;
 
     @Before
     public void before() {
@@ -65,7 +70,9 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         customerUser.setTenantId(tenantId);
         customerUser.setCustomerId(savedCustomer.getId());
         customerUser.setEmail("customer@thingsboard.org");
-        userService.saveUser(customerUser);
+        customerUser = userService.saveUser(customerUser);
+
+        userSettings = createUserSettings(customerUser.getId());
     }
 
     @After
@@ -136,32 +143,40 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         userService.deleteUser(tenantId, savedUser.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithSameEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("sysadmin@thingsboard.org");
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithInvalidEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("tenant_thingsboard.org");
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithEmptyEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail(null);
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithoutTenant() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setTenantId(null);
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
     @Test
@@ -472,6 +487,13 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         tenantService.deleteTenant(tenantId);
+    }
+
+    private UserSettings createUserSettings(UserId userId) {
+        UserSettings userSettings = new UserSettings();
+        userSettings.setUserId(userId);
+        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", StringUtils.randomAlphanumeric(10)));
+        return userSettings;
     }
 
 }

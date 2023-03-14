@@ -192,7 +192,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
         savedWidgetsBundle.setAlias("new_alias");
 
-        Mockito.reset(tbClusterService);
+        Mockito.clearInvocations(tbClusterService);
 
         doPost("/api/widgetsBundle", savedWidgetsBundle)
                 .andExpect(status().isBadRequest())

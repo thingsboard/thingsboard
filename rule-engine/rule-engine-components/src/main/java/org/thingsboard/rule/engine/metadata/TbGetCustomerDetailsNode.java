@@ -38,7 +38,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "customer details",
         configClazz = TbGetCustomerDetailsNodeConfiguration.class,
-        nodeDescription = "Adds fields from Customer details to the message body or metadata",
+        nodeDescription = "Enrich the message body or metadata with the corresponding customer details: title, address, email, phone, etc.",
         nodeDetails = "If checkbox: <b>Add selected details to the message metadata</b> is selected, existing fields will be added to the message metadata instead of message data.<br><br>" +
                 "<b>Note:</b> only Device, Asset, and Entity View type are allowed.<br><br>" +
                 "If the originator of the message is not assigned to Customer, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",

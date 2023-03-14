@@ -116,7 +116,7 @@ import java.util.stream.Collectors;
  * @author Andrew Shvayka
  */
 @Slf4j
-class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
+public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     static final String SESSION_TIMEOUT_MESSAGE = "session timeout!";
     final TenantId tenantId;

@@ -91,9 +91,9 @@ export default abstract class LeafletMap {
     selectedEntity: FormattedData;
     ignoreUpdateBounds = false;
     initDragModeIgnoreUpdateBoundsSet = false;
-  // tslint:disable-next-line:no-string-literal
+  // eslint-disable-next-line @typescript-eslint/dot-notation
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
-  // tslint:disable-next-line:no-string-literal
+  // eslint-disable-next-line @typescript-eslint/dot-notation
     northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
     saveLocation: (e: FormattedData, values: {[key: string]: any}) => Observable<any>;
     saveMarkerLocation: (e: FormattedData, lat?: number, lng?: number) => Observable<any>;
@@ -520,6 +520,13 @@ export default abstract class LeafletMap {
         this.createdControlButtonTooltip();
     }
 
+    resetState() {
+      if (this.options.initDragMode) {
+        this.initDragModeIgnoreUpdateBoundsSet = false;
+        this.ignoreUpdateBounds = false;
+      }
+    }
+
     private createdControlButtonTooltip() {
       import('tooltipster').then(() => {
         if ($.tooltipster) {
@@ -841,7 +848,7 @@ export default abstract class LeafletMap {
         this.fitBounds(bounds);
       }
     }
-    if (this.options.initDragMode && !this.initDragModeIgnoreUpdateBoundsSet) {
+    if (this.options.initDragMode && !this.initDragModeIgnoreUpdateBoundsSet && bounds.isValid()) {
       this.initDragModeIgnoreUpdateBoundsSet = true;
       this.ignoreUpdateBounds = true;
     }

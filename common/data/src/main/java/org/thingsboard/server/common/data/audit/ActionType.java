@@ -40,6 +40,8 @@ public enum ActionType {
     ALARM_ACK(false),
     ALARM_CLEAR(false),
     ALARM_DELETE(false),
+    ALARM_ASSIGN(false),
+    ALARM_UNASSIGN(false),
     LOGIN(false),
     LOGOUT(false),
     LOCKOUT(false),
@@ -48,7 +50,10 @@ public enum ActionType {
     PROVISION_SUCCESS(false),
     PROVISION_FAILURE(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false);
+    UNASSIGNED_FROM_EDGE(false),
+    ADDED_COMMENT(false),
+    UPDATED_COMMENT(false),
+    DELETED_COMMENT(false);
 
     private final boolean isRead;
 

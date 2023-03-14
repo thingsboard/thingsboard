@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Customer } from '@shared/models/customer.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,7 +42,7 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: Customer,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Customer>,
-              protected fb: FormBuilder,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -55,7 +55,7 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
     }
   }
 
-  buildEntityForm(entity: Customer): FormGroup {
+  buildEntityForm(entity: Customer): UntypedFormGroup {
     return this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],

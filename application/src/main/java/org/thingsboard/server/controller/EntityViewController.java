@@ -426,11 +426,7 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
-
-        Customer publicCustomer = customerService.findOrCreatePublicCustomer(getTenantId());
-
-        return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), getCurrentUser().getCustomerId(),
-                publicCustomer, entityViewId, getCurrentUser());
+        return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), entityViewId, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign entity view to edge (assignEntityViewToEdge)",

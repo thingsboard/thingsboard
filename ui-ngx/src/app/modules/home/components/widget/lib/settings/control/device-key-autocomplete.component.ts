@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -77,7 +77,7 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
 
   private propagateChange = null;
 
-  public deviceKeyFormGroup: FormGroup;
+  public deviceKeyFormGroup: UntypedFormGroup;
 
   filteredKeys: Observable<Array<string>>;
   keySearchText = '';
@@ -88,7 +88,7 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

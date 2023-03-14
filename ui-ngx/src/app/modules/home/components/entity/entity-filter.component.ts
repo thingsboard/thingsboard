@@ -15,7 +15,7 @@
 ///
 
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { AliasFilterType, aliasFilterTypeTranslationMap, EntityAliasFilter } from '@shared/models/alias.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,8 +44,8 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
 
   @Output() resolveMultipleChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  entityFilterFormGroup: FormGroup;
-  filterFormGroup: FormGroup;
+  entityFilterFormGroup: UntypedFormGroup;
+  filterFormGroup: UntypedFormGroup;
 
   aliasFilterTypes: Array<AliasFilterType>;
 
@@ -61,7 +61,7 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
 
   constructor(private translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

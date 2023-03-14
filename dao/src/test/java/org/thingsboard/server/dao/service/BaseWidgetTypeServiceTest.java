@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -88,7 +89,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetTypeWithEmptyName() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
@@ -100,22 +101,26 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         try {
-            widgetTypeService.saveWidgetType(widgetType);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetTypeService.saveWidgetType(widgetType);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetTypeWithEmptyBundleAlias() throws IOException {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
-        widgetTypeService.saveWidgetType(widgetType);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetTypeService.saveWidgetType(widgetType);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetTypeWithEmptyDescriptor() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
@@ -128,13 +133,15 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setDescriptor(new ObjectMapper().readValue("{}", JsonNode.class));
         try {
-            widgetTypeService.saveWidgetType(widgetType);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetTypeService.saveWidgetType(widgetType);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetTypeWithInvalidTenant() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
@@ -147,23 +154,27 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         try {
-            widgetTypeService.saveWidgetType(widgetType);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetTypeService.saveWidgetType(widgetType);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetTypeWithInvalidBundleAlias() throws IOException {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias("some_alias");
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
-        widgetTypeService.saveWidgetType(widgetType);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetTypeService.saveWidgetType(widgetType);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetTypeTenant() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
@@ -178,13 +189,15 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         savedWidgetType.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         try {
-            widgetTypeService.saveWidgetType(savedWidgetType);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetTypeService.saveWidgetType(savedWidgetType);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetTypeBundleAlias() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
@@ -199,13 +212,15 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         savedWidgetType.setBundleAlias("some_alias");
         try {
-            widgetTypeService.saveWidgetType(savedWidgetType);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetTypeService.saveWidgetType(savedWidgetType);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetTypeAlias() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
@@ -220,7 +235,9 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         savedWidgetType.setAlias("some_alias");
         try {
-            widgetTypeService.saveWidgetType(savedWidgetType);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetTypeService.saveWidgetType(savedWidgetType);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }

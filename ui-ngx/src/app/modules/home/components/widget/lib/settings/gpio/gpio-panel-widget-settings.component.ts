@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { GpioItem, gpioItemValidator } from '@home/components/widget/lib/settings/gpio/gpio-item.component';
@@ -28,14 +28,14 @@ import { GpioItem, gpioItemValidator } from '@home/components/widget/lib/setting
 })
 export class GpioPanelWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  gpioPanelWidgetSettingsForm: FormGroup;
+  gpioPanelWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.gpioPanelWidgetSettingsForm;
   }
 
@@ -60,11 +60,11 @@ export class GpioPanelWidgetSettingsComponent extends WidgetSettingsComponent {
     });
   }
 
-  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
     settingsForm.setControl('gpioList', this.prepareGpioListFormArray(settings.gpioList), {emitEvent: false});
   }
 
-  private prepareGpioListFormArray(gpioList: GpioItem[] | undefined): FormArray {
+  private prepareGpioListFormArray(gpioList: GpioItem[] | undefined): UntypedFormArray {
     const gpioListControls: Array<AbstractControl> = [];
     if (gpioList) {
       gpioList.forEach((gpioItem) => {
@@ -82,8 +82,8 @@ export class GpioPanelWidgetSettingsComponent extends WidgetSettingsComponent {
     }]);
   }
 
-  gpioListFormArray(): FormArray {
-    return this.gpioPanelWidgetSettingsForm.get('gpioList') as FormArray;
+  gpioListFormArray(): UntypedFormArray {
+    return this.gpioPanelWidgetSettingsForm.get('gpioList') as UntypedFormArray;
   }
 
   public trackByGpioItem(index: number, gpioItemControl: AbstractControl): any {
@@ -91,7 +91,7 @@ export class GpioPanelWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   public removeGpioItem(index: number) {
-    (this.gpioPanelWidgetSettingsForm.get('gpioList') as FormArray).removeAt(index);
+    (this.gpioPanelWidgetSettingsForm.get('gpioList') as UntypedFormArray).removeAt(index);
   }
 
   public addGpioItem() {
@@ -102,7 +102,7 @@ export class GpioPanelWidgetSettingsComponent extends WidgetSettingsComponent {
       col: null,
       color: null
     };
-    const gpioListArray = this.gpioPanelWidgetSettingsForm.get('gpioList') as FormArray;
+    const gpioListArray = this.gpioPanelWidgetSettingsForm.get('gpioList') as UntypedFormArray;
     const gpioItemControl = this.fb.control(gpioItem, [gpioItemValidator(true)]);
     (gpioItemControl as any).new = true;
     gpioListArray.push(gpioItemControl);
