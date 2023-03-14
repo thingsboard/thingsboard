@@ -17,10 +17,12 @@ package org.thingsboard.server.service.entitiy.alarm;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
@@ -48,5 +50,13 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
     public void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
         alarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment.getId());
         notificationEntityService.notifyAlarmComment(alarm, alarmComment, ActionType.DELETED_COMMENT, user);
+
+        AlarmComment.AlarmCommentBuilder commentDeletedComment = AlarmComment.builder()
+                .alarmId(alarm.getId())
+                .type(AlarmCommentType.SYSTEM)
+                .comment(JacksonUtil.newObjectNode().put("text",
+                        String.format("User %s deleted his comment", user.getName())));
+
+        alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), commentDeletedComment.build());
     }
 }

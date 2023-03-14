@@ -104,7 +104,7 @@ public class AlarmCommentController extends BaseController {
     @RequestMapping(value = "/alarm/{alarmId}/comment", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmCommentInfo> getAlarmComments(
-            @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+            @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ALARM_ID) String strAlarmId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
