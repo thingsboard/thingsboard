@@ -132,7 +132,11 @@ public class TbMsgDelayNodeTest {
             executorService.schedule(() -> {
                 if (scheduleCount.get() <= maxNumberOfInvocation) {
                     TbMsg msg = (TbMsg) (invocationOnMock.getArguments())[0];
-                    node.onMsg(ctx, msg);
+                    try {
+                        node.onMsg(ctx, msg);
+                    } catch (ExecutionException | InterruptedException | TbNodeException e) {
+                        log.error("Failed to process onMsg method on tellSelf invocation due to : ", e);
+                    }
                     awaitTellSelfLatch.countDown();
                 }
             }, scheduleTimeout.get(), TimeUnit.SECONDS);
@@ -147,7 +151,7 @@ public class TbMsgDelayNodeTest {
     }
 
     @Test
-    public void given_100_messages_then_verifyOutput() throws TbNodeException, InterruptedException {
+    public void given_100_messages_then_verifyOutput() throws TbNodeException, InterruptedException, ExecutionException {
         int msgCount = 5;
         awaitTellSelfLatch = new CountDownLatch(msgCount);
         invokeTellSelf(msgCount);
