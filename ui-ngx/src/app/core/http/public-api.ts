@@ -30,6 +30,7 @@ export * from './entity-relation.service';
 export * from './entity-view.service';
 export * from './event.service';
 export * from './http-utils';
+export * from './notification.service';
 export * from './oauth2.service';
 export * from './ota-package.service';
 export * from './queue.service';

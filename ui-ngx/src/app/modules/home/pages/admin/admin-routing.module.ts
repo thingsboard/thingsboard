@@ -36,6 +36,7 @@ import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
+import { NotificationSettingsComponent } from '@home/pages/admin/notification-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -148,6 +149,19 @@ const routes: Routes = [
           breadcrumb: {
             label: 'admin.home-settings',
             icon: 'settings_applications'
+          }
+        }
+      },
+      {
+        path: 'notification',
+        component: NotificationSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+          title: 'admin.notification.notification-settings',
+          breadcrumb: {
+            label: 'admin.notification.notification-settings',
+            icon: 'notifications'
           }
         }
       },

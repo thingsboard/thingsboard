@@ -1079,6 +1079,14 @@ mat-label {
     white-space: pre-line;
   }
 
+  // TinyMCE
+
+  .tox-tinymce {
+    button:not(.mat-mdc-menu-item):not(.mat-sort-header-button) {
+      text-transform: none;
+    }
+  }
+
   .tb-toast-panel {
     pointer-events: none !important;
   }

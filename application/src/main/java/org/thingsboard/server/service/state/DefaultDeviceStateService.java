@@ -28,6 +28,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -149,7 +150,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private final TbServiceInfoProvider serviceInfoProvider;
     private final EntityQueryRepository entityQueryRepository;
     private final DbTypeInfoComponent dbTypeInfoComponent;
-
+    @Autowired @Lazy
     private TelemetrySubscriptionService tsSubService;
 
     @Value("${state.defaultInactivityTimeoutInSec}")
@@ -194,11 +195,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         this.serviceInfoProvider = serviceInfoProvider;
         this.entityQueryRepository = entityQueryRepository;
         this.dbTypeInfoComponent = dbTypeInfoComponent;
-    }
-
-    @Autowired
-    public void setTsSubService(TelemetrySubscriptionService tsSubService) {
-        this.tsSubService = tsSubService;
     }
 
     @PostConstruct
