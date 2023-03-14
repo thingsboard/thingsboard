@@ -124,6 +124,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   activeComponentChanged(activeComponent: any) {
+    this.activeComponentService.setCurrentActiveComponent(activeComponent);
     if (!this.activeComponent) {
       setTimeout(() => {
         this.updateActiveComponent(activeComponent);
@@ -138,7 +139,6 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     this.searchText = '';
     this.activeComponent = activeComponent;
     this.hideLoadingBar = activeComponent && activeComponent instanceof RouterTabsComponent;
-    this.activeComponentService.setCurrentActiveComponent(activeComponent);
     if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
       this.searchEnabled = true;
       this.searchableComponent = this.activeComponent;
