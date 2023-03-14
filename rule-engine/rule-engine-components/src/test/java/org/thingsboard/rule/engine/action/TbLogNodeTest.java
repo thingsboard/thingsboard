@@ -17,6 +17,12 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -24,8 +30,16 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @Slf4j
 public class TbLogNodeTest {
@@ -79,14 +93,50 @@ public class TbLogNodeTest {
                 "{}");
     }
 
+    @ParameterizedTest
+    @EnumSource(ScriptLanguage.class)
+    void givenDefaultConfig_whenIsStandardForEachScriptLanguage_thenTrue(ScriptLanguage scriptLanguage) throws TbNodeException {
+
+        TbLogNodeConfiguration config = new TbLogNodeConfiguration().defaultConfiguration();
+        config.setScriptLang(scriptLanguage);
+        TbLogNode node = spy(new TbLogNode());
+        TbNodeConfiguration tbNodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        TbContext ctx = mock(TbContext.class);
+        node.init(ctx, tbNodeConfiguration);
+
+        assertThat(node.isStandard(config)).as("Script is standard for language " + scriptLanguage).isTrue();
+        verify(node, never()).createScriptEngine(any(), any());
+        verify(ctx, never()).createScriptEngine(any(), anyString());
+
+    }
+
     @Test
-    void givenDefaultConfig_whenIsStandardForEachScriptLanguage_thenTrue() {
+    void givenScriptEngineEnum_whenNewAdded_thenFailed() {
+        assertThat(ScriptLanguage.values().length).as("only two ScriptLanguage supported").isEqualTo(2);
+    }
+
+    @Test
+    void givenScriptEngineLangJs_whenCreateScriptEngine_thenSupplyJsScript(){
+        TbLogNodeConfiguration configJs = new TbLogNodeConfiguration().defaultConfiguration();
+        configJs.setScriptLang(ScriptLanguage.JS);
+        configJs.setJsScript(configJs.getJsScript() + " // This is JS script " + UUID.randomUUID());
         TbLogNode node = new TbLogNode();
-        for (ScriptLanguage scriptLanguage : ScriptLanguage.values()) {
-            TbLogNodeConfiguration config = new TbLogNodeConfiguration().defaultConfiguration();
-            config.setScriptLang(scriptLanguage);
-            assertThat(node.isStandard(config)).as("Script is standard for language " + scriptLanguage).isTrue();
-        }
+        TbContext ctx = mock(TbContext.class);
+        node.createScriptEngine(ctx, configJs);
+        verify(ctx).createScriptEngine(ScriptLanguage.JS, configJs.getJsScript());
+        verifyNoMoreInteractions(ctx);
+    }
+
+    @Test
+    void givenScriptEngineLangTbel_whenCreateScriptEngine_thenSupplyTbelScript(){
+        TbLogNodeConfiguration configTbel = new TbLogNodeConfiguration().defaultConfiguration();
+        configTbel.setScriptLang(ScriptLanguage.TBEL);
+        configTbel.setTbelScript(configTbel.getTbelScript() + " // This is TBEL script " + UUID.randomUUID());
+        TbLogNode node = new TbLogNode();
+        TbContext ctx = mock(TbContext.class);
+        node.createScriptEngine(ctx, configTbel);
+        verify(ctx).createScriptEngine(ScriptLanguage.TBEL, configTbel.getTbelScript());
+        verifyNoMoreInteractions(ctx);
     }
 
 }

@@ -57,7 +57,11 @@ public class TbLogNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbLogNodeConfiguration.class);
         this.standard = isStandard(config);
-        this.scriptEngine = this.standard ? null : ctx.createScriptEngine(config.getScriptLang(),
+        this.scriptEngine = this.standard ? null : createScriptEngine(ctx, config);
+    }
+
+    ScriptEngine createScriptEngine(TbContext ctx, TbLogNodeConfiguration config) {
+        return ctx.createScriptEngine(config.getScriptLang(),
                 ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getTbelScript() : config.getJsScript());
     }
 
@@ -91,9 +95,10 @@ public class TbLogNode implements TbNode {
         switch (conf.getScriptLang()) {
             case JS: return defaultConfig.getJsScript().equals(conf.getJsScript());
             case TBEL: return defaultConfig.getTbelScript().equals(conf.getTbelScript());
+            default:
+                log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
+                return false;
         }
-        log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
-        return false;
     }
 
     void logStandard(TbContext ctx, TbMsg msg) {
