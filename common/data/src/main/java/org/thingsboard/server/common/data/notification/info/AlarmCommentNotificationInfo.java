@@ -19,6 +19,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 import java.util.UUID;
@@ -32,14 +35,26 @@ public class AlarmCommentNotificationInfo implements NotificationInfo {
     private String comment;
     private String alarmType;
     private UUID alarmId;
+    private EntityId alarmOriginator;
+    private AlarmSeverity alarmSeverity;
+    private AlarmStatus alarmStatus;
 
     @Override
     public Map<String, String> getTemplateData() {
         return Map.of(
                 "comment", comment,
                 "alarmType", alarmType,
-                "alarmId", alarmId.toString()
+                "alarmId", alarmId.toString(),
+                "alarmSeverity", alarmSeverity.toString(),
+                "alarmStatus", alarmStatus.toString(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
+                "alarmOriginatorId", alarmOriginator.getId().toString()
         );
+    }
+
+    @Override
+    public EntityId getStateEntityId() {
+        return alarmOriginator;
     }
 
 }
