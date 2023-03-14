@@ -241,6 +241,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
+        entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -315,13 +316,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         if (query.getKeyFilters() == null || query.getKeyFilters().isEmpty()) {
             ctx.append("select count(e.id) from ");
             ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
-//
-//            if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-//                ctx.append(" e");
-//            } else {
-                ctx.append(" e where ");
-                ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
-//            }
+            ctx.append(" e where ");
+            ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
 
             return transactionTemplate.execute(status -> {
                 long startTs = System.currentTimeMillis();
