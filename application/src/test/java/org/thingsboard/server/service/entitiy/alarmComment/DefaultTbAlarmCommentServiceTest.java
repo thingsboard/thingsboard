@@ -86,10 +86,11 @@ public class DefaultTbAlarmCommentServiceTest {
     @Test
     public void testDelete() {
         var alarmId = new AlarmId(UUID.randomUUID());
-        var alarmCommentId = new AlarmCommentId(UUID.randomUUID());
+        var alarmComment = new AlarmComment();
+        alarmComment.setAlarmId(alarmId);
 
-        doNothing().when(alarmCommentService).deleteAlarmComment(Mockito.any(), eq(alarmCommentId));
-        service.deleteAlarmComment(new Alarm(alarmId), new AlarmComment(alarmCommentId), new User());
+        doNothing().when(alarmCommentService).deleteAlarmComment(Mockito.any(), eq(alarmComment), Mockito.any());
+        service.deleteAlarmComment(new Alarm(alarmId), new AlarmComment(), new User());
 
         verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
     }

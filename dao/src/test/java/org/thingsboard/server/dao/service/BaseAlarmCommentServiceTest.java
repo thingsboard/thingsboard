@@ -155,7 +155,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(createdComment);
         Assert.assertNotNull(createdComment.getId());
 
-        alarmCommentService.deleteAlarmComment(tenantId, createdComment.getId());
+        alarmCommentService.deleteAlarmComment(tenantId, createdComment, user);
 
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
 

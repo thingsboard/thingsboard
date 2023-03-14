@@ -22,12 +22,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -58,9 +62,20 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     }
 
     @Override
-    public void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId) {
-        log.debug("Deleting Alarm Comment with id: {}", alarmCommentId);
-        alarmCommentDao.deleteAlarmComment(tenantId, alarmCommentId);
+    public void deleteAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user) {
+        log.debug("Deleting Alarm Comment: {}", alarmComment);
+
+        if (alarmComment.getType() == AlarmCommentType.OTHER) {
+            alarmComment.setType(AlarmCommentType.SYSTEM);
+            alarmComment.setUserId(null);
+            alarmComment.setComment(JacksonUtil.newObjectNode().put("text",
+                    String.format("User %s deleted his comment",
+                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
+            alarmCommentDao.save(tenantId, alarmComment);
+        }
+        else {
+            alarmCommentDao.deleteAlarmComment(tenantId, alarmComment.getId());
+        }
     }
 
     @Override

@@ -48,15 +48,7 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
 
     @Override
     public void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
-        alarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment.getId());
+        alarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment, user);
         notificationEntityService.notifyAlarmComment(alarm, alarmComment, ActionType.DELETED_COMMENT, user);
-
-        AlarmComment.AlarmCommentBuilder commentDeletedComment = AlarmComment.builder()
-                .alarmId(alarm.getId())
-                .type(AlarmCommentType.SYSTEM)
-                .comment(JacksonUtil.newObjectNode().put("text",
-                        String.format("User %s deleted his comment", user.getName())));
-
-        alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), commentDeletedComment.build());
     }
 }
