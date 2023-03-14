@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -41,8 +43,11 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Delete several rule chains")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove several rule chains by mark in the checkbox and then click on the trash can icon in the menu " +
+            "that appears at the top")
     public void canDeleteSeveralRuleChainsByTopBtn() {
         String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName + 1));
@@ -57,8 +62,11 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.ruleChainsIsNotPresent(ruleChainName));
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Delete several rule chains")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove several rule chains by mark all the rule chains on the page by clicking in the topmost checkbox" +
+            " and then clicking on the trash icon in the menu that appears")
     public void selectAllRuleChain() {
         String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName + 1));
@@ -73,8 +81,11 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.ruleChainsIsNotPresent(ruleChainName));
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Delete several rule chains")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the root rule chain by mark in the checkbox and then click on the trash can icon in the menu " +
+            "that appears at the top")
     public void removeRootRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.selectAllCheckBox().click();
@@ -82,8 +93,11 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         Assert.assertFalse(ruleChainsPage.deleteBtn(ROOT_RULE_CHAIN_NAME).isEnabled());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Delete several rule chains")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the root rule chain by mark all the rule chains on the page by clicking in the topmost checkbox" +
+            " and then clicking on the trash icon in the menu that appears")
     public void removeSelectedRootRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.selectAllCheckBox().click();
@@ -91,8 +105,11 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         ruleChainsPage.assertCheckBoxIsNotDisplayed(ROOT_RULE_CHAIN_NAME);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Delete several rule chains")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Remove several rule chains by mark in the checkbox and then click on the trash can icon in the menu " +
+            "that appears at the top without refresh")
     public void deleteSeveralRuleChainsByTopBtnWithoutRefresh() {
         String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName + 1));

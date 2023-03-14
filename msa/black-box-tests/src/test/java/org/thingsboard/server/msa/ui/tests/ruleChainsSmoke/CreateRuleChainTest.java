@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -53,8 +55,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Add rule chain after specifying the name (text/numbers /special characters)")
     public void createRuleChain() {
         String ruleChainName = ENTITY_NAME + random();
 
@@ -70,8 +74,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Add rule chain after specifying the name and description (text/numbers /special characters)")
     public void createRuleChainWithDescription() {
         String ruleChainName = ENTITY_NAME + random();
 
@@ -89,8 +95,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertEquals(ruleChainsPage.descriptionEntityView().getAttribute("value"), ruleChainName);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add rule chain without the name")
     public void createRuleChainWithoutName() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -98,8 +106,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertFalse(ruleChainsPage.addBtnV().isEnabled());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Create rule chain only with spase in name")
     public void createRuleChainWithOnlySpace() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openCreateRuleChainView();
@@ -113,8 +123,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.addEntityView().isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Create a rule chain with the same name")
     public void createRuleChainWithSameName() {
         String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
@@ -138,8 +150,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         entityIsDisplayed.forEach(Assert::assertTrue);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Add rule chain after specifying the name (text/numbers /special characters) without refresh")
     public void createRuleChainWithoutRefresh() {
         String ruleChainName = ENTITY_NAME + random();
 
@@ -153,8 +167,10 @@ public class CreateRuleChainTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entity(ruleChainName).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Create rule chain")
     @Test(priority = 40, groups = "smoke")
-    @Description
+    @Description("Go to rule chain documentation page")
     public void documentation() {
         String urlPath = "docs/user-guide/ui/rule-chains/";
 
