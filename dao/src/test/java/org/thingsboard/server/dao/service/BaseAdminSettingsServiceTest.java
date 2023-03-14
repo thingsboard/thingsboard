@@ -20,10 +20,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 public abstract class BaseAdminSettingsServiceTest extends AbstractServiceTest {
+
+    @Autowired
+    AdminSettingsService adminSettingsService;
 
     @Test
     public void testFindAdminSettingsByKey() {
