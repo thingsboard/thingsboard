@@ -19,17 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasEmail;
 import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -39,8 +38,6 @@ import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -72,14 +69,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validateEntityCountQuery(query);
         return this.entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
-    }
-
-    @Override
-    public Map<EntityType, Long> countEntitiesByTypes(TenantId tenantId, CustomerId customerId, List<EntityType> entityTypes) {
-        log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], entityTypes [{}]", tenantId, customerId, entityTypes);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        return this.entityQueryDao.countEntitiesByTypes(tenantId, customerId, entityTypes);
     }
 
     @Override

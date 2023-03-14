@@ -1584,13 +1584,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return restTemplate.postForObject(baseURL + "/api/entitiesQuery/count", query, Long.class);
     }
 
-    public Map<Long, EntityType> countEntitiesByTypes(List<EntityType> entityTypes) {
-        return restTemplate.exchange(
-                baseURL + "/api/entitiesTypes/count",
-                HttpMethod.POST, new HttpEntity<>(entityTypes), new ParameterizedTypeReference<Map<Long, EntityType>>() {
-                }).getBody();
-    }
-
     public PageData<EntityData> findEntityDataByQuery(EntityDataQuery query) {
         return restTemplate.exchange(
                 baseURL + "/api/entitiesQuery/find",

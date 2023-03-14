@@ -17,7 +17,6 @@ package org.thingsboard.server.service.query;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -27,14 +26,9 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.List;
-import java.util.Map;
-
 public interface EntityQueryService {
 
     long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query);
-
-    Map<EntityType, Long> countEntitiesByTypes(SecurityUser securityUser, List<EntityType> entityTypes);
 
     PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query);
 

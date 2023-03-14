@@ -29,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.KvUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -55,7 +56,6 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -100,11 +100,6 @@ public class DefaultEntityQueryService implements EntityQueryService {
     @Override
     public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) {
         return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
-    }
-
-    @Override
-    public Map<EntityType, Long> countEntitiesByTypes(SecurityUser securityUser, List<EntityType> entityTypes) {
-        return entityService.countEntitiesByTypes(securityUser.getTenantId(), securityUser.getCustomerId(), entityTypes);
     }
 
     @Override

@@ -401,7 +401,6 @@ public class AdminController extends BaseController {
     @ResponseBody
     public SystemInfo getSystemInfo() throws ThingsboardException {
         return systemInfoService.getSystemInfo();
-
     }
 
 }
