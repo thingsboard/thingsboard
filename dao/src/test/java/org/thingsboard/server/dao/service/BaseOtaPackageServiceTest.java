@@ -20,13 +20,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,7 +34,11 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -59,18 +63,19 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
 
-    private TenantId tenantId;
-
     private DeviceProfileId deviceProfileId;
+
+    @Autowired
+    DeviceProfileService deviceProfileService;
+    @Autowired
+    DeviceService deviceService;
+    @Autowired
+    OtaPackageService otaPackageService;
+    @Autowired
+    TenantProfileService tenantProfileService;
 
     @Before
     public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
         Assert.assertNotNull(savedDeviceProfile);
