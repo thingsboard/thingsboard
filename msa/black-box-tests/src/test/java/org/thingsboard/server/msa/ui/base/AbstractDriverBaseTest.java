@@ -81,12 +81,12 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
-        openLocalhost();
+        openBaseUiUrl();
     }
 
     @BeforeMethod
     public void open() {
-        openLocalhost();
+        openBaseUiUrl();
     }
 
     @AfterMethod
@@ -105,7 +105,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         return (String) js.executeScript("return window.localStorage.getItem('jwt_token');");
     }
 
-    public void openLocalhost() {
+    public void openBaseUiUrl() {
         driver.get(getBaseUiUrl());
     }
 
