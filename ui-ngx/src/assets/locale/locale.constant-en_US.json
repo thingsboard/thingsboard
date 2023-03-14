@@ -2861,8 +2861,8 @@
         "targets-required": "Recipients is required",
         "template": "Template",
         "template-hint": {
-            "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}",
-            "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}",
+            "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
+            "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
             "device-inactivity": "Available params: ${deviceName}, ${deviceType}, ${deviceId}",
             "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}",
             "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}"

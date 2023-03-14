@@ -112,8 +112,8 @@
             <legend translate>notification.clear-rule</legend>
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
-              <mat-select formControlName="alarmStatus" multiple
-                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatus').value?.length ? ('alarm.any-status' | translate) : '' }}">
+              <mat-select formControlName="alarmStatuses" multiple
+                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
                 <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
                   {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
                 </mat-option>
@@ -232,8 +232,8 @@
             </mat-form-field>
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
-              <mat-select formControlName="alarmStatus" multiple
-                          placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatus').value?.length ? ('alarm.any-status' | translate) : '' }}">
+              <mat-select formControlName="alarmStatuses" multiple
+                          placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
                 <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
                   {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
                 </mat-option>

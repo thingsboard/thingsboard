@@ -151,7 +151,7 @@ export class RuleNotificationDialogComponent extends
         alarmTypes: [null],
         alarmSeverities: [[]],
         clearRule: this.fb.group({
-          alarmStatus: [[]]
+          alarmStatuses: [[]]
         })
       })
     });
@@ -189,7 +189,7 @@ export class RuleNotificationDialogComponent extends
       triggerConfig: this.fb.group({
         alarmTypes: [null],
         alarmSeverities: [[]],
-        alarmStatus: [[]]
+        alarmStatuses: [[]]
       })
     });
 
