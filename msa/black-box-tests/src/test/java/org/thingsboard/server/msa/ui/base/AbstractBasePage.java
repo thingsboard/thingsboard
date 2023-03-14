@@ -33,7 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 abstract public class AbstractBasePage {
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
