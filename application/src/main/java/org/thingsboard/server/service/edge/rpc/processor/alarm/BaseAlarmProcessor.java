@@ -48,7 +48,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             return Futures.immediateFuture(null);
         }
         try {
-            Alarm existentAlarm = alarmService.findLatestByOriginatorAndType(tenantId, originatorId, alarmUpdateMsg.getType()).get();
+            Alarm existentAlarm = alarmService.findLatestActiveByOriginatorAndType(tenantId, originatorId, alarmUpdateMsg.getType());
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -62,7 +62,9 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                         existentAlarm.setClearTs(alarmUpdateMsg.getClearTs());
                         existentAlarm.setPropagate(alarmUpdateMsg.getPropagate());
                     }
-                    existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
+                    var alarmStatus = AlarmStatus.valueOf(alarmUpdateMsg.getStatus());
+                    existentAlarm.setCleared(alarmStatus.isCleared());
+                    existentAlarm.setAcknowledged(alarmStatus.isAck());
                     existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                     existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
                     existentAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
@@ -70,18 +72,18 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
                     if (existentAlarm != null) {
-                        alarmService.ackAlarm(tenantId, existentAlarm.getId(), alarmUpdateMsg.getAckTs());
+                        alarmService.acknowledgeAlarm(tenantId, existentAlarm.getId(), alarmUpdateMsg.getAckTs());
                     }
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:
                     if (existentAlarm != null) {
                         alarmService.clearAlarm(tenantId, existentAlarm.getId(),
-                                JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
+                                alarmUpdateMsg.getAckTs(), JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
                     if (existentAlarm != null) {
-                        alarmService.deleteAlarm(tenantId, existentAlarm.getId());
+                        alarmService.delAlarm(tenantId, existentAlarm.getId());
                     }
                     break;
             }

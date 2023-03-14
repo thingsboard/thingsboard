@@ -20,6 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -44,7 +46,7 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     protected volatile DeviceProfile deviceProfile;
     @Getter
     @Setter
-    private volatile TransportProtos.SessionInfoProto sessionInfo;
+    protected volatile TransportProtos.SessionInfoProto sessionInfo;
 
     @Setter
     private volatile boolean connected;
@@ -81,4 +83,14 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     public void setDisconnected() {
         this.connected = false;
     }
+
+    public boolean isSparkplug() {
+        DeviceProfileTransportConfiguration transportConfiguration = this.deviceProfile.getProfileData().getTransportConfiguration();
+        if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
+            return ((MqttDeviceProfileTransportConfiguration) transportConfiguration).isSparkplug();
+        } else {
+            return false;
+        }
+    }
+
 }

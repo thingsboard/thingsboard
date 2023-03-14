@@ -435,9 +435,19 @@
         "originator": "Originator",
         "originator-type": "Originator type",
         "details": "Details",
+        "originator-label": "Originator label",
+        "assign": "Assign",
+        "assignments": "Assignments",
+        "assignee": "Assignee",
+        "assignee-id": "Assignee id",
+        "assignee-first-name": "Assignee first name",
+        "assignee-last-name": "Assignee last name",
+        "assignee-email": "Assignee email",
+        "unassigned": "Unassigned",
         "status": "Status",
         "alarm-details": "Alarm details",
         "start-time": "Start time",
+        "assign-time": "Assign time",
         "end-time": "End time",
         "ack-time": "Acknowledged time",
         "clear-time": "Cleared time",
@@ -474,7 +484,17 @@
         "fetch-size-error-min": "Minimum value is 10.",
         "alarm-type-list": "Alarm type list",
         "any-type": "Any type",
-        "search-propagated-alarms": "Search propagated alarms"
+        "search-propagated-alarms": "Search propagated alarms",
+        "comments": "Alarm comments",
+        "advanced-info": "Advanced info"
+    },
+    "alarm-comment": {
+        "add": "Add a comment...",
+        "alarm-comment": "Alarm comment",
+        "comments": "Comments",
+        "delete-alarm-comment": "Do you want to delete this comment?",
+        "refresh": "Refresh",
+        "sort-direction": "Sort direction"
     },
     "alias": {
         "add": "Add alias",
@@ -728,6 +748,8 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
+        "type-alarm-assign": "Assigned",
+        "type-alarm-unassign": "Unassigned",
         "type-added-comment": "Added comment",
         "type-updated-comment": "Updated comment",
         "type-deleted-comment": "Deleted comment",
@@ -1360,6 +1382,10 @@
         "create-new-device-profile": "Create a new one!",
         "mqtt-device-topic-filters": "MQTT device topic filters",
         "mqtt-device-topic-filters-unique": "MQTT device topic filters need to be unique.",
+        "mqtt-device-topic-filters-spark-plug": "MQTT device topic filters SparkPlug.",
+        "mqtt-device-topic-filters-spark-plug-hint": "Default - telemetry. Example: namespace/group_id/message_type/edge_node_id/[device_id].",
+        "mqtt-device-topic-filters-spark-plug-attribute-metric-names": "SparkPlug attributes metric names",
+        "mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint": "Names of SparkPlug metrics that will be stored as device attributes. All other metrics will be stored as device telemetry",
         "mqtt-device-payload-type": "MQTT device payload",
         "mqtt-device-payload-type-json": "JSON",
         "mqtt-device-payload-type-proto": "Protobuf",
@@ -3383,10 +3409,16 @@
         "days": "Days"
     },
     "timewindow": {
+        "years": "{ years, plural, =1 { year } other {# years } }",
+        "months": "{ months, plural, =1 { month } other {# months } }",
+        "weeks": "{ weeks, plural, =1 { week } other {# weeks } }",
         "days": "{ days, plural, =1 { day } other {# days } }",
         "hours": "{ hours, plural, =0 { hour } =1 {1 hour } other {# hours } }",
+        "hr": "{{ hr }} hr",
         "minutes": "{ minutes, plural, =0 { minute } =1 {1 minute } other {# minutes } }",
+        "min": "{{ min }} min",
         "seconds": "{ seconds, plural, =0 { second } =1 {1 second } other {# seconds } }",
+        "sec": "{{ sec }} sec",
         "short": {
             "days": "{ days, plural, =1 {1 day } other {# days } }",
             "hours": "{ hours, plural, =1 {1 hour } other {# hours } }",
@@ -3402,7 +3434,8 @@
         "last": "Last",
         "time-period": "Time period",
         "hide": "Hide",
-        "interval": "Interval"
+        "interval": "Interval",
+        "just-now": "Just now"
     },
     "user": {
         "user": "User",
@@ -4678,6 +4711,7 @@
             "use-markdown-text-function": "Use markdown/HTML value function",
             "markdown-text-function": "Markdown/HTML value function",
             "markdown-text-pattern": "Markdown/HTML pattern (markdown or HTML with variables, for ex. '${entityName} or ${keyName} - some text.')",
+            "apply-default-markdown-style": "Apply default markdown style",
             "markdown-css": "Markdown/HTML CSS"
         },
         "simple-card": {
@@ -4733,7 +4767,9 @@
             "enable-alarm-filter": "Enable alarm filter",
             "display-alarm-details": "Display alarm details",
             "allow-alarms-ack": "Allow alarms acknowledgment",
-            "allow-alarms-clear": "Allow alarms clear"
+            "allow-alarms-clear": "Allow alarms clear",
+            "display-alarm-comments": "Display alarm comments",
+            "allow-alarms-assign": "Allow alarms assignment"
         },
         "value-source": {
             "value-source": "Value source",

@@ -19,9 +19,8 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -46,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -71,10 +71,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         tenantProfileService.deleteTenantProfiles(anotherTenantId);
     }
 
-    @SuppressWarnings("deprecation")
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void testSaveDevicesWithoutMaxDeviceLimit() {
         Device device = this.saveDevice(tenantId, "My device");
@@ -91,7 +87,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         deleteDevice(tenantId, device);
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDevicesWithMaxDeviceOutOfLimit() {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(1).build());
@@ -102,7 +98,9 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         this.saveDevice(tenantId, "My first device");
         Assert.assertEquals(1, deviceService.countByTenantId(tenantId));
 
-        this.saveDevice(tenantId, "My second device that out of maxDeviceCount limit");
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            this.saveDevice(tenantId, "My second device that out of maxDeviceCount limit");
+        });
     }
 
     @Test
@@ -241,68 +239,78 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         savedDevice.setFirmwareId(savedFirmware.getId());
 
-        thrown.expect(DataValidationException.class);
-        thrown.expectMessage("Can't assign firmware with different deviceProfile!");
-        deviceService.saveDevice(savedDevice);
+        assertThatThrownBy(() -> deviceService.saveDevice(savedDevice))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("Can't assign firmware with different deviceProfile!");
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceWithEmptyName() {
         Device device = new Device();
         device.setType("default");
         device.setTenantId(tenantId);
-        deviceService.saveDevice(device);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceService.saveDevice(device);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceWithEmptyTenant() {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
-        deviceService.saveDevice(device);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceService.saveDevice(device);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceWithInvalidTenant() {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
         device.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        deviceService.saveDevice(device);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceService.saveDevice(device);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testAssignDeviceToNonExistentCustomer() {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
         device.setTenantId(tenantId);
-        device = deviceService.saveDevice(device);
+        Device savedDevice = deviceService.saveDevice(device);
         try {
-            deviceService.assignDeviceToCustomer(tenantId, device.getId(), new CustomerId(Uuids.timeBased()));
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceService.assignDeviceToCustomer(tenantId, savedDevice.getId(), new CustomerId(Uuids.timeBased()));
+            });
         } finally {
-            deviceService.deleteDevice(tenantId, device.getId());
+            deviceService.deleteDevice(tenantId, savedDevice.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testAssignDeviceToCustomerFromDifferentTenant() {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
         device.setTenantId(tenantId);
-        device = deviceService.saveDevice(device);
+        Device savedDevice = deviceService.saveDevice(device);
         Tenant tenant = new Tenant();
         tenant.setTitle("Test different tenant");
         tenant = tenantService.saveTenant(tenant);
         Customer customer = new Customer();
         customer.setTenantId(tenant.getId());
         customer.setTitle("Test different customer");
-        customer = customerService.saveCustomer(customer);
+        Customer savedCustomer = customerService.saveCustomer(customer);
         try {
-            deviceService.assignDeviceToCustomer(tenantId, device.getId(), customer.getId());
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceService.assignDeviceToCustomer(tenantId, savedDevice.getId(), savedCustomer.getId());
+            });
         } finally {
-            deviceService.deleteDevice(tenantId, device.getId());
+            deviceService.deleteDevice(tenantId, savedDevice.getId());
             tenantService.deleteTenant(tenant.getId());
         }
     }
