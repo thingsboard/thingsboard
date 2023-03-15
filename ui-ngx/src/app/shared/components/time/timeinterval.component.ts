@@ -17,7 +17,7 @@
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TimeInterval, TimeService } from '@core/services/time.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBooleanProperty, coerceNumberProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
@@ -39,8 +39,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   set min(min: number) {
-    if (typeof min !== 'undefined' && min !== this.minValue) {
-      this.minValue = min;
+    const minValueData = coerceNumberProperty(min);
+    if (typeof minValueData !== 'undefined' && minValueData !== this.minValue) {
+      this.minValue = minValueData;
       this.maxValue = Math.max(this.maxValue, this.minValue);
       this.updateView();
     }
@@ -48,8 +49,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   set max(max: number) {
-    if (typeof max !== 'undefined' && max !== this.maxValue) {
-      this.maxValue = max;
+    const maxValueData = coerceNumberProperty(max);
+    if (typeof maxValueData !== 'undefined' && maxValueData !== this.maxValue) {
+      this.maxValue = maxValueData;
       this.minValue = Math.min(this.minValue, this.maxValue);
       this.updateView();
     }

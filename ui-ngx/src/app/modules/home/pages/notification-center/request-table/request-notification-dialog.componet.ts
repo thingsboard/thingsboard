@@ -188,8 +188,8 @@ export class RequestNotificationDialogComponent extends
       this.preview = null;
       this.notificationService.getNotificationRequestPreview(this.notificationFormValue).pipe(
         map(data => {
-          if (data.processedTemplates.PUSH?.enabled) {
-            (data.processedTemplates.PUSH as any).text = data.processedTemplates.PUSH.body;
+          if (data.processedTemplates.WEB?.enabled) {
+            (data.processedTemplates.WEB as any).text = data.processedTemplates.WEB.body;
           }
           return data;
         })

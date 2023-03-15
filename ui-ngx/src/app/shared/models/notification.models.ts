@@ -36,7 +36,7 @@ export interface Notification {
   readonly info: NotificationInfo;
   readonly status: NotificationStatus;
   readonly createdTime: number;
-  readonly additionalConfig?: PushDeliveryMethodAdditionalConfig;
+  readonly additionalConfig?: WebDeliveryMethodAdditionalConfig;
 }
 
 export interface NotificationInfo {
@@ -189,18 +189,18 @@ interface NotificationTemplateConfig {
 }
 
 export interface DeliveryMethodNotificationTemplate extends
-  Partial<PushDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
+  Partial<WebDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
   body?: string;
   enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
-interface PushDeliveryMethodNotificationTemplate {
+interface WebDeliveryMethodNotificationTemplate {
   subject?: string;
-  additionalConfig: PushDeliveryMethodAdditionalConfig;
+  additionalConfig: WebDeliveryMethodAdditionalConfig;
 }
 
-interface PushDeliveryMethodAdditionalConfig {
+interface WebDeliveryMethodAdditionalConfig {
   icon: {
     enabled: boolean;
     icon: string;
@@ -232,14 +232,14 @@ export enum NotificationStatus {
 }
 
 export enum NotificationDeliveryMethod {
-  PUSH = 'PUSH',
+  WEB = 'WEB',
   SMS = 'SMS',
   EMAIL = 'EMAIL',
   SLACK = 'SLACK'
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
-  [NotificationDeliveryMethod.PUSH, 'notification.delivery-method-type.push'],
+  [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web'],
   [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
   [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
   [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack']

@@ -120,13 +120,13 @@
       </form>
     </mat-step>
     <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
-                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.PUSH.enabled').value"
-              [stepControl]="pushTemplateForm">
+                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.WEB.enabled').value"
+              [stepControl]="webTemplateForm">
       <ng-template matStepLabel>{{ 'notification.web-settings' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">
         {{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).hint | translate }}
       </div>
-      <form [formGroup]="pushTemplateForm">
+      <form [formGroup]="webTemplateForm">
         <mat-form-field class="mat-block" floatLabel="always">
           <mat-label translate>notification.subject</mat-label>
           <input matInput formControlName="subject" [placeholder]="notificationRequestForm.get('template.configuration.notificationSubject').value">
@@ -146,7 +146,7 @@
             <mat-slide-toggle formControlName="enabled" class="toggle">
               {{ 'icon.icon' | translate }}
             </mat-slide-toggle>
-            <div *ngIf="pushTemplateForm.get('additionalConfig.icon.enabled').value"
+            <div *ngIf="webTemplateForm.get('additionalConfig.icon.enabled').value"
                  fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
               <tb-material-icon-select formControlName="icon" required fxFlex>
               </tb-material-icon-select>
@@ -158,12 +158,12 @@
             <mat-slide-toggle formControlName="enabled" class="toggle">
               {{ 'notification.action-button' | translate }}
             </mat-slide-toggle>
-            <div *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
+            <div *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
               <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
                 <mat-form-field class="mat-block" fxFlex>
                   <mat-label translate>notification.button-text</mat-label>
                   <input matInput formControlName="text" required>
-                  <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
                     {{ 'notification.button-text-required' | translate }}
                   </mat-error>
                 </mat-form-field>
@@ -178,10 +178,10 @@
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field fxFlex
-                                *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
+                                *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
                   <mat-label translate>notification.link</mat-label>
                   <input matInput formControlName="link" required>
-                  <mat-error *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
                     {{ 'notification.link-required' | translate }}
                   </mat-error>
                 </mat-form-field>
@@ -192,13 +192,13 @@
                     formControlName="dashboardId">
                   </tb-dashboard-autocomplete>
                   <tb-dashboard-state-autocomplete fxFlex="35" fxFlex.xs="100"
-                                                   [dashboardId]="pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').value"
+                                                   [dashboardId]="webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').value"
                                                    formControlName="dashboardState">
                   </tb-dashboard-state-autocomplete>
                 </ng-template>
               </div>
               <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
-                                *ngIf="pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.DASHBOARD">
+                                *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.DASHBOARD">
                 {{ 'notification.set-entity-from-notification' | translate }}
               </mat-slide-toggle>
             </div>
@@ -270,13 +270,13 @@
                             strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
       </mat-progress-spinner>
       <div *ngIf="preview" style="padding-bottom: 16px">
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.PUSH?.enabled">
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.WEB?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
             <mat-icon class="tb-mat-18" svgIcon="mdi:bell-badge"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method-type.push-preview</div>
+            <div class="group-title" translate>notification.delivery-method-type.web-preview</div>
           </div>
           <div class="web-preview">
-            <tb-notification preview [notification]="preview.processedTemplates.PUSH"></tb-notification>
+            <tb-notification preview [notification]="preview.processedTemplates.WEB"></tb-notification>
           </div>
         </section>
         <section class="preview-group notification" *ngIf="preview.processedTemplates.EMAIL?.enabled">

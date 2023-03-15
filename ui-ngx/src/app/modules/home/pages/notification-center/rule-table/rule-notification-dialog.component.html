@@ -76,7 +76,7 @@
         </section>
         <ng-template #alarmTargesConfig>
           <fieldset class="fields-group tb-hierarchy" formGroupName="recipientsConfig">
-            <legend translate>notification.hierarchy-of-receiving</legend>
+            <legend translate>notification.notification-chain</legend>
             <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
           </fieldset>
         </ng-template>
@@ -108,7 +108,7 @@
             </mat-form-field>
           </fieldset>
 
-          <fieldset class="fields-group tb-margin-2" formGroupName="clearRule">
+          <fieldset class="fields-group tb-margin-2" formGroupName="clearRule" *ngIf="countRecipientsChainConfig() > 1">
             <legend translate>notification.clear-rule</legend>
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
