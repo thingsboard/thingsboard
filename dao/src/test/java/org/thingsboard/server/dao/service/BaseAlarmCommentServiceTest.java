@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -158,7 +159,9 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
         alarmCommentService.deleteAlarmComment(tenantId, createdComment, user);
 
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
-
-        Assert.assertNull("Alarm comment was returned when it was expected to be null", fetched);
+        Assert.assertNull(fetched.getUserId());
+        Assert.assertEquals(AlarmCommentType.SYSTEM, fetched.getType());
+        Assert.assertEquals(fetched.getComment().get("text").asText(), String.format("User %s deleted his comment",
+                (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()));
     }
 }
