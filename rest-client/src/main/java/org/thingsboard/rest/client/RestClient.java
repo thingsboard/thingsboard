@@ -58,6 +58,7 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -371,6 +372,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 throw exception;
             }
         }
+    }
+
+    public SystemInfo getSystemInfo() {
+        return restTemplate.getForEntity(baseURL + "/api/admin/systemInfo", SystemInfo.class).getBody();
     }
 
     public Optional<Alarm> getAlarmById(AlarmId alarmId) {
