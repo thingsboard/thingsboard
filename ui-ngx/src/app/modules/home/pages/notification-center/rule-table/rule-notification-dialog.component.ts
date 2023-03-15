@@ -72,6 +72,7 @@ export class RuleNotificationDialogComponent extends
   deviceInactivityTemplateForm: FormGroup;
   entityActionTemplateForm: FormGroup;
   alarmCommentTemplateForm: FormGroup;
+  alarmAssignmentTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[] = Object.values(TriggerType);
@@ -200,6 +201,15 @@ export class RuleNotificationDialogComponent extends
         alarmTypes: [null],
         alarmSeverities: [[]],
         alarmStatuses: [[]]
+      })
+    });
+
+    this.alarmAssignmentTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        alarmTypes: [null],
+        alarmSeverities: [[]],
+        alarmStatuses: [[]],
+        notifyOnUnassign: [true]
       })
     });
 
