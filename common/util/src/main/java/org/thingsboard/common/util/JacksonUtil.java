@@ -155,6 +155,14 @@ public class JacksonUtil {
         return mapper.createObjectNode();
     }
 
+    public static ArrayNode newArrayNode() {
+        return newArrayNode(OBJECT_MAPPER);
+    }
+
+    public static ArrayNode newArrayNode(ObjectMapper mapper) {
+        return mapper.createArrayNode();
+    }
+
     public static <T> T clone(T value) {
         @SuppressWarnings("unchecked")
         Class<T> valueClass = (Class<T>) value.getClass();

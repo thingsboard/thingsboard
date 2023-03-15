@@ -341,6 +341,7 @@ export class TbFlot {
 
   private init($element: JQuery<any>, subscription: IWidgetSubscription) {
     this.$element = $element;
+    this.$element.css('letter-spacing', 'normal');
     this.subscription = subscription;
     this.comparisonEnabled = this.subscription ? this.subscription.comparisonEnabled : this.settings.comparisonEnabled;
     if (this.comparisonEnabled) {

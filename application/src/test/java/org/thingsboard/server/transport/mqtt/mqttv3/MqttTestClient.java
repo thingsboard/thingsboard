@@ -31,7 +31,7 @@ public class MqttTestClient {
 
     private static final String MQTT_URL = "tcp://localhost:1883";
     private static final int TIMEOUT = 30; // seconds
-    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(TIMEOUT);
+    public static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(TIMEOUT);
 
     private final MqttAsyncClient client;
 
