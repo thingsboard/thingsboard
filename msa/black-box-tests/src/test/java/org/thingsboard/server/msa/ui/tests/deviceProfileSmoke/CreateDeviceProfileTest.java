@@ -189,7 +189,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         String urlPath = "docs/user-guide/device-profiles/";
 
         sideBarMenuView.openDeviceProfiles();
-        profilesPage.allEntity().get(0).click();
+        profilesPage.profileNames().get(0).click();
         profilesPage.goToProfileHelpPage();
 
         Assert.assertTrue(urlContains(urlPath), "URL contains " + urlPath);

@@ -83,7 +83,7 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainNameWithoutRoot(0);
         String ruleChain = ruleChainsPage.getRuleChainName();
         ruleChainsPage.detailsBtn(ruleChain).click();
-        ruleChainsPage.makeRootFromViewBtn().click();
+        jsClick(ruleChainsPage.makeRootFromViewBtn());
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.closeEntityViewBtn().click();
 

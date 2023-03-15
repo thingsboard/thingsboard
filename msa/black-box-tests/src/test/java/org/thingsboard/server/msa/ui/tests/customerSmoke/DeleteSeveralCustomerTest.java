@@ -53,9 +53,7 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
         testRestClient.postCustomer(defaultCustomerPrototype(title2));
 
         sideBarMenuView.customerBtn().click();
-        customerPage.clickOnCheckBoxes(2);
-        customerPage.deleteSelectedBtn().click();
-        customerPage.warningPopUpYesBtn().click();
+        customerPage.deleteSelected(2);
         customerPage.refreshBtn().click();
 
         Assert.assertTrue(customerPage.customerIsNotPresent(title1));
@@ -70,7 +68,7 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
     public void selectAllCustomers() {
         sideBarMenuView.customerBtn().click();
         customerPage.selectAllCheckBox().click();
-        customerPage.deleteSelectedBtn().click();
+        jsClick(customerPage.deleteSelectedBtn());
 
         Assert.assertNotNull(customerPage.warningPopUpTitle());
         Assert.assertTrue(customerPage.warningPopUpTitle().isDisplayed());
@@ -89,9 +87,7 @@ public class DeleteSeveralCustomerTest extends AbstractDriverBaseTest {
         testRestClient.postCustomer(defaultCustomerPrototype(title2));
 
         sideBarMenuView.customerBtn().click();
-        customerPage.clickOnCheckBoxes(2);
-        customerPage.deleteSelectedBtn().click();
-        customerPage.warningPopUpYesBtn().click();
+        customerPage.deleteSelected(2);
 
         Assert.assertTrue(customerPage.customerIsNotPresent(title1));
         Assert.assertTrue(customerPage.customerIsNotPresent(title2));

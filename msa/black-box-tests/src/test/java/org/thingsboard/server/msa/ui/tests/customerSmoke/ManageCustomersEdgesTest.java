@@ -62,7 +62,7 @@ public class ManageCustomersEdgesTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersEdgeBtnView().click();
+        jsClick(customerPage.manageCustomersEdgeBtnView());
 
         Assert.assertTrue(urlContains("edgeInstances"));
         Assert.assertNotNull(customerPage.customerEdgeIconHeader());

@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -110,8 +111,9 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
         ruleChainsPage.importBrowseFileBtn().click();
-        openRuleChainPage.doneBtn().click();
-        openRuleChainPage.waitUntilDoneBtnDisable();
+        WebElement doneBtn = openRuleChainPage.doneBtn();
+        doneBtn.click();
+        //openRuleChainPage.waitUntilBtnDisable(doneBtn);
         ruleChainName = IMPORT_RULE_CHAIN_NAME;
         sideBarMenuView.ruleChainsBtn().click();
 
@@ -132,8 +134,9 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
         ruleChainsPage.importBrowseFileBtn().click();
-        openRuleChainPage.doneBtn().click();
-        openRuleChainPage.waitUntilDoneBtnDisable();
+        WebElement doneBtn = openRuleChainPage.doneBtn();
+        doneBtn.click();
+        //openRuleChainPage.waitUntilBtnDisable(doneBtn);
         sideBarMenuView.ruleChainsBtn().click();
 
         boolean entityNotNull = ruleChainsPage.entity(ruleChainName) != null;

@@ -46,7 +46,7 @@ public class ManageCustomersUsersTest extends AbstractDriverBaseTest {
     public void openWindowByRightCornerBtn() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
-        customerPage.manageCustomersUserBtn(customerPage.getCustomerName()).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerPage.getCustomerName()));
 
         Assert.assertTrue(urlContains("user"));
         Assert.assertNotNull(customerPage.customerUserIconHeader());
@@ -62,7 +62,7 @@ public class ManageCustomersUsersTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersUserBtnView().click();
+        jsClick(customerPage.manageCustomersUserBtnView());
 
         Assert.assertTrue(urlContains("user"));
         Assert.assertNotNull(customerPage.customerUserIconHeader());

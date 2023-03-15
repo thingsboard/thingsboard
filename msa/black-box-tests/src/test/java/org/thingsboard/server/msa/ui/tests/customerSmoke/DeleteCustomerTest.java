@@ -85,9 +85,9 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.customerViewDeleteBtn().click();
+        jsClick(customerPage.customerViewDeleteBtn());
         customerPage.warningPopUpYesBtn().click();
-        customerPage.refreshBtn().click();
+        jsClick(customerPage.refreshBtn());
 
         Assert.assertTrue(customerPage.entityIsNotPresent(customerName));
     }
