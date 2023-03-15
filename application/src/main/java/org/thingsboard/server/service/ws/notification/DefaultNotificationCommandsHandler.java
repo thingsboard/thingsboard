@@ -131,51 +131,44 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
         log.trace("[{}, subId: {}] Handling notification update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
         Notification notification = update.getNotification();
         UUID notificationId = update.getNotificationId();
-        switch (update.getUpdateType()) {
-            case CREATED: {
-                subscription.getLatestUnreadNotifications().put(notificationId, notification);
-                subscription.getTotalUnreadCounter().incrementAndGet();
-                if (subscription.getLatestUnreadNotifications().size() > subscription.getLimit()) {
-                    Set<UUID> beyondLimit = subscription.getSortedNotifications().stream().skip(subscription.getLimit())
-                            .map(IdBased::getUuidId).collect(Collectors.toSet());
-                    beyondLimit.forEach(id -> subscription.getLatestUnreadNotifications().remove(id));
-                }
-                sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
-                break;
+        if (update.isCreated()) {
+            subscription.getLatestUnreadNotifications().put(notificationId, notification);
+            subscription.getTotalUnreadCounter().incrementAndGet();
+            if (subscription.getLatestUnreadNotifications().size() > subscription.getLimit()) {
+                Set<UUID> beyondLimit = subscription.getSortedNotifications().stream().skip(subscription.getLimit())
+                        .map(IdBased::getUuidId).collect(Collectors.toSet());
+                beyondLimit.forEach(id -> subscription.getLatestUnreadNotifications().remove(id));
             }
-            case UPDATED: {
-                if (update.getUpdatedStatus() == NotificationStatus.READ) {
-                    if (update.isAllNotifications() || subscription.getLatestUnreadNotifications().containsKey(notificationId)) {
-                        fetchUnreadNotifications(subscription);
-                        sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
-                    } else {
-                        subscription.getTotalUnreadCounter().decrementAndGet();
-                        sendUpdate(subscription.getSessionId(), subscription.createCountUpdate());
-                    }
-                } else if (notification.getStatus() != NotificationStatus.READ) {
-                    if (subscription.getLatestUnreadNotifications().containsKey(notificationId)) {
-                        subscription.getLatestUnreadNotifications().put(notificationId, notification);
-                        sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
-                    }
-                }
-                break;
-            }
-            case DELETED: {
-                if (subscription.getLatestUnreadNotifications().containsKey(notificationId)) {
+            sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
+        } else if (update.isUpdated()) {
+            if (update.getNewStatus() == NotificationStatus.READ) {
+                if (update.isAllNotifications() || subscription.getLatestUnreadNotifications().containsKey(notificationId)) {
                     fetchUnreadNotifications(subscription);
                     sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
-                } else if (notification.getStatus() != NotificationStatus.READ) {
+                } else {
                     subscription.getTotalUnreadCounter().decrementAndGet();
                     sendUpdate(subscription.getSessionId(), subscription.createCountUpdate());
                 }
-                break;
+            } else if (notification.getStatus() != NotificationStatus.READ) {
+                if (subscription.getLatestUnreadNotifications().containsKey(notificationId)) {
+                    subscription.getLatestUnreadNotifications().put(notificationId, notification);
+                    sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
+                }
+            }
+        } else if (update.isDeleted()) {
+            if (subscription.getLatestUnreadNotifications().containsKey(notificationId)) {
+                fetchUnreadNotifications(subscription);
+                sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
+            } else if (notification.getStatus() != NotificationStatus.READ) {
+                subscription.getTotalUnreadCounter().decrementAndGet();
+                sendUpdate(subscription.getSessionId(), subscription.createCountUpdate());
             }
         }
     }
 
     private void handleNotificationRequestUpdate(NotificationsSubscription subscription, NotificationRequestUpdate update) {
         log.trace("[{}, subId: {}] Handling notification request update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
-        fetchUnreadNotifications(subscription); // FIXME: figure out how not to fetch notifications on each request update...
+        fetchUnreadNotifications(subscription);
         sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
     }
 
@@ -191,44 +184,30 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void handleNotificationUpdate(NotificationsCountSubscription subscription, NotificationUpdate update) {
         log.trace("[{}, subId: {}] Handling notification update for count sub: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
-        Notification notification = update.getNotification();
-        switch (update.getUpdateType()) {
-            case CREATED: {
-                subscription.getUnreadCounter().incrementAndGet();
-                sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-                break;
-            }
-            case UPDATED: {
-                if (update.getUpdatedStatus() == NotificationStatus.READ) {
-                    if (update.isAllNotifications()) {
-                        fetchUnreadNotificationsCount(subscription);
-                    } else {
-                        subscription.getUnreadCounter().decrementAndGet();
-                    }
-                    sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-                }
-                break;
-            }
-            case DELETED: {
-                if (notification.getStatus() != NotificationStatus.READ) {
+        if (update.isCreated()) {
+            subscription.getUnreadCounter().incrementAndGet();
+            sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+        } else if (update.isUpdated()) {
+            if (update.getNewStatus() == NotificationStatus.READ) {
+                if (update.isAllNotifications()) {
+                    fetchUnreadNotificationsCount(subscription);
+                } else {
                     subscription.getUnreadCounter().decrementAndGet();
-                    sendUpdate(subscription.getSessionId(), subscription.createUpdate());
                 }
-                break;
+                sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+            }
+        } else if (update.isDeleted()) {
+            if (update.getNotification().getStatus() != NotificationStatus.READ) {
+                subscription.getUnreadCounter().decrementAndGet();
+                sendUpdate(subscription.getSessionId(), subscription.createUpdate());
             }
         }
     }
 
     private void handleNotificationRequestUpdate(NotificationsCountSubscription subscription, NotificationRequestUpdate update) {
         log.trace("[{}, subId: {}] Handling notification request update for count sub: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
-        fetchUnreadNotificationsCount(subscription); // FIXME: figure out how not to fetch notifications on each request update...
+        fetchUnreadNotificationsCount(subscription);
         sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-    }
-
-
-    private void sendUpdate(String sessionId, CmdUpdate update) {
-        log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
-        wsService.sendWsMsg(sessionId, update);
     }
 
 
@@ -251,6 +230,11 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     @Override
     public void handleUnsubCmd(WebSocketSessionRef sessionRef, UnsubscribeCmd cmd) {
         localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), cmd.getCmdId());
+    }
+
+    private void sendUpdate(String sessionId, CmdUpdate update) {
+        log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
+        wsService.sendWsMsg(sessionId, update);
     }
 
 }

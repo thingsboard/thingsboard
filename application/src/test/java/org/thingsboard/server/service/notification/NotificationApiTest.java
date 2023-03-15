@@ -48,7 +48,7 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
-import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
@@ -209,7 +209,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         int notificationsCount = 20;
         wsClient.registerWaitForUpdate(notificationsCount);
         for (int i = 1; i <= notificationsCount; i++) {
-            submitNotificationRequest(target.getId(), "Test " + i, NotificationDeliveryMethod.PUSH);
+            submitNotificationRequest(target.getId(), "Test " + i, NotificationDeliveryMethod.WEB);
         }
         wsClient.waitForUpdate(true);
         assertThat(wsClient.getLastDataUpdate().getTotalUnreadCount()).isEqualTo(notificationsCount);
@@ -267,32 +267,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void whenNotificationRequestIsUpdated_thenUpdateNotifications() throws Exception {
-        wsClient.subscribeForUnreadNotifications(10);
-        wsClient.waitForReply(true);
-
-        NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
-        String notificationText = "Text";
-        wsClient.registerWaitForUpdate();
-        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), notificationText);
-        wsClient.waitForUpdate(true);
-        Notification initialNotification = wsClient.getLastDataUpdate().getUpdate();
-        loginCustomerUser();
-        assertThat(getMyNotifications(false, 10)).singleElement().isEqualTo(initialNotification);
-        assertThat(initialNotification.getInfo()).isNotNull().isEqualTo(notificationRequest.getInfo());
-
-        wsClient.registerWaitForUpdate();
-        UserOriginatedNotificationInfo newNotificationInfo = new UserOriginatedNotificationInfo();
-        newNotificationInfo.setDescription("New description");
-        notificationRequest.setInfo(newNotificationInfo);
-        notificationCenter.updateNotificationRequest(tenantId, notificationRequest);
-        wsClient.waitForUpdate(true);
-        Notification updatedNotification = wsClient.getLastDataUpdate().getNotifications().iterator().next();
-        assertThat(updatedNotification.getInfo()).isEqualTo(newNotificationInfo);
-        assertThat(getMyNotifications(false, 10)).singleElement().isEqualTo(updatedNotification);
-    }
-
-    @Test
     public void testNotificationUpdatesForSeveralUsers() throws Exception {
         int usersCount = 150;
         Map<User, NotificationApiWsClient> sessions = new HashMap<>();
@@ -319,7 +293,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         sessions.forEach((user, wsClient) -> wsClient.registerWaitForUpdate());
         NotificationRequest notificationRequest = submitNotificationRequest(targets, "Hello, ${recipientEmail}", 0,
-                NotificationDeliveryMethod.PUSH);
+                NotificationDeliveryMethod.WEB);
         await().atMost(10, TimeUnit.SECONDS)
                 .pollDelay(1, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS)
                 .until(() -> {
@@ -342,7 +316,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
         NotificationRequestStats stats = getStats(notificationRequest.getId());
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(usersCount);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB)).hasValue(usersCount);
 
         sessions.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
         deleteNotificationRequest(notificationRequest.getId());
@@ -393,17 +367,17 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         String requestorEmail = TENANT_ADMIN_EMAIL;
         NotificationTemplateConfig templateConfig = new NotificationTemplateConfig();
-        templateConfig.setDefaultTextTemplate("Default message for SMS and PUSH: ${recipientEmail}");
+        templateConfig.setDefaultTextTemplate("Default message for SMS and WEB: ${recipientEmail}");
         templateConfig.setNotificationSubject("Default subject for EMAIL: ${recipientEmail}");
         HashMap<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates = new HashMap<>();
         templateConfig.setDeliveryMethodsTemplates(templates);
         notificationTemplate.setConfiguration(templateConfig);
 
-        PushDeliveryMethodNotificationTemplate pushNotificationTemplate = new PushDeliveryMethodNotificationTemplate();
-        pushNotificationTemplate.setEnabled(true);
-        // using default message for push
-        pushNotificationTemplate.setSubject("Subject for PUSH: ${recipientEmail}");
-        templates.put(NotificationDeliveryMethod.PUSH, pushNotificationTemplate);
+        WebDeliveryMethodNotificationTemplate webNotificationTemplate = new WebDeliveryMethodNotificationTemplate();
+        webNotificationTemplate.setEnabled(true);
+        // using default message for web
+        webNotificationTemplate.setSubject("Subject for WEB: ${recipientEmail}");
+        templates.put(NotificationDeliveryMethod.WEB, webNotificationTemplate);
 
         SmsDeliveryMethodNotificationTemplate smsNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
         smsNotificationTemplate.setEnabled(true);
@@ -435,19 +409,19 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(preview.getTotalRecipientsCount()).isEqualTo(1 + customerUsersCount);
 
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = preview.getProcessedTemplates();
-        assertThat(processedTemplates.get(NotificationDeliveryMethod.PUSH)).asInstanceOf(type(PushDeliveryMethodNotificationTemplate.class))
+        assertThat(processedTemplates.get(NotificationDeliveryMethod.WEB)).asInstanceOf(type(WebDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .startsWith("Default message for SMS and PUSH")
+                            .startsWith("Default message for SMS and WEB")
                             .endsWith(requestorEmail);
                     assertThat(template.getSubject())
-                            .startsWith("Subject for PUSH")
+                            .startsWith("Subject for WEB")
                             .endsWith(requestorEmail);
                 });
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SMS)).asInstanceOf(type(SmsDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .startsWith("Default message for SMS and PUSH")
+                            .startsWith("Default message for SMS and WEB")
                             .endsWith(requestorEmail);
                 });
         assertThat(processedTemplates.get(NotificationDeliveryMethod.EMAIL)).asInstanceOf(type(EmailDeliveryMethodNotificationTemplate.class))
@@ -469,7 +443,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRequestInfo() throws Exception {
         NotificationDeliveryMethod[] deliveryMethods = new NotificationDeliveryMethod[]{
-                NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL
+                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL
         };
         NotificationTemplate template = createNotificationTemplate(NotificationType.GENERAL, "Test subject", "Test text", deliveryMethods);
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
@@ -489,15 +463,14 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         wsClient.registerWaitForUpdate();
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
         NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)",
-                NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS);
+                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS);
         wsClient.waitForUpdate();
 
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
         NotificationRequestStats stats = getStats(notificationRequest.getId());
 
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.PUSH)).hasValue(1);
-        assertThat(stats.getSent().get(NotificationDeliveryMethod.EMAIL)).hasValue(1);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB)).hasValue(1);
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
     }
 
@@ -526,7 +499,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationTargetId notificationTargetId = notificationTarget.getId();
 
         ListenableFuture<NotificationRequest> request = executor.submit(() -> {
-            return submitNotificationRequest(notificationTargetId, "Hello, ${recipientEmail}", 0, NotificationDeliveryMethod.PUSH);
+            return submitNotificationRequest(notificationTargetId, "Hello, ${recipientEmail}", 0, NotificationDeliveryMethod.WEB);
         });
         await().atMost(10, TimeUnit.SECONDS).until(request::isDone);
         NotificationRequest notificationRequest = request.get();

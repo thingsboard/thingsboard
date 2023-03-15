@@ -17,6 +17,7 @@ package org.thingsboard.server.service.notification.rule.trigger;
 
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
@@ -26,10 +27,12 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmComment
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Set;
+
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 @Service
-public class AlarmCommentTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, AlarmCommentNotificationRuleTriggerConfig> {
+public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmCommentNotificationRuleTriggerConfig> {
 
     @Override
     public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
@@ -59,6 +62,11 @@ public class AlarmCommentTriggerProcessor implements NotificationRuleTriggerProc
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM_COMMENT;
+    }
+
+    @Override
+    public Set<String> getSupportedMsgTypes() {
+        return Set.of(DataConstants.COMMENT_CREATED, DataConstants.COMMENT_UPDATED);
     }
 
 }

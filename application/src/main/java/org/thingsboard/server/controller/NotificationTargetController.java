@@ -33,15 +33,16 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -159,11 +160,8 @@ public class NotificationTargetController extends BaseController {
         // generic permission for users
         UsersFilter usersFilter = ((PlatformUsersNotificationTargetConfig) targetConfig).getUsersFilter();
         if (usersFilter.getType() == UsersFilterType.USER_LIST) {
-            PageDataIterable<User> recipients = new PageDataIterable<>(pageLink -> {
-                return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, targetConfig, pageLink);
-            }, 200);
-            for (User recipient : recipients) {
-                checkEntity(user, recipient, Operation.READ);
+            for (UUID recipientId : ((UserListFilter) usersFilter).getUsersIds()) {
+                checkUserId(new UserId(recipientId), Operation.READ);
             }
         } else if (usersFilter.getType() == UsersFilterType.CUSTOMER_USERS) {
             CustomerId customerId = new CustomerId(((CustomerUsersFilter) usersFilter).getCustomerId());

@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets;
+package org.thingsboard.server.service.notification.rule.trigger;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Set;
 
-@RequiredArgsConstructor
-public enum NotificationTargetType {
+public interface RuleEngineMsgNotificationRuleTriggerProcessor<C extends NotificationRuleTriggerConfig> extends NotificationRuleTriggerProcessor<TbMsg, C> {
 
-    PLATFORM_USERS(Set.of(NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS)),
-    SLACK(Set.of(NotificationDeliveryMethod.SLACK));
-
-    @Getter
-    private final Set<NotificationDeliveryMethod> supportedDeliveryMethods;
+    Set<String> getSupportedMsgTypes();
 
 }

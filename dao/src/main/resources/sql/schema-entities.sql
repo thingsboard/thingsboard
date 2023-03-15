@@ -846,7 +846,6 @@ CREATE TABLE IF NOT EXISTS notification (
     subject VARCHAR(255),
     text VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),
-    info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
 

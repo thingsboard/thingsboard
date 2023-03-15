@@ -20,7 +20,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 
 @Data
 @NoArgsConstructor
@@ -28,6 +27,5 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 @Builder
 public class NotificationRequestUpdate {
     private NotificationRequestId notificationRequestId;
-    private NotificationInfo notificationInfo;
     private boolean deleted;
 }

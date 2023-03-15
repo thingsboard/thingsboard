@@ -55,7 +55,7 @@ public class NotificationRuleController extends BaseController {
     private final NotificationRuleService notificationRuleService;
 
     @PostMapping("/rule")
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule) throws Exception {
         notificationRule.setTenantId(getTenantId());
         checkEntity(notificationRule.getId(), notificationRule, NOTIFICATION);
@@ -63,14 +63,14 @@ public class NotificationRuleController extends BaseController {
     }
 
     @GetMapping("/rule/{id}")
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRuleInfo getNotificationRuleById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);
         return checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleInfoById,  Operation.READ);
     }
 
     @GetMapping("/rules")
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public PageData<NotificationRuleInfo> getNotificationRules(@RequestParam int pageSize,
                                                            @RequestParam int page,
                                                            @RequestParam(required = false) String textSearch,
@@ -83,7 +83,7 @@ public class NotificationRuleController extends BaseController {
     }
 
     @DeleteMapping("/rule/{id}")
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationRule(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) throws Exception {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);

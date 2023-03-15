@@ -255,7 +255,8 @@ public class DefaultWebSocketService implements WebSocketService {
                     try {
                         cmdHandler.handle(sessionRef, cmd);
                     } catch (Exception e) {
-                        log.error("Failed to handle WS cmd: {}", cmd, e);
+                        log.error("[sessionId: {}, tenantId: {}, userId: {}] Failed to handle WS cmd: {}", sessionId,
+                                sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), cmd, e);
                     }
                 }
             }

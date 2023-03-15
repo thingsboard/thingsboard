@@ -440,9 +440,6 @@ cache:
     notificationRules:
       timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:1440}"
       maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:10000}"
-    notificationRequests:
-      timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:1440}"
-      maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:10000}"
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"

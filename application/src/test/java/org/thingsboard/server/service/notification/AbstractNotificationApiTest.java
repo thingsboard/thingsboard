@@ -44,7 +44,7 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
-import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -101,7 +101,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected NotificationRequest submitNotificationRequest(List<NotificationTargetId> targets, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
         if (deliveryMethods.length == 0) {
-            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.PUSH};
+            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEB};
         }
         NotificationTemplate notificationTemplate = createNotificationTemplate(DEFAULT_NOTIFICATION_TYPE, DEFAULT_NOTIFICATION_SUBJECT, text, deliveryMethods);
         return submitNotificationRequest(targets, notificationTemplate.getId(), delayInSec);
@@ -137,8 +137,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
             DeliveryMethodNotificationTemplate deliveryMethodNotificationTemplate;
             switch (deliveryMethod) {
-                case PUSH: {
-                    PushDeliveryMethodNotificationTemplate template = new PushDeliveryMethodNotificationTemplate();
+                case WEB: {
+                    WebDeliveryMethodNotificationTemplate template = new WebDeliveryMethodNotificationTemplate();
                     template.setSubject(subject);
                     deliveryMethodNotificationTemplate = template;
                     break;

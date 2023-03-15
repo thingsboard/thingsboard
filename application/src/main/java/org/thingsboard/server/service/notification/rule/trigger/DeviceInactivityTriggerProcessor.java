@@ -18,6 +18,7 @@ package org.thingsboard.server.service.notification.rule.trigger;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,9 +29,11 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
-public class DeviceInactivityTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, DeviceInactivityNotificationRuleTriggerConfig> {
+public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<DeviceInactivityNotificationRuleTriggerConfig> {
 
     private final TbDeviceProfileCache deviceProfileCache;
 
@@ -60,6 +63,11 @@ public class DeviceInactivityTriggerProcessor implements NotificationRuleTrigger
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.DEVICE_INACTIVITY;
+    }
+
+    @Override
+    public Set<String> getSupportedMsgTypes() {
+        return Set.of(DataConstants.INACTIVITY_EVENT);
     }
 
 }

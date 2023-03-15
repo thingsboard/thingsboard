@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
@@ -92,6 +93,9 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "js.evaluator=local"
+})
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
@@ -111,10 +115,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     public void testNotificationRuleProcessing_entityActionTrigger() throws Exception {
         String notificationSubject = "${actionType}: ${entityType} [${entityId}]";
         String notificationText = "User: ${originatorUserName}";
-        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.GENERAL, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
+        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.GENERAL, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
         NotificationRule notificationRule = new NotificationRule();
-        notificationRule.setName("Push-notification when any device is created, updated or deleted");
+        notificationRule.setName("Web notification when any device is created, updated or deleted");
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
 
@@ -166,10 +170,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         String notificationSubject = "Alarm type: ${alarmType}, status: ${alarmStatus}, " +
                 "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}";
         String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
-        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
+        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
         NotificationRule notificationRule = new NotificationRule();
-        notificationRule.setName("Push-notification on any alarm");
+        notificationRule.setName("Web notification on any alarm");
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
@@ -240,7 +244,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
         clients.values().forEach(wsClient -> {
             wsClient.waitForUpdate(true);
-            Notification updatedNotification = wsClient.getLastDataUpdate().getNotifications().stream().findFirst().get();
+            Notification updatedNotification = wsClient.getLastDataUpdate().getUpdate();
             assertThat(updatedNotification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + expectedStatus + ", " +
                     "severity: " + expectedSeverity + ", deviceId: " + device.getId());
             assertThat(updatedNotification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity);
@@ -255,10 +259,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     public void testNotificationRuleProcessing_alarmTrigger_clearRule() throws Exception {
         String notificationSubject = "${alarmSeverity} alarm '${alarmType}' is ${alarmStatus}";
         String notificationText = "${alarmId}";
-        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.PUSH);
+        NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
         NotificationRule notificationRule = new NotificationRule();
-        notificationRule.setName("Push-notification on any alarm");
+        notificationRule.setName("Web notification on any alarm");
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
@@ -311,7 +315,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().registerWaitForUpdate();
         alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
         getWsClient().waitForUpdate(true);
-        notification = getWsClient().getLastDataUpdate().getNotifications().iterator().next();
+        notification = getWsClient().getLastDataUpdate().getUpdate();
         assertThat(notification.getSubject()).isEqualTo("CRITICAL alarm '" + alarmType + "' is CLEARED_UNACK");
 
         assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
@@ -321,7 +325,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     public void testNotificationRuleProcessing_ruleEngineComponentLifecycleEvent_ruleNodeStartError() {
         String subject = "Rule Node '${componentName}' in Rule Chain '${ruleChainName}' failed to start";
         String text = "The error: ${error}";
-        NotificationTemplate template = createNotificationTemplate(NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, subject, text, NotificationDeliveryMethod.PUSH);
+        NotificationTemplate template = createNotificationTemplate(NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, subject, text, NotificationDeliveryMethod.WEB);
 
         NotificationRule rule = new NotificationRule();
         rule.setName("Rule node start-up failures in my rule chain");
@@ -361,7 +365,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationRuleInfo() throws Exception {
-        NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL};
+        NotificationDeliveryMethod[] deliveryMethods = {NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL};
         NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Subject", "Text", deliveryMethods);
 
         NotificationRule rule = new NotificationRule();
