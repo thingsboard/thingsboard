@@ -54,7 +54,6 @@ import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 export class EscalationsComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   escalationsFormGroup: FormGroup;
-  newEscalation = false;
 
   @Input()
   @coerceBoolean()
@@ -62,11 +61,6 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
 
   @Input()
   disabled: boolean;
-
-  private mainEscalaion = {
-    delayInSec: 0,
-    targets: null
-  };
 
   private destroy$ = new Subject<void>();
 
@@ -113,23 +107,18 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
 
   writeValue(escalations: {[key: string]: Array<string>} | null): void {
     const escalationParse: Array<NonConfirmedNotificationEscalation> = [];
-    // tslint:disable-next-line:forin
     for (const escalation in escalations) {
-      escalationParse.push({delayInSec: Number(escalation), targets: escalations[escalation]});
+      escalationParse.push({delayInSec: Number(escalation) * 1000, targets: escalations[escalation]});
     }
     if (escalationParse.length === 0) {
-      this.addEscalation();
+      this.addEscalation(0);
     } else if (escalationParse?.length === this.escalationsFormArray.length) {
       this.escalationsFormArray.patchValue(escalationParse, {emitEvent: false});
     } else {
       const escalationsControls: Array<AbstractControl> = [];
-      if (escalationParse) {
-        escalationParse.forEach(escalation => {
-          escalationsControls.push(this.fb.control(escalation, [Validators.required]));
-        });
-      } else {
-        escalationsControls.push(this.fb.control(this.mainEscalaion, [Validators.required]));
-      }
+      escalationParse.forEach(escalation => {
+        escalationsControls.push(this.fb.control(escalation, [Validators.required]));
+      });
       this.escalationsFormGroup.setControl('escalations', this.fb.array(escalationsControls), {emitEvent: false});
       if (this.disabled) {
         this.escalationsFormGroup.disable({emitEvent: false});
@@ -143,18 +132,13 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
     (this.escalationsFormGroup.get('escalations') as FormArray).removeAt(index);
   }
 
-  public addEscalation() {
+  public addEscalation(delay = 60000) {
     const escalation = {
-      delayInSec: 0,
+      delayInSec: delay,
       targets: null
     };
-    this.newEscalation = true;
     const escalationArray = this.escalationsFormGroup.get('escalations') as FormArray;
-    escalationArray.push(this.fb.control(escalation, []));
-    this.escalationsFormGroup.updateValueAndValidity();
-    if (!this.escalationsFormGroup.valid) {
-      this.updateModel();
-    }
+    escalationArray.push(this.fb.control(escalation, []), {emitEvent: false});
   }
 
   public validate(c: AbstractControl): ValidationErrors | null {
@@ -168,7 +152,7 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
   private updateModel() {
     const escalations = {};
     this.escalationsFormGroup.get('escalations').value.forEach(
-      escalation => escalations[escalation.delayInSec] = escalation.targets
+      escalation => escalations[escalation.delayInSec / 1000] = escalation.targets
     );
     this.propagateChange(escalations);
   }
