@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,7 +28,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +37,8 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @RequiredArgsConstructor
 public class RedisRuleNodeCache implements RuleNodeCache {
+
+    private static final int FETCH_LIMIT = 1000;
 
     private final RedisConnectionFactory redisConnectionFactory;
 
@@ -121,10 +125,13 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, Integer partition, String key) {
+        ScanOptions options = ScanOptions.scanOptions().count(FETCH_LIMIT).build();
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            Set<byte[]> bytes = connection.setCommands().sMembers(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes());
-            if (bytes == null) {
-                return Collections.emptySet();
+            Set<byte[]> bytes = new HashSet<>();
+            Cursor<byte[]> cursor = connection.setCommands()
+                    .sScan(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), options);
+            while (cursor.hasNext()) {
+                bytes.add(cursor.next());
             }
             return bytes;
         }
