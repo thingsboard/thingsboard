@@ -671,6 +671,7 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         client.setCallback(onUpdateCallback);
 
         client.subscribeAndWait("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(device.getId(), FeatureType.ATTRIBUTES, 1);
 
         edgeImitator.expectResponsesAmount(1);
 
