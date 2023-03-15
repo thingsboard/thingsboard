@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
@@ -35,6 +36,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
+import static org.thingsboard.common.util.SystemUtil.getFreeDiscSpace;
+import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
 
 @Component
 @Slf4j
@@ -69,11 +74,8 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         } else {
             serviceTypes = Collections.singletonList(ServiceType.of(serviceType));
         }
-        ServiceInfo.Builder builder = ServiceInfo.newBuilder()
-                .setServiceId(serviceId)
-                .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()));
 
-        serviceInfo = builder.build();
+        serviceInfo = getServiceInfoWithCurrentSystemInfo();
     }
 
     @AfterContextReady
@@ -97,6 +99,35 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Override
     public boolean isService(ServiceType serviceType) {
         return serviceTypes.contains(serviceType);
+    }
+
+    @Override
+    public ServiceInfo getServiceInfoWithCurrentSystemInfo() {
+        ServiceInfo.Builder builder = ServiceInfo.newBuilder()
+                .setServiceId(serviceId)
+                .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()))
+                .setSystemInfo(getCurrentSystemInfoProto());
+
+        return builder.build();
+    }
+
+    private TransportProtos.SystemInfoProto getCurrentSystemInfoProto() {
+        TransportProtos.SystemInfoProto.Builder builder = TransportProtos.SystemInfoProto.newBuilder();
+
+        Long memoryUsage = getMemoryUsage();
+        if (memoryUsage != null) {
+            builder.setMemoryUsage(memoryUsage);
+        }
+        Double cpuUsage = getCpuUsage();
+        if (cpuUsage != null) {
+            builder.setCpuUsage(cpuUsage);
+        }
+        Long freeDiscSpace = getFreeDiscSpace();
+        if (freeDiscSpace != null) {
+            builder.setFreeDiscSpace(freeDiscSpace);
+        }
+
+        return builder.build();
     }
 
 }

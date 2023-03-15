@@ -22,9 +22,11 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.Collections;
+import java.util.List;
 
 @Service
 @ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "false", matchIfMissing = true)
@@ -46,4 +48,8 @@ public class DummyDiscoveryService implements DiscoveryService {
         partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
     }
 
+    @Override
+    public List<TransportProtos.ServiceInfo> getOtherServers() {
+        return Collections.emptyList();
+    }
 }

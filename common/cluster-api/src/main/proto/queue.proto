@@ -27,6 +27,13 @@ message ServiceInfo {
   string serviceId = 1;
   repeated string serviceTypes = 2;
   repeated string transports = 6;
+  SystemInfoProto systemInfo = 10;
+}
+
+message SystemInfoProto {
+  int64 memoryUsage = 1;
+  double cpuUsage = 2;
+  int64 freeDiscSpace = 3;
 }
 
 /**

@@ -16,7 +16,6 @@
 package org.thingsboard.server.queue.discovery;
 
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -64,5 +63,4 @@ public interface PartitionService {
 
     void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg);
 
-    List<TransportProtos.ServiceInfo> getCurrentOtherServices();
 }
