@@ -77,10 +77,30 @@
         <ng-template #alarmTargesConfig>
           <fieldset class="fields-group tb-hierarchy" formGroupName="recipientsConfig">
             <legend translate>notification.notification-chain</legend>
+            <div class="mat-body-2" translate>notification.targets</div>
             <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
+            <ng-container *ngTemplateOutlet="clearRules"></ng-container>
           </fieldset>
         </ng-template>
       </form>
+      <ng-template #clearRules>
+        <form [formGroup]="alarmTemplateForm">
+          <section formGroupName="triggerConfig">
+            <section formGroupName="clearRule">
+              <div class="mat-body-2" translate>notification.clear-rule</div>
+              <mat-form-field fxFlex class="mat-block" floatLabel="always" style="margin-right: 48px">
+                <mat-label translate>alarm.alarm-status-list</mat-label>
+                <mat-select formControlName="alarmStatuses" multiple
+                            placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                  <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                    {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </section>
+          </section>
+        </form>
+      </ng-template>
     </mat-step>
     <mat-step [stepControl]="alarmTemplateForm"
               *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM">
@@ -97,25 +117,12 @@
               formControlName="alarmTypes">
             </tb-string-items-list>
 
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field fxFlex class="mat-block clear-button-space" floatLabel="always">
               <mat-label translate>alarm.alarm-severity-list</mat-label>
               <mat-select formControlName="alarmSeverities" multiple
                           placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
                 <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
                   {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </fieldset>
-
-          <fieldset class="fields-group tb-margin-2" formGroupName="clearRule" *ngIf="countRecipientsChainConfig() > 1">
-            <legend translate>notification.clear-rule</legend>
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
-              <mat-label translate>alarm.alarm-status-list</mat-label>
-              <mat-select formControlName="alarmStatuses" multiple
-                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
-                <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-                  {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
