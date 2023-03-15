@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
@@ -48,6 +49,7 @@ import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
 import static org.thingsboard.common.util.SystemUtil.getFreeDiscSpace;
 import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
 
+@TbCoreComponent
 @Service
 @RequiredArgsConstructor
 @Slf4j

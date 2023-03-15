@@ -40,5 +40,4 @@ public class JpaEntityQueryDao implements EntityQueryDao {
     public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
         return entityQueryRepository.findEntityDataByQuery(tenantId, customerId, query);
     }
-
 }
