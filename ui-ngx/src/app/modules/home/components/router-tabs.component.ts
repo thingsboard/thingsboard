@@ -20,27 +20,30 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WINDOW } from '@core/services/window.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/services/menu.service';
-import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { distinctUntilChanged, filter, map, mergeMap } from 'rxjs/operators';
+import { merge } from 'rxjs';
 import { MenuSection } from '@core/services/menu.models';
-import { instanceOfSearchableComponent } from '@home/models/searchable-component.models';
-import { BroadcastService } from '@core/services/broadcast.service';
 import { ActiveComponentService } from '@core/services/active-component.service';
 
 @Component({
   selector: 'tb-router-tabs',
   templateUrl: './router-tabs.component.html',
-  styleUrls: ['./route-tabs.component.scss']
+  styleUrls: ['./router-tabs.component.scss']
 })
 export class RouterTabsComponent extends PageComponent implements AfterViewInit, OnInit {
 
-  tabs$: Observable<Array<MenuSection>> = this.menuService.menuSections().pipe(
-    map(sections => {
-      const found = sections.find(section => section.path === `/${this.activatedRoute.routeConfig.path}`);
-      return found ? found.pages : [];
-    })
+  hideCurrentTabs = false;
+
+  tabs$ = merge(this.menuService.menuSections(),
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd ),
+      distinctUntilChanged()
+    )
+  ).pipe(
+    mergeMap(() => this.menuService.menuSections()),
+    map((sections) => this.buildTabs(this.activatedRoute, sections))
   );
 
   constructor(protected store: Store<AppState>,
@@ -60,6 +63,45 @@ export class RouterTabsComponent extends PageComponent implements AfterViewInit,
 
   activeComponentChanged(activeComponent: any) {
     this.activeComponentService.setCurrentActiveComponent(activeComponent);
+    let snapshot = this.router.routerState.snapshot.root;
+    this.hideCurrentTabs = false;
+    let found = false;
+    while (snapshot.children.length) {
+      if (snapshot.component && snapshot.component === RouterTabsComponent) {
+        if (this.activatedRoute.snapshot === snapshot) {
+          found = true;
+        } else if (found) {
+          this.hideCurrentTabs = true;
+          break;
+        }
+      }
+      snapshot = snapshot.children[0];
+    }
+  }
+
+  private buildTabs(activatedRoute: ActivatedRoute, sections: MenuSection[]): Array<MenuSection> {
+    const sectionPath = '/' + activatedRoute.pathFromRoot.map(r => r.snapshot.url)
+      .filter(f => !!f[0]).map(f => f.map(f1 => f1.path).join('/')).join('/');
+    const found = this.findRootSection(sections, sectionPath);
+    const rootPath = sectionPath.substring(0, sectionPath.length - found.path.length);
+    const isRoot = rootPath === '';
+    const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.disabled && (!page.rootOnly || isRoot)) : [];
+    return tabs.map((tab) => ({...tab, path: rootPath + tab.path}));
+  }
+
+  private findRootSection(sections: MenuSection[], sectionPath: string): MenuSection {
+    for (const section of sections) {
+      if (sectionPath.endsWith(section.path)) {
+        return section;
+      }
+      if (section.pages?.length) {
+        const found = this.findRootSection(section.pages, sectionPath);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
   }
 
 }

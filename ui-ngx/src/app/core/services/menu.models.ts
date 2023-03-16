@@ -27,6 +27,8 @@ export interface MenuSection extends HasUUID{
   height?: string;
   pages?: Array<MenuSection>;
   opened?: boolean;
+  disabled?: boolean;
+  rootOnly?: boolean;
 }
 
 export interface HomeSection {
