@@ -476,7 +476,7 @@
         <fieldset [formGroup]="layoutSettings" class="fields-group fields-group-slider">
           <legend class="group-title" translate>widget-config.mobile-mode-settings</legend>
           <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header style="height: 100%;">
+            <mat-expansion-panel-header style="height: fit-content;">
               <mat-panel-title fxLayout.xs="column" fxLayoutAlign.xs="center start" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex="70">
                 <mat-slide-toggle formControlName="mobileHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
                   {{ 'widget-config.mobile-hide' | translate }}
