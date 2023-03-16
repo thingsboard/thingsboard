@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -33,7 +33,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.UserSettings;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,19 +43,17 @@ import java.util.List;
 
 public abstract class BaseUserServiceTest extends AbstractServiceTest {
 
+    @Autowired
+    CustomerService customerService;
+    @Autowired
+    UserService userService;
+
     private IdComparator<User> idComparator = new IdComparator<>();
 
-    private TenantId tenantId;
     private UserSettings userSettings;
 
     @Before
     public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-
         User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(tenantId);
@@ -73,11 +73,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         customerUser = userService.saveUser(customerUser);
 
         userSettings = createUserSettings(customerUser.getId());
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -209,17 +204,13 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, users.size());
         Assert.assertEquals(tenantAdminUser, users.get(0));
 
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
+        TenantId secondTenantId = createTenant();
 
         List<User> tenantAdmins = new ArrayList<>();
         for (int i = 0; i < 124; i++) {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
-            user.setTenantId(tenantId);
+            user.setTenantId(secondTenantId);
             user.setEmail("testTenant" + i + "@thingsboard.org");
             tenantAdmins.add(userService.saveUser(user));
         }
@@ -227,7 +218,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         List<User> loadedTenantAdmins = new ArrayList<>();
         PageLink pageLink = new PageLink(33);
         do {
-            pageData = userService.findTenantAdmins(tenantId, pageLink);
+            pageData = userService.findTenantAdmins(secondTenantId, pageLink);
             loadedTenantAdmins.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -239,10 +230,10 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
 
         Assert.assertEquals(tenantAdmins, loadedTenantAdmins);
 
-        tenantService.deleteTenant(tenantId);
+        tenantService.deleteTenant(secondTenantId);
 
         pageLink = new PageLink(33);
-        pageData = userService.findTenantAdmins(tenantId, pageLink);
+        pageData = userService.findTenantAdmins(secondTenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -250,12 +241,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTenantAdminsByEmail() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         String email1 = "testEmail1";
         List<User> tenantAdminsEmail1 = new ArrayList<>();
 
@@ -332,8 +317,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         pageData = userService.findTenantAdmins(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -345,12 +328,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         List<User> users = pageData.getData();
         Assert.assertEquals(1, users.size());
         Assert.assertEquals(customerUser, users.get(0));
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
 
         Customer customer = new Customer();
         customer.setTitle("Test customer");
@@ -394,12 +371,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindCustomerUsersByEmail() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
@@ -485,8 +456,6 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     private UserSettings createUserSettings(UserId userId) {

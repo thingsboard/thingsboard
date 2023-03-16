@@ -16,11 +16,10 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -33,6 +32,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
@@ -42,24 +44,15 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
-    
+
+    @Autowired
+    CustomerService customerService;
+    @Autowired
+    DashboardService dashboardService;
+    @Autowired
+    EdgeService edgeService;
+
     private IdComparator<DashboardInfo> idComparator = new IdComparator<>();
-    
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
     
     @Test
     public void testSaveDashboard() throws IOException {
@@ -176,12 +169,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
     
     @Test
     public void testFindDashboardsByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-        
-        TenantId tenantId = tenant.getId();
-        
         List<DashboardInfo> dashboards = new ArrayList<>();
         for (int i=0;i<165;i++) {
             Dashboard dashboard = new Dashboard();
@@ -212,18 +199,10 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-        
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
     public void testFindMobileDashboardsByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         List<DashboardInfo> mobileDashboards = new ArrayList<>();
         for (int i=0;i<165;i++) {
             Dashboard dashboard = new Dashboard();
@@ -272,8 +251,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         pageData = dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
     
     @Test
@@ -353,12 +330,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
     
     @Test
     public void testFindDashboardsByTenantIdAndCustomerId() throws ExecutionException, InterruptedException {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-        
-        TenantId tenantId = tenant.getId();
-        
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
@@ -396,8 +367,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-        
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
