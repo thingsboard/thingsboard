@@ -15,6 +15,15 @@
  */
 @import "../../../../../scss/constants";
 
+:host {
+  height: 100%;
+  display: grid;
+
+  .dialog-actions-row {
+    padding: 8px;
+  }
+}
+
 :host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
   @media #{$mat-lt-sm} {
     .mat-mdc-dialog-content {
