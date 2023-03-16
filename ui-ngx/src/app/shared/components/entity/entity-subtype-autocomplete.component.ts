@@ -16,14 +16,14 @@
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { connect, Observable, of, shareReplay, Subscription, throwError } from 'rxjs';
+import { Observable, of, Subscription, throwError } from 'rxjs';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
   map,
   publishReplay,
-  refCount, share,
+  refCount,
   switchMap,
   tap
 } from 'rxjs/operators';
