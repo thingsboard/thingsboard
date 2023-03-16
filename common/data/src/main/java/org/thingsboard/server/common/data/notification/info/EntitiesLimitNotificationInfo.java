@@ -19,43 +19,27 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.EntityType;
 
 import java.util.Map;
 
 import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class RuleEngineComponentLifecycleEventNotificationInfo implements NotificationInfo {
+public class EntitiesLimitNotificationInfo implements NotificationInfo {
 
-    private RuleChainId ruleChainId;
-    private String ruleChainName;
-    private EntityId componentId;
-    private String componentName;
-    private ComponentLifecycleEvent eventType;
-    private String error;
+    private EntityType entityType;
+    private int threshold;
 
     @Override
     public Map<String, String> getTemplateData() {
+        // FIXME: readable entity type name, e.g. 'Devices'
         return mapOf(
-                "ruleChainId", ruleChainId.toString(),
-                "ruleChainName", ruleChainName,
-                "componentId", componentId.toString(),
-                "componentType", componentId.getEntityType().name(),
-                "componentName", componentName,
-                "eventType", eventType.name(),
-                "error", error
+                "entityType", entityType.name(),
+                "threshold", String.valueOf(threshold)
         );
     }
-
-    @Override
-    public EntityId getStateEntityId() {
-        return ruleChainId;
-    }
-
 }

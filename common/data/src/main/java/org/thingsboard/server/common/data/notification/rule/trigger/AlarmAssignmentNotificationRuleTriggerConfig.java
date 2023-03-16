@@ -22,16 +22,16 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import java.util.Set;
 
 @Data
-public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class AlarmAssignmentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<String> alarmTypes;
     private Set<AlarmSeverity> alarmSeverities;
     private Set<AlarmSearchStatus> alarmStatuses;
-    private boolean onlyUserComments;
+    private boolean notifyOnUnassign;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ALARM_COMMENT;
+        return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
     }
 
 }

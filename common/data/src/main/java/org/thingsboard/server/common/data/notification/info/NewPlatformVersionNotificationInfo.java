@@ -13,18 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.info;
 
-public enum NotificationType {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    GENERAL,
-    ALARM,
-    DEVICE_INACTIVITY,
-    ENTITY_ACTION,
-    ALARM_COMMENT,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT
+import java.util.Map;
+
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class NewPlatformVersionNotificationInfo implements NotificationInfo {
+
+    private String message;
+
+    @Override
+    public Map<String, String> getTemplateData() {
+        return mapOf(
+                "message", message
+        );
+    }
 
 }

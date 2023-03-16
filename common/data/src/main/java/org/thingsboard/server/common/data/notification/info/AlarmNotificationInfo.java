@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,25 +38,28 @@ public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
     private String alarmType;
     private UUID alarmId;
     private EntityId alarmOriginator;
+    private String alarmOriginatorName;
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
     private CustomerId alarmCustomerId;
 
     @Override
-    public CustomerId getOriginatorEntityCustomerId() {
-        return alarmCustomerId;
-    }
-
-    @Override
     public Map<String, String> getTemplateData() {
-        return Map.of(
+        // TODO: readable status change
+        return mapOf(
                 "alarmType", alarmType,
                 "alarmId", alarmId.toString(),
                 "alarmSeverity", alarmSeverity.toString(),
                 "alarmStatus", alarmStatus.toString(),
                 "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
+                "alarmOriginatorName", alarmOriginatorName,
                 "alarmOriginatorId", alarmOriginator.getId().toString()
         );
+    }
+
+    @Override
+    public CustomerId getOriginatorEntityCustomerId() {
+        return alarmCustomerId;
     }
 
     @Override

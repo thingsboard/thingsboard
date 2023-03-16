@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-public enum NotificationType {
+import lombok.Data;
 
-    GENERAL,
-    ALARM,
-    DEVICE_INACTIVITY,
-    ENTITY_ACTION,
-    ALARM_COMMENT,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT
+@Data
+public class NewPlatformVersionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
+    }
 
 }

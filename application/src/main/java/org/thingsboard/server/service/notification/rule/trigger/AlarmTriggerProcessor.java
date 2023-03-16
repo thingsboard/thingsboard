@@ -15,37 +15,63 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
-import lombok.Builder;
-import lombok.Data;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.service.notification.rule.trigger.AlarmTriggerProcessor.AlarmTriggerObject;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 @Service
-public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmTriggerObject, AlarmNotificationRuleTriggerConfig> {
+public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmApiCallResult, AlarmNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
-        Alarm alarm = triggerObject.getAlarm();
-        return (isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
-                (isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity()));
+    public boolean matchesFilter(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        Alarm alarm = alarmUpdate.getAlarm();
+        if (!typeMatches(alarm, triggerConfig)) {
+            return false;
+        }
+
+        if (alarmUpdate.isCreated()) {
+            if (triggerConfig.getNotifyOn().contains(AlarmAction.CREATED)) {
+                return severityMatches(alarm, triggerConfig);
+            }
+        }  else if (alarmUpdate.isSeverityChanged()) {
+            if (triggerConfig.getNotifyOn().contains(AlarmAction.SEVERITY_CHANGED)) {
+                return severityMatches(alarmUpdate.getOld(), triggerConfig) || severityMatches(alarm, triggerConfig);
+            }  else {
+                // if we haven't yet sent notification about the alarm
+                return !severityMatches(alarmUpdate.getOld(), triggerConfig) && severityMatches(alarm, triggerConfig);
+            }
+        } else if (alarmUpdate.isAcknowledged()) {
+            if (triggerConfig.getNotifyOn().contains(AlarmAction.ACKNOWLEDGED)) {
+                return severityMatches(alarm, triggerConfig);
+            }
+        } else if (alarmUpdate.isCleared()) {
+            if (triggerConfig.getNotifyOn().contains(AlarmAction.CLEARED)) {
+                return severityMatches(alarm, triggerConfig);
+            }
+        }
+        return false;
     }
 
     @Override
-    public boolean matchesClearRule(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
-        if (triggerObject.isDeleted()) {
+    public boolean matchesClearRule(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        Alarm alarm = alarmUpdate.getAlarm();
+        if (!typeMatches(alarm, triggerConfig)) {
+            return false;
+        }
+        if (alarmUpdate.isDeleted()) {
             return true;
         }
-        Alarm alarm = triggerObject.getAlarm();
         ClearRule clearRule = triggerConfig.getClearRule();
         if (clearRule != null) {
             if (isNotEmpty(clearRule.getAlarmStatuses())) {
@@ -55,29 +81,32 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
         return false;
     }
 
+    private boolean severityMatches(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        return isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity());
+    }
+
+    private boolean typeMatches(Alarm alarm, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        return isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType());
+    }
+
     @Override
-    public NotificationInfo constructNotificationInfo(AlarmTriggerObject triggerObject, AlarmNotificationRuleTriggerConfig triggerConfig) {
-        Alarm alarm = triggerObject.getAlarm();
+    public NotificationInfo constructNotificationInfo(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        // TODO: readable action
+        AlarmInfo alarmInfo = alarmUpdate.getAlarm();
         return AlarmNotificationInfo.builder()
-                .alarmId(alarm.getUuidId())
-                .alarmType(alarm.getType())
-                .alarmOriginator(alarm.getOriginator())
-                .alarmSeverity(alarm.getSeverity())
-                .alarmStatus(alarm.getStatus())
-                .alarmCustomerId(alarm.getCustomerId())
+                .alarmId(alarmInfo.getUuidId())
+                .alarmType(alarmInfo.getType())
+                .alarmOriginator(alarmInfo.getOriginator())
+                .alarmOriginatorName(alarmInfo.getOriginatorName())
+                .alarmSeverity(alarmInfo.getSeverity())
+                .alarmStatus(alarmInfo.getStatus())
+                .alarmCustomerId(alarmInfo.getCustomerId())
                 .build();
     }
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM;
-    }
-
-    @Data
-    @Builder
-    public static class AlarmTriggerObject {
-        private final Alarm alarm;
-        private final boolean deleted;
     }
 
 }

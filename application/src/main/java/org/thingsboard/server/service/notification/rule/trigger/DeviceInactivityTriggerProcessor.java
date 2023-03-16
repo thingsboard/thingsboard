@@ -56,6 +56,7 @@ public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificati
                 .deviceId(ruleEngineMsg.getOriginator().getId())
                 .deviceName(ruleEngineMsg.getMetaData().getValue("deviceName"))
                 .deviceType(ruleEngineMsg.getMetaData().getValue("deviceType"))
+                .deviceLabel(ruleEngineMsg.getMetaData().getValue("deviceLabel"))
                 .deviceCustomerId(ruleEngineMsg.getCustomerId())
                 .build();
     }

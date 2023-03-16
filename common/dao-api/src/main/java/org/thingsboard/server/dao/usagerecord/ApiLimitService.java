@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.dao.usagerecord;
 
-public enum NotificationType {
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    GENERAL,
-    ALARM,
-    DEVICE_INACTIVITY,
-    ENTITY_ACTION,
-    ALARM_COMMENT,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT
+public interface ApiLimitService {
+
+    boolean checkEntitiesLimit(TenantId tenantId, EntityType entityType);
 
 }

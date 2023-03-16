@@ -129,7 +129,8 @@ public class NotificationProcessingContext {
         String result = template;
         for (Map<String, String> context : contexts) {
             for (Map.Entry<String, String> kv : context.entrySet()) {
-                result = result.replace("${" + kv.getKey() + '}', kv.getValue());
+                String value = Strings.nullToEmpty(kv.getValue());
+                result = result.replace("${" + kv.getKey() + '}', value);
             }
         }
         return result;

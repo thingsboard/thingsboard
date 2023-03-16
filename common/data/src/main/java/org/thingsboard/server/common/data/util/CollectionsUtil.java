@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.common.util;
+package org.thingsboard.server.common.data.util;
+
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +50,21 @@ public class CollectionsUtil {
             if (t != null) count++;
         }
         return count;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <K, V> Map<K, V> mapOf(Object... kvs) {
+        Map<K, V> map = new HashMap<>();
+        for (int i = 0; i < kvs.length; i += 2) {
+            K key = (K) kvs[i];
+            V value = (V) kvs[i + 1];
+            map.put(key, value);
+        }
+        return map;
+    }
+
+    public static  <K, V> Map<K, V> unmodifiableMapOf(Object... kvs) {
+        return Collections.unmodifiableMap(mapOf(kvs));
     }
 
 }

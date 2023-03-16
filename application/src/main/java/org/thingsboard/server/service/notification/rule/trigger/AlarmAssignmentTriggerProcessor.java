@@ -19,13 +19,12 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
-import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AlarmAssignmentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -34,18 +33,12 @@ import java.util.Set;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 @Service
-public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmCommentNotificationRuleTriggerConfig> {
+public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmAssignmentNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
-        if (ruleEngineMsg.getMetaData().getValue("comment") == null) {
+    public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
+        if (ruleEngineMsg.getType().equals(DataConstants.ALARM_UNASSIGN) && !triggerConfig.isNotifyOnUnassign()) {
             return false;
-        }
-        if (triggerConfig.isOnlyUserComments()) {
-            AlarmComment comment = JacksonUtil.fromString(ruleEngineMsg.getMetaData().getValue("comment"), AlarmComment.class);
-            if (comment.getType() == AlarmCommentType.SYSTEM) {
-                return false;
-            }
         }
         Alarm alarm = JacksonUtil.fromString(ruleEngineMsg.getData(), Alarm.class);
         return (isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
@@ -54,12 +47,14 @@ public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRu
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
+    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
         // TODO: readable action
-        AlarmComment comment = JacksonUtil.fromString(ruleEngineMsg.getMetaData().getValue("comment"), AlarmComment.class);
         AlarmInfo alarmInfo = JacksonUtil.fromString(ruleEngineMsg.getData(), AlarmInfo.class);
-        return AlarmCommentNotificationInfo.builder()
-                .comment(comment.getComment().get("text").asText())
+        AlarmAssignee assignee = alarmInfo.getAssignee();
+        return AlarmAssignmentNotificationInfo.builder()
+                .assigneeFirstName(assignee != null ? assignee.getFirstName() : null)
+                .assigneeLastName(assignee != null ? assignee.getLastName() : null)
+                .assigneeEmail(assignee != null ? assignee.getEmail() : null)
                 .userName(ruleEngineMsg.getMetaData().getValue("userName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
@@ -73,12 +68,12 @@ public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRu
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ALARM_COMMENT;
+        return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
     }
 
     @Override
     public Set<String> getSupportedMsgTypes() {
-        return Set.of(DataConstants.COMMENT_CREATED, DataConstants.COMMENT_UPDATED);
+        return Set.of(DataConstants.ALARM_ASSIGN, DataConstants.ALARM_UNASSIGN);
     }
 
 }

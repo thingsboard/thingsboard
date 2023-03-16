@@ -47,6 +47,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     @NotNull
     private NotificationRuleTriggerType triggerType;
     @NotNull
+    @Valid
     private NotificationRuleTriggerConfig triggerConfig;
     @NotNull
     @Valid

@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.notification.rule.EscalatedNotificatio
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
@@ -180,6 +181,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
         triggerConfig.setAlarmTypes(null);
         triggerConfig.setAlarmSeverities(null);
+        triggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED, AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED, AlarmAction.CLEARED));
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
@@ -251,8 +253,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
             wsClient.close();
         });
-
-        // TODO: test severity changes
     }
 
     @Test
@@ -273,6 +273,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
         triggerConfig.setAlarmTypes(Set.of(alarmType));
         triggerConfig.setAlarmSeverities(null);
+        triggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED, AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED));
 
         AlarmNotificationRuleTriggerConfig.ClearRule clearRule = new AlarmNotificationRuleTriggerConfig.ClearRule();
         clearRule.setAlarmStatuses(Set.of(AlarmSearchStatus.CLEARED, AlarmSearchStatus.UNACK));

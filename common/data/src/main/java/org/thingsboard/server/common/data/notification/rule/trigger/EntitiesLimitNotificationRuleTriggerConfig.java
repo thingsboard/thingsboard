@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-public enum NotificationType {
+import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 
-    GENERAL,
-    ALARM,
-    DEVICE_INACTIVITY,
-    ENTITY_ACTION,
-    ALARM_COMMENT,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT
+import javax.validation.constraints.Max;
+import java.util.Set;
+
+@Data
+public class EntitiesLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    private Set<EntityType> entityTypes;
+    @Max(1)
+    private float threshold; // in percents,
+
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.ENTITIES_LIMIT;
+    }
 
 }

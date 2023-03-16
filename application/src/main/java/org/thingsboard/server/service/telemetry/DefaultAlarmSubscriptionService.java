@@ -52,6 +52,7 @@ import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
+import org.thingsboard.server.service.notification.rule.NotificationRuleProcessingService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
@@ -68,6 +69,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     private final TbAlarmCommentService alarmCommentService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
+    private final NotificationRuleProcessingService notificationRuleProcessingService;
 
     @Override
     protected String getExecutorPrefix() {
@@ -232,6 +234,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                     return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
                 });
             }
+            notificationRuleProcessingService.process(tenantId,  result);
         });
     }
 
@@ -246,6 +249,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                     return TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
                 });
             }
+            notificationRuleProcessingService.process(tenantId,  result);
         });
     }
 

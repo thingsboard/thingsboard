@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -46,7 +48,7 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Map.of(
+        return mapOf(
                 "entityType", entityId.getEntityType().name(),
                 "entityId", entityId.toString(),
                 "entityName", entityName,
