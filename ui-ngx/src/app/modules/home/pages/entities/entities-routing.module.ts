@@ -27,8 +27,7 @@ const routes: Routes = [
     data: {
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
-        label: 'entity.entities',
-        icon: 'category'
+        skip: true
       }
     },
     children: [
