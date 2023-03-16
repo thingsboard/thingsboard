@@ -884,7 +884,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void awaitForDeviceActorToReceiveSubscription(DeviceId deviceId, FeatureType featureType, int subscriptionCount) {
         DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
         Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
-        Awaitility.await("Device actor received subscription command from the transport").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> subscriptions.size() == subscriptionCount);
+        Awaitility.await("Device actor received subscription command from the transport").atMost(5, TimeUnit.SECONDS).until(() -> {
+            log.warn("device {}, subscriptions.size() == {}", deviceId, subscriptions.size());
+            return subscriptions.size() == subscriptionCount;
+        });
     }
 
     protected static String getMapName(FeatureType featureType) {
