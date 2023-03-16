@@ -55,7 +55,7 @@ public class ManageCustomersDashboardsTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersDashboardsBtnView().click();
+        jsClick(customerPage.manageCustomersDashboardsBtnView());
 
         Assert.assertTrue(urlContains(manage.toLowerCase()));
         Assert.assertNotNull(customerPage.customerDashboardIconHeader());

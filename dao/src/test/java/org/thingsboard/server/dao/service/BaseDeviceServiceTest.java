@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -38,7 +39,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -51,14 +58,24 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
-    private IdComparator<Device> idComparator = new IdComparator<>();
+    @Autowired
+    CustomerService customerService;
+    @Autowired
+    DeviceCredentialsService deviceCredentialsService;
+    @Autowired
+    DeviceProfileService deviceProfileService;
+    @Autowired
+    DeviceService deviceService;
+    @Autowired
+    OtaPackageService otaPackageService;
+    @Autowired
+    TenantProfileService tenantProfileService;
 
-    private TenantId tenantId;
+    private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
 
     @Before
     public void before() {
-        tenantId = createTenant();
         anotherTenantId = createTenant();
     }
 
@@ -384,12 +401,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDevicesByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
             Device device = new Device();
@@ -421,8 +432,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -583,12 +592,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDevicesByTenantIdAndCustomerId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
@@ -627,8 +630,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         pageData = deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
