@@ -111,12 +111,22 @@ public class DefaultSystemInfoService implements SystemInfoService {
         return systemInfo;
     }
 
-    private void saveCurrentSystemInfo() {
+    protected void saveCurrentSystemInfo() {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
-        tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", getMemoryUsage())));
-        tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("cpuUsage", getCpuUsage())));
-        tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeDiscSpace", getFreeDiscSpace())));
+
+        Long memoryUsage = getMemoryUsage();
+        if (memoryUsage != null) {
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", memoryUsage)));
+        }
+        Double cpuUsage = getCpuUsage();
+        if (cpuUsage != null) {
+            tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("cpuUsage", cpuUsage)));
+        }
+        Long freeDiscSpace = getFreeDiscSpace();
+        if (freeDiscSpace != null) {
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeDiscSpace", freeDiscSpace)));
+        }
 
         telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, tsList, CALLBACK);
     }
