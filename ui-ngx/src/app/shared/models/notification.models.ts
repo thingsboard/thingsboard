@@ -109,20 +109,59 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   additionalConfig: {description: string};
 }
 
-export interface NotificationRuleTriggerConfig {
+export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig & EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig>
+
+export interface AlarmNotificationRuleTriggerConfig {
+  alarmTypes?: Array<string>;
+  alarmSeverities?: Array<AlarmSeverity>;
+  notifyOn: Array<AlarmAction>;
+  clearRule?: ClearRule;
+}
+
+interface ClearRule {
+  alarmStatuses: Array<AlarmSearchStatus>
+}
+
+export interface DeviceInactivityNotificationRuleTriggerConfig {
+  devices?: Array<string>;
+  deviceProfiles?: Array<string>;
+}
+
+export interface EntityActionNotificationRuleTriggerConfig {
+  entityType: EntityType;
+  created: boolean;
+  updated: boolean;
+  deleted: boolean;
+}
+
+export interface AlarmCommentNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
   alarmSeverities?: Array<AlarmSeverity>;
   alarmStatuses?: Array<AlarmSearchStatus>;
-  clearRule?: {
-    alarmStatuses: Array<AlarmSearchStatus>;
-  };
-  devices?: Array<string>;
-  deviceProfiles?: Array<string>;
-  entityType?: EntityType;
-  created?: boolean;
-  updated?: boolean;
-  deleted?: boolean;
+  notifyOnUnassign?: boolean;
+  onlyUserComments?: boolean;
 }
+
+export interface AlarmAssignmentNotificationRuleTriggerConfig {
+  alarmTypes?: Array<string>;
+  alarmSeverities?: Array<AlarmSeverity>;
+  alarmStatuses?: Array<AlarmSearchStatus>;
+  notifyOnUnassign?: boolean;
+}
+
+export enum AlarmAction {
+  CREATED = 'CREATED',
+  SEVERITY_CHANGED = 'SEVERITY_CHANGED',
+  ACKNOWLEDGED = 'ACKNOWLEDGED',
+  CLEARED = 'CLEARED'
+}
+
+export const AlarmActionTranslationMap = new Map<AlarmAction, string>([
+  [AlarmAction.CREATED, 'notification.notify-alarm-action.created'],
+  [AlarmAction.SEVERITY_CHANGED, 'notification.notify-alarm-action.severity-changed'],
+  [AlarmAction.ACKNOWLEDGED, 'notification.notify-alarm-action.acknowledged'],
+  [AlarmAction.CLEARED, 'notification.notify-alarm-action.cleared']
+])
 
 export interface NotificationRuleRecipientConfig {
   targets?: Array<string>;

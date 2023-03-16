@@ -2815,7 +2815,16 @@
         "notification-chain": "Notification chain",
         "notification-target": "Notification recipient",
         "notify": "notify",
+        "notify-alarm-action": {
+           "created": "Alarm created",
+           "severity-changed": "Alarm severity changed",
+           "acknowledged": "Alarm acknowledged",
+           "cleared": "Alarm cleared"
+        },
         "notify-again": "Notify again",
+        "notify-on": "Notify on",
+        "notify-on-required": "Notify on is required",
+        "notify-only-user-comments": "Notify only user comments",
         "notify-on-unassign": "Notify on unassign",
         "platform-users": "Platform users",
         "recipient": "Recipient",
