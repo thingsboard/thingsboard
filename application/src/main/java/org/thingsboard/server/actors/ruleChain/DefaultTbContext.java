@@ -105,6 +105,7 @@ import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -121,13 +122,14 @@ class DefaultTbContext implements TbContext {
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
-    private final RuleNodeCacheService ruleNodeCacheService;
+    private final Optional<RuleNodeCacheService> ruleNodeCacheService;
 
     public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
         this.mainCtx = mainCtx;
         this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
-        this.ruleNodeCacheService = new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache());
+        this.ruleNodeCacheService = mainCtx.getRuleNodeCache() == null ?
+                Optional.empty() : Optional.of(new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache()));
     }
 
     @Override
@@ -303,7 +305,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public TopicPartitionInfo getEntityTopicPartition(EntityId entityId) {
+    public TopicPartitionInfo getTopicPartitionInfo(EntityId entityId) {
         return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId);
     }
 
@@ -748,7 +750,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public RuleNodeCacheService getRuleNodeCacheService() {
+    public Optional<RuleNodeCacheService> getRuleNodeCacheService() {
         return ruleNodeCacheService;
     }
 

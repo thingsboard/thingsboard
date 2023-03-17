@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RedisRuleNodeCache implements RuleNodeCache {
 
-    private static final int FETCH_LIMIT = 1000;
+    private static final int SCAN_COUNT = 1000;
+    private static final ScanOptions OPTIONS = ScanOptions.scanOptions().count(SCAN_COUNT).build();
 
     private final RedisConnectionFactory redisConnectionFactory;
 
@@ -125,11 +126,10 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     }
 
     private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, Integer partition, String key) {
-        ScanOptions options = ScanOptions.scanOptions().count(FETCH_LIMIT).build();
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             Set<byte[]> bytes = new HashSet<>();
             Cursor<byte[]> cursor = connection.setCommands()
-                    .sScan(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), options);
+                    .sScan(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), OPTIONS);
             while (cursor.hasNext()) {
                 bytes.add(cursor.next());
             }

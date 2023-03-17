@@ -70,6 +70,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -210,7 +211,7 @@ public interface TbContext {
 
     boolean isLocalEntity(EntityId entityId);
 
-    TopicPartitionInfo getEntityTopicPartition(EntityId entityId);
+    TopicPartitionInfo getTopicPartitionInfo(EntityId entityId);
 
     RuleNodeId getSelfId();
 
@@ -323,7 +324,7 @@ public interface TbContext {
 
     void clearRuleNodeStates();
 
-    RuleNodeCacheService getRuleNodeCacheService();
+    Optional<RuleNodeCacheService> getRuleNodeCacheService();
 
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 

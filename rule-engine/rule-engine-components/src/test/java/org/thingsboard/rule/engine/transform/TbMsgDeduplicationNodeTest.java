@@ -111,8 +111,8 @@ public class TbMsgDeduplicationNodeTest {
 
         when(ctx.getSelfId()).thenReturn(ruleNodeId);
         when(ctx.getTenantId()).thenReturn(tenantId);
-        when(ctx.getRuleNodeCacheService()).thenReturn(ruleNodeCacheService);
-        when(ctx.getEntityTopicPartition(any())).thenReturn(tpi);
+        when(ctx.getRuleNodeCacheService()).thenReturn(Optional.of(ruleNodeCacheService));
+        when(ctx.getTopicPartitionInfo(any())).thenReturn(tpi);
         when(tpi.getPartition()).thenReturn(Optional.of(0));
         when(tpi.isMyPartition()).thenReturn(true);
         when(ruleNodeCacheService.getEntityIds(DEDUPLICATION_IDS_CACHE_KEY)).thenReturn(Collections.emptySet());

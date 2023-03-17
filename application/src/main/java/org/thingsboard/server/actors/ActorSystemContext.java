@@ -236,7 +236,7 @@ public class ActorSystemContext {
     @Getter
     private RuleNodeStateService ruleNodeStateService;
 
-    @Autowired
+    @Autowired(required = false)
     @Getter
     private RuleNodeCache ruleNodeCache;
 

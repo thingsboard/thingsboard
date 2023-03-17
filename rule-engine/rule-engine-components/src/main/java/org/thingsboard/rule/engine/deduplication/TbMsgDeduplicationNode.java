@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -72,8 +73,8 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     }
 
     @Override
-    protected void processGetValuesFromCacheAndSchedule(TbContext ctx, EntityId id, Integer partition) {
-        List<TbMsg> tbMsgs = new ArrayList<>(ctx.getRuleNodeCacheService().getTbMsgs(id, partition));
+    protected void getValuesFromCacheAndSchedule(TbContext ctx, RuleNodeCacheService cache, Integer partition, EntityId id) {
+        List<TbMsg> tbMsgs = new ArrayList<>(cache.getTbMsgs(id, partition));
         DeduplicationData deduplicationData = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
         if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
             return;
@@ -85,7 +86,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     @Override
     protected void processOnRegularMsg(TbContext ctx, TbMsg msg) {
         EntityId id = msg.getOriginator();
-        TopicPartitionInfo tpi = ctx.getEntityTopicPartition(id);
+        TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
         if (tpi.isMyPartition()) {
             Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
             Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
@@ -93,11 +94,13 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
             DeduplicationData deduplicationMsgs = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
             if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
                 log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
-                if (entityIdAdded) {
-                    ctx.getRuleNodeCacheService().add(getEntityIdsCacheKey(), id);
-                }
+                getCacheIfPresentAndExecute(ctx, cache -> {
+                    if (entityIdAdded) {
+                        cache.add(getEntityIdsCacheKey(), id);
+                    }
+                    cache.add(id, partition, msg);
+                });
                 deduplicationMsgs.add(msg);
-                ctx.getRuleNodeCacheService().add(id, partition, msg);
                 ctx.ack(msg);
                 scheduleTickMsg(ctx, id, deduplicationMsgs);
             } else {
@@ -112,7 +115,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     @Override
     protected void processOnTickMsg(TbContext ctx, TbMsg msg) {
         EntityId deduplicationId = msg.getOriginator();
-        TopicPartitionInfo tpi = ctx.getEntityTopicPartition(deduplicationId);
+        TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(deduplicationId);
         if (!tpi.isMyPartition()) {
             return;
         }
@@ -223,7 +226,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
             ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
-                        ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache);
+                        getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache));
                     },
                     throwable -> {
                         log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt, throwable);
@@ -231,7 +234,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
                     });
         } else {
             log.trace("[{}][{}] Removing deduplication messages pack due to max enqueue retry attempts exhausted!", ctx.getSelfId(), outMsg.getOriginator());
-            ctx.getRuleNodeCacheService().removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache);
+            getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache));
         }
     }
 
