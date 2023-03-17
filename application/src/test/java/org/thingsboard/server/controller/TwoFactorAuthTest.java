@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.aerogear.security.otp.Totp;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -52,7 +51,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
-import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -178,7 +177,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         logInWithPreVerificationToken(username, password);
 
-        Stream.generate(() -> RandomStringUtils.randomNumeric(6))
+        Stream.generate(() -> StringUtils.randomNumeric(6))
                 .limit(9)
                 .forEach(incorrectVerificationCode -> {
                     try {
@@ -190,11 +189,11 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
                     }
                 });
 
-        String errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + RandomStringUtils.randomNumeric(6))
+        String errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + StringUtils.randomNumeric(6))
                 .andExpect(status().isUnauthorized()));
         assertThat(errorMessage).containsIgnoringCase("account was locked due to exceeded 2fa verification attempts");
 
-        errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + RandomStringUtils.randomNumeric(6))
+        errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + StringUtils.randomNumeric(6))
                 .andExpect(status().isUnauthorized()));
         assertThat(errorMessage).containsIgnoringCase("user is disabled");
     }
@@ -397,7 +396,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
     private void logInWithPreVerificationToken(String username, String password) throws Exception {
         LoginRequest loginRequest = new LoginRequest(username, password);
 
-        JwtTokenPair response = readResponse(doPost("/api/auth/login", loginRequest).andExpect(status().isOk()), JwtTokenPair.class);
+        JwtPair response = readResponse(doPost("/api/auth/login", loginRequest).andExpect(status().isOk()), JwtPair.class);
         assertThat(response.getToken()).isNotNull();
         assertThat(response.getRefreshToken()).isNull();
         assertThat(response.getScope()).isEqualTo(Authority.PRE_VERIFICATION_TOKEN);

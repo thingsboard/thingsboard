@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,6 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    @Override
-    public void destroy() {
-    }
-
     protected abstract C loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected abstract ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg);
@@ -123,6 +119,9 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     private JsonElement setProperties(ContactBased entity, JsonElement data, EntityDetails entityDetails, String prefix) {
         JsonObject dataAsObject = data.getAsJsonObject();
         switch (entityDetails) {
+            case ID:
+                dataAsObject.addProperty(prefix + "id", entity.getId().toString());
+                break;
             case TITLE:
                 dataAsObject.addProperty(prefix + "title", entity.getName());
                 break;

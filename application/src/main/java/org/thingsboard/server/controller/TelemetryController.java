@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,6 +48,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -58,7 +58,6 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
@@ -92,11 +91,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -104,13 +101,15 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_JSON_REQUEST_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_KEYS_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_ALLOWED_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTE_DATA_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ATTRIBUTE_SCOPES;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_GET_ATTRIBUTE_SCOPES;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_SAVE_ATTRIBUTE_SCOPES;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.INVALID_STRUCTURE_OF_THE_REQUEST;
@@ -241,7 +240,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get attributes by scope (getAttributesByScope)",
             notes = "Returns all attributes of a specified scope that belong to specified entity." +
-                    ENTITY_ATTRIBUTE_SCOPES +
+                    ENTITY_GET_ATTRIBUTE_SCOPES +
                     "Use optional 'keys' parameter to return specific attributes."
                     + "\n Example of the result: \n\n"
                     + MARKDOWN_CODE_BLOCK_START
@@ -383,7 +382,7 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> saveDeviceAttributes(
             @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION, required = true) @PathVariable("deviceId") String deviceIdStr,
-            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody JsonNode request) throws ThingsboardException {
         try {
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
@@ -395,7 +394,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save entity attributes (saveEntityAttributesV1)",
             notes = "Creates or updates the entity attributes based on Entity Id and the specified attribute scope. " +
-                    ENTITY_ATTRIBUTE_SCOPES +
+                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
                     SAVE_ATTRIBUTES_REQUEST_PAYLOAD
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -411,7 +410,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityAttributesV1(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE") @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody JsonNode request) throws ThingsboardException {
         try {
             EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -423,7 +422,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save entity attributes (saveEntityAttributesV2)",
             notes = "Creates or updates the entity attributes based on Entity Id and the specified attribute scope. " +
-                    ENTITY_ATTRIBUTE_SCOPES +
+                    ENTITY_SAVE_ATTRIBUTE_SCOPES +
                     SAVE_ATTRIBUTES_REQUEST_PAYLOAD
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -439,7 +438,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityAttributesV2(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE") @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES, required = true) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody JsonNode request) throws ThingsboardException {
         try {
             EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -661,10 +660,8 @@ public class TelemetryController extends BaseController {
                         logAttributesDeleted(user, entityId, scope, keys, null);
                         if (entityIdSrc.getEntityType().equals(EntityType.DEVICE)) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
-                            Set<AttributeKey> keysToNotify = new HashSet<>();
-                            keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
                             tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                                    user.getTenantId(), deviceId, keysToNotify), null);
+                                    user.getTenantId(), deviceId, scope, keys), null);
                         }
                         result.setResult(new ResponseEntity<>(HttpStatus.OK));
                     }

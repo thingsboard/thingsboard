@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, GuavaSession> {
 
     @Override
-    protected DriverContext buildContext(
-            DriverConfigLoader configLoader,
-            ProgrammaticArguments programmaticArguments) {
-        return new GuavaDriverContext(
-                configLoader,
-                programmaticArguments.getTypeCodecs(),
-                programmaticArguments.getNodeStateListener(),
-                programmaticArguments.getSchemaChangeListener(),
-                programmaticArguments.getRequestTracker(),
-                programmaticArguments.getLocalDatacenters(),
-                programmaticArguments.getNodeFilters(),
-                programmaticArguments.getClassLoader());
+    protected DriverContext buildContext(DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+        return new GuavaDriverContext(configLoader, programmaticArguments);
     }
 
     @Override

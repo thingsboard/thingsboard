@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -65,12 +65,12 @@
       <mat-label translate>widgets.gauge.neon-glow-brightness</mat-label>
       <input matInput type="number" min="0" max="100" formControlName="neonGlowBrightness">
     </mat-form-field>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.stripes-thickness</mat-label>
         <input matInput type="number" min="0" formControlName="dashThickness">
       </mat-form-field>
-      <mat-checkbox fxFlex formControlName="roundedLineCap" style="margin-bottom: 16px;">
+      <mat-checkbox fxFlex formControlName="roundedLineCap">
         {{ 'widgets.gauge.rounded-line-cap' | translate }}
       </mat-checkbox>
     </section>

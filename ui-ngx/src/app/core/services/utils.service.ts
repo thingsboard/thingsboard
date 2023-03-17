@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-// tslint:disable-next-line:no-reference
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
 
 import { Inject, Injectable, NgZone } from '@angular/core';
@@ -25,7 +25,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   deleteNullProperties,
-  guid,
+  guid, hashCode,
   isDefined,
   isDefinedAndNotNull,
   isString,
@@ -43,6 +43,15 @@ import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
 import materialIconsCodepoints from '!raw-loader!./material-icons-codepoints.raw';
 import { Observable, of, ReplaySubject } from 'rxjs';
+import { publishReplay, refCount } from 'rxjs/operators';
+import { WidgetContext } from '@app/modules/home/models/widget-component.models';
+import {
+  AttributeData,
+  LatestTelemetry,
+  TelemetrySubscriber,
+  TelemetryType
+} from '@shared/models/telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -396,6 +405,13 @@ export class UtilsService {
     });
   }
 
+  public stringToHslColor(str: string, saturationPercentage: number, lightnessPercentage: number): string {
+    if (str && str.length) {
+      let hue = hashCode(str) % 360;
+      return `hsl(${hue}, ${saturationPercentage}%, ${lightnessPercentage}%)`;
+    }
+  }
+
   public currentPerfTime(): number {
     return this.window.performance && this.window.performance.now ?
       this.window.performance.now() : Date.now();
@@ -478,5 +494,28 @@ export class UtilsService {
     } else {
       return defaultValue;
     }
+  }
+
+  private getEntityIdFromDatasource(dataSource: Datasource): EntityId {
+    return {id: dataSource.entityId, entityType: dataSource.entityType};
+  }
+
+  public subscribeToEntityTelemetry(ctx: WidgetContext,
+                                    entityId?: EntityId,
+                                    type: TelemetryType = LatestTelemetry.LATEST_TELEMETRY,
+                                    keys: string[] = null): Observable<Array<AttributeData>> {
+    if (!entityId && ctx.datasources.length > 0) {
+      entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
+    }
+    const subscription = TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
+    if (!ctx.telemetrySubscribers) {
+      ctx.telemetrySubscribers = [];
+    }
+    ctx.telemetrySubscribers.push(subscription);
+    subscription.subscribe();
+    return subscription.attributeData$().pipe(
+      publishReplay(1),
+      refCount()
+    );
   }
 }

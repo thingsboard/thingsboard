@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -189,8 +191,8 @@ public class TbSubscriptionUtils {
         if (proto.getErrorCode() > 0) {
             return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
         } else {
-            Alarm alarm = JacksonUtil.fromString(proto.getAlarm(), Alarm.class);
-            return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), alarm);
+            AlarmInfo alarm = JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class);
+            return new AlarmSubscriptionUpdate(proto.getSubscriptionId(), alarm, proto.getDeleted());
         }
     }
 
@@ -236,7 +238,7 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-    public static ToCoreMsg toAttributesDeleteProto(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+    public static ToCoreMsg toAttributesDeleteProto(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
         TbAttributeDeleteProto.Builder builder = TbAttributeDeleteProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -245,6 +247,7 @@ public class TbSubscriptionUtils {
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setScope(scope);
         builder.addAllKeys(keys);
+        builder.setNotifyDevice(notifyDevice);
 
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setAttrDelete(builder);
@@ -315,7 +318,7 @@ public class TbSubscriptionUtils {
         return entry;
     }
 
-    public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+    public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, AlarmInfo alarm) {
         TbAlarmUpdateProto.Builder builder = TbAlarmUpdateProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -328,7 +331,7 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-    public static ToCoreMsg toAlarmDeletedProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+    public static ToCoreMsg toAlarmDeletedProto(TenantId tenantId, EntityId entityId, AlarmInfo alarm) {
         TbAlarmDeleteProto.Builder builder = TbAlarmDeleteProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());

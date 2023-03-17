@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angu
 import { ClipboardService } from 'ngx-clipboard';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { TranslateService } from '@ngx-translate/core';
+import { ThemePalette } from '@angular/material/core';
 
 @Component({
   selector: 'tb-copy-button',
@@ -52,7 +53,7 @@ export class CopyButtonComponent {
   style: {[key: string]: any} = {};
 
   @Input()
-  color: string;
+  color: ThemePalette;
 
   @Output()
   successCopied = new EventEmitter<string>();

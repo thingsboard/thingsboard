@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="parentForm">
   <mat-form-field class="mat-block" fxFlex>
-    <mat-label>{{ isDeviceSetting ? ("device-profile.power-saving-mode" | translate) : " "}}</mat-label>
+    <mat-label *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode" | translate }}</mat-label>
     <mat-select formControlName="powerMode">
       <mat-option [value]="null" *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode-type.default" | translate }}</mat-option>
       <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">

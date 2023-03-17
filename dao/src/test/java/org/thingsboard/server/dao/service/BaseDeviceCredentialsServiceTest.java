@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -47,13 +48,15 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         tenantService.deleteTenant(tenantId);
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testCreateDeviceCredentials() {
         DeviceCredentials deviceCredentials = new DeviceCredentials();
-        deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceCredentialsWithEmptyDevice() {
         Device device = new Device();
         device.setName("My device");
@@ -63,13 +66,15 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
         deviceCredentials.setDeviceId(null);
         try {
-            deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            });
         } finally {
             deviceService.deleteDevice(tenantId, device.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceCredentialsWithEmptyCredentialsType() {
         Device device = new Device();
         device.setName("My device");
@@ -79,13 +84,15 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
         deviceCredentials.setCredentialsType(null);
         try {
-            deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            });
         } finally {
             deviceService.deleteDevice(tenantId, device.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceCredentialsWithEmptyCredentialsId() {
         Device device = new Device();
         device.setName("My device");
@@ -95,13 +102,15 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
         deviceCredentials.setCredentialsId(null);
         try {
-            deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            });
         } finally {
             deviceService.deleteDevice(tenantId, device.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveNonExistentDeviceCredentials() {
         Device device = new Device();
         device.setName("My device");
@@ -115,13 +124,15 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         newDeviceCredentials.setCredentialsType(deviceCredentials.getCredentialsType());
         newDeviceCredentials.setCredentialsId(deviceCredentials.getCredentialsId());
         try {
-            deviceCredentialsService.updateDeviceCredentials(tenantId, newDeviceCredentials);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, newDeviceCredentials);
+            });
         } finally {
             deviceService.deleteDevice(tenantId, device.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceCredentialsWithNonExistentDevice() {
         Device device = new Device();
         device.setName("My device");
@@ -131,7 +142,9 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
         deviceCredentials.setDeviceId(new DeviceId(Uuids.timeBased()));
         try {
-            deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+            });
         } finally {
             deviceService.deleteDevice(tenantId, device.getId());
         }

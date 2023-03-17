@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,6 +97,8 @@ transport:
     dtls:
       # Enable/disable DTLS 1.2 support
       enabled: "${COAP_DTLS_ENABLED:false}"
+      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+      retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
       # CoAP DTLS bind address
       bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
       # CoAP DTLS bind port
@@ -115,7 +117,7 @@ transport:
           key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
         # Keystore server credentials
         keystore:
-          # Type of the key store
+          # Type of the key store (JKS or PKCS12)
           type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
           # Path to the key store that holds the SSL certificate
           store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
@@ -223,7 +225,6 @@ queue:
       notifications: "${TB_QUEUE_RABBIT_MQ_NOTIFICATIONS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}"
-    virtual_nodes_size: "${TB_QUEUE_PARTITIONS_VIRTUAL_NODES_SIZE:16}"
   transport_api:
     requests_topic: "${TB_QUEUE_TRANSPORT_API_REQUEST_TOPIC:tb_transport.api.requests}"
     responses_topic: "${TB_QUEUE_TRANSPORT_API_RESPONSE_TOPIC:tb_transport.api.responses}"

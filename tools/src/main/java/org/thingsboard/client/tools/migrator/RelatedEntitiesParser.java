@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.client.tools.migrator;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.io.File;
@@ -43,6 +43,7 @@ public class RelatedEntitiesParser {
             Map.entry("COPY public.widget_type ", EntityType.WIDGET_TYPE),
             Map.entry("COPY public.tenant_profile ", EntityType.TENANT_PROFILE),
             Map.entry("COPY public.device_profile ", EntityType.DEVICE_PROFILE),
+            Map.entry("COPY public.asset_profile ", EntityType.ASSET_PROFILE),
             Map.entry("COPY public.api_usage_state ", EntityType.API_USAGE_STATE)
     );
 

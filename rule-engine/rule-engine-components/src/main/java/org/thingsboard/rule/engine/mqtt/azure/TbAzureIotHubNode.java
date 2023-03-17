@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.mqtt.azure;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.common.util.AzureIotHubUtil;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.rule.engine.api.RuleNode;

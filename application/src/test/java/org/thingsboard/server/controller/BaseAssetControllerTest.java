@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,33 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
@@ -47,12 +56,24 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
+@ContextConfiguration(classes = {BaseAssetControllerTest.Config.class})
 public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private AssetDao assetDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public AssetDao assetDao(AssetDao assetDao) {
+            return Mockito.mock(AssetDao.class, AdditionalAnswers.delegatesTo(assetDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -117,7 +138,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveAssetWithViolationOfLengthValidation() throws Exception {
         Asset asset = new Asset();
-        asset.setName(RandomStringUtils.randomAlphabetic(300));
+        asset.setName(StringUtils.randomAlphabetic(300));
         asset.setType("default");
 
         Mockito.reset(tbClusterService, auditLogService);
@@ -132,7 +153,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService);
 
         asset.setName("Normal name");
-        asset.setType(RandomStringUtils.randomAlphabetic(300));
+        asset.setType(StringUtils.randomAlphabetic(300));
         msgError = msgErrorFieldLength("type");
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
@@ -143,7 +164,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService);
 
         asset.setType("default");
-        asset.setLabel(RandomStringUtils.randomAlphabetic(300));
+        asset.setLabel(StringUtils.randomAlphabetic(300));
         msgError = msgErrorFieldLength("label");
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
@@ -177,6 +198,20 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
         deleteDifferentTenant();
+    }
+
+    @Test
+    public void testSaveAssetWithProfileFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        AssetProfile differentProfile = createAssetProfile("Different profile");
+        differentProfile = doPost("/api/assetProfile", differentProfile, AssetProfile.class);
+
+        loginTenantAdmin();
+        Asset asset = new Asset();
+        asset.setName("My device");
+        asset.setAssetProfileId(differentProfile.getId());
+        doPost("/api/asset", asset).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Asset can`t be referencing to asset profile from different tenant!")));
     }
 
     @Test
@@ -302,13 +337,12 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset type " + msgErrorShouldBeSpecified;
-        doPost("/api/asset", asset)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString(msgError)));
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+        Assert.assertEquals("default", savedAsset.getType());
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
     }
 
     @Test
@@ -360,6 +394,41 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
+
+        foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
+    }
+
+    @Test
+    public void testAssignUnassignAssetToPublicCustomer() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Asset assignedAsset = doPost("/api/customer/public/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        Customer publicCustomer = doGet("/api/customer/" + assignedAsset.getCustomerId(), Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
+
+        Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(publicCustomer.getId(), foundAsset.getCustomerId());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Asset unassignedAsset =
+                doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -471,7 +540,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsTitle1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -482,7 +551,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsTitle2 = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -557,7 +626,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsType1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -569,7 +638,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsType2 = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -684,7 +753,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsTitle1 = new ArrayList<>();
         for (int i = 0; i < 125; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -697,7 +766,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsTitle2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -779,7 +848,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsType1 = new ArrayList<>();
         for (int i = 0; i < 125; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -793,7 +862,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         List<Asset> assetsType2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
@@ -904,5 +973,25 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 }, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testDeleteAssetWithDeleteRelationsOk() throws Exception {
+        AssetId assetId = createAsset("Asset for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), assetId, "/api/asset/" + assetId);
+    }
+
+    @Ignore
+    @Test
+    public void testDeleteAssetExceptionWithRelationsTransactional() throws Exception {
+        AssetId assetId = createAsset("Asset for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(assetDao, savedTenant.getId(), assetId, "/api/asset/" + assetId);
+    }
+
+    private Asset createAsset(String name) {
+        Asset asset = new Asset();
+        asset.setName(name);
+        asset.setType("default");
+        return doPost("/api/asset", asset, Asset.class);
     }
 }

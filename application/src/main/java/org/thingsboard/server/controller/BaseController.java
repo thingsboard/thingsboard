@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -47,6 +46,7 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -54,17 +54,21 @@ import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -84,12 +88,13 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -97,6 +102,8 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -118,10 +125,12 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.user.UserSettingsService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
@@ -129,10 +138,11 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.edge.EdgeNotificationService;
+import org.thingsboard.server.service.edge.instructions.EdgeInstallService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -146,15 +156,14 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_PAGE_SIZE;
+import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
+import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -186,6 +195,9 @@ public abstract class BaseController {
     protected UserService userService;
 
     @Autowired
+    protected UserSettingsService userSettingsService;
+
+    @Autowired
     protected DeviceService deviceService;
 
     @Autowired
@@ -195,7 +207,13 @@ public abstract class BaseController {
     protected AssetService assetService;
 
     @Autowired
+    protected AssetProfileService assetProfileService;
+
+    @Autowired
     protected AlarmSubscriptionService alarmService;
+
+    @Autowired
+    protected AlarmCommentService alarmCommentService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;
@@ -269,14 +287,17 @@ public abstract class BaseController {
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
 
+    @Autowired
+    protected TbAssetProfileCache assetProfileCache;
+
     @Autowired(required = false)
     protected EdgeService edgeService;
 
     @Autowired(required = false)
-    protected EdgeNotificationService edgeNotificationService;
+    protected EdgeRpcService edgeRpcService;
 
     @Autowired(required = false)
-    protected EdgeRpcService edgeGrpcService;
+    protected EdgeInstallService edgeInstallService;
 
     @Autowired
     protected TbNotificationEntityService notificationEntityService;
@@ -414,9 +435,12 @@ public abstract class BaseController {
     }
 
     PageLink createPageLink(int pageSize, int page, String textSearch, String sortProperty, String sortOrder) throws ThingsboardException {
-        if (!StringUtils.isEmpty(sortProperty)) {
+        if (StringUtils.isNotEmpty(sortProperty)) {
+            if (!Validator.isValidProperty(sortProperty)) {
+                throw new IllegalArgumentException("Invalid sort property");
+            }
             SortOrder.Direction direction = SortOrder.Direction.ASC;
-            if (!StringUtils.isEmpty(sortOrder)) {
+            if (StringUtils.isNotEmpty(sortOrder)) {
                 try {
                     direction = SortOrder.Direction.valueOf(sortOrder.toUpperCase());
                 } catch (IllegalArgumentException e) {
@@ -552,6 +576,9 @@ public abstract class BaseController {
                 case ASSET:
                     checkAssetId(new AssetId(entityId.getId()), operation);
                     return;
+                case ASSET_PROFILE:
+                    checkAssetProfileId(new AssetProfileId(entityId.getId()), operation);
+                    return;
                 case DASHBOARD:
                     checkDashboardId(new DashboardId(entityId.getId()), operation);
                     return;
@@ -586,7 +613,6 @@ public abstract class BaseController {
             throw handleException(e, false);
         }
     }
-
     Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
@@ -671,6 +697,18 @@ public abstract class BaseController {
         }
     }
 
+    AssetProfile checkAssetProfileId(AssetProfileId assetProfileId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(assetProfileId, "Incorrect assetProfileId " + assetProfileId);
+            AssetProfile assetProfile = assetProfileService.findAssetProfileById(getCurrentUser().getTenantId(), assetProfileId);
+            checkNotNull(assetProfile, "Asset profile with id [" + assetProfileId + "] is not found");
+            accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, operation, assetProfileId, assetProfile);
+            return assetProfile;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     Alarm checkAlarmId(AlarmId alarmId, Operation operation) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
@@ -686,10 +724,24 @@ public abstract class BaseController {
     AlarmInfo checkAlarmInfoId(AlarmId alarmId, Operation operation) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
-            AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
+            AlarmInfo alarmInfo = alarmService.findAlarmInfoById(getCurrentUser().getTenantId(), alarmId);
             checkNotNull(alarmInfo, "Alarm with id [" + alarmId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, operation, alarmId, alarmInfo);
             return alarmInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {
+        try {
+            validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+            AlarmComment alarmComment = alarmCommentService.findAlarmCommentByIdAsync(getCurrentUser().getTenantId(), alarmCommentId).get();
+            checkNotNull(alarmComment, "Alarm comment with id [" + alarmCommentId + "] is not found");
+            if (!alarmId.equals(alarmComment.getAlarmId())) {
+                throw new ThingsboardException("Alarm id does not match with comment alarm id", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+           return alarmComment;
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -937,5 +989,18 @@ public abstract class BaseController {
             }
         }, MoreExecutors.directExecutor());
         return deferredResult;
+    }
+
+    protected EntityDataSortOrder createEntityDataSortOrder(String sortProperty, String sortOrder) {
+        if (isNotEmpty(sortProperty)) {
+            EntityDataSortOrder entityDataSortOrder = new EntityDataSortOrder();
+            entityDataSortOrder.setKey(new EntityKey(ENTITY_FIELD, sortProperty));
+            if (isNotEmpty(sortOrder)) {
+                entityDataSortOrder.setDirection(EntityDataSortOrder.Direction.valueOf(sortOrder));
+            }
+            return entityDataSortOrder;
+        } else {
+            return null;
+        }
     }
 }

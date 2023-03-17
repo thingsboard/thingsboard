@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -52,8 +53,6 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantDao;
@@ -121,18 +120,22 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenantService.deleteTenant(savedTenant.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveTenantWithEmptyTitle() {
         Tenant tenant = new Tenant();
-        tenantService.saveTenant(tenant);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            tenantService.saveTenant(tenant);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveTenantWithInvalidEmail() {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         tenant.setEmail("invalid@mail");
-        tenantService.saveTenant(tenant);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            tenantService.saveTenant(tenant);
+        });
     }
 
     @Test
@@ -192,7 +195,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         List<Tenant> tenantsTitle1 = new ArrayList<>();
         for (int i = 0; i < 134; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
@@ -202,7 +205,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         List<Tenant> tenantsTitle2 = new ArrayList<>();
         for (int i = 0; i < 127; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
@@ -299,23 +302,6 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-    }
-
-    @Test(expected = DataValidationException.class)
-    public void testSaveTenantWithIsolatedProfileInMonolithSetup() {
-        TenantProfile tenantProfile = new TenantProfile();
-        tenantProfile.setName("Isolated Tenant Profile");
-        TenantProfileData profileData = new TenantProfileData();
-        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
-        tenantProfile.setProfileData(profileData);
-        tenantProfile.setDefault(false);
-        tenantProfile.setIsolatedTbRuleEngine(true);
-        TenantProfile isolatedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Tenant");
-        tenant.setTenantProfileId(isolatedTenantProfile.getId());
-        tenantService.saveTenant(tenant);
     }
 
     @Test

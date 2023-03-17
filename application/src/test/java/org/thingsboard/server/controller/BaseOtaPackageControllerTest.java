@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,6 +29,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -137,7 +137,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
         firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle(RandomStringUtils.randomAlphabetic(300));
+        firmwareInfo.setTitle(StringUtils.randomAlphabetic(300));
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUsesUrl(false);
         String msgError = msgErrorFieldLength("title");
@@ -154,7 +154,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
                 ActionType.ADDED, new DataValidationException(msgError));
 
         firmwareInfo.setTitle(TITLE);
-        firmwareInfo.setVersion(RandomStringUtils.randomAlphabetic(300));
+        firmwareInfo.setVersion(StringUtils.randomAlphabetic(300));
         msgError = msgErrorFieldLength("version");
         doPost("/api/otaPackage", firmwareInfo)
                 .andExpect(status().isBadRequest())
@@ -168,7 +168,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUsesUrl(true);
         msgError = msgErrorFieldLength("url");
-        firmwareInfo.setUrl(RandomStringUtils.randomAlphabetic(300));
+        firmwareInfo.setUrl(StringUtils.randomAlphabetic(300));
         doPost("/api/otaPackage", firmwareInfo)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));

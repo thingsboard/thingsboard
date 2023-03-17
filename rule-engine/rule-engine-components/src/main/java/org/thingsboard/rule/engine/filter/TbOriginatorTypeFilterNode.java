@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "originator type",
+        name = "entity type",
         configClazz = TbOriginatorTypeFilterNodeConfiguration.class,
         relationTypes = {"True", "False"},
-        nodeDescription = "Filter incoming messages by message Originator Type",
-        nodeDetails = "If Originator Type of incoming message is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
+        nodeDescription = "Filter incoming messages by the type of message originator entity",
+        nodeDetails = "Checks that the entity type of the incoming message originator matches one of the values specified in the filter.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeOriginatorTypeConfig")
 public class TbOriginatorTypeFilterNode implements TbNode {
@@ -51,8 +51,4 @@ public class TbOriginatorTypeFilterNode implements TbNode {
         ctx.tellNext(msg, config.getOriginatorTypes().contains(originatorType) ? "True" : "False");
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }

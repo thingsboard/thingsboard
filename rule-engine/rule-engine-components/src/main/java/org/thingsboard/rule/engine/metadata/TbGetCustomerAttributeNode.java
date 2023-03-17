@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         name="customer attributes",
         configClazz = TbGetEntityAttrNodeConfiguration.class,
         nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into metadata. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>.",
+        nodeDetails = "Enrich the message metadata with the corresponding customer's latest attributes or telemetry value. " +
+                "The customer is selected based on the originator of the message: device, asset, etc. " +
+                "</br>" +
+                "Useful when you store some parameters on the customer level and would like to use them for message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {

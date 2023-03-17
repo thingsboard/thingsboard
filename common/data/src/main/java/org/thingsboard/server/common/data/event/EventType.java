@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,30 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import lombok.Getter;
+
 public enum EventType {
-    ERROR, LC_EVENT, STATS, DEBUG_RULE_NODE, DEBUG_RULE_CHAIN
+    ERROR("error_event", "ERROR"),
+    LC_EVENT("lc_event", "LC_EVENT"),
+    STATS("stats_event", "STATS"),
+    DEBUG_RULE_NODE("rule_node_debug_event", "DEBUG_RULE_NODE", true),
+    DEBUG_RULE_CHAIN("rule_chain_debug_event", "DEBUG_RULE_CHAIN", true);
+
+    @Getter
+    private final String table;
+    @Getter
+    private final String oldName;
+    @Getter
+    private final boolean debug;
+
+    EventType(String table, String oldName) {
+        this(table, oldName, false);
+    }
+
+    EventType(String table, String oldName, boolean debug) {
+        this.table = table;
+        this.oldName = oldName;
+        this.debug = debug;
+    }
+
 }

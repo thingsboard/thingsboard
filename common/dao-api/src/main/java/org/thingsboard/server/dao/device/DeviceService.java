@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -32,11 +33,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface DeviceService {
+public interface DeviceService extends EntityDaoService {
 
     DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId);
 
@@ -66,6 +68,8 @@ public interface DeviceService {
 
     PageData<DeviceInfo> findDeviceInfosByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
+
     PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
     PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type, PageLink pageLink);
@@ -77,6 +81,10 @@ public interface DeviceService {
     PageData<DeviceInfo> findDeviceInfosByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink);
 
     ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
+
+    List<Device> findDevicesByIds(List<DeviceId> deviceIds);
+
+    ListenableFuture<List<Device>> findDevicesByIdsAsync(List<DeviceId> deviceIds);
 
     void deleteDevicesByTenantId(TenantId tenantId);
 

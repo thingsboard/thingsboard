@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -40,7 +40,7 @@ public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override
     protected ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, originator);
+        return Futures.immediateFuture(ctx.getTenantId());
     }
 
 }

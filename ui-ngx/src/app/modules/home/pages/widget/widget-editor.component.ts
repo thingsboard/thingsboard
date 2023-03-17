@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -210,6 +210,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   ngOnDestroy(): void {
     this.window.removeEventListener('message', this.onWindowMessageListener);
+    this.aceEditors.forEach(editor => editor.destroy());
     this.aceResize$.disconnect();
     this.rxSubscriptions.forEach((subscription) => {
       subscription.unsubscribe();
@@ -599,6 +600,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     config.title = this.widget.widgetName;
     this.widget.defaultConfig = JSON.stringify(config);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
+    // @ts-ignore
     this.iframe[0].contentWindow.location.reload(true);
   }
 

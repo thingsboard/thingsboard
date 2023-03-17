@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
       <mat-label translate>widgets.maps.normalization-step</mat-label>
       <input matInput type="number" min="1" formControlName="normalizationStep">
     </mat-form-field>
-    <section fxLayout="row" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
       <tb-datasources-key-autocomplete fxFlex
                                        required
                                        [datasources]="widget?.config?.datasources"
@@ -51,7 +51,7 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <section fxLayout="row" fxLayoutGap="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
             <tb-color-input
               fxFlex
               formControlName="tooltipColor"

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.event;
 
 public interface EventCleanupRepository {
 
-    void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs);
+    void cleanupEvents(long eventExpTime, boolean debug);
 
+    void migrateEvents(long regularEventTs, long debugEventTs);
 }

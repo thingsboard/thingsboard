@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ export class Circle {
       const circleLabelText = fillDataPattern(this.map.circleLabelText, this.map.replaceInfoTooltipCircle, this.data);
       const labelColor = this.map.ctx.widgetConfig.color;
       this.leafletCircle.bindTooltip(`<div style="color: ${labelColor};"><b>${circleLabelText}</b></div>`,
-        { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center'})
+        { className: 'tb-polygon-label', permanent: true, direction: 'center'})
         .openTooltip(this.leafletCircle.getLatLng());
     }
   }

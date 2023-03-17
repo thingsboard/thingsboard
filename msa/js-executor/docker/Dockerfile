@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/node:16.15.1-bullseye-slim
+FROM thingsboard/node:16.17.0-bullseye-slim
 
 ENV NODE_ENV production
 ENV DOCKER_MODE true

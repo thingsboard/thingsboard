@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,15 @@ public class CacheConstants {
     public static final String TENANTS_CACHE = "tenants";
     public static final String TENANTS_EXIST_CACHE = "tenantsExist";
     public static final String DEVICE_PROFILE_CACHE = "deviceProfiles";
+
+    public static final String ASSET_PROFILE_CACHE = "assetProfiles";
     public static final String ATTRIBUTES_CACHE = "attributes";
-    public static final String USERS_UPDATE_TIME_CACHE = "usersUpdateTime";
+    public static final String USERS_SESSION_INVALIDATION_CACHE = "userSessionsInvalidation";
     public static final String OTA_PACKAGE_CACHE = "otaPackages";
     public static final String OTA_PACKAGE_DATA_CACHE = "otaPackagesData";
     public static final String REPOSITORY_SETTINGS_CACHE = "repositorySettings";
     public static final String AUTO_COMMIT_SETTINGS_CACHE = "autoCommitSettings";
     public static final String TWO_FA_VERIFICATION_CODES_CACHE = "twoFaVerificationCodes";
     public static final String VERSION_CONTROL_TASK_CACHE = "versionControlTask";
+    public static final String USER_SETTINGS_CACHE = "userSettings";
 }

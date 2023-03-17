@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final TbNotificationEntityService entityNotificationService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
-            EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
+            EntityType.CUSTOMER, EntityType.ASSET_PROFILE, EntityType.ASSET, EntityType.RULE_CHAIN,
             EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE,
             EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE
     );

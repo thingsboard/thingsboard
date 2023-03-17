@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
   Datasource,
+  datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   datasourceTypeTranslationMap,
   defaultLegendConfig,
@@ -32,17 +34,17 @@ import {
 } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isObject, isUndefined } from '@app/core/utils';
+import { deepClone, genNextLabel, isDefined, isObject } from '@app/core/utils';
 import {
   alarmFields,
   AlarmSearchStatus,
@@ -51,7 +53,7 @@ import {
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
+import { EntityAlias } from '@shared/models/alias.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -67,9 +69,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
-import { Dashboard, DashboardState } from '@shared/models/dashboard.models';
+import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
-import { Filter, Filters } from '@shared/models/query/query.models';
+import { Filter } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
@@ -162,15 +164,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   private propagateChange = null;
 
-  public dataSettings: FormGroup;
-  public targetDeviceSettings: FormGroup;
-  public alarmSourceSettings: FormGroup;
-  public widgetSettings: FormGroup;
-  public layoutSettings: FormGroup;
-  public advancedSettings: FormGroup;
-  public actionsSettings: FormGroup;
-
-  public dataError = '';
+  public dataSettings: UntypedFormGroup;
+  public targetDeviceSettings: UntypedFormGroup;
+  public alarmSourceSettings: UntypedFormGroup;
+  public widgetSettings: UntypedFormGroup;
+  public layoutSettings: UntypedFormGroup;
+  public advancedSettings: UntypedFormGroup;
+  public actionsSettings: UntypedFormGroup;
+  public openExtensionPanel = true;
+  public timeseriesKeyError = false;
 
   public datasourceError: string[] = [];
 
@@ -187,7 +189,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               private entityService: EntityService,
               private dialog: MatDialog,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -254,7 +256,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]],
-      mobileHide: [false]
+      mobileHide: [false],
+      desktopHide: [false]
     });
     this.actionsSettings = this.fb.group({
       actionsData: [null, []]
@@ -334,10 +337,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.targetDeviceSettings = this.fb.group({});
     this.alarmSourceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
-    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
-      this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(null));
-      this.dataSettings.addControl('displayTimewindow', this.fb.control(null));
-      this.dataSettings.addControl('timewindow', this.fb.control(null));
+    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+      this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(true));
+      this.dataSettings.addControl('displayTimewindow', this.fb.control({value: true, disabled: true}));
+      this.dataSettings.addControl('timewindow', this.fb.control({value: null, disabled: true}));
       this.dataSettings.get('useDashboardTimewindow').valueChanges.subscribe((value: boolean) => {
         if (value) {
           this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
@@ -372,8 +375,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       this.fb.control(null, []));
   }
 
-  datasourcesFormArray(): FormArray {
-    return this.dataSettings.get('datasources') as FormArray;
+  datasourcesFormArray(): UntypedFormArray {
+    return this.dataSettings.get('datasources') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -467,7 +470,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           },
           {emitEvent: false}
         );
-        if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+        if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
           const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
             config.useDashboardTimewindow : true;
           this.dataSettings.patchValue(
@@ -492,7 +495,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           if (this.widgetType !== widgetType.rpc &&
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
-            const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
+            const datasourcesFormArray = this.dataSettings.get('datasources') as UntypedFormArray;
             datasourcesFormArray.clear();
             if (config.datasources) {
               config.datasources.forEach((datasource) => {
@@ -553,7 +556,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             {
               mobileOrder: layout.mobileOrder,
               mobileHeight: layout.mobileHeight,
-              mobileHide: layout.mobileHide
+              mobileHide: layout.mobileHide,
+              desktopHide: layout.desktopHide
             },
             {emitEvent: false}
           );
@@ -562,7 +566,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             {
               mobileOrder: null,
               mobileHeight: null,
-              mobileHide: false
+              mobileHide: false,
+              desktopHide: false
             },
             {emitEvent: false}
           );
@@ -581,7 +586,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  private buildDatasourceForm(datasource?: Datasource): FormGroup {
+  private buildDatasourceForm(datasource?: Datasource): UntypedFormGroup {
     const dataKeysRequired = !this.dataKeysOptional(datasource);
     const datasourceFormGroup = this.fb.group(
       {
@@ -712,7 +717,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const types: string[] = this.dataSettings.get('alarmTypeList').value;
@@ -731,6 +736,24 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   public displayAdvanced(): boolean {
     return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
         !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
+  }
+
+  public displayTimewindowConfig(): boolean {
+    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+      return true;
+    } else if (this.widgetType === widgetType.latest) {
+      const datasources = this.dataSettings.get('datasources').value;
+      return datasourcesHasAggregation(datasources);
+    }
+  }
+
+  public onlyHistoryTimewindow(): boolean {
+    if (this.widgetType === widgetType.latest) {
+      const datasources = this.dataSettings.get('datasources').value;
+      return datasourcesHasOnlyComparisonAggregation(datasources);
+    } else {
+      return false;
+    }
   }
 
   public onDatasourceDrop(event: CdkDragDrop<string[]>) {
@@ -772,7 +795,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           label = this.translate.instant(keyField.name);
         }
       }
-      label = this.genNextLabel(label);
+      const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
+      label = genNextLabel(label, datasources);
       const result: DataKey = {
         name: chip,
         type,
@@ -795,41 +819,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       }
       return result;
     }
-  }
-
-  private genNextLabel(name: string): string {
-    let label = name;
-    let i = 1;
-    let matches = false;
-    const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
-    if (datasources) {
-      do {
-        matches = false;
-        datasources.forEach((datasource) => {
-          if (datasource) {
-            if (datasource.dataKeys) {
-              datasource.dataKeys.forEach((dataKey) => {
-                if (dataKey.label === label) {
-                  i++;
-                  label = name + ' ' + i;
-                  matches = true;
-                }
-              });
-            }
-            if (datasource.latestDataKeys) {
-              datasource.latestDataKeys.forEach((dataKey) => {
-                if (dataKey.label === label) {
-                  i++;
-                  label = name + ' ' + i;
-                  matches = true;
-                }
-              });
-            }
-          }
-        });
-      } while (matches);
-    }
-    return label;
   }
 
   private genNextColor(): string {
@@ -919,8 +908,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
   }
 
-  public validate(c: FormControl) {
-    this.dataError = '';
+  public validate(c: UntypedFormControl) {
+    this.timeseriesKeyError = false;
     this.datasourceError = [];
     if (!this.dataSettings.valid) {
       return {
@@ -975,7 +964,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
           let valid = config.datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
           if (!valid) {
-            this.dataError = 'At least one timeseries data key should be specified';
+            this.timeseriesKeyError = true;
             return {
               timeseriesDataKeys: {
                 valid: false
@@ -1003,4 +992,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return null;
   }
 
+  public extensionPanelIsOpen(value) {
+    this.openExtensionPanel = value;
+  }
 }

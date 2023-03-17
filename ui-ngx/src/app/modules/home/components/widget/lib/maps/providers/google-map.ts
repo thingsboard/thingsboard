@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ export class GoogleMap extends LeafletMap {
       const map = L.map($container, {
         attributionControl: false,
         doubleClickZoom: !this.options.disableDoubleClickZooming,
-        zoomControl: !this.options.disableZoomControl,
-        tap: L.Browser.safari && L.Browser.mobile
+        zoomControl: !this.options.disableZoomControl
       }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
       (L.gridLayer as any).googleMutant({
         type: options?.gmDefaultMapType || 'roadmap'

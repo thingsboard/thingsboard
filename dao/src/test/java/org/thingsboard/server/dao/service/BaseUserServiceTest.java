@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,24 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -40,6 +44,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
     private IdComparator<User> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
+    private UserSettings userSettings;
 
     @Before
     public void before() {
@@ -65,7 +70,9 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         customerUser.setTenantId(tenantId);
         customerUser.setCustomerId(savedCustomer.getId());
         customerUser.setEmail("customer@thingsboard.org");
-        userService.saveUser(customerUser);
+        customerUser = userService.saveUser(customerUser);
+
+        userSettings = createUserSettings(customerUser.getId());
     }
 
     @After
@@ -136,32 +143,40 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         userService.deleteUser(tenantId, savedUser.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithSameEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("sysadmin@thingsboard.org");
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithInvalidEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("tenant_thingsboard.org");
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithEmptyEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail(null);
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveUserWithoutTenant() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setTenantId(null);
-        userService.saveUser(tenantAdminUser);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            userService.saveUser(tenantAdminUser);
+        });
     }
 
     @Test
@@ -248,7 +263,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -262,7 +277,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -400,7 +415,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setTenantId(tenantId);
             user.setCustomerId(customerId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -415,7 +430,7 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setTenantId(tenantId);
             user.setCustomerId(customerId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -472,6 +487,13 @@ public abstract class BaseUserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         tenantService.deleteTenant(tenantId);
+    }
+
+    private UserSettings createUserSettings(UserId userId) {
+        UserSettings userSettings = new UserSettings();
+        userSettings.setUserId(userId);
+        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", StringUtils.randomAlphanumeric(10)));
+        return userSettings;
     }
 
 }

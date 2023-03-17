@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
+import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
@@ -87,6 +89,10 @@ public interface TbClusterService extends TbQueueClusterService {
     void onResourceDeleted(TbResource resource, TbQueueCallback callback);
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
+
+    void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest);
+
+    void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse);
 
     void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action);
 }

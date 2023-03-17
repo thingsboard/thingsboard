@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,15 @@ public class OtaPackageMsgConstructor {
                 .setMsgType(msgType)
                 .setIdMSB(otaPackage.getId().getId().getMostSignificantBits())
                 .setIdLSB(otaPackage.getId().getId().getLeastSignificantBits())
-                .setDeviceProfileIdMSB(otaPackage.getDeviceProfileId().getId().getMostSignificantBits())
-                .setDeviceProfileIdLSB(otaPackage.getDeviceProfileId().getId().getLeastSignificantBits())
                 .setType(otaPackage.getType().name())
                 .setTitle(otaPackage.getTitle())
                 .setVersion(otaPackage.getVersion())
                 .setTag(otaPackage.getTag());
+
+        if (otaPackage.getDeviceProfileId() != null) {
+            builder.setDeviceProfileIdMSB(otaPackage.getDeviceProfileId().getId().getMostSignificantBits())
+                    .setDeviceProfileIdLSB(otaPackage.getDeviceProfileId().getId().getLeastSignificantBits());
+        }
 
         if (otaPackage.getUrl() != null) {
             builder.setUrl(otaPackage.getUrl());

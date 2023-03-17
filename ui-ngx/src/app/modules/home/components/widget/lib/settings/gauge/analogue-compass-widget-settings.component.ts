@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Component } from '@angular/core';
@@ -32,14 +32,14 @@ export class AnalogueCompassWidgetSettingsComponent extends WidgetSettingsCompon
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
-  analogueCompassWidgetSettingsForm: FormGroup;
+  analogueCompassWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              protected fb: FormBuilder) {
+              protected fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.analogueCompassWidgetSettingsForm;
   }
 
@@ -146,7 +146,7 @@ export class AnalogueCompassWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   addMajorTickName(event: MatChipInputEvent): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
 
     const tickNames: string[] = this.analogueCompassWidgetSettingsForm.get('majorTicks').value;

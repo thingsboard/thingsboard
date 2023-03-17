@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -136,7 +135,7 @@ public class HashPartitionServiceTest {
         Random random = new Random();
         long ts = new SimpleDateFormat("dd-MM-yyyy").parse("06-12-2016").getTime() - TimeUnit.DAYS.toMillis(tenantCount);
         for (int tenantIndex = 0; tenantIndex < tenantCount; tenantIndex++) {
-            TenantId tenantId = new TenantId(UUIDs.startOf(ts));
+            TenantId tenantId = new TenantId(Uuids.startOf(ts));
             ts += TimeUnit.DAYS.toMillis(1) + random.nextInt(1000);
             for (int queueIndex = 0; queueIndex < queueCount; queueIndex++) {
                 QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "queue" + queueIndex, tenantId);

@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2022 The Thingsboard Authors
+-- Copyright © 2016-2023 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -52,14 +52,27 @@ CREATE TABLE IF NOT EXISTS alarm (
     propagate boolean,
     severity varchar(255),
     start_ts bigint,
-    status varchar(255),
+    assign_ts bigint DEFAULT 0,
+    assignee_id uuid,
     tenant_id uuid,
     customer_id uuid,
     propagate_relation_types varchar,
     type varchar(255),
     propagate_to_owner boolean,
-    propagate_to_tenant boolean
+    propagate_to_tenant boolean,
+    acknowledged boolean,
+    cleared boolean
 );
+
+CREATE TABLE IF NOT EXISTS alarm_comment (
+    id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    alarm_id uuid NOT NULL,
+    user_id uuid,
+    type varchar(255) NOT NULL,
+    comment varchar(10000),
+    CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
+    ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS entity_alarm (
     tenant_id uuid NOT NULL,
@@ -73,23 +86,8 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
     CONSTRAINT fk_entity_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS asset (
-    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    customer_id uuid,
-    name varchar(255),
-    label varchar(255),
-    search_text varchar(255),
-    tenant_id uuid,
-    type varchar(255),
-    external_id uuid,
-    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id)
-);
-
 CREATE TABLE IF NOT EXISTS audit_log (
-    id uuid NOT NULL CONSTRAINT audit_log_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     created_time bigint NOT NULL,
     tenant_id uuid,
     customer_id uuid,
@@ -102,7 +100,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_data varchar(1000000),
     action_status varchar(255),
     action_failure_details varchar(1000000)
-);
+) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_type varchar(255),
@@ -240,6 +238,44 @@ CREATE TABLE IF NOT EXISTS queue (
     additional_info varchar
 );
 
+CREATE TABLE IF NOT EXISTS asset_profile (
+    id uuid NOT NULL CONSTRAINT asset_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    image varchar(1000000),
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    default_dashboard_id uuid,
+    default_queue_name varchar(255),
+    default_edge_rule_chain_id uuid,
+    external_id uuid,
+    CONSTRAINT asset_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_profile_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_default_rule_chain_asset_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_default_dashboard_asset_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
+    CONSTRAINT fk_default_edge_rule_chain_asset_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)
+    );
+
+CREATE TABLE IF NOT EXISTS asset (
+    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    customer_id uuid,
+    asset_profile_id uuid NOT NULL,
+    name varchar(255),
+    label varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    type varchar(255),
+    external_id uuid,
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_asset_profile FOREIGN KEY (asset_profile_id) REFERENCES asset_profile(id)
+);
+
 CREATE TABLE IF NOT EXISTS device_profile (
     id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -259,6 +295,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     default_dashboard_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
+    default_edge_rule_chain_id uuid,
     external_id uuid,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
@@ -266,7 +303,8 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
     CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
     CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
-    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
+    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_default_edge_rule_chain_device_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)
 );
 
 DO
@@ -323,18 +361,64 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     CONSTRAINT device_credentials_device_id_unq_key UNIQUE (device_id)
 );
 
-CREATE TABLE IF NOT EXISTS event (
-    id uuid NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    body varchar(10000000),
-    entity_id uuid,
-    entity_type varchar(255),
-    event_type varchar(255),
-    event_uid varchar(255),
-    tenant_id uuid,
+CREATE TABLE IF NOT EXISTS rule_node_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL ,
     ts bigint NOT NULL,
-    CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
-);
+    entity_id uuid NOT NULL,
+    service_id varchar,
+    e_type varchar,
+    e_entity_id uuid,
+    e_entity_type varchar,
+    e_msg_id uuid,
+    e_msg_type varchar,
+    e_data_type varchar,
+    e_relation_type varchar,
+    e_data varchar,
+    e_metadata varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS rule_chain_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_message varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS stats_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_messages_processed bigint NOT NULL,
+    e_errors_occurred bigint NOT NULL
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS lc_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_type varchar NOT NULL,
+    e_success boolean NOT NULL,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS error_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_method varchar NOT NULL,
+    e_error varchar
+) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS relation (
     from_id uuid,
@@ -346,13 +430,6 @@ CREATE TABLE IF NOT EXISTS relation (
     additional_info varchar,
     CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
--- ) PARTITION BY LIST (relation_type_group);
---
--- CREATE TABLE other_relations PARTITION OF relation DEFAULT;
--- CREATE TABLE common_relations PARTITION OF relation FOR VALUES IN ('COMMON');
--- CREATE TABLE alarm_relations PARTITION OF relation FOR VALUES IN ('ALARM');
--- CREATE TABLE dashboard_relations PARTITION OF relation FOR VALUES IN ('DASHBOARD');
--- CREATE TABLE rule_relations PARTITION OF relation FOR VALUES IN ('RULE_CHAIN', 'RULE_NODE');
 
 CREATE TABLE IF NOT EXISTS tb_user (
     id uuid NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
@@ -406,7 +483,8 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     enabled boolean,
     password varchar(255),
     reset_token varchar(255) UNIQUE,
-    user_id uuid UNIQUE
+    user_id uuid UNIQUE,
+    additional_info varchar DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS widget_type (
@@ -652,7 +730,7 @@ CREATE TABLE IF NOT EXISTS edge (
 );
 
 CREATE TABLE IF NOT EXISTS edge_event (
-    id uuid NOT NULL CONSTRAINT edge_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     created_time bigint NOT NULL,
     edge_id uuid,
     edge_event_type varchar(255),
@@ -662,7 +740,7 @@ CREATE TABLE IF NOT EXISTS edge_event (
     body varchar(10000000),
     tenant_id uuid,
     ts bigint NOT NULL
-);
+) PARTITION BY RANGE(created_time);
 
 CREATE TABLE IF NOT EXISTS rpc (
     id uuid NOT NULL CONSTRAINT rpc_pkey PRIMARY KEY,
@@ -675,38 +753,6 @@ CREATE TABLE IF NOT EXISTS rpc (
     additional_info varchar(10000000),
     status varchar(255) NOT NULL
 );
-
-CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(
-    IN regular_events_start_ts bigint,
-    IN regular_events_end_ts bigint,
-    IN debug_events_start_ts bigint,
-    IN debug_events_end_ts bigint,
-    INOUT deleted bigint)
-    LANGUAGE plpgsql AS
-$$
-DECLARE
-    ttl_deleted_count bigint DEFAULT 0;
-    debug_ttl_deleted_count bigint DEFAULT 0;
-BEGIN
-    IF regular_events_start_ts > 0 AND regular_events_end_ts > 0 THEN
-        EXECUTE format(
-                'WITH deleted AS (DELETE FROM event WHERE id in (SELECT id from event WHERE ts > %L::bigint AND ts < %L::bigint AND ' ||
-                '(event_type != %L::varchar AND event_type != %L::varchar)) RETURNING *) ' ||
-                'SELECT count(*) FROM deleted', regular_events_start_ts, regular_events_end_ts,
-                'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
-    END IF;
-    IF debug_events_start_ts > 0 AND debug_events_end_ts > 0 THEN
-        EXECUTE format(
-                'WITH deleted AS (DELETE FROM event WHERE id in (SELECT id from event WHERE ts > %L::bigint AND ts < %L::bigint AND ' ||
-                '(event_type = %L::varchar OR event_type = %L::varchar)) RETURNING *) ' ||
-                'SELECT count(*) FROM deleted', debug_events_start_ts, debug_events_end_ts,
-                'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
-    END IF;
-    RAISE NOTICE 'Events removed by ttl: %', ttl_deleted_count;
-    RAISE NOTICE 'Debug Events removed by ttl: %', debug_ttl_deleted_count;
-    deleted := ttl_deleted_count + debug_ttl_deleted_count;
-END
-$$;
 
 CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
 $$
@@ -741,3 +787,251 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
     two_fa_settings varchar
 );
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    settings varchar(10000),
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+);
+
+DROP VIEW IF EXISTS alarm_info CASCADE;
+CREATE VIEW alarm_info AS
+SELECT a.*,
+(CASE WHEN a.acknowledged AND a.cleared THEN 'CLEARED_ACK'
+      WHEN NOT a.acknowledged AND a.cleared THEN 'CLEARED_UNACK'
+      WHEN a.acknowledged AND NOT a.cleared THEN 'ACTIVE_ACK'
+      WHEN NOT a.acknowledged AND NOT a.cleared THEN 'ACTIVE_UNACK' END) as status,
+COALESCE(CASE WHEN a.originator_type = 0 THEN (select title from tenant where id = a.originator_id)
+              WHEN a.originator_type = 1 THEN (select title from customer where id = a.originator_id)
+              WHEN a.originator_type = 2 THEN (select email from tb_user where id = a.originator_id)
+              WHEN a.originator_type = 3 THEN (select title from dashboard where id = a.originator_id)
+              WHEN a.originator_type = 4 THEN (select name from asset where id = a.originator_id)
+              WHEN a.originator_type = 5 THEN (select name from device where id = a.originator_id)
+              WHEN a.originator_type = 9 THEN (select name from entity_view where id = a.originator_id)
+              WHEN a.originator_type = 13 THEN (select name from device_profile where id = a.originator_id)
+              WHEN a.originator_type = 14 THEN (select name from asset_profile where id = a.originator_id)
+              WHEN a.originator_type = 18 THEN (select name from edge where id = a.originator_id) END
+    , 'Deleted') originator_name,
+COALESCE(CASE WHEN a.originator_type = 0 THEN (select title from tenant where id = a.originator_id)
+              WHEN a.originator_type = 1 THEN (select COALESCE(title, email) from customer where id = a.originator_id)
+              WHEN a.originator_type = 2 THEN (select email from tb_user where id = a.originator_id)
+              WHEN a.originator_type = 3 THEN (select title from dashboard where id = a.originator_id)
+              WHEN a.originator_type = 4 THEN (select COALESCE(label, name) from asset where id = a.originator_id)
+              WHEN a.originator_type = 5 THEN (select COALESCE(label, name) from device where id = a.originator_id)
+              WHEN a.originator_type = 9 THEN (select name from entity_view where id = a.originator_id)
+              WHEN a.originator_type = 13 THEN (select name from device_profile where id = a.originator_id)
+              WHEN a.originator_type = 14 THEN (select name from asset_profile where id = a.originator_id)
+              WHEN a.originator_type = 18 THEN (select COALESCE(label, name) from edge where id = a.originator_id) END
+    , 'Deleted') as originator_label,
+u.first_name as assignee_first_name, u.last_name as assignee_last_name, u.email as assignee_email
+FROM alarm a
+LEFT JOIN tb_user u ON u.id = a.assignee_id;
+
+CREATE OR REPLACE FUNCTION create_or_update_active_alarm(
+                                        t_id uuid, c_id uuid, a_id uuid, a_created_ts bigint,
+                                        a_o_id uuid, a_o_type integer, a_type varchar,
+                                        a_severity varchar, a_start_ts bigint, a_end_ts bigint,
+                                        a_details varchar,
+                                        a_propagate boolean, a_propagate_to_owner boolean,
+                                        a_propagate_to_tenant boolean, a_propagation_types varchar,
+                                        a_creation_enabled boolean)
+    RETURNS varchar
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    null_id constant uuid = '13814000-1dd2-11b2-8080-808080808080'::uuid;
+    existing  alarm;
+    result    alarm_info;
+    row_count integer;
+BEGIN
+    SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type AND a.cleared = false ORDER BY a.start_ts DESC FOR UPDATE;
+    IF existing.id IS NULL THEN
+        IF a_creation_enabled = FALSE THEN
+            RETURN json_build_object('success', false)::text;
+        END IF;
+        IF c_id = null_id THEN
+            c_id = NULL;
+        end if;
+        INSERT INTO alarm
+            (tenant_id, customer_id, id, created_time,
+             originator_id, originator_type, type,
+             severity, start_ts, end_ts,
+             additional_info,
+             propagate, propagate_to_owner, propagate_to_tenant, propagate_relation_types,
+             acknowledged, ack_ts,
+             cleared, clear_ts,
+             assignee_id, assign_ts)
+             VALUES
+            (t_id, c_id, a_id, a_created_ts,
+             a_o_id, a_o_type, a_type,
+             a_severity, a_start_ts, a_end_ts,
+             a_details,
+             a_propagate, a_propagate_to_owner, a_propagate_to_tenant, a_propagation_types,
+             false, 0, false, 0, NULL, 0);
+        SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
+        RETURN json_build_object('success', true, 'created', true, 'modified', true, 'alarm', row_to_json(result))::text;
+    ELSE
+        UPDATE alarm a
+        SET severity                 = a_severity,
+            start_ts                 = a_start_ts,
+            end_ts                   = a_end_ts,
+            additional_info          = a_details,
+            propagate                = a_propagate,
+            propagate_to_owner       = a_propagate_to_owner,
+            propagate_to_tenant      = a_propagate_to_tenant,
+            propagate_relation_types = a_propagation_types
+        WHERE a.id = existing.id
+          AND a.tenant_id = t_id
+          AND (severity != a_severity OR start_ts != a_start_ts OR end_ts != a_end_ts OR additional_info != a_details
+            OR propagate != a_propagate OR propagate_to_owner != a_propagate_to_owner OR
+               propagate_to_tenant != a_propagate_to_tenant OR propagate_relation_types != a_propagation_types);
+        GET DIAGNOSTICS row_count = ROW_COUNT;
+        SELECT * INTO result FROM alarm_info a WHERE a.id = existing.id AND a.tenant_id = t_id;
+        IF row_count > 0 THEN
+            RETURN json_build_object('success', true, 'modified', true, 'alarm', row_to_json(result), 'old', row_to_json(existing))::text;
+        ELSE
+            RETURN json_build_object('success', true, 'modified', false, 'alarm', row_to_json(result))::text;
+        END IF;
+    END IF;
+END
+$$;
+
+DROP FUNCTION IF EXISTS update_alarm;
+CREATE OR REPLACE FUNCTION update_alarm(t_id uuid, a_id uuid, a_severity varchar, a_start_ts bigint, a_end_ts bigint,
+                                        a_details varchar,
+                                        a_propagate boolean, a_propagate_to_owner boolean,
+                                        a_propagate_to_tenant boolean, a_propagation_types varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    existing  alarm;
+    result    alarm_info;
+    row_count integer;
+BEGIN
+    SELECT * INTO existing FROM alarm a WHERE a.id = a_id AND a.tenant_id = t_id FOR UPDATE;
+    IF existing IS NULL THEN
+        RETURN json_build_object('success', false)::text;
+    END IF;
+    UPDATE alarm a
+    SET severity                 = a_severity,
+        start_ts                 = a_start_ts,
+        end_ts                   = a_end_ts,
+        additional_info          = a_details,
+        propagate                = a_propagate,
+        propagate_to_owner       = a_propagate_to_owner,
+        propagate_to_tenant      = a_propagate_to_tenant,
+        propagate_relation_types = a_propagation_types
+    WHERE a.id = a_id
+      AND a.tenant_id = t_id
+      AND (severity != a_severity OR start_ts != a_start_ts OR end_ts != a_end_ts OR additional_info != a_details
+        OR propagate != a_propagate OR propagate_to_owner != a_propagate_to_owner OR
+           propagate_to_tenant != a_propagate_to_tenant OR propagate_relation_types != a_propagation_types);
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
+    IF row_count > 0 THEN
+        RETURN json_build_object('success', true, 'modified', row_count > 0, 'alarm', row_to_json(result), 'old', row_to_json(existing))::text;
+    ELSE
+        RETURN json_build_object('success', true, 'modified', row_count > 0, 'alarm', row_to_json(result))::text;
+    END IF;
+END
+$$;
+
+DROP FUNCTION IF EXISTS acknowledge_alarm;
+CREATE OR REPLACE FUNCTION acknowledge_alarm(t_id uuid, a_id uuid, a_ts bigint)
+    RETURNS varchar
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    existing alarm;
+    result   alarm_info;
+    modified boolean = FALSE;
+BEGIN
+    SELECT * INTO existing FROM alarm a WHERE a.id = a_id AND a.tenant_id = t_id FOR UPDATE;
+    IF existing IS NULL THEN
+        RETURN json_build_object('success', false)::text;
+    END IF;
+
+    IF NOT (existing.acknowledged) THEN
+        modified = TRUE;
+        UPDATE alarm a SET acknowledged = true, ack_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
+    END IF;
+    SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
+    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
+END
+$$;
+
+DROP FUNCTION IF EXISTS clear_alarm;
+CREATE OR REPLACE FUNCTION clear_alarm(t_id uuid, a_id uuid, a_ts bigint, a_details varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    existing alarm;
+    result   alarm_info;
+    cleared boolean = FALSE;
+BEGIN
+    SELECT * INTO existing FROM alarm a WHERE a.id = a_id AND a.tenant_id = t_id FOR UPDATE;
+    IF existing IS NULL THEN
+        RETURN json_build_object('success', false)::text;
+    END IF;
+    IF NOT(existing.cleared) THEN
+        cleared = TRUE;
+        UPDATE alarm a SET cleared = true, clear_ts = a_ts, additional_info = a_details WHERE a.id = a_id AND a.tenant_id = t_id;
+    END IF;
+    SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
+    RETURN json_build_object('success', true, 'cleared', cleared, 'alarm', row_to_json(result))::text;
+END
+$$;
+
+DROP FUNCTION IF EXISTS assign_alarm;
+CREATE OR REPLACE FUNCTION assign_alarm(t_id uuid, a_id uuid, u_id uuid, a_ts bigint)
+    RETURNS varchar
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    existing alarm;
+    result   alarm_info;
+    modified boolean = FALSE;
+BEGIN
+    SELECT * INTO existing FROM alarm a WHERE a.id = a_id AND a.tenant_id = t_id FOR UPDATE;
+    IF existing IS NULL THEN
+        RETURN json_build_object('success', false)::text;
+    END IF;
+    IF existing.assignee_id IS NULL OR existing.assignee_id != u_id THEN
+        modified = TRUE;
+        UPDATE alarm a SET assignee_id = u_id, assign_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
+    END IF;
+    SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
+    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
+END
+$$;
+
+DROP FUNCTION IF EXISTS unassign_alarm;
+CREATE OR REPLACE FUNCTION unassign_alarm(t_id uuid, a_id uuid, a_ts bigint)
+    RETURNS varchar
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    existing alarm;
+    result   alarm_info;
+    modified boolean = FALSE;
+BEGIN
+    SELECT * INTO existing FROM alarm a WHERE a.id = a_id AND a.tenant_id = t_id FOR UPDATE;
+    IF existing IS NULL THEN
+        RETURN json_build_object('success', false)::text;
+    END IF;
+    IF existing.assignee_id IS NOT NULL THEN
+        modified = TRUE;
+        UPDATE alarm a SET assignee_id = NULL, assign_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
+    END IF;
+    SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
+    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
+END
+$$;

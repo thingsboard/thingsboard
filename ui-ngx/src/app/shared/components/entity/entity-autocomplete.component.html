@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ entityText | translate }}"
+<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance">
+  <mat-label>{{ entityText | translate }}</mat-label>
+  <input matInput type="text"
          #entityInput
          formControlName="entity"
          (focusin)="onFocus()"
@@ -24,7 +25,7 @@
          [matAutocomplete]="entityAutocomplete">
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

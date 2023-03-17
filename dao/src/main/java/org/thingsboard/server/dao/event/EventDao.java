@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package org.thingsboard.server.dao.event;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +28,7 @@ import java.util.UUID;
 /**
  * The Interface EventDao.
  */
-public interface EventDao extends Dao<Event> {
+public interface EventDao {
 
     /**
      * Save or update event object async
@@ -40,27 +39,6 @@ public interface EventDao extends Dao<Event> {
     ListenableFuture<Void> saveAsync(Event event);
 
     /**
-     * Find event by tenantId, entityId and eventUid.
-     *
-     * @param tenantId the tenantId
-     * @param entityId the entityId
-     * @param eventType the eventType
-     * @param eventUid the eventUid
-     * @return the event
-     */
-    Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid);
-
-    /**
-     * Find events by tenantId, entityId and pageLink.
-     *
-     * @param tenantId the tenantId
-     * @param entityId the entityId
-     * @param pageLink the pageLink
-     * @return the event list
-     */
-    PageData<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink);
-
-    /**
      * Find events by tenantId, entityId, eventType and pageLink.
      *
      * @param tenantId the tenantId
@@ -69,9 +47,9 @@ public interface EventDao extends Dao<Event> {
      * @param pageLink the pageLink
      * @return the event list
      */
-    PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+    PageData<? extends Event> findEvents(UUID tenantId, UUID entityId, EventType eventType, TimePageLink pageLink);
 
-    PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
+    PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, EventFilter eventFilter, TimePageLink pageLink);
 
     /**
      * Find latest events by tenantId, entityId and eventType.
@@ -82,14 +60,37 @@ public interface EventDao extends Dao<Event> {
      * @param limit the limit
      * @return the event list
      */
-    List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit);
+    List<? extends Event> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit);
 
     /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
-     * @param regularEventStartTs the start time of the interval to use to delete non debug events
-     * @param regularEventEndTs the end time of the interval to use to delete non debug events
-     * @param debugEventStartTs the start time of the interval to use to delete debug events
-     * @param debugEventEndTs the end time of the interval to use to delete debug events
+     * @param regularEventExpTs the expiration time of the regular events
+     * @param debugEventExpTs the expiration time of the debug events
+     * @param cleanupDb
      */
-    void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs);
+    void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb);
+
+    /**
+     * Removes all events for the specified entity and time interval
+     *
+     * @param tenantId
+     * @param entityId
+     * @param startTime
+     * @param endTime
+     */
+    void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime);
+
+    /**
+     *
+     * Removes all events for the specified entity, event filter and time interval
+     *
+     * @param tenantId
+     * @param entityId
+     * @param eventFilter
+     * @param startTime
+     * @param endTime
+     */
+    void removeEvents(UUID tenantId, UUID entityId, EventFilter eventFilter, Long startTime, Long endTime);
+
+    void migrateEvents(long regularEventTs, long debugEventTs);
 }

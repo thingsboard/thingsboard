@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ import { Component, Input } from '@angular/core';
 import { HelpLinks } from '@shared/models/constants';
 
 @Component({
-  // tslint:disable-next-line:component-selector
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: '[tb-help]',
   templateUrl: './help.component.html'
 })
 export class HelpComponent {
 
-  // tslint:disable-next-line:no-input-rename
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('tb-help') helpLinkId: string;
 
   gotoHelpPage(): void {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
@@ -45,11 +45,11 @@ public class DefaultSmsService implements SmsService {
     private final SmsSenderFactory smsSenderFactory;
     private final AdminSettingsService adminSettingsService;
     private final TbApiUsageStateService apiUsageStateService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
 
     private SmsSender smsSender;
 
-    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageReportClient apiUsageClient) {
         this.smsSenderFactory = smsSenderFactory;
         this.adminSettingsService = adminSettingsService;
         this.apiUsageStateService = apiUsageStateService;

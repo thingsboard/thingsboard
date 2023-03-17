@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -86,12 +86,13 @@
           {{ 'asset.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-entity-subtype-autocomplete
-        formControlName="type"
-        [required]="true"
-        [entityType]="entityType.ASSET"
-      >
-      </tb-entity-subtype-autocomplete>
+      <tb-asset-profile-autocomplete
+        [selectDefaultProfile]="isAdd"
+        required
+        formControlName="assetProfileId"
+        [showDetailsPageLink]="true"
+        (assetProfileUpdated)="onAssetProfileUpdated()">
+      </tb-asset-profile-autocomplete>
       <mat-form-field class="mat-block">
         <mat-label translate>asset.label</mat-label>
         <input matInput formControlName="label">

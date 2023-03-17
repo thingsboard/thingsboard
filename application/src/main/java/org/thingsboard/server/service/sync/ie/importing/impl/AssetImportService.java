@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
 
     @Override
     protected Asset prepare(EntitiesImportCtx ctx, Asset asset, Asset old, EntityExportData<Asset> exportData, IdProvider idProvider) {
+        asset.setAssetProfileId(idProvider.getInternalId(asset.getAssetProfileId()));
         return asset;
     }
 

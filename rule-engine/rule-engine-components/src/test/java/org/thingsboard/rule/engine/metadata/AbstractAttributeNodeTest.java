@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
-import org.jetbrains.annotations.NotNull;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -205,7 +204,6 @@ public abstract class AbstractAttributeNodeTest {
         return getConfig(true);
     }
 
-    @NotNull
     private TbGetEntityAttrNodeConfiguration getConfig(boolean isTelemetry) {
         TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
         Map<String, String> conf = new HashMap<>();

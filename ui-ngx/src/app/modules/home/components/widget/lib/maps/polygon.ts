@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ export class Polygon {
             const polygonLabelText = fillDataPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
             const labelColor = this.map.ctx.widgetConfig.color;
             this.leafletPoly.bindTooltip(`<div style="color: ${labelColor};"><b>${polygonLabelText}</b></div>`,
-              { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center' })
+              { className: 'tb-polygon-label', permanent: true, direction: 'center' })
               .openTooltip(this.leafletPoly.getBounds().getCenter());
         }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -41,6 +44,8 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
+
+import java.util.Locale;
 
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
@@ -110,7 +115,7 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Event> getEvents(
+    public PageData<EventInfo> getEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -135,25 +140,24 @@ public class EventController extends BaseController {
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
-        try {
-            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
 
-            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId, Operation.READ);
-            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        checkEntityId(entityId, Operation.READ);
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+        return checkNotNull(eventService.findEvents(tenantId, entityId, resolveEventType(eventType), pageLink));
     }
 
-    @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity. " +
+    @ApiOperation(value = "Get Events (Deprecated)",
+            notes = "Returns a page of events for specified entity. Deprecated and will be removed in next minor release. " +
+                    "The call was deprecated to improve the performance of the system. " +
+                    "Current implementation will return 'Lifecycle' events only. " +
+                    "Use 'Get events by type' or 'Get events by filter' instead. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Event> getEvents(
+    public PageData<EventInfo> getEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -176,18 +180,14 @@ public class EventController extends BaseController {
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
-        try {
-            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
 
-            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId, Operation.READ);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        checkEntityId(entityId, Operation.READ);
 
-            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
-            return checkNotNull(eventService.findEvents(tenantId, entityId, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return checkNotNull(eventService.findEvents(tenantId, entityId, EventType.LC_EVENT, pageLink));
     }
 
     @ApiOperation(value = "Get Events by event filter (getEvents)",
@@ -198,7 +198,7 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
-    public PageData<Event> getEvents(
+    public PageData<EventInfo> getEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -223,21 +223,13 @@ public class EventController extends BaseController {
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
-        try {
-            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
 
-            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId, Operation.READ);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        checkEntityId(entityId, Operation.READ);
 
-            if (sortProperty != null && sortProperty.equals("createdTime") && eventFilter.hasFilterForJsonBody()) {
-                sortProperty = ModelConstants.CREATED_TIME_PROPERTY;
-            }
-
-            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventFilter, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+        return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventFilter, pageLink));
     }
 
     @ApiOperation(value = "Clear Events (clearEvents)", notes = "Clears events by filter for specified entity.")
@@ -264,6 +256,15 @@ public class EventController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private static EventType resolveEventType(String eventType) throws ThingsboardException {
+        for (var et : EventType.values()) {
+            if (et.name().equalsIgnoreCase(eventType) || et.getOldName().equalsIgnoreCase(eventType)) {
+                return et;
+            }
+        }
+        throw new ThingsboardException("Event type: '" + eventType + "' is not supported!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
     }
 
 }

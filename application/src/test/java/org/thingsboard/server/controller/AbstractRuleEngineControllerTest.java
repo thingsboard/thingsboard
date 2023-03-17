@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -60,20 +60,19 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
         return doGet("/api/ruleChain/metadata/" + ruleChainId.getId().toString(), RuleChainMetaData.class);
     }
 
-    protected PageData<Event> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
-        return getEvents(tenantId, entityId, DataConstants.DEBUG_RULE_NODE, limit);
+    protected PageData<EventInfo> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
+        return getEvents(tenantId, entityId, EventType.DEBUG_RULE_NODE.getOldName(), limit);
     }
 
-    protected PageData<Event> getEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) throws Exception {
+    protected PageData<EventInfo> getEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) throws Exception {
         TimePageLink pageLink = new TimePageLink(limit);
         return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
-                new TypeReference<PageData<Event>>() {
+                new TypeReference<PageData<EventInfo>>() {
                 }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
     }
 
 
-
-    protected JsonNode getMetadata(Event outEvent) {
+    protected JsonNode getMetadata(EventInfo outEvent) {
         String metaDataStr = outEvent.getBody().get("metadata").asText();
         try {
             return mapper.readTree(metaDataStr);
@@ -82,7 +81,7 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
         }
     }
 
-    protected Predicate<Event> filterByCustomEvent() {
+    protected Predicate<EventInfo> filterByCustomEvent() {
         return event -> event.getBody().get("msgType").textValue().equals("CUSTOM");
     }
 

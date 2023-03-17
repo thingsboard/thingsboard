@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         deviceId = device.getId().getId().toString();
 
         lwM2MTestClient.start(true);
+        awaitObserveReadAll(2, false, device.getId().getId().toString());
     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {

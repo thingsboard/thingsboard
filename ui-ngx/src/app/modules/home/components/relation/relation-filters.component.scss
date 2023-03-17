@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,9 @@
 
     .container{
       width: 100%;
-      overflow: auto;
     }
 
     .header {
-      width: max-content;
       padding: 0 5px 5px;
 
       .cell {
@@ -38,8 +36,9 @@
     }
 
     .body {
-      width: max-content;
       padding: 0 5px 20px;
+      max-height: 300px;
+      overflow: auto;
 
       .row {
         padding-top: 5px;
@@ -53,23 +52,6 @@
 
     .any-filter{
       margin: 10px 0 20px;
-    }
-  }
-}
-
-:host ::ng-deep {
-  .tb-relation-filters {
-    .cell {
-      .mat-form-field {
-        .mat-form-field-infix {
-          border-top: none;
-        }
-        &.mat-form-field-appearance-standard {
-          .mat-form-field-flex {
-            padding-top: 0;
-          }
-        }
-      }
     }
   }
 }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@
         <mat-label translate>dashboard.public-link</mat-label>
         <input matInput disabled [ngModel]="publicLink">
       </mat-form-field>
-      <button mat-button mat-icon-button style="margin-top: 8px;"
+      <button mat-icon-button style="margin-top: 8px;"
               ngxClipboard
               (cbOnSuccess)="onPublicLinkCopied($event)"
               cbContent="{{ publicLink }}"

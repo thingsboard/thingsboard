@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +29,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.device.DeviceCacheEvictEvent;
 import org.thingsboard.server.cache.device.DeviceCacheKey;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -54,6 +53,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -77,6 +77,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -86,7 +87,7 @@ import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
-@Service
+@Service("DeviceDaoService")
 @Slf4j
 public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKey, Device, DeviceCacheEvictEvent> implements DeviceService {
 
@@ -197,7 +198,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
             deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-            deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
+            deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : StringUtils.randomAlphanumeric(20));
             deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
         }
         return savedDevice;
@@ -347,6 +348,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
+    public PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink) {
+        log.trace("Executing findTenantDeviceIdPairs, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return deviceDao.findDeviceIdInfos(pageLink);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -400,6 +408,20 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
         return deviceDao.findDevicesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
+    }
+
+    @Override
+    public List<Device> findDevicesByIds(List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        return deviceDao.findDevicesByIds(toUUIDs(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByIdsAsync(List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        return deviceDao.findDevicesByIdsAsync(toUUIDs(deviceIds));
     }
 
     @Transactional
@@ -685,4 +707,15 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             unassignDeviceFromCustomer(tenantId, new DeviceId(entity.getUuidId()));
         }
     };
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findDeviceById(tenantId, new DeviceId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DEVICE;
+    }
+
 }

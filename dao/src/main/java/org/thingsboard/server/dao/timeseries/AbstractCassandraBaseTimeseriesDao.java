@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.timeseries;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -88,12 +88,24 @@ public abstract class AbstractCassandraBaseTimeseriesDao extends CassandraAbstra
 
     protected TsKvEntry convertResultToTsKvEntry(String key, Row row) {
         if (row != null) {
-            Optional<String> foundKeyOpt = getKey(row);
-            long ts = row.getLong(ModelConstants.TS_COLUMN);
-            return new BasicTsKvEntry(ts, toKvEntry(row, foundKeyOpt.orElse(key)));
+            return getBasicTsKvEntry(key, row);
         } else {
             return new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
         }
+    }
+
+    protected Optional<TsKvEntry> convertResultToTsKvEntryOpt(String key, Row row) {
+        if (row != null) {
+            return Optional.of(getBasicTsKvEntry(key, row));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private BasicTsKvEntry getBasicTsKvEntry(String key, Row row) {
+        Optional<String> foundKeyOpt = getKey(row);
+        long ts = row.getLong(ModelConstants.TS_COLUMN);
+        return new BasicTsKvEntry(ts, toKvEntry(row, foundKeyOpt.orElse(key)));
     }
 
     private Optional<String> getKey(Row row){

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 @import '../../../../../../../scss/constants';
 
 :host {
@@ -31,7 +30,7 @@
 
       legend + * {
         display: block;
-        margin-top: 16px;
+        margin-top: 8px;
       }
 
       &.fields-group-slider {
@@ -50,6 +49,7 @@
 
     .tb-control-list {
       overflow-y: auto;
+
       &.mat-padding {
         padding: 8px;
         @media #{$mat-gt-sm} {
@@ -58,18 +58,25 @@
       }
     }
 
-    .tb-prompt{
+    .tb-prompt {
       margin: 30px 0;
+    }
+  }
+
+  .flex-gap-xs {
+    margin-bottom: 8px;
+
+    @media #{$mat-xs} {
+      margin-bottom: 16px;
+      &.large {
+        margin-bottom: 24px;
+      }
     }
   }
 }
 
 :host ::ng-deep {
   .tb-widget-settings {
-    .mat-checkbox-label {
-      white-space: normal;
-    }
-
     .mat-expansion-panel {
       &.tb-settings {
         box-shadow: none;
@@ -99,14 +106,6 @@
             padding: 0;
           }
         }
-
-        .mat-checkbox-layout {
-          margin: 5px 0;
-        }
-
-        .mat-checkbox-inner-container {
-          margin-right: 12px;
-        }
       }
 
       .mat-expansion-panel-content {
@@ -125,10 +124,5 @@
         margin-bottom: 8px;
       }
     }
-
-    .mat-slide-toggle-content {
-      white-space: normal;
-    }
-
   }
 }

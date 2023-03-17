@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import {
   NotificationType,
   NotificationVerticalPosition
 } from '@core/notification/notification.models';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
@@ -40,14 +40,16 @@ import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { ResourceService } from '@core/http/resource.service';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TbInject } from '@shared/decorators/tb-inject';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 
 @Directive()
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
   executingRpcRequest: boolean;
@@ -61,7 +63,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   constructor(@TbInject(RafService) public raf: RafService,
               @TbInject(Store) protected store: Store<AppState>,
-              @TbInject(FormBuilder) public fb: FormBuilder,
+              @TbInject(UntypedFormBuilder) public fb: UntypedFormBuilder,
               @TbInject(Injector) public readonly $injector: Injector,
               @TbInject('widgetContext') public readonly ctx: WidgetContext,
               @TbInject('errorMessages') public readonly errorMessages: string[]) {
@@ -80,7 +82,9 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.dialogs = $injector.get(DialogService);
     this.ctx.customDialog = $injector.get(CustomDialogService);
     this.ctx.resourceService = $injector.get(ResourceService);
+    this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
     this.ctx.date = $injector.get(DatePipe);
+    this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);
     this.ctx.translate = $injector.get(TranslateService);
     this.ctx.http = $injector.get(HttpClient);
     this.ctx.sanitizer = $injector.get(DomSanitizer);
@@ -100,7 +104,9 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   }
 
   ngOnDestroy(): void {
-
+    if (this.ctx.telemetrySubscribers) {
+      this.ctx.telemetrySubscribers.forEach(item =>  item.unsubscribe());
+    }
   }
 
   clearRpcError() {

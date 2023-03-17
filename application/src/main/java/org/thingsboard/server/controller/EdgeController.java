@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,11 +33,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -47,6 +50,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
+import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -59,8 +64,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -529,21 +536,32 @@ public class EdgeController extends BaseController {
                     "All entities that are assigned to particular edge are going to be send to remote edge service." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
-    public void syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<ResponseEntity> syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                          @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         try {
+            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
             if (isEdgesEnabled()) {
                 EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
                 edgeId = checkNotNull(edgeId);
                 SecurityUser user = getCurrentUser();
                 TenantId tenantId = user.getTenantId();
-                edgeGrpcService.startSyncProcess(tenantId, edgeId);
+                ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
+                edgeRpcService.processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
             } else {
                 throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
             }
+            return response;
         } catch (Exception e) {
             throw handleException(e);
+        }
+    }
+
+    private void reply(DeferredResult<ResponseEntity> response, FromEdgeSyncResponse fromEdgeSyncResponse) {
+        if (fromEdgeSyncResponse.isSuccess()) {
+            response.setResult(new ResponseEntity<>(HttpStatus.OK));
+        } else {
+            response.setErrorResult(new ThingsboardException("Edge is not connected", ThingsboardErrorCode.GENERAL));
         }
     }
 
@@ -578,5 +596,25 @@ public class EdgeController extends BaseController {
         }
 
         return edgeBulkImportService.processBulkImport(request, user);
+    }
+
+    @ApiOperation(value = "Get Edge Docker Install Instructions (getEdgeDockerInstallInstructions)",
+            notes = "Get a docker install instructions for provided edge id." + TENANT_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/instructions/{edgeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public EdgeInstallInstructions getEdgeDockerInstallInstructions(
+            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("edgeId") String strEdgeId,
+            HttpServletRequest request) throws ThingsboardException {
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 }

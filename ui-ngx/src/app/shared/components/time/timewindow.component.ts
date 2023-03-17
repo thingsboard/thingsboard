@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -75,11 +75,39 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   @Input()
   set historyOnly(val) {
-    this.historyOnlyValue = coerceBooleanProperty(val);
+    const newHistoryOnlyValue = coerceBooleanProperty(val);
+    if (this.historyOnlyValue !== newHistoryOnlyValue) {
+      this.historyOnlyValue = newHistoryOnlyValue;
+      if (this.onHistoryOnlyChanged()) {
+        this.notifyChanged();
+      }
+    }
   }
 
   get historyOnly() {
     return this.historyOnlyValue;
+  }
+
+  alwaysDisplayTypePrefixValue = false;
+
+  @Input()
+  set alwaysDisplayTypePrefix(val) {
+    this.alwaysDisplayTypePrefixValue = coerceBooleanProperty(val);
+  }
+
+  get alwaysDisplayTypePrefix() {
+    return this.alwaysDisplayTypePrefixValue;
+  }
+
+  quickIntervalOnlyValue = false;
+
+  @Input()
+  set quickIntervalOnly(val) {
+    this.quickIntervalOnlyValue = coerceBooleanProperty(val);
+  }
+
+  get quickIntervalOnly() {
+    return this.quickIntervalOnlyValue;
   }
 
   aggregationValue = false;
@@ -240,6 +268,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
       {
         timewindow: deepClone(this.innerValue),
         historyOnly: this.historyOnly,
+        quickIntervalOnly: this.quickIntervalOnly,
         aggregation: this.aggregation,
         timezone: this.timezone,
         isEdit: this.isEdit
@@ -265,6 +294,17 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     return Injector.create({parent: this.viewContainerRef.injector, providers});
   }
 
+  private onHistoryOnlyChanged(): boolean {
+    if (this.historyOnlyValue && this.innerValue) {
+      if (this.innerValue.selectedTab !== TimewindowType.HISTORY) {
+        this.innerValue.selectedTab = TimewindowType.HISTORY;
+        this.updateDisplayValue();
+        return true;
+      }
+    }
+    return false;
+  }
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
@@ -278,9 +318,15 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   }
 
   writeValue(obj: Timewindow): void {
-    this.innerValue = initModelFromDefaultTimewindow(obj, this.timeService);
+    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.timeService);
     this.timewindowDisabled = this.isTimewindowDisabled();
-    this.updateDisplayValue();
+    if (this.onHistoryOnlyChanged()) {
+      setTimeout(() => {
+        this.notifyChanged();
+      });
+    } else {
+      this.updateDisplayValue();
+    }
   }
 
   notifyChanged() {
@@ -297,7 +343,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
           this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
       }
     } else {
-      this.innerValue.displayValue = !this.historyOnly ? (this.translate.instant('timewindow.history') + ' - ') : '';
+      this.innerValue.displayValue = (!this.historyOnly || this.alwaysDisplayTypePrefix) ? (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +
           this.millisecondsToTimeStringPipe.transform(this.innerValue.history.timewindowMs);

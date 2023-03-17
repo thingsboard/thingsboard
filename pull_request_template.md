@@ -6,12 +6,13 @@ Put your PR description here instead of this sentence.
 
 - [ ] You have reviewed the guidelines [document](https://docs.google.com/document/d/1wqcOafLx5hth8SAg4dqV_LV3un3m5WYR8RdTJ4MbbUM/edit?usp=sharing).
 - [ ] PR name contains fix version. For example, "[3.3.4] Hotfix of some UI component" or "[3.4] New Super Feature".
+- [ ] The [milestone](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones) is specified and corresponds to fix version.  
 - [ ] Description references specific [issue](https://github.com/thingsboard/thingsboard/issues).
 - [ ] Description contains human-readable scope of changes.
 - [ ] Description contains brief notes about what needs to be added to the documentation.
 - [ ] No merge conflicts, commented blocks of code, code formatting issues.
 - [ ] Changes are backward compatible or upgrade script is provided.
-- [ ] Similar PR is opened for PE version to simplify merge. Required for internal contributors only.
+- [ ] Similar PR is opened for PE version to simplify merge. Crosslinks between PRs added. Required for internal contributors only.
   
 ## Front-End feature checklist
 

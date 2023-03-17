@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,13 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -37,11 +40,13 @@ import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -71,7 +76,7 @@ import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
-@Service
+@Service("EdgeDaoService")
 @Slf4j
 public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, Edge, EdgeCacheEvictEvent> implements EdgeService {
 
@@ -95,6 +100,10 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Autowired
     private DataValidator<Edge> edgeValidator;
+
+    @Value("${edges.enabled}")
+    @Getter
+    private boolean edgesEnabled;
 
     @TransactionalEventListener(classes = EdgeCacheEvictEvent.class)
     @Override
@@ -182,6 +191,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    @Transactional
     public void deleteEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing deleteEdge [{}]", edgeId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
@@ -395,11 +405,29 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     };
 
     @Override
+    public List<EdgeId> findAllRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
+        if (!edgesEnabled) {
+            return null;
+        }
+        if (EntityType.EDGE.equals(entityId.getEntityType())) {
+            return Collections.singletonList(new EdgeId(entityId.getId()));
+        }
+        PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
+        List<EdgeId> result = new ArrayList<>();
+        for (EdgeId edgeId : relatedEdgeIdsIterator) {
+            result.add(edgeId);
+        }
+        return result;
+    }
+
+    @Override
     public PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}] [{}]", tenantId, entityId, pageLink);
         switch (entityId.getEntityType()) {
             case TENANT:
             case DEVICE_PROFILE:
+            case ASSET_PROFILE:
             case OTA_PACKAGE:
                 return convertToEdgeIds(findEdgesByTenantId(tenantId, pageLink));
             case CUSTOMER:
@@ -492,4 +520,15 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         } while (pageData != null && pageData.hasNext());
         return result;
     }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findEdgeById(tenantId, new EdgeId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.EDGE;
+    }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,11 +426,7 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
-
-        Customer publicCustomer = customerService.findOrCreatePublicCustomer(getTenantId());
-
-        return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), getCurrentUser().getCustomerId(),
-                publicCustomer, entityViewId, getCurrentUser());
+        return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), entityViewId, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign entity view to edge (assignEntityViewToEdge)",

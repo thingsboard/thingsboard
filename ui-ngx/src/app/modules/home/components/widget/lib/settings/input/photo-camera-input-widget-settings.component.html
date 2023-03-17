@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.image-settings</legend>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px" fxLayoutAlign.gt-sm="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.input-widgets.image-format</mat-label>
         <mat-select formControlName="imageFormat">
@@ -45,7 +45,7 @@
         <input matInput type="number" min="0" max="1" formControlName="imageQuality">
       </mat-form-field>
     </section>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px" fxLayoutAlign.gt-sm="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.input-widgets.max-image-width</mat-label>
         <input matInput type="number" min="1" formControlName="maxWidth">

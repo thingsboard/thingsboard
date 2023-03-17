@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import {
   NgZone,
   OnChanges,
   OnDestroy,
-  OnInit, Renderer2,
+  OnInit,
+  Renderer2,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
@@ -39,12 +40,14 @@ import {
   defaultLegendConfig,
   LegendConfig,
   LegendData,
-  LegendPosition, MobileActionResult,
+  LegendPosition,
   Widget,
   WidgetActionDescriptor,
   widgetActionSources,
   WidgetActionType,
-  WidgetComparisonSettings, WidgetMobileActionDescriptor, WidgetMobileActionType,
+  WidgetComparisonSettings,
+  WidgetMobileActionDescriptor,
+  WidgetMobileActionType,
   WidgetResource,
   widgetType,
   WidgetTypeParameters
@@ -65,7 +68,9 @@ import {
   validateEntityId
 } from '@core/utils';
 import {
-  IDynamicWidgetComponent, ShowWidgetHeaderActionFunction, updateEntityParams,
+  IDynamicWidgetComponent,
+  ShowWidgetHeaderActionFunction,
+  updateEntityParams,
   WidgetContext,
   WidgetHeaderAction,
   WidgetInfo,
@@ -109,9 +114,7 @@ import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
-import {
-  DASHBOARD_PAGE_COMPONENT_TOKEN
-} from '@home/components/tokens';
+import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
 
 @Component({
   selector: 'tb-widget',
@@ -400,17 +403,17 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private displayWidgetInstance(): boolean {
-    if (this.widget.type !== widgetType.static) {
-      for (const id of Object.keys(this.widgetContext.subscriptions)) {
-        const subscription = this.widgetContext.subscriptions[id];
-        if (subscription.isDataResolved()) {
-          return true;
-        }
-      }
-      return false;
-    } else {
+    if (this.widget.type === widgetType.static || this.typeParameters?.processNoDataByWidget) {
       return true;
     }
+
+    for (const id of Object.keys(this.widgetContext.subscriptions)) {
+      const subscription = this.widgetContext.subscriptions[id];
+      if (subscription.isDataResolved()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private onDestroy() {
@@ -450,7 +453,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     for (const id of Object.keys(this.widgetContext.subscriptions)) {
       const subscription = this.widgetContext.subscriptions[id];
       if (!subscription.useDashboardTimewindow) {
-        subscription.updateTimewindowConfig(timewindow);
+        subscription.updateTimewindowConfig(subscription.onTimewindowChangeFunction(timewindow));
       }
     }
   }
@@ -463,7 +466,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private loadFromWidgetInfo() {
-    this.widgetContext.widgetNamespace = `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
+    this.widgetContext.widgetNamespace =
+      `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
     const elem = this.elementRef.nativeElement;
     elem.classList.add('tb-widget');
     elem.classList.add(this.widgetContext.widgetNamespace);
@@ -688,7 +692,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private initialize(): Observable<any> {
 
-    const initSubject = new ReplaySubject();
+    const initSubject = new ReplaySubject<void>();
 
     this.rxSubscriptions.push(this.widgetContext.aliasController.entityAliasesChanged.subscribe(
       (aliasIds) => {
@@ -963,7 +967,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private createDefaultSubscription(): Observable<any> {
-    const createSubscriptionSubject = new ReplaySubject();
+    const createSubscriptionSubject = new ReplaySubject<void>();
     let options: WidgetSubscriptionOptions;
     if (this.widget.type !== widgetType.rpc && this.widget.type !== widgetType.static) {
       const comparisonSettings: WidgetComparisonSettings = this.widgetContext.settings;
@@ -1378,8 +1382,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         ]
       });
-      const component = this.popoverService.displayPopover(trigger, this.renderer,
-        this.widgetContentContainer, this.dashboardPageComponent, preferredPlacement, hideOnClickOutside,
+      const componentRef = this.popoverService.createPopoverRef(this.widgetContentContainer);
+      const component = this.popoverService.displayPopoverWithComponentRef(componentRef, trigger, this.renderer,
+        this.dashboardPageComponent, preferredPlacement, hideOnClickOutside,
         injector,
         {
           embedded: true,
@@ -1388,7 +1393,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           currentState: objToBase64([stateObject]),
           dashboard,
           parentDashboard: this.widgetContext.parentDashboard ?
-            this.widgetContext.parentDashboard : this.widgetContext.dashboard
+            this.widgetContext.parentDashboard : this.widgetContext.dashboard,
+          popoverComponent: componentRef.instance
         },
         {width: popoverWidth, height: popoverHeight},
         popoverStyle,
@@ -1431,7 +1437,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         title = insertVariable(title, prop + ':entityLabel', params[prop].entityLabel);
       }
     }
-    this.dialog.open(this.embedDashboardDialogComponent, {
+    dashboard.dialogRef = this.dialog.open(this.embedDashboardDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       viewContainerRef: this.widgetContentContainer,
@@ -1441,7 +1447,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         title,
         hideToolbar: hideDashboardToolbar,
         width: dialogWidth,
-        height: dialogHeight
+        height: dialogHeight,
+        parentDashboard: this.widgetContext.parentDashboard ?
+          this.widgetContext.parentDashboard : this.widgetContext.dashboard
       }
     });
     this.cd.markForCheck();

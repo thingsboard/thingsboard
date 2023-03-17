@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
   twoFactorAuthProvidersLoginData,
@@ -70,7 +70,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
               private twoFactorAuthService: TwoFactorAuthenticationService,
               private authService: AuthService,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -187,8 +187,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
 
   cancelLogin() {
     if (this.prevProvider) {
-      this.selectedProvider = this.prevProvider;
-      this.prevProvider = null;
+      this.selectProvider(this.prevProvider);
     } else {
       this.authService.logout();
     }

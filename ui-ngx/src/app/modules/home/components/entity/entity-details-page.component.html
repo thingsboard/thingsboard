@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-card class="settings-card">
+<mat-card appearance="outlined" class="settings-card">
   <mat-toolbar class="details-toolbar">
     <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center">
       <div class="tb-details-title-header" fxLayout="column" fxLayoutAlign="center start">
@@ -46,7 +46,7 @@
     </div>
   </mat-toolbar>
   <mat-card-content fxFlex="100">
-    <mat-tab-group class="tb-absolute-fill" [ngClass]="{'tb-headless': hideDetailsTabs()}" [(selectedIndex)]="selectedTab" fxFill>
+    <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill" [ngClass]="{'tb-headless': hideDetailsTabs()}" [(selectedIndex)]="selectedTab" fxFill>
       <mat-tab label="{{ 'details.details' | translate }}">
         <tb-anchor #entityDetailsForm></tb-anchor>
       </mat-tab>

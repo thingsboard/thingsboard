@@ -1,0 +1,88 @@
+#
+# Copyright © 2016-2023 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+changelog:
+  exclude:
+    labels:
+      - Ignore for release
+  categories:
+    - title: 'Major Core & Rule Engine'
+      labels:
+        - 'Major Core'
+        - 'Major Rule Engine'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Major UI'
+      labels:
+        - 'Major UI'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Major Transport'
+      labels:
+        - 'Major Transport'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Major Edge'
+      labels:
+        - 'Major Edge'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Core & Rule Engine'
+      labels:
+        - 'Core'
+        - 'Rule Engine'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'UI'
+      labels:
+        - 'UI'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Transport'
+      labels:
+        - 'Transport'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Edge'
+      labels:
+        - 'Edge'
+      exclude:
+        labels:
+          - 'Bug'
+    - title: 'Bug: Core & Rule Engine'
+      labels:
+        - 'Core'
+        - 'Rule Engine'
+        - 'Bug'
+    - title: 'Bug: UI'
+      labels:
+        - 'UI'
+        - 'Bug'
+    - title: 'Bug: Transport'
+      labels:
+        - 'Transport'
+        - 'Bug'
+    - title: 'Bug: Edge'
+      labels:
+        - 'Edge'
+        - 'Bug'

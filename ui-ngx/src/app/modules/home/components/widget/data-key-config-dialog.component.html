@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<form [formGroup]="dataKeyFormGroup" (ngSubmit)="save()" style="width: 700px;">
+<form [formGroup]="dataKeyFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
     <h2>{{ 'datakey.configuration' | translate }}</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -36,6 +36,7 @@
       [dashboard]="data.dashboard"
       [aliasController]="data.aliasController"
       [widget]="data.widget"
+      [widgetType]="data.widgetType"
       [showPostProcessing]="data.showPostProcessing"
       [callbacks]="data.callbacks"
       formControlName="dataKey">

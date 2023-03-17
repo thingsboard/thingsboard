@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,7 +83,6 @@ public class TbGetRelatedAttributeNodeTest extends AbstractAttributeNodeTest {
         return getConfig(true);
     }
 
-    @NotNull
     private TbGetEntityAttrNodeConfiguration getConfig(boolean isTelemetry) {
         TbGetRelatedAttrNodeConfiguration config = new TbGetRelatedAttrNodeConfiguration();
         config = config.defaultConfiguration();

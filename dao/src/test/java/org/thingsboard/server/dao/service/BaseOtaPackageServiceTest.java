@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +27,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import javax.validation.ValidationException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -669,13 +668,13 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         OtaPackageInfo firmwareInfo = new OtaPackageInfo();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
         firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle(RandomStringUtils.random(257));
+        firmwareInfo.setTitle(StringUtils.random(257));
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
 
         thrown.expect(DataValidationException.class);
-        thrown.expectMessage("length of title must be equal or less than 255");
+        thrown.expectMessage("title length must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }
@@ -689,8 +688,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setTenantId(tenantId);
         firmwareInfo.setTitle(TITLE);
 
-        firmwareInfo.setVersion(RandomStringUtils.random(257));
-        thrown.expectMessage("length of version must be equal or less than 255");
+        firmwareInfo.setVersion(StringUtils.random(257));
+        thrown.expectMessage("version length must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }

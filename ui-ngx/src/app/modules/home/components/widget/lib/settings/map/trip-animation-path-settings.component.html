@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="tripAnimationPathSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.path-settings</legend>
-    <section fxLayout="row" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
       <tb-color-input
         fxFlex
         formControlName="color"
@@ -70,7 +70,7 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <section fxLayout="row" fxLayoutGap="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.maps.decorator-symbol</mat-label>
               <mat-select required formControlName="decoratorSymbol">
@@ -84,7 +84,7 @@
               <input matInput type="number" min="1" formControlName="decoratorSymbolSize">
             </mat-form-field>
           </section>
-          <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
             <mat-slide-toggle fxFlex formControlName="useDecoratorCustomColor">
               {{ 'widgets.maps.use-path-decorator-custom-color' | translate }}
             </mat-slide-toggle>
@@ -95,7 +95,7 @@
               label="{{ 'widgets.maps.decorator-custom-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
           </section>
-          <section fxLayout="row" fxLayoutGap="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.maps.decorator-offset</mat-label>
               <input matInput formControlName="decoratorOffset">

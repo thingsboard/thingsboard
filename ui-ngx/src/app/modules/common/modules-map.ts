@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -98,7 +98,6 @@ import * as LogoComponent from '@shared/components/logo.component';
 import * as FooterFabButtonsComponent from '@shared/components/footer-fab-buttons.component';
 import * as FullscreenDirective from '@shared/components/fullscreen.directive';
 import * as CircularProgressDirective from '@shared/components/circular-progress.directive';
-import * as MatChipDraggableDirective from '@shared/components/mat-chip-draggable.directive';
 import * as TbHotkeysDirective from '@shared/components/hotkeys.directive';
 import * as TbAnchorComponent from '@shared/components/tb-anchor.component';
 import * as TbPopoverComponent from '@shared/components/popover.component';
@@ -142,6 +141,7 @@ import * as JsonObjectEditComponent from '@shared/components/json-object-edit.co
 import * as JsonObjectViewComponent from '@shared/components/json-object-view.component';
 import * as JsonContentComponent from '@shared/components/json-content.component';
 import * as JsFuncComponent from '@shared/components/js-func.component';
+import * as TbScriptLangComponent from '@shared/components/script-lang.component';
 import * as FabToolbarComponent from '@shared/components/fab-toolbar.component';
 import * as WidgetsBundleSelectComponent from '@shared/components/widgets-bundle-select.component';
 import * as ConfirmDialogComponent from '@shared/components/dialog/confirm-dialog.component';
@@ -240,7 +240,7 @@ import * as FilterPredicateValueComponent from '@home/components/filter/filter-p
 import * as TenantProfileComponent from '@home/components/profile/tenant-profile.component';
 import * as TenantProfileDialogComponent from '@home/components/profile/tenant-profile-dialog.component';
 import * as TenantProfileDataComponent from '@home/components/profile/tenant-profile-data.component';
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 import * as DefaultDeviceProfileConfigurationComponent from '@home/components/profile/device/default-device-profile-configuration.component';
 import * as DeviceProfileConfigurationComponent from '@home/components/profile/device/device-profile-configuration.component';
 import * as DeviceProfileComponent from '@home/components/profile/device-profile.component';
@@ -265,7 +265,7 @@ import * as AlarmScheduleInfoComponent from '@home/components/profile/alarm/alar
 import * as AlarmScheduleDialogComponent from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import * as EditAlarmDetailsDialogComponent from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 import * as AlarmRuleConditionDialogComponent from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 import * as DefaultTenantProfileConfigurationComponent from '@home/components/profile/tenant/default-tenant-profile-configuration.component';
 import * as TenantProfileConfigurationComponent from '@home/components/profile/tenant/tenant-profile-configuration.component';
 import * as SmsProviderConfigurationComponent from '@home/components/sms/sms-provider-configuration.component';
@@ -290,6 +290,9 @@ import * as DashboardImageDialogComponent from '@home/components/dashboard-page/
 import * as WidgetContainerComponent from '@home/components/widget/widget-container.component';
 import * as TenantProfileQueuesComponent from '@home/components/profile/queue/tenant-profile-queues.component';
 import * as QueueFormComponent from '@home/components/queue/queue-form.component';
+import * as AssetProfileComponent from '@home/components/profile/asset-profile.component';
+import * as AssetProfileDialogComponent from '@home/components/profile/asset-profile-dialog.component';
+import * as AssetProfileAutocompleteComponent from '@home/components/profile/asset-profile-autocomplete.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -383,7 +386,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/footer-fab-buttons.component': FooterFabButtonsComponent,
     '@shared/components/fullscreen.directive': FullscreenDirective,
     '@shared/components/circular-progress.directive': CircularProgressDirective,
-    '@shared/components/mat-chip-draggable.directive': MatChipDraggableDirective,
     '@shared/components/hotkeys.directive': TbHotkeysDirective,
     '@shared/components/tb-anchor.component': TbAnchorComponent,
     '@shared/components/popover.component': TbPopoverComponent,
@@ -427,6 +429,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/json-object-view.component': JsonObjectViewComponent,
     '@shared/components/json-content.component': JsonContentComponent,
     '@shared/components/js-func.component': JsFuncComponent,
+    '@shared/components/script-lang.component': TbScriptLangComponent,
     '@shared/components/fab-toolbar.component': FabToolbarComponent,
     '@shared/components/widgets-bundle-select.component': WidgetsBundleSelectComponent,
     '@shared/components/dialog/confirm-dialog.component': ConfirmDialogComponent,
@@ -537,6 +540,9 @@ class ModulesMap implements IModulesMap {
     MqttDeviceProfileTransportConfigurationComponent,
     '@home/components/profile/device/coap-device-profile-transport-configuration.component':
     CoapDeviceProfileTransportConfigurationComponent,
+    '@home/components/profile/asset-profile.component': AssetProfileComponent,
+    '@home/components/profile/asset-profile-dialog.component': AssetProfileDialogComponent,
+    '@home/components/profile/asset-profile-autocomplete.component': AssetProfileAutocompleteComponent,
     '@home/components/profile/alarm/device-profile-alarms.component': DeviceProfileAlarmsComponent,
     '@home/components/profile/alarm/device-profile-alarm.component': DeviceProfileAlarmComponent,
     '@home/components/profile/alarm/create-alarm-rules.component': CreateAlarmRulesComponent,

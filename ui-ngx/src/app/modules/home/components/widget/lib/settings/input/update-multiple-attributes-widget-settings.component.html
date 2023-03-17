@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.group-settings</legend>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
       <mat-slide-toggle fxFlex="30" formControlName="showGroupTitle" class="slide-block">
         {{ 'widgets.input-widgets.show-group-title' | translate }}
       </mat-slide-toggle>
@@ -73,7 +73,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.fields-alignment</legend>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex="50" class="mat-block">
         <mat-label translate>widgets.input-widgets.fields-alignment</mat-label>
         <mat-select formControlName="fieldsAlignment">

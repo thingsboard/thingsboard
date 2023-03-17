@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
@@ -29,16 +32,27 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.service.ttl.EdgeEventsCleanUpService;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @TestPropertySource(properties = {
@@ -49,6 +63,18 @@ public abstract class BaseEdgeEventControllerTest extends AbstractControllerTest
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private EdgeEventDao edgeEventDao;
+    @SpyBean
+    private SqlPartitioningRepository partitioningRepository;
+    @Autowired
+    private EdgeEventsCleanUpService edgeEventsCleanUpService;
+
+    @Value("#{${sql.edge_events.partition_size} * 60 * 60 * 1000}")
+    private long partitionDurationInMs;
+    @Value("${sql.ttl.edge_events.edge_event_ttl}")
+    private long edgeEventTtlInSec;
 
     @Before
     public void beforeTest() throws Exception {
@@ -114,6 +140,34 @@ public abstract class BaseEdgeEventControllerTest extends AbstractControllerTest
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.RELATION.equals(ee.getType())));
     }
 
+    @Test
+    public void saveEdgeEvent_thenCreatePartitionIfNotExist() {
+        reset(partitioningRepository);
+        EdgeEvent edgeEvent = createEdgeEvent();
+        verify(partitioningRepository).createPartitionIfNotExists(eq("edge_event"), eq(edgeEvent.getCreatedTime()), eq(partitionDurationInMs));
+        List<Long> partitions = partitioningRepository.fetchPartitions("edge_event");
+        assertThat(partitions).singleElement().satisfies(partitionStartTs -> {
+            assertThat(partitionStartTs).isEqualTo(partitioningRepository.calculatePartitionStartTime(edgeEvent.getCreatedTime(), partitionDurationInMs));
+        });
+    }
+
+    @Test
+    public void cleanUpEdgeEventByTtl_dropOldPartitions() {
+        long oldEdgeEventTs = LocalDate.of(2020, 10, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+        long partitionStartTs = partitioningRepository.calculatePartitionStartTime(oldEdgeEventTs, partitionDurationInMs);
+        partitioningRepository.createPartitionIfNotExists("edge_event", oldEdgeEventTs, partitionDurationInMs);
+        List<Long> partitions = partitioningRepository.fetchPartitions("edge_event");
+        assertThat(partitions).contains(partitionStartTs);
+
+        edgeEventsCleanUpService.cleanUp();
+        partitions = partitioningRepository.fetchPartitions("edge_event");
+        assertThat(partitions).doesNotContain(partitionStartTs);
+        assertThat(partitions).allSatisfy(partitionsStart -> {
+            long partitionEndTs = partitionsStart + partitionDurationInMs;
+            assertThat(partitionEndTs).isGreaterThan(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edgeEventTtlInSec));
+        });
+    }
+
     private List<EdgeEvent> findEdgeEvents(EdgeId edgeId) throws Exception {
         return doGetTypedWithTimePageLink("/api/edge/" + edgeId.toString() + "/events?",
                 new TypeReference<PageData<EdgeEvent>>() {
@@ -132,6 +186,21 @@ public abstract class BaseEdgeEventControllerTest extends AbstractControllerTest
         asset.setName(name);
         asset.setType(type);
         return asset;
+    }
+
+    private EdgeEvent createEdgeEvent() {
+        EdgeEvent edgeEvent = new EdgeEvent();
+        edgeEvent.setCreatedTime(System.currentTimeMillis());
+        edgeEvent.setTenantId(tenantId);
+        edgeEvent.setAction(EdgeEventActionType.ADDED);
+        edgeEvent.setEntityId(tenantAdmin.getUuidId());
+        edgeEvent.setType(EdgeEventType.ALARM);
+        try {
+            edgeEventDao.saveAsync(edgeEvent).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        return edgeEvent;
     }
 
 }

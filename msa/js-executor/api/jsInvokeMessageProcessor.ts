@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import config from 'config';
 import { _logger } from '../config/logger';
 import { JsExecutor, TbScript } from './jsExecutor';
 import { performance } from 'perf_hooks';
-import { isString, parseJsErrorDetails, toUUIDString, UUIDFromBuffer, UUIDToBits } from './utils';
+import { isString, parseJsErrorDetails, toUUIDString, UUIDFromBuffer, UUIDToBits, isNotUUID } from './utils';
 import { IQueue } from '../queue/queue.models';
 import {
     JsCompileRequest,
@@ -36,13 +36,16 @@ import Long from 'long';
 const COMPILATION_ERROR = 0;
 const RUNTIME_ERROR = 1;
 const TIMEOUT_ERROR = 2;
+const NOT_FOUND_ERROR = 3;
 
 const statFrequency = Number(config.get('script.stat_print_frequency'));
+const memoryUsageTraceFrequency = Number(config.get('script.memory_usage_trace_frequency'));
 const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_frequency'));
 const useSandbox = config.get('script.use_sandbox') === 'true';
 const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 const slowQueryLogMs = Number(config.get('script.slow_query_log_ms'));
 const slowQueryLogBody = config.get('script.slow_query_log_body') === 'true';
+const maxResultSize = Number(config.get('js.max_result_size'));
 
 export class JsInvokeMessageProcessor {
 
@@ -128,7 +131,12 @@ export class JsInvokeMessageProcessor {
     processCompileRequest(requestId: string, responseTopic: string, headers: any, compileRequest: JsCompileRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(compileRequest);
         this.logger.debug('[%s] Processing compile request, scriptId: [%s]', requestId, scriptId);
-
+        if (this.scriptMap.has(scriptId)) {
+            const compileResponse = JsInvokeMessageProcessor.createCompileResponse(scriptId, true);
+            this.logger.debug('[%s] Script was already compiled, scriptId: [%s]', requestId, scriptId);
+            this.sendResponse(requestId, responseTopic, headers, scriptId, compileResponse);
+            return;
+        }
         this.executor.compileScript(compileRequest.scriptBody).then(
             (script) => {
                 this.cacheScript(scriptId, script);
@@ -160,13 +168,27 @@ export class JsInvokeMessageProcessor {
         if (this.executedScriptsCounter % scriptBodyTraceFrequency == 0) {
             this.logger.info('[%s] Executing script body: [%s]', scriptId, invokeRequest.scriptBody);
         }
+        if (this.executedScriptsCounter % memoryUsageTraceFrequency == 0) {
+            this.logger.info('Current memory usage: [%s]', process.memoryUsage());
+        }
+
         this.getOrCompileScript(scriptId, invokeRequest.scriptBody).then(
             (script) => {
                 this.executor.executeScript(script, invokeRequest.args, invokeRequest.timeout).then(
-                    (result) => {
-                        const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse(result, true);
-                        this.logger.debug('[%s] Sending success invoke response, scriptId: [%s]', requestId, scriptId);
-                        this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
+                    (result: string | undefined) => {
+                        if (!result || result.length <= maxResultSize) {
+                            const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse(result, true);
+                            this.logger.debug('[%s] Sending success invoke response, scriptId: [%s]', requestId, scriptId);
+                            this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
+                        } else {
+                            const err = {
+                                name: 'Error',
+                                message: 'script invocation result exceeds maximum allowed size of ' + maxResultSize + ' symbols'
+                            }
+                            const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse("", false, RUNTIME_ERROR, err);
+                            this.logger.debug('[%s] Script invocation result exceeds maximum allowed size of %s symbols, scriptId: [%s]', requestId, maxResultSize, scriptId);
+                            this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
+                        }
                     },
                     (err: any) => {
                         let errorCode;
@@ -182,8 +204,12 @@ export class JsInvokeMessageProcessor {
                 )
             },
             (err: any) => {
-                const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse("", false, COMPILATION_ERROR, err);
-                this.logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, COMPILATION_ERROR);
+                let errorCode = COMPILATION_ERROR;
+                if (err?.name === 'script body not found') {
+                    errorCode = NOT_FOUND_ERROR;
+                }
+                const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse("", false, errorCode, err);
+                this.logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, errorCode);
                 this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
             }
         );
@@ -211,7 +237,7 @@ export class JsInvokeMessageProcessor {
         const remoteResponse = JsInvokeMessageProcessor.createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
         const rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
         this.logger.debug('[%s] Sending response to queue, scriptId: [%s]', requestId, scriptId);
-        this.producer.send(responseTopic, scriptId, rawResponse, headers).then(
+        this.producer.send(responseTopic, requestId, rawResponse, headers).then(
             () => {
                 this.logger.debug('[%s] Response sent to queue, took [%s]ms, scriptId: [%s]', requestId, (performance.now() - tStartSending), scriptId);
             },
@@ -231,7 +257,7 @@ export class JsInvokeMessageProcessor {
             if (script) {
                 self.incrementUseScriptId(scriptId);
                 resolve(script);
-            } else {
+            } else if (scriptBody) {
                 const startTime = performance.now();
                 self.executor.compileScript(scriptBody).then(
                     (compiledScript) => {
@@ -244,6 +270,12 @@ export class JsInvokeMessageProcessor {
                         reject(err);
                     }
                 );
+            } else {
+                const err = {
+                    name: 'script body not found',
+                    message: ''
+                }
+                reject(err);
             }
         });
     }
@@ -274,17 +306,29 @@ export class JsInvokeMessageProcessor {
     }
 
     private static createCompileResponse(scriptId: string, success: boolean, errorCode?: number, err?: any): JsCompileResponse {
-        const scriptIdBits = UUIDToBits(scriptId);
-        return {
-            errorCode: errorCode,
-            success: success,
-            errorDetails: parseJsErrorDetails(err),
-            scriptIdMSB: scriptIdBits[0],
-            scriptIdLSB: scriptIdBits[1]
-        };
+        if (isNotUUID(scriptId)) {
+            return {
+                errorCode: errorCode,
+                success: success,
+                errorDetails: parseJsErrorDetails(err),
+                scriptIdMSB: "0",
+                scriptIdLSB: "0",
+                scriptHash: scriptId
+            };
+        } else { // this is for backward compatibility (to be able to work with tb-node of previous version) - todo: remove in the next release
+            let scriptIdBits = UUIDToBits(scriptId);
+            return {
+                errorCode: errorCode,
+                success: success,
+                errorDetails: parseJsErrorDetails(err),
+                scriptIdMSB: scriptIdBits[0],
+                scriptIdLSB: scriptIdBits[1],
+                scriptHash: ""
+            };
+        }
     }
 
-    private static createInvokeResponse(result: string, success: boolean, errorCode?: number, err?: any): JsInvokeResponse {
+    private static createInvokeResponse(result: string | undefined, success: boolean, errorCode?: number, err?: any): JsInvokeResponse {
         return {
             errorCode: errorCode,
             success: success,
@@ -294,16 +338,26 @@ export class JsInvokeMessageProcessor {
     }
 
     private static createReleaseResponse(scriptId: string, success: boolean): JsReleaseResponse {
-        const scriptIdBits = UUIDToBits(scriptId);
-        return {
-            success: success,
-            scriptIdMSB: scriptIdBits[0],
-            scriptIdLSB: scriptIdBits[1]
-        };
+        if (isNotUUID(scriptId)) {
+            return {
+                success: success,
+                scriptIdMSB: "0",
+                scriptIdLSB: "0",
+                scriptHash: scriptId,
+            };
+        } else { // todo: remove in the next release
+            let scriptIdBits = UUIDToBits(scriptId);
+            return {
+                success: success,
+                scriptIdMSB: scriptIdBits[0],
+                scriptIdLSB: scriptIdBits[1],
+                scriptHash: ""
+            }
+        }
     }
 
     private static getScriptId(request: TbMessage): string {
-        return toUUIDString(request.scriptIdMSB, request.scriptIdLSB);
+        return request.scriptHash ? request.scriptHash : toUUIDString(request.scriptIdMSB, request.scriptIdLSB);
     }
 
     private incrementUseScriptId(scriptId: string) {

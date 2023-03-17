@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                 long partitionEndTs = toMills(localDateTimeEnd);
                 ZonedDateTime zonedDateTime = localDateTimeStart.atZone(ZoneOffset.UTC);
                 String partitionDate = zonedDateTime.format(DateTimeFormatter.ofPattern(tsFormat.getPattern()));
-                savePartition(new SqlPartition(partitionStartTs, partitionEndTs, partitionDate));
+                savePartition(new SqlPartition(SqlPartition.TS_KV, partitionStartTs, partitionEndTs, partitionDate));
             }
         }
     }

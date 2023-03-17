@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<mat-tab-group class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
+<mat-tab-group mat-stretch-tabs="false" class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" *ngIf="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
-      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm" fxFlex="100"
+      <div *ngIf="displayTimewindowConfig()" fxFlex="100"
            fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
         <div fxLayout="column" fxLayoutGap="8px" fxFlex.gt-xs>
           <mat-checkbox formControlName="useDashboardTimewindow">
@@ -34,6 +34,9 @@
                 style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
                          isEdit="true"
+                         alwaysDisplayTypePrefix
+                         [historyOnly]="onlyHistoryTimewindow()"
+                         quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
                          fxFlex formControlName="timewindow"></tb-timewindow>
         </section>
@@ -64,18 +67,18 @@
              fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block" floatLabel="always">
             <mat-label translate>alarm.alarm-type-list</mat-label>
-            <mat-chip-list #alarmTypeChipList formControlName="alarmTypeList">
-              <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
+            <mat-chip-grid #alarmTypeChipList formControlName="alarmTypeList">
+              <mat-chip-row *ngFor="let type of alarmTypeList()"
               [removable]="true" (removed)="removeAlarmType(type)">
               {{type}}
               <mat-icon matChipRemove>cancel</mat-icon>
-              </mat-chip>
+              </mat-chip-row>
               <input placeholder="{{ !dataSettings.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
                      [matChipInputFor]="alarmTypeChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                      matChipInputAddOnBlur
                      (matChipInputTokenEnd)="addAlarmType($event)">
-            </mat-chip-list>
+            </mat-chip-grid>
           </mat-form-field>
           <mat-checkbox fxFlex formControlName="searchPropagatedAlarms">
             {{ 'alarm.search-propagated-alarms' | translate }}
@@ -83,16 +86,24 @@
         </div>
       </div>
       <mat-accordion multi>
-        <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
+        <mat-expansion-panel (opened)="extensionPanelIsOpen(true)" (closed)="extensionPanelIsOpen(false)" class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                     widgetType !== widgetTypes.alarm &&
                                     modelValue?.isDataEnabled" [expanded]="true">
           <mat-expansion-panel-header>
-            <mat-panel-title fxLayout="column">
-              <div class="tb-panel-title" translate>widget-config.datasources</div>
-              <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
-                   class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
-              <tb-error [error]="dataError"></tb-error>
+            <mat-panel-title fxLayout="row">
+              <div fxLayout="column">
+                <div class="tb-panel-title" translate>widget-config.datasources</div>
+                <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
+                     class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+              </div>
+              <mat-icon *ngIf = '(datasourceError.length > 0 || !datasourcesFormArray().valid) && !openExtensionPanel'
+                        style = "color: red; font-size: 18px; margin-left: 5px;">
+                report_gmailerrorred
+              </mat-icon>
             </mat-panel-title>
+            <mat-panel-description *ngIf = "timeseriesKeyError">
+              <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
+            </mat-panel-description>
           </mat-expansion-panel-header>
           <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">
                 <span translate fxLayoutAlign="center center"
@@ -100,10 +111,10 @@
           </div>
           <ng-template #datasourcesTemplate>
             <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-              <span style="width: 60px;"></span>
+              <span style="width: 68px;"></span>
               <div fxFlex fxLayout="row" fxLayoutAlign="start center"
                    style="padding: 0 0 0 10px; margin: 5px;">
-                <span translate style="min-width: 120px;">widget-config.datasource-type</span>
+                <span translate style="min-width: 160px;">widget-config.datasource-type</span>
                 <span fxHide fxShow.gt-sm translate fxFlex
                       style="padding-left: 10px;">widget-config.datasource-parameters</span>
                 <span style="min-width: 40px;"></span>
@@ -120,7 +131,7 @@
                                class="tb-datasource-list-item tb-draggable" cdkDrag
                                [cdkDragDisabled]="disabled">
                   <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-                    <div style="width: 60px;">
+                    <div fxLayout="row" fxLayoutAlign="start center" style="width: 68px;">
                       <button *ngIf="!disabled" mat-icon-button color="primary"
                               class="handle"
                               style="min-width: 40px; margin: 0"
@@ -135,11 +146,7 @@
                       <div fxFlex
                            fxLayout="row"
                            fxLayoutAlign="start center">
-                        <section fxFlex
-                                 fxLayout="column"
-                                 fxLayoutAlign="center"
-                                 fxLayout.gt-sm="row"
-                                 fxLayoutAlign.gt-sm="start center">
+                        <section class="tb-datasource-section">
                           <mat-form-field class="tb-datasource-type">
                             <mat-select [formControl]="datasourceControl.get('type')">
                               <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
@@ -149,7 +156,7 @@
                           </mat-form-field>
                           <section fxLayout="column" class="tb-datasource" [ngSwitch]="datasourceControl.get('type').value">
                             <ng-template [ngSwitchCase]="datasourceType.function">
-                              <mat-form-field class="tb-datasource-name" style="min-width: 200px;">
+                              <mat-form-field fxFlex>
                                 <mat-label translate>datasource.label</mat-label>
                                 <input matInput
                                        [formControl]="datasourceControl.get('name')">
@@ -171,9 +178,7 @@
                                 [callbacks]="widgetConfigCallbacks">
                               </tb-filter-select>
                               <mat-form-field *ngIf="datasourceControl.get('type').value === datasourceType.entityCount"
-                                              floatLabel="always"
-                                              class="tb-datasource-name no-border-top" style="min-width: 200px;">
-                                <mat-label></mat-label>
+                                              fxFlex>
                                 <input matInput
                                        placeholder="{{ 'datasource.label' | translate }}"
                                        [formControl]="datasourceControl.get('name')">
@@ -234,7 +239,7 @@
                     type="button"
                     mat-raised-button color="primary"
                     [fxShow]="modelValue?.typeParameters &&
-                              (modelValue?.typeParameters.maxDatasources == -1 || datasourcesFormArray().controls.length < modelValue?.typeParameters.maxDatasources)"
+                              (modelValue?.typeParameters.maxDatasources === -1 || datasourcesFormArray().controls.length < modelValue?.typeParameters.maxDatasources)"
                     (click)="addDatasource()"
                     matTooltip="{{ 'widget-config.add-datasource' | translate }}"
                     matTooltipPosition="above">
@@ -268,11 +273,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div [formGroup]="alarmSourceSettings" style="padding: 0 5px;">
-            <section fxFlex
-                     fxLayout="column"
-                     fxLayoutAlign="center"
-                     fxLayout.gt-sm="row"
-                     fxLayoutAlign.gt-sm="start center">
+            <section class="tb-datasource-section">
               <mat-form-field class="tb-datasource-type">
                 <mat-select formControlName="type">
                   <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
@@ -477,12 +478,15 @@
           <legend class="group-title" translate>widget-config.mobile-mode-settings</legend>
           <mat-expansion-panel class="tb-settings">
             <mat-expansion-panel-header>
-              <mat-panel-title>
+              <mat-panel-title fxLayout.xs="column" fxLayoutAlign.xs="center start" fxLayout="row" fxLayoutGap="8px" fxFlex="70">
                 <mat-slide-toggle formControlName="mobileHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
                   {{ 'widget-config.mobile-hide' | translate }}
                 </mat-slide-toggle>
+                <mat-slide-toggle formControlName="desktopHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
+                  {{ 'widget-config.desktop-hide' | translate }}
+                </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate fxFlex="30">
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>

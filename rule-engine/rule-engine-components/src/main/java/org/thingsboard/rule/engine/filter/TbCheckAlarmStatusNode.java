@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.io.IOException;
         configClazz = TbCheckAlarmStatusNodeConfig.class,
         relationTypes = {"True", "False"},
         nodeDescription = "Checks alarm status.",
-        nodeDetails = "If the alarm status matches the specified one - msg is success if does not match - msg is failure.",
+        nodeDetails = "Checks the alarm status to match one of the specified statuses.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {
@@ -93,7 +93,4 @@ public class TbCheckAlarmStatusNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
 }

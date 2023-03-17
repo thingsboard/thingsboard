@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 ///
 
 import {
+  CellActionDescriptorType,
   DateEntityTableColumn,
   EntityActionTableColumn,
   EntityTableColumn,
@@ -225,8 +226,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
-      case DebugEventType.DEBUG_RULE_CHAIN:
-        this.columns[0].width = '100px';
+        this.columns[0].width = '80px';
+        (this.columns[1] as EntityTableColumn<Event>).headerCellStyleFunction = () => ({padding: '0 12px 0 0'});
+        (this.columns[1] as EntityTableColumn<Event>).cellStyleFunction = () => ({padding: '0 12px 0 0'});
         this.columns.push(
           new EntityTableColumn<Event>('type', 'event.type', '40px',
             (entity) => entity.body.type, entity => ({
@@ -234,20 +236,47 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }), false, key => ({
               padding: '0 12px 0 0'
             })),
-          new EntityTableColumn<Event>('entityName', 'event.entity-type', '100px',
-            (entity) => entity.body.entityName, entity => ({
+          new EntityTableColumn<Event>('entityType', 'event.entity-type', '75px',
+            (entity) => entity.body.entityType, entity => ({
               padding: '0 12px 0 0',
             }), false, key => ({
               padding: '0 12px 0 0'
             })),
-          new EntityTableColumn<Event>('msgId', 'event.message-id', '100px',
-            (entity) => entity.body.msgId, entity => ({
-              whiteSpace: 'nowrap',
+          new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
+            (entity) => `${entity.body.entityId.substring(0, 6)}…`, () => ({
               padding: '0 12px 0 0'
-            }), false, key => ({
+            }), false, () => ({
               padding: '0 12px 0 0'
             }),
-            entity => entity.body.msgId),
+            () => undefined, false, {
+              name: this.translate.instant('event.copy-entity-id'),
+              icon: 'content_paste',
+              style: {
+                padding: '4px',
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.entityId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }),
+          new EntityTableColumn<Event>('msgId', 'event.message-id', '85px',
+            (entity) => `${entity.body.msgId.substring(0, 6)}…`, () => ({
+              padding: '0 12px 0 0'
+            }), false, () => ({
+              padding: '0 12px 0 0'
+            }), () => undefined, false, {
+              name: this.translate.instant('event.copy-message-id'),
+              icon: 'content_paste',
+              style: {
+                padding: '4px',
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.msgId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }),
           new EntityTableColumn<Event>('msgType', 'event.message-type', '100px',
             (entity) => entity.body.msgType, entity => ({
               whiteSpace: 'nowrap',
@@ -256,8 +285,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               padding: '0 12px 0 0'
             }),
             entity => entity.body.msgType),
-          new EntityTableColumn<Event>('relationType', 'event.relation-type', '100px',
-            (entity) => entity.body.relationType, entity => ({padding: '0 12px 0 0', }), false, key => ({
+          new EntityTableColumn<Event>('relationType', 'event.relation-type', '70px',
+            (entity) => entity.body.relationType, () => ({padding: '0 12px 0 0'}), false, () => ({
               padding: '0 12px 0 0'
             })),
           new EntityActionTableColumn<Event>('data', 'event.data',
@@ -276,6 +305,29 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               isEnabled: (entity) => entity.body.metadata ? entity.body.metadata.length > 0 : false,
               onAction: ($event, entity) => this.showContent($event, entity.body.metadata,
                 'event.metadata', ContentType.JSON, true)
+            },
+            '40px'),
+          new EntityActionTableColumn<Event>('error', 'event.error',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
+              onAction: ($event, entity) => this.showContent($event, entity.body.error,
+                'event.error')
+            },
+            '40px')
+        );
+        break;
+      case DebugEventType.DEBUG_RULE_CHAIN:
+        this.columns[0].width = '100px';
+        this.columns.push(
+          new EntityActionTableColumn<Event>('message', 'event.message',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.message ? entity.body.message.length > 0 : false,
+              onAction: ($event, entity) => this.showContent($event, entity.body.message,
+                'event.message')
             },
             '40px'),
           new EntityActionTableColumn<Event>('error', 'event.error',
@@ -334,20 +386,29 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case EventType.STATS:
         this.filterColumns.push(
-          {key: 'messagesProcessed', title: 'event.min-messages-processed'},
-          {key: 'errorsOccurred', title: 'event.min-errors-occurred'}
+          {key: 'minMessagesProcessed', title: 'event.min-messages-processed'},
+          {key: 'maxMessagesProcessed', title: 'event.max-messages-processed'},
+          {key: 'minErrorsOccurred', title: 'event.min-errors-occurred'},
+          {key: 'maxErrorsOccurred', title: 'event.max-errors-occurred'}
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
-      case DebugEventType.DEBUG_RULE_CHAIN:
         this.filterColumns.push(
           {key: 'msgDirectionType', title: 'event.type'},
           {key: 'entityId', title: 'event.entity-id'},
-          {key: 'entityName', title: 'event.entity-type'},
+          {key: 'entityType', title: 'event.entity-type'},
+          {key: 'msgId', title: 'event.message-id'},
           {key: 'msgType', title: 'event.message-type'},
           {key: 'relationType', title: 'event.relation-type'},
           {key: 'dataSearch', title: 'event.data'},
           {key: 'metadataSearch', title: 'event.metadata'},
+          {key: 'isError', title: 'event.error'},
+          {key: 'errorStr', title: 'event.error'}
+        );
+        break;
+      case DebugEventType.DEBUG_RULE_CHAIN:
+        this.filterColumns.push(
+          {key: 'message', title: 'event.message'},
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );
@@ -381,6 +442,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     };
     config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
       .withPositions([connectedPosition]);
+    config.maxHeight = '70vh';
+    config.height = 'min-content';
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {

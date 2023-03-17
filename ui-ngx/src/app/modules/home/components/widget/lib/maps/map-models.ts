@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
-import { DeviceProfileType } from '@shared/models/device.models';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 export const DEFAULT_ZOOM_LEVEL = 8;
@@ -49,8 +48,10 @@ export interface CircleData {
 }
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
-export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
-export type PosFuncton = (origXPos, origYPos) => { x, y };
+export type MarkerImageFunction = (data: FormattedData, markerImages: string[],
+                                   dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
+export type PosFunction = (origXPos, origYPos, data: FormattedData,
+                           dsData: FormattedData[], dsIndex: number, aspect: number) => { x: number, y: number };
 export type MarkerIconReadyFunction = (icon: MarkerIconInfo) => void;
 
 export enum GoogleMapType {
@@ -84,6 +85,7 @@ export enum OpenStreetMapProvider {
   openStreetHot = 'OpenStreetMap.HOT',
   esriWorldStreetMap = 'Esri.WorldStreetMap',
   esriWorldTopoMap = 'Esri.WorldTopoMap',
+  esriWorldImagery = 'Esri.WorldImagery',
   cartoDbPositron = 'CartoDB.Positron',
   cartoDbDarkMatter = 'CartoDB.DarkMatter'
 }
@@ -94,6 +96,7 @@ export const openStreetMapProviderTranslationMap = new Map<OpenStreetMapProvider
     [OpenStreetMapProvider.openStreetHot, 'widgets.maps.openstreet-provider-hot'],
     [OpenStreetMapProvider.esriWorldStreetMap, 'widgets.maps.openstreet-provider-esri-street'],
     [OpenStreetMapProvider.esriWorldTopoMap, 'widgets.maps.openstreet-provider-esri-topo'],
+    [OpenStreetMapProvider.esriWorldImagery, 'widgets.maps.openstreet-provider-esri-imagery'],
     [OpenStreetMapProvider.cartoDbPositron, 'widgets.maps.openstreet-provider-cartodb-positron'],
     [OpenStreetMapProvider.cartoDbDarkMatter, 'widgets.maps.openstreet-provider-cartodb-dark-matter']
   ]
@@ -602,6 +605,12 @@ export interface MarkerClusteringSettings {
   showCoverageOnHover: boolean;
   chunkedLoading: boolean;
   removeOutsideVisibleBounds: boolean;
+  useIconCreateFunction: boolean;
+  clusterMarkerFunction?: string;
+}
+
+export interface WidgetMarkerClusteringSettings extends MarkerClusteringSettings {
+  parsedClusterMarkerFunction?: GenericFunction;
 }
 
 export const defaultMarkerClusteringSettings: MarkerClusteringSettings = {
@@ -613,7 +622,9 @@ export const defaultMarkerClusteringSettings: MarkerClusteringSettings = {
   spiderfyOnMaxZoom: false,
   showCoverageOnHover: true,
   chunkedLoading: false,
-  removeOutsideVisibleBounds: true
+  removeOutsideVisibleBounds: true,
+  useIconCreateFunction: false,
+  clusterMarkerFunction: null
 };
 
 export interface MapEditorSettings {
@@ -635,7 +646,7 @@ export const defaultMapEditorSettings: MapEditorSettings = {
 };
 
 export type UnitedMapSettings = MapProviderSettings & CommonMapSettings & MarkersSettings &
-  PolygonSettings & CircleSettings & PolylineSettings & PointsSettings & MarkerClusteringSettings & MapEditorSettings;
+  PolygonSettings & CircleSettings & PolylineSettings & PointsSettings & WidgetMarkerClusteringSettings & MapEditorSettings;
 
 export const defaultMapSettings: UnitedMapSettings = {
   ...defaultMapProviderSettings,

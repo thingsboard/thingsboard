@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -312,7 +312,7 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     if (this.snackBarRef) {
       this.parentEl = this.data.parent.nativeElement;
-      this.snackBarContainerEl = $(this.elementRef.nativeElement).closest('snack-bar-container')[0];
+      this.snackBarContainerEl = $(this.elementRef.nativeElement).closest('.mat-mdc-snack-bar-container')[0];
       this.snackBarContainerEl.style.position = 'absolute';
       this.updateContainerRect();
       this.updatePosition(this.snackBarRef.containerInstance.snackBarConfig);

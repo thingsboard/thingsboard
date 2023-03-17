@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -39,11 +41,22 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -55,6 +68,8 @@ import java.util.concurrent.Executors;
 @TbCoreComponent
 @Slf4j
 public class DefaultEdgeNotificationService implements EdgeNotificationService {
+
+    public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     @Autowired
     private EdgeService edgeService;
@@ -69,16 +84,49 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private EdgeProcessor edgeProcessor;
 
     @Autowired
-    private EntityEdgeProcessor entityProcessor;
+    private AssetEdgeProcessor assetProcessor;
+
+    @Autowired
+    private DeviceEdgeProcessor deviceProcessor;
+
+    @Autowired
+    private EntityViewEdgeProcessor entityViewProcessor;
+
+    @Autowired
+    private DashboardEdgeProcessor dashboardProcessor;
+
+    @Autowired
+    private RuleChainEdgeProcessor ruleChainProcessor;
+
+    @Autowired
+    private UserEdgeProcessor userProcessor;
+
+    @Autowired
+    private CustomerEdgeProcessor customerProcessor;
+
+    @Autowired
+    private DeviceProfileEdgeProcessor deviceProfileProcessor;
+
+    @Autowired
+    private AssetProfileEdgeProcessor assetProfileProcessor;
+
+    @Autowired
+    private OtaPackageEdgeProcessor otaPackageProcessor;
+
+    @Autowired
+    private WidgetBundleEdgeProcessor widgetBundleProcessor;
+
+    @Autowired
+    private WidgetTypeEdgeProcessor widgetTypeProcessor;
+
+    @Autowired
+    private QueueEdgeProcessor queueProcessor;
 
     @Autowired
     private AlarmEdgeProcessor alarmProcessor;
 
     @Autowired
     private RelationEdgeProcessor relationProcessor;
-
-    @Autowired
-    private CustomerEdgeProcessor customerProcessor;
 
     private ExecutorService dbCallBackExecutor;
 
@@ -98,7 +146,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);
-        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, null).get();
+        ObjectNode isRootBody = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
+        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, isRootBody).get();
         return savedEdge;
     }
 
@@ -130,23 +180,44 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 case EDGE:
                     future = edgeProcessor.processEdgeNotification(tenantId, edgeNotificationMsg);
                     break;
-                case USER:
                 case ASSET:
+                    future = assetProcessor.processAssetNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case DEVICE:
-                case DEVICE_PROFILE:
+                    future = deviceProcessor.processDeviceNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case ENTITY_VIEW:
+                    future = entityViewProcessor.processEntityViewNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case DASHBOARD:
+                    future = dashboardProcessor.processDashboardNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case RULE_CHAIN:
-                case OTA_PACKAGE:
-                    future = entityProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                    future = ruleChainProcessor.processRuleChainNotification(tenantId, edgeNotificationMsg);
+                    break;
+                case USER:
+                    future = userProcessor.processUserNotification(tenantId, edgeNotificationMsg);
                     break;
                 case CUSTOMER:
                     future = customerProcessor.processCustomerNotification(tenantId, edgeNotificationMsg);
                     break;
+                case DEVICE_PROFILE:
+                    future = deviceProfileProcessor.processDeviceProfileNotification(tenantId, edgeNotificationMsg);
+                    break;
+                case ASSET_PROFILE:
+                    future = assetProfileProcessor.processAssetProfileNotification(tenantId, edgeNotificationMsg);
+                    break;
+                case OTA_PACKAGE:
+                    future = otaPackageProcessor.processOtaPackageNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case WIDGETS_BUNDLE:
+                    future = widgetBundleProcessor.processWidgetsBundleNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case WIDGET_TYPE:
+                    future = widgetTypeProcessor.processWidgetTypeNotification(tenantId, edgeNotificationMsg);
+                    break;
                 case QUEUE:
-                    future = entityProcessor.processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
+                    future = queueProcessor.processQueueNotification(tenantId, edgeNotificationMsg);
                     break;
                 case ALARM:
                     future = alarmProcessor.processAlarmNotification(tenantId, edgeNotificationMsg);
@@ -175,8 +246,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void callBackFailure(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback, Throwable throwable) {
-        String errMsg = String.format("Can't push to edge updates, edgeNotificationMsg [%s]", edgeNotificationMsg);
-        log.error(errMsg, throwable);
+        log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, throwable);
         callback.onFailure(throwable);
     }
 

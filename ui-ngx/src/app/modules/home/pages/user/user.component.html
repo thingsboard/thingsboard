@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@
           <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
             <tb-dashboard-autocomplete
               fxFlex
-              placeholder="{{ 'user.default-dashboard' | translate }}"
+              label="{{ 'user.default-dashboard' | translate }}"
               formControlName="defaultDashboardId"
               [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
               [tenantId]="entity?.tenantId?.id"
@@ -115,7 +115,7 @@
           <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
             <tb-dashboard-autocomplete
               fxFlex
-              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              label="{{ 'dashboard.home-dashboard' | translate }}"
               formControlName="homeDashboardId"
               [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
               [tenantId]="entity?.tenantId?.id"

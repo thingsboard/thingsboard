@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
@@ -27,19 +27,20 @@ import { AppState } from '@core/core.state';
 })
 export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
 
-  entitiesTableKeySettingsForm: FormGroup;
+  entitiesTableKeySettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.entitiesTableKeySettingsForm;
   }
 
   protected defaultSettings(): WidgetSettings {
     return {
+      customTitle: '',
       columnWidth: '0px',
       useCellStyleFunction: false,
       cellStyleFunction: '',
@@ -52,6 +53,7 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.entitiesTableKeySettingsForm = this.fb.group({
+      customTitle: [settings.customTitle, []],
       columnWidth: [settings.columnWidth, []],
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],

@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 #
 
 
-version: '2.2'
+version: '3.0'
 
 services:
   zookeeper:
@@ -30,7 +30,8 @@ services:
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
-    scale: 10
+    deploy:
+      replicas: 10
     env_file:
       - tb-js-executor.env
   tb-core1:

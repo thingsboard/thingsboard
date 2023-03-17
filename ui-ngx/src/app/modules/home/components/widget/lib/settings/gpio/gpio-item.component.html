@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,12 @@
     <div fxFlex fxLayout="row" fxLayoutAlign="start center">
       <mat-panel-title>
         <div fxLayout="row" fxFlex fxLayoutAlign="start center">
-          <div [innerHTML]="gpioItemHtml()"></div>
+          <div>
+            <span>{{ gpioItemFormGroup.value.label || 'Undefined' }} (</span><small>pin:</small>
+            <span>{{ numberText(gpioItemFormGroup.value.pin, 0) }}) - [</span><small>row:</small>
+            <span>{{ numberText(gpioItemFormGroup.value.row, -1) }}) - [</span><small>col:</small>
+            <span>{{ numberText(gpioItemFormGroup.value.col, -1) }}]</span>
+          </div>
           <div *ngIf="hasColor" class="tb-color-preview" style="margin-left: 6px;">
             <div class="tb-color-result" [ngStyle]="{background: gpioItemFormGroup.get('color').value}"></div>
           </div>

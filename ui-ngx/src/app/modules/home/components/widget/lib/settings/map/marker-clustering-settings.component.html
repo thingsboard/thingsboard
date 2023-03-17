@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
         <mat-slide-toggle formControlName="zoomOnClick" class="slide-block">
           {{ 'widgets.maps.zoom-on-cluster-click' | translate }}
         </mat-slide-toggle>
-        <section fxLayout="row" fxLayoutGap="8px">
+        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.maps.max-cluster-zoom</mat-label>
             <input matInput type="number" min="0" max="18" step="1" formControlName="maxZoom">
@@ -44,7 +44,7 @@
             <input matInput type="number" min="0" formControlName="maxClusterRadius">
           </mat-form-field>
         </section>
-        <section fxLayout="row" fxLayoutGap="8px">
+        <section class="flex-gap-xs" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutGap.xs="16px">
           <mat-slide-toggle fxFlex formControlName="animate" class="slide-block">
             {{ 'widgets.maps.cluster-zoom-animation' | translate }}
           </mat-slide-toggle>
@@ -57,12 +57,36 @@
         </mat-slide-toggle>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.load-optimization</legend>
-          <mat-slide-toggle formControlName="chunkedLoading" class="slide-block">
+          <mat-slide-toggle formControlName="chunkedLoading" class="flex-gap-xs large">
             {{ 'widgets.maps.cluster-chunked-loading' | translate }}
           </mat-slide-toggle>
           <mat-slide-toggle formControlName="removeOutsideVisibleBounds" class="slide-block">
             {{ 'widgets.maps.cluster-markers-lazy-load' | translate }}
           </mat-slide-toggle>
+        </fieldset>
+        <fieldset class="fields-group fields-group-slider">
+          <legend class="group-title" translate>widgets.maps.clustering-markers</legend>
+          <mat-expansion-panel class="tb-settings" [expanded]="markerClusteringSettingsFormGroup.get('useIconCreateFunction').value">
+            <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-panel-title>
+                <mat-slide-toggle formControlName="useIconCreateFunction" (click)="$event.stopPropagation()"
+                                  fxLayoutAlign="center">
+                  {{ 'widgets.maps.use-icon-create-function' | translate }}
+                </mat-slide-toggle>
+              </mat-panel-title>
+              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+                widget-config.advanced-settings
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-js-func formControlName="clusterMarkerFunction"
+                          [globalVariables]="functionScopeVariables"
+                          [functionArgs]="['data', 'childCount']"
+                          functionTitle="{{ 'widgets.maps.marker-color-function' | translate }}"
+                          helpId="widget/lib/map/clustering_color_fn">
+              </tb-js-func>
+            </ng-template>
+          </mat-expansion-panel>
         </fieldset>
       </ng-template>
     </mat-expansion-panel>

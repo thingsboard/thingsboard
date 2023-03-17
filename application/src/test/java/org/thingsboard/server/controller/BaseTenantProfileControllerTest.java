@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -84,7 +85,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
 
         Mockito.reset(tbClusterService);
 
-        TenantProfile tenantProfile = this.createTenantProfile(RandomStringUtils.randomAlphabetic(300));
+        TenantProfile tenantProfile = this.createTenantProfile(StringUtils.randomAlphabetic(300));
         doPost("/api/tenantProfile", tenantProfile)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgErrorFieldLength("name"))));
@@ -341,8 +342,8 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
 
     private void addMainQueueConfig(TenantProfile tenantProfile) {
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
+        mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
         mainQueueConfiguration.setPollInterval(25);
         mainQueueConfiguration.setPartitions(10);
         mainQueueConfiguration.setConsumerPerPartition(true);

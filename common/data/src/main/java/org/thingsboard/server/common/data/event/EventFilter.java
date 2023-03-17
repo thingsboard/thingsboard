@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import io.swagger.annotations.ApiModelProperty;
         include = JsonTypeInfo.As.PROPERTY,
         property = "eventType")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = DebugRuleNodeEventFilter.class, name = "DEBUG_RULE_NODE"),
-        @JsonSubTypes.Type(value = DebugRuleChainEventFilter.class, name = "DEBUG_RULE_CHAIN"),
+        @JsonSubTypes.Type(value = RuleNodeDebugEventFilter.class, name = "DEBUG_RULE_NODE"),
+        @JsonSubTypes.Type(value = RuleChainDebugEventFilter.class, name = "DEBUG_RULE_CHAIN"),
         @JsonSubTypes.Type(value = ErrorEventFilter.class, name = "ERROR"),
         @JsonSubTypes.Type(value = LifeCycleEventFilter.class, name = "LC_EVENT"),
         @JsonSubTypes.Type(value = StatisticsEventFilter.class, name = "STATS")
@@ -37,6 +37,6 @@ public interface EventFilter {
     @ApiModelProperty(position = 1, required = true, value = "String value representing the event type", example = "STATS")
     EventType getEventType();
 
-    boolean hasFilterForJsonBody();
+    boolean isNotEmpty();
 
 }

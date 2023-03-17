@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.thingsboard.server.service.sql;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -180,7 +179,6 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
         saveTimeseries(asset.getId(), saveTsKvEntry);
     }
 
-    @NotNull
     JsonObject getJsonObject(String key, long value, Optional<String> tsKvEntryOpt) {
         JsonObject jsonObject = new JsonObject();
         if (tsKvEntryOpt.isPresent()) {

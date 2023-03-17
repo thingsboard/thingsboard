@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -31,8 +30,14 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -40,11 +45,13 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.data.page.PageData;
@@ -54,6 +61,7 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 
@@ -81,6 +89,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
         "js.evaluator=mock",
 })
 @Slf4j
+@ContextConfiguration(classes = {BaseEntityViewControllerTest.Config.class})
 public abstract class BaseEntityViewControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<EntityView>> PAGE_DATA_ENTITY_VIEW_TYPE_REF = new TypeReference<>() {
     };
@@ -92,6 +101,17 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     List<ListenableFuture<ResultActions>> deleteFutures = new ArrayList<>();
     ListeningExecutorService executor;
+
+    @Autowired
+    private EntityViewDao entityViewDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public EntityViewDao entityViewDao(EntityViewDao entityViewDao) {
+            return Mockito.mock(EntityViewDao.class, AdditionalAnswers.delegatesTo(entityViewDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -170,7 +190,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testSaveEntityViewWithViolationOfValidation() throws Exception {
-        EntityView entityView = createEntityView(RandomStringUtils.randomAlphabetic(300), 0, 0);
+        EntityView entityView = createEntityView(StringUtils.randomAlphabetic(300), 0, 0);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -186,7 +206,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         entityView.setName("Normal name");
         msgError = msgErrorFieldLength("type");
-        entityView.setType(RandomStringUtils.randomAlphabetic(300));
+        entityView.setType(StringUtils.randomAlphabetic(300));
         doPost("/api/entityView", entityView)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -291,7 +311,40 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testNotifyEntityAllOneTime(unAssignedView, savedView.getId(), savedView.getId(),
                 tenantId, savedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.UNASSIGNED_FROM_CUSTOMER,
-                savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
+                assignedView.getId().getId().toString(), savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
+    }
+
+    @Test
+    public void testAssignAndUnAssignedEntityViewToPublicCustomer() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Test entity view");
+        Mockito.reset(tbClusterService, auditLogService);
+
+        EntityView assignedView = doPost(
+                "/api/customer/public/entityView/" + savedView.getId().getId().toString(),
+                EntityView.class);
+        Customer publicCustomer = doGet("/api/customer/" + assignedView.getCustomerId(), Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testBroadcastEntityStateChangeEventNever(assignedView.getId());
+        testNotifyEntityAllOneTime(assignedView, assignedView.getId(), assignedView.getId(),
+                tenantId, assignedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedView.getId().getId().toString(), assignedView.getCustomerId().getId().toString(), publicCustomer.getTitle());
+
+        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(publicCustomer.getId(), foundView.getCustomerId());
+
+        EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
+
+        foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
+
+        testBroadcastEntityStateChangeEventNever(foundView.getId());
+        testNotifyEntityAllOneTime(unAssignedView, unAssignedView.getId(), unAssignedView.getId(),
+                tenantId, publicCustomer.getId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.UNASSIGNED_FROM_CUSTOMER,
+                unAssignedView.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
     }
 
     @Test
@@ -409,7 +462,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testBroadcastEntityStateChangeEventNever(loadedNamesOfView1.get(0).getId());
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new EntityView(), new EntityView(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 2);
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
 
         PageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_TYPE_REF,
                 new PageLink(4, 0, name1));
@@ -722,7 +775,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
             });
 
             viewNameFutures.add(Futures.transform(customerFuture, customerId -> {
-                String fullName = partOfName + ' ' + RandomStringUtils.randomAlphanumeric(15);
+                String fullName = partOfName + ' ' + StringUtils.randomAlphanumeric(15);
                 fullName = even ? fullName.toLowerCase() : fullName.toUpperCase();
                 EntityView view = getNewSavedEntityView(fullName);
                 view.setCustomerId(customerId);
@@ -785,5 +838,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 PAGE_DATA_ENTITY_VIEW_TYPE_REF, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testDeleteEntityViewWithDeleteRelationsOk() throws Exception {
+        EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(tenantId, entityViewId, "/api/entityView/" + entityViewId);
+    }
+
+    @Ignore
+    @Test
+    public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
+        EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -28,16 +27,15 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class DashboardMsgConstructor {
 
-    public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard, CustomerId customerId) {
+    public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits())
                 .setTitle(dashboard.getTitle())
                 .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
-        if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        if (dashboard.getAssignedCustomers() != null) {
+            builder.setAssignedCustomers(JacksonUtil.toString(dashboard.getAssignedCustomers()));
         }
         return builder.build();
     }

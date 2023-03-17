@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     protected T query;
     @Setter
     protected volatile ScheduledFuture<?> refreshTask;
+    protected volatile boolean stopped;
 
     public TbAbstractSubCtx(String serviceId, TelemetryWebSocketService wsService,
                             EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
@@ -187,6 +188,12 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
     public void clearSubscriptions() {
         clearDynamicValueSubscriptions();
+    }
+
+    public void stop() {
+        stopped = true;
+        cancelTasks();
+        clearSubscriptions();
     }
 
     @Data
@@ -299,7 +306,11 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     }
 
     public void setRefreshTask(ScheduledFuture<?> task) {
-        this.refreshTask = task;
+        if (!stopped) {
+            this.refreshTask = task;
+        } else {
+            task.cancel(true);
+        }
     }
 
     public void cancelTasks() {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ import { FlowInjectionToken, NgxFlowModule } from '@flowjs/ngx-flow';
 import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MAT_AUTOCOMPLETE_DEFAULT_OPTIONS, MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
@@ -37,11 +38,11 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
+import { MAT_SELECT_CONFIG, MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
@@ -53,7 +54,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
-import { MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
+import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
 import { FlexLayoutModule } from '@angular/flex-layout';
@@ -113,7 +114,6 @@ import { EntitySubTypeListComponent } from '@shared/components/entity/entity-sub
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { TbJsonPipe } from '@shared/pipe/tbJson.pipe';
 import { ColorPickerDialogComponent } from '@shared/components/dialog/color-picker-dialog.component';
-import { MatChipDraggableDirective } from '@shared/components/mat-chip-draggable.directive';
 import { ColorInputComponent } from '@shared/components/color-input.component';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
@@ -165,6 +165,10 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MultipleImageInputComponent } from '@shared/components/multiple-image-input.component';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
 import { PhoneInputComponent } from '@shared/components/phone-input.component';
+import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
+import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
+import { TbScriptLangComponent } from '@shared/components/script-lang.component';
+import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -180,6 +184,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     FileSizePipe,
     SafePipe,
+    DateAgoPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -188,9 +193,24 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       provide: MAT_DATE_LOCALE,
       useValue: 'en-GB'
     },
+    { provide: DatetimeAdapter, useClass: CustomDateAdapter },
     { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
     { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
-    TbPopoverService
+    { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl },
+    TbPopoverService,
+    {
+      provide: MAT_SELECT_CONFIG,
+      useValue: {
+        overlayPanelClass: 'tb-select-overlay',
+        hideSingleSelectionIndicator: true
+      }
+    },
+    {
+      provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
+      useValue: {
+        hideSingleSelectionIndicator: true
+      }
+    }
   ],
   declarations: [
     FooterComponent,
@@ -199,7 +219,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
-    MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
     TbPopoverComponent,
@@ -288,13 +307,16 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
-    PhoneInputComponent
+    PhoneInputComponent,
+    TbScriptLangComponent,
+    DateAgoPipe
   ],
   imports: [
     CommonModule,
     RouterModule,
     TranslateModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCheckboxModule,
     MatIconModule,
     MatCardModule,
@@ -357,7 +379,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
-    MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
     TbStringTemplateOutletDirective,
@@ -406,6 +427,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSelectComponent,
     ValueInputComponent,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCheckboxModule,
     MatIconModule,
     MatCardModule,
@@ -490,7 +512,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
-    PhoneInputComponent
+    PhoneInputComponent,
+    TbScriptLangComponent,
+    DateAgoPipe
   ]
 })
 export class SharedModule { }

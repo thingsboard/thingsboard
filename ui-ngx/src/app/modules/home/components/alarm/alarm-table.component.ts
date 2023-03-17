@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -26,6 +26,8 @@ import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { Overlay } from '@angular/cdk/overlay';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-alarm-table',
@@ -71,7 +73,11 @@ export class AlarmTableComponent implements OnInit {
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
-              private store: Store<AppState>) {
+              private store: Store<AppState>,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
+              private cd: ChangeDetectorRef,
+              private utilsService: UtilsService) {
   }
 
   ngOnInit() {
@@ -84,7 +90,11 @@ export class AlarmTableComponent implements OnInit {
       this.dialog,
       this.entityIdValue,
       AlarmSearchStatus.ANY,
-      this.store
+      this.store,
+      this.viewContainerRef,
+      this.overlay,
+      this.cd,
+      this.utilsService
     );
   }
 

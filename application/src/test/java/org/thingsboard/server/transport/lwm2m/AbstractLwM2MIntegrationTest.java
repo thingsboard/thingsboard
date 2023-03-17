@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
+import org.eclipse.leshan.core.ResponseCode;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -60,12 +62,12 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
@@ -103,7 +105,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 })
 @Slf4j
 @DaoSqlTest
-public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTest {
+public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
     @SpyBean
     DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
@@ -142,7 +144,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
 
-    protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS =
+    public static final String OBSERVE_ATTRIBUTES_WITH_PARAMS =
 
             "    {\n" +
                     "    \"keyName\": {\n" +
@@ -157,7 +159,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
 
-    protected final String CLIENT_LWM2M_SETTINGS =
+    public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
                     "    \"edrxCycle\": null,\n" +
                     "    \"powerMode\": \"DRX\",\n" +
@@ -172,7 +174,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
 
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
-    protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
+    protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
@@ -235,6 +237,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
 
         getWsClient().registerWaitForUpdate();
         createNewClient(security, coapConfig, false, endpoint, false, null);
+        awaitObserveReadAll(0, false, device.getId().getId().toString());
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
@@ -369,7 +372,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
 
     private static void awaitServersDestroy() {
         await("One of servers ports number is not free")
-                .atMost(3000, TimeUnit.MILLISECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> isServerPortsAvailable() == null);
     }
 
@@ -388,8 +391,35 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
 
     private static void awaitClientDestroy(LeshanClient leshanClient) {
         await("Destroy LeshanClient: delete All is registered Servers.")
-                .atMost(2000, TimeUnit.MILLISECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> leshanClient.getRegisteredServers().size() == 0);
+    }
+
+    protected  void awaitObserveReadAll(int cntObserve, boolean isBootstrap, String deviceIdStr) throws Exception {
+        if (!isBootstrap) {
+            await("ObserveReadAll after start client: countObserve " + cntObserve)
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> {
+                        String actualResultReadAll = sendObserve("ObserveReadAll", null, deviceIdStr);
+                        ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
+                        Assert.assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
+                        String actualValuesReadAll = rpcActualResultReadAll.get("value").asText();
+                        log.warn("ObserveReadAll:  [{}]", actualValuesReadAll);
+                        int actualCntObserve = "[]".equals(actualValuesReadAll) ? 0 : actualValuesReadAll.split(",").length;
+                        return cntObserve == actualCntObserve;
+                    });
+        }
+    }
+
+    protected String sendObserve(String method, String params, String deviceIdStr) throws Exception {
+        String sendRpcRequest;
+        if (params == null) {
+            sendRpcRequest = "{\"method\": \"" + method + "\"}";
+        }
+        else {
+            sendRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + params + "\"}}";
+        }
+        return doPostAsync("/api/plugins/rpc/twoway/" + deviceIdStr, sendRpcRequest, String.class, status().isOk());
     }
 
 }

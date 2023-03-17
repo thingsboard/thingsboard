@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -130,6 +130,16 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   activeComponentChanged(activeComponent: any) {
+    if (!this.activeComponent) {
+      setTimeout(() => {
+        this.updateActiveComponent(activeComponent);
+      }, 0);
+    } else {
+      this.updateActiveComponent(activeComponent);
+    }
+  }
+
+  private updateActiveComponent(activeComponent: any) {
     this.showSearch = false;
     this.searchText = '';
     this.activeComponent = activeComponent;
