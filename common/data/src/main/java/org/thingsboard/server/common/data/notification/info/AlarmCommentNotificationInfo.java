@@ -54,7 +54,7 @@ public class AlarmCommentNotificationInfo implements RuleOriginatedNotificationI
                 "userName", userName,
                 "alarmType", alarmType,
                 "alarmId", alarmId.toString(),
-                "alarmSeverity", alarmSeverity.toString(),
+                "alarmSeverity", alarmSeverity.name().toLowerCase(),
                 "alarmStatus", alarmStatus.toString(),
                 "alarmOriginatorEntityType", alarmOriginator.getEntityType().normalName(),
                 "alarmOriginatorId", alarmOriginator.getId().toString(),

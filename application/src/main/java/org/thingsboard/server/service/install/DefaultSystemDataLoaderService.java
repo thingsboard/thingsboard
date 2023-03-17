@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -678,13 +679,27 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createDefaultNotificationConfigs() {
-        notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+        try {
+            log.info("Creating default notification configs for system admin");
+            notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+        } catch (Exception e) {
+            if (StringUtils.contains(e.getMessage(), "already exists")) {
+                log.info("Default notification configs are already present for system admin, skipping");
+            } else {
+                throw e;
+            }
+        }
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        log.info("Creating default notification configs for all tenants");
         for (TenantId tenantId : tenants) {
             try {
                 notificationSettingsService.createDefaultNotificationConfigs(tenantId);
             } catch (Exception e) {
-                log.warn("Failed to create default notification configs for tenant {}: {}", tenantId, e.getMessage());
+                if (StringUtils.contains(e.getMessage(), "already exists")) {
+                    log.info("Default notification configs are already present for tenant {}, skipping", tenantId);
+                } else {
+                    throw e;
+                }
             }
         }
     }

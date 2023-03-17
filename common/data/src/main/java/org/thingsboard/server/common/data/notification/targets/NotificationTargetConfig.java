@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.notification.targets.slack.SlackNotifi
 @Data
 public abstract class NotificationTargetConfig {
 
+    @NoXss
     private String description;
 
     @JsonIgnore

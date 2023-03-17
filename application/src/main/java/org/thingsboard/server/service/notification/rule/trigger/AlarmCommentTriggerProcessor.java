@@ -62,7 +62,7 @@ public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRu
         AlarmInfo alarmInfo = JacksonUtil.fromString(ruleEngineMsg.getData(), AlarmInfo.class);
         return AlarmCommentNotificationInfo.builder()
                 .comment(comment.getComment().get("text").asText())
-                .action(ruleEngineMsg.getType().equals(DataConstants.COMMENT_CREATED) ? "created" : "updated")
+                .action(ruleEngineMsg.getType().equals(DataConstants.COMMENT_CREATED) ? "added" : "updated")
                 .userName(ruleEngineMsg.getMetaData().getValue("userName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())

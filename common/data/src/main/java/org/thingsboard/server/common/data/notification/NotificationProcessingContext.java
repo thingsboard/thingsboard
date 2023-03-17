@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,9 +113,14 @@ public class NotificationProcessingContext {
                     .map(config -> config.get("actionButtonConfig")).filter(JsonNode::isObject)
                     .map(config -> (ObjectNode) config);
             if (buttonConfig.isPresent()) {
+                JsonNode text = buttonConfig.get().get("text");
+                if (text != null && text.isTextual()) {
+                    text = new TextNode(processTemplate(text.asText(), templateContext));
+                    buttonConfig.get().set("text", text);
+                }
                 JsonNode link = buttonConfig.get().get("link");
                 if (link != null && link.isTextual()) {
-                    link = new TextNode(processTemplate(link.asText(), templateContext, info != null ? info.getTemplateData() : Collections.emptyMap()));
+                    link = new TextNode(processTemplate(link.asText(), templateContext).toLowerCase());
                     buttonConfig.get().set("link", link);
                 }
             }
@@ -124,14 +128,12 @@ public class NotificationProcessingContext {
         return template;
     }
 
-    private static String processTemplate(String template, Map<String, String>... contexts) {
+    private static String processTemplate(String template, Map<String, String> context) {
         if (template == null) return null;
         String result = template;
-        for (Map<String, String> context : contexts) {
-            for (Map.Entry<String, String> kv : context.entrySet()) {
-                String value = Strings.nullToEmpty(kv.getValue());
-                result = result.replace("${" + kv.getKey() + '}', value);
-            }
+        for (Map.Entry<String, String> kv : context.entrySet()) {
+            String value = Strings.nullToEmpty(kv.getValue());
+            result = result.replace("${" + kv.getKey() + '}', value);
         }
         return result;
     }

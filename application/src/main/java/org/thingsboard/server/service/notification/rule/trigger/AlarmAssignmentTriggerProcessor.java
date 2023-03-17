@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmAssignmentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig.Action;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -37,8 +38,8 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
 
     @Override
     public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        if ((ruleEngineMsg.getType().equals(DataConstants.ALARM_ASSIGN) && !triggerConfig.isNotifyOnAssign())
-                || (ruleEngineMsg.getType().equals(DataConstants.ALARM_UNASSIGN) && !triggerConfig.isNotifyOnUnassign())) {
+        Action action = ruleEngineMsg.getType().equals(DataConstants.ALARM_ASSIGN) ? Action.ASSIGNED : Action.UNASSIGNED;
+        if (!triggerConfig.getNotifyOn().contains(action)) {
             return false;
         }
         Alarm alarm = JacksonUtil.fromString(ruleEngineMsg.getData(), Alarm.class);

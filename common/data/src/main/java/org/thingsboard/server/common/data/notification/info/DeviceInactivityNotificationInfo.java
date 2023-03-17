@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.notification.info;
 
-import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

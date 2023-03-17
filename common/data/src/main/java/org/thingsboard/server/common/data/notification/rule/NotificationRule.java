@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 import javax.validation.constraints.AssertTrue;
@@ -40,6 +41,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
 
     private TenantId tenantId;
     @NotBlank
+    @NoXss
     private String name;
     @NotNull
     private NotificationTemplateId templateId;

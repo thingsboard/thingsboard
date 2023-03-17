@@ -76,6 +76,9 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
                 .ruleChainName(triggerObject.getRuleChainName())
                 .componentId(triggerObject.getComponentId())
                 .componentName(triggerObject.getComponentName())
+                .action(triggerObject.getEventType() == ComponentLifecycleEvent.STARTED ? "start" :
+                        triggerObject.getEventType() == ComponentLifecycleEvent.UPDATED ? "update" :
+                        triggerObject.getEventType() == ComponentLifecycleEvent.STOPPED ? "stop" : null)
                 .eventType(triggerObject.getEventType())
                 .error(getErrorMsg(triggerObject.getError()))
                 .build();

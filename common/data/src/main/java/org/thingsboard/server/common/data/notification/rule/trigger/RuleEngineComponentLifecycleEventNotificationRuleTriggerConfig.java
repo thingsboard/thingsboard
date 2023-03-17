@@ -24,14 +24,14 @@ import java.util.UUID;
 @Data
 public class RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
+    private Set<UUID> ruleChains; // if empty - all rule chains
+
     private Set<ComponentLifecycleEvent> ruleChainEvents; // available options: STARTED, UPDATED, STOPPED. if empty - all events
     private boolean onlyRuleChainLifecycleFailures;
 
     private boolean trackRuleNodeEvents;
     private Set<ComponentLifecycleEvent> ruleNodeEvents; // available options: STARTED, UPDATED, STOPPED. if empty - all events
     private boolean onlyRuleNodeLifecycleFailures;
-
-    private Set<UUID> ruleChains; // if empty - all rule chains
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
