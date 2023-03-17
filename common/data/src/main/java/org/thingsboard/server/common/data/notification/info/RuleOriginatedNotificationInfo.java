@@ -16,9 +16,14 @@
 package org.thingsboard.server.common.data.notification.info;
 
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.UserId;
 
 public interface RuleOriginatedNotificationInfo extends NotificationInfo {
 
     CustomerId getOriginatorEntityCustomerId();
+
+    default UserId getTargetUserId() {
+        return null;
+    }
 
 }

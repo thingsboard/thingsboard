@@ -91,11 +91,15 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
 
     @Override
     public NotificationInfo constructNotificationInfo(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
-        // TODO: readable action
         AlarmInfo alarmInfo = alarmUpdate.getAlarm();
         return AlarmNotificationInfo.builder()
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
+                .action(alarmUpdate.isCreated() ? "created" :
+                        alarmUpdate.isSeverityChanged() ? "severity changed" :
+                        alarmUpdate.isAcknowledged() ? "acknowledged" :
+                        alarmUpdate.isCleared() ? "cleared" :
+                        alarmUpdate.isDeleted() ? "deleted" : null)
                 .alarmOriginator(alarmInfo.getOriginator())
                 .alarmOriginatorName(alarmInfo.getOriginatorName())
                 .alarmSeverity(alarmInfo.getSeverity())

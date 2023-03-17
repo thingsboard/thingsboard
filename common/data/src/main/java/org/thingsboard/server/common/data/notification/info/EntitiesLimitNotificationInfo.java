@@ -36,9 +36,8 @@ public class EntitiesLimitNotificationInfo implements NotificationInfo {
 
     @Override
     public Map<String, String> getTemplateData() {
-        // FIXME: readable entity type name, e.g. 'Devices'
         return mapOf(
-                "entityType", entityType.name(),
+                "entityType", entityType.normalName(),
                 "threshold", String.valueOf(threshold)
         );
     }

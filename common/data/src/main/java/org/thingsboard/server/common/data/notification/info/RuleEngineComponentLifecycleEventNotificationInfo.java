@@ -46,9 +46,9 @@ public class RuleEngineComponentLifecycleEventNotificationInfo implements Notifi
                 "ruleChainId", ruleChainId.toString(),
                 "ruleChainName", ruleChainName,
                 "componentId", componentId.toString(),
-                "componentType", componentId.getEntityType().name(),
+                "componentType", componentId.getEntityType().normalName(),
                 "componentName", componentName,
-                "eventType", eventType.name(),
+                "eventType", eventType.name().toLowerCase(),
                 "error", error
         );
     }

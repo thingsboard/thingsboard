@@ -36,6 +36,7 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 public class AlarmCommentNotificationInfo implements RuleOriginatedNotificationInfo {
 
     private String comment;
+    private String action;
     private String userName;
     private String alarmType;
     private UUID alarmId;
@@ -49,12 +50,13 @@ public class AlarmCommentNotificationInfo implements RuleOriginatedNotificationI
     public Map<String, String> getTemplateData() {
         return mapOf(
                 "comment", comment,
+                "action", action,
                 "userName", userName,
                 "alarmType", alarmType,
                 "alarmId", alarmId.toString(),
                 "alarmSeverity", alarmSeverity.toString(),
                 "alarmStatus", alarmStatus.toString(),
-                "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().normalName(),
                 "alarmOriginatorId", alarmOriginator.getId().toString(),
                 "alarmOriginatorName", alarmOriginatorName
         );

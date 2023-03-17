@@ -41,6 +41,9 @@ public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRu
         if (ruleEngineMsg.getMetaData().getValue("comment") == null) {
             return false;
         }
+        if (ruleEngineMsg.getType().equals(DataConstants.COMMENT_UPDATED) && !triggerConfig.isNotifyOnCommentUpdate()) {
+            return false;
+        }
         if (triggerConfig.isOnlyUserComments()) {
             AlarmComment comment = JacksonUtil.fromString(ruleEngineMsg.getMetaData().getValue("comment"), AlarmComment.class);
             if (comment.getType() == AlarmCommentType.SYSTEM) {
@@ -55,11 +58,11 @@ public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRu
 
     @Override
     public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
-        // TODO: readable action
         AlarmComment comment = JacksonUtil.fromString(ruleEngineMsg.getMetaData().getValue("comment"), AlarmComment.class);
         AlarmInfo alarmInfo = JacksonUtil.fromString(ruleEngineMsg.getData(), AlarmInfo.class);
         return AlarmCommentNotificationInfo.builder()
                 .comment(comment.getComment().get("text").asText())
+                .action(ruleEngineMsg.getType().equals(DataConstants.COMMENT_CREATED) ? "created" : "updated")
                 .userName(ruleEngineMsg.getMetaData().getValue("userName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())

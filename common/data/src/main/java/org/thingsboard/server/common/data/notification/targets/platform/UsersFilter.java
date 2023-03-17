@@ -26,8 +26,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @Type(value = UserListFilter.class, name = "USER_LIST"),
         @Type(value = CustomerUsersFilter.class, name = "CUSTOMER_USERS"),
+        @Type(value = TenantAdministratorsFilter.class, name = "TENANT_ADMINISTRATORS"),
         @Type(value = AllUsersFilter.class, name = "ALL_USERS"),
-        @Type(value = OriginatorEntityOwnerUsersFilter.class, name = "ORIGINATOR_ENTITY_OWNER_USERS") // for usage in notification rules
+        @Type(value = OriginatorEntityOwnerUsersFilter.class, name = "ORIGINATOR_ENTITY_OWNER_USERS"),
+        @Type(value = ActionTargetUserFilter.class, name = "ACTION_TARGET_USER")
 })
 public interface UsersFilter {
 

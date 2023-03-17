@@ -39,9 +39,12 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -56,6 +59,7 @@ import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
@@ -89,6 +93,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationService notificationService;
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
+    private final UserService userService;
     private final NotificationExecutorService notificationExecutor;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
@@ -186,9 +191,21 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Iterable<? extends NotificationRecipient> recipients;
         switch (target.getConfiguration().getType()) {
             case PLATFORM_USERS: {
-                recipients = new PageDataIterable<>(pageLink -> {
-                    return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), ctx.getCustomerId(), target.getConfiguration(), pageLink);
-                }, 200);
+                PlatformUsersNotificationTargetConfig platformUsersTargetConfig = (PlatformUsersNotificationTargetConfig) target.getConfiguration();
+                if (platformUsersTargetConfig.getUsersFilter().getType() == UsersFilterType.ACTION_TARGET_USER) {
+                    if (ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
+                        UserId targetUserId = ((RuleOriginatedNotificationInfo) ctx.getRequest().getInfo()).getTargetUserId();
+                        if (targetUserId != null) {
+                            recipients = List.of(userService.findUserById(ctx.getTenantId(), targetUserId));
+                            break;
+                        }
+                    }
+                    recipients = Collections.emptyList();
+                } else {
+                    recipients = new PageDataIterable<>(pageLink -> {
+                        return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), ctx.getCustomerId(), platformUsersTargetConfig, pageLink);
+                    }, 500);
+                }
                 break;
             }
             case SLACK: {

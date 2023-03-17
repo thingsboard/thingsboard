@@ -27,6 +27,7 @@ public class AlarmAssignmentNotificationRuleTriggerConfig implements Notificatio
     private Set<String> alarmTypes;
     private Set<AlarmSeverity> alarmSeverities;
     private Set<AlarmSearchStatus> alarmStatuses;
+    private boolean notifyOnAssign;
     private boolean notifyOnUnassign;
 
     @Override

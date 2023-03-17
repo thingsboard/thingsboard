@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.targets.platform;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Data
-public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class TenantAdministratorsFilter implements UsersFilter {
 
-    private Set<String> alarmTypes;
-    private Set<AlarmSeverity> alarmSeverities;
-    private Set<AlarmSearchStatus> alarmStatuses;
-    private boolean onlyUserComments;
-    private boolean notifyOnCommentUpdate;
+    private Set<UUID> tenantsIds;
+    private Set<UUID> tenantProfilesIds;
 
     @Override
-    public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ALARM_COMMENT;
+    public UsersFilterType getType() {
+        return UsersFilterType.TENANT_ADMINISTRATORS;
     }
 
 }

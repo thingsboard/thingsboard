@@ -106,7 +106,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
-            throw new DataValidationException(String.format("%ss limit reached", capitalize(entityType.name().toLowerCase().replaceAll("_", " "))));
+            throw new DataValidationException(entityType.normalName() + "s limit reached");
         }
     }
 
