@@ -109,7 +109,8 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   additionalConfig: {description: string};
 }
 
-export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig & EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig>
+export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig & EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
+  RuleEngineLifecycleEventNotificationRuleTriggerConfig>
 
 export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
@@ -148,6 +149,27 @@ export interface AlarmAssignmentNotificationRuleTriggerConfig {
   alarmStatuses?: Array<AlarmSearchStatus>;
   notifyOn: Array<AlarmAssignmentAction>;
 }
+
+export interface RuleEngineLifecycleEventNotificationRuleTriggerConfig {
+  ruleChains?: Array<string>;
+  ruleChainEvents?: Array<ComponentLifecycleEvent>;
+  onlyRuleChainLifecycleFailures: boolean;
+  trackRuleNodeEvents: boolean;
+  ruleNodeEvents: Array<any>;
+  onlyRuleNodeLifecycleFailures: ComponentLifecycleEvent;
+}
+
+export enum ComponentLifecycleEvent {
+  STARTED = 'STARTED',
+  UPDATED = 'UPDATED',
+  STOPPED = 'STOPPED'
+}
+
+export const ComponentLifecycleEventTranslationMap = new Map<ComponentLifecycleEvent, string>([
+  [ComponentLifecycleEvent.STARTED, 'event.started'],
+  [ComponentLifecycleEvent.UPDATED, 'event.updated'],
+  [ComponentLifecycleEvent.STOPPED, 'event.stopped']
+])
 
 export enum AlarmAction {
   CREATED = 'CREATED',
@@ -347,7 +369,8 @@ export enum NotificationType {
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT',
-  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT'
+  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
+  RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -356,6 +379,7 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ENTITY_ACTION, 'devices'],
   [NotificationType.ALARM_COMMENT, 'comment'],
   [NotificationType.ALARM_ASSIGNMENT, 'assignment_turned_in'],
+  [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'settings_ethernet']
 ]);
 
 export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
@@ -419,6 +443,12 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       name: 'notification.template-type.alarm-assignment',
       hint: 'notification.template-hint.alarm-assignment'
     }
+  ],
+  [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+    {
+      name: 'notification.template-type.rule-engine-lifecycle-event',
+      hint: 'notification.template-hint.rule-engine-lifecycle-event'
+    }
   ]
 ]);
 
@@ -427,7 +457,8 @@ export enum TriggerType {
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT',
-  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT'
+  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
+  RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT'
 }
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
@@ -436,4 +467,5 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action'],
   [TriggerType.ALARM_COMMENT, 'notification.trigger.alarm-comment'],
   [TriggerType.ALARM_ASSIGNMENT, 'notification.trigger.alarm-assignment'],
+  [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'notification.trigger.rule-engine-lifecycle-event'],
 ]);

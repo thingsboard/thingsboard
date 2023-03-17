@@ -2174,7 +2174,10 @@
         "entity-type": "Entity type",
         "clear-filter": "Clear Filter",
         "clear-request-title": "Clear all events",
-        "clear-request-text": "Are you sure you want to clear all events?"
+        "clear-request-text": "Are you sure you want to clear all events?",
+        "started": "Started",
+        "updated": "Updated",
+        "stopped": "Stopped"
     },
     "extension": {
         "extensions": "Extensions",
@@ -2836,8 +2839,12 @@
         },
         "review": "Review",
         "rule": "Rule",
+        "rule-chain-list-rule-hint": "If the field is empty, the trigger will be applied to all rule chains",
+        "rule-engine-events-trigger-settings": "Rule engine events trigger settings",
+        "rule-engine-filter": "Rule engine filter",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
+        "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "scheduler-later": "Schedule for later",
         "search-notification": "Search notification",
@@ -2882,7 +2889,8 @@
             "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
             "device-inactivity": "Available params: ${deviceName}, ${deviceLabel}, ${deviceType}, ${deviceId}",
             "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}",
-            "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}"
+            "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}",
+            "rule-engine-lifecycle-event": "Available params: ${ruleChainName}, ${componentName}, ${eventType}, ${error}, ${ruleChainId}, ${componentId}"
         },
         "template-name": "Template name",
         "template-required": "Template is required",
@@ -2892,12 +2900,14 @@
             "alarm-comment": "Alarm comment",
             "device-inactivity": "Device inactivity",
             "entity-action": "Entity action",
-            "general": "General"
+            "general": "General",
+            "rule-engine-lifecycle-event": "Rule engine lifecycle event"
         },
         "templates": "Templates",
         "tenants-list-rule-hint": "If the field is empty, the trigger will be applied to all tenants",
         "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",
         "time": "Time",
+        "track-rule-node-events": "Track rule node events",
         "trigger": {
             "alarm": "Alarm",
             "alarm-assignment": "Alarm assignment",
@@ -2905,14 +2915,17 @@
             "device-inactivity": "Device inactivity",
             "entity-action": "Entity action",
             "trigger": "Trigger",
-            "trigger-required": "Trigger is required"
+            "trigger-required": "Trigger is required",
+            "rule-engine-lifecycle-event": "Rule engine lifecycle event"
         },
         "type": "Type",
         "unread": "Unread",
         "updated": "Updated",
         "use-template": "Use template",
         "view-all": "View all",
-        "web-settings": "Web settings"
+        "web-settings": "Web settings",
+        "only-rule-chain-lifecycle-failures": "Only rule chain lifecycle failures",
+        "only-rule-node-lifecycle-failures": "Only rule node lifecycle failures"
     },
     "ota-update": {
       "add": "Add package",
@@ -3145,6 +3158,7 @@
     },
     "rulechain": {
         "rulechain": "Rule chain",
+        "rulechain-events": "Rule chain events",
         "rulechains": "Rule chains",
         "root": "Root",
         "delete": "Delete rule chain",
@@ -3206,6 +3220,7 @@
         "unassign-rulechains": "Unassign rulechains"
     },
     "rulenode": {
+        "rule-node-events": "Rule node events",
         "details": "Details",
         "events": "Events",
         "search": "Search nodes",

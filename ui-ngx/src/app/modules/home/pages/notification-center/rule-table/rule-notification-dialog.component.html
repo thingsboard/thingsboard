@@ -333,6 +333,65 @@
         </section>
       </form>
     </mat-step>
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT"
+              [stepControl]="ruleEngineEventsTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.rule-engine-events-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="ruleEngineEventsTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.rule-engine-filter</legend>
+            <tb-entity-list
+              formControlName="ruleChains"
+              subscriptSizing="dynamic"
+              labelText="{{ 'rulechain.rulechains' | translate }}"
+              placeholderText="{{ 'rulechain.rulechains' | translate }}"
+              hint="{{ 'notification.rule-chain-list-rule-hint' | translate }}"
+              [entityType]="entityType.RULE_CHAIN">
+            </tb-entity-list>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>rulechain.rulechain-events</mat-label>
+              <mat-select formControlName="ruleChainEvents" multiple
+                          placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleChainEvents').value?.length ? ('event.all-events' | translate) : '' }}">
+                <mat-option *ngFor="let componentLifecycleEvent of componentLifecycleEvents" [value]="componentLifecycleEvent">
+                  {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-slide-toggle formControlName="onlyRuleChainLifecycleFailures">
+              {{ 'notification.only-rule-chain-lifecycle-failures' | translate }}
+            </mat-slide-toggle>
+          </fieldset>
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.rule-node-filter</legend>
+            <mat-slide-toggle formControlName="trackRuleNodeEvents">
+              {{ 'notification.track-rule-node-events' | translate }}
+            </mat-slide-toggle>
+            <section *ngIf="ruleEngineEventsTemplateForm.get('triggerConfig.trackRuleNodeEvents').value">
+              <mat-form-field fxFlex class="mat-block" floatLabel="always">
+                <mat-label translate>rulenode.rule-node-events</mat-label>
+                <mat-select formControlName="ruleNodeEvents" multiple
+                            placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleNodeEvents').value?.length ? ('event.all-events' | translate) : '' }}">
+                  <mat-option *ngFor="let componentLifecycleEvent of componentLifecycleEvents" [value]="componentLifecycleEvent">
+                    {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-slide-toggle formControlName="onlyRuleNodeLifecycleFailures">
+                {{ 'notification.only-rule-node-lifecycle-failures' | translate }}
+              </mat-slide-toggle>
+            </section>
+          </fieldset>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>
