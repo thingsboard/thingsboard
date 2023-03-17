@@ -107,7 +107,7 @@
       <ng-template matStepLabel>{{ 'notification.alarm-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="alarmTemplateForm">
         <section formGroupName="triggerConfig">
-          <fieldset class="fields-group tb-margin">
+          <fieldset class="fields-group tb-margin-before-field">
             <legend translate>notification.filter</legend>
             <tb-string-items-list
               editable
@@ -117,7 +117,7 @@
               formControlName="alarmTypes">
             </tb-string-items-list>
 
-            <mat-form-field fxFlex class="mat-block clear-button-space" floatLabel="always">
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>alarm.alarm-severity-list</mat-label>
               <mat-select formControlName="alarmSeverities" multiple
                           placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
@@ -127,6 +127,17 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let alarmAction of alarmActions" [value]="alarmAction">
+                {{ alarmActionTranslationMap.get(alarmAction) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="alarmTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
         </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
@@ -247,6 +258,9 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
+          <mat-slide-toggle formControlName="onlyUserComments" style="margin-bottom: 12px;">
+            {{ 'notification.notify-only-user-comments' | translate }}
+          </mat-slide-toggle>
         </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
