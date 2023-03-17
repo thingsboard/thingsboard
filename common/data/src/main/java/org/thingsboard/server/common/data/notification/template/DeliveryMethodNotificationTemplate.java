@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method")
 @JsonSubTypes({
-        @Type(name = "PUSH", value = PushDeliveryMethodNotificationTemplate.class),
+        @Type(name = "WEB", value = WebDeliveryMethodNotificationTemplate.class),
         @Type(name = "EMAIL", value = EmailDeliveryMethodNotificationTemplate.class),
         @Type(name = "SMS", value = SmsDeliveryMethodNotificationTemplate.class),
         @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class)

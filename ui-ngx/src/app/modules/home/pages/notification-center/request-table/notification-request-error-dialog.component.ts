@@ -36,7 +36,7 @@ export class NotificationRequestErrorDialogComponent extends DialogComponent<Not
   errorStats: { [key in NotificationDeliveryMethod]: {[key in string]: string}};
 
   notificationDeliveryMethodErrorTranslateMap = new Map<NotificationDeliveryMethod, string>([
-    [NotificationDeliveryMethod.PUSH, 'notification.delivery-method-type.push-failed-sent'],
+    [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web-failed-sent'],
     [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms-failed-sent'],
     [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email-failed-sent'],
     [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack-failed-sent'],

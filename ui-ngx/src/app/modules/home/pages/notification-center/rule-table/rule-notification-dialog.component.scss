@@ -38,8 +38,8 @@
       margin-bottom: 12px;
     }
 
-    &.tb-margin-2 {
-      margin-bottom: 24px;
+    &.tb-margin-before-field {
+      margin-bottom: 12px;
     }
 
     &.tb-hierarchy {
@@ -50,6 +50,15 @@
       margin-bottom: 8px;
       color: rgba(0, 0, 0, .7);
       width: fit-content;
+    }
+
+    .mat-body-2 {
+      margin-bottom: 8px;
+      color: rgba(0,0,0,.76);
+    }
+
+    .clear-button-space {
+      margin-right: 48px;
     }
   }
 
@@ -71,7 +80,7 @@
         }
 
         .mat-horizontal-content-container {
-          height: 550px;
+          height: 700px;
           max-height: 100%;
           width: 100%;;
           overflow-y: auto;

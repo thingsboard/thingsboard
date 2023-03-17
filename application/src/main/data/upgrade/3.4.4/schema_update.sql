@@ -89,6 +89,10 @@ CREATE TABLE IF NOT EXISTS alarm_comment (
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
 
+-- ALARM COMMENTS END
+
+-- NOTIFICATIONS START
+
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
@@ -122,7 +126,7 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     additional_config VARCHAR(255),
     CONSTRAINT uq_notification_rule_name UNIQUE (tenant_id, name)
 );
-CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_created_time ON notification_rule(tenant_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_trigger_type_created_time ON notification_rule(tenant_id, trigger_type, created_time DESC);
 
 CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
@@ -139,9 +143,12 @@ CREATE TABLE IF NOT EXISTS notification_request (
     status VARCHAR(32),
     stats VARCHAR(10000)
 );
-CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_entity_type, created_time DESC);
-CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id);
-CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_request(status);
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_user_created_time ON notification_request(tenant_id, created_time DESC)
+    WHERE originator_entity_type = 'USER';
+CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id)
+    WHERE originator_entity_type = 'ALARM';
+CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_request(status)
+    WHERE status = 'SCHEDULED';
 
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
@@ -150,13 +157,14 @@ CREATE TABLE IF NOT EXISTS notification (
     recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
     type VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
-    text VARCHAR(1000) NOT NULL,
+    body VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),
-    info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
-CREATE INDEX IF NOT EXISTS idx_notification_id_recipient_id ON notification(id, recipient_id);
-CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_status_created_time ON notification(recipient_id, status, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
+CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);
+
+-- NOTIFICATIONS END
 
 ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS phone VARCHAR(255);
 
@@ -165,8 +173,6 @@ CREATE TABLE IF NOT EXISTS user_settings (
     settings varchar(100000),
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
 );
-
--- ALARM COMMENTS END
 
 -- ALARM INFO VIEW
 
@@ -341,7 +347,7 @@ BEGIN
         UPDATE alarm a SET acknowledged = true, ack_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
     END IF;
     SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
-    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
+    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result), 'old', row_to_json(existing))::text;
 END
 $$;
 

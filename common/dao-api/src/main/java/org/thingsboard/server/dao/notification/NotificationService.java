@@ -40,8 +40,6 @@ public interface NotificationService {
 
     int countUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId);
 
-    void updateNotificationsStatusByRequestId(TenantId tenantId, NotificationRequestId requestId, NotificationStatus status);
-
     boolean deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
 }

@@ -26,12 +26,12 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
+public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
     private String subject;
     private JsonNode additionalConfig;
 
-    public PushDeliveryMethodNotificationTemplate(PushDeliveryMethodNotificationTemplate other) {
+    public WebDeliveryMethodNotificationTemplate(WebDeliveryMethodNotificationTemplate other) {
         super(other);
         this.subject = other.subject;
         this.additionalConfig = other.additionalConfig;
@@ -39,12 +39,12 @@ public class PushDeliveryMethodNotificationTemplate extends DeliveryMethodNotifi
 
     @Override
     public NotificationDeliveryMethod getMethod() {
-        return NotificationDeliveryMethod.PUSH;
+        return NotificationDeliveryMethod.WEB;
     }
 
     @Override
-    public PushDeliveryMethodNotificationTemplate copy() {
-        return new PushDeliveryMethodNotificationTemplate(this);
+    public WebDeliveryMethodNotificationTemplate copy() {
+        return new WebDeliveryMethodNotificationTemplate(this);
     }
 
 }

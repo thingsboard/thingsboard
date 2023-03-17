@@ -121,7 +121,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                 if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
                     return userService.findUsersByTenantId(tenantId, pageLink);
                 } else {
-                    return userService.findUsers(TenantId.SYS_TENANT_ID, pageLink);
+                    return userService.findAllUsers(TenantId.SYS_TENANT_ID, pageLink);
                 }
             }
             case ORIGINATOR_ENTITY_OWNER_USERS: {

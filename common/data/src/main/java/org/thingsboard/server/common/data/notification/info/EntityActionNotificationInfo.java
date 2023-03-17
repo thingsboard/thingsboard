@@ -19,12 +19,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
 @Data
 @NoArgsConstructor
@@ -32,8 +34,7 @@ import java.util.UUID;
 @Builder
 public class EntityActionNotificationInfo implements RuleOriginatedNotificationInfo {
 
-    private EntityType entityType;
-    private UUID entityId;
+    private EntityId entityId;
     private String entityName;
     private ActionType actionType;
     private UUID originatorUserId;
@@ -47,14 +48,19 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Map.of(
-                "entityType", entityType.name(),
+        return mapOf(
+                "entityType", entityId.getEntityType().name(),
                 "entityId", entityId.toString(),
                 "entityName", entityName,
                 "actionType", actionType.name().toLowerCase(),
                 "originatorUserId", originatorUserId.toString(),
                 "originatorUserName", originatorUserName
         );
+    }
+
+    @Override
+    public EntityId getStateEntityId() {
+        return entityId;
     }
 
 }

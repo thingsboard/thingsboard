@@ -15,18 +15,15 @@
  */
 package org.thingsboard.server.service.notification.rule;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.NotificationCenter;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -42,61 +39,54 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
-import org.thingsboard.server.service.notification.rule.trigger.AlarmTriggerProcessor.AlarmTriggerObject;
+import org.thingsboard.server.service.notification.rule.trigger.EntitiesLimitTriggerProcessor.EntitiesLimitTriggerObject;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineComponentLifecycleEventTriggerProcessor.RuleEngineComponentLifecycleEventTriggerObject;
+import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
 
 import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class DefaultNotificationRuleProcessingService implements NotificationRuleProcessingService {
 
     private final NotificationRuleService notificationRuleService;
     private final NotificationRequestService notificationRequestService;
     @Autowired @Lazy
     private NotificationCenter notificationCenter;
-    private Map<NotificationRuleTriggerType, NotificationRuleTriggerProcessor> triggerProcessors;
-
     private final NotificationExecutorService notificationExecutor;
-    private final DbCallbackExecutorService dbCallbackExecutor;
 
-    private final Map<String, NotificationRuleTriggerType> msgTypeToTriggerType = Map.of(
-            DataConstants.INACTIVITY_EVENT, NotificationRuleTriggerType.DEVICE_INACTIVITY,
-            DataConstants.ENTITY_CREATED, NotificationRuleTriggerType.ENTITY_ACTION,
-            DataConstants.ENTITY_UPDATED, NotificationRuleTriggerType.ENTITY_ACTION,
-            DataConstants.ENTITY_DELETED, NotificationRuleTriggerType.ENTITY_ACTION,
-            DataConstants.COMMENT_CREATED, NotificationRuleTriggerType.ALARM_COMMENT,
-            DataConstants.COMMENT_UPDATED, NotificationRuleTriggerType.ALARM_COMMENT
-    );
+    private final Map<NotificationRuleTriggerType, NotificationRuleTriggerProcessor> triggerProcessors = new EnumMap<>(NotificationRuleTriggerType.class);
+
+    private final Map<String, NotificationRuleTriggerType> ruleEngineMsgTypeToTriggerType = new HashMap<>();
 
     @Override
     public void process(TenantId tenantId, TbMsg ruleEngineMsg) {
         String msgType = ruleEngineMsg.getType();
-        NotificationRuleTriggerType triggerType = msgTypeToTriggerType.get(msgType);
+        NotificationRuleTriggerType triggerType = ruleEngineMsgTypeToTriggerType.get(msgType);
         if (triggerType == null) {
             return;
         }
-
         processTrigger(tenantId, triggerType, ruleEngineMsg.getOriginator(), ruleEngineMsg);
     }
 
     @Override
-    public void process(TenantId tenantId, Alarm alarm, boolean deleted) {
-        AlarmTriggerObject triggerObject = AlarmTriggerObject.builder()
-                .alarm(alarm)
-                .deleted(deleted)
-                .build();
-        processTrigger(tenantId, NotificationRuleTriggerType.ALARM, alarm.getId(), triggerObject);
+    public void process(TenantId tenantId, AlarmApiCallResult alarmUpdate) {
+        processTrigger(tenantId, NotificationRuleTriggerType.ALARM, alarmUpdate.getAlarm().getId(), alarmUpdate);
     }
 
     @Override
@@ -112,73 +102,78 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
         processTrigger(tenantId, NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, componentId, triggerObject);
     }
 
+    @Override
+    public void process(UpdateMessage platformUpdateMessage) {
+//        if (!partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+//            return;
+//        }
+//        // todo: don't send repetitive notification after platform restart?
+//
+//        processTrigger(TenantId.SYS_TENANT_ID, NotificationRuleTriggerType.NEW_PLATFORM_VERSION, TenantId.SYS_TENANT_ID, platformUpdateMessage);
+    }
+
+    @Override
+    public void process(TenantId tenantId, EntityType entityType, long limit, long currentCount) {
+//        EntitiesLimitTriggerObject triggerObject = EntitiesLimitTriggerObject.builder()
+//                .entityType(entityType)
+//                .limit(limit)
+//                .currentCount(currentCount)
+//                .build();
+    }
+
+    @Override
+    public void process(ComponentLifecycleMsg componentLifecycleMsg) {
+//        EntityId entityId = componentLifecycleMsg.getEntityId();
+//        switch (entityId.getEntityType()) {
+//            case TENANT:
+//
+//        }
+    }
+
     private void processTrigger(TenantId tenantId, NotificationRuleTriggerType triggerType, EntityId originatorEntityId, Object triggerObject) {
-        ListenableFuture<List<NotificationRule>> rulesFuture = dbCallbackExecutor.submit(() -> {
-            return notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
-        });
-        DonAsynchron.withCallback(rulesFuture, rules -> {
-            for (NotificationRule rule : rules) {
-                notificationExecutor.submit(() -> {
+        List<NotificationRule> rules = notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
+        for (NotificationRule rule : rules) {
+            notificationExecutor.submit(() -> {
+                try {
                     processNotificationRule(rule, originatorEntityId, triggerObject);
-                });
-            }
-        }, e -> {
-            log.error("Failed to find notification rules by trigger type {}", triggerType, e);
-        });
+                } catch (Throwable e) {
+                    log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), triggerObject, e);
+                }
+            });
+        }
     }
 
     private void processNotificationRule(NotificationRule rule, EntityId originatorEntityId, Object triggerObject) {
         NotificationRuleTriggerConfig triggerConfig = rule.getTriggerConfig();
         log.debug("Processing notification rule '{}' for trigger type {}", rule.getName(), rule.getTriggerType());
 
-        if (triggerConfig.getTriggerType().isUpdatable()) {
+        if (matchesClearRule(triggerObject, triggerConfig)) {
             List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(rule.getTenantId(), rule.getId(), originatorEntityId);
-            if (!notificationRequests.isEmpty()) {
-                if (matchesClearRule(triggerObject, triggerConfig)) {
-                    notificationRequests = notificationRequests.stream()
-                            .filter(notificationRequest -> {
-                                if (!notificationRequest.isSent()) {
-                                    dbCallbackExecutor.submit(() -> {
-                                        notificationCenter.deleteNotificationRequest(rule.getTenantId(), notificationRequest.getId());
-                                    });
-                                    return false;
-                                } else {
-                                    return true;
-                                }
-                            })
-                            .collect(Collectors.toList());
-                    // not returning because we need to update notifications if any
-                }
-
-                NotificationInfo notificationInfo = constructNotificationInfo(triggerObject, triggerConfig);
-                for (NotificationRequest notificationRequest : notificationRequests) {
-                    NotificationInfo previousNotificationInfo = notificationRequest.getInfo();
-                    if (!notificationInfo.equals(previousNotificationInfo)) {
-                        notificationRequest.setInfo(notificationInfo);
-                        dbCallbackExecutor.submit(() -> {
-                            notificationCenter.updateNotificationRequest(rule.getTenantId(), notificationRequest);
-                        });
-                    }
-                }
+            if (notificationRequests.isEmpty()) {
                 return;
             }
-        }
 
-        if (!matchesFilter(triggerObject, triggerConfig)) {
+            List<UUID> targets = notificationRequests.stream()
+                    .filter(NotificationRequest::isSent)
+                    .flatMap(notificationRequest -> notificationRequest.getTargets().stream())
+                    .distinct().collect(Collectors.toList());
+            NotificationInfo notificationInfo = constructNotificationInfo(triggerObject, triggerConfig);
+            submitNotificationRequest(targets, rule, originatorEntityId, notificationInfo, 0);
+
+            notificationRequests.forEach(notificationRequest -> {
+                if (notificationRequest.isScheduled()) {
+                    notificationCenter.deleteNotificationRequest(rule.getTenantId(), notificationRequest.getId());
+                }
+            });
             return;
         }
 
-        NotificationInfo notificationInfo = constructNotificationInfo(triggerObject, triggerConfig);
-        rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
-            notificationExecutor.submit(() -> {
-                try {
-                    log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delay, targets);
-                    submitNotificationRequest(targets, rule, originatorEntityId, notificationInfo, delay);
-                } catch (Exception e) {
-                    log.error("Failed to submit notification request for rule {}", rule.getId(), e);
-                }
+        if (matchesFilter(triggerObject, triggerConfig)) {
+            NotificationInfo notificationInfo = constructNotificationInfo(triggerObject, triggerConfig);
+            rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
+                submitNotificationRequest(targets, rule, originatorEntityId, notificationInfo, delay);
             });
-        });
+        }
     }
 
     private boolean matchesFilter(Object triggerObject, NotificationRuleTriggerConfig triggerConfig) {
@@ -208,7 +203,14 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .ruleId(rule.getId())
                 .originatorEntityId(originatorEntityId)
                 .build();
-        notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest);
+        notificationExecutor.submit(() -> {
+            try {
+                log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delayInSec, targets);
+                notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest);
+            } catch (Exception e) {
+                log.error("Failed to process notification request for rule {}", rule.getId(), e);
+            }
+        });
     }
 
     @EventListener(ComponentLifecycleMsg.class)
@@ -220,7 +222,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
         TenantId tenantId = componentLifecycleMsg.getTenantId();
         NotificationRuleId notificationRuleId = (NotificationRuleId) componentLifecycleMsg.getEntityId();
-        dbCallbackExecutor.submit(() -> {
+        notificationExecutor.submit(() -> {
             List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
             for (NotificationRequestId notificationRequestId : scheduledForRule) {
                 notificationCenter.deleteNotificationRequest(tenantId, notificationRequestId);
@@ -230,8 +232,15 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
     @Autowired
     public void setTriggerProcessors(Collection<NotificationRuleTriggerProcessor> processors) {
-        this.triggerProcessors = processors.stream()
-                .collect(Collectors.toMap(NotificationRuleTriggerProcessor::getTriggerType, p -> p));
+        processors.forEach(processor -> {
+            triggerProcessors.put(processor.getTriggerType(), processor);
+            if (processor instanceof RuleEngineMsgNotificationRuleTriggerProcessor) {
+                Set<String> supportedMsgTypes = ((RuleEngineMsgNotificationRuleTriggerProcessor<?>) processor).getSupportedMsgTypes();
+                supportedMsgTypes.forEach(supportedMsgType -> {
+                    ruleEngineMsgTypeToTriggerType.put(supportedMsgType, processor.getTriggerType());
+                });
+            }
+        });
     }
 
 }

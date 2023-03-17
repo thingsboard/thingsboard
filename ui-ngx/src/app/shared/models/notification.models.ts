@@ -36,7 +36,7 @@ export interface Notification {
   readonly info: NotificationInfo;
   readonly status: NotificationStatus;
   readonly createdTime: number;
-  readonly additionalConfig?: PushDeliveryMethodAdditionalConfig;
+  readonly additionalConfig?: WebDeliveryMethodAdditionalConfig;
 }
 
 export interface NotificationInfo {
@@ -45,7 +45,7 @@ export interface NotificationInfo {
   alarmSeverity?: AlarmSeverity;
   alarmStatus?: AlarmStatus;
   alarmType?: string;
-  originatorId?: EntityId;
+  stateEntityId?: EntityId;
 }
 
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
@@ -109,20 +109,59 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   additionalConfig: {description: string};
 }
 
-export interface NotificationRuleTriggerConfig {
+export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig & EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig>
+
+export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
   alarmSeverities?: Array<AlarmSeverity>;
-  alarmStatus?: Array<AlarmSearchStatus>;
-  clearRule?: {
-    alarmStatus: Array<AlarmSearchStatus>;
-  };
+  notifyOn: Array<AlarmAction>;
+  clearRule?: ClearRule;
+}
+
+interface ClearRule {
+  alarmStatuses: Array<AlarmSearchStatus>
+}
+
+export interface DeviceInactivityNotificationRuleTriggerConfig {
   devices?: Array<string>;
   deviceProfiles?: Array<string>;
-  entityType?: EntityType;
-  created?: boolean;
-  updated?: boolean;
-  deleted?: boolean;
 }
+
+export interface EntityActionNotificationRuleTriggerConfig {
+  entityType: EntityType;
+  created: boolean;
+  updated: boolean;
+  deleted: boolean;
+}
+
+export interface AlarmCommentNotificationRuleTriggerConfig {
+  alarmTypes?: Array<string>;
+  alarmSeverities?: Array<AlarmSeverity>;
+  alarmStatuses?: Array<AlarmSearchStatus>;
+  notifyOnUnassign?: boolean;
+  onlyUserComments?: boolean;
+}
+
+export interface AlarmAssignmentNotificationRuleTriggerConfig {
+  alarmTypes?: Array<string>;
+  alarmSeverities?: Array<AlarmSeverity>;
+  alarmStatuses?: Array<AlarmSearchStatus>;
+  notifyOnUnassign?: boolean;
+}
+
+export enum AlarmAction {
+  CREATED = 'CREATED',
+  SEVERITY_CHANGED = 'SEVERITY_CHANGED',
+  ACKNOWLEDGED = 'ACKNOWLEDGED',
+  CLEARED = 'CLEARED'
+}
+
+export const AlarmActionTranslationMap = new Map<AlarmAction, string>([
+  [AlarmAction.CREATED, 'notification.notify-alarm-action.created'],
+  [AlarmAction.SEVERITY_CHANGED, 'notification.notify-alarm-action.severity-changed'],
+  [AlarmAction.ACKNOWLEDGED, 'notification.notify-alarm-action.acknowledged'],
+  [AlarmAction.CLEARED, 'notification.notify-alarm-action.cleared']
+])
 
 export interface NotificationRuleRecipientConfig {
   targets?: Array<string>;
@@ -189,18 +228,18 @@ interface NotificationTemplateConfig {
 }
 
 export interface DeliveryMethodNotificationTemplate extends
-  Partial<PushDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
+  Partial<WebDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
   body?: string;
   enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
-interface PushDeliveryMethodNotificationTemplate {
+interface WebDeliveryMethodNotificationTemplate {
   subject?: string;
-  additionalConfig: PushDeliveryMethodAdditionalConfig;
+  additionalConfig: WebDeliveryMethodAdditionalConfig;
 }
 
-interface PushDeliveryMethodAdditionalConfig {
+interface WebDeliveryMethodAdditionalConfig {
   icon: {
     enabled: boolean;
     icon: string;
@@ -209,11 +248,11 @@ interface PushDeliveryMethodAdditionalConfig {
   actionButtonConfig: {
     enabled: boolean;
     text: string;
-    linkType: ActionButtonLinkType,
+    linkType: ActionButtonLinkType;
     link?: string;
     dashboardId?: string;
     dashboardState?: string;
-    setEntityIdInState?: boolean
+    setEntityIdInState?: boolean;
   };
 }
 
@@ -232,17 +271,17 @@ export enum NotificationStatus {
 }
 
 export enum NotificationDeliveryMethod {
-  PUSH = 'PUSH',
+  WEB = 'WEB',
   SMS = 'SMS',
   EMAIL = 'EMAIL',
   SLACK = 'SLACK'
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
-  [NotificationDeliveryMethod.PUSH, 'notification.delivery-method-type.push'],
+  [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web'],
   [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
   [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack'],
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack']
 ]);
 
 export enum NotificationRequestStatus {
@@ -288,14 +327,16 @@ export enum NotificationType {
   ALARM = 'ALARM',
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
-  ALARM_COMMENT = 'ALARM_COMMENT'
+  ALARM_COMMENT = 'ALARM_COMMENT',
+  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ALARM, 'warning'],
   [NotificationType.DEVICE_INACTIVITY, 'phonelink_off'],
   [NotificationType.ENTITY_ACTION, 'devices'],
-  [NotificationType.ALARM_COMMENT, 'warning']
+  [NotificationType.ALARM_COMMENT, 'comment'],
+  [NotificationType.ALARM_ASSIGNMENT, 'assignment_turned_in'],
 ]);
 
 export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
@@ -354,18 +395,26 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       hint: 'notification.template-hint.alarm-comment'
     }
   ],
+  [NotificationType.ALARM_ASSIGNMENT,
+    {
+      name: 'notification.template-type.alarm-assignment',
+      hint: 'notification.template-hint.alarm-assignment'
+    }
+  ]
 ]);
 
 export enum TriggerType {
   ALARM = 'ALARM',
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
-  ALARM_COMMENT = 'ALARM_COMMENT'
+  ALARM_COMMENT = 'ALARM_COMMENT',
+  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT'
 }
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.ALARM, 'notification.trigger.alarm'],
   [TriggerType.DEVICE_INACTIVITY, 'notification.trigger.device-inactivity'],
   [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action'],
-  [TriggerType.ALARM_COMMENT, 'notification.trigger.alarm-comment']
+  [TriggerType.ALARM_COMMENT, 'notification.trigger.alarm-comment'],
+  [TriggerType.ALARM_ASSIGNMENT, 'notification.trigger.alarm-assignment'],
 ]);

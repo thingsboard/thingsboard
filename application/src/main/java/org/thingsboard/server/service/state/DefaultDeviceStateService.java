@@ -139,6 +139,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private static final List<EntityKey> PERSISTENT_ENTITY_FIELDS = Arrays.asList(
             new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
             new EntityKey(EntityKeyType.ENTITY_FIELD, "type"),
+            new EntityKey(EntityKeyType.ENTITY_FIELD, "label"),
             new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"));
 
     private final TenantService tenantService;
@@ -329,6 +330,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                         DeviceStateData stateData = getOrFetchDeviceStateData(device.getId());
                         TbMsgMetaData md = new TbMsgMetaData();
                         md.putValue("deviceName", device.getName());
+                        md.putValue("deviceLabel", device.getLabel());
                         md.putValue("deviceType", device.getType());
                         stateData.setMetaData(md);
                         callback.onSuccess();
@@ -581,6 +583,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             .build();
                     TbMsgMetaData md = new TbMsgMetaData();
                     md.putValue("deviceName", device.getName());
+                    md.putValue("deviceLabel", device.getLabel());
                     md.putValue("deviceType", device.getType());
                     DeviceStateData deviceStateData = DeviceStateData.builder()
                             .customerId(device.getCustomerId())
@@ -660,6 +663,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 .build();
         TbMsgMetaData md = new TbMsgMetaData();
         md.putValue("deviceName", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "name", ""));
+        md.putValue("deviceLabel", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "label", ""));
         md.putValue("deviceType", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "type", ""));
         return DeviceStateData.builder()
                 .customerId(deviceIdInfo.getCustomerId())

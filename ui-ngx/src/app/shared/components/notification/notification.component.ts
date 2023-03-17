@@ -101,7 +101,7 @@ export class NotificationComponent implements OnInit {
           const stateObject: StateObject = {};
           if (this.notification.additionalConfig.actionButtonConfig.setEntityIdInState) {
             stateObject.params = {
-              entityId: this.notification.info.originatorId ?? null
+              entityId: this.notification.info.stateEntityId ?? null
             };
           } else {
             stateObject.params = {};

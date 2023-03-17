@@ -167,7 +167,7 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         String urlPath = "docs/user-guide/asset-profiles/";
 
         sideBarMenuView.openAssetProfiles();
-        profilesPage.allEntity().get(0).click();
+        profilesPage.profileNames().get(0).click();
         profilesPage.goToProfileHelpPage();
 
         Assert.assertTrue(urlContains(urlPath));

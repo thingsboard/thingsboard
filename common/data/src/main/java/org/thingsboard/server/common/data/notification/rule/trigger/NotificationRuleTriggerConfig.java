@@ -27,7 +27,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = DeviceInactivityNotificationRuleTriggerConfig.class, name = "DEVICE_INACTIVITY"),
         @Type(value = EntityActionNotificationRuleTriggerConfig.class, name = "ENTITY_ACTION"),
         @Type(value = AlarmCommentNotificationRuleTriggerConfig.class, name = "ALARM_COMMENT"),
-        @Type(value = RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig.class, name = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT")
+        @Type(value = RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig.class, name = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT"),
+        @Type(value = AlarmAssignmentNotificationRuleTriggerConfig.class, name = "ALARM_ASSIGNMENT"),
+        @Type(value = NewPlatformVersionNotificationRuleTriggerConfig.class, name = "NEW_PLATFORM_VERSION"),
+        @Type(value = EntitiesLimitNotificationRuleTriggerConfig.class, name = "ENTITIES_LIMIT")
 })
 public interface NotificationRuleTriggerConfig {
 

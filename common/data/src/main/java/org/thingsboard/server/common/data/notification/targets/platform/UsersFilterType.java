@@ -20,8 +20,4 @@ public enum UsersFilterType {
     CUSTOMER_USERS,
     ALL_USERS,
     ORIGINATOR_ENTITY_OWNER_USERS
-
-//    USER_GROUP,
-//    USERS_WITH_ROLE,
-//    QUERY // ?
 }

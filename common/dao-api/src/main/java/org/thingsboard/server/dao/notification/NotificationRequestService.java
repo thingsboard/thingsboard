@@ -45,7 +45,7 @@ public interface NotificationRequestService {
 
     List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId);
 
-    void deleteNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
+    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId requestId);
 
     PageData<NotificationRequest> findScheduledNotificationRequests(PageLink pageLink);
 

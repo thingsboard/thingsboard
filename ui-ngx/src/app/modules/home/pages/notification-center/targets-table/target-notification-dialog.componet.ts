@@ -150,9 +150,14 @@ export class TargetNotificationDialogComponent extends
   }
 
   save() {
-    let formValue = deepTrim(this.targetNotificationForm.value);
+    let formValue: NotificationTarget = deepTrim(this.targetNotificationForm.value);
     if (isDefined(this.data.target)) {
       formValue = Object.assign({}, this.data.target, formValue);
+    }
+    if (formValue.configuration.type === NotificationTargetType.PLATFORM_USERS && !formValue.configuration.usersFilter) {
+      formValue.configuration.usersFilter = {
+        type: NotificationTargetConfigType.ALL_USERS
+      }
     }
     this.notificationService.saveNotificationTarget(formValue).subscribe(
       (target) => this.dialogRef.close(target)

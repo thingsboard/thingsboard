@@ -19,27 +19,55 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AlarmCommentNotificationInfo implements NotificationInfo {
+public class AlarmCommentNotificationInfo implements RuleOriginatedNotificationInfo {
 
     private String comment;
+    private String userName;
     private String alarmType;
     private UUID alarmId;
+    private EntityId alarmOriginator;
+    private String alarmOriginatorName;
+    private AlarmSeverity alarmSeverity;
+    private AlarmStatus alarmStatus;
+    private CustomerId alarmCustomerId;
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Map.of(
+        return mapOf(
                 "comment", comment,
+                "userName", userName,
                 "alarmType", alarmType,
-                "alarmId", alarmId.toString()
+                "alarmId", alarmId.toString(),
+                "alarmSeverity", alarmSeverity.toString(),
+                "alarmStatus", alarmStatus.toString(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
+                "alarmOriginatorId", alarmOriginator.getId().toString(),
+                "alarmOriginatorName", alarmOriginatorName
         );
+    }
+
+    @Override
+    public CustomerId getOriginatorEntityCustomerId() {
+        return alarmCustomerId;
+    }
+
+    @Override
+    public EntityId getStateEntityId() {
+        return alarmOriginator;
     }
 
 }

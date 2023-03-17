@@ -71,7 +71,7 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
 
     @Override
     public List<NotificationRequest> findByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
-        return DaoUtil.convertDataList(notificationRequestRepository.findAllByRuleIdAndOriginatorEntityTypeAndOriginatorEntityId(ruleId.getId(), originatorEntityId.getEntityType(), originatorEntityId.getId()));
+        return DaoUtil.convertDataList(notificationRequestRepository.findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityType(ruleId.getId(), originatorEntityId.getId(), originatorEntityId.getEntityType()));
     }
 
     @Override

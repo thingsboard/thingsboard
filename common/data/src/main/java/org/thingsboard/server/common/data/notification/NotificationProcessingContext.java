@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.HasSubject;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
-import org.thingsboard.server.common.data.notification.template.PushDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -96,7 +96,7 @@ public class NotificationProcessingContext {
 
     public <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
         NotificationInfo info = request.getInfo();
-        if (info != null && deliveryMethod != NotificationDeliveryMethod.PUSH) { // for push notifications we are processing template from info on each serialization
+        if (info != null) {
             templateContext = new HashMap<>(templateContext);
             templateContext.putAll(info.getTemplateData());
         }
@@ -108,9 +108,9 @@ public class NotificationProcessingContext {
             ((HasSubject) template).setSubject(processTemplate(subject, templateContext));
         }
 
-        if (deliveryMethod == NotificationDeliveryMethod.PUSH) {
-            PushDeliveryMethodNotificationTemplate pushNotificationTemplate = (PushDeliveryMethodNotificationTemplate) template;
-            Optional<ObjectNode> buttonConfig = Optional.ofNullable(pushNotificationTemplate.getAdditionalConfig())
+        if (deliveryMethod == NotificationDeliveryMethod.WEB) {
+            WebDeliveryMethodNotificationTemplate webNotificationTemplate = (WebDeliveryMethodNotificationTemplate) template;
+            Optional<ObjectNode> buttonConfig = Optional.ofNullable(webNotificationTemplate.getAdditionalConfig())
                     .map(config -> config.get("actionButtonConfig")).filter(JsonNode::isObject)
                     .map(config -> (ObjectNode) config);
             if (buttonConfig.isPresent()) {
@@ -129,7 +129,8 @@ public class NotificationProcessingContext {
         String result = template;
         for (Map<String, String> context : contexts) {
             for (Map.Entry<String, String> kv : context.entrySet()) {
-                result = result.replace("${" + kv.getKey() + '}', kv.getValue());
+                String value = Strings.nullToEmpty(kv.getValue());
+                result = result.replace("${" + kv.getKey() + '}', value);
             }
         }
         return result;

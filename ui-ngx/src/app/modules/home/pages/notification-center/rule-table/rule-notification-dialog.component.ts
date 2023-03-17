@@ -15,6 +15,8 @@
 ///
 
 import {
+  AlarmAction,
+  AlarmActionTranslationMap,
   NotificationRule,
   NotificationTarget,
   TriggerType,
@@ -72,6 +74,7 @@ export class RuleNotificationDialogComponent extends
   deviceInactivityTemplateForm: FormGroup;
   entityActionTemplateForm: FormGroup;
   alarmCommentTemplateForm: FormGroup;
+  alarmAssignmentTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[] = Object.values(TriggerType);
@@ -87,6 +90,9 @@ export class RuleNotificationDialogComponent extends
 
   alarmSeverityTranslationMap = alarmSeverityTranslations;
   alarmSeverities = Object.keys(AlarmSeverity) as Array<AlarmSeverity>;
+
+  alarmActions: AlarmAction[] = Object.values(AlarmAction);
+  alarmActionTranslationMap = AlarmActionTranslationMap;
 
   entityType = EntityType;
   entityTypes: EntityType[] = Object.values(EntityType);
@@ -146,13 +152,24 @@ export class RuleNotificationDialogComponent extends
       }
     });
 
+    this.ruleNotificationForm.get('recipientsConfig.escalationTable').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (this.countRecipientsChainConfig() > 1) {
+        this.alarmTemplateForm.get('triggerConfig.clearRule').enable({emitEvent: false});
+      } else {
+        this.alarmTemplateForm.get('triggerConfig.clearRule').disable({emitEvent: false});
+      }
+    })
+
     this.alarmTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
         alarmTypes: [null],
         alarmSeverities: [[]],
         clearRule: this.fb.group({
-          alarmStatus: [[]]
-        })
+          alarmStatuses: [[]]
+        }),
+        notifyOn: [[AlarmAction.CREATED], Validators.required]
       })
     });
 
@@ -189,7 +206,17 @@ export class RuleNotificationDialogComponent extends
       triggerConfig: this.fb.group({
         alarmTypes: [null],
         alarmSeverities: [[]],
-        alarmStatus: [[]]
+        alarmStatuses: [[]],
+        onlyUserComments: [false]
+      })
+    });
+
+    this.alarmAssignmentTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        alarmTypes: [null],
+        alarmSeverities: [[]],
+        alarmStatuses: [[]],
+        notifyOnUnassign: [true]
       })
     });
 
@@ -197,7 +224,8 @@ export class RuleNotificationDialogComponent extends
       [TriggerType.ALARM, this.alarmTemplateForm],
       [TriggerType.ALARM_COMMENT, this.alarmCommentTemplateForm],
       [TriggerType.DEVICE_INACTIVITY, this.deviceInactivityTemplateForm],
-      [TriggerType.ENTITY_ACTION, this.entityActionTemplateForm]
+      [TriggerType.ENTITY_ACTION, this.entityActionTemplateForm],
+      [TriggerType.ALARM_ASSIGNMENT, this.alarmAssignmentTemplateForm],
     ]);
 
     if (data.isAdd || data.isCopy) {
@@ -311,5 +339,9 @@ export class RuleNotificationDialogComponent extends
           this.ruleNotificationForm.get('recipientsConfig.targets').patchValue(formValue);
         }
       });
+  }
+
+  countRecipientsChainConfig(): number {
+    return Object.keys(this.ruleNotificationForm.get('recipientsConfig.escalationTable').value ?? {}).length;
   }
 }

@@ -844,9 +844,8 @@ CREATE TABLE IF NOT EXISTS notification (
     recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
     type VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
-    text VARCHAR(1000) NOT NULL,
+    body VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),
-    info VARCHAR(1000),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
 
@@ -1022,7 +1021,7 @@ BEGIN
         UPDATE alarm a SET acknowledged = true, ack_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
     END IF;
     SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
-    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
+    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result), 'old', row_to_json(existing))::text;
 END
 $$;
 

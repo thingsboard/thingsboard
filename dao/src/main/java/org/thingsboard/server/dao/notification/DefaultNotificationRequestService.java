@@ -30,10 +30,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
-import org.thingsboard.server.dao.notification.cache.NotificationRequestCacheKey;
-import org.thingsboard.server.dao.notification.cache.NotificationRequestCacheValue;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
@@ -42,7 +39,7 @@ import java.util.Optional;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultNotificationRequestService extends AbstractCachedEntityService<NotificationRequestCacheKey, NotificationRequestCacheValue, NotificationRequest> implements NotificationRequestService, EntityDaoService {
+public class DefaultNotificationRequestService implements NotificationRequestService, EntityDaoService {
 
     private final NotificationRequestDao notificationRequestDao;
 
@@ -51,14 +48,7 @@ public class DefaultNotificationRequestService extends AbstractCachedEntityServi
     @Override
     public NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         notificationRequestValidator.validate(notificationRequest, NotificationRequest::getTenantId);
-        try {
-            notificationRequest = notificationRequestDao.save(tenantId, notificationRequest);
-            publishEvictEvent(notificationRequest);
-        } catch (Exception e) {
-            handleEvictEvent(notificationRequest);
-            throw e;
-        }
-        return notificationRequest;
+        return notificationRequestDao.save(tenantId, notificationRequest);
     }
 
     @Override
@@ -88,21 +78,13 @@ public class DefaultNotificationRequestService extends AbstractCachedEntityServi
 
     @Override
     public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
-        NotificationRequestCacheKey cacheKey = NotificationRequestCacheKey.builder()
-                .originatorEntityId(originatorEntityId)
-                .ruleId(ruleId)
-                .build();
-        return cache.getAndPutInTransaction(cacheKey, () -> NotificationRequestCacheValue.builder()
-                        .notificationRequests(notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId))
-                        .build(), false)
-                .getNotificationRequests();
+        return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
     }
 
     // ON DELETE CASCADE is used: notifications for request are deleted as well
     @Override
-    public void deleteNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        publishEvictEvent(notificationRequest);
-        notificationRequestDao.removeById(tenantId, notificationRequest.getUuidId());
+    public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId requestId) {
+        notificationRequestDao.removeById(tenantId, requestId.getId());
     }
 
     @Override
@@ -118,17 +100,6 @@ public class DefaultNotificationRequestService extends AbstractCachedEntityServi
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);
-    }
-
-    @Override
-    public void handleEvictEvent(NotificationRequest notificationRequest) {
-        if (notificationRequest.getRuleId() == null) return;
-
-        NotificationRequestCacheKey cacheKey = NotificationRequestCacheKey.builder()
-                .originatorEntityId(notificationRequest.getOriginatorEntityId())
-                .ruleId(notificationRequest.getRuleId())
-                .build();
-        cache.evict(cacheKey);
     }
 
     @Override

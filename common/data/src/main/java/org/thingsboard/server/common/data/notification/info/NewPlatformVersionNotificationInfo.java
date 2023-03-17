@@ -13,31 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification.cache;
+package org.thingsboard.server.common.data.notification.info;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.NotificationRuleId;
 
-import java.io.Serializable;
+import java.util.Map;
+
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class NotificationRequestCacheKey implements Serializable {
+public class NewPlatformVersionNotificationInfo implements NotificationInfo {
 
-    private static final long serialVersionUID = 59871139005482170L;
-
-    private EntityId originatorEntityId;
-    private NotificationRuleId ruleId;
+    private String message;
 
     @Override
-    public String toString() {
-        return ruleId + "_" + originatorEntityId;
+    public Map<String, String> getTemplateData() {
+        return mapOf(
+                "message", message
+        );
     }
 
 }

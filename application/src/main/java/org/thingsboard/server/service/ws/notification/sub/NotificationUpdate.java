@@ -22,7 +22,6 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.UUID;
 
@@ -33,12 +32,15 @@ import java.util.UUID;
 public class NotificationUpdate {
 
     private NotificationId notificationId;
+
+    private boolean created;
     private Notification notification;
 
-    boolean allNotifications;
+    private boolean updated;
+    private NotificationStatus newStatus;
+    private boolean allNotifications;
 
-    private NotificationStatus updatedStatus;
-    private ComponentLifecycleEvent updateType;
+    private boolean deleted;
 
     public UUID getNotificationId() {
         return notificationId != null ? notificationId.getId() :

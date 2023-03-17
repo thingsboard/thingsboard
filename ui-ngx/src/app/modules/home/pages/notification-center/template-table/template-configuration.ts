@@ -39,7 +39,7 @@ import { deepClone, deepTrim } from '@core/utils';
 export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<T, R> implements OnDestroy{
 
   templateNotificationForm: FormGroup;
-  pushTemplateForm: FormGroup;
+  webTemplateForm: FormGroup;
   emailTemplateForm: FormGroup;
   smsTemplateForm: FormGroup;
   slackTemplateForm: FormGroup;
@@ -87,10 +87,10 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
 
     this.notificationDeliveryMethods.forEach(method => {
       (this.templateNotificationForm.get('configuration.deliveryMethodsTemplates') as FormGroup)
-        .addControl(method, this.fb.group({enabled: method === NotificationDeliveryMethod.PUSH}), {emitEvent: false});
+        .addControl(method, this.fb.group({enabled: method === NotificationDeliveryMethod.WEB}), {emitEvent: false});
     });
 
-    this.pushTemplateForm = this.fb.group({
+    this.webTemplateForm = this.fb.group({
       subject: [''],
       body: [''],
       additionalConfig: this.fb.group({
@@ -111,43 +111,43 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       })
     });
 
-    this.pushTemplateForm.get('additionalConfig.icon.enabled').valueChanges.pipe(
+    this.webTemplateForm.get('additionalConfig.icon.enabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       if (value) {
-        this.pushTemplateForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
       } else {
-        this.pushTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
       }
     });
 
-    this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').valueChanges.pipe(
+    this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       if (value) {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig').enable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').updateValueAndValidity({onlySelf: true});
+        this.webTemplateForm.get('additionalConfig.actionButtonConfig').enable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').updateValueAndValidity({onlySelf: true});
       } else {
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig').disable({emitEvent: false});
-        this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').enable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.actionButtonConfig').disable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').enable({emitEvent: false});
       }
     });
 
-    this.pushTemplateForm.get('additionalConfig.actionButtonConfig.linkType').valueChanges.pipe(
+    this.webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
-      const isEnabled = this.pushTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value;
+      const isEnabled = this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value;
       if (isEnabled) {
         if (value === ActionButtonLinkType.LINK) {
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').disable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').disable({emitEvent: false});
         } else {
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
-          this.pushTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').enable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
+          this.webTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').enable({emitEvent: false});
         }
       }
     });
@@ -166,7 +166,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     });
 
     this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([
-      [NotificationDeliveryMethod.PUSH, this.pushTemplateForm],
+      [NotificationDeliveryMethod.WEB, this.webTemplateForm],
       [NotificationDeliveryMethod.EMAIL, this.emailTemplateForm],
       [NotificationDeliveryMethod.SMS, this.smsTemplateForm],
       [NotificationDeliveryMethod.SLACK, this.slackTemplateForm]

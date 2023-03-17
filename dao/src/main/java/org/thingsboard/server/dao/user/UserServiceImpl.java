@@ -250,7 +250,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public PageData<User> findUsers(TenantId tenantId, PageLink pageLink) {
+    public PageData<User> findAllUsers(TenantId tenantId, PageLink pageLink) {
         return userDao.findAll(tenantId, pageLink);
     }
 

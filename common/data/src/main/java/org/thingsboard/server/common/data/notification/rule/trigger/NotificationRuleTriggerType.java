@@ -15,19 +15,15 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 public enum NotificationRuleTriggerType {
 
-    ALARM(true),
-    ALARM_COMMENT(true),
-    DEVICE_INACTIVITY(false),
-    ENTITY_ACTION(false),
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT(false);
-
-    @Getter
-    private final boolean updatable;
+    ALARM,
+    ALARM_COMMENT,
+    DEVICE_INACTIVITY,
+    ENTITY_ACTION,
+    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+    ALARM_ASSIGNMENT,
+    NEW_PLATFORM_VERSION,
+    ENTITIES_LIMIT
 
 }

@@ -208,6 +208,7 @@ public class TenantActor extends RuleChainManagerActor {
             log.trace("[{}] Ack message because Rule Engine is disabled", tenantId);
             tbMsg.getCallback().onSuccess();
         }
+        systemContext.getNotificationRuleProcessingService().process(tenantId, tbMsg);
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {

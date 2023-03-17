@@ -24,7 +24,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public enum NotificationTargetType {
 
-    PLATFORM_USERS(Set.of(NotificationDeliveryMethod.PUSH, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS)),
+    PLATFORM_USERS(Set.of(NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS)),
     SLACK(Set.of(NotificationDeliveryMethod.SLACK));
 
     @Getter

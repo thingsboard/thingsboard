@@ -25,10 +25,11 @@ import org.thingsboard.server.common.data.notification.rule.trigger.EntityAction
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
-public class EntityActionTriggerProcessor implements NotificationRuleTriggerProcessor<TbMsg, EntityActionNotificationRuleTriggerConfig> {
+public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<EntityActionNotificationRuleTriggerConfig> {
 
     @Override
     public boolean matchesFilter(TbMsg ruleEngineMsg, EntityActionNotificationRuleTriggerConfig triggerConfig) {
@@ -59,8 +60,7 @@ public class EntityActionTriggerProcessor implements NotificationRuleTriggerProc
                                 msgType.equals(DataConstants.ENTITY_UPDATED) ? ActionType.UPDATED :
                                 msgType.equals(DataConstants.ENTITY_DELETED) ? ActionType.DELETED : null;
         return EntityActionNotificationInfo.builder()
-                .entityType(entityId.getEntityType())
-                .entityId(entityId.getId())
+                .entityId(entityId)
                 .entityName(ruleEngineMsg.getMetaData().getValue("entityName"))
                 .actionType(actionType)
                 .originatorUserId(UUID.fromString(ruleEngineMsg.getMetaData().getValue("userId")))
@@ -72,6 +72,11 @@ public class EntityActionTriggerProcessor implements NotificationRuleTriggerProc
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ENTITY_ACTION;
+    }
+
+    @Override
+    public Set<String> getSupportedMsgTypes() {
+        return Set.of(DataConstants.ENTITY_CREATED, DataConstants.ENTITY_UPDATED, DataConstants.ENTITY_DELETED);
     }
 
 }

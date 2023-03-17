@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.common.data.notification.info;
 
-import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.Map;
+
+import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
 @Data
 @AllArgsConstructor
@@ -42,7 +42,7 @@ public class RuleEngineComponentLifecycleEventNotificationInfo implements Notifi
 
     @Override
     public Map<String, String> getTemplateData() {
-        return Map.of(
+        return mapOf(
                 "ruleChainId", ruleChainId.toString(),
                 "ruleChainName", ruleChainName,
                 "componentId", componentId.toString(),
@@ -51,6 +51,11 @@ public class RuleEngineComponentLifecycleEventNotificationInfo implements Notifi
                 "eventType", eventType.name(),
                 "error", error
         );
+    }
+
+    @Override
+    public EntityId getStateEntityId() {
+        return ruleChainId;
     }
 
 }
