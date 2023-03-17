@@ -587,6 +587,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId>, ExportableEnti
 }
 
 export interface DeviceProfileInfo extends EntityInfoData {
+  tenantId: TenantId;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
   image?: string;
