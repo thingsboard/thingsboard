@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage;
+package org.thingsboard.server.dao.usagerecord;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,7 +26,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.service.notification.rule.NotificationRuleProcessingService;
+import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,8 @@ public class DefaultApiLimitService implements ApiLimitService {
 
     private final EntityService entityService;
     private final TbTenantProfileCache tenantProfileCache;
-    private final NotificationRuleProcessingService notificationRuleProcessingService;
+    @Autowired(required = false)
+    private NotificationRuleProcessingService notificationRuleProcessingService;
 
     @Override
     public boolean checkEntitiesLimit(TenantId tenantId, EntityType entityType) {
@@ -43,7 +45,9 @@ public class DefaultApiLimitService implements ApiLimitService {
             EntityTypeFilter filter = new EntityTypeFilter();
             filter.setEntityType(entityType);
             long currentCount = entityService.countEntitiesByQuery(tenantId, null, new EntityCountQuery(filter));
-            notificationRuleProcessingService.process(tenantId, entityType, limit, currentCount);
+            if (notificationRuleProcessingService != null) {
+                notificationRuleProcessingService.process(tenantId, entityType, limit, currentCount);
+            }
             return currentCount < limit;
         } else {
             return true;

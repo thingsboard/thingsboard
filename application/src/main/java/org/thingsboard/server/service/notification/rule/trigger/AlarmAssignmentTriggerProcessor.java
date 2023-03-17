@@ -37,7 +37,8 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
 
     @Override
     public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        if (ruleEngineMsg.getType().equals(DataConstants.ALARM_UNASSIGN) && !triggerConfig.isNotifyOnUnassign()) {
+        if ((ruleEngineMsg.getType().equals(DataConstants.ALARM_ASSIGN) && !triggerConfig.isNotifyOnAssign())
+                || (ruleEngineMsg.getType().equals(DataConstants.ALARM_UNASSIGN) && !triggerConfig.isNotifyOnUnassign())) {
             return false;
         }
         Alarm alarm = JacksonUtil.fromString(ruleEngineMsg.getData(), Alarm.class);
@@ -48,13 +49,14 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
 
     @Override
     public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        // TODO: readable action
         AlarmInfo alarmInfo = JacksonUtil.fromString(ruleEngineMsg.getData(), AlarmInfo.class);
         AlarmAssignee assignee = alarmInfo.getAssignee();
         return AlarmAssignmentNotificationInfo.builder()
+                .action(ruleEngineMsg.getType().equals(DataConstants.ALARM_ASSIGN) ? "assigned" : "unassigned")
                 .assigneeFirstName(assignee != null ? assignee.getFirstName() : null)
                 .assigneeLastName(assignee != null ? assignee.getLastName() : null)
                 .assigneeEmail(assignee != null ? assignee.getEmail() : null)
+                .assigneeId(assignee != null ? assignee.getId() : null)
                 .userName(ruleEngineMsg.getMetaData().getValue("userName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())

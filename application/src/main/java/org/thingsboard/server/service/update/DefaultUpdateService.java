@@ -26,7 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.notification.rule.NotificationRuleProcessingService;
+import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

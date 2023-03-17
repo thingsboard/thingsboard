@@ -1216,7 +1216,7 @@ vc:
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 notification_system:
-  thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:30}"
+  thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:10}"
 
 management:
   endpoints:

@@ -52,7 +52,7 @@ import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
-import org.thingsboard.server.service.notification.rule.NotificationRuleProcessingService;
+import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;

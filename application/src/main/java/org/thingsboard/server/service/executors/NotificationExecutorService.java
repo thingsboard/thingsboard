@@ -22,7 +22,7 @@ import org.thingsboard.common.util.AbstractListeningExecutor;
 @Component
 public class NotificationExecutorService extends AbstractListeningExecutor {
 
-    @Value("${notification_system.thread_pool_size:30}")
+    @Value("${notification_system.thread_pool_size:10}")
     private int threadPoolSize;
 
     @Override
