@@ -23,7 +23,6 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
-@TbCoreComponent
 @Data
 @Lazy
 public class TbMailContextComponent {
