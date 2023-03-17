@@ -315,7 +315,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             };
 
     private DeviceProfileInfo toDeviceProfileInfo(DeviceProfile profile) {
-        return profile == null ? null : new DeviceProfileInfo(profile.getId(), profile.getName(), profile.getImage(),
+        return profile == null ? null : new DeviceProfileInfo(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(),
                 profile.getDefaultDashboardId(), profile.getType(), profile.getTransportType());
     }
 
