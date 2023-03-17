@@ -148,6 +148,10 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
 
+            if (EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()) && ASSIGNEE_KEY.equalsIgnoreCase(sortOrder.getKey().getKey())) {
+                sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_EMAIL_KEY), sortOrder.getDirection());
+            }
+
             List<EntityKey> alarmFields = new ArrayList<>();
             for (EntityKey key : query.getAlarmFields()) {
                 if (EntityKeyType.ALARM_FIELD.equals(key.getType()) && ASSIGNEE_KEY.equalsIgnoreCase(key.getKey())) {
