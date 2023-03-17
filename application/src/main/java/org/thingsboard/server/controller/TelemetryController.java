@@ -730,6 +730,7 @@ public class TelemetryController extends BaseController {
         List<TsKvEntry> entries = new ArrayList<>();
         for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.entrySet()) {
             for (KvEntry kv : entry.getValue()) {
+                ConstraintValidator.validateFields(kv);
                 entries.add(new BasicTsKvEntry(entry.getKey(), kv));
             }
         }
