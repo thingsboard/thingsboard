@@ -159,16 +159,16 @@
             <mat-button-toggle-group class="tb-notification-unread-toggle-group"
                                      style="width: 250px;"
                                      formControlName="filterByDevice">
-              <mat-button-toggle fxFlex [value]=true>{{ 'notification.device' | translate }}</mat-button-toggle>
-              <mat-button-toggle fxFlex [value]=false>{{ 'notification.device-profile' | translate }}</mat-button-toggle>
+              <mat-button-toggle fxFlex [value]=true>{{ 'device.device' | translate }}</mat-button-toggle>
+              <mat-button-toggle fxFlex [value]=false>{{ 'device-profile.device-profile' | translate }}</mat-button-toggle>
             </mat-button-toggle-group>
           </div>
           <ng-container *ngIf="deviceInactivityTemplateForm.get('triggerConfig.filterByDevice').value; else deviceProfile">
             <tb-entity-list
               formControlName="devices"
               subscriptSizing="dynamic"
-              labelText="{{ 'notification.devices' | translate }}"
-              placeholderText="{{ 'notification.devices' | translate }}"
+              labelText="{{ 'device.devices' | translate }}"
+              placeholderText="{{ 'device.devices' | translate }}"
               hint="{{ 'notification.device-list-rule-hint' | translate }}"
               [entityType]="entityType.DEVICE">
             </tb-entity-list>
@@ -177,8 +177,8 @@
             <tb-entity-list
               formControlName="deviceProfiles"
               subscriptSizing="dynamic"
-              labelText="{{ 'notification.device-profiles' | translate }}"
-              placeholderText="{{ 'notification.device-profiles' | translate }}"
+              labelText="{{ 'device-profile.device-profiles' | translate }}"
+              placeholderText="{{ 'device-profile.device-profiles' | translate }}"
               hint="{{ 'notification.device-profiles-list-rule-hint' | translate }}"
               [entityType]="entityType.DEVICE_PROFILE">
             </tb-entity-list>
@@ -258,9 +258,14 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
-          <mat-slide-toggle formControlName="onlyUserComments" style="margin-bottom: 12px;">
-            {{ 'notification.notify-only-user-comments' | translate }}
-          </mat-slide-toggle>
+          <section fxLayout="column">
+            <mat-slide-toggle formControlName="onlyUserComments" style="margin-bottom: 12px;">
+              {{ 'notification.notify-only-user-comments' | translate }}
+            </mat-slide-toggle>
+            <mat-slide-toggle formControlName="notifyOnCommentUpdate" style="margin-bottom: 12px;">
+              {{ 'notification.notify-on-comment-update' | translate }}
+            </mat-slide-toggle>
+          </section>
         </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
@@ -306,9 +311,17 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
-          <mat-slide-toggle formControlName="notifyOnUnassign" style="margin-bottom: 12px;">
-            {{ 'notification.notify-on-unassign' | translate }}
-          </mat-slide-toggle>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let alarmAssignmentAction of alarmAssignmentActions" [value]="alarmAssignmentAction">
+                {{ alarmAssignmentActionTranslationMap.get(alarmAssignmentAction) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="alarmAssignmentTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
         </section>
       </form>
       <form [formGroup]="ruleNotificationForm">

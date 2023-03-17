@@ -56,4 +56,58 @@
       flex-direction: column;
     }
   }
+
+  .mat-button-toggle-group.tb-notification-tenant-group {
+    &.mat-button-toggle-group-appearance-standard {
+      border: none;
+      border-radius: 18px;
+      margin-bottom: 14px;
+
+      .mat-button-toggle + .mat-button-toggle {
+        border-left: none;
+      }
+    }
+
+    .mat-button-toggle {
+      background: rgba(0, 0, 0, 0.06);
+      height: 36px;
+      align-items: center;
+      display: flex;
+
+      .mat-button-toggle-ripple {
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        bottom: 2px;
+        border-radius: 18px;
+      }
+    }
+
+    .mat-button-toggle-button {
+      color: #959595;
+    }
+
+    .mat-button-toggle-focus-overlay {
+      border-radius: 18px;
+      margin: 2px;
+    }
+
+    .mat-button-toggle-checked .mat-button-toggle-button {
+      background-color: $tb-primary-color;
+      color: #fff;
+      border-radius: 18px;
+      margin-left: 2px;
+      margin-right: 2px;
+    }
+
+    .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+      line-height: 34px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
+      opacity: .01;
+    }
+  }
 }

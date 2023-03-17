@@ -32,7 +32,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepTrim, isDefined } from '@core/utils';
+import { deepTrim, isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
@@ -61,7 +61,7 @@ export class TargetNotificationDialogComponent extends
   notificationTargetTypes: NotificationTargetType[] = Object.values(NotificationTargetType);
   notificationTargetTypeTranslationMap = NotificationTargetTypeTranslationMap;
   notificationTargetConfigType = NotificationTargetConfigType;
-  notificationTargetConfigTypes: NotificationTargetConfigType[] = Object.values(NotificationTargetConfigType);
+  notificationTargetConfigTypes: NotificationTargetConfigType[] = this.allowNotificationTargetConfigTypes();
   notificationTargetConfigTypeTranslateMap = NotificationTargetConfigTypeTranslateMap;
   slackChanelTypes = Object.keys(SlackChanelType) as SlackChanelType[];
   slackChanelTypesTranslateMap = SlackChanelTypesTranslateMap;
@@ -79,7 +79,7 @@ export class TargetNotificationDialogComponent extends
               private notificationService: NotificationService) {
     super(store, router, dialogRef);
 
-    if (isDefined(data.isAdd)) {
+    if (isDefinedAndNotNull(data.isAdd)) {
       this.isAdd = data.isAdd;
     }
 
@@ -88,9 +88,12 @@ export class TargetNotificationDialogComponent extends
       configuration: this.fb.group({
         type: [NotificationTargetType.PLATFORM_USERS],
         usersFilter: this.fb.group({
-          type: [{value: NotificationTargetConfigType.ALL_USERS, disabled: !this.isTenantAdmin()}],
+          type: [NotificationTargetConfigType.ALL_USERS],
+          filterByTenants: [{value: true, disabled: true}],
+          tenantsIds: [{value: null, disabled: true}],
+          tenantProfilesIds: [{value: null, disabled: true}],
+          customerId: [{value: null, disabled: true}, Validators.required],
           usersIds: [{value: null, disabled: true}, Validators.required],
-          customerId: [{value: null, disabled: true}, Validators.required]
         }),
         conversationType: [{value: SlackChanelType.PUBLIC_CHANNEL, disabled: true}],
         conversation: [{value: '', disabled: true}, Validators.required],
@@ -104,10 +107,8 @@ export class TargetNotificationDialogComponent extends
       this.targetNotificationForm.get('configuration').disable({emitEvent: false});
       switch (type) {
         case NotificationTargetType.PLATFORM_USERS:
-          if (this.isTenantAdmin()) {
-            this.targetNotificationForm.get('configuration.usersFilter').enable({emitEvent: false});
-            this.targetNotificationForm.get('configuration.usersFilter.type').updateValueAndValidity({onlySelf: true});
-          }
+          this.targetNotificationForm.get('configuration.usersFilter').enable({emitEvent: false});
+          this.targetNotificationForm.get('configuration.usersFilter.type').updateValueAndValidity({onlySelf: true});
           break;
         case NotificationTargetType.SLACK:
           this.targetNotificationForm.get('configuration.conversationType').enable({emitEvent: false});
@@ -123,6 +124,11 @@ export class TargetNotificationDialogComponent extends
     ).subscribe((type: NotificationTargetConfigType) => {
       this.targetNotificationForm.get('configuration.usersFilter').disable({emitEvent: false});
       switch (type) {
+        case NotificationTargetConfigType.TENANT_ADMINISTRATORS:
+          if (this.isSysAdmin()) {
+            this.targetNotificationForm.get('configuration.usersFilter.filterByTenants').enable({onlySelf: true});
+          }
+          break;
         case NotificationTargetConfigType.USER_LIST:
           this.targetNotificationForm.get('configuration.usersFilter.usersIds').enable({emitEvent: false});
           break;
@@ -133,9 +139,25 @@ export class TargetNotificationDialogComponent extends
       this.targetNotificationForm.get('configuration.usersFilter.type').enable({emitEvent: false});
     });
 
-    if (isDefined(data.target)) {
+    this.targetNotificationForm.get('configuration.usersFilter.filterByTenants').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: boolean) => {
+      if (value) {
+        this.targetNotificationForm.get('configuration.usersFilter.tenantsIds').enable({emitEvent: false});
+        this.targetNotificationForm.get('configuration.usersFilter.tenantProfilesIds').disable({emitEvent: false});
+      } else {
+        this.targetNotificationForm.get('configuration.usersFilter.tenantsIds').disable({emitEvent: false});
+        this.targetNotificationForm.get('configuration.usersFilter.tenantProfilesIds').enable({emitEvent: false});
+      }
+    });
+
+    if (isDefinedAndNotNull(data.target)) {
       this.targetNotificationForm.patchValue(data.target, {emitEvent: false});
       this.targetNotificationForm.get('configuration.type').updateValueAndValidity({onlySelf: true});
+      if (this.isSysAdmin() && data.target.configuration.usersFilter.type === NotificationTargetConfigType.TENANT_ADMINISTRATORS) {
+        this.targetNotificationForm.get('configuration.usersFilter.filterByTenants')
+          .patchValue(!Array.isArray(this.data.target.configuration.usersFilter.tenantProfilesIds), {onlySelf: true});
+      }
     }
   }
 
@@ -150,21 +172,27 @@ export class TargetNotificationDialogComponent extends
   }
 
   save() {
-    let formValue: NotificationTarget = deepTrim(this.targetNotificationForm.value);
-    if (isDefined(this.data.target)) {
+    let formValue = deepTrim(this.targetNotificationForm.value);
+    if (isDefinedAndNotNull(this.data.target)) {
       formValue = Object.assign({}, this.data.target, formValue);
     }
-    if (formValue.configuration.type === NotificationTargetType.PLATFORM_USERS && !formValue.configuration.usersFilter) {
-      formValue.configuration.usersFilter = {
-        type: NotificationTargetConfigType.ALL_USERS
-      }
+    if (this.isSysAdmin() && formValue.configuration.type === NotificationTargetType.PLATFORM_USERS &&
+      formValue.configuration.usersFilter.type === NotificationTargetConfigType.TENANT_ADMINISTRATORS) {
+      delete formValue.configuration.usersFilter.filterByTenants;
     }
     this.notificationService.saveNotificationTarget(formValue).subscribe(
       (target) => this.dialogRef.close(target)
     );
   }
 
-  public isTenantAdmin(): boolean {
-    return this.authUser.authority === Authority.TENANT_ADMIN;
+  isSysAdmin(): boolean {
+    return this.authUser.authority === Authority.SYS_ADMIN;
+  }
+
+  private allowNotificationTargetConfigTypes(): NotificationTargetConfigType[] {
+    if (this.isSysAdmin()) {
+      return [NotificationTargetConfigType.ALL_USERS, NotificationTargetConfigType.TENANT_ADMINISTRATORS];
+    }
+    return Object.values(NotificationTargetConfigType);
   }
 }
