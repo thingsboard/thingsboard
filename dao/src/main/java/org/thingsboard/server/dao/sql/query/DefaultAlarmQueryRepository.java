@@ -148,7 +148,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
 
-            if (EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()) && ASSIGNEE_KEY.equalsIgnoreCase(sortOrder.getKey().getKey())) {
+            if (sortOrder != null && EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()) && ASSIGNEE_KEY.equalsIgnoreCase(sortOrder.getKey().getKey())) {
                 sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_EMAIL_KEY), sortOrder.getDirection());
             }
 
@@ -269,6 +269,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
 
             if (pageLink.getAssigneeId() != null) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
                 ctx.addUuidParameter("assigneeId", pageLink.getAssigneeId().getId());
                 wherePart.append(" a.assignee_id = :assigneeId");
             }
