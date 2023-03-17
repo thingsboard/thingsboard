@@ -17,6 +17,8 @@
 import {
   AlarmAction,
   AlarmActionTranslationMap,
+  AlarmAssignmentAction,
+  AlarmAssignmentActionTranslationMap,
   NotificationRule,
   NotificationTarget,
   TriggerType,
@@ -93,6 +95,9 @@ export class RuleNotificationDialogComponent extends
 
   alarmActions: AlarmAction[] = Object.values(AlarmAction);
   alarmActionTranslationMap = AlarmActionTranslationMap;
+
+  alarmAssignmentActions: AlarmAssignmentAction[] = Object.values(AlarmAssignmentAction);
+  alarmAssignmentActionTranslationMap = AlarmAssignmentActionTranslationMap;
 
   entityType = EntityType;
   entityTypes: EntityType[] = Object.values(EntityType);
@@ -207,7 +212,8 @@ export class RuleNotificationDialogComponent extends
         alarmTypes: [null],
         alarmSeverities: [[]],
         alarmStatuses: [[]],
-        onlyUserComments: [false]
+        onlyUserComments: [false],
+        notifyOnCommentUpdate: [false]
       })
     });
 
@@ -216,7 +222,7 @@ export class RuleNotificationDialogComponent extends
         alarmTypes: [null],
         alarmSeverities: [[]],
         alarmStatuses: [[]],
-        notifyOnUnassign: [true]
+        notifyOn: [[AlarmAssignmentAction.ASSIGNED], Validators.required]
       })
     });
 

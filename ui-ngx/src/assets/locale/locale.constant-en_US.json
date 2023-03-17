@@ -2768,13 +2768,9 @@
         },
         "delivery-methods": "Delivery methods",
         "description": "Description",
-        "device": "Device",
         "device-inactivity-trigger-settings": "Device inactive trigger settings",
         "device-list-rule-hint": "If the field is empty, the trigger will be applied to all devices",
-        "device-profile": "Device profile",
-        "device-profiles": "Device profiles",
         "device-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all device profiles",
-        "devices": "Devices",
         "edit-notification-target": "Edit notification recipient",
         "edit-notification-template": "Edit notification template",
         "edit-rule": "Edit rule",
@@ -2816,13 +2812,16 @@
         "notification-target": "Notification recipient",
         "notify": "notify",
         "notify-alarm-action": {
-           "created": "Alarm created",
-           "severity-changed": "Alarm severity changed",
-           "acknowledged": "Alarm acknowledged",
-           "cleared": "Alarm cleared"
+            "assigned": "Alarm assigned",
+            "created": "Alarm created",
+            "severity-changed": "Alarm severity changed",
+            "acknowledged": "Alarm acknowledged",
+            "cleared": "Alarm cleared",
+            "unassigned": "Alarm unassigned"
         },
         "notify-again": "Notify again",
         "notify-on": "Notify on",
+        "notify-on-comment-update": "Notify on comment update",
         "notify-on-required": "Notify on is required",
         "notify-only-user-comments": "Notify only user comments",
         "notify-on-unassign": "Notify on unassign",
@@ -2866,9 +2865,11 @@
         "target-name": "Name",
         "target-name-required": "Name is required",
         "target-type": {
+            "action-target-user": "Action target user",
             "all-users": "All users",
             "customer-users": "Customer users",
             "originator-entity-owner-users": "Users of originator entity owner",
+            "tenant-administrators": "Tenant administrators",
             "user-filters": "User filter",
             "user-list": "User list"
         },
@@ -2894,6 +2895,8 @@
             "general": "General"
         },
         "templates": "Templates",
+        "tenants-list-rule-hint": "If the field is empty, the trigger will be applied to all tenants",
+        "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",
         "time": "Time",
         "trigger": {
             "alarm": "Alarm",

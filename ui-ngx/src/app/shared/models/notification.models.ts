@@ -138,15 +138,15 @@ export interface AlarmCommentNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
   alarmSeverities?: Array<AlarmSeverity>;
   alarmStatuses?: Array<AlarmSearchStatus>;
-  notifyOnUnassign?: boolean;
   onlyUserComments?: boolean;
+  notifyOnCommentUpdate?: boolean;
 }
 
 export interface AlarmAssignmentNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
   alarmSeverities?: Array<AlarmSeverity>;
   alarmStatuses?: Array<AlarmSearchStatus>;
-  notifyOnUnassign?: boolean;
+  notifyOn: Array<AlarmAssignmentAction>;
 }
 
 export enum AlarmAction {
@@ -161,6 +161,16 @@ export const AlarmActionTranslationMap = new Map<AlarmAction, string>([
   [AlarmAction.SEVERITY_CHANGED, 'notification.notify-alarm-action.severity-changed'],
   [AlarmAction.ACKNOWLEDGED, 'notification.notify-alarm-action.acknowledged'],
   [AlarmAction.CLEARED, 'notification.notify-alarm-action.cleared']
+])
+
+export enum AlarmAssignmentAction {
+  ASSIGNED = 'ASSIGNED',
+  UNASSIGNED = 'UNASSIGNED'
+}
+
+export const AlarmAssignmentActionTranslationMap = new Map<AlarmAssignmentAction, string>([
+  [AlarmAssignmentAction.ASSIGNED, 'notification.notify-alarm-action.assigned'],
+  [AlarmAssignmentAction.UNASSIGNED, 'notification.notify-alarm-action.unassigned']
 ])
 
 export interface NotificationRuleRecipientConfig {
@@ -187,16 +197,21 @@ export interface PlatformUsersNotificationTargetConfig {
 }
 
 export interface UsersFilter extends
-  Partial<UserListNotificationTargetConfig & CustomerUsersNotificationTargetConfig>{
+  Partial<UserListFilter & CustomerUsersFilter & TenantAdministratorsFilter>{
   type: NotificationTargetConfigType;
 }
 
-interface UserListNotificationTargetConfig {
+interface UserListFilter {
   usersIds: Array<string>;
 }
 
-interface CustomerUsersNotificationTargetConfig {
+interface CustomerUsersFilter {
   customerId: string;
+}
+
+interface TenantAdministratorsFilter {
+  tenantsIds?: Array<string>;
+  tenantProfilesIds?: Array<string>;
 }
 
 export interface SlackNotificationTargetConfig {
@@ -310,16 +325,20 @@ export const SlackChanelTypesTranslateMap = new Map<SlackChanelType, string>([
 
 export enum NotificationTargetConfigType {
   ALL_USERS = 'ALL_USERS',
-  USER_LIST = 'USER_LIST',
+  TENANT_ADMINISTRATORS = 'TENANT_ADMINISTRATORS',
   CUSTOMER_USERS = 'CUSTOMER_USERS',
-  ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS'
+  USER_LIST = 'USER_LIST',
+  ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS',
+  ACTION_TARGET_USER = 'ACTION_TARGET_USER'
 }
 
 export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTargetConfigType, string>([
   [NotificationTargetConfigType.ALL_USERS, 'notification.target-type.all-users'],
-  [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
+  [NotificationTargetConfigType.TENANT_ADMINISTRATORS, 'notification.target-type.tenant-administrators'],
   [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
-  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS, 'notification.target-type.originator-entity-owner-users']
+  [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
+  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS, 'notification.target-type.originator-entity-owner-users'],
+  [NotificationTargetConfigType.ACTION_TARGET_USER, 'notification.target-type.action-target-user'],
 ]);
 
 export enum NotificationType {

@@ -56,6 +56,38 @@
           </mat-select>
         </mat-form-field>
         <ng-container [ngSwitch]="targetNotificationForm.get('configuration.usersFilter.type').value">
+          <ng-container *ngSwitchCase="notificationTargetConfigType.TENANT_ADMINISTRATORS">
+            <section *ngIf="isSysAdmin()">
+              <div fxFlex fxLayoutAlign="center center">
+                <mat-button-toggle-group class="tb-notification-tenant-group"
+                                         style="width: 280px;"
+                                         formControlName="filterByTenants">
+                  <mat-button-toggle fxFlex [value]=true>{{ 'tenant.tenant' | translate }}</mat-button-toggle>
+                  <mat-button-toggle fxFlex [value]=false>{{ 'tenant-profile.tenant-profile' | translate }}</mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+              <ng-container *ngIf="targetNotificationForm.get('configuration.usersFilter.filterByTenants').value; else tenantProfiles">
+                <tb-entity-list
+                  formControlName="tenantsIds"
+                  subscriptSizing="dynamic"
+                  labelText="{{ 'tenant.tenants' | translate }}"
+                  placeholderText="{{ 'tenant.tenants' | translate }}"
+                  hint="{{ 'notification.tenants-list-rule-hint' | translate }}"
+                  [entityType]="entityType.TENANT">
+                </tb-entity-list>
+              </ng-container>
+              <ng-template #tenantProfiles>
+                <tb-entity-list
+                  formControlName="tenantProfilesIds"
+                  subscriptSizing="dynamic"
+                  labelText="{{ 'tenant-profile.tenant-profiles' | translate }}"
+                  placeholderText="{{ 'tenant-profile.tenant-profiles' | translate }}"
+                  hint="{{ 'notification.tenant-profiles-list-rule-hint' | translate }}"
+                  [entityType]="entityType.TENANT_PROFILE">
+                </tb-entity-list>
+              </ng-template>
+            </section>
+          </ng-container>
           <ng-container *ngSwitchCase="notificationTargetConfigType.USER_LIST">
             <tb-entity-list
               required
