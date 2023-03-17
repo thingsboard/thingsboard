@@ -22,7 +22,7 @@
 }
 
 .tb-protobuf-content-toolbar {
-  button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+  button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
     align-items: center;
     vertical-align: middle;
     min-width: 32px;
@@ -36,6 +36,9 @@
     &:not(:last-child) {
       margin-right: 4px;
     }
+  }
+  button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+    height: 23px;
   }
 }
 

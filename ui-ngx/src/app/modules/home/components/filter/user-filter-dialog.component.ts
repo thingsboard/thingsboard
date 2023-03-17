@@ -20,10 +20,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  AbstractControl, FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  AbstractControl, UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   FormGroupDirective,
   NgForm,
   Validators
@@ -54,7 +54,7 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
 
   filter: Filter;
 
-  userFilterFormGroup: FormGroup;
+  userFilterFormGroup: UntypedFormGroup;
 
   valueTypeEnum = EntityKeyValueType;
 
@@ -65,7 +65,7 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
               @Inject(MAT_DIALOG_DATA) public data: UserFilterDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<UserFilterDialogComponent, Filter>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               public translate: TranslateService) {
     super(store, router, dialogRef);
     this.filter = data.filter;
@@ -97,14 +97,14 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
     return userInputControl;
   }
 
-  userInputsFormArray(): FormArray {
-    return this.userFilterFormGroup.get('userInputs') as FormArray;
+  userInputsFormArray(): UntypedFormArray {
+    return this.userFilterFormGroup.get('userInputs') as UntypedFormArray;
   }
 
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

@@ -32,9 +32,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 abstract public class AbstractBasePage {
+    public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected Actions actions;
@@ -43,7 +45,7 @@ abstract public class AbstractBasePage {
 
     public AbstractBasePage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofMillis(8000));
+        this.wait = new WebDriverWait(driver, Duration.ofMillis(WAIT_TIMEOUT));
         this.actions = new Actions(driver);
         this.js = (JavascriptExecutor) driver;
     }

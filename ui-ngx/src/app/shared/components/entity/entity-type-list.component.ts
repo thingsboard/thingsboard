@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -24,8 +24,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
+import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 interface EntityTypeInfo {
   name: string;
@@ -46,7 +47,7 @@ interface EntityTypeInfo {
 })
 export class EntityTypeListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  entityTypeListFormGroup: FormGroup;
+  entityTypeListFormGroup: UntypedFormGroup;
 
   modelValue: Array<EntityType> | null;
 
@@ -67,6 +68,9 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   disabled: boolean;
 
   @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
   allowedEntityTypes: Array<EntityType | AliasEntityType>;
 
   @Input()
@@ -74,7 +78,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
 
   @ViewChild('entityTypeInput') entityTypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityTypeAutocomplete') entityTypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   allEntityTypeList: Array<EntityTypeInfo> = [];
   entityTypeList: Array<EntityTypeInfo> = [];
@@ -92,7 +96,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.entityTypeListFormGroup = this.fb.group({
       entityTypeList: [this.entityTypeList, this.required ? [Validators.required] : []],
       entityType: [null]

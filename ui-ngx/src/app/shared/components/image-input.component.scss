@@ -140,13 +140,10 @@ $previewSize: 96px !default;
   button.browse-file {
     padding: 0;
     font-size: 16px;
-    span.mat-button-wrapper {
+    span.mdc-button__label {
       display: block;
-      label {
-        display: block;
-        cursor: pointer;
-        padding: 0 16px;
-      }
+      cursor: pointer;
+      padding: 0 16px;
     }
   }
 }

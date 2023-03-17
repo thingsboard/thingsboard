@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,7 +37,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 })
 export class EntitySelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  entitySelectFormGroup: FormGroup;
+  entitySelectFormGroup: UntypedFormGroup;
 
   modelValue: EntityId = {entityType: null, id: null};
 
@@ -70,7 +70,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
               public translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
                                                                          this.useAliasEntityTypes);
