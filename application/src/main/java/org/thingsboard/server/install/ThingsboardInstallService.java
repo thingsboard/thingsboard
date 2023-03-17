@@ -22,10 +22,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.DatabaseEntitiesUpgradeService;
 import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
+import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.NoSqlKeyspaceService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
@@ -87,6 +89,12 @@ public class ThingsboardInstallService {
 
     @Autowired(required = false)
     private TsLatestMigrateService latestMigrateService;
+
+    @Autowired
+    private ResourceService resourceService;
+
+    @Autowired
+    private InstallScripts installScripts;
 
     public void performInstall() {
         try {
@@ -242,6 +250,7 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
+                            installScripts.migrateLwm2mResources();
                             break;
                         //TODO update CacheCleanupService on the next version upgrade
                         default:
@@ -284,6 +293,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createQueues();
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
+                installScripts.migrateLwm2mResources();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");
@@ -302,3 +312,4 @@ public class ThingsboardInstallService {
     }
 
 }
+
