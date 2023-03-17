@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,7 +22,7 @@ import { WINDOW } from '@core/services/window.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/services/menu.service';
-import { distinctUntilChanged, filter, map, mergeMap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, mergeMap, take } from 'rxjs/operators';
 import { merge } from 'rxjs';
 import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
@@ -32,7 +32,7 @@ import { ActiveComponentService } from '@core/services/active-component.service'
   templateUrl: './router-tabs.component.html',
   styleUrls: ['./router-tabs.component.scss']
 })
-export class RouterTabsComponent extends PageComponent implements AfterViewInit, OnInit {
+export class RouterTabsComponent extends PageComponent {
 
   hideCurrentTabs = false;
 
@@ -42,7 +42,7 @@ export class RouterTabsComponent extends PageComponent implements AfterViewInit,
       distinctUntilChanged()
     )
   ).pipe(
-    mergeMap(() => this.menuService.menuSections()),
+    mergeMap(() => this.menuService.menuSections().pipe(take(1))),
     map((sections) => this.buildTabs(this.activatedRoute, sections))
   );
 
@@ -55,11 +55,6 @@ export class RouterTabsComponent extends PageComponent implements AfterViewInit,
               public breakpointObserver: BreakpointObserver) {
     super(store);
   }
-
-  ngOnInit() {
-  }
-
-  ngAfterViewInit() {}
 
   activeComponentChanged(activeComponent: any) {
     this.activeComponentService.setCurrentActiveComponent(activeComponent);
@@ -83,10 +78,14 @@ export class RouterTabsComponent extends PageComponent implements AfterViewInit,
     const sectionPath = '/' + activatedRoute.pathFromRoot.map(r => r.snapshot.url)
       .filter(f => !!f[0]).map(f => f.map(f1 => f1.path).join('/')).join('/');
     const found = this.findRootSection(sections, sectionPath);
-    const rootPath = sectionPath.substring(0, sectionPath.length - found.path.length);
-    const isRoot = rootPath === '';
-    const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.disabled && (!page.rootOnly || isRoot)) : [];
-    return tabs.map((tab) => ({...tab, path: rootPath + tab.path}));
+    if (found) {
+      const rootPath = sectionPath.substring(0, sectionPath.length - found.path.length);
+      const isRoot = rootPath === '';
+      const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.disabled && (!page.rootOnly || isRoot)) : [];
+      return tabs.map((tab) => ({...tab, path: rootPath + tab.path}));
+    } else {
+      return [];
+    }
   }
 
   private findRootSection(sections: MenuSection[], sectionPath: string): MenuSection {
