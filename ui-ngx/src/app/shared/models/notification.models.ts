@@ -354,13 +354,44 @@ export enum NotificationTargetConfigType {
   ACTION_TARGET_USER = 'ACTION_TARGET_USER'
 }
 
-export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTargetConfigType, string>([
-  [NotificationTargetConfigType.ALL_USERS, 'notification.target-type.all-users'],
-  [NotificationTargetConfigType.TENANT_ADMINISTRATORS, 'notification.target-type.tenant-administrators'],
-  [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
-  [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
-  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS, 'notification.target-type.originator-entity-owner-users'],
-  [NotificationTargetConfigType.ACTION_TARGET_USER, 'notification.target-type.action-target-user'],
+interface NotificationTargetConfigTypeInfo {
+  name: string;
+  hint?: string;
+}
+
+export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetConfigType, NotificationTargetConfigTypeInfo>([
+  [NotificationTargetConfigType.ALL_USERS,
+    {
+      name: 'notification.target-type.all-users'
+    }
+  ],
+  [NotificationTargetConfigType.TENANT_ADMINISTRATORS,
+    {
+      name: 'notification.target-type.tenant-administrators'
+    }
+  ],
+  [NotificationTargetConfigType.CUSTOMER_USERS,
+    {
+      name: 'notification.target-type.customer-users'
+    }
+  ],
+  [NotificationTargetConfigType.USER_LIST,
+    {
+      name: 'notification.target-type.user-list'
+    }
+  ],
+  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
+    {
+      name: 'notification.target-type.originator-entity-owner-users',
+      hint: 'notification.target-type.originator-entity-owner-users-hint'
+    }
+  ],
+  [NotificationTargetConfigType.ACTION_TARGET_USER,
+    {
+      name: 'notification.target-type.action-target-user',
+      hint: 'notification.target-type.action-target-user-hint'
+    }
+  ]
 ]);
 
 export enum NotificationType {

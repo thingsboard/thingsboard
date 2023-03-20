@@ -2873,9 +2873,11 @@
         "target-name-required": "Name is required",
         "target-type": {
             "action-target-user": "Action target user",
+            "action-target-user-hint": "Action target user hint",
             "all-users": "All users",
             "customer-users": "Customer users",
             "originator-entity-owner-users": "Users of originator entity owner",
+            "originator-entity-owner-users-hint": "Users of originator entity owner hint",
             "tenant-administrators": "Tenant administrators",
             "user-filters": "User filter",
             "user-list": "User list"

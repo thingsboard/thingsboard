@@ -47,13 +47,14 @@
       </mat-radio-group>
       <section formGroupName="usersFilter"
                *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.PLATFORM_USERS">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-label translate>notification.target-type.user-filters</mat-label>
           <mat-select formControlName="type">
             <mat-option *ngFor="let type of notificationTargetConfigTypes" [value]="type">
-              {{ notificationTargetConfigTypeTranslateMap.get(type) | translate }}
+              {{ notificationTargetConfigTypeInfoMap.get(type).name | translate }}
             </mat-option>
           </mat-select>
+          <mat-hint>{{ notificationTargetConfigTypeInfoMap.get(targetNotificationForm.get('configuration.usersFilter.type').value).hint | translate }}</mat-hint>
         </mat-form-field>
         <ng-container [ngSwitch]="targetNotificationForm.get('configuration.usersFilter.type').value">
           <ng-container *ngSwitchCase="notificationTargetConfigType.TENANT_ADMINISTRATORS">
