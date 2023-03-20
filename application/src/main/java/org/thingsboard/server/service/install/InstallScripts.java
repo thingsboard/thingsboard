@@ -267,13 +267,7 @@ public class InstallScripts {
         }
     }
 
-    /**
-     * TbResource res = new TbResource();
-     * res.setTenantId(TenantId.SYS_TENANT_ID); // SisAdmin
-     * res.setData("File base64");
-     * res.setResourceType(ResourceType.LWM2M_MODEL);
-     */
-    public void migrateLwm2mResources() {
+    public void loadSystemLwm2mResources() {
         Path resourceLwm2mPath = Paths.get(dataDir, MODELS_LWM2M_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(resourceLwm2mPath, path -> path.toString().endsWith(InstallScripts.XML_EXT))) {
             dirStream.forEach(
@@ -281,7 +275,7 @@ public class InstallScripts {
                         try {
                             String data = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
                             TbResource tbResource = new TbResource();
-                            tbResource.setTenantId(TenantId.SYS_TENANT_ID); // SisAdmin
+                            tbResource.setTenantId(TenantId.SYS_TENANT_ID);
                             tbResource.setData(data);
                             tbResource.setResourceType(ResourceType.LWM2M_MODEL);
                             tbResource.setFileName(path.toFile().getName());
@@ -306,12 +300,10 @@ public class InstallScripts {
             }
             toLwm2mResource(resource);
             resourceService.saveResource(resource);
-        } catch (Exception e) {
-            if (e.getMessage().equals("Resource with such resourceKey already exists!")) {
-                log.trace("File of lwm2m model: [{}]. [{}]", resource.getFileName(), e.getMessage());
-            } else {
-                throw e;
-            }
+        } catch (DataValidationException e) {
+            log.error("[{}] {}", resource.getFileName(), e.getMessage());
+        } catch (Exception ex) {
+            throw ex;
         }
     }
 }
