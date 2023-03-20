@@ -262,7 +262,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 }
                 if (asf.hasClearFilter()) {
                     addAndIfNeeded(wherePart, addAnd);
-                    // addAnd = true; // not needed but stored as an example if someone adds new conditions
+                    addAnd = true;
                     ctx.addBooleanParameter("clearStatus", asf.getClearFilter());
                     wherePart.append(" a.cleared = :clearStatus");
                 }
