@@ -28,12 +28,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -51,6 +58,7 @@ import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -397,6 +405,92 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
+    }
+
+    @Test
+    public void testAssignUnassignAssetToCustomerWithAlarmOptions() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .customerId(null)
+                .originator(savedAsset.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("TEST")
+                .build();
+
+        AlarmComment alarmComment = AlarmComment.builder()
+                .comment(JacksonUtil.newObjectNode().put("text", "text"))
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + tenantAdmin.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        AlarmComment savedAlarmComment = doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment, AlarmComment.class);
+        Assert.assertNotNull(savedAlarmComment);
+
+        savedAsset = assignAssetToCustomerWithAlarmOptions(savedAsset.getId(), savedCustomer, false, false);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        PageData<AlarmCommentInfo> foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        List<AlarmCommentInfo> userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertFalse(userAlarmComments.isEmpty());
+
+        savedAsset = doDelete("/api/customer/asset/" + savedAsset.getId().getId(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, savedAsset.getCustomerId().getId());
+
+        savedAsset = assignAssetToCustomerWithAlarmOptions(savedAsset.getId(), savedCustomer, true, true);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNull(foundAlarm.getAssignee());
+
+        foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertTrue(userAlarmComments.isEmpty());
+
+        doDelete("/api/customer/asset/" + savedAsset.getId().getId(), Asset.class);
+    }
+
+    private Asset assignAssetToCustomerWithAlarmOptions(AssetId assetId, Customer customer,
+                                                          Boolean unassignAlarms, Boolean removeAlarmComments) throws Exception {
+        Mockito.reset(tbClusterService, auditLogService);
+        Asset assignedAsset = doPost("/api/customer/" + customer.getId().getId()
+                + "/asset/" + assetId.getId() + "?unassignAlarms=" + unassignAlarms.toString()
+                + "&removeAlarmComments=" + removeAlarmComments, Asset.class);
+        Assert.assertEquals(customer.getId(), assignedAsset.getCustomerId());
+
+        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(), savedTenant.getId(),
+                customer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedAsset.getId().getId().toString(), customer.getId().getId().toString(),
+                customer.getTitle());
+
+        Asset foundAsset = doGet("/api/asset/" + assetId.getId(), Asset.class);
+        Assert.assertEquals(customer.getId(), foundAsset.getCustomerId());
+        return foundAsset;
     }
 
     @Test

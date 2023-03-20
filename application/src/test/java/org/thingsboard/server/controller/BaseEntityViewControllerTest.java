@@ -40,6 +40,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -48,6 +49,12 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -312,6 +319,91 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 tenantId, savedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.UNASSIGNED_FROM_CUSTOMER,
                 assignedView.getId().getId().toString(), savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
+    }
+
+    @Test
+    public void testAssignUnassignEntityViewToCustomerWithAlarmOptions() throws Exception {
+        EntityView view = getNewSavedEntityView("Test entity view");
+        EntityView savedEntityView = doPost("/api/entityView", view, EntityView.class);
+
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .customerId(null)
+                .originator(savedEntityView.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("TEST")
+                .build();
+
+        AlarmComment alarmComment = AlarmComment.builder()
+                .comment(JacksonUtil.newObjectNode().put("text", "text"))
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + tenantAdminUserId.getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        AlarmComment savedAlarmComment = doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment, AlarmComment.class);
+        Assert.assertNotNull(savedAlarmComment);
+
+        savedEntityView = assignEntityViewToCustomerWithAlarmOptions(savedEntityView.getId(), savedCustomer, false, false);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        PageData<AlarmCommentInfo> foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        List<AlarmCommentInfo> userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertFalse(userAlarmComments.isEmpty());
+
+        savedEntityView = doDelete("/api/customer/entityView/" + savedEntityView.getId().getId(), EntityView.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, savedEntityView.getCustomerId().getId());
+
+        savedEntityView = assignEntityViewToCustomerWithAlarmOptions(savedEntityView.getId(), savedCustomer, true, true);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNull(foundAlarm.getAssignee());
+
+        foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertTrue(userAlarmComments.isEmpty());
+
+        doDelete("/api/customer/entityView/" + savedEntityView.getId().getId(), EntityView.class);
+    }
+
+    private EntityView assignEntityViewToCustomerWithAlarmOptions(EntityViewId entityViewId, Customer customer,
+                                                        Boolean unassignAlarms, Boolean removeAlarmComments) throws Exception {
+        Mockito.reset(tbClusterService, auditLogService);
+        EntityView assignedEntityView = doPost("/api/customer/" + customer.getId().getId()
+                + "/entityView/" + entityViewId.getId() + "?unassignAlarms=" + unassignAlarms.toString()
+                + "&removeAlarmComments=" + removeAlarmComments, EntityView.class);
+        Assert.assertEquals(customer.getId(), assignedEntityView.getCustomerId());
+
+        testBroadcastEntityStateChangeEventNever(entityViewId);
+        testNotifyEntityAllOneTime(assignedEntityView, entityViewId, entityViewId,
+                tenantId, assignedEntityView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedEntityView.getId().getId().toString(), assignedEntityView.getCustomerId().getId().toString(), customer.getTitle());
+
+        EntityView foundEntityView = doGet("/api/entityView/" + entityViewId.getId(), EntityView.class);
+        Assert.assertEquals(customer.getId(), foundEntityView.getCustomerId());
+        return foundEntityView;
     }
 
     @Test

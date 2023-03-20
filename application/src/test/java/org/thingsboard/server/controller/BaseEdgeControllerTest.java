@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -40,10 +41,17 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -68,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -331,6 +340,91 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundEdge.getCustomerId().getId());
     }
+
+    @Test
+    public void testAssignUnassignEdgeToCustomerWithAlarmOptions() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .customerId(null)
+                .originator(savedEdge.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("TEST")
+                .build();
+
+        AlarmComment alarmComment = AlarmComment.builder()
+                .comment(JacksonUtil.newObjectNode().put("text", "text"))
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + tenantAdmin.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        AlarmComment savedAlarmComment = doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment, AlarmComment.class);
+        Assert.assertNotNull(savedAlarmComment);
+
+        savedEdge = assignEdgeToCustomerWithAlarmOptions(savedEdge.getId(), savedCustomer, false, false);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        PageData<AlarmCommentInfo> foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        List<AlarmCommentInfo> userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertFalse(userAlarmComments.isEmpty());
+
+        savedEdge = doDelete("/api/customer/edge/" + savedEdge.getId().getId(), Edge.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, savedEdge.getCustomerId().getId());
+
+        savedEdge = assignEdgeToCustomerWithAlarmOptions(savedEdge.getId(), savedCustomer, true, true);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNull(foundAlarm.getAssignee());
+
+        foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertTrue(userAlarmComments.isEmpty());
+
+        doDelete("/api/customer/edge/" + savedEdge.getId().getId(), Edge.class);
+    }
+
+    private Edge assignEdgeToCustomerWithAlarmOptions(EdgeId edgeId, Customer customer,
+                                                          Boolean unassignAlarms, Boolean removeAlarmComments) throws Exception {
+        Mockito.reset(tbClusterService, auditLogService);
+        Edge assignedEdge = doPost("/api/customer/" + customer.getId().getId()
+                + "/edge/" + edgeId.getId() + "?unassignAlarms=" + unassignAlarms.toString()
+                + "&removeAlarmComments=" + removeAlarmComments, Edge.class);
+        Assert.assertEquals(customer.getId(), assignedEdge.getCustomerId());
+
+        testNotifyEntityAllOneTime(assignedEdge, assignedEdge.getId(), assignedEdge.getId(), savedTenant.getId(),
+                customer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedEdge.getId().getId().toString(), customer.getId().getId().toString(),
+                customer.getTitle());
+
+        Edge foundEdge = doGet("/api/edge/" + edgeId.getId(), Edge.class);
+        Assert.assertEquals(customer.getId(), foundEdge.getCustomerId());
+        return foundEdge;
+    }
+
 
     @Test
     public void testAssignEdgeToNonExistentCustomer() throws Exception {

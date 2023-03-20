@@ -33,6 +33,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -44,6 +45,12 @@ import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -69,6 +76,7 @@ import org.thingsboard.server.service.gateway_device.GatewayNotificationsService
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -520,6 +528,93 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundDevice.getCustomerId().getId());
+    }
+
+    @Test
+    public void testAssignUnassignDeviceToCustomerWithAlarmOptions() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .customerId(null)
+                .originator(savedDevice.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("TEST")
+                .build();
+
+        AlarmComment alarmComment = AlarmComment.builder()
+                .comment(JacksonUtil.newObjectNode().put("text", "text"))
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + tenantAdmin.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        AlarmComment savedAlarmComment = doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment, AlarmComment.class);
+        Assert.assertNotNull(savedAlarmComment);
+
+        savedDevice = assignDeviceToCustomerWithAlarmOptions(savedDevice.getId(), savedCustomer, false, false);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm.getAssignee());
+
+        PageData<AlarmCommentInfo> foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        List<AlarmCommentInfo> userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertFalse(userAlarmComments.isEmpty());
+
+        savedDevice = doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, savedDevice.getCustomerId().getId());
+
+        savedDevice = assignDeviceToCustomerWithAlarmOptions(savedDevice.getId(), savedCustomer, true, true);
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNull(foundAlarm.getAssignee());
+
+        foundAlarmCommentsData = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment?page=0&pageSize=10",
+                new TypeReference<>() {
+                }
+        );
+        userAlarmComments = foundAlarmCommentsData.getData().stream()
+                .filter(alarmCommentInfo -> !AlarmCommentType.SYSTEM.equals(alarmCommentInfo.getType()))
+                .collect(Collectors.toList());
+        Assert.assertTrue(userAlarmComments.isEmpty());
+
+        doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
+    }
+
+    private Device assignDeviceToCustomerWithAlarmOptions(DeviceId deviceId, Customer customer,
+                                                          Boolean unassignAlarms, Boolean removeAlarmComments) throws Exception {
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+        Device assignedDevice = doPost("/api/customer/" + customer.getId().getId()
+                + "/device/" + deviceId.getId() + "?unassignAlarms=" + unassignAlarms.toString()
+                + "&removeAlarmComments=" + removeAlarmComments, Device.class);
+        Assert.assertEquals(customer.getId(), assignedDevice.getCustomerId());
+
+        testNotifyEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
+                customer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedDevice.getId().getId().toString(), customer.getId().getId().toString(),
+                customer.getTitle());
+        testNotificationUpdateGatewayNever();
+
+        Device foundDevice = doGet("/api/device/" + deviceId.getId(), Device.class);
+        Assert.assertEquals(customer.getId(), foundDevice.getCustomerId());
+        return foundDevice;
     }
 
     @Test
