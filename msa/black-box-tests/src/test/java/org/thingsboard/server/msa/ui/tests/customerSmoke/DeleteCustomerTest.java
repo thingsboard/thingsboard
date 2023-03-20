@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -43,8 +45,10 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the trash icon in the right side of refresh")
     public void removeCustomerByRightSideBtn() {
         String customer = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customer));
@@ -56,8 +60,10 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.entityIsNotPresent(deletedCustomer));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove customer by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedCustomer() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -69,8 +75,10 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedCustomer));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the 'Delete customer' btn in the entity view")
     public void removeFromCustomerView() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -84,8 +92,10 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.entityIsNotPresent(customerName));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the trash icon in the right side of customer without refresh")
     public void removeCustomerByRightSideBtnWithoutRefresh() {
         String customer = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customer));

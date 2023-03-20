@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -59,8 +61,10 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Import rule chain")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Drop json file")
     public void importRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -70,8 +74,10 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.importingFile(IMPORT_RULE_CHAIN_FILE_NAME).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Import rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Drop json file and delete it")
     public void importRuleChainAndDeleteFile() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -83,8 +89,10 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entityIsNotPresent(IMPORT_RULE_CHAIN_FILE_NAME));
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Import rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Import txt file")
     public void importTxtFile() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -94,8 +102,10 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Import rule chain")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Import rule chain")
     public void importRuleChainAndSave() {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.openImportRuleChainView();
@@ -103,7 +113,6 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         ruleChainsPage.importBrowseFileBtn().click();
         WebElement doneBtn = openRuleChainPage.doneBtn();
         doneBtn.click();
-        //openRuleChainPage.waitUntilBtnDisable(doneBtn);
         ruleChainName = IMPORT_RULE_CHAIN_NAME;
         sideBarMenuView.ruleChainsBtn().click();
 
@@ -111,8 +120,10 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entity(IMPORT_RULE_CHAIN_NAME).isDisplayed());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Import rule chain")
     @Test(priority = 40, groups = "smoke")
-    @Description
+    @Description("Import rule chain with same name")
     public void importRuleChainAndSaveWithSameName() {
         String ruleChainName = IMPORT_RULE_CHAIN_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
@@ -124,7 +135,6 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         ruleChainsPage.importBrowseFileBtn().click();
         WebElement doneBtn = openRuleChainPage.doneBtn();
         doneBtn.click();
-        //openRuleChainPage.waitUntilBtnDisable(doneBtn);
         sideBarMenuView.ruleChainsBtn().click();
 
         boolean entityNotNull = ruleChainsPage.entity(ruleChainName) != null;
