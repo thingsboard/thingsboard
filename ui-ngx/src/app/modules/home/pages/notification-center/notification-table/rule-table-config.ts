@@ -60,9 +60,9 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
     this.defaultSortOrder = {property: 'name', direction: Direction.ASC};
 
     this.handleRowClick = ($event, rule) => {
-      this.editRule($event, rule)
+      this.editRule($event, rule);
       return true;
-    }
+    };
 
     this.columns.push(
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),

@@ -77,7 +77,7 @@ export class StringItemsListComponent implements ControlValueAccessor{
 
   @Input()
   @coerceBoolean()
-  editable: boolean = false
+  editable = false;
 
   private propagateChange = (v: any) => { };
 

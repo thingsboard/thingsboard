@@ -66,7 +66,7 @@ export class NotificationBellComponent implements OnDestroy {
       if (value) {
         this.initSubscription();
       }
-    })
+    });
   }
 
   ngOnDestroy() {

@@ -186,15 +186,15 @@ export interface NotificationsUpdateMsg extends CmdUpdateMsg {
 
 export type WebsocketNotificationMsg = NotificationCountUpdateMsg | NotificationsUpdateMsg;
 
-export function isNotificationCountUpdateMsg(message: WebsocketNotificationMsg): message is NotificationCountUpdateMsg {
+export const isNotificationCountUpdateMsg = (message: WebsocketNotificationMsg): message is NotificationCountUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS_COUNT;
-}
+};
 
-export function isNotificationsUpdateMsg(message: WebsocketNotificationMsg): message is NotificationsUpdateMsg {
+export const isNotificationsUpdateMsg = (message: WebsocketNotificationMsg): message is NotificationsUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS;
-}
+};
 
 export class NotificationPluginCmdWrapper implements CmdWrapper {
 

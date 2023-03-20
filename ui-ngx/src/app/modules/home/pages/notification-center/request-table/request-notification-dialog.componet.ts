@@ -99,7 +99,7 @@ export class RequestNotificationDialogComponent extends
       })
     });
 
-    this.notificationRequestForm.get('template.name').setValue(guid())
+    this.notificationRequestForm.get('template.name').setValue(guid());
 
     this.notificationRequestForm.get('useTemplate').valueChanges.pipe(
       takeUntil(this.destroy$)

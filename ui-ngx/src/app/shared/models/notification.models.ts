@@ -74,7 +74,7 @@ export interface NotificationRequestPreview {
 
 export interface NotificationRequestStats {
   sent: Map<NotificationDeliveryMethod, any>;
-  errors: { [key in NotificationDeliveryMethod]: {[key in string]: string}};
+  errors: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
   processedRecipients: Map<NotificationDeliveryMethod, Set<UserId>>;
 }
 
@@ -109,8 +109,9 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   additionalConfig: {description: string};
 }
 
-export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig & EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
-  RuleEngineLifecycleEventNotificationRuleTriggerConfig>
+export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
+  EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
+  RuleEngineLifecycleEventNotificationRuleTriggerConfig>;
 
 export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
@@ -120,7 +121,7 @@ export interface AlarmNotificationRuleTriggerConfig {
 }
 
 interface ClearRule {
-  alarmStatuses: Array<AlarmSearchStatus>
+  alarmStatuses: Array<AlarmSearchStatus>;
 }
 
 export interface DeviceInactivityNotificationRuleTriggerConfig {
@@ -169,7 +170,7 @@ export const ComponentLifecycleEventTranslationMap = new Map<ComponentLifecycleE
   [ComponentLifecycleEvent.STARTED, 'event.started'],
   [ComponentLifecycleEvent.UPDATED, 'event.updated'],
   [ComponentLifecycleEvent.STOPPED, 'event.stopped']
-])
+]);
 
 export enum AlarmAction {
   CREATED = 'CREATED',
@@ -183,7 +184,7 @@ export const AlarmActionTranslationMap = new Map<AlarmAction, string>([
   [AlarmAction.SEVERITY_CHANGED, 'notification.notify-alarm-action.severity-changed'],
   [AlarmAction.ACKNOWLEDGED, 'notification.notify-alarm-action.acknowledged'],
   [AlarmAction.CLEARED, 'notification.notify-alarm-action.cleared']
-])
+]);
 
 export enum AlarmAssignmentAction {
   ASSIGNED = 'ASSIGNED',
@@ -193,7 +194,7 @@ export enum AlarmAssignmentAction {
 export const AlarmAssignmentActionTranslationMap = new Map<AlarmAssignmentAction, string>([
   [AlarmAssignmentAction.ASSIGNED, 'notification.notify-alarm-action.assigned'],
   [AlarmAssignmentAction.UNASSIGNED, 'notification.notify-alarm-action.unassigned']
-])
+]);
 
 export interface NotificationRuleRecipientConfig {
   targets?: Array<string>;

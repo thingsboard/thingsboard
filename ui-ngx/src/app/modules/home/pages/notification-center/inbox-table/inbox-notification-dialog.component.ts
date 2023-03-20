@@ -45,6 +45,6 @@ export class InboxNotificationDialogComponent extends DialogComponent<InboxNotif
   }
 
   markAsRead(id: string) {
-    this.dialogRef.close(id)
+    this.dialogRef.close(id);
   }
 }

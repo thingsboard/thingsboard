@@ -72,7 +72,6 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
     this.onEntityAction = action => this.onRequestAction(action);
 
     this.handleRowClick = (event, entity) => {
-      const path = (event as any).path || (event.composedPath && event.composedPath());
       if ((event.target as HTMLElement).getElementsByClassName('stats').length || (event.target as HTMLElement).className === 'stats') {
         this.openStatsErrorDialog(event, entity);
       }
@@ -145,7 +144,8 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
         backgroundColor = 'rgba(212, 125, 24, 0.08)';
         break;
     }
-    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: fit-content; background-color: ${backgroundColor}">
+    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px;
+                        width: fit-content; background-color: ${backgroundColor}">
                 ${this.translate.instant(translateKey)}
             </div>`;
   }
@@ -154,10 +154,10 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
     let countError = 0;
     Object.keys(stats.errors).forEach(method => countError += Object.keys(stats.errors[method]).length);
     if (countError === 0) {
-      return ''
+      return '';
     }
-    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content; background-color: #D12730;
-                        color: #fff; font-weight: 500; margin-left: 8px" class="stats">
+    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content;
+                        background-color: #D12730; color: #fff; font-weight: 500; margin-left: 8px" class="stats">
                 ${countError} ${this.translate.instant('notification.fails')} >
             </div>`;
   }

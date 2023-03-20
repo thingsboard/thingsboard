@@ -95,7 +95,7 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
     this.router.navigateByUrl(this.router.createUrlTree(['notification-center'])).then(() => {});
   }
 
-  trackById (index: number, item: NotificationRequest): string {
+  trackById(index: number, item: NotificationRequest): string {
     return item.id.id;
   }
 }

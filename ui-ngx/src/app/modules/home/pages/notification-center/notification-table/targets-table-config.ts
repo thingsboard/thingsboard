@@ -65,7 +65,7 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
     this.handleRowClick = ($event, target) => {
       this.editTarget($event, target);
       return true;
-    }
+    };
 
     this.columns.push(
       new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),

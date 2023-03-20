@@ -57,9 +57,9 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.handleRowClick = ($event, notification) => {
-      this.showNotification($event, notification)
+      this.showNotification($event, notification);
       return true;
-    }
+    };
 
     this.componentsData = {
       unreadOnly: true

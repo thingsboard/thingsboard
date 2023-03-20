@@ -63,9 +63,9 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
     this.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
 
     this.handleRowClick = ($event, template) => {
-      this.editTemplate($event, template)
+      this.editTemplate($event, template);
       return true;
-    }
+    };
 
     this.columns.push(
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%',

@@ -33,7 +33,7 @@ export interface NotificationRequestErrorDialogData {
 })
 export class NotificationRequestErrorDialogComponent extends DialogComponent<NotificationRequestErrorDialogComponent, void> {
 
-  errorStats: { [key in NotificationDeliveryMethod]: {[key in string]: string}};
+  errorStats: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
 
   notificationDeliveryMethodErrorTranslateMap = new Map<NotificationDeliveryMethod, string>([
     [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web-failed-sent'],

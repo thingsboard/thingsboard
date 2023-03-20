@@ -165,13 +165,13 @@ export class RuleNotificationDialogComponent extends
 
     this.ruleNotificationForm.get('recipientsConfig.escalationTable').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(value => {
+    ).subscribe(() => {
       if (this.countRecipientsChainConfig() > 1) {
         this.alarmTemplateForm.get('triggerConfig.clearRule').enable({emitEvent: false});
       } else {
         this.alarmTemplateForm.get('triggerConfig.clearRule').disable({emitEvent: false});
       }
-    })
+    });
 
     this.alarmTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({

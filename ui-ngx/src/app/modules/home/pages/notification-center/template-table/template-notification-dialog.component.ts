@@ -99,6 +99,7 @@ export class TemplateNotificationDialogComponent
       }
       this.templateNotificationForm.reset({}, {emitEvent: false});
       this.templateNotificationForm.patchValue(this.templateNotification, {emitEvent: false});
+      // eslint-disable-next-line guard-for-in
       for (const method in this.templateNotification.configuration.deliveryMethodsTemplates) {
         this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
           .patchValue(this.templateNotification.configuration.deliveryMethodsTemplates[method]);

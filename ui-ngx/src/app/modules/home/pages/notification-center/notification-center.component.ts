@@ -64,7 +64,8 @@ export class NotificationCenterComponent extends PageComponent {
   }
 
   sendNotification($event: Event) {
-    this.notificationRequestTable.entityTableConfig.onEntityAction({event: $event, action: this.requestTab.isActive ? 'add' : 'add-without-update', entity: null});
+    this.notificationRequestTable.entityTableConfig
+      .onEntityAction({event: $event, action: this.requestTab.isActive ? 'add' : 'add-without-update', entity: null});
   }
 
   public isTenantAdmin(): boolean {
