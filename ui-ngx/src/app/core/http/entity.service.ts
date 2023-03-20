@@ -244,9 +244,7 @@ export class EntityService {
           entityIds);
         break;
       case EntityType.TENANT_PROFILE:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.tenantProfileService.getTenantProfileInfo(id, config),
-          entityIds);
+        observable = this.tenantProfileService.getTenantProfilesByIds(entityIds, config);
         break;
       case EntityType.ASSET_PROFILE:
         observable = this.getEntitiesByIdsObservable(
