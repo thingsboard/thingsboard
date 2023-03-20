@@ -79,7 +79,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -167,19 +166,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
                 } catch (Exception e) {
                     log.error("[{}] Failed to update stats for notification request", requestId, e);
-                }
-
-                UserId senderId = notificationRequest.getSenderId();
-                if (senderId != null) {
-                    if (stats.getErrors().isEmpty()) {
-                        int sent = stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum();
-                        sendBasicNotification(tenantId, senderId, "Notifications sent",
-                                "All notifications were successfully sent (" + sent + ")");
-                    } else {
-                        int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
-                        sendBasicNotification(tenantId, senderId, "Notification failure",
-                                "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to' button
-                    }
                 }
             }, dbCallbackExecutorService);
         });

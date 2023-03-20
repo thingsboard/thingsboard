@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.notification;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -65,12 +66,14 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
 
     @Override
     public PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(recipientId.getId(), NotificationStatus.READ, DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(recipientId.getId(), NotificationStatus.READ,
+                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public PageData<Notification> findByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationRepository.findByRecipientId(recipientId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(notificationRepository.findByRecipientId(recipientId.getId(),
+                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -37,7 +37,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
             "FROM NotificationRuleEntity r INNER JOIN NotificationTemplateEntity t ON r.templateId = t.id";
 
     @Query("SELECT r FROM NotificationRuleEntity r WHERE r.tenantId = :tenantId " +
-            "AND lower(r.name) LIKE lower(concat('%', :searchText, '%')) ")
+            "AND (:searchText = '' OR lower(r.name) LIKE lower(concat('%', :searchText, '%')))")
     Page<NotificationRuleEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);

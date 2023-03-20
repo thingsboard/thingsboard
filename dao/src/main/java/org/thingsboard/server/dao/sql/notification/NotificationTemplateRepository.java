@@ -32,9 +32,9 @@ import java.util.UUID;
 public interface NotificationTemplateRepository extends JpaRepository<NotificationTemplateEntity, UUID> {
 
     @Query("SELECT t FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId AND " +
-            "t.notificationType IN :notificationTypes AND " +
-            "(lower(t.name) LIKE lower(concat('%', :searchText, '%')) OR " +
-            "lower(t.notificationType) LIKE lower(concat('%', :searchText, '%')))")
+            "t.notificationType IN :notificationTypes " +
+            "AND (:searchText = '' OR lower(t.name) LIKE lower(concat('%', :searchText, '%')) " +
+            "OR lower(t.notificationType) LIKE lower(concat('%', :searchText, '%')))")
     Page<NotificationTemplateEntity> findByTenantIdAndNotificationTypesAndSearchText(@Param("tenantId") UUID tenantId,
                                                                                      @Param("notificationTypes") List<NotificationType> notificationTypes,
                                                                                      @Param("searchText") String searchText,

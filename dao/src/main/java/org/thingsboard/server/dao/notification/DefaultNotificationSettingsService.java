@@ -138,7 +138,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         NotificationTemplate deviceActionNotificationTemplate = createTemplate(tenantId, "Device action notification", NotificationType.ENTITY_ACTION,
                 "${entityType} was ${actionType}",
                 "${entityType} '${entityName}' was ${actionType} by user ${originatorUserName}",
-                "info","Go to Device", "/devices/${entityId}");
+                "info", "Go to Device", "/devices/${entityId}");
         EntityActionNotificationRuleTriggerConfig deviceActionRuleTriggerConfig = new EntityActionNotificationRuleTriggerConfig();
         deviceActionRuleTriggerConfig.setEntityType(EntityType.DEVICE);
         deviceActionRuleTriggerConfig.setCreated(true);
@@ -232,8 +232,10 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
         WebDeliveryMethodNotificationTemplate webTemplate = new WebDeliveryMethodNotificationTemplate();
         ObjectNode additionalConfig = newObjectNode();
-        ObjectNode iconConfig = additionalConfig.set("icon", newObjectNode());
-        ObjectNode buttonConfig = additionalConfig.set("actionButtonConfig", newObjectNode());
+        ObjectNode iconConfig = newObjectNode();
+        additionalConfig.set("icon", iconConfig);
+        ObjectNode buttonConfig = newObjectNode();
+        additionalConfig.set("actionButtonConfig", buttonConfig);
         if (icon != null) {
             iconConfig.put("enabled", true)
                     .put("icon", icon)
@@ -250,12 +252,10 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             buttonConfig.put("enabled", false);
         }
         webTemplate.setAdditionalConfig(additionalConfig);
+        webTemplate.setEnabled(true);
         templateConfig.setDeliveryMethodsTemplates(Map.of(
                 NotificationDeliveryMethod.WEB, webTemplate
         ));
-        /*
-        * {"icon":{"enabled":true,"icon":"info","color":"#757575"},"actionButtonConfig":{"enabled":true,"text":"Go to device","linkType":"LINK","link":"/devices/aa4a3660-c3e9-11ed-934f-bdfa9bfa7568"}}
-        * */
         template.setConfiguration(templateConfig);
         return notificationTemplateService.saveNotificationTemplate(tenantId, template);
     }

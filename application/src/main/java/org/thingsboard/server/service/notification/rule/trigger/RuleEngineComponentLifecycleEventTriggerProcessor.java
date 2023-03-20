@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,6 +32,8 @@ import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineCo
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineComponentLifecycleEventTriggerProcessor.RuleEngineComponentLifecycleEventTriggerObject;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Set;
 
 @Service
@@ -85,13 +88,11 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
     }
 
     private String getErrorMsg(Exception error) {
-        String errorMsg = error != null ? error.getMessage() : null;
-        errorMsg = Strings.nullToEmpty(errorMsg);
-        int lengthLimit = 150;
-        if (errorMsg.length() > lengthLimit) {
-            errorMsg = StringUtils.substring(errorMsg, 0, lengthLimit + 1).trim() + "[...]";
-        }
-        return errorMsg;
+        if (error == null) return null;
+
+        StringWriter sw = new StringWriter();
+        error.printStackTrace(new PrintWriter(sw));
+        return StringUtils.abbreviate(ExceptionUtils.getStackTrace(error), 200);
     }
 
     @Override
