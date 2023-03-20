@@ -21,18 +21,30 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
 @TbCoreComponent
@@ -84,15 +96,37 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user) throws ThingsboardException {
+    public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user, Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
                     actionType, user, edgeId.toString(), customerId.toString(), customer.getName());
-
+            if (removeAlarmComments || unassignAlarms) {
+                AlarmQuery alarmQuery = new AlarmQuery(edgeId, new TimePageLink(Integer.MAX_VALUE),
+                        AlarmSearchStatus.ANY, null, null, false);
+                PageData<AlarmInfo> alarmInfoPageData = alarmService.findAlarms(tenantId, alarmQuery).get(10, TimeUnit.SECONDS);
+                if (!alarmInfoPageData.getData().isEmpty()) {
+                    for (AlarmInfo alarmInfo : alarmInfoPageData.getData()) {
+                        if (unassignAlarms && alarmInfo.getAssigneeId() != null) {
+                            alarmService.unassignAlarm(tenantId, alarmInfo.getId(), System.currentTimeMillis());
+                        }
+                        if (removeAlarmComments) {
+                            PageData<AlarmCommentInfo> alarmComments =
+                                    alarmCommentService.findAlarmComments(tenantId, alarmInfo.getId(), new PageLink(Integer.MAX_VALUE));
+                            if (!alarmComments.getData().isEmpty()) {
+                                alarmComments.getData().forEach(commentInfo -> alarmCommentService.deleteAlarmComment(tenantId, commentInfo.getId()));
+                            }
+                        }
+                    }
+                }
+            }
             return savedEdge;
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.EDGE), actionType, user,
+                    e, edgeId.toString(), customerId.toString());
+            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.EDGE),
                     ActionType.ASSIGNED_TO_CUSTOMER, user, e, edgeId.toString(), customerId.toString());

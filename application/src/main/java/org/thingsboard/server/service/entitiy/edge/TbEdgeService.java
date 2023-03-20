@@ -29,7 +29,7 @@ public interface TbEdgeService {
 
     void delete(Edge edge, User user);
 
-    Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user) throws ThingsboardException;
+    Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user, Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException;
 
     Edge unassignEdgeFromCustomer(Edge edge, Customer customer, User user) throws ThingsboardException;
 

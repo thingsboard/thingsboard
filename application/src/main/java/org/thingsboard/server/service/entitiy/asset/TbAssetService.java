@@ -30,7 +30,7 @@ public interface TbAssetService {
 
     ListenableFuture<Void> delete(Asset asset, User user);
 
-    Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user) throws ThingsboardException;
+    Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user, Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException;
 
     Asset unassignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user) throws ThingsboardException;
 

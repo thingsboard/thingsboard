@@ -218,10 +218,10 @@ public class DeviceController extends BaseController {
                                          @PathVariable(CUSTOMER_ID) String strCustomerId,
                                          @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
                                          @PathVariable(DEVICE_ID) String strDeviceId,
-                                         @ApiParam(value = "Remove alarm comments.")
-                                         @RequestParam(required = false, defaultValue = "true") Boolean removeAlarmComments,
                                          @ApiParam(value = "Unassign alarms from previous assignees.")
-                                         @RequestParam(required = false, defaultValue = "true") Boolean unassignAlarms) throws ThingsboardException {
+                                         @RequestParam(required = false, defaultValue = "true") Boolean unassignAlarms,
+                                         @ApiParam(value = "Remove alarm comments.")
+                                         @RequestParam(required = false, defaultValue = "true") Boolean removeAlarmComments) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(DEVICE_ID, strDeviceId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));

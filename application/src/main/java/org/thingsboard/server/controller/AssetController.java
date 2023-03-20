@@ -169,14 +169,18 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
     public Asset assignAssetToCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION) @PathVariable("customerId") String strCustomerId,
-                                       @ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+                                       @ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId,
+                                       @ApiParam(value = "Unassign alarms from previous assignees.")
+                                       @RequestParam(required = false, defaultValue = "true") Boolean unassignAlarms,
+                                       @ApiParam(value = "Remove alarm comments.")
+                                       @RequestParam(required = false, defaultValue = "true") Boolean removeAlarmComments) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(ASSET_ID, strAssetId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.READ);
         AssetId assetId = new AssetId(toUUID(strAssetId));
         checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbAssetService.assignAssetToCustomer(getTenantId(), assetId, customer, getCurrentUser());
+        return tbAssetService.assignAssetToCustomer(getTenantId(), assetId, customer, getCurrentUser(), unassignAlarms, removeAlarmComments);
     }
 
     @ApiOperation(value = "Unassign asset from customer (unassignAssetFromCustomer)",

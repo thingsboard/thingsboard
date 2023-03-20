@@ -525,12 +525,19 @@ public class RestClient implements Closeable {
     }
 
     public Optional<Asset> assignAssetToCustomer(CustomerId customerId, AssetId assetId) {
+        return assignAssetToCustomer(customerId, assetId, true, true);
+    }
+
+    public Optional<Asset> assignAssetToCustomer(CustomerId customerId, AssetId assetId, Boolean unassignAlarms, Boolean removeAlarmComments) {
         Map<String, String> params = new HashMap<>();
         params.put("customerId", customerId.getId().toString());
         params.put("assetId", assetId.getId().toString());
+        params.put("unassignAlarms", unassignAlarms.toString());
+        params.put("removeAlarmComments", removeAlarmComments.toString());
 
         try {
-            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", null, Asset.class, params);
+            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}" +
+                    "?unassignAlarms={unassignAlarms}&removeAlarmComments={removeAlarmComments}", null, Asset.class, params);
             return Optional.ofNullable(asset.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -1207,8 +1214,14 @@ public class RestClient implements Closeable {
     }
 
     public Optional<Device> assignDeviceToCustomer(CustomerId customerId, DeviceId deviceId) {
+        return assignDeviceToCustomer(customerId, deviceId, true, true);
+    }
+
+    public Optional<Device> assignDeviceToCustomer(CustomerId customerId, DeviceId deviceId, Boolean unassignAlarms, Boolean removeAlarmComments) {
         try {
-            ResponseEntity<Device> device = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/device/{deviceId}", null, Device.class, customerId.getId(), deviceId.getId());
+            ResponseEntity<Device> device = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/device/{deviceId}" +
+                            "?unassignAlarms={unassignAlarms}&removeAlarmComments={removeAlarmComments}"
+                    , null, Device.class, customerId.getId(), deviceId.getId(), unassignAlarms, removeAlarmComments);
             return Optional.ofNullable(device.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -1828,8 +1841,14 @@ public class RestClient implements Closeable {
     }
 
     public Optional<EntityView> assignEntityViewToCustomer(CustomerId customerId, EntityViewId entityViewId) {
+        return assignEntityViewToCustomer(customerId, entityViewId, true, true);
+    }
+
+    public Optional<EntityView> assignEntityViewToCustomer(CustomerId customerId, EntityViewId entityViewId, Boolean unassignAlarms, Boolean removeAlarmComments) {
         try {
-            ResponseEntity<EntityView> entityView = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/entityView/{entityViewId}", null, EntityView.class, customerId.getId(), entityViewId.getId());
+            ResponseEntity<EntityView> entityView = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/entityView/{entityViewId}" +
+                            "?unassignAlarms={unassignAlarms}&removeAlarmComments={removeAlarmComments}"
+                    , null, EntityView.class, customerId.getId(), entityViewId.getId(), unassignAlarms, removeAlarmComments);
             return Optional.ofNullable(entityView.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -2746,8 +2765,14 @@ public class RestClient implements Closeable {
     }
 
     public Optional<Edge> assignEdgeToCustomer(CustomerId customerId, EdgeId edgeId) {
+        return assignEdgeToCustomer(customerId, edgeId, true, true);
+    }
+
+    public Optional<Edge> assignEdgeToCustomer(CustomerId customerId, EdgeId edgeId, Boolean unassignAlarms, Boolean removeAlarmComments) {
         try {
-            ResponseEntity<Edge> edge = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/edge/{edgeId}", null, Edge.class, customerId.getId(), edgeId.getId());
+            ResponseEntity<Edge> edge = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/edge/{edgeId}" +
+                            "?unassignAlarms={unassignAlarms}&removeAlarmComments={removeAlarmComments}"
+                    , null, Edge.class, customerId.getId(), edgeId.getId(), unassignAlarms, removeAlarmComments);
             return Optional.ofNullable(edge.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {

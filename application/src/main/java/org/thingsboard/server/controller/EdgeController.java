@@ -223,14 +223,18 @@ public class EdgeController extends BaseController {
     public Edge assignEdgeToCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
                                      @PathVariable("customerId") String strCustomerId,
                                      @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
-                                     @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
+                                     @PathVariable(EDGE_ID) String strEdgeId,
+                                     @ApiParam(value = "Unassign alarms from previous assignees.")
+                                     @RequestParam(required = false, defaultValue = "true") Boolean unassignAlarms,
+                                     @ApiParam(value = "Remove alarm comments.")
+                                     @RequestParam(required = false, defaultValue = "true") Boolean removeAlarmComments) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(EDGE_ID, strEdgeId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.READ);
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
         checkEdgeId(edgeId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbEdgeService.assignEdgeToCustomer(getTenantId(), edgeId, customer, getCurrentUser());
+        return tbEdgeService.assignEdgeToCustomer(getTenantId(), edgeId, customer, getCurrentUser(), unassignAlarms, removeAlarmComments);
     }
 
     @ApiOperation(value = "Unassign edge from customer (unassignEdgeFromCustomer)",

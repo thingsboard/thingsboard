@@ -29,8 +29,13 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -41,6 +46,9 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -57,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
@@ -144,13 +154,36 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
+    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user, Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException {
         CustomerId customerId = customer.getId();
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
                     ActionType.ASSIGNED_TO_CUSTOMER, user, entityViewId.toString(), customerId.toString(), customer.getName());
+            if (removeAlarmComments || unassignAlarms) {
+                AlarmQuery alarmQuery = new AlarmQuery(entityViewId, new TimePageLink(Integer.MAX_VALUE),
+                        AlarmSearchStatus.ANY, null, null, false);
+                PageData<AlarmInfo> alarmInfoPageData = alarmService.findAlarms(tenantId, alarmQuery).get(10, TimeUnit.SECONDS);
+                if (!alarmInfoPageData.getData().isEmpty()) {
+                    for (AlarmInfo alarmInfo : alarmInfoPageData.getData()) {
+                        if (unassignAlarms && alarmInfo.getAssigneeId() != null) {
+                            alarmService.unassignAlarm(tenantId, alarmInfo.getId(), System.currentTimeMillis());
+                        }
+                        if (removeAlarmComments) {
+                            PageData<AlarmCommentInfo> alarmComments =
+                                    alarmCommentService.findAlarmComments(tenantId, alarmInfo.getId(), new PageLink(Integer.MAX_VALUE));
+                            if (!alarmComments.getData().isEmpty()) {
+                                alarmComments.getData().forEach(commentInfo -> alarmCommentService.deleteAlarmComment(tenantId, commentInfo.getId()));
+                            }
+                        }
+                    }
+                }
+            }
             return savedEntityView;
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW), ActionType.ASSIGNED_TO_CUSTOMER, user,
+                    e, entityViewId.toString(), customerId.toString());
+            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
                     ActionType.ASSIGNED_TO_CUSTOMER, user, e, entityViewId.toString(), customerId.toString());

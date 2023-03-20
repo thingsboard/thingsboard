@@ -194,7 +194,11 @@ public class EntityViewController extends BaseController {
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
-            @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+            @PathVariable(ENTITY_VIEW_ID) String strEntityViewId,
+            @ApiParam(value = "Unassign alarms from previous assignees.")
+            @RequestParam(required = false, defaultValue = "true") Boolean unassignAlarms,
+            @ApiParam(value = "Remove alarm comments.")
+            @RequestParam(required = false, defaultValue = "true") Boolean removeAlarmComments) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
 
@@ -204,7 +208,7 @@ public class EntityViewController extends BaseController {
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
 
-        return tbEntityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customer, getCurrentUser());
+        return tbEntityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customer, getCurrentUser(), unassignAlarms, removeAlarmComments);
     }
 
     @ApiOperation(value = "Unassign Entity View from customer (unassignEntityViewFromCustomer)",

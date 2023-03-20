@@ -21,6 +21,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -31,12 +35,18 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
@@ -92,15 +102,37 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user) throws ThingsboardException {
+    public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user, Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
                     actionType, user, assetId.toString(), customerId.toString(), customer.getName());
-
+            if (removeAlarmComments || unassignAlarms) {
+                AlarmQuery alarmQuery = new AlarmQuery(assetId, new TimePageLink(Integer.MAX_VALUE),
+                        AlarmSearchStatus.ANY, null, null, false);
+                PageData<AlarmInfo> alarmInfoPageData = alarmService.findAlarms(tenantId, alarmQuery).get(10, TimeUnit.SECONDS);
+                if (!alarmInfoPageData.getData().isEmpty()) {
+                    for (AlarmInfo alarmInfo : alarmInfoPageData.getData()) {
+                        if (unassignAlarms && alarmInfo.getAssigneeId() != null) {
+                            alarmService.unassignAlarm(tenantId, alarmInfo.getId(), System.currentTimeMillis());
+                        }
+                        if (removeAlarmComments) {
+                            PageData<AlarmCommentInfo> alarmComments =
+                                    alarmCommentService.findAlarmComments(tenantId, alarmInfo.getId(), new PageLink(Integer.MAX_VALUE));
+                            if (!alarmComments.getData().isEmpty()) {
+                                alarmComments.getData().forEach(commentInfo -> alarmCommentService.deleteAlarmComment(tenantId, commentInfo.getId()));
+                            }
+                        }
+                    }
+                }
+            }
             return savedAsset;
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user,
+                    e, assetId.toString(), customerId.toString());
+            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
                     assetId.toString(), customerId.toString());

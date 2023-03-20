@@ -37,7 +37,7 @@ public interface TbEntityViewService extends ComponentLifecycleListener {
 
     void delete(EntityView entity, User user) throws ThingsboardException;
 
-    EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException;
+    EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user, Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException;
 
     EntityView assignEntityViewToPublicCustomer(TenantId tenantId, EntityViewId entityViewId, User user) throws ThingsboardException;
 
