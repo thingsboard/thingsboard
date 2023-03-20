@@ -174,5 +174,5 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         }
         return false;
     }
-
 }
+
