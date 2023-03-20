@@ -22,14 +22,26 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @RuleNode(
@@ -86,23 +98,61 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
     }
 
     private void processAssignAsset(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(msg.getOriginator().getId()), customerId);
+        AssetId assetId = new AssetId(msg.getOriginator().getId());
+        ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), assetId, customerId);
+        processAlarmsAssignAndComments(ctx, msg, assetId);
     }
 
     private void processAssignDevice(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId()), customerId);
+        DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
+        ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), deviceId, customerId);
+        processAlarmsAssignAndComments(ctx, msg, deviceId);
     }
 
     private void processAssignEntityView(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()), customerId);
+        EntityViewId entityViewId = new EntityViewId(msg.getOriginator().getId());
+        ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), entityViewId, customerId);
+        processAlarmsAssignAndComments(ctx, msg, entityViewId);
     }
 
     private void processAssignEdge(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()), customerId);
+        EdgeId edgeId = new EdgeId(msg.getOriginator().getId());
+        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), edgeId, customerId);
+        processAlarmsAssignAndComments(ctx, msg, edgeId);
     }
 
     private void processAssignDashboard(TbContext ctx, TbMsg msg, CustomerId customerId) {
         ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(msg.getOriginator().getId()), customerId);
+    }
+
+    private void processAlarmsAssignAndComments(TbContext ctx, TbMsg msg, EntityId entityId) {
+        boolean unassignAlarms = Boolean.parseBoolean(msg.getMetaData().getData().getOrDefault("unassignAlarms", "True"));
+        boolean removeAlarmComments = Boolean.parseBoolean(msg.getMetaData().getData().getOrDefault("removeAlarmComments", "True"));
+
+        if (removeAlarmComments || unassignAlarms) {
+            AlarmQuery alarmQuery = new AlarmQuery(entityId, new TimePageLink(Integer.MAX_VALUE),
+                    AlarmSearchStatus.ANY, null, null, false);
+            PageData<AlarmInfo> alarmInfoPageData = null;
+            try {
+                alarmInfoPageData = ctx.getAlarmService().findAlarms(ctx.getTenantId(), alarmQuery).get(10, TimeUnit.SECONDS);
+                if (!alarmInfoPageData.getData().isEmpty()) {
+                    for (AlarmInfo alarmInfo : alarmInfoPageData.getData()) {
+                        if (unassignAlarms && alarmInfo.getAssigneeId() != null) {
+                            ctx.getAlarmService().unassignAlarm(ctx.getTenantId(), alarmInfo.getId(), System.currentTimeMillis());
+                        }
+                        if (removeAlarmComments) {
+                            PageData<AlarmCommentInfo> alarmComments =
+                                    ctx.getAlarmCommentService().findAlarmComments(ctx.getTenantId(), alarmInfo.getId(), new PageLink(Integer.MAX_VALUE));
+                            if (!alarmComments.getData().isEmpty()) {
+                                alarmComments.getData().forEach(commentInfo -> ctx.getAlarmCommentService().deleteAlarmComment(ctx.getTenantId(), commentInfo.getId()));
+                            }
+                        }
+                    }
+                }
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                ctx.tellFailure(msg, e);
+            }
+        }
     }
 
 }
