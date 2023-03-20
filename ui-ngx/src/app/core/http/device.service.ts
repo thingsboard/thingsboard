@@ -122,9 +122,10 @@ export class DeviceService {
     return this.http.post<Device>(`/api/customer/public/device/${deviceId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public assignDeviceToCustomer(customerId: string, deviceId: string,
+  public assignDeviceToCustomer(customerId: string, deviceId: string, unassignAlarms: boolean, removeAlarmComments: boolean,
                                 config?: RequestConfig): Observable<Device> {
-    return this.http.post<Device>(`/api/customer/${customerId}/device/${deviceId}`, null, defaultHttpOptionsFromConfig(config));
+    let url = `/api/customer/${customerId}/device/${deviceId}?unassignAlarms=${unassignAlarms}&removeAlarmComments=${removeAlarmComments}`;
+    return this.http.post<Device>(url, null, defaultHttpOptionsFromConfig(config));
   }
 
   public unassignDeviceFromCustomer(deviceId: string, config?: RequestConfig) {

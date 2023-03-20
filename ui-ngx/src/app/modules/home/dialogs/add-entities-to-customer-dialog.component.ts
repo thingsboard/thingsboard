@@ -70,7 +70,9 @@ export class AddEntitiesToCustomerDialogComponent extends
 
   ngOnInit(): void {
     this.addEntitiesToCustomerFormGroup = this.fb.group({
-      entityIds: [null, [Validators.required]]
+      entityIds: [null, [Validators.required]],
+      unassignAlarms: [true, [Validators.required]],
+      removeAlarmComments:[true, [Validators.required]]
     });
     switch (this.data.entityType) {
       case EntityType.DEVICE:
@@ -109,10 +111,12 @@ export class AddEntitiesToCustomerDialogComponent extends
   assign(): void {
     this.submitted = true;
     const entityIds: Array<string> = this.addEntitiesToCustomerFormGroup.get('entityIds').value;
+    const unassignAlarms: boolean = this.addEntitiesToCustomerFormGroup.get('unassignAlarms').value;
+    const removeAlarmComments: boolean = this.addEntitiesToCustomerFormGroup.get('removeAlarmComments').value;
     const tasks: Observable<any>[] = [];
     entityIds.forEach(
       (entityId) => {
-        tasks.push(this.getAssignToCustomerTask(this.data.customerId, entityId));
+        tasks.push(this.getAssignToCustomerTask(this.data.customerId, entityId, unassignAlarms, removeAlarmComments));
       }
     );
     forkJoin(tasks).subscribe(
@@ -122,16 +126,16 @@ export class AddEntitiesToCustomerDialogComponent extends
     );
   }
 
-  private getAssignToCustomerTask(customerId: string, entityId: string): Observable<any> {
+  private getAssignToCustomerTask(customerId: string, entityId: string, unassignAlarms: boolean, removeAlarmComments: boolean): Observable<any> {
     switch (this.data.entityType) {
       case EntityType.DEVICE:
-        return this.deviceService.assignDeviceToCustomer(customerId, entityId);
+        return this.deviceService.assignDeviceToCustomer(customerId, entityId, unassignAlarms, removeAlarmComments);
       case EntityType.ASSET:
-        return this.assetService.assignAssetToCustomer(customerId, entityId);
+        return this.assetService.assignAssetToCustomer(customerId, entityId, unassignAlarms, removeAlarmComments);
       case EntityType.EDGE:
-        return this.edgeService.assignEdgeToCustomer(customerId, entityId);
+        return this.edgeService.assignEdgeToCustomer(customerId, entityId, unassignAlarms, removeAlarmComments);
       case EntityType.ENTITY_VIEW:
-        return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
+        return this.entityViewService.assignEntityViewToCustomer(customerId, entityId, unassignAlarms, removeAlarmComments);
       case EntityType.DASHBOARD:
         return this.dashboardService.assignDashboardToCustomer(customerId, entityId);
     }

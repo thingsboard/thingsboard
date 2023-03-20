@@ -36,6 +36,18 @@
         required
         [entityType]="entityType.CUSTOMER">
       </tb-entity-autocomplete>
+      <div style="padding-bottom: 0.5em">
+        <mat-checkbox formControlName="unassignAlarms">
+          {{ 'alarm.unassign-alarms' | translate }}
+        </mat-checkbox>
+        <div class="tb-hint" innerHTML="{{ 'alarm.unassign-alarms-text' | translate }}"></div>
+      </div>
+      <div style="padding-bottom: 0.5em">
+        <mat-checkbox formControlName="removeAlarmComments">
+          {{ 'alarm-comment.remove-alarm-comments' | translate }}
+        </mat-checkbox>
+        <div class="tb-hint" innerHTML="{{ 'alarm-comment.remove-alarm-comments-text' | translate }}"></div>
+      </div>
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">

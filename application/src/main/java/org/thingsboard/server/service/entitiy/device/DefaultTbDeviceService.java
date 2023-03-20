@@ -26,13 +26,21 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -45,6 +53,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
 @TbCoreComponent
@@ -111,15 +122,38 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user) throws ThingsboardException {
+    public Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user,
+                                         Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
                     actionType, user, deviceId.toString(), customerId.toString(), customer.getName());
-
+            if (removeAlarmComments || unassignAlarms) {
+                AlarmQuery alarmQuery = new AlarmQuery(deviceId, new TimePageLink(Integer.MAX_VALUE),
+                        AlarmSearchStatus.ANY, null, null, false);
+                PageData<AlarmInfo> alarmInfoPageData = alarmService.findAlarms(tenantId, alarmQuery).get(10, TimeUnit.SECONDS);
+                if (!alarmInfoPageData.getData().isEmpty()) {
+                    for (AlarmInfo alarmInfo : alarmInfoPageData.getData()) {
+                        if (unassignAlarms && alarmInfo.getAssigneeId() != null) {
+                            alarmService.unassignAlarm(tenantId, alarmInfo.getId(), System.currentTimeMillis());
+                        }
+                        if (removeAlarmComments) {
+                            PageData<AlarmCommentInfo> alarmComments =
+                                    alarmCommentService.findAlarmComments(tenantId, alarmInfo.getId(), new PageLink(Integer.MAX_VALUE));
+                            if (!alarmComments.getData().isEmpty()) {
+                                alarmComments.getData().forEach(commentInfo -> alarmCommentService.deleteAlarmComment(tenantId, commentInfo.getId()));
+                            }
+                        }
+                    }
+                }
+            }
             return savedDevice;
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), actionType, user,
+                    e, deviceId.toString(), customerId.toString());
+            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), actionType, user,
                     e, deviceId.toString(), customerId.toString());

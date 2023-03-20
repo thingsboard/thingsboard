@@ -68,10 +68,10 @@ export class EntityViewService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public assignEntityViewToCustomer(customerId: string, entityViewId: string,
+  public assignEntityViewToCustomer(customerId: string, entityViewId: string, unassignAlarms: boolean, removeAlarmComments: boolean,
                                     config?: RequestConfig): Observable<EntityView> {
-    return this.http.post<EntityView>(`/api/customer/${customerId}/entityView/${entityViewId}`, null,
-      defaultHttpOptionsFromConfig(config));
+    let url = `/api/customer/${customerId}/entityView/${entityViewId}?unassignAlarms=${unassignAlarms}&removeAlarmComments=${removeAlarmComments}`;
+    return this.http.post<EntityView>(url, null, defaultHttpOptionsFromConfig(config));
   }
 
   public unassignEntityViewFromCustomer(entityViewId: string, config?: RequestConfig) {

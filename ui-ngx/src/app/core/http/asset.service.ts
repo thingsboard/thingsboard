@@ -85,9 +85,10 @@ export class AssetService {
     return this.http.post<Asset>(`/api/customer/public/asset/${assetId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public assignAssetToCustomer(customerId: string, assetId: string,
+  public assignAssetToCustomer(customerId: string, assetId: string, unassignAlarms: boolean, removeAlarmComments: boolean,
                                config?: RequestConfig): Observable<Asset> {
-    return this.http.post<Asset>(`/api/customer/${customerId}/asset/${assetId}`, null, defaultHttpOptionsFromConfig(config));
+    let url = `/api/customer/${customerId}/asset/${assetId}?unassignAlarms=${unassignAlarms}&removeAlarmComments=${removeAlarmComments}`;
+    return this.http.post<Asset>(url, null, defaultHttpOptionsFromConfig(config));
   }
 
   public unassignAssetFromCustomer(assetId: string, config?: RequestConfig) {

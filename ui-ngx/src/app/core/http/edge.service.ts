@@ -65,10 +65,10 @@ export class EdgeService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public assignEdgeToCustomer(customerId: string, edgeId: string,
+  public assignEdgeToCustomer(customerId: string, edgeId: string, unassignAlarms: boolean, removeAlarmComments: boolean,
                               config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/customer/${customerId}/edge/${edgeId}`,
-      defaultHttpOptionsFromConfig(config));
+    let url = `/api/customer/${customerId}/edge/${edgeId}?unassignAlarms=${unassignAlarms}&removeAlarmComments=${removeAlarmComments}`;
+    return this.http.post<Edge>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public unassignEdgeFromCustomer(edgeId: string, config?: RequestConfig) {

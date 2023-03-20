@@ -37,7 +37,8 @@ public interface TbDeviceService {
 
     ListenableFuture<Void> delete(Device device, User user);
 
-    Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user) throws ThingsboardException;
+    Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user,
+                                  Boolean unassignAlarms, Boolean removeAlarmComments) throws ThingsboardException;
 
     Device unassignDeviceFromCustomer(Device device, Customer customer, User user) throws ThingsboardException;
 

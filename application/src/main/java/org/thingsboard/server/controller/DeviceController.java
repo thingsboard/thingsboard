@@ -215,16 +215,20 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
     public Device assignDeviceToCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
-                                         @PathVariable("customerId") String strCustomerId,
+                                         @PathVariable(CUSTOMER_ID) String strCustomerId,
                                          @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+                                         @PathVariable(DEVICE_ID) String strDeviceId,
+                                         @ApiParam(value = "Remove alarm comments.")
+                                         @RequestParam(required = false, defaultValue = "true") Boolean removeAlarmComments,
+                                         @ApiParam(value = "Unassign alarms from previous assignees.")
+                                         @RequestParam(required = false, defaultValue = "true") Boolean unassignAlarms) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(DEVICE_ID, strDeviceId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.READ);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDeviceService.assignDeviceToCustomer(getTenantId(), deviceId, customer, getCurrentUser());
+        return tbDeviceService.assignDeviceToCustomer(getTenantId(), deviceId, customer, getCurrentUser(), unassignAlarms, removeAlarmComments);
     }
 
     @ApiOperation(value = "Unassign device from customer (unassignDeviceFromCustomer)",
