@@ -23,6 +23,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface TenantProfileService extends EntityDaoService {
 
     TenantProfile findTenantProfileById(TenantId tenantId, TenantProfileId tenantProfileId);
@@ -46,5 +49,7 @@ public interface TenantProfileService extends EntityDaoService {
     boolean setDefaultTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId);
 
     void deleteTenantProfiles(TenantId tenantId);
+
+    List<TenantProfile> findTenantProfilesByIds(TenantId tenantId, UUID[] ids);
 
 }

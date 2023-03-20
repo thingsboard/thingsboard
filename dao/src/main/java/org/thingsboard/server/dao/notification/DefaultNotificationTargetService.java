@@ -147,7 +147,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                 if (customerId != null && !customerId.isNullUid()) {
                     return userService.findCustomerUsers(tenantId, customerId, pageLink);
                 } else {
-                    return userService.findTenantAdmins(tenantId, pageLink); // TODO: or should we send to all users within tenant?
+                    return userService.findTenantAdmins(tenantId, pageLink);
                 }
             }
         }
