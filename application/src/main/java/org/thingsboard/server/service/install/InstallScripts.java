@@ -301,7 +301,7 @@ public class InstallScripts {
             toLwm2mResource(resource);
             resourceService.saveResource(resource);
         } catch (DataValidationException e) {
-            log.error("[{}] {}", resource.getFileName(), e.getMessage());
+            log.debug("[{}] {}", resource.getFileName(), e.getMessage());
         } catch (Exception ex) {
             throw ex;
         }
