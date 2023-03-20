@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
@@ -44,7 +46,7 @@ public class DefaultApiLimitService implements ApiLimitService {
         if (limit > 0) {
             EntityTypeFilter filter = new EntityTypeFilter();
             filter.setEntityType(entityType);
-            long currentCount = entityService.countEntitiesByQuery(tenantId, null, new EntityCountQuery(filter));
+            long currentCount = entityService.countEntitiesByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), new EntityCountQuery(filter));
             if (notificationRuleProcessingService != null) {
                 notificationRuleProcessingService.process(tenantId, entityType, limit, currentCount);
             }

@@ -18,6 +18,9 @@ package org.thingsboard.server.dao.notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -26,12 +29,15 @@ import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
+
+import java.util.Optional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultNotificationService implements NotificationService {
+public class DefaultNotificationService implements NotificationService, EntityDaoService {
 
     private final NotificationDao notificationDao;
 
@@ -79,6 +85,16 @@ public class DefaultNotificationService implements NotificationService {
     @Override
     public boolean deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
         return notificationDao.deleteByIdAndRecipientId(tenantId, recipientId, notificationId);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findNotificationById(tenantId, new NotificationId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION;
     }
 
 }
