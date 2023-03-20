@@ -101,8 +101,6 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 });
     }
 
-    // TODO: validate that wasn't already created (catch exception unique name)
-    // FIXME: user that does not have access to some entity, gets notifications about this entity - check permissions?
     @Transactional(propagation = Propagation.NOT_SUPPORTED) // so that parent transaction is not aborted on method failure
     @Override
     public void createDefaultNotificationConfigs(TenantId tenantId) {
