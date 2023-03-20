@@ -15,25 +15,36 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.NewPlatformVersionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.discovery.PartitionService;
 
 @Service
-public class NewPlatformVersionTriggerProcessor implements NotificationRuleTriggerProcessor<UpdateMessage, NewPlatformVersionNotificationRuleTriggerConfig> {
+@RequiredArgsConstructor
+public class NewPlatformVersionTriggerProcessor implements NotificationRuleTriggerProcessor<NewPlatformVersionTrigger, NewPlatformVersionNotificationRuleTriggerConfig> {
+
+    private final PartitionService partitionService;
 
     @Override
-    public boolean matchesFilter(UpdateMessage triggerObject, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
-        return triggerObject.isUpdateAvailable();
+    public boolean matchesFilter(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
+         // todo: don't send repetitive notification after platform restart?
+        if (!partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+            return false;
+        }
+        return trigger.getMessage().isUpdateAvailable();
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(UpdateMessage updateMessage, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
+    public NotificationInfo constructNotificationInfo(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
         return NewPlatformVersionNotificationInfo.builder()
-                .message(updateMessage.getMessage())
+                .message(trigger.getMessage().getMessage())
                 .build();
     }
 

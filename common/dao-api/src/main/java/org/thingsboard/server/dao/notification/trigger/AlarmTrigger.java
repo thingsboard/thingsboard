@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification.rule.trigger;
+package org.thingsboard.server.dao.notification.trigger;
 
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 
-public interface NotificationRuleTriggerProcessor<T extends NotificationRuleTrigger, C extends NotificationRuleTriggerConfig> {
+@Data
+@Builder
+public class AlarmTrigger implements NotificationRuleTrigger {
 
-    boolean matchesFilter(T trigger, C triggerConfig);
+    private final AlarmApiCallResult alarmUpdate;
 
-    default boolean matchesClearRule(T trigger, C triggerConfig) {
-        return false;
+    @Override
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.ALARM;
     }
 
-    NotificationInfo constructNotificationInfo(T trigger, C triggerConfig);
-
-    NotificationRuleTriggerType getTriggerType();
+    @Override
+    public EntityId getOriginatorEntityId() {
+        return alarmUpdate.getAlarm().getId();
+    }
 
 }

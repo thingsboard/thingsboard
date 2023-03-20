@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig.Action;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Set;
 
@@ -37,28 +37,28 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmAssignmentNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        Action action = ruleEngineMsg.getType().equals(DataConstants.ALARM_ASSIGN) ? Action.ASSIGNED : Action.UNASSIGNED;
+    public boolean matchesFilter(RuleEngineMsgTrigger trigger, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
+        Action action = trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGN) ? Action.ASSIGNED : Action.UNASSIGNED;
         if (!triggerConfig.getNotifyOn().contains(action)) {
             return false;
         }
-        Alarm alarm = JacksonUtil.fromString(ruleEngineMsg.getData(), Alarm.class);
+        Alarm alarm = JacksonUtil.fromString(trigger.getMsg().getData(), Alarm.class);
         return (isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
                 (isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity())) &&
                 (isEmpty(triggerConfig.getAlarmStatuses()) || AlarmStatusFilter.from(triggerConfig.getAlarmStatuses()).matches(alarm));
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        AlarmInfo alarmInfo = JacksonUtil.fromString(ruleEngineMsg.getData(), AlarmInfo.class);
+    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
+        AlarmInfo alarmInfo = JacksonUtil.fromString(trigger.getMsg().getData(), AlarmInfo.class);
         AlarmAssignee assignee = alarmInfo.getAssignee();
         return AlarmAssignmentNotificationInfo.builder()
-                .action(ruleEngineMsg.getType().equals(DataConstants.ALARM_ASSIGN) ? "assigned" : "unassigned")
+                .action(trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGN) ? "assigned" : "unassigned")
                 .assigneeFirstName(assignee != null ? assignee.getFirstName() : null)
                 .assigneeLastName(assignee != null ? assignee.getLastName() : null)
                 .assigneeEmail(assignee != null ? assignee.getEmail() : null)
                 .assigneeId(assignee != null ? assignee.getId() : null)
-                .userName(ruleEngineMsg.getMetaData().getValue("userName"))
+                .userName(trigger.getMsg().getMetaData().getValue("userName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
                 .alarmOriginator(alarmInfo.getOriginator())

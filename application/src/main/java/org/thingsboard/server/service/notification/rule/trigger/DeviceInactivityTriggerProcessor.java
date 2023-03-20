@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceInactivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.Set;
@@ -38,8 +39,8 @@ public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificati
     private final TbDeviceProfileCache deviceProfileCache;
 
     @Override
-    public boolean matchesFilter(TbMsg ruleEngineMsg, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
-        DeviceId deviceId = (DeviceId) ruleEngineMsg.getOriginator();
+    public boolean matchesFilter(RuleEngineMsgTrigger trigger, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
+        DeviceId deviceId = (DeviceId) trigger.getMsg().getOriginator();
         if (CollectionUtils.isNotEmpty(triggerConfig.getDevices())) {
             return triggerConfig.getDevices().contains(deviceId.getId());
         } else if (CollectionUtils.isNotEmpty(triggerConfig.getDeviceProfiles())) {
@@ -51,13 +52,14 @@ public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificati
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
+    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
+        TbMsg msg = trigger.getMsg();
         return DeviceInactivityNotificationInfo.builder()
-                .deviceId(ruleEngineMsg.getOriginator().getId())
-                .deviceName(ruleEngineMsg.getMetaData().getValue("deviceName"))
-                .deviceType(ruleEngineMsg.getMetaData().getValue("deviceType"))
-                .deviceLabel(ruleEngineMsg.getMetaData().getValue("deviceLabel"))
-                .deviceCustomerId(ruleEngineMsg.getCustomerId())
+                .deviceId(msg.getOriginator().getId())
+                .deviceName(msg.getMetaData().getValue("deviceName"))
+                .deviceType(msg.getMetaData().getValue("deviceType"))
+                .deviceLabel(msg.getMetaData().getValue("deviceLabel"))
+                .deviceCustomerId(msg.getCustomerId())
                 .build();
     }
 

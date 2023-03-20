@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Optional;
 import java.util.Set;
@@ -34,8 +34,8 @@ import java.util.UUID;
 public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<EntityActionNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(TbMsg ruleEngineMsg, EntityActionNotificationRuleTriggerConfig triggerConfig) {
-        String msgType = ruleEngineMsg.getType();
+    public boolean matchesFilter(RuleEngineMsgTrigger trigger, EntityActionNotificationRuleTriggerConfig triggerConfig) {
+        String msgType = trigger.getMsg().getType();
         if (msgType.equals(DataConstants.ENTITY_CREATED)) {
             if (!triggerConfig.isCreated()) {
                 return false;
@@ -51,28 +51,28 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
         } else {
             return false;
         }
-        return triggerConfig.getEntityType() == null || getEntityType(ruleEngineMsg) == triggerConfig.getEntityType();
+        return triggerConfig.getEntityType() == null || getEntityType(trigger.getMsg()) == triggerConfig.getEntityType();
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, EntityActionNotificationRuleTriggerConfig triggerConfig) {
-        EntityId entityId = ruleEngineMsg.getOriginator();
-        String msgType = ruleEngineMsg.getType();
+    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, EntityActionNotificationRuleTriggerConfig triggerConfig) {
+        TbMsg msg = trigger.getMsg();
+        String msgType = msg.getType();
         ActionType actionType = msgType.equals(DataConstants.ENTITY_CREATED) ? ActionType.ADDED :
                                 msgType.equals(DataConstants.ENTITY_UPDATED) ? ActionType.UPDATED :
                                 msgType.equals(DataConstants.ENTITY_DELETED) ? ActionType.DELETED : null;
         return EntityActionNotificationInfo.builder()
-                .entityId(actionType != ActionType.DELETED ? entityId : null)
-                .entityName(ruleEngineMsg.getMetaData().getValue("entityName"))
+                .entityId(actionType != ActionType.DELETED ? msg.getOriginator() : null)
+                .entityName(msg.getMetaData().getValue("entityName"))
                 .actionType(actionType)
-                .originatorUserId(UUID.fromString(ruleEngineMsg.getMetaData().getValue("userId")))
-                .originatorUserName(ruleEngineMsg.getMetaData().getValue("userName"))
-                .entityCustomerId(ruleEngineMsg.getCustomerId())
+                .originatorUserId(UUID.fromString(msg.getMetaData().getValue("userId")))
+                .originatorUserName(msg.getMetaData().getValue("userName"))
+                .entityCustomerId(msg.getCustomerId())
                 .build();
     }
 
-    private static EntityType getEntityType(TbMsg ruleEngineMsg) {
-        return Optional.ofNullable(ruleEngineMsg.getMetaData().getValue("entityType"))
+    private static EntityType getEntityType(TbMsg msg) {
+        return Optional.ofNullable(msg.getMetaData().getValue("entityType"))
                 .map(EntityType::valueOf).orElse(null);
     }
 

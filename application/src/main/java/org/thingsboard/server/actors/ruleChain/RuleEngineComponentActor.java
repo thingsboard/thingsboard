@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineComponentLifecycleEventTrigger;
 
 public abstract class RuleEngineComponentActor<T extends EntityId, P extends ComponentMsgProcessor<T>> extends ComponentActor<T, P> {
 
@@ -32,8 +33,14 @@ public abstract class RuleEngineComponentActor<T extends EntityId, P extends Com
     @Override
     protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         super.logLifecycleEvent(event, e);
-        systemContext.getNotificationRuleProcessingService().process(tenantId, getRuleChainId(), getRuleChainName(),
-                id, processor.getComponentName(), event, e);
+        systemContext.getNotificationRuleProcessingService().process(tenantId, RuleEngineComponentLifecycleEventTrigger.builder()
+                .ruleChainId(getRuleChainId())
+                .ruleChainName(getRuleChainName())
+                .componentId(id)
+                .componentName(processor.getComponentName())
+                .eventType(event)
+                .error(e)
+                .build());
     }
 
     protected abstract RuleChainId getRuleChainId();
