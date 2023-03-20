@@ -137,6 +137,12 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         }
     }
 
+    /**
+     * OFFLINE_All
+     * @param cntDevices
+     * @throws Exception
+     */
+
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OFFLINE_All(int cntDevices) throws Exception {
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
@@ -165,6 +171,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
             }
         }
     }
+
 
     private boolean findEqualsKeyValueInKvEntrys(List<TsKvEntry> finalFuture, TsKvEntry tsKvEntry) {
         for (TsKvEntry kvEntry : finalFuture) {
