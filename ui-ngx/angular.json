@@ -30,6 +30,11 @@
               "src/thingsboard.ico",
               "src/assets",
               {
+                "glob": "*.svg",
+                "input": "./node_modules/@mdi/svg/svg/",
+                "output": "/assets/mdi/"
+              },
+              {
                 "glob": "worker-html.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
