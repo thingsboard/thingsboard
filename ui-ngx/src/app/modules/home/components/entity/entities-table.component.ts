@@ -126,6 +126,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   private widgetResize$: ResizeObserver;
 
+  private rxSubscriptions = new Array<Subscription>();
+
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
               public translate: TranslateService,
@@ -143,7 +145,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (this.entitiesTableConfig) {
       this.init(this.entitiesTableConfig);
     } else {
-      this.init(this.route.snapshot.data.entitiesTableConfig);
+      this.rxSubscriptions.push(this.route.data.subscribe(
+        (data) => {
+          this.init(data.entitiesTableConfig);
+        }
+      ));
     }
     this.widgetResize$ = new ResizeObserver(() => {
       const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
@@ -159,6 +165,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.rxSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.rxSubscriptions.length = 0;
   }
 
   ngOnChanges(changes: SimpleChanges): void {

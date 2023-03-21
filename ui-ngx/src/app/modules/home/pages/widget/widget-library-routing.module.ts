@@ -27,8 +27,8 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
 import { map } from 'rxjs/operators';
-import { detailsToWidgetInfo, toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import { widgetType, WidgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
+import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import { widgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { WidgetsData } from '@home/models/dashboard-component.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -120,7 +120,7 @@ export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction<any> = (
 export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetEditorComponent> =
   ((route, translate, component) => component ? component.widget.widgetName : '');
 
-export const routes: Routes = [
+export const widgetsBundlesRoutes: Routes = [
   {
     path: 'widgets-bundles',
     data: {
@@ -199,6 +199,28 @@ export const routes: Routes = [
         ]
       }
     ]
+  },
+];
+
+const routes: Routes = [
+  {
+    path: 'widgets-bundles',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-bundles'
+  },
+  {
+    path: 'widgets-bundles/:widgetsBundleId/widgetTypes',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes',
+  },
+  {
+    path: 'widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
+  },
+  {
+    path: 'widgets-bundles/:widgetsBundleId/widgetTypes/add/:widgetType',
+    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/add/:widgetType',
   }
 ];
 

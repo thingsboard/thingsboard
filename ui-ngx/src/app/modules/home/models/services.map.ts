@@ -42,6 +42,7 @@ import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentica
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { NotificationService } from '@core/http/notification.service';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
+import { UserSettingsService } from '@core/http/user-settings.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -71,6 +72,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['resourceService', ResourceService],
    ['twoFactorAuthenticationService', TwoFactorAuthenticationService],
    ['telemetryWsService', TelemetryWebsocketService],
+   ['userSettingsService', UserSettingsService],
    ['notificationService', NotificationService]
   ]
 );
