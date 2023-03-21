@@ -28,8 +28,16 @@ public class SystemInfoData {
     private String serviceType;
     @ApiModelProperty(position = 3, value = "CPU usage.")
     private Double cpuUsage;
-    @ApiModelProperty(position = 4, value = "Memory usage.")
-    private Long memUsage;
-    @ApiModelProperty(position = 5, value = "Free disc space.")
+    @ApiModelProperty(position = 4, value = "Total CPU usage.")
+    private Double totalCpuUsage;
+    @ApiModelProperty(position = 5, value = "Memory usage in bytes.")
+    private Long memoryUsage;
+    @ApiModelProperty(position = 6, value = "Total memory in bytes.")
+    private Long totalMemory;
+    @ApiModelProperty(position = 6, value = "Free memory in bytes.")
+    private Long freeMemory;
+    @ApiModelProperty(position = 7, value = "Free disc space in bytes.")
     private Long freeDiscSpace;
+    @ApiModelProperty(position = 7, value = "Total disc space in bytes.")
+    private Long totalDiscSpace;
 }

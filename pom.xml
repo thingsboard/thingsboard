@@ -149,6 +149,7 @@
         <allure-testng.version>2.21.0</allure-testng.version>
         <allure-maven.version>2.12.0</allure-maven.version>
         <slack-api.version>1.12.1</slack-api.version>
+        <oshi.version>3.4.0</oshi.version>
     </properties>
 
     <modules>
@@ -1986,6 +1987,11 @@
                 <groupId>net.objecthunter</groupId>
                 <artifactId>exp4j</artifactId>
                 <version>${exp4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dblock</groupId>
+                <artifactId>oshi-core</artifactId>
+                <version>${oshi.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

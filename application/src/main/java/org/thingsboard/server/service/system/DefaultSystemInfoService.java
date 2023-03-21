@@ -21,22 +21,27 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.SystemInfoData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,15 +50,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.common.util.SystemUtil.getFreeMemory;
 import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
 import static org.thingsboard.common.util.SystemUtil.getFreeDiscSpace;
 import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
+import static org.thingsboard.common.util.SystemUtil.getTotalCpuUsage;
+import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
+import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
 
 @TbCoreComponent
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DefaultSystemInfoService implements SystemInfoService {
+public class DefaultSystemInfoService extends TbApplicationEventListener<PartitionChangeEvent> implements SystemInfoService {
 
     public static final FutureCallback<Integer> CALLBACK = new FutureCallback<>() {
         @Override
@@ -67,6 +76,7 @@ public class DefaultSystemInfoService implements SystemInfoService {
     };
 
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final PartitionService partitionService;
     private final DiscoveryService discoveryService;
     private final TelemetrySubscriptionService telemetryService;
     private ScheduledExecutorService scheduler;
@@ -74,18 +84,15 @@ public class DefaultSystemInfoService implements SystemInfoService {
     @Value("${zk.enabled:false}")
     private boolean zkEnabled;
 
-    @PostConstruct
-    private void init() {
-        if (!zkEnabled) {
-            scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
-            scheduler.scheduleAtFixedRate(this::saveCurrentSystemInfo, 0, 1, TimeUnit.MINUTES);
-        }
-    }
-
-    @PreDestroy
-    private void destroy() {
-        if (scheduler != null) {
-            scheduler.shutdownNow();
+    @Override
+    protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
+            if (scheduler == null && partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+                scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
+                scheduler.scheduleAtFixedRate(this::saveCurrentSystemInfo, 0, 1, TimeUnit.MINUTES);
+            } else {
+                destroy();
+            }
         }
     }
 
@@ -96,13 +103,7 @@ public class DefaultSystemInfoService implements SystemInfoService {
         ServiceInfo serviceInfo = serviceInfoProvider.getServiceInfoWithCurrentSystemInfo();
 
         if (zkEnabled) {
-            List<SystemInfoData> clusterSystemData = new ArrayList<>();
-            clusterSystemData.add(createSystemInfoData(serviceInfo));
-            this.discoveryService.getOtherServers()
-                    .stream()
-                    .map(this::createSystemInfoData)
-                    .forEach(clusterSystemData::add);
-            systemInfo.setSystemData(clusterSystemData);
+            systemInfo.setSystemData(getSystemData(serviceInfo));
         } else {
             systemInfo.setMonolith(true);
             systemInfo.setSystemData(Collections.singletonList(createSystemInfoData(serviceInfo)));
@@ -112,6 +113,22 @@ public class DefaultSystemInfoService implements SystemInfoService {
     }
 
     protected void saveCurrentSystemInfo() {
+        if (zkEnabled) {
+            saveCurrentClusterSystemInfo();
+        } else {
+            saveCurrentMonolithSystemInfo();
+        }
+    }
+
+    private void saveCurrentClusterSystemInfo() {
+        long ts = System.currentTimeMillis();
+
+        List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfoWithCurrentSystemInfo());
+        BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
+        doSave(Collections.singletonList(clusterDataKv));
+    }
+
+    private void saveCurrentMonolithSystemInfo() {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
 
@@ -119,16 +136,46 @@ public class DefaultSystemInfoService implements SystemInfoService {
         if (memoryUsage != null) {
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", memoryUsage)));
         }
+        Long totalMemory = getTotalMemory();
+        if (totalMemory != null) {
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalMemory", totalMemory)));
+        }
+        Long freeMemory = getFreeMemory();
+        if (freeMemory != null) {
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeMemory", freeMemory)));
+        }
         Double cpuUsage = getCpuUsage();
         if (cpuUsage != null) {
             tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("cpuUsage", cpuUsage)));
+        }
+        Double totalCpuUsage = getTotalCpuUsage();
+        if (totalCpuUsage != null) {
+            tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("totalCpuUsage", totalCpuUsage)));
         }
         Long freeDiscSpace = getFreeDiscSpace();
         if (freeDiscSpace != null) {
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeDiscSpace", freeDiscSpace)));
         }
+        Long totalDiscSpace = getTotalDiscSpace();
+        if (totalDiscSpace != null) {
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalDiscSpace", totalDiscSpace)));
+        }
 
-        telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, tsList, CALLBACK);
+        doSave(tsList);
+    }
+
+    private void doSave(List<TsKvEntry> telemetry) {
+        telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, telemetry, CALLBACK);
+    }
+
+    private List<SystemInfoData> getSystemData(ServiceInfo serviceInfo) {
+        List<SystemInfoData> clusterSystemData = new ArrayList<>();
+        clusterSystemData.add(createSystemInfoData(serviceInfo));
+        this.discoveryService.getOtherServers()
+                .stream()
+                .map(this::createSystemInfoData)
+                .forEach(clusterSystemData::add);
+        return clusterSystemData;
     }
 
     private SystemInfoData createSystemInfoData(ServiceInfo serviceInfo) {
@@ -136,10 +183,21 @@ public class DefaultSystemInfoService implements SystemInfoService {
         SystemInfoData infoData = new SystemInfoData();
         infoData.setServiceId(serviceInfo.getServiceId());
         infoData.setServiceType(serviceTypes.size() > 1 ? "MONOLITH" : serviceTypes.get(0));
-        infoData.setMemUsage(serviceInfo.getSystemInfo().getMemoryUsage());
+        infoData.setMemoryUsage(serviceInfo.getSystemInfo().getMemoryUsage());
+        infoData.setTotalMemory(serviceInfo.getSystemInfo().getTotalMemory());
+        infoData.setFreeMemory(serviceInfo.getSystemInfo().getFreeMemory());
         infoData.setCpuUsage(serviceInfo.getSystemInfo().getCpuUsage());
+        infoData.setTotalCpuUsage(serviceInfo.getSystemInfo().getTotalCpuUsage());
         infoData.setFreeDiscSpace(serviceInfo.getSystemInfo().getFreeDiscSpace());
+        infoData.setTotalDiscSpace(serviceInfo.getSystemInfo().getTotalDiscSpace());
         return infoData;
     }
 
+    @PreDestroy
+    private void destroy() {
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+            scheduler = null;
+        }
+    }
 }

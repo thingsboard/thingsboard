@@ -16,16 +16,24 @@
 package org.thingsboard.common.util;
 
 import lombok.extern.slf4j.Slf4j;
+import oshi.SystemInfo;
+import oshi.hardware.HardwareAbstractionLayer;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.lang.management.OperatingSystemMXBean;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Slf4j
 public class SystemUtil {
+
+    private static final HardwareAbstractionLayer HARDWARE;
+
+    static {
+        SystemInfo si = new SystemInfo();
+        HARDWARE = si.getHardware();
+    }
 
     public static Long getMemoryUsage() {
         try {
@@ -37,12 +45,38 @@ public class SystemUtil {
         return null;
     }
 
+    public static Long getTotalMemory() {
+        try {
+            return HARDWARE.getMemory().getTotal();
+        } catch (Exception e) {
+            log.debug("Failed to get total memory!!!", e);
+        }
+        return null;
+    }
+
+    public static Long getFreeMemory() {
+        try {
+            return HARDWARE.getMemory().getAvailable();
+        } catch (Exception e) {
+            log.debug("Failed to get free memory!!!", e);
+        }
+        return null;
+    }
+
     public static Double getCpuUsage() {
         try {
-            OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-            return osBean.getSystemLoadAverage();
+            return prepare(HARDWARE.getProcessor().getSystemLoadAverage());
         } catch (Exception e) {
             log.debug("Failed to get cpu usage!!!", e);
+        }
+        return null;
+    }
+
+    public static Double getTotalCpuUsage() {
+        try {
+            return prepare(HARDWARE.getProcessor().getSystemCpuLoad() * 100);
+        } catch (Exception e) {
+            log.debug("Failed to get total cpu usage!!!", e);
         }
         return null;
     }
@@ -55,5 +89,19 @@ public class SystemUtil {
             log.debug("Failed to get free disc space!!!", e);
         }
         return null;
+    }
+
+    public static Long getTotalDiscSpace() {
+        try {
+            FileStore store = Files.getFileStore(Paths.get("/"));
+            return store.getTotalSpace();
+        } catch (Exception e) {
+            log.debug("Failed to get total disc space!!!", e);
+        }
+        return null;
+    }
+
+    private static Double prepare(Double d) {
+        return (int) (d * 100) / 100.0;
     }
 }
