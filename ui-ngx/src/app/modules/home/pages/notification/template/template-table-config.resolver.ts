@@ -28,46 +28,51 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
-} from '@home/pages/notification-center/template-table/template-notification-dialog.component';
+} from '@home/pages/notification/template/template-notification-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  TemplateTableHeaderComponent
-} from '@home/pages/notification-center/template-table/template-table-header.component';
+import { TemplateTableHeaderComponent } from '@home/pages/notification/template/template-table-header.component';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 
-export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate> {
+@Injectable()
+export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<NotificationTemplate>> {
+
+  private readonly config: EntityTableConfig<NotificationTemplate> = new EntityTableConfig<NotificationTemplate>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog) {
-    super();
-    this.loadDataOnInit = false;
-    this.rowPointer = true;
 
-    this.entityTranslations = {
+    this.config.detailsPanelEnabled = false;
+    this.config.selectionEnabled = false;
+    this.config.addEnabled = false;
+    this.config.rowPointer = true;
+
+    this.config.entityTranslations = {
       noEntities: 'notification.no-notification-templates',
       search: 'notification.search-templates'
     };
-    this.entityResources = {} as EntityTypeResource<NotificationTemplate>;
+    this.config.entityResources = {} as EntityTypeResource<NotificationTemplate>;
 
-    this.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
 
-    this.deleteEntityTitle = template => this.translate.instant('notification.delete-template-title', {templateName: template.name});
-    this.deleteEntityContent = () => this.translate.instant('notification.delete-template-text');
-    this.deleteEntity = id => this.notificationService.deleteNotificationTemplate(id.id);
+    this.config.deleteEntityTitle = template => this.translate.instant('notification.delete-template-title', {templateName: template.name});
+    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-template-text');
+    this.config.deleteEntity = id => this.notificationService.deleteNotificationTemplate(id.id);
 
-    this.cellActionDescriptors = this.configureCellActions();
+    this.config.cellActionDescriptors = this.configureCellActions();
 
-    this.headerComponent = TemplateTableHeaderComponent;
-    this.onEntityAction = action => this.onTemplateAction(action);
+    this.config.headerComponent = TemplateTableHeaderComponent;
+    this.config.onEntityAction = action => this.onTemplateAction(action);
 
-    this.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
+    this.config.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
 
-    this.handleRowClick = ($event, template) => {
+    this.config.handleRowClick = ($event, template) => {
       this.editTemplate($event, template);
       return true;
     };
 
-    this.columns.push(
+    this.config.columns.push(
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%',
         (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
@@ -76,6 +81,10 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
       new EntityTableColumn<NotificationTemplate>('configuration.defaultTextTemplate', 'notification.message', '35%',
         (template) => template.configuration.defaultTextTemplate, () => ({}), false)
     );
+  }
+
+  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTemplate> {
+    return this.config;
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationTemplate>> {
@@ -105,7 +114,7 @@ export class TemplateTableConfig extends EntityTableConfig<NotificationTemplate>
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.updateData();
+          this.config.updateData();
         }
       });
   }

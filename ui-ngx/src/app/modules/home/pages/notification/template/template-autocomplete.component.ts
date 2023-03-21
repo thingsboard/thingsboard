@@ -37,7 +37,7 @@ import { isEqual } from '@core/utils';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
-} from '@home/pages/notification-center/template-table/template-notification-dialog.component';
+} from '@home/pages/notification/template/template-notification-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coerce-boolean';

@@ -42,7 +42,6 @@ import { AlarmModule } from '@home/pages/alarm/alarm.module';
 import { EntitiesModule } from '@home/pages/entities/entities.module';
 import { FeaturesModule } from '@home/pages/features/features.module';
 import { NotificationModule } from '@home/pages/notification/notification.module';
-import { NotificationCenterModule } from '@home/pages/notification-center/notification-center.module';
 
 @NgModule({
   exports: [

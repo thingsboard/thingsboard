@@ -14,36 +14,23 @@
 /// limitations under the License.
 ///
 
-import { ActivatedRoute, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
-import { Component, NgModule, OnInit } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
-import { isDefinedAndNotNull } from '@core/utils';
-
-@Component({
-  selector: 'tb-notification-temp-component',
-  template: '<div>{{text}}</div>',
-  styleUrls: []
-})
-class NotificationTempComponent implements OnInit {
-
-  text: string;
-
-  constructor(private route: ActivatedRoute) {}
-
-  ngOnInit() {
-    if (isDefinedAndNotNull(this.route.snapshot.data.text)) {
-      this.text = this.route.snapshot.data.text;
-    }
-  }
-}
+import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
+import { InboxTableConfigResolver } from '@home/pages/notification/inbox/inbox-table-config.resolver';
+import { SentTableConfigResolver } from '@home/pages/notification/sent/sent-table-config.resolver';
+import { RecipientTableConfigResolver } from '@home/pages/notification/recipient/recipient-table-config.resolver';
+import { TemplateTableConfigResolver } from '@home/pages/notification/template/template-table-config.resolver';
+import { RuleTableConfigResolver } from '@home/pages/notification/rule/rule-table-config.resolver';
 
 const routes: Routes = [
   {
     path: 'notification',
     component: RouterTabsComponent,
     data: {
-      auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER, Authority.SYS_ADMIN],
       breadcrumb: {
         label: 'notification.notification-center',
         icon: 'mdi:message-badge'
@@ -54,73 +41,83 @@ const routes: Routes = [
         path: '',
         children: [],
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER, Authority.SYS_ADMIN],
           redirectTo: '/notification/inbox'
         }
       },
       {
         path: 'inbox',
-        component: NotificationTempComponent,
+        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER, Authority.SYS_ADMIN],
           title: 'notification.inbox',
           breadcrumb: {
             label: 'notification.inbox',
             icon: 'inbox'
-          },
-          text: 'TODO: Implement inbox'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: InboxTableConfigResolver
         }
       },
       {
         path: 'sent',
-        component: NotificationTempComponent,
+        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN],
+          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
           title: 'notification.sent',
           breadcrumb: {
             label: 'notification.sent',
             icon: 'outbox'
-          },
-          text: 'TODO: Implement sent'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: SentTableConfigResolver
         }
       },
       {
         path: 'templates',
-        component: NotificationTempComponent,
+        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN],
+          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
           title: 'notification.templates',
           breadcrumb: {
             label: 'notification.templates',
             icon: 'mdi:message-draw'
-          },
-          text: 'TODO: Implement templates'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: TemplateTableConfigResolver
         }
       },
       {
         path: 'recipients',
-        component: NotificationTempComponent,
+        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN],
+          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
           title: 'notification.recipients',
           breadcrumb: {
             label: 'notification.recipients',
             icon: 'contacts'
           },
-          text: 'TODO: Implement recipients'
+        },
+        resolve: {
+          entitiesTableConfig: RecipientTableConfigResolver
         }
       },
       {
         path: 'rules',
-        component: NotificationTempComponent,
+        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN],
+          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
           title: 'notification.rules',
           breadcrumb: {
             label: 'notification.rules',
             icon: 'mdi:message-cog'
-          },
-          text: 'TODO: Implement rules'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: RuleTableConfigResolver
         }
       }
     ]
@@ -128,7 +125,13 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  declarations: [NotificationTempComponent],
+  providers: [
+    InboxTableConfigResolver,
+    SentTableConfigResolver,
+    RecipientTableConfigResolver,
+    TemplateTableConfigResolver,
+    RuleTableConfigResolver
+  ],
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })

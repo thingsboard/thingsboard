@@ -25,49 +25,54 @@ import { NotificationTarget, NotificationTargetTypeTranslationMap } from '@share
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  TargetNotificationDialogComponent,
-  TargetsNotificationDialogData
-} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+  RecipientNotificationDialogComponent,
+  RecipientNotificationDialogData
+} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import {
-  TargetTableHeaderComponent
-} from '@home/pages/notification-center/targets-table/target-table-header.component';
+import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Injectable } from '@angular/core';
 
-export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
+@Injectable()
+export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<NotificationTarget>> {
+
+  private readonly config: EntityTableConfig<NotificationTarget> = new EntityTableConfig<NotificationTarget>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog) {
-    super();
-    this.loadDataOnInit = false;
-    this.rowPointer = true;
 
-    this.entityTranslations = {
+    this.config.detailsPanelEnabled = false;
+    this.config.selectionEnabled = false;
+    this.config.addEnabled = false;
+    this.config.rowPointer = true;
+
+    this.config.entityTranslations = {
       noEntities: 'notification.no-targets-notification',
       search: 'notification.search-targets'
     };
-    this.entityResources = {} as EntityTypeResource<NotificationTarget>;
+    this.config.entityResources = {} as EntityTypeResource<NotificationTarget>;
 
-    this.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTargets(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTargets(pageLink);
 
-    this.deleteEntityTitle = target => this.translate.instant('notification.delete-target-title', {targetName: target.name});
-    this.deleteEntityContent = () => this.translate.instant('notification.delete-target-text');
-    this.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
+    this.config.deleteEntityTitle = target => this.translate.instant('notification.delete-target-title', {targetName: target.name});
+    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-target-text');
+    this.config.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
 
-    this.cellActionDescriptors = this.configureCellActions();
+    this.config.cellActionDescriptors = this.configureCellActions();
 
-    this.headerComponent = TargetTableHeaderComponent;
-    this.onEntityAction = action => this.onTargetAction(action);
+    this.config.headerComponent = RecipientTableHeaderComponent;
+    this.config.onEntityAction = action => this.onTargetAction(action);
 
-    this.defaultSortOrder = {property: 'name', direction: Direction.ASC};
+    this.config.defaultSortOrder = {property: 'name', direction: Direction.ASC};
 
-    this.handleRowClick = ($event, target) => {
+    this.config.handleRowClick = ($event, target) => {
       this.editTarget($event, target);
       return true;
     };
 
-    this.columns.push(
+    this.config.columns.push(
       new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
       new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '20%',
         (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.configuration.type)),
@@ -78,6 +83,10 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
     );
   }
 
+  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTarget> {
+    return this.config;
+  }
+
   private configureCellActions(): Array<CellActionDescriptor<NotificationTarget>> {
     return [];
   }
@@ -86,8 +95,8 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
-      NotificationTarget>(TargetNotificationDialogComponent, {
+    this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
+      NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -97,7 +106,7 @@ export class TargetsTableConfig extends EntityTableConfig<NotificationTarget> {
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.updateData();
+          this.config.updateData();
         }
       });
   }

@@ -388,14 +388,14 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
   ],
   [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
     {
-      name: 'notification.target-type.originator-entity-owner-users',
-      hint: 'notification.target-type.originator-entity-owner-users-hint'
+      name: 'notification.target-type.users-entity-owner',
+      hint: 'notification.target-type.users-entity-owner-hint'
     }
   ],
   [NotificationTargetConfigType.ACTION_TARGET_USER,
     {
-      name: 'notification.target-type.action-target-user',
-      hint: 'notification.target-type.action-target-user-hint'
+      name: 'notification.target-type.affected-user',
+      hint: 'notification.target-type.affected-user-hint'
     }
   ]
 ]);

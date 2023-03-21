@@ -21,11 +21,11 @@ import { AppState } from '@core/core.state';
 import { NotificationTarget } from '@shared/models/notification.models';
 
 @Component({
-  selector: 'tb-target-table-header',
-  templateUrl: './target-table-header.component.html',
-  styleUrls: ['target-table-header.component.scss']
+  selector: 'tb-recipient-table-header',
+  templateUrl: './recipient-table-header.component.html',
+  styleUrls: ['recipient-table-header.component.scss']
 })
-export class TargetTableHeaderComponent extends EntityTableHeaderComponent<NotificationTarget> {
+export class RecipientTableHeaderComponent extends EntityTableHeaderComponent<NotificationTarget> {
 
   constructor(protected store: Store<AppState>) {
     super(store);

@@ -140,8 +140,48 @@ export class MenuService {
         id: guid(),
         name: 'notification.notification-center',
         type: 'link',
-        path: '/notification-center',
-        icon: 'notifications'
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: guid(),
+            name: 'notification.inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          },
+          {
+            id: guid(),
+            name: 'notification.sent',
+            type: 'link',
+            path: '/notification/sent',
+            icon: 'outbox'
+          },
+          {
+            id: guid(),
+            name: 'notification.templates',
+            type: 'link',
+            path: '/notification/templates',
+            icon: 'mdi:message-draw',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
+            name: 'notification.recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: guid(),
+            name: 'notification.rules',
+            type: 'link',
+            path: '/notification/rules',
+            icon: 'mdi:message-cog',
+            isMdiIcon: true
+          }
+        ]
       },
       {
         id: guid(),
@@ -251,16 +291,6 @@ export class MenuService {
             icon: 'now_widgets',
             path: '/widgets-bundles'
           }
-        ]
-      },
-      {
-        name: 'notification.management',
-        places: [
-          {
-            name: 'notification.notification-center',
-            path: '/notification-center',
-            icon: 'notifications'
-          },
         ]
       },
       {
@@ -543,13 +573,6 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'notification.notification-center',
-        type: 'link',
-        path: '/notification-center',
-        icon: 'notifications'
-      },
-      {
-        id: guid(),
         name: 'admin.settings',
         type: 'link',
         path: '/settings',
@@ -722,16 +745,6 @@ export class MenuService {
         ]
       },
       {
-        name: 'notification.management',
-        places: [
-          {
-            name: 'notification.notification-center',
-            path: '/notification-center',
-            icon: 'notifications'
-          },
-        ]
-      },
-      {
         name: 'audit-log.audit',
         places: [
           {
@@ -855,6 +868,25 @@ export class MenuService {
         icon: 'dashboard'
       }
     );
+    sections.push(
+      {
+        id: guid(),
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: guid(),
+            name: 'notification.inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          }
+        ]
+      }
+    );
     return sections;
   }
 
@@ -915,16 +947,6 @@ export class MenuService {
             icon: 'dashboard',
             path: '/dashboards'
           }
-        ]
-      },
-      {
-        name: 'notification.management',
-        places: [
-          {
-            name: 'notification.notification-center',
-            path: '/notification-center',
-            icon: 'notifications'
-          },
         ]
       }
     );

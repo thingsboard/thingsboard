@@ -39,11 +39,11 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { map, takeUntil } from 'rxjs/operators';
 import { getCurrentTime } from '@shared/models/time/time.models';
 import {
-  TargetNotificationDialogComponent,
-  TargetsNotificationDialogData
-} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+  RecipientNotificationDialogComponent,
+  RecipientNotificationDialogData
+} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
 import { MatButton } from '@angular/material/button';
-import { TemplateConfiguration } from '@home/pages/notification-center/template-table/template-configuration';
+import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -51,12 +51,12 @@ export interface RequestNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-request-notification-dialog',
-  templateUrl: './request-notification-dialog.component.html',
-  styleUrls: ['./request-notification-dialog.component.scss']
+  selector: 'tb-sent-notification-dialog',
+  templateUrl: './sent-notification-dialog.component.html',
+  styleUrls: ['./sent-notification-dialog.component.scss']
 })
-export class RequestNotificationDialogComponent extends
-  TemplateConfiguration<RequestNotificationDialogComponent, NotificationRequest> implements OnDestroy {
+export class SentNotificationDialogComponent extends
+  TemplateConfiguration<SentNotificationDialogComponent, NotificationRequest> implements OnDestroy {
 
   @ViewChild('createNotification', {static: true}) createNotification: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
@@ -76,7 +76,7 @@ export class RequestNotificationDialogComponent extends
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              protected dialogRef: MatDialogRef<RequestNotificationDialogComponent, NotificationRequest>,
+              protected dialogRef: MatDialogRef<SentNotificationDialogComponent, NotificationRequest>,
               @Inject(MAT_DIALOG_DATA) public data: RequestNotificationDialogData,
               private breakpointObserver: BreakpointObserver,
               protected fb: FormBuilder,
@@ -242,8 +242,8 @@ export class RequestNotificationDialogComponent extends
       $event.stopPropagation();
     }
     button._elementRef.nativeElement.blur();
-    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
-      NotificationTarget>(TargetNotificationDialogComponent, {
+    this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
+      NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {}

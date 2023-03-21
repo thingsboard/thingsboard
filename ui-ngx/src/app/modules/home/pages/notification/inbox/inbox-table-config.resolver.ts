@@ -29,54 +29,64 @@ import {
   NotificationTemplateTypeTranslateMap
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
-import { InboxTableHeaderComponent } from '@home/pages/notification-center/inbox-table/inbox-table-header.component';
+import { InboxTableHeaderComponent } from '@home/pages/notification/inbox/inbox-table-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  InboxNotificationDialogComponent, InboxNotificationDialogData
-} from '@home/pages/notification-center/inbox-table/inbox-notification-dialog.component';
+  InboxNotificationDialogComponent,
+  InboxNotificationDialogData
+} from '@home/pages/notification/inbox/inbox-notification-dialog.component';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 
-export class InboxTableConfig extends EntityTableConfig<Notification> {
+@Injectable()
+export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notification>> {
+
+  private readonly config: EntityTableConfig<Notification> = new EntityTableConfig<Notification>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
               private datePipe: DatePipe) {
-    super();
-    this.entitiesDeleteEnabled = false;
-    this.rowPointer = true;
-    this.entityTranslations = {
+
+    this.config.detailsPanelEnabled = false;
+    this.config.selectionEnabled = false;
+    this.config.addEnabled = false;
+    this.config.entitiesDeleteEnabled = false;
+    this.config.rowPointer = true;
+    this.config.entityTranslations = {
       noEntities: 'notification.no-inbox-notification',
       search: 'notification.search-notification'
     };
-    this.entityResources = {} as EntityTypeResource<Notification>;
+    this.config.entityResources = {} as EntityTypeResource<Notification>;
 
-    this.entitiesFetchFunction = pageLink => this.notificationService.getNotifications(pageLink, this.componentsData.unreadOnly);
+    this.config.entitiesFetchFunction = pageLink =>
+      this.notificationService.getNotifications(pageLink, this.config.componentsData.unreadOnly);
 
-    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+    this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
-    this.handleRowClick = ($event, notification) => {
+    this.config.handleRowClick = ($event, notification) => {
       this.showNotification($event, notification);
       return true;
     };
 
-    this.componentsData = {
+    this.config.componentsData = {
       unreadOnly: true
     };
 
-    this.cellActionDescriptors = this.configureCellActions();
+    this.config.cellActionDescriptors = this.configureCellActions();
 
-    this.headerComponent = InboxTableHeaderComponent;
+    this.config.headerComponent = InboxTableHeaderComponent;
 
-    this.headerActionDescriptors = [{
+    this.config.headerActionDescriptors = [{
       name: this.translate.instant('notification.mark-all-as-read'),
       icon: 'done_all',
       isEnabled: () => true,
       onAction: $event => this.markAllRead($event)
     }];
 
-    this.columns.push(
+    this.config.columns.push(
       new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<Notification>('type', 'notification.type', '10%', (notification) =>
         this.translate.instant(NotificationTemplateTypeTranslateMap.get(notification.type).name)),
@@ -84,6 +94,10 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
       new EntityTableColumn<Notification>('text', 'notification.message', '60%')
     );
 
+  }
+
+  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<Notification> {
+    return this.config;
   }
 
   private configureCellActions(): Array<CellActionDescriptor<Notification>> {
@@ -100,10 +114,10 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
       $event.stopPropagation();
     }
     this.notificationService.markAllNotificationsAsRead().subscribe(() => {
-      if (this.componentsData.unreadOnly) {
-        this.getTable().resetSortAndFilter(true);
+      if (this.config.componentsData.unreadOnly) {
+        this.config.getTable().resetSortAndFilter(true);
       } else {
-        this.updateData();
+        this.config.updateData();
       }
     });
   }
@@ -113,18 +127,18 @@ export class InboxTableConfig extends EntityTableConfig<Notification> {
       $event.stopPropagation();
     }
     this.notificationService.markNotificationAsRead(entity.id.id).subscribe(() => {
-      if (this.componentsData.unreadOnly) {
-        this.getTable().dataSource.pageData$.pipe(take(1)).subscribe(
+      if (this.config.componentsData.unreadOnly) {
+        this.config.getTable().dataSource.pageData$.pipe(take(1)).subscribe(
           (value) => {
-            if (value.data.length === 1 && this.getTable().pageLink.page) {
-              this.getTable().pageLink.page--;
+            if (value.data.length === 1 && this.config.getTable().pageLink.page) {
+              this.config.getTable().pageLink.page--;
             }
-            this.updateData();
+            this.config.updateData();
           }
         );
       } else {
         entity.status = NotificationStatus.READ;
-        this.getTable().detectChanges();
+        this.config.getTable().detectChanges();
       }
     });
   }

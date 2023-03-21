@@ -37,50 +37,58 @@ import { Direction } from '@shared/models/page/sort-order';
 import { DatePipe } from '@angular/common';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import {
-  RequestNotificationDialogComponent,
-  RequestNotificationDialogData
-} from '@home/pages/notification-center/request-table/request-notification-dialog.componet';
+  RequestNotificationDialogData,
+  SentNotificationDialogComponent
+} from '@home/pages/notification/sent/sent-notification-dialog.componet';
 import { PageLink } from '@shared/models/page/page-link';
 import {
-  NotificationRequestErrorDialogComponent,
-  NotificationRequestErrorDialogData
-} from '@home/pages/notification-center/request-table/notification-request-error-dialog.component';
+  NotificationRequestErrorDialogData,
+  SentErrorDialogComponent
+} from '@home/pages/notification/sent/sent-error-dialog.component';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Injectable } from '@angular/core';
 
-export class RequestTableConfig extends EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> {
+@Injectable()
+export class SentTableConfigResolver implements Resolve<EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>> {
+
+  private readonly config: EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> =
+    new EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
               private datePipe: DatePipe) {
-    super();
-    this.loadDataOnInit = false;
-    this.searchEnabled = false;
-    this.entityTranslations = {
+
+    this.config.detailsPanelEnabled = false;
+    this.config.selectionEnabled = false;
+    this.config.addEnabled = false;
+    this.config.searchEnabled = false;
+    this.config.entityTranslations = {
       noEntities: 'notification.no-notification-request',
     };
-    this.entityResources = {} as EntityTypeResource<NotificationRequest>;
+    this.config.entityResources = {} as EntityTypeResource<NotificationRequest>;
 
-    this.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRequests(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRequests(pageLink);
 
-    this.deleteEnabled = (request) => request.status === NotificationRequestStatus.SCHEDULED;
-    this.deleteEntityTitle = () => this.translate.instant('notification.delete-request-title');
-    this.deleteEntityContent = () => this.translate.instant('notification.delete-request-text');
-    this.deleteEntity = id => this.notificationService.deleteNotificationRequest(id.id);
+    this.config.deleteEnabled = (request) => request.status === NotificationRequestStatus.SCHEDULED;
+    this.config.deleteEntityTitle = () => this.translate.instant('notification.delete-request-title');
+    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-request-text');
+    this.config.deleteEntity = id => this.notificationService.deleteNotificationRequest(id.id);
 
-    this.cellActionDescriptors = this.configureCellActions();
+    this.config.cellActionDescriptors = this.configureCellActions();
 
-    this.onEntityAction = action => this.onRequestAction(action);
+    this.config.onEntityAction = action => this.onRequestAction(action);
 
-    this.handleRowClick = (event, entity) => {
+    this.config.handleRowClick = (event, entity) => {
       if ((event.target as HTMLElement).getElementsByClassName('stats').length || (event.target as HTMLElement).className === 'stats') {
         this.openStatsErrorDialog(event, entity);
       }
       return true;
     };
 
-    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+    this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
-    this.columns.push(
+    this.config.columns.push(
       new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRequestInfo>('status', 'notification.status', '15%',
         request => `<span style="display: flex;">${this.requestStatus(request.status)}${this.requestStats(request.stats)}</span>`,
@@ -91,6 +99,10 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
         () => ({}), false),
       new EntityTableColumn<NotificationRequest>('templateName', 'notification.template', '70%')
     );
+  }
+
+  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> {
+    return this.config;
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationRequestInfo>> {
@@ -106,8 +118,8 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<RequestNotificationDialogComponent, RequestNotificationDialogData,
-      NotificationTemplate>(RequestNotificationDialogComponent, {
+    this.dialog.open<SentNotificationDialogComponent, RequestNotificationDialogData,
+      NotificationTemplate>(SentNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -116,7 +128,7 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
       }
     }).afterClosed().subscribe((res) => {
       if (res && updateData) {
-        this.updateData();
+        this.config.updateData();
       }
     });
   }
@@ -151,6 +163,9 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
   }
 
   private requestStats(stats: NotificationRequestStats): string {
+    if (!stats?.errors) {
+      return '';
+    }
     let countError = 0;
     Object.keys(stats.errors).forEach(method => countError += Object.keys(stats.errors[method]).length);
     if (countError === 0) {
@@ -183,8 +198,8 @@ export class RequestTableConfig extends EntityTableConfig<NotificationRequest, P
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<NotificationRequestErrorDialogComponent, NotificationRequestErrorDialogData,
-      void>(NotificationRequestErrorDialogComponent, {
+    this.dialog.open<SentErrorDialogComponent, NotificationRequestErrorDialogData,
+      void>(SentErrorDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {

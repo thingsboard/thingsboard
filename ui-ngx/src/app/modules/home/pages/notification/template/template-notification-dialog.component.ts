@@ -30,7 +30,7 @@ import { MatStepper } from '@angular/material/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
-import { TemplateConfiguration } from '@home/pages/notification-center/template-table/template-configuration';
+import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
 import { AuthState } from '@core/auth/auth.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';

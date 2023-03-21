@@ -31,9 +31,9 @@ import { NonConfirmedNotificationEscalation, NotificationTarget } from '@shared/
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntil } from 'rxjs/operators';
 import {
-  TargetNotificationDialogComponent,
-  TargetsNotificationDialogData
-} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+  RecipientNotificationDialogComponent,
+  RecipientNotificationDialogData
+} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 
@@ -130,8 +130,8 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
       $event.stopPropagation();
     }
     button._elementRef.nativeElement.blur();
-    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
-      NotificationTarget>(TargetNotificationDialogComponent, {
+    this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
+      NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {}

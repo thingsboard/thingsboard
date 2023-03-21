@@ -26,45 +26,52 @@ import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RuleTableHeaderComponent } from '@home/pages/notification-center/rule-table/rule-table-header.component';
+import { RuleTableHeaderComponent } from '@home/pages/notification/rule/rule-table-header.component';
 import {
   RuleNotificationDialogComponent,
   RuleNotificationDialogData
-} from '@home/pages/notification-center/rule-table/rule-notification-dialog.component';
+} from '@home/pages/notification/rule/rule-notification-dialog.component';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Injectable } from '@angular/core';
 
-export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
+@Injectable()
+export class RuleTableConfigResolver implements Resolve<EntityTableConfig<NotificationRule>> {
+
+  private readonly config: EntityTableConfig<NotificationRule> = new EntityTableConfig<NotificationRule>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog) {
-    super();
-    this.loadDataOnInit = false;
-    this.rowPointer = true;
 
-    this.entityTranslations = {
+    this.config.detailsPanelEnabled = false;
+    this.config.selectionEnabled = false;
+    this.config.addEnabled = false;
+    this.config.rowPointer = true;
+
+    this.config.entityTranslations = {
       noEntities: 'notification.no-rules-notification',
       search: 'notification.search-rules'
     };
-    this.entityResources = {} as EntityTypeResource<NotificationRule>;
+    this.config.entityResources = {} as EntityTypeResource<NotificationRule>;
 
-    this.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRules(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRules(pageLink);
 
-    this.deleteEntityTitle = rule => this.translate.instant('notification.delete-rule-title', {ruleName: rule.name});
-    this.deleteEntityContent = () => this.translate.instant('notification.delete-rule-text');
-    this.deleteEntity = id => this.notificationService.deleteNotificationRule(id.id);
+    this.config.deleteEntityTitle = rule => this.translate.instant('notification.delete-rule-title', {ruleName: rule.name});
+    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-rule-text');
+    this.config.deleteEntity = id => this.notificationService.deleteNotificationRule(id.id);
 
-    this.cellActionDescriptors = this.configureCellActions();
-    this.headerComponent = RuleTableHeaderComponent;
-    this.onEntityAction = action => this.onTargetAction(action);
+    this.config.cellActionDescriptors = this.configureCellActions();
+    this.config.headerComponent = RuleTableHeaderComponent;
+    this.config.onEntityAction = action => this.onTargetAction(action);
 
-    this.defaultSortOrder = {property: 'name', direction: Direction.ASC};
+    this.config.defaultSortOrder = {property: 'name', direction: Direction.ASC};
 
-    this.handleRowClick = ($event, rule) => {
+    this.config.handleRowClick = ($event, rule) => {
       this.editRule($event, rule);
       return true;
     };
 
-    this.columns.push(
+    this.config.columns.push(
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),
       new EntityTableColumn<NotificationRule>('templateName', 'notification.template', '20%'),
       new EntityTableColumn<NotificationRule>('triggerType', 'notification.trigger.trigger', '20%',
@@ -74,6 +81,10 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
         (target) => target.additionalConfig.description || '',
         () => ({}), false)
     );
+  }
+
+  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationRule> {
+    return this.config;
   }
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationRule>> {
@@ -101,7 +112,7 @@ export class RuleTableConfig extends EntityTableConfig<NotificationRule> {
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.updateData();
+          this.config.updateData();
         }
       });
   }

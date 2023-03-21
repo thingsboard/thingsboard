@@ -27,11 +27,11 @@ export interface NotificationRequestErrorDialogData {
 }
 
 @Component({
-  selector: 'tb-notification-request-error-dialog',
-  templateUrl: './notification-request-error-dialog.component.html',
-  styleUrls: ['notification-request-error-dialog.component.scss']
+  selector: 'tb-notification-send-error-dialog',
+  templateUrl: './sent-error-dialog.component.html',
+  styleUrls: ['sent-error-dialog.component.scss']
 })
-export class NotificationRequestErrorDialogComponent extends DialogComponent<NotificationRequestErrorDialogComponent, void> {
+export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogComponent, void> {
 
   errorStats: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
 
@@ -44,7 +44,7 @@ export class NotificationRequestErrorDialogComponent extends DialogComponent<Not
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              protected dialogRef: MatDialogRef<NotificationRequestErrorDialogComponent, void>,
+              protected dialogRef: MatDialogRef<SentErrorDialogComponent, void>,
               @Inject(MAT_DIALOG_DATA) public data: NotificationRequestErrorDialogData) {
     super(store, router, dialogRef);
 

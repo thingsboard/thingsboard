@@ -92,7 +92,7 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
       $event.stopPropagation();
     }
     this.onClose();
-    this.router.navigateByUrl(this.router.createUrlTree(['notification-center'])).then(() => {});
+    this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
   }
 
   trackById(index: number, item: NotificationRequest): string {

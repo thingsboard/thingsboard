@@ -40,18 +40,18 @@ import { AuthState } from '@core/auth/auth.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';
 
-export interface TargetsNotificationDialogData {
+export interface RecipientNotificationDialogData {
   target?: NotificationTarget;
   isAdd?: boolean;
 }
 
 @Component({
   selector: 'tb-target-notification-dialog',
-  templateUrl: './target-notification-dialog.component.html',
-  styleUrls: ['target-notification-dialog.componet.scss']
+  templateUrl: './recipient-notification-dialog.component.html',
+  styleUrls: ['recipient-notification-dialog.componet.scss']
 })
-export class TargetNotificationDialogComponent extends
-  DialogComponent<TargetNotificationDialogComponent, NotificationTarget> implements OnDestroy {
+export class RecipientNotificationDialogComponent extends
+  DialogComponent<RecipientNotificationDialogComponent, NotificationTarget> implements OnDestroy {
 
   private authState: AuthState = getCurrentAuthState(this.store);
   private authUser: AuthUser = this.authState.authUser;
@@ -73,8 +73,8 @@ export class TargetNotificationDialogComponent extends
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              protected dialogRef: MatDialogRef<TargetNotificationDialogComponent, NotificationTarget>,
-              @Inject(MAT_DIALOG_DATA) public data: TargetsNotificationDialogData,
+              protected dialogRef: MatDialogRef<RecipientNotificationDialogComponent, NotificationTarget>,
+              @Inject(MAT_DIALOG_DATA) public data: RecipientNotificationDialogData,
               private fb: FormBuilder,
               private notificationService: NotificationService) {
     super(store, router, dialogRef);

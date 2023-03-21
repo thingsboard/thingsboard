@@ -50,9 +50,9 @@ import {
 } from '@shared/models/alarm.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  TargetNotificationDialogComponent,
-  TargetsNotificationDialogData
-} from '@home/pages/notification-center/targets-table/target-notification-dialog.componet';
+  RecipientNotificationDialogComponent,
+  RecipientNotificationDialogData
+} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
 import { MatButton } from '@angular/material/button';
 import { AuthState } from '@core/auth/auth.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
@@ -364,8 +364,8 @@ export class RuleNotificationDialogComponent extends
       $event.stopPropagation();
     }
     button._elementRef.nativeElement.blur();
-    this.dialog.open<TargetNotificationDialogComponent, TargetsNotificationDialogData,
-      NotificationTarget>(TargetNotificationDialogComponent, {
+    this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
+      NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {}
