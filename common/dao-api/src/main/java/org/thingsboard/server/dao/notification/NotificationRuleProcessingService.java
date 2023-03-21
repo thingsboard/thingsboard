@@ -15,30 +15,14 @@
  */
 package org.thingsboard.server.dao.notification;
 
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 
 public interface NotificationRuleProcessingService {
 
+    void process(TenantId tenantId, NotificationRuleTrigger trigger);
+
     void process(TenantId tenantId, TbMsg ruleEngineMsg);
-
-    // for handling internal component lifecycle events that are not getting to rule chain
-    void process(ComponentLifecycleMsg componentLifecycleMsg);
-
-    void process(TenantId tenantId, AlarmApiCallResult alarmUpdate);
-
-    void process(TenantId tenantId, RuleChainId ruleChainId, String ruleChainName,
-                 EntityId componentId, String componentName, ComponentLifecycleEvent eventType, Exception error);
-
-    void process(UpdateMessage platformUpdateMessage);
-
-    void process(TenantId tenantId, EntityType entityType, long limit, long currentCount);
 
 }

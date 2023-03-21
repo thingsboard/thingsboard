@@ -15,22 +15,26 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-
-import javax.validation.constraints.Max;
-import java.util.Set;
+import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class EntitiesLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+@Builder
+public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
-    private Set<EntityType> entityTypes;
-    @Max(1)
-    private float threshold; // in percents,
+    private final UpdateMessage message;
 
     @Override
-    public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ENTITIES_LIMIT;
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
+    }
+
+    @Override
+    public EntityId getOriginatorEntityId() {
+        return TenantId.SYS_TENANT_ID;
     }
 
 }

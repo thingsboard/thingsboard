@@ -110,6 +110,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Before
     public void beforeEach() throws Exception {
         loginTenantAdmin();
+
     }
 
     @Test

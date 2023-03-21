@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.Set;
+public interface NotificationRuleTrigger {
 
-public interface RuleEngineMsgNotificationRuleTriggerProcessor<C extends NotificationRuleTriggerConfig> extends NotificationRuleTriggerProcessor<RuleEngineMsgTrigger, C> {
+    NotificationRuleTriggerType getType();
 
-    Set<String> getSupportedMsgTypes();
+    EntityId getOriginatorEntityId();
 
 }

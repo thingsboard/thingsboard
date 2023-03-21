@@ -25,8 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -133,7 +135,9 @@ public class DefaultUpdateService implements UpdateService {
                     response.get("updateAvailable").asBoolean()
             );
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
-                notificationRuleProcessingService.process(updateMessage);
+                notificationRuleProcessingService.process(TenantId.SYS_TENANT_ID, NewPlatformVersionTrigger.builder()
+                        .message(updateMessage)
+                        .build());
             }
         } catch (Exception e) {
             log.trace(e.getMessage());

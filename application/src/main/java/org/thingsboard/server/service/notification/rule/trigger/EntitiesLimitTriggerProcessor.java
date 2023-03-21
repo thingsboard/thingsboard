@@ -15,48 +15,39 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
-import lombok.Builder;
-import lombok.Data;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.notification.info.EntitiesLimitNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.service.notification.rule.trigger.EntitiesLimitTriggerProcessor.EntitiesLimitTriggerObject;
+import org.thingsboard.server.dao.notification.trigger.EntitiesLimitTrigger;
 
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 @Service
-public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerProcessor<EntitiesLimitTriggerObject, EntitiesLimitNotificationRuleTriggerConfig> {
+public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerProcessor<EntitiesLimitTrigger, EntitiesLimitNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(EntitiesLimitTriggerObject triggerObject, EntitiesLimitNotificationRuleTriggerConfig triggerConfig) {
-        if (isNotEmpty(triggerConfig.getEntityTypes()) && !triggerConfig.getEntityTypes().contains(triggerObject.getEntityType())) {
+    public boolean matchesFilter(EntitiesLimitTrigger trigger, EntitiesLimitNotificationRuleTriggerConfig triggerConfig) {
+        if (isNotEmpty(triggerConfig.getEntityTypes()) && !triggerConfig.getEntityTypes().contains(trigger.getEntityType())) {
             return false;
         }
-        return ((float) triggerObject.getCurrentCount() / triggerObject.getLimit()) >= triggerConfig.getThreshold();
+        return (int) (trigger.getLimit() * triggerConfig.getThreshold()) == trigger.getCurrentCount(); // strict comparing not to send notification on each new entity
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(EntitiesLimitTriggerObject triggerObject, EntitiesLimitNotificationRuleTriggerConfig triggerConfig) {
+    public NotificationInfo constructNotificationInfo(EntitiesLimitTrigger trigger, EntitiesLimitNotificationRuleTriggerConfig triggerConfig) {
         return EntitiesLimitNotificationInfo.builder()
-                .entityType(triggerObject.getEntityType())
-                .threshold((int) (triggerConfig.getThreshold() * 100))
+                .entityType(trigger.getEntityType())
+                .currentCount(trigger.getCurrentCount())
+                .limit(trigger.getLimit())
+                .percents((int) (((float)trigger.getCurrentCount() / trigger.getLimit()) * 100))
                 .build();
     }
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ENTITIES_LIMIT;
-    }
-
-    @Data
-    @Builder
-    public static class EntitiesLimitTriggerObject {
-        private final EntityType entityType;
-        private final long limit;
-        private final long currentCount;
     }
 
 }
