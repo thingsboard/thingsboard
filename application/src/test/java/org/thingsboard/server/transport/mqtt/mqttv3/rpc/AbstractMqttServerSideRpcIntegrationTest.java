@@ -223,7 +223,6 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
         MqttTestCallback  callback = new MqttTestCallback(GATEWAY_RPC_TOPIC);
         client.setCallback(callback);
-        client.subscribeAndWait(GATEWAY_RPC_TOPIC, MqttQoS.AT_MOST_ONCE);
         subscribeAndCheckSubscription(client, GATEWAY_RPC_TOPIC, savedDevice.getId(), FeatureType.RPC);
 
         String setGpioRequest = "{\"method\": \"toggle_gpio\", \"params\": {\"pin\":1}}";

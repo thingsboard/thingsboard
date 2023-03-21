@@ -301,7 +301,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (this.config.componentsData.ruleChainScope === 'edges') {
           this.router.navigateByUrl(`edgeManagement/ruleChains/ruleChain/import`);
         } else {
-          this.router.navigateByUrl(`ruleChains/ruleChain/import`);
+          this.router.navigateByUrl(`features/ruleChains/ruleChain/import`);
         }
       }
     });

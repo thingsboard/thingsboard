@@ -76,9 +76,11 @@
         "none": "None"
     },
     "admin": {
+        "settings": "Settings",
         "general": "General",
         "general-settings": "General Settings",
         "home-settings": "Home Settings",
+        "home": "Home",
         "outgoing-mail": "Mail Server",
         "outgoing-mail-settings": "Outgoing Mail Server Settings",
         "system-settings": "System Settings",
@@ -325,6 +327,7 @@
         "queue-processing-strategy": "Processing strategy",
         "queue-configuration": "Queue configuration",
         "repository-settings": "Repository settings",
+        "repository": "Repository",
         "repository-url": "Repository URL",
         "repository-url-required": "Repository URL is required.",
         "default-branch": "Default branch name",
@@ -346,6 +349,7 @@
         "delete-repository-settings-title": "Are you sure you want to delete repository settings?",
         "delete-repository-settings-text": "Be careful, after the confirmation the repository settings will be removed and version control feature will be unavailable.",
         "auto-commit-settings": "Auto-commit settings",
+        "auto-commit": "Auto-commit",
         "auto-commit-entities": "Auto-commit entities",
         "no-auto-commit-entities-prompt": "No entities configured for auto-commit",
         "delete-auto-commit-settings-title": "Are you sure you want to delete auto-commit settings?",
@@ -404,11 +408,15 @@
             "generate-key": "Generate key",
             "info-header": "All users will be to re-logined",
             "info-message": "Change of the JWT Signing Key will cause all issued tokens to be invalid. All users will need to re-login. This will also affect scripts that use Rest API/Websockets."
-        }
-      },
+        },
+        "resources": "Resources",
+        "notifications": "Notifications",
+        "notifications-settings": "Notifications settings"
+    },
     "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarms",
+        "all-alarms": "All alarms",
         "select-alarm": "Select alarm",
         "no-alarms-matching": "No alarms matching '{{entity}}' were found.",
         "alarm-required": "Alarm is required",
@@ -1729,6 +1737,7 @@
     "edge": {
         "edge": "Edge",
         "edge-instances": "Edge instances",
+        "instances": "Instances",
         "edge-file": "Edge file",
         "name-max-length": "Name should be less than 256",
         "label-max-length": "Label should be less than 256",
@@ -1952,7 +1961,7 @@
         "dashboard-name-starts-with": "Dashboards whose names start with '{{prefix}}'",
         "type-alarm": "Alarm",
         "type-alarms": "Alarms",
-        "list-of-alarms": "{ count, plural, =1 {One alarms} other {List of # alarms} }",
+        "list-of-alarms": "{ count, plural, =1 {One alarm} other {List of # alarms} }",
         "alarm-name-starts-with": "Alarms whose names start with '{{prefix}}'",
         "type-rulechain": "Rule chain",
         "type-rulechains": "Rule chains",
@@ -2317,6 +2326,9 @@
         "export-extension": "Export extension",
         "file": "Extensions file",
         "invalid-file-error": "Invalid extension file"
+    },
+    "feature": {
+         "advanced-features": "Advanced features"
     },
     "filter": {
          "add": "Add filter",
@@ -2698,6 +2710,14 @@
         "preview": "Preview",
         "copy-code": "Click to copy",
         "copied": "Copied!"
+    },
+    "notification": {
+        "notification-center": "Notification center",
+        "inbox": "Inbox",
+        "sent": "Sent",
+        "templates": "Templates",
+        "recipients": "Recipients",
+        "rules": "Rules"
     },
     "ota-update": {
       "add": "Add package",

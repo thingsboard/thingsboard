@@ -47,6 +47,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TbInject } from '@shared/decorators/tb-inject';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
+import { UserSettingsService } from '@core/http/user-settings.service';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -82,6 +83,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.dialogs = $injector.get(DialogService);
     this.ctx.customDialog = $injector.get(CustomDialogService);
     this.ctx.resourceService = $injector.get(ResourceService);
+    this.ctx.userSettingsService = $injector.get(UserSettingsService);
     this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
     this.ctx.date = $injector.get(DatePipe);
     this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);

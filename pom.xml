@@ -67,6 +67,7 @@
         <jackson.version>2.13.4</jackson.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
         <fasterxml-classmate.version>1.3.4</fasterxml-classmate.version>
+        <auth0-jwt.version>4.2.1</auth0-jwt.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>3.0.0</californium.version>
         <leshan.version>2.0.0-M5</leshan.version>
@@ -826,6 +827,7 @@
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
+                            <exclude>**/lwm2m-registry/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -1428,6 +1430,11 @@
                 <groupId>com.fasterxml</groupId>
                 <artifactId>classmate</artifactId>
                 <version>${fasterxml-classmate.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.auth0</groupId>
+                <artifactId>java-jwt</artifactId>
+                <version>${auth0-jwt.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.fge</groupId>

@@ -354,6 +354,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                 SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         client.publishAndWait(attrPubTopic, CLIENT_ATTRIBUTES_PAYLOAD.getBytes());
         client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
+        //RequestAttributes does not make any subscriptions in device actor
+
         String update = getWsClient().waitForUpdate();
         assertThat(update).as("ws update received").isNotBlank();
         MqttTestCallback callback = new MqttTestCallback(attrSubTopic.replace("+", "1"));
@@ -383,6 +385,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         client.publishAndWait(attrPubTopic, getAttributesProtoPayloadBytes());
         client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
+        //RequestAttributes does not make any subscriptions in device actor
+
         String update = getWsClient().waitForUpdate();
         assertThat(update).as("ws update received").isNotBlank();
         MqttTestCallback callback = new MqttTestCallback(attrSubTopic.replace("+", "1"));
@@ -442,6 +446,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         assertThat(update).as("ws update received").isNotBlank();
 
         client.subscribeAndWait(GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, MqttQoS.AT_LEAST_ONCE);
+        //RequestAttributes does not make any subscriptions in device actor
 
         MqttTestCallback clientAttributesCallback = new MqttTestCallback(GATEWAY_ATTRIBUTES_RESPONSE_TOPIC);
         client.setCallback(clientAttributesCallback);
@@ -495,6 +500,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         assertThat(update).as("ws update received").isNotBlank();
 
         client.subscribeAndWait(GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, MqttQoS.AT_LEAST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(device.getId(), FeatureType.ATTRIBUTES, 1);
 
         MqttTestCallback clientAttributesCallback = new MqttTestCallback(GATEWAY_ATTRIBUTES_RESPONSE_TOPIC);
         client.setCallback(clientAttributesCallback);

@@ -2443,6 +2443,11 @@
     "@material/theme" "15.0.0-canary.684e33d25.0"
     tslib "^2.1.0"
 
+"@mdi/svg@^7.1.96":
+  version "7.1.96"
+  resolved "https://registry.yarnpkg.com/@mdi/svg/-/svg-7.1.96.tgz#4911ee6d2f3457f016be8b7a454cf1a8e5c361f0"
+  integrity sha512-QO+CyF7eZsYBJpyb9Q77r1O6PFdp/Ircx8FMV7+cFS7g0p5rF55PA9zrmzuZqi1LyPKANDpr0oULNLHgeQuXZQ==
+
 "@messageformat/core@^3.0.1":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@messageformat/core/-/core-3.0.1.tgz#191e12cf9643704d1fd32e592a3fbdc194dd588e"

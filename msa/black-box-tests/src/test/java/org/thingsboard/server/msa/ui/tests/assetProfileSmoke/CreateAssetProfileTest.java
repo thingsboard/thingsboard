@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -52,8 +54,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Add asset profile after specifying the name (text/numbers /special characters)")
     public void createAssetProfile() {
         String name = ENTITY_NAME + random();
 
@@ -68,8 +72,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entity(name).isDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add asset profile after specifying the name with details")
     public void createAssetProfileWithDetails() {
         String name = ENTITY_NAME + random();
         String ruleChain = "Root Rule Chain";
@@ -103,8 +109,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertEquals(description, profilesPage.getDescription());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Create asset profile with the same name")
     public void createAssetProfileWithSameName() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -122,8 +130,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.addAssetProfileView().isDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add asset profile without the name")
     public void createAssetProfileWithoutName() {
         sideBarMenuView.openAssetProfiles();
         profilesPage.openCreateAssetProfileView();
@@ -131,8 +141,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertFalse(profilesPage.addBtnV().isEnabled());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Create asset profile only with spase in name")
     public void createAssetProfileWithOnlySpaceInName() {
         sideBarMenuView.openAssetProfiles();
         profilesPage.openCreateAssetProfileView();
@@ -146,8 +158,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.addAssetProfileView().isDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Add asset profile after specifying the name (text/numbers /special characters) without refresh")
     public void createAssetProfileWithoutRefresh() {
         String name = ENTITY_NAME + random();
 
@@ -161,8 +175,10 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entity(name).isDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Create asset profile")
     @Test(priority = 40, groups = "smoke")
-    @Description
+    @Description("Go to asset profile documentation page")
     public void documentation() {
         String urlPath = "docs/user-guide/asset-profiles/";
 
@@ -170,6 +186,6 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
         profilesPage.profileNames().get(0).click();
         profilesPage.goToProfileHelpPage();
 
-        Assert.assertTrue(urlContains(urlPath));
+        Assert.assertTrue(urlContains(urlPath), "URL not contains " + urlPath);
     }
 }

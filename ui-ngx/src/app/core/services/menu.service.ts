@@ -15,31 +15,38 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
-import { take } from 'rxjs/operators';
+import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
+import { filter, take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { guid } from '@core/utils';
 import { AuthState } from '@core/auth/auth.models';
+import { NavigationEnd, Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MenuService {
 
+  currentMenuSections: Array<MenuSection>;
   menuSections$: Subject<Array<MenuSection>> = new BehaviorSubject<Array<MenuSection>>([]);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
 
-  constructor(private store: Store<AppState>, private authService: AuthService) {
+  constructor(private store: Store<AppState>,
+              private router: Router) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
         if (authenticated) {
           this.buildMenu();
         }
+      }
+    );
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(
+      () => {
+        this.updateOpenedMenuSections();
       }
     );
   }
@@ -48,30 +55,39 @@ export class MenuService {
     this.store.pipe(select(selectAuth), take(1)).subscribe(
       (authState: AuthState) => {
         if (authState.authUser) {
-          let menuSections: Array<MenuSection>;
           let homeSections: Array<HomeSection>;
           switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              menuSections = this.buildSysAdminMenu(authState);
-              homeSections = this.buildSysAdminHome(authState);
+              this.currentMenuSections = this.buildSysAdminMenu();
+              homeSections = this.buildSysAdminHome();
               break;
             case Authority.TENANT_ADMIN:
-              menuSections = this.buildTenantAdminMenu(authState);
+              this.currentMenuSections = this.buildTenantAdminMenu(authState);
               homeSections = this.buildTenantAdminHome(authState);
               break;
             case Authority.CUSTOMER_USER:
-              menuSections = this.buildCustomerUserMenu(authState);
+              this.currentMenuSections = this.buildCustomerUserMenu(authState);
               homeSections = this.buildCustomerUserHome(authState);
               break;
           }
-          this.menuSections$.next(menuSections);
+          this.updateOpenedMenuSections();
+          this.menuSections$.next(this.currentMenuSections);
           this.homeSections$.next(homeSections);
         }
       }
     );
   }
 
-  private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {
+  private updateOpenedMenuSections() {
+    const url = this.router.url;
+    const openedMenuSections = getCurrentOpenedMenuSections(this.store);
+    this.currentMenuSections.filter(section => section.type === 'toggle' &&
+      (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
+      section => section.opened = true
+    );
+  }
+
+  private buildSysAdminMenu(): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -98,17 +114,33 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'widget.widget-library',
-        type: 'link',
-        path: '/widgets-bundles',
-        icon: 'now_widgets'
+        name: 'admin.resources',
+        type: 'toggle',
+        path: '/resources',
+        icon: 'folder',
+        pages: [
+          {
+            id: guid(),
+            name: 'widget.widget-library',
+            type: 'link',
+            path: '/resources/widgets-bundles',
+            icon: 'now_widgets'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/resources/resources-library',
+            icon: 'mdi:rhombus-split',
+            isMdiIcon: true
+          }
+        ]
       },
       {
         id: guid(),
-        name: 'admin.system-settings',
-        type: 'toggle',
+        name: 'admin.settings',
+        type: 'link',
         path: '/settings',
-        height: '320px',
         icon: 'settings',
         pages: [
           {
@@ -127,39 +159,11 @@ export class MenuService {
           },
           {
             id: guid(),
-            name: 'admin.sms-provider',
+            name: 'admin.notifications',
             type: 'link',
-            path: '/settings/sms-provider',
-            icon: 'sms'
-          },
-          {
-            id: guid(),
-            name: 'admin.security-settings',
-            type: 'link',
-            path: '/settings/security-settings',
-            icon: 'security'
-          },
-          {
-            id: guid(),
-            name: 'admin.oauth2.oauth2',
-            type: 'link',
-            path: '/settings/oauth2',
-            icon: 'security'
-          },
-          {
-            id: guid(),
-            name: 'admin.2fa.2fa',
-            type: 'link',
-            path: '/settings/2fa',
-            icon: 'mdi:two-factor-authentication',
+            path: '/settings/notifications',
+            icon: 'mdi:message-badge',
             isMdiIcon: true
-          },
-          {
-            id: guid(),
-            name: 'resource.resources-library',
-            type: 'link',
-            path: '/settings/resources-library',
-            icon: 'folder'
           },
           {
             id: guid(),
@@ -169,12 +173,44 @@ export class MenuService {
             icon: 'swap_calls'
           },
         ]
+      },
+      {
+        id: guid(),
+        name: 'security.security',
+        type: 'toggle',
+        path: '/security-settings',
+        icon: 'security',
+        pages: [
+          {
+            id: guid(),
+            name: 'admin.general',
+            type: 'link',
+            path: '/security-settings/general',
+            icon: 'settings_applications'
+          },
+          {
+            id: guid(),
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/security-settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/security-settings/oauth2',
+            icon: 'mdi:shield-account',
+            isMdiIcon: true
+          }
+        ]
       }
     );
     return sections;
   }
 
-  private buildSysAdminHome(authState: AuthState): Array<HomeSection> {
+  private buildSysAdminHome(): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -265,38 +301,53 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'rulechain.rulechains',
+        name: 'alarm.alarms',
         type: 'link',
-        path: '/ruleChains',
-        icon: 'settings_ethernet'
+        path: '/alarms',
+        icon: 'notifications'
       },
       {
         id: guid(),
-        name: 'customer.customers',
+        name: 'dashboard.dashboards',
         type: 'link',
-        path: '/customers',
-        icon: 'supervisor_account'
+        path: '/dashboards',
+        icon: 'dashboards'
       },
       {
         id: guid(),
-        name: 'asset.assets',
-        type: 'link',
-        path: '/assets',
-        icon: 'domain'
-      },
-      {
-        id: guid(),
-        name: 'device.devices',
-        type: 'link',
-        path: '/devices',
-        icon: 'devices_other'
+        name: 'entity.entities',
+        type: 'toggle',
+        path: '/entities',
+        icon: 'category',
+        pages: [
+          {
+            id: guid(),
+            name: 'device.devices',
+            type: 'link',
+            path: '/entities/devices',
+            icon: 'devices_other'
+          },
+          {
+            id: guid(),
+            name: 'asset.assets',
+            type: 'link',
+            path: '/entities/assets',
+            icon: 'domain'
+          },
+          {
+            id: guid(),
+            name: 'entity-view.entity-views',
+            type: 'link',
+            path: '/entities/entityViews',
+            icon: 'view_quilt'
+          }
+        ]
       },
       {
         id: guid(),
         name: 'profiles.profiles',
         type: 'toggle',
         path: '/profiles',
-        height: '80px',
         icon: 'badge',
         pages: [
           {
@@ -319,36 +370,28 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'ota-update.ota-updates',
+        name: 'customer.customers',
         type: 'link',
-        path: '/otaUpdates',
-        icon: 'memory'
-      },
-      {
-        id: guid(),
-        name: 'entity-view.entity-views',
-        type: 'link',
-        path: '/entityViews',
-        icon: 'view_quilt'
+        path: '/customers',
+        icon: 'supervisor_account'
       }
     );
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
           id: guid(),
-          name: 'edge.edge-instances',
-          type: 'link',
-          path: '/edgeInstances',
-          icon: 'router'
-        },
-        {
-          id: guid(),
           name: 'edge.management',
           type: 'toggle',
           path: '/edgeManagement',
-          height: '40px',
           icon: 'settings_input_antenna',
           pages: [
+            {
+              id: guid(),
+              name: 'edge.instances',
+              type: 'link',
+              path: '/edgeManagement/instances',
+              icon: 'router'
+            },
             {
               id: guid(),
               name: 'edge.rulechain-templates',
@@ -363,31 +406,104 @@ export class MenuService {
     sections.push(
       {
         id: guid(),
-        name: 'widget.widget-library',
-        type: 'link',
-        path: '/widgets-bundles',
-        icon: 'now_widgets'
+        name: 'feature.advanced-features',
+        type: 'toggle',
+        path: '/features',
+        icon: 'construction',
+        pages: [
+          {
+            id: guid(),
+            name: 'rulechain.rulechains',
+            type: 'link',
+            path: '/features/ruleChains',
+            icon: 'settings_ethernet'
+          },
+          {
+            id: guid(),
+            name: 'ota-update.ota-updates',
+            type: 'link',
+            path: '/features/otaUpdates',
+            icon: 'memory'
+          },
+          {
+            id: guid(),
+            name: 'version-control.version-control',
+            type: 'link',
+            path: '/features/vc',
+            icon: 'history'
+          }
+        ]
       },
       {
         id: guid(),
-        name: 'dashboard.dashboards',
-        type: 'link',
-        path: '/dashboards',
-        icon: 'dashboards'
+        name: 'admin.resources',
+        type: 'toggle',
+        path: '/resources',
+        icon: 'folder',
+        pages: [
+          {
+            id: guid(),
+            name: 'widget.widget-library',
+            type: 'link',
+            path: '/resources/widgets-bundles',
+            icon: 'now_widgets'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/resources/resources-library',
+            icon: 'mdi:rhombus-split',
+            isMdiIcon: true
+          }
+        ]
       },
       {
         id: guid(),
-        name: 'version-control.version-control',
+        name: 'notification.notification-center',
         type: 'link',
-        path: '/vc',
-        icon: 'history'
-      },
-      {
-        id: guid(),
-        name: 'audit-log.audit-logs',
-        type: 'link',
-        path: '/auditLogs',
-        icon: 'track_changes'
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: guid(),
+            name: 'notification.inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          },
+          {
+            id: guid(),
+            name: 'notification.sent',
+            type: 'link',
+            path: '/notification/sent',
+            icon: 'outbox'
+          },
+          {
+            id: guid(),
+            name: 'notification.templates',
+            type: 'link',
+            path: '/notification/templates',
+            icon: 'mdi:message-draw',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
+            name: 'notification.recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: guid(),
+            name: 'notification.rules',
+            type: 'link',
+            path: '/notification/rules',
+            icon: 'mdi:message-cog',
+            isMdiIcon: true
+          }
+        ]
       },
       {
         id: guid(),
@@ -398,39 +514,47 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'admin.system-settings',
-        type: 'toggle',
+        name: 'admin.settings',
+        type: 'link',
         path: '/settings',
-        height: '160px',
         icon: 'settings',
         pages: [
           {
             id: guid(),
-            name: 'admin.home-settings',
+            name: 'admin.home',
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
           },
           {
             id: guid(),
-            name: 'resource.resources-library',
-            type: 'link',
-            path: '/settings/resources-library',
-            icon: 'folder'
-          },
-          {
-            id: guid(),
-            name: 'admin.repository-settings',
+            name: 'admin.repository',
             type: 'link',
             path: '/settings/repository',
             icon: 'manage_history'
           },
           {
             id: guid(),
-            name: 'admin.auto-commit-settings',
+            name: 'admin.auto-commit',
             type: 'link',
             path: '/settings/auto-commit',
             icon: 'settings_backup_restore'
+          }
+        ]
+      },
+      {
+        id: guid(),
+        name: 'security.security',
+        type: 'toggle',
+        path: '/security-settings',
+        icon: 'security',
+        pages: [
+          {
+            id: guid(),
+            name: 'audit-log.audit-logs',
+            type: 'link',
+            path: '/security-settings/auditLogs',
+            icon: 'track_changes'
           }
         ]
       }
@@ -610,24 +734,47 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'asset.assets',
+        name: 'alarm.alarms',
         type: 'link',
-        path: '/assets',
-        icon: 'domain'
+        path: '/alarms',
+        icon: 'notifications'
       },
       {
         id: guid(),
-        name: 'device.devices',
+        name: 'dashboard.dashboards',
         type: 'link',
-        path: '/devices',
-        icon: 'devices_other'
+        path: '/dashboards',
+        icon: 'dashboards'
       },
       {
         id: guid(),
-        name: 'entity-view.entity-views',
-        type: 'link',
-        path: '/entityViews',
-        icon: 'view_quilt'
+        name: 'entity.entities',
+        type: 'toggle',
+        path: '/entities',
+        icon: 'category',
+        pages: [
+          {
+            id: guid(),
+            name: 'device.devices',
+            type: 'link',
+            path: '/entities/devices',
+            icon: 'devices_other'
+          },
+          {
+            id: guid(),
+            name: 'asset.assets',
+            type: 'link',
+            path: '/entities/assets',
+            icon: 'domain'
+          },
+          {
+            id: guid(),
+            name: 'entity-view.entity-views',
+            type: 'link',
+            path: '/entities/entityViews',
+            icon: 'view_quilt'
+          }
+        ]
       }
     );
     if (authState.edgesSupportEnabled) {
@@ -636,20 +783,11 @@ export class MenuService {
           id: guid(),
           name: 'edge.edge-instances',
           type: 'link',
-          path: '/edgeInstances',
+          path: '/edgeManagement/instances',
           icon: 'router'
         }
       );
     }
-    sections.push(
-      {
-        id: guid(),
-        name: 'dashboard.dashboards',
-        type: 'link',
-        path: '/dashboards',
-        icon: 'dashboard'
-      }
-    );
     return sections;
   }
 
