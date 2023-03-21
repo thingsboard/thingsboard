@@ -58,12 +58,6 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
         if (tenantProfile.getProfileData().getConfiguration() == null) {
             throw new DataValidationException("Tenant profile data configuration should be specified!");
         }
-        if (tenantProfile.getProfileData().getConfiguration() instanceof DefaultTenantProfileConfiguration) {
-            DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
-            if (configuration.getWsMsgQueueLimitPerSession() == 0) {
-                throw new DataValidationException("WS message queue limit per session should be greater than 0");
-            }
-        }
         if (tenantProfile.isDefault()) {
             TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
             if (defaultTenantProfile != null && !defaultTenantProfile.getId().equals(tenantProfile.getId())) {

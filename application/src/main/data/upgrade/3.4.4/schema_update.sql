@@ -348,9 +348,3 @@ $$;
 
 -- ALARM FUNCTIONS END
 
--- TENANT PROFILE START
-
-update tenant_profile SET profile_data = jsonb_set(profile_data, array['configuration','wsMsgQueueLimitPerSession'], to_jsonb(1000))
-    WHERE profile_data::json#>>'{configuration,wsMsgQueueLimitPerSession}' = '0';
-
--- TENANT PROFILE END

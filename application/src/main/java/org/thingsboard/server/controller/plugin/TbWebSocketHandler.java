@@ -81,6 +81,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     private long sendTimeout;
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
+    @Value("${server.ws.max_queue_messages_per_session:1000}")
+    private int wsQueueMessagesPerSession;
 
     private final ConcurrentMap<String, TelemetryWebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbRateLimits> perSessionUpdateLimits = new ConcurrentHashMap<>();
@@ -142,7 +144,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
             internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef,
                     tenantProfileConfiguration != null && tenantProfileConfiguration.getWsMsgQueueLimitPerSession() > 0 ?
-                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : 500));
+                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : wsQueueMessagesPerSession));
 
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
