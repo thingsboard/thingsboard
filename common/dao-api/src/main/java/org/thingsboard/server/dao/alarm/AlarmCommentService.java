@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 public interface AlarmCommentService {
     AlarmComment createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment);
 
-    void deleteAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user);
+    AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment);
 
     PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId alarmId, PageLink pageLink);
 

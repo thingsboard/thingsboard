@@ -43,7 +43,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class BaseAlarmCommentService extends AbstractEntityService implements AlarmCommentService{
+public class BaseAlarmCommentService extends AbstractEntityService implements AlarmCommentService {
 
     @Autowired
     private AlarmCommentDao alarmCommentDao;
@@ -62,20 +62,10 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     }
 
     @Override
-    public void deleteAlarmComment(TenantId tenantId, AlarmComment alarmComment, User user) {
+    public AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
         log.debug("Deleting Alarm Comment: {}", alarmComment);
-
-        if (alarmComment.getType() == AlarmCommentType.OTHER) {
-            alarmComment.setType(AlarmCommentType.SYSTEM);
-            alarmComment.setUserId(null);
-            alarmComment.setComment(JacksonUtil.newObjectNode().put("text",
-                    String.format("User %s deleted his comment",
-                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
-            alarmCommentDao.save(tenantId, alarmComment);
-        }
-        else {
-            alarmCommentDao.deleteAlarmComment(tenantId, alarmComment.getId());
-        }
+        alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
+        return alarmCommentDao.save(tenantId, alarmComment);
     }
 
     @Override
