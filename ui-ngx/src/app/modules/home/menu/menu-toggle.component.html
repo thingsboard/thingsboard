@@ -16,8 +16,8 @@
 
 -->
 <a mat-button class="tb-button-toggle" (click)="toggleSection($event)">
-  <mat-icon *ngIf="!section.isMdiIcon && section.icon !== null" class="tb-mat-18">{{section.icon}}</mat-icon>
-  <mat-icon *ngIf="section.isMdiIcon && section.icon !== null" [svgIcon]="section.icon" class="tb-mat-18"></mat-icon>
+  <mat-icon *ngIf="!section.isMdiIcon && section.icon !== null">{{section.icon}}</mat-icon>
+  <mat-icon *ngIf="section.isMdiIcon && section.icon !== null" [svgIcon]="section.icon"></mat-icon>
   <span>{{section.name | translate}}</span>
   <span class=" pull-right fa fa-chevron-down tb-toggle-icon"
         [ngClass]="{'tb-toggled' : section.opened}"></span>

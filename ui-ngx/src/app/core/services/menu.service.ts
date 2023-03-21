@@ -58,8 +58,8 @@ export class MenuService {
           let homeSections: Array<HomeSection>;
           switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              this.currentMenuSections = this.buildSysAdminMenu(authState);
-              homeSections = this.buildSysAdminHome(authState);
+              this.currentMenuSections = this.buildSysAdminMenu();
+              homeSections = this.buildSysAdminHome();
               break;
             case Authority.TENANT_ADMIN:
               this.currentMenuSections = this.buildTenantAdminMenu(authState);
@@ -87,7 +87,7 @@ export class MenuService {
     );
   }
 
-  private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {
+  private buildSysAdminMenu(): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -117,7 +117,6 @@ export class MenuService {
         name: 'admin.resources',
         type: 'toggle',
         path: '/resources',
-        height: '80px',
         icon: 'folder',
         pages: [
           {
@@ -180,7 +179,6 @@ export class MenuService {
         name: 'security.security',
         type: 'toggle',
         path: '/security-settings',
-        height: '120px',
         icon: 'security',
         pages: [
           {
@@ -212,7 +210,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildSysAdminHome(authState: AuthState): Array<HomeSection> {
+  private buildSysAdminHome(): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -320,7 +318,6 @@ export class MenuService {
         name: 'entity.entities',
         type: 'toggle',
         path: '/entities',
-        height: '120px',
         icon: 'category',
         pages: [
           {
@@ -351,7 +348,6 @@ export class MenuService {
         name: 'profiles.profiles',
         type: 'toggle',
         path: '/profiles',
-        height: '80px',
         icon: 'badge',
         pages: [
           {
@@ -387,7 +383,6 @@ export class MenuService {
           name: 'edge.management',
           type: 'toggle',
           path: '/edgeManagement',
-          height: '80px',
           icon: 'settings_input_antenna',
           pages: [
             {
@@ -414,7 +409,6 @@ export class MenuService {
         name: 'feature.advanced-features',
         type: 'toggle',
         path: '/features',
-        height: '120px',
         icon: 'construction',
         pages: [
           {
@@ -445,7 +439,6 @@ export class MenuService {
         name: 'admin.resources',
         type: 'toggle',
         path: '/resources',
-        height: '80px',
         icon: 'folder',
         pages: [
           {
@@ -554,7 +547,6 @@ export class MenuService {
         name: 'security.security',
         type: 'toggle',
         path: '/security-settings',
-        height: '40px',
         icon: 'security',
         pages: [
           {
@@ -759,7 +751,6 @@ export class MenuService {
         name: 'entity.entities',
         type: 'toggle',
         path: '/entities',
-        height: '120px',
         icon: 'category',
         pages: [
           {
