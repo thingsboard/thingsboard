@@ -278,7 +278,6 @@ const routes: Routes = [
   },
   {
     path: 'security-settings',
-    component: RouterTabsComponent,
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {

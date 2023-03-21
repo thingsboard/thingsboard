@@ -15,7 +15,6 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
@@ -37,7 +36,6 @@ export class MenuService {
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
 
   constructor(private store: Store<AppState>,
-              private authService: AuthService,
               private router: Router) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
@@ -180,8 +178,9 @@ export class MenuService {
       {
         id: guid(),
         name: 'security.security',
-        type: 'link',
+        type: 'toggle',
         path: '/security-settings',
+        height: '120px',
         icon: 'security',
         pages: [
           {
@@ -553,8 +552,9 @@ export class MenuService {
       {
         id: guid(),
         name: 'security.security',
-        type: 'link',
+        type: 'toggle',
         path: '/security-settings',
+        height: '40px',
         icon: 'security',
         pages: [
           {
