@@ -68,10 +68,6 @@ export class NotificationCenterComponent extends PageComponent {
       .onEntityAction({event: $event, action: this.requestTab.isActive ? 'add' : 'add-without-update', entity: null});
   }
 
-  public isTenantAdmin(): boolean {
-    return this.authUser.authority === Authority.TENANT_ADMIN;
-  }
-
   public isCustomerUser(): boolean {
     return this.authUser.authority === Authority.CUSTOMER_USER;
   }

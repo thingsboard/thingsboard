@@ -2779,6 +2779,7 @@
         "edit-rule": "Edit rule",
         "edit-template": "Edit template",
         "email-settings": "Email settings",
+        "entities-limit-trigger-settings": "Entities limit trigger settings",
         "entity-action-trigger-settings": "Entity action trigger settings",
         "entity-type": "Entity type",
         "failed-send": "Failed send",
@@ -2890,6 +2891,7 @@
             "alarm-assignment": "Available params: ${assigneeFirstName}, ${assigneeLastName}, ${assigneeEmail}, ${assigneeFirstName}, ${userName}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
             "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
             "device-inactivity": "Available params: ${deviceName}, ${deviceLabel}, ${deviceType}, ${deviceId}",
+            "entities-limit": "Available params: ${entityType}, ${currentCount}, ${limit}",
             "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}",
             "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}",
             "rule-engine-lifecycle-event": "Available params: ${ruleChainName}, ${componentName}, ${eventType}, ${error}, ${ruleChainId}, ${componentId}"
@@ -2901,6 +2903,7 @@
             "alarm-assignment": "Alarm assignment",
             "alarm-comment": "Alarm comment",
             "device-inactivity": "Device inactivity",
+            "entities-limit": "Entities limit",
             "entity-action": "Entity action",
             "general": "General",
             "rule-engine-lifecycle-event": "Rule engine lifecycle event"
@@ -2910,11 +2913,13 @@
         "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",
         "time": "Time",
         "track-rule-node-events": "Track rule node events",
+        "threshold": "Threshold",
         "trigger": {
             "alarm": "Alarm",
             "alarm-assignment": "Alarm assignment",
             "alarm-comment": "Alarm comment",
             "device-inactivity": "Device inactivity",
+            "entities-limit": "Entities limit",
             "entity-action": "Entity action",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required",
