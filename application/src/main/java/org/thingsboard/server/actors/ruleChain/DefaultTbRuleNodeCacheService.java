@@ -88,5 +88,4 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
         cache.evict(ruleNodeId, key);
     }
 
-
 }

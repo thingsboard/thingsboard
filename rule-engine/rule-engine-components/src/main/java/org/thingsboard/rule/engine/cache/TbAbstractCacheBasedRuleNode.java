@@ -126,15 +126,15 @@ public abstract class TbAbstractCacheBasedRuleNode<C, K> implements TbNode {
             }
             entityIds.forEach(id -> {
                 TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
-                if (tpi.isMyPartition()) {
+                if (!tpi.isMyPartition()) {
+                    log.trace("[{}][{}][{}] Ignore entity that doesn't belong to my partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
+                } else {
                     Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
                     Set<EntityId> partitionEntityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
                     boolean added = partitionEntityIds.add(id);
                     if (added) {
                         getValuesFromCacheAndSchedule(ctx, cache, partition, id);
                     }
-                } else {
-                    log.trace("[{}][{}][{}] Ignore entity that doesn't belong to my partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
                 }
             });
         });

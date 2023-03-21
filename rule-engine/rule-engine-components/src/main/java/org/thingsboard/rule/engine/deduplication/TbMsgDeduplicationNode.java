@@ -87,28 +87,28 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     protected void processOnRegularMsg(TbContext ctx, TbMsg msg) {
         EntityId id = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
-        if (tpi.isMyPartition()) {
+        if (!tpi.isMyPartition()) {
+            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
+        } else {
             Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
             Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
             boolean entityIdAdded = entityIds.add(id);
             DeduplicationData deduplicationMsgs = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
-            if (deduplicationMsgs.size() < config.getMaxPendingMsgs()) {
+            if (deduplicationMsgs.size() >= config.getMaxPendingMsgs()) {
+                log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
+                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
+            } else {
                 log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
+                deduplicationMsgs.add(msg);
                 getCacheIfPresentAndExecute(ctx, cache -> {
                     if (entityIdAdded) {
                         cache.add(getEntityIdsCacheKey(), id);
                     }
                     cache.add(id, partition, msg);
                 });
-                deduplicationMsgs.add(msg);
                 ctx.ack(msg);
                 scheduleTickMsg(ctx, id, deduplicationMsgs);
-            } else {
-                log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
-                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
             }
-        } else {
-            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
         }
     }
 
@@ -117,6 +117,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
         EntityId deduplicationId = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(deduplicationId);
         if (!tpi.isMyPartition()) {
+            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), deduplicationId);
             return;
         }
         Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
@@ -222,7 +223,10 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     private void enqueueForTellNextWithRetry(TbContext ctx, Integer partition, TbPair<TbMsg, List<TbMsg>> result, int retryAttempt) {
         TbMsg outMsg = result.getFirst();
         List<TbMsg> msgsToRemoveFromCache = result.getSecond();
-        if (config.getMaxRetries() > retryAttempt) {
+        if (retryAttempt >= config.getMaxRetries()) {
+            log.trace("[{}][{}] Removing deduplication messages pack due to max enqueue retry attempts exhausted!", ctx.getSelfId(), outMsg.getOriginator());
+            getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache));
+        } else {
             ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
@@ -232,9 +236,6 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
                         log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt, throwable);
                         ctx.schedule(() -> enqueueForTellNextWithRetry(ctx, partition, result, retryAttempt + 1), TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
                     });
-        } else {
-            log.trace("[{}][{}] Removing deduplication messages pack due to max enqueue retry attempts exhausted!", ctx.getSelfId(), outMsg.getOriginator());
-            getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache));
         }
     }
 

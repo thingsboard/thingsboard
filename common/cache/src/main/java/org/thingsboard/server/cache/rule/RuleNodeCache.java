@@ -45,4 +45,5 @@ public interface RuleNodeCache {
     void evict(RuleNodeId ruleNodeId, String key);
 
     void evict(RuleNodeId ruleNodeId, Integer partition, EntityId key);
+
 }

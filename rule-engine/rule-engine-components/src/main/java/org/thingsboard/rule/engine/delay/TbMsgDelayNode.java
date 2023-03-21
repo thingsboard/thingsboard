@@ -71,18 +71,19 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
     protected void getValuesFromCacheAndSchedule(TbContext ctx, RuleNodeCacheService cache, Integer partition, EntityId id) {
         long currentTs = System.currentTimeMillis();
         Set<TbMsg> pendingMsgs = cache.getTbMsgs(id, partition);
-        if (!pendingMsgs.isEmpty()) {
-            Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdValuesMap.computeIfAbsent(id, k -> new HashMap<>());
-            pendingMsgs.forEach(pendingMsg -> {
-                long delayMsgScheduledTs = getDelayTimeout(ctx, pendingMsg);
-                if (currentTs >= delayMsgScheduledTs) {
-                    processEnqueue(ctx, pendingMsg, partition);
-                } else {
-                    originatorPendingMsgsMap.put(pendingMsg.getId(), pendingMsg);
-                    scheduleTickMsg(ctx, delayMsgScheduledTs - currentTs, id, pendingMsg.getId());
-                }
-            });
+        if (pendingMsgs.isEmpty()) {
+            return;
         }
+        Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdValuesMap.computeIfAbsent(id, k -> new HashMap<>());
+        pendingMsgs.forEach(pendingMsg -> {
+            long delayMsgScheduledTs = getDelayTimeout(ctx, pendingMsg);
+            if (currentTs >= delayMsgScheduledTs) {
+                processEnqueue(ctx, pendingMsg, partition);
+            } else {
+                originatorPendingMsgsMap.put(pendingMsg.getId(), pendingMsg);
+                scheduleTickMsg(ctx, delayMsgScheduledTs - currentTs, id, pendingMsg.getId());
+            }
+        });
     }
 
     @Override
@@ -93,24 +94,31 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
             return;
         }
         Map<UUID, TbMsg> pendingMsgs = entityIdValuesMap.get(originator);
-        if (pendingMsgs != null) {
-            TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
-            if (pendingMsg != null) {
-                processEnqueue(ctx, pendingMsg, tpi.getPartition().orElse(DEFAULT_PARTITION));
-            }
+        if (pendingMsgs == null) {
+            return;
         }
+        TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
+        if (pendingMsg == null) {
+            return;
+        }
+        processEnqueue(ctx, pendingMsg, tpi.getPartition().orElse(DEFAULT_PARTITION));
     }
 
     @Override
     protected void processOnRegularMsg(TbContext ctx, TbMsg msg) {
         EntityId id = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
-        if (tpi.isMyPartition()) {
+        if (!tpi.isMyPartition()) {
+            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
+        } else {
             Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
             Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
             boolean entityIdAdded = entityIds.add(id);
             Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdValuesMap.computeIfAbsent(id, k -> new HashMap<>());
-            if (originatorPendingMsgsMap.size() < config.getMaxPendingMsgs()) {
+            if (originatorPendingMsgsMap.size() >= config.getMaxPendingMsgs()) {
+                log.trace("[{}] Max limit of pending messages reached for originator id: [{}]", ctx.getSelfId(), id);
+                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for originator id: [" + id + "]"));
+            } else {
                 long delay = getDelay(msg);
                 UUID msgId = msg.getId();
                 TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
@@ -125,14 +133,9 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
                         cache.add(id, partition, transformedMsg);
                     }
                 });
-                scheduleTickMsg(ctx, delay, id, msgId);
                 ctx.ack(msg);
-            } else {
-                log.trace("[{}] Max limit of pending messages reached for originator id: [{}]", ctx.getSelfId(), id);
-                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for originator id: [" + id + "]"));
+                scheduleTickMsg(ctx, delay, id, msgId);
             }
-        } else {
-            log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
         }
     }
 
