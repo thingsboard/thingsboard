@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -54,8 +56,10 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Add device profile after specifying the name (text/numbers /special characters)")
     public void createDeviceProfile() {
         String name = ENTITY_NAME + random();
 
@@ -70,8 +74,10 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entity(name).isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add device profile after specifying the name with details")
     public void createDeviceProfileWithDetails() {
         String name = ENTITY_NAME + random();
         String ruleChain = "Root Rule Chain";
@@ -105,8 +111,10 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertEquals(description, profilesPage.getDescription());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Create a device profile with the same name")
     public void createDeviseProfileWithSameName() {
         String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
@@ -124,8 +132,10 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.addDeviceProfileView().isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add device profile without the name")
     public void createDeviceProfileWithoutName() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openCreateDeviceProfileView();
@@ -137,8 +147,10 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertEquals(profilesPage.errorMessage().getText(), NAME_IS_REQUIRED_MESSAGE);
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Create device profile only with spase in name")
     public void createDeviseProfileWithOnlySpaceInName() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.openCreateDeviceProfileView();
@@ -152,8 +164,10 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.addDeviceProfileView().isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add device profile after specifying the name (text/numbers /special characters) without refresh")
     public void createDeviceProfileWithoutRefresh() {
         String name = ENTITY_NAME + random();
 
@@ -167,16 +181,18 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entity(name).isDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Create device profile")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Go to device profile documentation page")
     public void documentation() {
         String urlPath = "docs/user-guide/device-profiles/";
 
         sideBarMenuView.openDeviceProfiles();
-        profilesPage.allEntity().get(0).click();
+        profilesPage.profileNames().get(0).click();
         profilesPage.goToProfileHelpPage();
 
-        Assert.assertTrue(urlContains(urlPath));
+        Assert.assertTrue(urlContains(urlPath), "URL contains " + urlPath);
     }
 }
 
