@@ -35,7 +35,8 @@
       fxFlex="60"
       formControlName="targets"
       subscriptSizing="dynamic"
-      [entityType]="entityType.NOTIFICATION_TARGET"
+      entityType="{{ entityType.NOTIFICATION_TARGET }}"
+      subType="{{ notificationType.ALARM }}"
       [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-target' | translate)">
       <button #createTargetButton
               mat-button [fxHide]="disabled" matSuffix

@@ -34,7 +34,7 @@ import {
   SlackConversation
 } from '@shared/models/notification.models';
 import { User } from '@shared/models/user.model';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -131,9 +131,13 @@ export class NotificationService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getNotificationTargets(pageLink: PageLink, config?: RequestConfig): Observable<PageData<NotificationTarget>> {
-    return this.http.get<PageData<NotificationTarget>>(`/api/notification/targets${pageLink.toQuery()}`,
-                                                        defaultHttpOptionsFromConfig(config));
+  public getNotificationTargets(pageLink: PageLink, type?: NotificationType,
+                                config?: RequestConfig): Observable<PageData<NotificationTarget>> {
+    let url = `/api/notification/targets${pageLink.toQuery()}`;
+    if (isNotEmptyStr(type)) {
+      url += `&notificationType=${type}`;
+    }
+    return this.http.get<PageData<NotificationTarget>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getRecipientsForNotificationTargetConfig(notificationTarget: NotificationTarget, pageLink: PageLink,

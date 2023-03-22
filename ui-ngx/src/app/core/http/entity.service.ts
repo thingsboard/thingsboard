@@ -90,6 +90,7 @@ import { QueueService } from '@core/http/queue.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { NotificationService } from '@core/http/notification.service';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
+import { NotificationType } from '@shared/models/notification.models';
 
 @Injectable({
   providedIn: 'root'
@@ -418,7 +419,7 @@ export class EntityService {
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.notificationService.getNotificationTargets(pageLink, config);
+        entitiesObservable = this.notificationService.getNotificationTargets(pageLink, subType as NotificationType, config);
         break;
     }
     return entitiesObservable;

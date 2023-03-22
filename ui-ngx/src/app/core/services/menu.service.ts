@@ -160,18 +160,18 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'notification.recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: guid(),
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
             icon: 'mdi:message-draw',
             isMdiIcon: true
-          },
-          {
-            id: guid(),
-            name: 'notification.recipients',
-            type: 'link',
-            path: '/notification/recipients',
-            icon: 'contacts'
           },
           {
             id: guid(),
@@ -529,18 +529,18 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'notification.recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: guid(),
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
             icon: 'mdi:message-draw',
             isMdiIcon: true
-          },
-          {
-            id: guid(),
-            name: 'notification.recipients',
-            type: 'link',
-            path: '/notification/recipients',
-            icon: 'contacts'
           },
           {
             id: guid(),

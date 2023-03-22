@@ -65,7 +65,8 @@
           <tb-entity-list
             required
             formControlName="targets"
-            [entityType]="entityType.NOTIFICATION_TARGET"
+            subType="{{ ruleNotificationForm.get('triggerType').value }}"
+            entityType="{{ entityType.NOTIFICATION_TARGET }}"
             placeholderText="{{ 'notification.target' | translate }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix

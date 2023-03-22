@@ -27,7 +27,11 @@ import {
 } from '@angular/forms';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
-import { NonConfirmedNotificationEscalation, NotificationTarget } from '@shared/models/notification.models';
+import {
+  NonConfirmedNotificationEscalation,
+  NotificationTarget,
+  NotificationType
+} from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntil } from 'rxjs/operators';
 import {
@@ -65,6 +69,7 @@ export class EscalationFormComponent implements ControlValueAccessor, OnInit, On
   escalationFormGroup: FormGroup;
 
   entityType = EntityType;
+  notificationType = NotificationType;
 
   private modelValue;
   private propagateChange = null;
