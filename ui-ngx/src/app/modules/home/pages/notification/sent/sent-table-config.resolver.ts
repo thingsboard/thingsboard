@@ -173,7 +173,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     if (countError === 0) {
       return '';
     }
-    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content;
+    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content; cursor: pointer;
                         background-color: #D12730; color: #fff; font-weight: 500; margin-left: 8px" class="stats">
                 ${countError} ${this.translate.instant('notification.fails')} >
             </div>`;
@@ -182,8 +182,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
   private requestStatusStyle(status: NotificationRequestStatus): object {
     const styleObj = {
       fontSize: '14px',
-      color: '#198038',
-      cursor: 'pointer'
+      color: '#198038'
     };
     switch (status) {
       case NotificationRequestStatus.SCHEDULED:

@@ -129,7 +129,13 @@ export class SentNotificationDialogComponent extends
       this.dialogTitle = 'notification.new-notification';
     }
     if (data.request) {
+      this.notificationRequestForm.reset({}, {emitEvent: false});
       this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
+      // eslint-disable-next-line guard-for-in
+      for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
+        this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
+          .patchValue(this.data.request.template.configuration.deliveryMethodsTemplates[method]);
+      }
     }
   }
 
