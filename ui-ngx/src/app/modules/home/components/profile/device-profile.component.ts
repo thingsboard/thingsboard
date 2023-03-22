@@ -104,7 +104,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
       type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
-      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
+      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret,
+      certificateValue: entity?.profileData?.provisionConfiguration?.certificateValue,
+      certificateRegExPattern: entity?.profileData?.provisionConfiguration?.certificateRegExPattern,
+      allowCreateNewDevicesByX509Certificate: entity?.profileData?.provisionConfiguration?.allowCreateNewDevicesByX509Certificate
     };
     const form = this.fb.group(
       {
@@ -185,7 +188,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
       type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
-      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
+      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret,
+      certificateValue: entity?.profileData?.provisionConfiguration?.certificateValue,
+      certificateRegExPattern: entity?.profileData?.provisionConfiguration?.certificateRegExPattern,
+      allowCreateNewDevicesByX509Certificate: entity?.profileData?.provisionConfiguration?.allowCreateNewDevicesByX509Certificate
     };
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type}, {emitEvent: false});

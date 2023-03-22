@@ -322,6 +322,9 @@ export interface DeviceProvisionConfiguration {
   type: DeviceProvisionType;
   provisionDeviceSecret?: string;
   provisionDeviceKey?: string;
+  certificateValue?: string;
+  certificateRegExPattern?: string;
+  allowCreateNewDevicesByX509Certificate?: boolean;
 }
 
 export function createDeviceProfileConfiguration(type: DeviceProfileType): DeviceProfileConfiguration {
