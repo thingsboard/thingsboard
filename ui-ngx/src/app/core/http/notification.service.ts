@@ -51,6 +51,10 @@ export class NotificationService {
                                                   defaultHttpOptionsFromConfig(config));
   }
 
+  public deleteNotification(id: string, config?: RequestConfig): Observable<void> {
+    return this.http.delete<void>(`/api/notification/${id}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public markNotificationAsRead(id: string, config?: RequestConfig): Observable<void> {
     return this.http.put<void>(`/api/notification/${id}/read`, defaultHttpOptionsFromConfig(config));
   }

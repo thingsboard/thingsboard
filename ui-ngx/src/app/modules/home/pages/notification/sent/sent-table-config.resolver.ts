@@ -32,7 +32,7 @@ import {
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { DatePipe } from '@angular/common';
 import { EntityAction } from '@home/models/entity/entity-component.models';
@@ -60,21 +60,20 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
               private dialog: MatDialog,
               private datePipe: DatePipe) {
 
+    this.config.entityType = EntityType.NOTIFICATION_REQUEST;
     this.config.detailsPanelEnabled = false;
-    this.config.selectionEnabled = false;
     this.config.addEnabled = false;
     this.config.searchEnabled = false;
-    this.config.entityTranslations = {
-      noEntities: 'notification.no-notification-request',
-    };
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_REQUEST);
     this.config.entityResources = {} as EntityTypeResource<NotificationRequest>;
 
-    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRequests(pageLink);
-
-    this.config.deleteEnabled = (request) => request.status === NotificationRequestStatus.SCHEDULED;
     this.config.deleteEntityTitle = () => this.translate.instant('notification.delete-request-title');
     this.config.deleteEntityContent = () => this.translate.instant('notification.delete-request-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('notification.delete-requests-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-requests-text');
+
     this.config.deleteEntity = id => this.notificationService.deleteNotificationRequest(id.id);
+    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRequests(pageLink);
 
     this.config.cellActionDescriptors = this.configureCellActions();
 

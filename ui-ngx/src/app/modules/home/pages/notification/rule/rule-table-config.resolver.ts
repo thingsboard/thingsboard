@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { NotificationRule, TriggerTypeTranslationMap } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
@@ -46,15 +46,13 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
               private dialog: MatDialog,
               private datePipe: DatePipe) {
 
+    this.config.entityType = EntityType.NOTIFICATION_RULE;
     this.config.detailsPanelEnabled = false;
     this.config.selectionEnabled = false;
     this.config.addEnabled = false;
     this.config.rowPointer = true;
 
-    this.config.entityTranslations = {
-      noEntities: 'notification.no-rules-notification',
-      search: 'notification.search-rules'
-    };
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_RULE);
     this.config.entityResources = {} as EntityTypeResource<NotificationRule>;
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRules(pageLink);

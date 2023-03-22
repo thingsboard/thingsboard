@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { NotificationTemplate, NotificationTemplateTypeTranslateMap } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
@@ -46,15 +46,13 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
               private dialog: MatDialog,
               private datePipe: DatePipe) {
 
+    this.config.entityType = EntityType.NOTIFICATION_TEMPLATE;
     this.config.detailsPanelEnabled = false;
     this.config.selectionEnabled = false;
     this.config.addEnabled = false;
     this.config.rowPointer = true;
 
-    this.config.entityTranslations = {
-      noEntities: 'notification.no-notification-templates',
-      search: 'notification.search-templates'
-    };
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TEMPLATE);
     this.config.entityResources = {} as EntityTypeResource<NotificationTemplate>;
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
@@ -77,13 +75,9 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
 
     this.config.columns.push(
       new DateEntityTableColumn<NotificationTemplate>('createdTime', 'notification.created-time', this.datePipe, '170px'),
-      new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%',
+      new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '20%',
         (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
-      new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
-      new EntityTableColumn<NotificationTemplate>('configuration.notificationSubject', 'notification.subject', '25%',
-        (template) => template.configuration.notificationSubject, () => ({}), false),
-      new EntityTableColumn<NotificationTemplate>('configuration.defaultTextTemplate', 'notification.message', '35%',
-        (template) => template.configuration.defaultTextTemplate, () => ({}), false)
+      new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '80%')
     );
   }
 

@@ -263,8 +263,6 @@ export interface NotificationTemplate extends Omit<BaseData<NotificationTemplate
 }
 
 interface NotificationTemplateConfig {
-  defaultTextTemplate: string;
-  notificationSubject: string;
   deliveryMethodsTemplates: {
     [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate
   };
