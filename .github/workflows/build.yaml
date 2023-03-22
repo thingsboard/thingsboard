@@ -1,9 +1,9 @@
 name: Java CI
 
-on: push
-#  push:
-#    branches:
-#      - 'master'
+on:
+  push:
+    branches:
+      - 'master'
 
 jobs:
   build:
@@ -11,8 +11,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -30,4 +28,4 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
       - name: Build with Maven
-        run: mvn clean install -DskipTests -Ddockerfile.skip=false -Dlicense.skip -P push-docker-amd-arm-images
+        run: mvn clean install -T 1C -DskipTests -Ddockerfile.skip=false -Dlicense.skip -P push-docker-amd-arm-images
