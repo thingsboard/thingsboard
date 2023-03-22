@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,10 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
         return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(tenantId.getId(),
-                originatorType, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink))).mapData(NotificationRequestInfoEntity::toData);
+                        originatorType, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, Map.of(
+                                "templateName", "t.name"
+                        ))))
+                .mapData(NotificationRequestInfoEntity::toData);
     }
 
     @Override

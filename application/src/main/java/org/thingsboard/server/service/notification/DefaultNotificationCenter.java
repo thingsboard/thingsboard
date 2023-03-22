@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -54,6 +55,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -64,6 +66,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.apiusage.limits.LimitedApi;
+import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
@@ -97,12 +101,16 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
+    private final RateLimitService rateLimitService;
 
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        if (!rateLimitService.checkRateLimit(tenantId, LimitedApi.NOTIFICATION_REQUEST)) {
+            throw new TbRateLimitsException(EntityType.TENANT);
+        }
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         NotificationTemplate notificationTemplate;
         if (notificationRequest.getTemplateId() != null) {
@@ -178,7 +186,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         switch (target.getConfiguration().getType()) {
             case PLATFORM_USERS: {
                 PlatformUsersNotificationTargetConfig platformUsersTargetConfig = (PlatformUsersNotificationTargetConfig) target.getConfiguration();
-                if (platformUsersTargetConfig.getUsersFilter().getType() == UsersFilterType.ACTION_TARGET_USER) {
+                if (platformUsersTargetConfig.getUsersFilter().getType() == UsersFilterType.AFFECTED_USER) {
                     if (ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
                         UserId targetUserId = ((RuleOriginatedNotificationInfo) ctx.getRequest().getInfo()).getTargetUserId();
                         if (targetUserId != null) {

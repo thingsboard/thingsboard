@@ -73,18 +73,9 @@ public class NotificationProcessingContext {
     private void init() {
         NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
         templateConfig.getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
-            if (!template.isEnabled()) return;
-
-            template = template.copy();
-            if (StringUtils.isEmpty(template.getBody())) {
-                template.setBody(templateConfig.getDefaultTextTemplate());
+            if (template.isEnabled()) {
+                templates.put(deliveryMethod, template);
             }
-            if (template instanceof HasSubject) {
-                if (StringUtils.isEmpty(((HasSubject) template).getSubject())) {
-                    ((HasSubject) template).setSubject(templateConfig.getNotificationSubject());
-                }
-            }
-            templates.put(deliveryMethod, template);
         });
         deliveryMethods = templates.keySet();
     }

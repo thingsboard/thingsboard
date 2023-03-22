@@ -22,12 +22,15 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
+import javax.validation.constraints.NotEmpty;
+
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @NotEmpty
     private String subject;
     private JsonNode additionalConfig;
 

@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
@@ -44,7 +45,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.Platform
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
-import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
@@ -142,6 +142,19 @@ public class NotificationTargetController extends BaseController {
         // generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationTargetService.findNotificationTargetsByTenantId(user.getTenantId(), pageLink);
+    }
+
+    @GetMapping(value = "/targets", params = "notificationType")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public PageData<NotificationTarget> getNotificationTargetsBySupportedNotificationType(@RequestParam int pageSize,
+                                                                                          @RequestParam int page,
+                                                                                          @RequestParam(required = false) String textSearch,
+                                                                                          @RequestParam(required = false) String sortProperty,
+                                                                                          @RequestParam(required = false) String sortOrder,
+                                                                                          @RequestParam(required = false) NotificationType notificationType,
+                                                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return notificationTargetService.findNotificationTargetsByTenantIdAndSupportedNotificationType(user.getTenantId(), notificationType, pageLink);
     }
 
     @ApiOperation(value = "Delete notification target by id (deleteNotificationTargetById)",

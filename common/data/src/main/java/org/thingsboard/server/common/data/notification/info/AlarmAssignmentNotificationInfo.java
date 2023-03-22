@@ -58,12 +58,13 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
                 "assigneeFirstName", assigneeFirstName,
                 "assigneeLastName", assigneeLastName,
                 "assigneeEmail", assigneeEmail,
+                "assigneeId", assigneeId != null ? assigneeId.toString() : null,
                 "userName", userName,
                 "alarmType", alarmType,
                 "alarmId", alarmId.toString(),
                 "alarmSeverity", alarmSeverity.name().toLowerCase(),
                 "alarmStatus", alarmStatus.toString(),
-                "alarmOriginatorEntityType", alarmOriginator.getEntityType().normalName(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().getNormalName(),
                 "alarmOriginatorId", alarmOriginator.getId().toString(),
                 "alarmOriginatorName", alarmOriginatorName
         );

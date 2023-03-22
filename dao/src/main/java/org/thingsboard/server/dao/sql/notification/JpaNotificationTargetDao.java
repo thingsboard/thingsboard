@@ -22,8 +22,9 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -32,11 +33,10 @@ import org.thingsboard.server.dao.notification.NotificationTargetDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.dao.DaoUtil.getId;
 
 @Component
 @SqlDao
@@ -47,8 +47,18 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
 
     @Override
     public PageData<NotificationTarget> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndNameContainingIgnoreCase(tenantId.getId(),
+        return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndSearchText(tenantId.getId(),
                 Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<NotificationTarget> findByTenantIdAndSupportedNotificationTypeAndPageLink(TenantId tenantId, NotificationType notificationType, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(tenantId.getId(),
+                Strings.nullToEmpty(pageLink.getTextSearch()),
+                Arrays.stream(UsersFilterType.values())
+                        .filter(type -> notificationType != NotificationType.GENERAL || !type.isForRules())
+                        .map(Enum::name).collect(Collectors.toList()),
+                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

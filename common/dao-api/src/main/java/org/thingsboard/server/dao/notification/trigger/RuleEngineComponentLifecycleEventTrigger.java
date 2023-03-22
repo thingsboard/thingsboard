@@ -32,7 +32,7 @@ public class RuleEngineComponentLifecycleEventTrigger implements NotificationRul
     private final EntityId componentId;
     private final String componentName;
     private final ComponentLifecycleEvent eventType;
-    private final Exception error;
+    private final Throwable error;
 
     @Override
     public NotificationRuleTriggerType getType() {
