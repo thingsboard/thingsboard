@@ -18,11 +18,11 @@ package org.thingsboard.server.common.data.notification.targets.platform;
 import lombok.Data;
 
 @Data
-public class ActionTargetUserFilter implements UsersFilter {
+public class AffectedUserFilter implements UsersFilter {
 
     @Override
     public UsersFilterType getType() {
-        return UsersFilterType.ACTION_TARGET_USER;
+        return UsersFilterType.AFFECTED_USER;
     }
 
 }

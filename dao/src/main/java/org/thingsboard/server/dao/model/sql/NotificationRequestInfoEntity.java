@@ -49,21 +49,22 @@ public class NotificationRequestInfoEntity extends NotificationRequestEntity {
         NotificationRequest request = super.toData();
         List<NotificationDeliveryMethod> deliveryMethods;
 
-        NotificationTemplateConfig templateConfig = fromJson(this.templateConfig, NotificationTemplateConfig.class);
-        String templateName = this.templateName;
-        if (templateConfig == null && request.getTemplate() != null) {
-            templateConfig = request.getTemplate().getConfiguration();
-        }
-        if (templateConfig != null) {
-            deliveryMethods = templateConfig.getDeliveryMethodsTemplates().entrySet().stream()
-                    .filter(entry -> entry.getValue().isEnabled())
-                    .map(Map.Entry::getKey).collect(Collectors.toList());
-        } else if (request.getStats() != null) {
+        if (request.getStats() != null) {
             Set<NotificationDeliveryMethod> methods = new HashSet<>(request.getStats().getSent().keySet());
             methods.addAll(request.getStats().getErrors().keySet());
             deliveryMethods = new ArrayList<>(methods);
         } else {
-            deliveryMethods = Collections.emptyList();
+            NotificationTemplateConfig templateConfig = fromJson(this.templateConfig, NotificationTemplateConfig.class);
+            if (templateConfig == null && request.getTemplate() != null) {
+                templateConfig = request.getTemplate().getConfiguration();
+            }
+            if (templateConfig != null) {
+                deliveryMethods = templateConfig.getDeliveryMethodsTemplates().entrySet().stream()
+                        .filter(entry -> entry.getValue().isEnabled())
+                        .map(Map.Entry::getKey).collect(Collectors.toList());
+            } else {
+                deliveryMethods = Collections.emptyList();
+            }
         }
         return new NotificationRequestInfo(request, templateName, deliveryMethods);
     }

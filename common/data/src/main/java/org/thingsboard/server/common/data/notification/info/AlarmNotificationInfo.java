@@ -52,7 +52,7 @@ public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
                 "alarmId", alarmId.toString(),
                 "alarmSeverity", alarmSeverity.name().toLowerCase(),
                 "alarmStatus", alarmStatus.toString(),
-                "alarmOriginatorEntityType", alarmOriginator.getEntityType().normalName(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().getNormalName(),
                 "alarmOriginatorName", alarmOriginatorName,
                 "alarmOriginatorId", alarmOriginator.getId().toString()
         );

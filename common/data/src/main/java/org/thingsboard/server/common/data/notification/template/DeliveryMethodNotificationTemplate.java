@@ -22,7 +22,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method")
@@ -37,6 +41,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 public abstract class DeliveryMethodNotificationTemplate {
 
     private boolean enabled;
+    @NotEmpty
     private String body;
 
     public DeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {

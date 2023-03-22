@@ -49,7 +49,7 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
-                "entityType", entityId.getEntityType().normalName(),
+                "entityType", entityId.getEntityType().getNormalName(),
                 "entityId", entityId.toString(),
                 "entityName", entityName,
                 "actionType", actionType.name().toLowerCase(),

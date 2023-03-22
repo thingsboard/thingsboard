@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -48,8 +49,7 @@ public enum EntityType {
     NOTIFICATION,
     NOTIFICATION_RULE;
 
-    public String normalName() {
-        return StringUtils.capitalize(name().toLowerCase().replaceAll("_", " "));
-    }
+    @Getter
+    private final String normalName = StringUtils.capitalize(name().toLowerCase().replaceAll("_", " "));
 
 }

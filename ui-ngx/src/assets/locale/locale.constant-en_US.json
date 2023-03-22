@@ -2818,7 +2818,7 @@
         "no-severity-matching": "'{{severity}}' not found.",
         "no-targets-notification": "No recipients notification",
         "no-template-matching": "No resource matching '{{template}}' were found.",
-        "not-found-slack-recipient": "Not found slack recipient",
+        "not-found-slack-recipient": "Slack recipient not found",
         "notification": "Notification",
         "notification-center": "Notification center",
         "notification-chain": "Notification chain",
@@ -2842,7 +2842,7 @@
         "recipient": "Recipient",
         "recipients": "Recipients",
         "recipient-type": "Recipient type",
-        "recipients-count": "{ count, plural, =1 {1 Recipient} other {# Recipients} }",
+        "recipients-count": "{ count, plural, =1 {1 recipient} other {# recipients} }",
         "request-status": {
             "processing": "Processing",
             "scheduled": "Scheduled",
@@ -2858,7 +2858,7 @@
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "scheduler-later": "Schedule for later",
-        "search-notification": "Search notification",
+        "search-notification": "Search notifications",
         "search-rules": "Search rules",
         "search-targets": "Search recipients",
         "search-templates": "Search templates",
@@ -2867,11 +2867,11 @@
         "settings": "Notification settings",
         "set-entity-from-notification": "Set entity from notification to dashboard state",
         "slack": "Slack",
-        "slack-chanel-type": "Slack chanel type",
+        "slack-chanel-type": "Slack channel type",
         "slack-chanel-types": {
             "direct": "Direct message",
-            "private-channel": "Private Channel",
-            "public-channel": "Public Channel"
+            "private-channel": "Private channel",
+            "public-channel": "Public channel"
         },
         "slack-settings": "Slack settings",
         "sms-settings": "SMS settings",

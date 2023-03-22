@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage;
+package org.thingsboard.server.service.apiusage.limits;
 
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface RateLimitService {
 
-    boolean checkEntityExportLimit(TenantId tenantId);
-
-    boolean checkEntityImportLimit(TenantId tenantId);
+    boolean checkRateLimit(TenantId tenantId, LimitedApi api);
 
 }

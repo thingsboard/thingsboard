@@ -39,7 +39,7 @@ public class EntitiesLimitNotificationInfo implements NotificationInfo {
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
-                "entityType", entityType.normalName(),
+                "entityType", entityType.getNormalName(),
                 "currentCount", String.valueOf(currentCount),
                 "limit", String.valueOf(limit),
                 "percents", String.valueOf(percents)

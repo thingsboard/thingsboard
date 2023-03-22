@@ -82,7 +82,7 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
                 .build();
     }
 
-    private String getErrorMsg(Exception error) {
+    private String getErrorMsg(Throwable error) {
         if (error == null) return null;
 
         StringWriter sw = new StringWriter();
