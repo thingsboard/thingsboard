@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.service.notification;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,6 +25,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
@@ -40,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unchecked")
 public class NotificationProcessingContext {
@@ -57,6 +61,8 @@ public class NotificationProcessingContext {
     private Set<NotificationDeliveryMethod> deliveryMethods;
     @Getter
     private final NotificationRequestStats stats;
+
+    private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\$\\{([a-zA-Z]+)(:[a-zA-Z]+)?}");
 
     @Builder
     public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationSettings settings,
@@ -111,7 +117,7 @@ public class NotificationProcessingContext {
                 }
                 JsonNode link = buttonConfig.get().get("link");
                 if (link != null && link.isTextual()) {
-                    link = new TextNode(processTemplate(link.asText(), templateContext).toLowerCase());
+                    link = new TextNode(processTemplate(link.asText(), templateContext));
                     buttonConfig.get().set("link", link);
                 }
             }
@@ -120,19 +126,22 @@ public class NotificationProcessingContext {
     }
 
     private static String processTemplate(String template, Map<String, String> context) {
-        if (template == null) return null;
-        String result = template;
-        for (Map.Entry<String, String> kv : context.entrySet()) {
-            String value = Strings.nullToEmpty(kv.getValue());
-            result = result.replace("${" + kv.getKey() + '}', value);
-        }
-        return result;
-    }
-
-    public static String processTemplate(String template, NotificationInfo notificationInfo) {
-        if (notificationInfo == null) return template;
-        Map<String, String> templateContext = notificationInfo.getTemplateData();
-        return processTemplate(template, templateContext);
+        return TEMPLATE_PARAM_PATTERN.matcher(template).replaceAll(matchResult -> {
+            String key = matchResult.group(1);
+            String value = Strings.nullToEmpty(context.get(key));
+            String function = matchResult.group(2);
+            if (function != null) {
+                switch (function) {
+                    case ":upperCase":
+                        return value.toUpperCase();
+                    case ":lowerCase":
+                        return value.toLowerCase();
+                    case ":capitalize":
+                        return StringUtils.capitalize(value.toLowerCase());
+                }
+            }
+            return value;
+        });
     }
 
     public Map<String, String> createTemplateContext(User recipient) {

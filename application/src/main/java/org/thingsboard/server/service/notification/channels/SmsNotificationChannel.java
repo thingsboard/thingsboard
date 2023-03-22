@@ -24,7 +24,7 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
-import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 
 @Component

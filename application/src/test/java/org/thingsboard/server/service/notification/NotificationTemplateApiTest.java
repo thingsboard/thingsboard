@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.thingsboard.server.common.data.id.IdBased;
@@ -29,6 +30,8 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
@@ -40,9 +43,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class NotificationTemplateApiTest extends AbstractNotificationApiTest {
 
+    @Autowired
+    private NotificationTemplateService templateService;
+    @Autowired
+    private NotificationRuleService notificationRuleService;
+
     @Before
     public void beforeEach() throws Exception {
         loginTenantAdmin();
+        notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
+        templateService.deleteNotificationTemplatesByTenantId(tenantId);
     }
 
     @Test
@@ -61,8 +71,6 @@ public class NotificationTemplateApiTest extends AbstractNotificationApiTest {
 
         NotificationTemplateConfig config = new NotificationTemplateConfig();
         notificationTemplate.setConfiguration(config);
-        config.setDefaultTextTemplate("Default text");
-        config.setNotificationSubject(null);
         EmailDeliveryMethodNotificationTemplate emailTemplate = new EmailDeliveryMethodNotificationTemplate();
         emailTemplate.setEnabled(true);
         emailTemplate.setBody(null);
@@ -74,14 +82,9 @@ public class NotificationTemplateApiTest extends AbstractNotificationApiTest {
 
         validationError = saveAndGetError(notificationTemplate, status().isBadRequest());
         assertThat(validationError)
-                .contains("notificationSubject must be")
+                .contains("subject must not be")
+                .contains("body must not be")
                 .contains("name is malformed");
-
-        config.setDefaultTextTemplate(null);
-
-        validationError = saveAndGetError(notificationTemplate, status().isBadRequest());
-        assertThat(validationError)
-                .contains("defaultTextTemplate").contains("must be specified");
     }
 
     @Test
