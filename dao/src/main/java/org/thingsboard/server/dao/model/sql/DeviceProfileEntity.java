@@ -109,6 +109,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_CERTIFICATE_HASH_PROPERTY)
+    private String certificateHash;
+
     public DeviceProfileEntity() {
         super();
     }
@@ -126,6 +129,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.image = deviceProfile.getImage();
         this.transportType = deviceProfile.getTransportType();
         this.provisionType = deviceProfile.getProvisionType();
+        this.certificateHash = deviceProfile.getCertificateHash();
         this.description = deviceProfile.getDescription();
         this.isDefault = deviceProfile.isDefault();
         this.profileData = JacksonUtil.convertValue(deviceProfile.getProfileData(), ObjectNode.class);
@@ -188,6 +192,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
             deviceProfile.setDefaultDashboardId(new DashboardId(defaultDashboardId));
         }
         deviceProfile.setProvisionDeviceKey(provisionDeviceKey);
+        deviceProfile.setCertificateHash(certificateHash);
 
         if (firmwareId != null) {
             deviceProfile.setFirmwareId(new OtaPackageId(firmwareId));

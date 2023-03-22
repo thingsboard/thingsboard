@@ -54,8 +54,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCredRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -85,6 +86,9 @@ public interface TransportService {
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(DeviceTransportType transportType, ValidateDeviceX509CertRequestMsg msg,
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
+
+    void process(DeviceTransportType transportType, ValidateOrCreateDeviceX509CertRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(ValidateDeviceLwM2MCredentialsRequestMsg msg,

@@ -116,6 +116,11 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
+    public DeviceProfile findByCertificateHash(String certificateHash) {
+        return DaoUtil.getData(deviceProfileRepository.findDeviceProfileByCertificateHash(certificateHash));
+    }
+
+    @Override
     public DeviceProfile findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }

@@ -24,9 +24,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -42,7 +41,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
@@ -123,7 +121,7 @@ public class MqttSslHandlerProvider {
     static class ThingsboardMqttX509TrustManager implements X509TrustManager {
 
         private final X509TrustManager trustManager;
-        private TransportService transportService;
+        private final TransportService transportService;
 
         ThingsboardMqttX509TrustManager(X509TrustManager trustManager, TransportService transportService) {
             this.trustManager = trustManager;
@@ -142,43 +140,37 @@ public class MqttSslHandlerProvider {
         }
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain,
-                                       String authType) throws CertificateException {
-            String credentialsBody = null;
-            for (X509Certificate cert : chain) {
-                try {
-                    String strCert = SslUtil.getCertificateString(cert);
-                    String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                    final String[] credentialsBodyHolder = new String[1];
-                    CountDownLatch latch = new CountDownLatch(1);
-                    transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
-                            new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
-                                @Override
-                                public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                    if (!StringUtils.isEmpty(msg.getCredentials())) {
-                                        credentialsBodyHolder[0] = msg.getCredentials();
-                                    }
-                                    latch.countDown();
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            String clientDeviceCertValue = SslUtil.getCertificateString(chain[0]);
+            final String[] credentialsBodyHolder = new String[1];
+            CountDownLatch latch = new CountDownLatch(1);
+            try {
+                String certificateChain = SslUtil.getCertificateChainString(chain);
+                transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg
+                                .newBuilder().setCertificateChain(certificateChain).build(),
+                        new TransportServiceCallback<>() {
+                            @Override
+                            public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                                if (!StringUtils.isEmpty(msg.getCredentials())) {
+                                    credentialsBodyHolder[0] = msg.getCredentials();
                                 }
+                                latch.countDown();
+                            }
 
-                                @Override
-                                public void onError(Throwable e) {
-                                    log.error(e.getMessage(), e);
-                                    latch.countDown();
-                                }
-                            });
-                    latch.await(10, TimeUnit.SECONDS);
-                    if (strCert.equals(credentialsBodyHolder[0])) {
-                        credentialsBody = credentialsBodyHolder[0];
-                        break;
-                    }
-                } catch (InterruptedException | CertificateEncodingException e) {
-                    log.error(e.getMessage(), e);
+                            @Override
+                            public void onError(Throwable e) {
+                                log.trace("Failed to process certificate chain: {}", certificateChain, e);
+                                latch.countDown();
+                            }
+                        });
+                latch.await(10, TimeUnit.SECONDS);
+                if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                    throw new CertificateException("Invalid Certificate's chain. Cannot find such device credentials.");
                 }
-            }
-            if (credentialsBody == null) {
-                throw new CertificateException("Invalid Device Certificate");
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
         }
+
     }
 }

@@ -64,6 +64,8 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileInfo findDefaultDeviceProfileInfo(@Param("tenantId") UUID tenantId);
 
+    DeviceProfileEntity findDeviceProfileByCertificateHash(String certificateHash);
+
     DeviceProfileEntity findByTenantIdAndName(UUID id, String profileName);
 
     DeviceProfileEntity findByProvisionDeviceKey(@Param("provisionDeviceKey") String provisionDeviceKey);

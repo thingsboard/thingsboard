@@ -194,6 +194,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
+    public static final String DEVICE_PROFILE_CERTIFICATE_HASH_PROPERTY = "certificate_hash";
     public static final String DEVICE_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY = "default_edge_rule_chain_id";
 
     /**
