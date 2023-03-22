@@ -62,6 +62,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   deviceProvisionType = DeviceProvisionType;
   deviceProvisionTypes = Object.keys(DeviceProvisionType);
   deviceProvisionTypeTranslateMap = deviceProvisionTypeTranslationMap;
+  readMore: boolean;
 
   private requiredValue: boolean;
   get required(): boolean {
