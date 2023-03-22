@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.SystemInfoData;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -50,9 +52,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.common.util.SystemUtil.getFreeMemory;
 import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
 import static org.thingsboard.common.util.SystemUtil.getFreeDiscSpace;
+import static org.thingsboard.common.util.SystemUtil.getFreeMemory;
 import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
 import static org.thingsboard.common.util.SystemUtil.getTotalCpuUsage;
 import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
@@ -79,6 +81,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final PartitionService partitionService;
     private final DiscoveryService discoveryService;
     private final TelemetrySubscriptionService telemetryService;
+    private final TbApiUsageStateClient apiUsageStateClient;
     private ScheduledExecutorService scheduler;
 
     @Value("${zk.enabled:false}")
@@ -165,7 +168,8 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     }
 
     private void doSave(List<TsKvEntry> telemetry) {
-        telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, telemetry, CALLBACK);
+        ApiUsageState apiUsageState = apiUsageStateClient.getApiUsageState(TenantId.SYS_TENANT_ID);
+        telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, apiUsageState.getId(), telemetry, CALLBACK);
     }
 
     private List<SystemInfoData> getSystemData(ServiceInfo serviceInfo) {
