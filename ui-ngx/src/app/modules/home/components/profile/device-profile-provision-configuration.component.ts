@@ -86,7 +86,10 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     this.provisionConfigurationFormGroup = this.fb.group({
       type: [DeviceProvisionType.DISABLED, Validators.required],
       provisionDeviceSecret: [{value: null, disabled: true}, Validators.required],
-      provisionDeviceKey: [{value: null, disabled: true}, Validators.required]
+      provisionDeviceKey: [{value: null, disabled: true}, Validators.required],
+      certificateValue: [{value: null, disabled: true}, Validators.required],
+      certificateRegExPattern: [{value: '[\\w]*', disabled: true}, Validators.required],
+      allowCreateNewDevicesByX509Certificate: [{value: true, disabled: true}]
     });
     this.provisionConfigurationFormGroup.get('type').valueChanges.subscribe((type) => {
       if (type === DeviceProvisionType.DISABLED) {
@@ -94,6 +97,17 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(null, {emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').disable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').patchValue(null);
+        this.provisionConfigurationFormGroup.get('certificateValue').disable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('certificateValue').patchValue(null);
+        this.provisionConfigurationFormGroup.get('certificateRegExPattern').disable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('certificateRegExPattern').patchValue(null);
+        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').disable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').patchValue(null);
+
+      } else if (type === DeviceProvisionType.X509_CERTIFICATE_CHAIN) {
+        this.provisionConfigurationFormGroup.get('certificateValue').enable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('certificateRegExPattern').enable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').enable({emitEvent: false});
       } else {
         const provisionDeviceSecret: string = this.provisionConfigurationFormGroup.get('provisionDeviceSecret').value;
         if (!provisionDeviceSecret || !provisionDeviceSecret.length) {
