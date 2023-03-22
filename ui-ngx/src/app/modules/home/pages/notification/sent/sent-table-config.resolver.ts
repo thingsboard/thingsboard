@@ -47,6 +47,7 @@ import {
 } from '@home/pages/notification/sent/sent-error-dialog.component';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Injectable } from '@angular/core';
+import { SentTableHeaderComponent } from '@home/pages/notification/sent/sent-table-header.component';
 
 @Injectable()
 export class SentTableConfigResolver implements Resolve<EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>> {
@@ -77,6 +78,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
 
     this.config.cellActionDescriptors = this.configureCellActions();
 
+    this.config.headerComponent = SentTableHeaderComponent;
     this.config.onEntityAction = action => this.onRequestAction(action);
 
     this.config.handleRowClick = (event, entity) => {

@@ -16,6 +16,7 @@
 
 import {
   CellActionDescriptor,
+  DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -33,6 +34,7 @@ import {
 } from '@home/pages/notification/rule/rule-notification-dialog.component';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Injectable } from '@angular/core';
+import { DatePipe } from '@angular/common';
 
 @Injectable()
 export class RuleTableConfigResolver implements Resolve<EntityTableConfig<NotificationRule>> {
@@ -41,7 +43,8 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private datePipe: DatePipe) {
 
     this.config.detailsPanelEnabled = false;
     this.config.selectionEnabled = false;
@@ -64,7 +67,7 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     this.config.headerComponent = RuleTableHeaderComponent;
     this.config.onEntityAction = action => this.onTargetAction(action);
 
-    this.config.defaultSortOrder = {property: 'name', direction: Direction.ASC};
+    this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.handleRowClick = ($event, rule) => {
       this.editRule($event, rule);
@@ -72,6 +75,7 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     };
 
     this.config.columns.push(
+      new DateEntityTableColumn<NotificationRule>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),
       new EntityTableColumn<NotificationRule>('templateName', 'notification.template', '20%'),
       new EntityTableColumn<NotificationRule>('triggerType', 'notification.trigger.trigger', '20%',

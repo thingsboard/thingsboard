@@ -186,7 +186,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         NotificationTemplate ruleEngineComponentLifecycleFailureNotificationTemplate = createTemplate(tenantId, "Rule chain/node lifecycle failure notification", NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
                 "${componentType} '${componentName}' failed to ${action}",
                 "Rule chain '${ruleChainName}' - ${action} failure:<br/>${error}",
-                "warning", "Go to Rule chain", "/ruleChains/${ruleChainId}");
+                "warning", "Go to Rule chain", "/features/ruleChains/${ruleChainId}");
         RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig ruleEngineComponentLifecycleEventRuleTriggerConfig = new RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig();
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChains(null);
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChainEvents(Set.of(ComponentLifecycleEvent.STARTED, ComponentLifecycleEvent.UPDATED, ComponentLifecycleEvent.STOPPED));

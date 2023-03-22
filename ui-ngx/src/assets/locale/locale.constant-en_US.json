@@ -415,11 +415,8 @@
         "resources": "Resources",
         "notifications": "Notifications",
         "notifications-settings": "Notifications settings",
-        "notification": {
-            "notification-settings": "Notification settings",
-            "slack-api-token": "Slack api token",
-            "slack": "Slack"
-        }
+        "slack-api-token": "Slack api token",
+        "slack": "Slack"
       },
     "alarm": {
         "alarm": "Alarm",

@@ -16,6 +16,7 @@
 
 import {
   CellActionDescriptor,
+  DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -33,6 +34,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TemplateTableHeaderComponent } from '@home/pages/notification/template/template-table-header.component';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { DatePipe } from '@angular/common';
 
 @Injectable()
 export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<NotificationTemplate>> {
@@ -41,7 +43,8 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private datePipe: DatePipe) {
 
     this.config.detailsPanelEnabled = false;
     this.config.selectionEnabled = false;
@@ -65,7 +68,7 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
     this.config.headerComponent = TemplateTableHeaderComponent;
     this.config.onEntityAction = action => this.onTemplateAction(action);
 
-    this.config.defaultSortOrder = {property: 'notificationType', direction: Direction.ASC};
+    this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.handleRowClick = ($event, template) => {
       this.editTemplate($event, template);
@@ -73,6 +76,7 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
     };
 
     this.config.columns.push(
+      new DateEntityTableColumn<NotificationTemplate>('createdTime', 'notification.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '15%',
         (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '25%'),
