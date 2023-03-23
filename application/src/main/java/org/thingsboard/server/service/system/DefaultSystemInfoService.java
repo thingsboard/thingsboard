@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.protobuf.ProtocolStringList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -82,19 +81,20 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final DiscoveryService discoveryService;
     private final TelemetrySubscriptionService telemetryService;
     private final TbApiUsageStateClient apiUsageStateClient;
-    private ScheduledExecutorService scheduler;
-
-    @Value("${zk.enabled:false}")
-    private boolean zkEnabled;
+    private volatile ScheduledExecutorService scheduler;
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            if (scheduler == null && partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
-                scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
-                scheduler.scheduleAtFixedRate(this::saveCurrentSystemInfo, 0, 1, TimeUnit.MINUTES);
-            } else {
-                destroy();
+            synchronized (this) {
+                if (partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+                    if (scheduler == null) {
+                        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
+                        scheduler.scheduleAtFixedRate(this::saveCurrentSystemInfo, 0, 1, TimeUnit.MINUTES);
+                    }
+                } else {
+                    destroy();
+                }
             }
         }
     }
@@ -105,27 +105,26 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
 
         ServiceInfo serviceInfo = serviceInfoProvider.getServiceInfoWithCurrentSystemInfo();
 
-        if (zkEnabled) {
-            systemInfo.setSystemData(getSystemData(serviceInfo));
-        } else {
+        if (discoveryService.isMonolith()) {
             systemInfo.setMonolith(true);
             systemInfo.setSystemData(Collections.singletonList(createSystemInfoData(serviceInfo)));
+        } else {
+            systemInfo.setSystemData(getSystemData(serviceInfo));
         }
 
         return systemInfo;
     }
 
     protected void saveCurrentSystemInfo() {
-        if (zkEnabled) {
-            saveCurrentClusterSystemInfo();
-        } else {
+        if (discoveryService.isMonolith()) {
             saveCurrentMonolithSystemInfo();
+        } else {
+            saveCurrentClusterSystemInfo();
         }
     }
 
     private void saveCurrentClusterSystemInfo() {
         long ts = System.currentTimeMillis();
-
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfoWithCurrentSystemInfo());
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
         doSave(Collections.singletonList(clusterDataKv));
@@ -135,34 +134,13 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
 
-        Long memoryUsage = getMemoryUsage();
-        if (memoryUsage != null) {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", memoryUsage)));
-        }
-        Long totalMemory = getTotalMemory();
-        if (totalMemory != null) {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalMemory", totalMemory)));
-        }
-        Long freeMemory = getFreeMemory();
-        if (freeMemory != null) {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeMemory", freeMemory)));
-        }
-        Double cpuUsage = getCpuUsage();
-        if (cpuUsage != null) {
-            tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("cpuUsage", cpuUsage)));
-        }
-        Double totalCpuUsage = getTotalCpuUsage();
-        if (totalCpuUsage != null) {
-            tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("totalCpuUsage", totalCpuUsage)));
-        }
-        Long freeDiscSpace = getFreeDiscSpace();
-        if (freeDiscSpace != null) {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeDiscSpace", freeDiscSpace)));
-        }
-        Long totalDiscSpace = getTotalDiscSpace();
-        if (totalDiscSpace != null) {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalDiscSpace", totalDiscSpace)));
-        }
+        getMemoryUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", v))));
+        getTotalMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalMemory", v))));
+        getFreeMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeMemory", v))));
+        getCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("cpuUsage", v))));
+        getTotalCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("totalCpuUsage", v))));
+        getFreeDiscSpace().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeDiscSpace", v))));
+        getTotalDiscSpace().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalDiscSpace", v))));
 
         doSave(tsList);
     }

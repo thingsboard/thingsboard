@@ -23,4 +23,6 @@ public interface DiscoveryService {
 
     List<TransportProtos.ServiceInfo> getOtherServers();
 
+    boolean isMonolith();
+
 }

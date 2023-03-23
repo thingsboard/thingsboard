@@ -37,9 +37,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.common.util.SystemUtil.getFreeMemory;
 import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
 import static org.thingsboard.common.util.SystemUtil.getFreeDiscSpace;
+import static org.thingsboard.common.util.SystemUtil.getFreeMemory;
 import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
 import static org.thingsboard.common.util.SystemUtil.getTotalCpuUsage;
 import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
@@ -118,34 +118,13 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private TransportProtos.SystemInfoProto getCurrentSystemInfoProto() {
         TransportProtos.SystemInfoProto.Builder builder = TransportProtos.SystemInfoProto.newBuilder();
 
-        Long memoryUsage = getMemoryUsage();
-        if (memoryUsage != null) {
-            builder.setMemoryUsage(memoryUsage);
-        }
-        Long totalMemory = getTotalMemory();
-        if (totalMemory != null) {
-            builder.setTotalMemory(totalMemory);
-        }
-        Long freeMemory = getFreeMemory();
-        if (freeMemory != null) {
-            builder.setFreeMemory(freeMemory);
-        }
-        Double cpuUsage = getCpuUsage();
-        if (cpuUsage != null) {
-            builder.setCpuUsage(cpuUsage);
-        }
-        Double totalCpuUsage = getTotalCpuUsage();
-        if (totalCpuUsage != null) {
-            builder.setTotalCpuUsage(totalCpuUsage);
-        }
-        Long freeDiscSpace = getFreeDiscSpace();
-        if (freeDiscSpace != null) {
-            builder.setFreeDiscSpace(freeDiscSpace);
-        }
-        Long totalDiscSpace = getTotalDiscSpace();
-        if (totalDiscSpace != null) {
-            builder.setTotalDiscSpace(totalDiscSpace);
-        }
+        getMemoryUsage().ifPresent(builder::setMemoryUsage);
+        getTotalMemory().ifPresent(builder::setTotalMemory);
+        getFreeMemory().ifPresent(builder::setFreeMemory);
+        getCpuUsage().ifPresent(builder::setCpuUsage);
+        getTotalCpuUsage().ifPresent(builder::setTotalCpuUsage);
+        getFreeDiscSpace().ifPresent(builder::setFreeDiscSpace);
+        getTotalDiscSpace().ifPresent(builder::setTotalDiscSpace);
 
         return builder.build();
     }

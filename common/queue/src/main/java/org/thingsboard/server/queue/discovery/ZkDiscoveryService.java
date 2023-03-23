@@ -115,6 +115,11 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public boolean isMonolith() {
+        return false;
+    }
+
     @AfterStartUp(order = AfterStartUp.DISCOVERY_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         if (stopped) {
@@ -287,8 +292,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             case CHILD_ADDED:
             case CHILD_REMOVED:
                 recalculatePartitions();
-                break;
-            case CHILD_UPDATED:
                 break;
             default:
                 break;
