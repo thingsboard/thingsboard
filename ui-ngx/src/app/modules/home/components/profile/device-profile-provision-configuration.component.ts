@@ -32,7 +32,7 @@ import {
   DeviceProvisionType,
   deviceProvisionTypeTranslationMap
 } from '@shared/models/device.models';
-import { generateSecret, isDefinedAndNotNull } from '@core/utils';
+import { generateSecret, isBoolean, isDefinedAndNotNull } from '@core/utils';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -114,7 +114,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
           this.provisionConfigurationFormGroup.get('certificateRegExPattern').patchValue('[\\w]*', {emitEvent: false});
         }
         const allowCreateNewDevicesByX509Certificate: boolean | null = this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').value;
-        if (typeof allowCreateNewDevicesByX509Certificate !== 'boolean') {
+        if (isBoolean(allowCreateNewDevicesByX509Certificate)) {
           this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').patchValue(true, {emitEvent: false});
         }
         this.provisionConfigurationFormGroup.get('certificateValue').enable({emitEvent: false});
