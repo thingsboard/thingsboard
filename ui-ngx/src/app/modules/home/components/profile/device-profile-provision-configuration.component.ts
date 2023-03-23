@@ -94,16 +94,13 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     });
     this.provisionConfigurationFormGroup.get('type').valueChanges.subscribe((type) => {
       if (type === DeviceProvisionType.DISABLED) {
-        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(null, {emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceKey').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceKey').patchValue(null);
-        this.provisionConfigurationFormGroup.get('certificateValue').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('certificateValue').patchValue(null);
-        this.provisionConfigurationFormGroup.get('certificateRegExPattern').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('certificateRegExPattern').patchValue(null);
-        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').patchValue(null);
+        for (const field in this.provisionConfigurationFormGroup.controls) {
+          if (field !== 'type') {
+            const control = this.provisionConfigurationFormGroup.get(field);
+            control.disable({emitEvent: false});
+            control.patchValue(null, {emitEvent: false});
+          }
+        }
       } else if (type === DeviceProvisionType.X509_CERTIFICATE_CHAIN) {
         const certificateValue: string = this.provisionConfigurationFormGroup.get('certificateValue').value;
         if (!certificateValue || !certificateValue.length) {
@@ -114,12 +111,14 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
           this.provisionConfigurationFormGroup.get('certificateRegExPattern').patchValue('[\\w]*', {emitEvent: false});
         }
         const allowCreateNewDevicesByX509Certificate: boolean | null = this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').value;
-        if (isBoolean(allowCreateNewDevicesByX509Certificate)) {
+        if (!isBoolean(allowCreateNewDevicesByX509Certificate)) {
           this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').patchValue(true, {emitEvent: false});
         }
         this.provisionConfigurationFormGroup.get('certificateValue').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('certificateRegExPattern').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').enable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').disable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('provisionDeviceKey').disable({emitEvent: false});
       } else {
         const provisionDeviceSecret: string = this.provisionConfigurationFormGroup.get('provisionDeviceSecret').value;
         if (!provisionDeviceSecret || !provisionDeviceSecret.length) {
@@ -133,6 +132,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('certificateValue').disable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('certificateRegExPattern').disable({emitEvent: false});
+        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').disable({emitEvent: false});
       }
     });
     this.provisionConfigurationFormGroup.valueChanges.subscribe(() => {
