@@ -22,10 +22,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -53,25 +51,18 @@ import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
-public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
-
+public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> extends TbAbstractNodeWithFetchTo<C> {
     private static final String VALUE = "value";
     private static final String TS = "ts";
-
-    protected C config;
-    private boolean fetchToData;
     private boolean isTellFailureIfAbsent;
     private boolean getLatestValueWithTs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = loadGetAttributesNodeConfig(configuration);
-        this.fetchToData = config.isFetchToData();
-        this.getLatestValueWithTs = config.isGetLatestValueWithTs();
-        this.isTellFailureIfAbsent = BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true);
+        super.init(ctx, configuration);
+        getLatestValueWithTs = config.isGetLatestValueWithTs();
+        isTellFailureIfAbsent = config.isTellFailureIfAbsent();
     }
-
-    protected abstract C loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
@@ -92,13 +83,9 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             ctx.tellNext(msg, FAILURE);
             return;
         }
-        JsonNode msgDataNode;
-        if (fetchToData) {
-            msgDataNode = JacksonUtil.toJsonNode(msg.getData());
-            if (!msgDataNode.isObject()) {
-                ctx.tellFailure(msg, new IllegalArgumentException("Msg body is not an object!"));
-                return;
-            }
+        ObjectNode msgDataNode;
+        if (FetchTo.DATA.equals(fetchTo)) {
+            msgDataNode = getMsgDataAsObjectNode(msg);
         } else {
             msgDataNode = null;
         }
@@ -116,17 +103,22 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                     String prefix = getPrefix(keyScope);
                     kvEntryList.forEach(kvEntry -> {
                         String key = prefix + kvEntry.getKey();
-                        if (fetchToData) {
-                            JacksonUtil.addKvEntry((ObjectNode) msgDataNode, kvEntry, key);
-                        } else {
+                        if (FetchTo.DATA.equals(fetchTo)) {
+                            JacksonUtil.addKvEntry(msgDataNode, kvEntry, key);
+                        } else if (FetchTo.METADATA.equals(fetchTo)) {
                             msgMetaData.putValue(key, kvEntry.getValueAsString());
                         }
                     });
                 });
             });
-            TbMsg outMsg = fetchToData ?
-                    TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode)) :
-                    TbMsg.transformMsg(msg, msgMetaData);
+
+            TbMsg outMsg = null;
+            if (FetchTo.DATA.equals(fetchTo)) {
+                outMsg = TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode));
+            } else if (FetchTo.METADATA.equals(fetchTo)) {
+                outMsg = TbMsg.transformMsg(msg, msgMetaData);
+            }
+
             if (failuresMap.isEmpty()) {
                 ctx.tellSuccess(outMsg);
             } else {
@@ -175,7 +167,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
-        ObjectMapper mapper = fetchToData ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
+        ObjectMapper mapper = FetchTo.DATA.equals(fetchTo) ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
         ObjectNode value = JacksonUtil.newObjectNode(mapper);
         value.put(TS, tsKvEntry.getTs());
         JacksonUtil.addKvEntry(value, tsKvEntry, VALUE, mapper);

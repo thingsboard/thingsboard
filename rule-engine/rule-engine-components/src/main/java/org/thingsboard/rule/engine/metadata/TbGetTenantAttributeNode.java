@@ -20,6 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -29,19 +32,22 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         type = ComponentType.ENRICHMENT,
         name="tenant attributes",
         configClazz = TbGetEntityAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Tenant Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into metadata. " +
+        nodeDescription = "Add Originators Tenant Attributes or Latest Telemetry into Message Metadata/Data",
+        nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message Metadata/Data. " +
+                "If Latest Telemetry enrichment configured, latest telemetry added into Metadata/Data. " +
                 "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
-public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
-
+public class TbGetTenantAttributeNode extends TbAbstractGetEntityAttrNode<TenantId> {
     @Override
-    protected ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
+    public ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
         ctx.checkTenantEntity(originator);
         return Futures.immediateFuture(ctx.getTenantId());
     }
 
+    @Override
+    public TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
+    }
 }

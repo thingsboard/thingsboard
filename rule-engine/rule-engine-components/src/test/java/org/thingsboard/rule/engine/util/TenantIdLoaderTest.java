@@ -56,7 +56,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -93,8 +92,6 @@ public class TenantIdLoaderTest {
     private DeviceService deviceService;
     @Mock
     private RuleEngineAlarmService alarmService;
-    @Mock
-    private AlarmCommentService alarmCommentService;
     @Mock
     private RuleChainService ruleChainService;
     @Mock
@@ -312,9 +309,8 @@ public class TenantIdLoaderTest {
 
                 break;
             default:
-                throw new RuntimeException("Unexpected original EntityType " + entityType);
+                throw new RuntimeException("Unexpected originator EntityType " + entityType);
         }
-
     }
 
     private EntityId getEntityId(EntityType entityType) {
@@ -350,5 +346,4 @@ public class TenantIdLoaderTest {
     public void test_findEntityIdAsync_other_tenant() {
         checkTenant(new TenantId(UUID.randomUUID()), false);
     }
-
 }

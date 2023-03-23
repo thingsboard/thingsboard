@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -26,8 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfiguration {
-
     private RelationsQuery relationsQuery;
 
     @Override

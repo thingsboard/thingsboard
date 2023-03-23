@@ -27,11 +27,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.EntityDetails;
 import org.thingsboard.server.common.data.ContactBased;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -41,19 +39,10 @@ import java.util.Map;
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
-public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEntityDetailsNodeConfiguration> implements TbNode {
-
+public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEntityDetailsNodeConfiguration> extends TbAbstractNodeWithFetchTo<C> {
     private static final Gson gson = new Gson();
-    private static final JsonParser jsonParser = new JsonParser();
     private static final Type TYPE = new TypeToken<Map<String, String>>() {
     }.getType();
-
-    protected C config;
-
-    @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = loadGetEntityDetailsNodeConfiguration(configuration);
-    }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -62,22 +51,20 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    protected abstract C loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
-
     protected abstract ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg);
 
     protected abstract ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg);
 
     protected MessageData getDataAsJson(TbMsg msg) {
-        if (this.config.isAddToMetadata()) {
+        if (config.getFetchTo() == FetchTo.METADATA) {
             return new MessageData(gson.toJsonTree(msg.getMetaData().getData(), TYPE), DataSource.METADATA);
         } else {
-            return new MessageData(jsonParser.parse(msg.getData()), DataSource.DATA);
+            return new MessageData(JsonParser.parseString(msg.getData()), DataSource.DATA);
         }
     }
 
     protected ListenableFuture<TbMsg> getTbMsgListenableFuture(TbContext ctx, TbMsg msg, MessageData messageData, String prefix) {
-        if (this.config.getDetailsList().isEmpty()) {
+        if (config.getDetailsList().isEmpty()) {
             return Futures.immediateFuture(msg);
         } else {
             ListenableFuture<ContactBased> contactBasedListenableFuture = getContactBasedListenableFuture(ctx, msg);
@@ -178,6 +165,4 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     private enum DataSource {
         DATA, METADATA
     }
-
-
 }

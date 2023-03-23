@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2023 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractAttributeNodeTest {
+public abstract class TbAbstractAttributeNodeTest {
     final CustomerId customerId = new CustomerId(Uuids.timeBased());
     final TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
     final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
@@ -86,9 +86,9 @@ public abstract class AbstractAttributeNodeTest {
     DeviceService deviceService;
     TbMsg msg;
     Map<String, String> metaData;
-    TbEntityGetAttrNode node;
+    TbAbstractGetEntityAttrNode node;
 
-    void init(TbEntityGetAttrNode node) throws TbNodeException {
+    void init(TbAbstractGetEntityAttrNode node) throws TbNodeException {
         ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfig()));
 
@@ -117,7 +117,6 @@ public abstract class AbstractAttributeNodeTest {
     }
 
     void errorThrownIfCannotLoadAttributesAsync(User user) {
-
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
@@ -168,7 +167,7 @@ public abstract class AbstractAttributeNodeTest {
         ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfigForTelemetry()));
 
-        TbEntityGetAttrNode node = getEmptyNode();
+        TbAbstractGetEntityAttrNode node = getEmptyNode();
         node.init(null, nodeConfiguration);
 
         msg = TbMsg.newMsg("DEVICE", device.getId(), new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
@@ -210,10 +209,11 @@ public abstract class AbstractAttributeNodeTest {
         conf.put(keyAttrConf, valueAttrConf);
         config.setAttrMapping(conf);
         config.setTelemetry(isTelemetry);
+        config.setFetchTo(FetchTo.METADATA);
         return config;
     }
 
-    protected abstract TbEntityGetAttrNode getEmptyNode();
+    protected abstract TbAbstractGetEntityAttrNode getEmptyNode();
 
     abstract EntityId getEntityId();
 

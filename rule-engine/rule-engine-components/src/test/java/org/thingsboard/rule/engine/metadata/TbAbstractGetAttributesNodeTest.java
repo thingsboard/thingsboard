@@ -130,7 +130,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToMetadata_whenOnMsg_then_success() throws Exception {
-        TbGetAttributesNode node = initNode(false, false, false);
+        TbGetAttributesNode node = initNode(FetchTo.METADATA, false, false);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
 
@@ -138,9 +138,9 @@ public class TbAbstractGetAttributesNodeTest {
         TbMsg resultMsg = checkMsg(true);
 
         //check attributes
-        checkAttributes(resultMsg, false, "cs_", clientAttributes);
-        checkAttributes(resultMsg, false, "ss_", serverAttributes);
-        checkAttributes(resultMsg, false, "shared_", sharedAttributes);
+        checkAttributes(resultMsg, FetchTo.METADATA, "cs_", clientAttributes);
+        checkAttributes(resultMsg, FetchTo.METADATA, "ss_", serverAttributes);
+        checkAttributes(resultMsg, FetchTo.METADATA, "shared_", sharedAttributes);
 
         //check timeseries
         checkTs(resultMsg, false, false, tsKeys);
@@ -148,7 +148,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToMetadata_latestWithTs_whenOnMsg_then_success() throws Exception {
-        TbGetAttributesNode node = initNode(false, true, false);
+        TbGetAttributesNode node = initNode(FetchTo.METADATA, true, false);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
 
@@ -156,9 +156,9 @@ public class TbAbstractGetAttributesNodeTest {
         TbMsg resultMsg = checkMsg(true);
 
         //check attributes
-        checkAttributes(resultMsg, false, "cs_", clientAttributes);
-        checkAttributes(resultMsg, false, "ss_", serverAttributes);
-        checkAttributes(resultMsg, false, "shared_", sharedAttributes);
+        checkAttributes(resultMsg, FetchTo.METADATA, "cs_", clientAttributes);
+        checkAttributes(resultMsg, FetchTo.METADATA, "ss_", serverAttributes);
+        checkAttributes(resultMsg, FetchTo.METADATA, "shared_", sharedAttributes);
 
         //check timeseries with ts
         checkTs(resultMsg, false, true, tsKeys);
@@ -166,7 +166,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToData_whenOnMsg_then_success() throws Exception {
-        TbGetAttributesNode node = initNode(true, false, false);
+        TbGetAttributesNode node = initNode(FetchTo.DATA, false, false);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
 
@@ -174,9 +174,9 @@ public class TbAbstractGetAttributesNodeTest {
         TbMsg resultMsg = checkMsg(true);
 
         //check attributes
-        checkAttributes(resultMsg, true, "cs_", clientAttributes);
-        checkAttributes(resultMsg, true, "ss_", serverAttributes);
-        checkAttributes(resultMsg, true, "shared_", sharedAttributes);
+        checkAttributes(resultMsg, FetchTo.DATA, "cs_", clientAttributes);
+        checkAttributes(resultMsg, FetchTo.DATA, "ss_", serverAttributes);
+        checkAttributes(resultMsg, FetchTo.DATA, "shared_", sharedAttributes);
 
         //check timeseries
         checkTs(resultMsg, true, false, tsKeys);
@@ -184,7 +184,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToData_latestWithTs_whenOnMsg_then_success() throws Exception {
-        TbGetAttributesNode node = initNode(true, true, false);
+        TbGetAttributesNode node = initNode(FetchTo.DATA, true, false);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
 
@@ -192,9 +192,9 @@ public class TbAbstractGetAttributesNodeTest {
         TbMsg resultMsg = checkMsg(true);
 
         //check attributes
-        checkAttributes(resultMsg, true, "cs_", clientAttributes);
-        checkAttributes(resultMsg, true, "ss_", serverAttributes);
-        checkAttributes(resultMsg, true, "shared_", sharedAttributes);
+        checkAttributes(resultMsg, FetchTo.DATA, "cs_", clientAttributes);
+        checkAttributes(resultMsg, FetchTo.DATA, "ss_", serverAttributes);
+        checkAttributes(resultMsg, FetchTo.DATA, "shared_", sharedAttributes);
 
         //check timeseries with ts
         checkTs(resultMsg, true, true, tsKeys);
@@ -202,7 +202,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToMetadata_whenOnMsg_then_failure() throws Exception {
-        TbGetAttributesNode node = initNode(false, false, true);
+        TbGetAttributesNode node = initNode(FetchTo.METADATA, false, true);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
 
@@ -210,9 +210,9 @@ public class TbAbstractGetAttributesNodeTest {
         TbMsg actualMsg = checkMsg(false);
 
         //check attributes
-        checkAttributes(actualMsg, false, "cs_", clientAttributes);
-        checkAttributes(actualMsg, false, "ss_", serverAttributes);
-        checkAttributes(actualMsg, false, "shared_", sharedAttributes);
+        checkAttributes(actualMsg, FetchTo.METADATA, "cs_", clientAttributes);
+        checkAttributes(actualMsg, FetchTo.METADATA, "ss_", serverAttributes);
+        checkAttributes(actualMsg, FetchTo.METADATA, "shared_", sharedAttributes);
 
         //check timeseries with ts
         checkTs(actualMsg, false, false, tsKeys);
@@ -220,7 +220,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToData_whenOnMsg_then_failure() throws Exception {
-        TbGetAttributesNode node = initNode(true, true, true);
+        TbGetAttributesNode node = initNode(FetchTo.DATA, true, true);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
 
@@ -228,9 +228,9 @@ public class TbAbstractGetAttributesNodeTest {
         TbMsg actualMsg = checkMsg(false);
 
         //check attributes
-        checkAttributes(actualMsg, true, "cs_", clientAttributes);
-        checkAttributes(actualMsg, true, "ss_", serverAttributes);
-        checkAttributes(actualMsg, true, "shared_", sharedAttributes);
+        checkAttributes(actualMsg, FetchTo.DATA, "cs_", clientAttributes);
+        checkAttributes(actualMsg, FetchTo.DATA, "ss_", serverAttributes);
+        checkAttributes(actualMsg, FetchTo.DATA, "shared_", sharedAttributes);
 
         //check timeseries with ts
         checkTs(actualMsg, true, true, tsKeys);
@@ -238,7 +238,7 @@ public class TbAbstractGetAttributesNodeTest {
 
     @Test
     public void fetchToData_whenOnMsg_and_data_is_not_object_then_failure() throws Exception {
-        TbGetAttributesNode node = initNode(true, true, true);
+        TbGetAttributesNode node = initNode(FetchTo.DATA, true, true);
         TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), "[]");
         node.onMsg(ctx, msg);
 
@@ -272,13 +272,13 @@ public class TbAbstractGetAttributesNodeTest {
         return resultMsg;
     }
 
-    private void checkAttributes(TbMsg actualMsg, boolean fetchToData, String prefix, List<String> attributes) {
+    private void checkAttributes(TbMsg actualMsg, FetchTo fetchTo, String prefix, List<String> attributes) {
         JsonNode msgData = JacksonUtil.toJsonNode(actualMsg.getData());
         attributes.stream()
                 .filter(attribute -> !attribute.equals("unknown"))
                 .forEach(attribute -> {
                     String result;
-                    if (fetchToData) {
+                    if (FetchTo.DATA.equals(fetchTo)) {
                         result = msgData.get(prefix + attribute).asText();
                     } else {
                         result = actualMsg.getMetaData().getValue(prefix + attribute);
@@ -313,13 +313,13 @@ public class TbAbstractGetAttributesNodeTest {
         }
     }
 
-    private TbGetAttributesNode initNode(boolean fetchToData, boolean getLatestValueWithTs, boolean isTellFailureIfAbsent) throws TbNodeException {
+    private TbGetAttributesNode initNode(FetchTo fetchTo, boolean getLatestValueWithTs, boolean isTellFailureIfAbsent) throws TbNodeException {
         TbGetAttributesNodeConfiguration config = new TbGetAttributesNodeConfiguration();
         config.setClientAttributeNames(List.of("client_attr_1", "client_attr_2", "${client_attr_metadata}", "unknown"));
         config.setServerAttributeNames(List.of("server_attr_1", "server_attr_2", "${server_attr_metadata}", "unknown"));
         config.setSharedAttributeNames(List.of("shared_attr_1", "shared_attr_2", "$[shared_attr_data]", "unknown"));
         config.setLatestTsKeyNames(List.of("temperature", "humidity", "unknown"));
-        config.setFetchToData(fetchToData);
+        config.setFetchTo(fetchTo);
         config.setGetLatestValueWithTs(getLatestValueWithTs);
         config.setTellFailureIfAbsent(isTellFailureIfAbsent);
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));

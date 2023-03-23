@@ -18,6 +18,9 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -25,20 +28,24 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 
 @RuleNode(
         type = ComponentType.ENRICHMENT,
-        name="customer attributes",
+        name = "customer attributes",
         configClazz = TbGetEntityAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "Enrich the message metadata with the corresponding customer's latest attributes or telemetry value. " +
+        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata/Data",
+        nodeDetails = "Enrich the Message Metadata/Data with the corresponding customer's latest attributes or telemetry value. " +
                 "The customer is selected based on the originator of the message: device, asset, etc. " +
                 "</br>" +
                 "Useful when you store some parameters on the customer level and would like to use them for message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
-public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
-
+public class TbGetCustomerAttributeNode extends TbAbstractGetEntityAttrNode<CustomerId> {
     @Override
     protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
+        ctx.checkTenantEntity(originator);
         return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator);
     }
 
+    @Override
+    protected TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
+    }
 }
