@@ -136,7 +136,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
         X509CertificateChainProvisionConfiguration x509Configuration = new X509CertificateChainProvisionConfiguration();
-        if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+        if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
             x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
         }
         if (x509Configuration.getCertificateValue() != null) {

@@ -39,7 +39,8 @@ public class EncryptionUtil {
         return input.replaceAll("\n", "")
                 .replaceAll("\r", "")
                 .replaceAll("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\n")
-                .replaceAll("-----END CERTIFICATE-----", "\n-----END CERTIFICATE-----\n");
+                .replaceAll("-----END CERTIFICATE-----", "\n-----END CERTIFICATE-----\n")
+                .trim();
     }
 
     public static String pubkTrimNewLines(String input) {
