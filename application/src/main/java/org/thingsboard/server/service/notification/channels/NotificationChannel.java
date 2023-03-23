@@ -17,7 +17,7 @@ package org.thingsboard.server.service.notification.channels;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 

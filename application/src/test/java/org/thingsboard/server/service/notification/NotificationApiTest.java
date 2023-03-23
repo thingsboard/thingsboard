@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -339,6 +340,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         target1Config.setUsersFilter(userListFilter);
         target1.setConfiguration(target1Config);
         target1 = saveNotificationTarget(target1);
+        List<UserId> recipients = new ArrayList<>();
+        recipients.add(tenantAdminUserId);
 
         createDifferentCustomer();
         loginTenantAdmin();
@@ -350,6 +353,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
             customerUser.setCustomerId(differentCustomerId);
             customerUser.setEmail("other-customer-" + i + "@thingsboard.org");
             customerUser = createUser(customerUser, "12345678");
+            recipients.add(customerUser.getId());
         }
         NotificationTarget target2 = new NotificationTarget();
         target2.setName("Other customer users");
@@ -367,27 +371,25 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         String requestorEmail = TENANT_ADMIN_EMAIL;
         NotificationTemplateConfig templateConfig = new NotificationTemplateConfig();
-        templateConfig.setDefaultTextTemplate("Default message for SMS and WEB: ${recipientEmail}");
-        templateConfig.setNotificationSubject("Default subject for EMAIL: ${recipientEmail}");
         HashMap<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates = new HashMap<>();
         templateConfig.setDeliveryMethodsTemplates(templates);
         notificationTemplate.setConfiguration(templateConfig);
 
         WebDeliveryMethodNotificationTemplate webNotificationTemplate = new WebDeliveryMethodNotificationTemplate();
         webNotificationTemplate.setEnabled(true);
-        // using default message for web
+        webNotificationTemplate.setBody("Message for WEB: ${recipientEmail}");
         webNotificationTemplate.setSubject("Subject for WEB: ${recipientEmail}");
         templates.put(NotificationDeliveryMethod.WEB, webNotificationTemplate);
 
         SmsDeliveryMethodNotificationTemplate smsNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
         smsNotificationTemplate.setEnabled(true);
-        // using default message for sms
+        smsNotificationTemplate.setBody("Message for SMS: ${recipientEmail}");
         templates.put(NotificationDeliveryMethod.SMS, smsNotificationTemplate);
 
         EmailDeliveryMethodNotificationTemplate emailNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
         emailNotificationTemplate.setEnabled(true);
+        emailNotificationTemplate.setSubject("Subject for EMAIL: ${recipientEmail}");
         emailNotificationTemplate.setBody("Message for EMAIL: ${recipientEmail}");
-        // using default subject for email
         templates.put(NotificationDeliveryMethod.EMAIL, emailNotificationTemplate);
 
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
@@ -407,12 +409,13 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(preview.getRecipientsCountByTarget().get(target1.getName())).isEqualTo(1);
         assertThat(preview.getRecipientsCountByTarget().get(target2.getName())).isEqualTo(customerUsersCount);
         assertThat(preview.getTotalRecipientsCount()).isEqualTo(1 + customerUsersCount);
+        assertThat(preview.getRecipientsPreview()).extracting(User::getId).containsAll(recipients);
 
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = preview.getProcessedTemplates();
         assertThat(processedTemplates.get(NotificationDeliveryMethod.WEB)).asInstanceOf(type(WebDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .startsWith("Default message for SMS and WEB")
+                            .startsWith("Message for WEB")
                             .endsWith(requestorEmail);
                     assertThat(template.getSubject())
                             .startsWith("Subject for WEB")
@@ -421,7 +424,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SMS)).asInstanceOf(type(SmsDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .startsWith("Default message for SMS and WEB")
+                            .startsWith("Message for SMS")
                             .endsWith(requestorEmail);
                 });
         assertThat(processedTemplates.get(NotificationDeliveryMethod.EMAIL)).asInstanceOf(type(EmailDeliveryMethodNotificationTemplate.class))
@@ -430,7 +433,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                             .startsWith("Message for EMAIL")
                             .endsWith(requestorEmail);
                     assertThat(template.getSubject())
-                            .startsWith("Default subject for EMAIL")
+                            .startsWith("Subject for EMAIL")
                             .endsWith(requestorEmail);
                 });
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SLACK)).asInstanceOf(type(SlackDeliveryMethodNotificationTemplate.class))
@@ -534,9 +537,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationTemplate.setName("Slack notification template");
         notificationTemplate.setNotificationType(NotificationType.GENERAL);
         NotificationTemplateConfig config = new NotificationTemplateConfig();
-        config.setDefaultTextTemplate("To Slack :)  ${recipientEmail}");
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
         slackNotificationTemplate.setEnabled(true);
+        slackNotificationTemplate.setBody("To Slack :)  ${recipientEmail}");
         config.setDeliveryMethodsTemplates(Map.of(
                 NotificationDeliveryMethod.SLACK, slackNotificationTemplate
         ));
@@ -556,7 +559,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationRequest successfulNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(successfulNotificationRequest.getId()).isSent());
-        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(config.getDefaultTextTemplate()));
+        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(slackNotificationTemplate.getBody()));
         NotificationRequestStats stats = getStats(successfulNotificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.SLACK)).hasValue(1);
 

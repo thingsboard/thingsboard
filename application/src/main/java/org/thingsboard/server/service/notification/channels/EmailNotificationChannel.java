@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.mail.MailExecutorService;
-import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
 @Component
 @RequiredArgsConstructor
