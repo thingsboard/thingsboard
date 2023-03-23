@@ -191,8 +191,14 @@ export class RecipientNotificationDialogComponent extends
 
   private allowNotificationTargetConfigTypes(): NotificationTargetConfigType[] {
     if (this.isSysAdmin()) {
-      return [NotificationTargetConfigType.ALL_USERS, NotificationTargetConfigType.TENANT_ADMINISTRATORS];
+      return [
+        NotificationTargetConfigType.ALL_USERS,
+        NotificationTargetConfigType.TENANT_ADMINISTRATORS,
+        NotificationTargetConfigType.AFFECTED_TENANT_ADMINISTRATORS,
+        NotificationTargetConfigType.SYSTEM_ADMINISTRATORS
+      ];
     }
-    return Object.values(NotificationTargetConfigType);
+    return Object.values(NotificationTargetConfigType).filter(type =>
+      type !== NotificationTargetConfigType.AFFECTED_TENANT_ADMINISTRATORS && type !== NotificationTargetConfigType.SYSTEM_ADMINISTRATORS);
   }
 }

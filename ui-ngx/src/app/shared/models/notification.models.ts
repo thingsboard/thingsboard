@@ -357,7 +357,9 @@ export enum NotificationTargetConfigType {
   CUSTOMER_USERS = 'CUSTOMER_USERS',
   USER_LIST = 'USER_LIST',
   ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS',
-  AFFECTED_USER = 'AFFECTED_USER'
+  AFFECTED_USER = 'AFFECTED_USER',
+  SYSTEM_ADMINISTRATORS = 'SYSTEM_ADMINISTRATORS',
+  AFFECTED_TENANT_ADMINISTRATORS = 'AFFECTED_TENANT_ADMINISTRATORS'
 }
 
 interface NotificationTargetConfigTypeInfo {
@@ -396,6 +398,16 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
     {
       name: 'notification.recipient-type.affected-user',
       hint: 'notification.recipient-type.affected-user-hint'
+    }
+  ],
+  [NotificationTargetConfigType.SYSTEM_ADMINISTRATORS,
+    {
+      name: 'notification.recipient-type.system-administrators'
+    }
+  ],
+  [NotificationTargetConfigType.AFFECTED_TENANT_ADMINISTRATORS,
+    {
+      name: 'notification.recipient-type.affected-tenant-administrators'
     }
   ]
 ]);

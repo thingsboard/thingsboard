@@ -2857,10 +2857,12 @@
         "recipient": "Recipient",
         "recipient-group": "Recipient group",
         "recipient-type": {
+            "affected-tenant-administrators": "Affected tenant administrators",
             "affected-user": "Affected user",
             "affected-user-hint": "Affected user hint",
             "all-users": "All users",
             "customer-users": "Customer users",
+            "system-administrators": "System administrators",
             "tenant-administrators": "Tenant administrators",
             "user-filters": "User filter",
             "user-list": "User list",
