@@ -141,7 +141,7 @@ public class TbMailSender extends JavaMailSenderImpl {
                         new GenericUrl(tokenUri), refreshToken)
                         .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
                         .execute();
-                if (MailOauth2Provider.MICROSOFT.name().equals(providerId)) {
+                if (MailOauth2Provider.OFFICE_365.name().equals(providerId)) {
                     ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
                     ((ObjectNode)jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
                     ctx.getAdminSettingsService().saveAdminSettings(TenantId.SYS_TENANT_ID, settings);

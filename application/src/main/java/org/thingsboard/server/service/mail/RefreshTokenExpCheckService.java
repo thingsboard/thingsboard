@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import static org.thingsboard.server.config.MailOauth2Provider.MICROSOFT;
+import static org.thingsboard.server.config.MailOauth2Provider.OFFICE_365;
 
 @TbCoreComponent
 @Service
@@ -39,7 +39,7 @@ public class RefreshTokenExpCheckService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null && settings.getJsonValue().has("enableOauth2") && settings.getJsonValue().get("enableOauth2").asBoolean()) {
             JsonNode jsonValue = settings.getJsonValue();
-            if (MICROSOFT.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshTokenExpires")) {
+            if (OFFICE_365.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshTokenExpires")) {
                 long expiresIn = jsonValue.get("refreshTokenExpires").longValue();
                 if ((expiresIn - System.currentTimeMillis()) < 604800000L) { //less than 7 days
                     log.info("Refresh token expires in less than 7 days.");
