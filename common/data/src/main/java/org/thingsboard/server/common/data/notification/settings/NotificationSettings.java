@@ -20,10 +20,11 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Map;
 
 @Data
-public class NotificationSettings {
+public class NotificationSettings implements Serializable {
 
     @NotNull
     @Valid

@@ -22,12 +22,14 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method")
 @JsonSubTypes({
         @Type(name = "SLACK", value = SlackNotificationDeliveryMethodConfig.class)
 })
-public interface NotificationDeliveryMethodConfig {
+public interface NotificationDeliveryMethodConfig extends Serializable {
 
     @JsonIgnore
     NotificationDeliveryMethod getMethod();

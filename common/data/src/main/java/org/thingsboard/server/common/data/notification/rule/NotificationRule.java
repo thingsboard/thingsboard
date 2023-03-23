@@ -33,11 +33,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName {
+public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName, Serializable {
 
     private TenantId tenantId;
     @NotBlank

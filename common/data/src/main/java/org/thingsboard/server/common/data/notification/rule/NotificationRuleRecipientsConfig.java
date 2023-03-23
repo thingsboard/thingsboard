@@ -24,6 +24,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,7 +35,7 @@ import java.util.UUID;
         @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
 })
 @Data
-public abstract class NotificationRuleRecipientsConfig {
+public abstract class NotificationRuleRecipientsConfig implements Serializable {
 
     @NotNull
     private NotificationRuleTriggerType triggerType;
