@@ -73,7 +73,7 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     };
 
     this.config.columns.push(
-      new DateEntityTableColumn<NotificationRule>('createdTime', 'notification.created-time', this.datePipe, '170px'),
+      new DateEntityTableColumn<NotificationRule>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRule>('name', 'notification.rule-name', '30%'),
       new EntityTableColumn<NotificationRule>('templateName', 'notification.template', '20%'),
       new EntityTableColumn<NotificationRule>('triggerType', 'notification.trigger.trigger', '20%',

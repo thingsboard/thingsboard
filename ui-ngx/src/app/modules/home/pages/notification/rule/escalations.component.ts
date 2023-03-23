@@ -133,7 +133,7 @@ export class EscalationsComponent implements ControlValueAccessor, Validator, On
     (this.escalationsFormGroup.get('escalations') as FormArray).removeAt(index);
   }
 
-  public addEscalation(delay = 60000) {
+  public addEscalation(delay = 3600000) {
     const escalation = {
       delayInSec: delay,
       targets: null

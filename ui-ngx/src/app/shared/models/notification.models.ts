@@ -253,7 +253,7 @@ export enum NotificationTargetType {
 
 export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetType, string>([
   [NotificationTargetType.PLATFORM_USERS, 'notification.platform-users'],
-  [NotificationTargetType.SLACK, 'notification.slack']
+  [NotificationTargetType.SLACK, 'notification.delivery-method.slack']
 ]);
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
@@ -319,10 +319,10 @@ export enum NotificationDeliveryMethod {
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
-  [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web'],
-  [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
-  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack']
+  [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web'],
+  [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
+  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack']
 ]);
 
 export enum NotificationRequestStatus {

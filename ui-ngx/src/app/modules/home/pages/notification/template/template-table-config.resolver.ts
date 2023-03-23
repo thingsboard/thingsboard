@@ -74,7 +74,7 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
     };
 
     this.config.columns.push(
-      new DateEntityTableColumn<NotificationTemplate>('createdTime', 'notification.created-time', this.datePipe, '170px'),
+      new DateEntityTableColumn<NotificationTemplate>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationTemplate>('notificationType', 'notification.type', '20%',
         (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '80%')

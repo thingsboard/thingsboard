@@ -74,7 +74,7 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
     };
 
     this.config.columns.push(
-      new DateEntityTableColumn<NotificationTarget>('createdTime', 'notification.created-time', this.datePipe, '170px'),
+      new DateEntityTableColumn<NotificationTarget>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
       new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '20%',
         (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.configuration.type)),

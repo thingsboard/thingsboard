@@ -72,7 +72,7 @@
     </mat-step>
     <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.WEB.enabled').value"
       [stepControl]="webTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.web-settings' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.delivery-method.web' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">
         {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
       </div>
@@ -163,7 +163,7 @@
     </mat-step>
     <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
       [stepControl]="emailTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.email-settings' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
       <ng-template matStepContent>
         <div class="tb-hint tb-hint-available-params">
           {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
@@ -183,7 +183,7 @@
     </mat-step>
     <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SMS.enabled').value"
               [stepControl]="smsTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.sms-settings' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.delivery-method.sms' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">
         {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
       </div>
@@ -204,7 +204,7 @@
     </mat-step>
     <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.SLACK.enabled').value"
               [stepControl]="slackTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.slack-settings' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.delivery-method.slack' | translate }}</ng-template>
       <div class="tb-hint tb-hint-available-params">
         {{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).hint | translate }}
       </div>

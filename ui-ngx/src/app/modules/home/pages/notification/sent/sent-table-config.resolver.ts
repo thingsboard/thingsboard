@@ -90,11 +90,11 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.columns.push(
-      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '170px'),
+      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRequestInfo>('status', 'notification.status', '15%',
         request => `<span style="display: flex;">${this.requestStatus(request.status)}${this.requestStats(request.stats)}</span>`,
           request => this.requestStatusStyle(request.status)),
-      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '15%',
+      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method.delivery-method', '15%',
         (request) => request.deliveryMethods
           .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodTranslateMap.get(deliveryMethod))).join(', '),
         () => ({}), false),

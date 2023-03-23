@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
-import { deepTrim, guid } from '@core/utils';
+import { deepTrim, guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
 import { EntityType } from '@shared/models/entity-type.models';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -136,11 +136,16 @@ export class SentNotificationDialogComponent extends
     if (data.request) {
       this.notificationRequestForm.reset({}, {emitEvent: false});
       this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
-      // eslint-disable-next-line guard-for-in
-      for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
-        this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
-          .patchValue(this.data.request.template.configuration.deliveryMethodsTemplates[method]);
+      let useTemplate = true;
+      if (isDefinedAndNotNull(this.data.request.template)) {
+        useTemplate = false;
+        // eslint-disable-next-line guard-for-in
+        for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
+          this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
+            .patchValue(this.data.request.template.configuration.deliveryMethodsTemplates[method]);
+        }
       }
+      this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
     }
   }
 
