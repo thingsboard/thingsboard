@@ -19,7 +19,10 @@ import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+
+import java.util.Set;
 
 public interface NotificationCenter {
 
@@ -29,11 +32,12 @@ public interface NotificationCenter {
 
     void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text);
 
-
     void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
     void markAllNotificationsAsRead(TenantId tenantId, UserId recipientId);
 
     void deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId);
+
+    Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId);
 
 }

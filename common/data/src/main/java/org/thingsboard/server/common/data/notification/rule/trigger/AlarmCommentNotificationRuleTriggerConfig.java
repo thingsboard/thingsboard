@@ -28,6 +28,7 @@ public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRu
     private Set<AlarmSeverity> alarmSeverities;
     private Set<AlarmSearchStatus> alarmStatuses;
     private boolean onlyUserComments;
+    private boolean notifyOnCommentUpdate;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {

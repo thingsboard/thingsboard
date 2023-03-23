@@ -89,6 +89,8 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { QueueService } from '@core/http/queue.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { NotificationService } from '@core/http/notification.service';
+import { TenantProfileService } from '@core/http/tenant-profile.service';
+import { NotificationType } from '@shared/models/notification.models';
 
 @Injectable({
   providedIn: 'root'
@@ -112,6 +114,7 @@ export class EntityService {
     private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
+    private tenantProfileService: TenantProfileService,
     private assetProfileService: AssetProfileService,
     private utils: UtilsService,
     private queueService: QueueService,
@@ -240,6 +243,9 @@ export class EntityService {
         observable = this.getEntitiesByIdsObservable(
           (id) => this.deviceProfileService.getDeviceProfileInfo(id, config),
           entityIds);
+        break;
+      case EntityType.TENANT_PROFILE:
+        observable = this.tenantProfileService.getTenantProfilesByIds(entityIds, config);
         break;
       case EntityType.ASSET_PROFILE:
         observable = this.getEntitiesByIdsObservable(
@@ -399,6 +405,10 @@ export class EntityService {
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.deviceProfileService.getDeviceProfileInfos(pageLink, null, config);
         break;
+      case EntityType.TENANT_PROFILE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.tenantProfileService.getTenantProfiles(pageLink, config);
+        break;
       case EntityType.ASSET_PROFILE:
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.assetProfileService.getAssetProfileInfos(pageLink, config);
@@ -409,7 +419,7 @@ export class EntityService {
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.notificationService.getNotificationTargets(pageLink, config);
+        entitiesObservable = this.notificationService.getNotificationTargets(pageLink, subType as NotificationType, config);
         break;
     }
     return entitiesObservable;

@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column">
+  <div class="tb-tenant-profile-queues"
+       fxLayout="row" style="align-items: center"
+       *ngFor="let escalationControl of escalationsFormArray.controls;
+       let $index = index; last as isLast;"
+       [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+    <tb-escalation-form fxFlex
+                        [formControl]="escalationControl"
+                        [systemEscalation]="$index === 0">
+    </tb-escalation-form>
+    <span *ngIf="$index === 0" style="width: 48px;"></span>
+    <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
+            type="button"
+            (click)="removeEscalation($index)"
+            matTooltip="{{ 'action.remove' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div *ngIf="!escalationsFormArray.controls.length">
+      <span translate fxLayoutAlign="center center"
+            class="tb-prompt">notification.no-rule</span>
+  </div>
+  <div *ngIf="!disabled" style="padding: 16px 0;">
+    <button mat-raised-button color="primary"
+            type="button"
+            (click)="addEscalation()">
+      <span translate>notification.add-stage</span>
+    </button>
+  </div>
+</div>

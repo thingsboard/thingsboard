@@ -16,18 +16,19 @@
 package org.thingsboard.server.service.notification.rule.trigger;
 
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
-public interface NotificationRuleTriggerProcessor<T, C extends NotificationRuleTriggerConfig> {
+public interface NotificationRuleTriggerProcessor<T extends NotificationRuleTrigger, C extends NotificationRuleTriggerConfig> {
 
-    boolean matchesFilter(T triggerObject, C triggerConfig);
+    boolean matchesFilter(T trigger, C triggerConfig);
 
-    default boolean matchesClearRule(T triggerObject, C triggerConfig) {
+    default boolean matchesClearRule(T trigger, C triggerConfig) {
         return false;
     }
 
-    NotificationInfo constructNotificationInfo(T triggerObject, C triggerConfig);
+    NotificationInfo constructNotificationInfo(T trigger, C triggerConfig);
 
     NotificationRuleTriggerType getTriggerType();
 

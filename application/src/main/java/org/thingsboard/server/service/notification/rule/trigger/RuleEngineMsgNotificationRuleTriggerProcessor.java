@@ -16,11 +16,11 @@
 package org.thingsboard.server.service.notification.rule.trigger;
 
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Set;
 
-public interface RuleEngineMsgNotificationRuleTriggerProcessor<C extends NotificationRuleTriggerConfig> extends NotificationRuleTriggerProcessor<TbMsg, C> {
+public interface RuleEngineMsgNotificationRuleTriggerProcessor<C extends NotificationRuleTriggerConfig> extends NotificationRuleTriggerProcessor<RuleEngineMsgTrigger, C> {
 
     Set<String> getSupportedMsgTypes();
 

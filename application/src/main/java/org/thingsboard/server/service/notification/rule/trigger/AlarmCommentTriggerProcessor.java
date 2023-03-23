@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Set;
 
@@ -37,30 +38,35 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmCommentNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(TbMsg ruleEngineMsg, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
-        if (ruleEngineMsg.getMetaData().getValue("comment") == null) {
+    public boolean matchesFilter(RuleEngineMsgTrigger trigger, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
+        TbMsg msg = trigger.getMsg();
+        if (msg.getMetaData().getValue("comment") == null) {
+            return false;
+        }
+        if (msg.getType().equals(DataConstants.COMMENT_UPDATED) && !triggerConfig.isNotifyOnCommentUpdate()) {
             return false;
         }
         if (triggerConfig.isOnlyUserComments()) {
-            AlarmComment comment = JacksonUtil.fromString(ruleEngineMsg.getMetaData().getValue("comment"), AlarmComment.class);
+            AlarmComment comment = JacksonUtil.fromString(msg.getMetaData().getValue("comment"), AlarmComment.class);
             if (comment.getType() == AlarmCommentType.SYSTEM) {
                 return false;
             }
         }
-        Alarm alarm = JacksonUtil.fromString(ruleEngineMsg.getData(), Alarm.class);
+        Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         return (isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
                 (isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity())) &&
                 (isEmpty(triggerConfig.getAlarmStatuses()) || AlarmStatusFilter.from(triggerConfig.getAlarmStatuses()).matches(alarm));
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(TbMsg ruleEngineMsg, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
-        // TODO: readable action
-        AlarmComment comment = JacksonUtil.fromString(ruleEngineMsg.getMetaData().getValue("comment"), AlarmComment.class);
-        AlarmInfo alarmInfo = JacksonUtil.fromString(ruleEngineMsg.getData(), AlarmInfo.class);
+    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
+        TbMsg msg = trigger.getMsg();
+        AlarmComment comment = JacksonUtil.fromString(msg.getMetaData().getValue("comment"), AlarmComment.class);
+        AlarmInfo alarmInfo = JacksonUtil.fromString(msg.getData(), AlarmInfo.class);
         return AlarmCommentNotificationInfo.builder()
                 .comment(comment.getComment().get("text").asText())
-                .userName(ruleEngineMsg.getMetaData().getValue("userName"))
+                .action(msg.getType().equals(DataConstants.COMMENT_CREATED) ? "added" : "updated")
+                .userName(msg.getMetaData().getValue("userName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
                 .alarmOriginator(alarmInfo.getOriginator())

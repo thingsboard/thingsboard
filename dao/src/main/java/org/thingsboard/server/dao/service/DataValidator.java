@@ -34,8 +34,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.commons.lang3.StringUtils.capitalize;
-
 @Slf4j
 public abstract class DataValidator<D extends BaseData<?>> {
     private static final Pattern EMAIL_PATTERN =
@@ -106,7 +104,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
-            throw new DataValidationException(String.format("%ss limit reached", capitalize(entityType.name().toLowerCase().replaceAll("_", " "))));
+            throw new DataValidationException(entityType.getNormalName() + "s limit reached");
         }
     }
 

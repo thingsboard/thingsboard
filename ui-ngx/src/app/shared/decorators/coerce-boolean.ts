@@ -16,21 +16,19 @@
 
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
-export function coerceBoolean() {
-  return function (target: any, key: string): void {
-    const getter = function () {
-      return this['__' + key];
-    };
-
-    const setter = function (next: any) {
-      this['__' + key] = coerceBooleanProperty(next);
-    };
-
-    Object.defineProperty(target, key, {
-      get: getter,
-      set: setter,
-      enumerable: true,
-      configurable: true,
-    });
+export const coerceBoolean = () => (target: any, key: string): void => {
+  const getter = function() {
+    return this['__' + key];
   };
-}
+
+  const setter = function(next: any) {
+    this['__' + key] = coerceBooleanProperty(next);
+  };
+
+  Object.defineProperty(target, key, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
+};

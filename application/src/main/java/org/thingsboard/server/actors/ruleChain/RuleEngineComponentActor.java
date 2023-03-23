@@ -16,12 +16,15 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbRuleNodeUpdateException;
 import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbActorStopReason;
+import org.thingsboard.server.dao.notification.trigger.RuleEngineComponentLifecycleEventTrigger;
 
 public abstract class RuleEngineComponentActor<T extends EntityId, P extends ComponentMsgProcessor<T>> extends ComponentActor<T, P> {
 
@@ -32,8 +35,29 @@ public abstract class RuleEngineComponentActor<T extends EntityId, P extends Com
     @Override
     protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         super.logLifecycleEvent(event, e);
-        systemContext.getNotificationRuleProcessingService().process(tenantId, getRuleChainId(), getRuleChainName(),
-                id, processor.getComponentName(), event, e);
+        if (e instanceof TbRuleNodeUpdateException || (event == ComponentLifecycleEvent.STARTED && e != null)) {
+            return;
+        }
+        processNotificationRule(event, e);
+    }
+
+    @Override
+    public void destroy(TbActorStopReason stopReason, Throwable cause) {
+        super.destroy(stopReason, cause);
+        if (stopReason == TbActorStopReason.INIT_FAILED && cause != null) {
+            processNotificationRule(ComponentLifecycleEvent.STARTED, cause);
+        }
+    }
+
+    private void processNotificationRule(ComponentLifecycleEvent event, Throwable e) {
+        systemContext.getNotificationRuleProcessingService().process(tenantId, RuleEngineComponentLifecycleEventTrigger.builder()
+                .ruleChainId(getRuleChainId())
+                .ruleChainName(getRuleChainName())
+                .componentId(id)
+                .componentName(processor.getComponentName())
+                .eventType(event)
+                .error(e)
+                .build());
     }
 
     protected abstract RuleChainId getRuleChainId();

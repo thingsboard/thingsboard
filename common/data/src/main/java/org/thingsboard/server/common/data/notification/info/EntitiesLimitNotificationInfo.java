@@ -32,14 +32,18 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 public class EntitiesLimitNotificationInfo implements NotificationInfo {
 
     private EntityType entityType;
-    private int threshold;
+    private long currentCount;
+    private long limit;
+    private int percents;
 
     @Override
     public Map<String, String> getTemplateData() {
-        // FIXME: readable entity type name, e.g. 'Devices'
         return mapOf(
-                "entityType", entityType.name(),
-                "threshold", String.valueOf(threshold)
+                "entityType", entityType.getNormalName(),
+                "currentCount", String.valueOf(currentCount),
+                "limit", String.valueOf(limit),
+                "percents", String.valueOf(percents)
         );
     }
+
 }

@@ -142,6 +142,8 @@ export class NotificationComponent implements OnInit {
   notificationIconColor(): object {
     if (this.notification.type === NotificationType.ALARM) {
       return {color: AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)};
+    } else if (this.notification.type === NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT) {
+      return {color: '#D12730'};
     }
     return null;
   }

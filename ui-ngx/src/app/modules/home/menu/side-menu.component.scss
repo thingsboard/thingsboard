@@ -63,6 +63,7 @@
       white-space: nowrap;
       display: inline-flex;
       & > span {
+        letter-spacing: .03125em;
         overflow: hidden;
         text-overflow: ellipsis;
       }

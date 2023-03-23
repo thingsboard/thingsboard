@@ -26,15 +26,17 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotific
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
+import org.thingsboard.server.dao.notification.trigger.AlarmTrigger;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 @Service
-public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmApiCallResult, AlarmNotificationRuleTriggerConfig> {
+public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmTrigger, AlarmNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
+    public boolean matchesFilter(AlarmTrigger trigger, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        AlarmApiCallResult alarmUpdate = trigger.getAlarmUpdate();
         Alarm alarm = alarmUpdate.getAlarm();
         if (!typeMatches(alarm, triggerConfig)) {
             return false;
@@ -64,7 +66,8 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
     }
 
     @Override
-    public boolean matchesClearRule(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
+    public boolean matchesClearRule(AlarmTrigger trigger, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        AlarmApiCallResult alarmUpdate = trigger.getAlarmUpdate();
         Alarm alarm = alarmUpdate.getAlarm();
         if (!typeMatches(alarm, triggerConfig)) {
             return false;
@@ -90,12 +93,17 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(AlarmApiCallResult alarmUpdate, AlarmNotificationRuleTriggerConfig triggerConfig) {
-        // TODO: readable action
+    public NotificationInfo constructNotificationInfo(AlarmTrigger trigger, AlarmNotificationRuleTriggerConfig triggerConfig) {
+        AlarmApiCallResult alarmUpdate = trigger.getAlarmUpdate();
         AlarmInfo alarmInfo = alarmUpdate.getAlarm();
         return AlarmNotificationInfo.builder()
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
+                .action(alarmUpdate.isCreated() ? "created" :
+                        alarmUpdate.isSeverityChanged() ? "severity changed" :
+                        alarmUpdate.isAcknowledged() ? "acknowledged" :
+                        alarmUpdate.isCleared() ? "cleared" :
+                        alarmUpdate.isDeleted() ? "deleted" : null)
                 .alarmOriginator(alarmInfo.getOriginator())
                 .alarmOriginatorName(alarmInfo.getOriginatorName())
                 .alarmSeverity(alarmInfo.getSeverity())

@@ -30,12 +30,12 @@ import com.slack.api.model.ConversationType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -140,10 +140,9 @@ public class DefaultSlackService implements SlackService {
             String error = response.getError();
             if (error == null) {
                 error = "unknown error";
-            }
-            if (error.contains("missing_scope")) {
+            } else if (error.contains("missing_scope")) {
                 String neededScope = response.getNeeded();
-                throw new RuntimeException("Bot token scope '" + neededScope + "' is needed");
+                error = "bot token scope '" + neededScope + "' is needed";
             }
             throw new RuntimeException("Failed to send message via Slack: " + error);
         }

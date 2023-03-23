@@ -26,6 +26,11 @@ import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/tab
 import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 
+export enum AlarmsMode {
+  ALL,
+  ENTITY
+}
+
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
   MAJOR = 'MAJOR',
@@ -278,7 +283,7 @@ export class AlarmQuery {
   }
 
   public toQuery(): string {
-    let query = `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}`;
+    let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
     query += this.pageLink.toQuery();
     if (this.searchStatus) {
       query += `&searchStatus=${this.searchStatus}`;

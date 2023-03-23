@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -38,7 +39,6 @@ import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
@@ -56,14 +56,18 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -196,6 +200,7 @@ public class NotificationController extends BaseController {
     @PostMapping("/notification/request/preview")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRequestPreview getNotificationRequestPreview(@RequestBody @Valid NotificationRequest request,
+                                                                    @RequestParam(defaultValue = "20") int recipientsPreviewSize,
                                                                     @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         NotificationRequestPreview preview = new NotificationRequestPreview();
 
@@ -229,18 +234,29 @@ public class NotificationController extends BaseController {
         preview.setProcessedTemplates(processedTemplates);
 
         // generic permission
+        Set<User> recipientsPreview = new LinkedHashSet<>();
         Map<String, Integer> recipientsCountByTarget = new HashMap<>();
         List<NotificationTarget> targets = notificationTargetService.findNotificationTargetsByTenantIdAndIds(user.getTenantId(),
                 request.getTargets().stream().map(NotificationTargetId::new).collect(Collectors.toList()));
         for (NotificationTarget target : targets) {
             int recipientsCount;
             if (target.getConfiguration().getType() == NotificationTargetType.PLATFORM_USERS) {
-                recipientsCount = notificationTargetService.countRecipientsForNotificationTargetConfig(user.getTenantId(), target.getConfiguration());
+                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null,
+                        target.getConfiguration(), new PageLink(recipientsPreviewSize));
+                recipientsCount = (int) recipients.getTotalElements();
+                for (User recipient : recipients.getData()) {
+                    if (recipientsPreview.size() < recipientsPreviewSize) {
+                        recipientsPreview.add(recipient);
+                    } else {
+                        break;
+                    }
+                }
             } else {
                 recipientsCount = 1;
             }
             recipientsCountByTarget.put(target.getName(), recipientsCount);
         }
+        preview.setRecipientsPreview(recipientsPreview);
         preview.setRecipientsCountByTarget(recipientsCountByTarget);
         preview.setTotalRecipientsCount(recipientsCountByTarget.values().stream().mapToInt(Integer::intValue).sum());
 
@@ -279,8 +295,8 @@ public class NotificationController extends BaseController {
     @PostMapping("/notification/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationSettings saveNotificationSettings(@RequestBody @Valid NotificationSettings notificationSettings,
-                                                         @AuthenticationPrincipal SecurityUser user) {
-        // generic permission
+                                                         @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.WRITE);
         TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
         notificationSettingsService.saveNotificationSettings(tenantId, notificationSettings);
         return notificationSettings;
@@ -288,10 +304,17 @@ public class NotificationController extends BaseController {
 
     @GetMapping("/notification/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationSettings getNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
-        // generic permission
+    public NotificationSettings getNotificationSettings(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
         TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
         return notificationSettingsService.findNotificationSettings(tenantId);
+    }
+
+    @GetMapping("/notification/deliveryMethods")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+        return notificationCenter.getAvailableDeliveryMethods(user.getTenantId());
     }
 
 }

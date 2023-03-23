@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rest.client;
 
+import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -28,9 +29,6 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestExecution;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -67,6 +65,8 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -85,6 +85,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -162,7 +163,6 @@ import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -172,6 +172,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
@@ -179,16 +180,24 @@ import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 /**
  * @author Andrew Shvayka
  */
-public class RestClient implements ClientHttpRequestInterceptor, Closeable {
+public class RestClient implements Closeable {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    protected final RestTemplate restTemplate;
-    protected final String baseURL;
-    private String token;
-    private String refreshToken;
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
-
+    private static final long AVG_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
+    protected final RestTemplate restTemplate;
+    protected final RestTemplate loginRestTemplate;
+    protected final String baseURL;
+
+    private String username;
+    private String password;
+    private String mainToken;
+    private String refreshToken;
+    private long mainTokenExpTs;
+    private long refreshTokenExpTs;
+    private long clientServerTimeDiff;
 
     public RestClient(String baseURL) {
         this(new RestTemplate(), baseURL);
@@ -196,23 +205,25 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
         this.restTemplate = restTemplate;
+        this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
-    }
-
-    @Override
-    public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
-        HttpRequest wrapper = new HttpRequestWrapper(request);
-        wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-        ClientHttpResponse response = execution.execute(wrapper, bytes);
-        if (response.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-            synchronized (this) {
-                restTemplate.getInterceptors().remove(this);
-                refreshToken();
-                wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-                return execution.execute(wrapper, bytes);
+        this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
+            HttpRequest wrapper = new HttpRequestWrapper(request);
+            long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
+            if (calculatedTs > mainTokenExpTs) {
+                synchronized (RestClient.this) {
+                    if (calculatedTs > mainTokenExpTs) {
+                        if (calculatedTs < refreshTokenExpTs) {
+                            refreshToken();
+                        } else {
+                            doLogin();
+                        }
+                    }
+                }
             }
-        }
-        return response;
+            wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + mainToken);
+            return execution.execute(wrapper, bytes);
+        });
     }
 
     public RestTemplate getRestTemplate() {
@@ -220,7 +231,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public String getToken() {
-        return token;
+        return mainToken;
     }
 
     public String getRefreshToken() {
@@ -230,22 +241,32 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     public void refreshToken() {
         Map<String, String> refreshTokenRequest = new HashMap<>();
         refreshTokenRequest.put("refreshToken", refreshToken);
-        ResponseEntity<JsonNode> tokenInfo = restTemplate.postForEntity(baseURL + "/api/auth/token", refreshTokenRequest, JsonNode.class);
-        setTokenInfo(tokenInfo.getBody());
+        long ts = System.currentTimeMillis();
+        ResponseEntity<JsonNode> tokenInfo = loginRestTemplate.postForEntity(baseURL + "/api/auth/token", refreshTokenRequest, JsonNode.class);
+        setTokenInfo(ts, tokenInfo.getBody());
     }
 
     public void login(String username, String password) {
+        this.username = username;
+        this.password = password;
+        doLogin();
+    }
+
+    private void doLogin() {
+        long ts = System.currentTimeMillis();
         Map<String, String> loginRequest = new HashMap<>();
         loginRequest.put("username", username);
         loginRequest.put("password", password);
-        ResponseEntity<JsonNode> tokenInfo = restTemplate.postForEntity(baseURL + "/api/auth/login", loginRequest, JsonNode.class);
-        setTokenInfo(tokenInfo.getBody());
+        ResponseEntity<JsonNode> tokenInfo = loginRestTemplate.postForEntity(baseURL + "/api/auth/login", loginRequest, JsonNode.class);
+        setTokenInfo(ts, tokenInfo.getBody());
     }
 
-    private void setTokenInfo(JsonNode tokenInfo) {
-        this.token = tokenInfo.get("token").asText();
+    private synchronized void setTokenInfo(long ts, JsonNode tokenInfo) {
+        this.mainToken = tokenInfo.get("token").asText();
         this.refreshToken = tokenInfo.get("refreshToken").asText();
-        restTemplate.getInterceptors().add(this);
+        this.mainTokenExpTs = JWT.decode(this.mainToken).getExpiresAtAsInstant().toEpochMilli();
+        this.refreshTokenExpTs = JWT.decode(refreshToken).getExpiresAtAsInstant().toEpochMilli();
+        this.clientServerTimeDiff = JWT.decode(this.mainToken).getIssuedAtAsInstant().toEpochMilli() - ts;
     }
 
     public Optional<AdminSettings> getAdminSettings(String key) {
@@ -475,6 +496,29 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     @Deprecated
     public Alarm createAlarm(Alarm alarm) {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
+    }
+
+    public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
+        return restTemplate.postForEntity(baseURL + "/api/alarm/{alarmId}/comment", alarmComment, AlarmComment.class, alarmId.getId()).getBody();
+    }
+
+    public void deleteAlarmComment(AlarmId alarmId, AlarmCommentId alarmCommentId) {
+        restTemplate.delete(baseURL + "/api/alarm/{alarmId}/comment/{alarmCommentId}",
+                alarmId.getId(), alarmCommentId.getId());
+    }
+
+    public PageData<AlarmCommentInfo> getAlarmComments(AlarmId alarmId, PageLink pageLink) {
+        String urlSecondPart = "/api/alarm/{alarmId}/comment";
+        Map<String, String> params = new HashMap<>();
+        params.put("alarmId", alarmId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + urlSecondPart + "&" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmCommentInfo>>() {
+                },
+                params).getBody();
     }
 
     public Optional<Asset> getAssetById(AssetId assetId) {
@@ -3558,9 +3602,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     @Override
     public void close() {
-        if (service != null) {
-            service.shutdown();
-        }
+        service.shutdown();
     }
 
 }

@@ -22,7 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -32,16 +35,18 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -51,15 +56,19 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.apiusage.limits.LimitedApi;
+import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
@@ -75,7 +84,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,16 +97,23 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationService notificationService;
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
+    private final UserService userService;
     private final NotificationExecutorService notificationExecutor;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
+    private final RateLimitService rateLimitService;
+    private final MailService mailService;
+    private final SmsService smsService;
 
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        if (!rateLimitService.checkRateLimit(tenantId, LimitedApi.NOTIFICATION_REQUEST)) {
+            throw new TbRateLimitsException(EntityType.TENANT);
+        }
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
         NotificationTemplate notificationTemplate;
         if (notificationRequest.getTemplateId() != null) {
@@ -110,13 +125,12 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
         List<NotificationTarget> targets = notificationTargetService.findNotificationTargetsByTenantIdAndIds(tenantId,
                 notificationRequest.getTargets().stream().map(NotificationTargetId::new).collect(Collectors.toList()));
+        Set<NotificationDeliveryMethod> availableDeliveryMethods = getAvailableDeliveryMethods(tenantId);
 
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
-            if (deliveryMethod == NotificationDeliveryMethod.SLACK) {
-                if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod)) {
-                    throw new IllegalArgumentException("Slack must be configured in the settings");
-                }
+            if (!availableDeliveryMethods.contains(deliveryMethod)) {
+                throw new IllegalArgumentException("Settings for " + deliveryMethod.getName() + " are missing");
             }
             if (notificationRequest.getRuleId() == null) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
@@ -163,19 +177,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 } catch (Exception e) {
                     log.error("[{}] Failed to update stats for notification request", requestId, e);
                 }
-
-                UserId senderId = notificationRequest.getSenderId();
-                if (senderId != null) {
-                    if (stats.getErrors().isEmpty()) {
-                        int sent = stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum();
-                        sendBasicNotification(tenantId, senderId, "Notifications sent",
-                                "All notifications were successfully sent (" + sent + ")");
-                    } else {
-                        int failures = stats.getErrors().values().stream().mapToInt(Map::size).sum();
-                        sendBasicNotification(tenantId, senderId, "Notification failure",
-                                "Some notifications were not sent (" + failures + ")"); // TODO: 'Go to' button
-                    }
-                }
             }, dbCallbackExecutorService);
         });
 
@@ -186,9 +187,21 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Iterable<? extends NotificationRecipient> recipients;
         switch (target.getConfiguration().getType()) {
             case PLATFORM_USERS: {
-                recipients = new PageDataIterable<>(pageLink -> {
-                    return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), ctx.getCustomerId(), target.getConfiguration(), pageLink);
-                }, 200);
+                PlatformUsersNotificationTargetConfig platformUsersTargetConfig = (PlatformUsersNotificationTargetConfig) target.getConfiguration();
+                if (platformUsersTargetConfig.getUsersFilter().getType() == UsersFilterType.AFFECTED_USER) {
+                    if (ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
+                        UserId targetUserId = ((RuleOriginatedNotificationInfo) ctx.getRequest().getInfo()).getTargetUserId();
+                        if (targetUserId != null) {
+                            recipients = List.of(userService.findUserById(ctx.getTenantId(), targetUserId));
+                            break;
+                        }
+                    }
+                    recipients = Collections.emptyList();
+                } else {
+                    recipients = new PageDataIterable<>(pageLink -> {
+                        return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), ctx.getCustomerId(), platformUsersTargetConfig, pageLink);
+                    }, 500);
+                }
                 break;
             }
             case SLACK: {
@@ -328,6 +341,24 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     .build();
             onNotificationUpdate(tenantId, recipientId, update);
         }
+    }
+
+    @Override
+    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
+        Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>();
+        deliveryMethods.add(NotificationDeliveryMethod.WEB);
+        NotificationSettings notificationSettings = notificationSettingsService.findNotificationSettings(tenantId);
+        if (notificationSettings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.SLACK)) {
+            deliveryMethods.add(NotificationDeliveryMethod.SLACK);
+        }
+        try {
+            mailService.testConnection(tenantId);
+            deliveryMethods.add(NotificationDeliveryMethod.EMAIL);
+        } catch (Exception e) {}
+        if (smsService.isConfigured(tenantId)) {
+            deliveryMethods.add(NotificationDeliveryMethod.SMS);
+        }
+        return deliveryMethods;
     }
 
     @Override

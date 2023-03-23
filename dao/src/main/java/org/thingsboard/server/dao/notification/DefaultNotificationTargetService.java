@@ -25,13 +25,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
-import org.thingsboard.server.common.data.notification.targets.platform.OriginatorEntityOwnerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.page.PageData;
@@ -45,6 +47,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 @Service
 @Slf4j
@@ -76,6 +80,11 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     @Override
     public PageData<NotificationTarget> findNotificationTargetsByTenantId(TenantId tenantId, PageLink pageLink) {
         return notificationTargetDao.findByTenantIdAndPageLink(tenantId, pageLink);
+    }
+
+    @Override
+    public PageData<NotificationTarget> findNotificationTargetsByTenantIdAndSupportedNotificationType(TenantId tenantId, NotificationType notificationType, PageLink pageLink) {
+        return notificationTargetDao.findByTenantIdAndSupportedNotificationTypeAndPageLink(tenantId, notificationType, pageLink);
     }
 
     @Override
@@ -117,19 +126,34 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                 CustomerUsersFilter filter = (CustomerUsersFilter) usersFilter;
                 return userService.findCustomerUsers(tenantId, new CustomerId(filter.getCustomerId()), pageLink);
             }
+            case TENANT_ADMINISTRATORS: {
+                TenantAdministratorsFilter filter = (TenantAdministratorsFilter) usersFilter;
+                if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
+                    return userService.findTenantAdmins(tenantId, pageLink);
+                } else {
+                    if (isNotEmpty(filter.getTenantsIds())) {
+                        return userService.findTenantAdminsByTenantsIds(filter.getTenantsIds().stream()
+                                .map(TenantId::fromUUID).collect(Collectors.toList()), pageLink);
+                    } else if (isNotEmpty(filter.getTenantProfilesIds())) {
+                        return userService.findTenantAdminsByTenantProfilesIds(filter.getTenantProfilesIds().stream()
+                                .map(TenantProfileId::new).collect(Collectors.toList()), pageLink);
+                    } else {
+                        return userService.findAllTenantAdmins(pageLink);
+                    }
+                }
+            }
             case ALL_USERS: {
                 if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
                     return userService.findUsersByTenantId(tenantId, pageLink);
                 } else {
-                    return userService.findAllUsers(TenantId.SYS_TENANT_ID, pageLink);
+                    return userService.findAllUsers(pageLink);
                 }
             }
             case ORIGINATOR_ENTITY_OWNER_USERS: {
-                OriginatorEntityOwnerUsersFilter filter = (OriginatorEntityOwnerUsersFilter) usersFilter;
                 if (customerId != null && !customerId.isNullUid()) {
                     return userService.findCustomerUsers(tenantId, customerId, pageLink);
                 } else {
-                    return userService.findTenantAdmins(tenantId, pageLink); // TODO: or should we send to all users within tenant?
+                    return userService.findTenantAdmins(tenantId, pageLink);
                 }
             }
         }

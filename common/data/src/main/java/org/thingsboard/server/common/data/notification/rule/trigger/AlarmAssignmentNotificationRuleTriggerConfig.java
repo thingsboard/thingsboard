@@ -19,6 +19,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.Set;
 
 @Data
@@ -27,11 +28,16 @@ public class AlarmAssignmentNotificationRuleTriggerConfig implements Notificatio
     private Set<String> alarmTypes;
     private Set<AlarmSeverity> alarmSeverities;
     private Set<AlarmSearchStatus> alarmStatuses;
-    private boolean notifyOnUnassign;
+    @NotEmpty
+    private Set<Action> notifyOn;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
+    }
+
+    public enum Action {
+        ASSIGNED, UNASSIGNED
     }
 
 }

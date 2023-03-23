@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--BSD 3-Clause License
+
+Copyright (c) 2019, Cloudminds
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Network Info</Name>
+    <Description1><![CDATA[This LWM2M Object includes network status related information.]]></Description1>
+    <ObjectID>10330</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10330</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Single</MultipleInstances>
+    <Mandatory>Mandatory</Mandatory>
+    <Resources>
+      <Item ID="1">
+        <Name>IMEI</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration>15</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[The IMEI of the RCU in the Robot.]]></Description>
+      </Item>
+      <Item ID="2">
+        <Name>IMSI</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration>15</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[The IMSI of the RCU in the Robot.]]></Description>
+      </Item>
+	  <Item ID="3">
+		<Name>Radio Connectivity</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Single</MultipleInstances>
+		<Mandatory>Mandatory</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[The radio connectivity status, contains the reference to the Connectivity Monitoring(4).]]>
+		</Description>
+	  </Item>
+	  <Item ID="4">
+        <Name>GPS Signal Status</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>1..4</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[The GPS signal status: 1: Very Good, 2: Good, 3:Normal, 4: Bad.]]></Description>
+      </Item>
+	  <Item ID="5">
+        <Name>VBN Connection Status</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..1</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[VBN Connection Status: 1:Connected, 0:Disconnected.]]></Description>
+      </Item>
+	  <Item ID="6">
+        <Name>HARI Connection Status</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..1</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[HARI Connection Status: 1:Connected, 0:Disconnected.]]></Description>
+      </Item>
+	  <Item ID="7">
+        <Name>CCU Connection Status</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..1</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[CCU Connection Status: 1:Connected, 0:Disconnected.
+			The resource instance ID is the same with the Object Instance ID of corresponding CCU.]]></Description>
+      </Item>
+    </Resources>	  
+    <Description2 />
+  </Object>
+</LWM2M>

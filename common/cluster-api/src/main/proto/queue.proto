@@ -197,7 +197,6 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
   int64 gatewayIdLSB = 2;
   string deviceName = 3;
   string deviceType = 4;
-  bool sparkplug = 5;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {

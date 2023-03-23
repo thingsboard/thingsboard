@@ -90,10 +90,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   disabled: boolean;
 
   @Input()
-  subscriptSizing: SubscriptSizing = 'fixed'
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
-  hint: string
+  hint: string;
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;

@@ -25,6 +25,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
 import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { User } from '@shared/models/user.model';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -70,11 +71,12 @@ export interface NotificationRequestPreview {
   totalRecipientsCount: number;
   recipientsCountByTarget: { [key in string]: number };
   processedTemplates: { [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate };
+  recipientsPreview: Array<User>;
 }
 
 export interface NotificationRequestStats {
   sent: Map<NotificationDeliveryMethod, any>;
-  errors: { [key in NotificationDeliveryMethod]: {[key in string]: string}};
+  errors: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
   processedRecipients: Map<NotificationDeliveryMethod, Set<UserId>>;
 }
 
@@ -109,7 +111,9 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   additionalConfig: {description: string};
 }
 
-export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig & EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig>
+export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
+  EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
+  RuleEngineLifecycleEventNotificationRuleTriggerConfig & EntitiesLimitNotificationRuleTriggerConfig>;
 
 export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
@@ -119,7 +123,7 @@ export interface AlarmNotificationRuleTriggerConfig {
 }
 
 interface ClearRule {
-  alarmStatuses: Array<AlarmSearchStatus>
+  alarmStatuses: Array<AlarmSearchStatus>;
 }
 
 export interface DeviceInactivityNotificationRuleTriggerConfig {
@@ -138,16 +142,42 @@ export interface AlarmCommentNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
   alarmSeverities?: Array<AlarmSeverity>;
   alarmStatuses?: Array<AlarmSearchStatus>;
-  notifyOnUnassign?: boolean;
   onlyUserComments?: boolean;
+  notifyOnCommentUpdate?: boolean;
 }
 
 export interface AlarmAssignmentNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
   alarmSeverities?: Array<AlarmSeverity>;
   alarmStatuses?: Array<AlarmSearchStatus>;
-  notifyOnUnassign?: boolean;
+  notifyOn: Array<AlarmAssignmentAction>;
 }
+
+export interface RuleEngineLifecycleEventNotificationRuleTriggerConfig {
+  ruleChains?: Array<string>;
+  ruleChainEvents?: Array<ComponentLifecycleEvent>;
+  onlyRuleChainLifecycleFailures: boolean;
+  trackRuleNodeEvents: boolean;
+  ruleNodeEvents: Array<any>;
+  onlyRuleNodeLifecycleFailures: ComponentLifecycleEvent;
+}
+
+export interface EntitiesLimitNotificationRuleTriggerConfig {
+  entityTypes: EntityType[];
+  threshold: number;
+}
+
+export enum ComponentLifecycleEvent {
+  STARTED = 'STARTED',
+  UPDATED = 'UPDATED',
+  STOPPED = 'STOPPED'
+}
+
+export const ComponentLifecycleEventTranslationMap = new Map<ComponentLifecycleEvent, string>([
+  [ComponentLifecycleEvent.STARTED, 'event.started'],
+  [ComponentLifecycleEvent.UPDATED, 'event.updated'],
+  [ComponentLifecycleEvent.STOPPED, 'event.stopped']
+]);
 
 export enum AlarmAction {
   CREATED = 'CREATED',
@@ -161,7 +191,17 @@ export const AlarmActionTranslationMap = new Map<AlarmAction, string>([
   [AlarmAction.SEVERITY_CHANGED, 'notification.notify-alarm-action.severity-changed'],
   [AlarmAction.ACKNOWLEDGED, 'notification.notify-alarm-action.acknowledged'],
   [AlarmAction.CLEARED, 'notification.notify-alarm-action.cleared']
-])
+]);
+
+export enum AlarmAssignmentAction {
+  ASSIGNED = 'ASSIGNED',
+  UNASSIGNED = 'UNASSIGNED'
+}
+
+export const AlarmAssignmentActionTranslationMap = new Map<AlarmAssignmentAction, string>([
+  [AlarmAssignmentAction.ASSIGNED, 'notification.notify-alarm-action.assigned'],
+  [AlarmAssignmentAction.UNASSIGNED, 'notification.notify-alarm-action.unassigned']
+]);
 
 export interface NotificationRuleRecipientConfig {
   targets?: Array<string>;
@@ -187,16 +227,21 @@ export interface PlatformUsersNotificationTargetConfig {
 }
 
 export interface UsersFilter extends
-  Partial<UserListNotificationTargetConfig & CustomerUsersNotificationTargetConfig>{
+  Partial<UserListFilter & CustomerUsersFilter & TenantAdministratorsFilter>{
   type: NotificationTargetConfigType;
 }
 
-interface UserListNotificationTargetConfig {
+interface UserListFilter {
   usersIds: Array<string>;
 }
 
-interface CustomerUsersNotificationTargetConfig {
+interface CustomerUsersFilter {
   customerId: string;
+}
+
+interface TenantAdministratorsFilter {
+  tenantsIds?: Array<string>;
+  tenantProfilesIds?: Array<string>;
 }
 
 export interface SlackNotificationTargetConfig {
@@ -210,7 +255,7 @@ export enum NotificationTargetType {
 
 export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetType, string>([
   [NotificationTargetType.PLATFORM_USERS, 'notification.platform-users'],
-  [NotificationTargetType.SLACK, 'notification.slack']
+  [NotificationTargetType.SLACK, 'notification.delivery-method.slack']
 ]);
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
@@ -220,8 +265,6 @@ export interface NotificationTemplate extends Omit<BaseData<NotificationTemplate
 }
 
 interface NotificationTemplateConfig {
-  defaultTextTemplate: string;
-  notificationSubject: string;
   deliveryMethodsTemplates: {
     [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate
   };
@@ -278,10 +321,10 @@ export enum NotificationDeliveryMethod {
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
-  [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web'],
-  [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
-  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack']
+  [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web'],
+  [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
+  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack']
 ]);
 
 export enum NotificationRequestStatus {
@@ -310,16 +353,63 @@ export const SlackChanelTypesTranslateMap = new Map<SlackChanelType, string>([
 
 export enum NotificationTargetConfigType {
   ALL_USERS = 'ALL_USERS',
-  USER_LIST = 'USER_LIST',
+  TENANT_ADMINISTRATORS = 'TENANT_ADMINISTRATORS',
   CUSTOMER_USERS = 'CUSTOMER_USERS',
-  ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS'
+  USER_LIST = 'USER_LIST',
+  ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS',
+  AFFECTED_USER = 'AFFECTED_USER',
+  SYSTEM_ADMINISTRATORS = 'SYSTEM_ADMINISTRATORS',
+  AFFECTED_TENANT_ADMINISTRATORS = 'AFFECTED_TENANT_ADMINISTRATORS'
 }
 
-export const NotificationTargetConfigTypeTranslateMap = new Map<NotificationTargetConfigType, string>([
-  [NotificationTargetConfigType.ALL_USERS, 'notification.target-type.all-users'],
-  [NotificationTargetConfigType.USER_LIST, 'notification.target-type.user-list'],
-  [NotificationTargetConfigType.CUSTOMER_USERS, 'notification.target-type.customer-users'],
-  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS, 'notification.target-type.originator-entity-owner-users']
+interface NotificationTargetConfigTypeInfo {
+  name: string;
+  hint?: string;
+}
+
+export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetConfigType, NotificationTargetConfigTypeInfo>([
+  [NotificationTargetConfigType.ALL_USERS,
+    {
+      name: 'notification.recipient-type.all-users'
+    }
+  ],
+  [NotificationTargetConfigType.TENANT_ADMINISTRATORS,
+    {
+      name: 'notification.recipient-type.tenant-administrators'
+    }
+  ],
+  [NotificationTargetConfigType.CUSTOMER_USERS,
+    {
+      name: 'notification.recipient-type.customer-users'
+    }
+  ],
+  [NotificationTargetConfigType.USER_LIST,
+    {
+      name: 'notification.recipient-type.user-list'
+    }
+  ],
+  [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
+    {
+      name: 'notification.recipient-type.users-entity-owner',
+      hint: 'notification.recipient-type.users-entity-owner-hint'
+    }
+  ],
+  [NotificationTargetConfigType.AFFECTED_USER,
+    {
+      name: 'notification.recipient-type.affected-user',
+      hint: 'notification.recipient-type.affected-user-hint'
+    }
+  ],
+  [NotificationTargetConfigType.SYSTEM_ADMINISTRATORS,
+    {
+      name: 'notification.recipient-type.system-administrators'
+    }
+  ],
+  [NotificationTargetConfigType.AFFECTED_TENANT_ADMINISTRATORS,
+    {
+      name: 'notification.recipient-type.affected-tenant-administrators'
+    }
+  ]
 ]);
 
 export enum NotificationType {
@@ -328,7 +418,9 @@ export enum NotificationType {
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT',
-  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT'
+  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
+  RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
+  ENTITIES_LIMIT = 'ENTITIES_LIMIT'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -337,6 +429,8 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ENTITY_ACTION, 'devices'],
   [NotificationType.ALARM_COMMENT, 'comment'],
   [NotificationType.ALARM_ASSIGNMENT, 'assignment_turned_in'],
+  [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'settings_ethernet'],
+  [NotificationType.ENTITIES_LIMIT, 'data_thresholding'],
 ]);
 
 export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
@@ -361,46 +455,57 @@ export const ActionButtonLinkTypeTranslateMap = new Map<ActionButtonLinkType, st
 
 interface NotificationTemplateTypeTranslate {
   name: string;
-  hint?: string;
+  helpId?: string;
 }
 
 export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, NotificationTemplateTypeTranslate>([
   [NotificationType.GENERAL,
     {
       name: 'notification.template-type.general',
-      hint: 'notification.template-hint.general'
+      helpId: 'notification/general'
     }
   ],
   [NotificationType.ALARM,
     {
       name: 'notification.template-type.alarm',
-      hint: 'notification.template-hint.alarm'
+      helpId: 'notification/alarm'
     }
   ],
   [NotificationType.DEVICE_INACTIVITY,
     {
       name: 'notification.template-type.device-inactivity',
-      hint: 'notification.template-hint.device-inactivity'
+      helpId: 'notification/device_inactivity'
     }
   ],
   [NotificationType.ENTITY_ACTION,
     {
       name: 'notification.template-type.entity-action',
-      hint: 'notification.template-hint.entity-action'
+      helpId: 'notification/entity_action'
     }
   ],
   [NotificationType.ALARM_COMMENT,
     {
       name: 'notification.template-type.alarm-comment',
-      hint: 'notification.template-hint.alarm-comment'
+      helpId: 'notification/alarm_comment'
     }
   ],
   [NotificationType.ALARM_ASSIGNMENT,
     {
       name: 'notification.template-type.alarm-assignment',
-      hint: 'notification.template-hint.alarm-assignment'
+      helpId: 'notification/alarm_assignment'
     }
-  ]
+  ],
+  [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+    {
+      name: 'notification.template-type.rule-engine-lifecycle-event',
+      helpId: 'notification/rule_engine_lifecycle_event'
+    }
+  ],
+  [NotificationType.ENTITIES_LIMIT,
+    {
+      name: 'notification.template-type.entities-limit',
+      helpId: 'notification/entities_limit'
+    }]
 ]);
 
 export enum TriggerType {
@@ -408,7 +513,9 @@ export enum TriggerType {
   DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT',
-  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT'
+  ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
+  RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
+  ENTITIES_LIMIT = 'ENTITIES_LIMIT'
 }
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
@@ -417,4 +524,6 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action'],
   [TriggerType.ALARM_COMMENT, 'notification.trigger.alarm-comment'],
   [TriggerType.ALARM_ASSIGNMENT, 'notification.trigger.alarm-assignment'],
+  [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'notification.trigger.rule-engine-lifecycle-event'],
+  [TriggerType.ENTITIES_LIMIT, 'notification.trigger.entities-limit'],
 ]);

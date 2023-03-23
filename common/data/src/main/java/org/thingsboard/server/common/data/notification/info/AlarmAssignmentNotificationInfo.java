@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.UserId;
 
 import java.util.Map;
 import java.util.UUID;
@@ -35,9 +36,11 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 @Builder
 public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificationInfo {
 
+    private String action;
     private String assigneeFirstName;
     private String assigneeLastName;
     private String assigneeEmail;
+    private UserId assigneeId;
     private String userName;
 
     private String alarmType;
@@ -51,15 +54,17 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
+                "action", action,
                 "assigneeFirstName", assigneeFirstName,
                 "assigneeLastName", assigneeLastName,
                 "assigneeEmail", assigneeEmail,
+                "assigneeId", assigneeId != null ? assigneeId.toString() : null,
                 "userName", userName,
                 "alarmType", alarmType,
                 "alarmId", alarmId.toString(),
-                "alarmSeverity", alarmSeverity.toString(),
+                "alarmSeverity", alarmSeverity.name().toLowerCase(),
                 "alarmStatus", alarmStatus.toString(),
-                "alarmOriginatorEntityType", alarmOriginator.getEntityType().toString(),
+                "alarmOriginatorEntityType", alarmOriginator.getEntityType().getNormalName(),
                 "alarmOriginatorId", alarmOriginator.getId().toString(),
                 "alarmOriginatorName", alarmOriginatorName
         );
@@ -68,6 +73,11 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
     @Override
     public CustomerId getOriginatorEntityCustomerId() {
         return alarmCustomerId;
+    }
+
+    @Override
+    public UserId getTargetUserId() {
+        return assigneeId;
     }
 
     @Override

@@ -187,6 +187,7 @@ public class EntityActionService {
                         entityNode.put("configuration", "");
                     }
                     metaData.putValue("entityName", entity.getName());
+                    metaData.putValue("entityType", entityId.getEntityType().toString());
                 } else {
                     entityNode = json.createObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {

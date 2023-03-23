@@ -35,7 +35,7 @@
   </mat-sidenav>
   <mat-sidenav-content>
     <div fxLayout="column" role="main" style="height: 100%;">
-      <mat-toolbar fxLayout="row" color="primary" class="mat-elevation-z1 tb-primary-toolbar">
+      <mat-toolbar fxLayout="row" color="primary" class="tb-primary-toolbar">
         <button [fxShow]="!forceFullscreen" mat-icon-button id="main"
                 [ngClass]="{'tb-invisible': displaySearchMode()}"
                 fxHide.gt-sm (click)="sidenav.toggle()">
@@ -52,7 +52,7 @@
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
         <tb-breadcrumb [fxShow]="!displaySearchMode()"
-             fxFlex [activeComponent]="activeComponent" class="mat-toolbar-tools">
+             fxFlex class="mat-toolbar-tools">
         </tb-breadcrumb>
         <div [fxShow]="displaySearchMode()" fxFlex fxLayout="row" class="tb-dark">
           <mat-form-field fxFlex class="tb-appearance-transparent">
@@ -73,7 +73,7 @@
         <tb-user-menu [displayUserInfo]="!displaySearchMode()"></tb-user-menu>
       </mat-toolbar>
       <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
-                        *ngIf="isLoading$ | async">
+                        *ngIf="!hideLoadingBar && (isLoading$ | async)">
       </mat-progress-bar>
       <div fxFlex fxLayout="column" tb-toast class="tb-main-content">
         <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>

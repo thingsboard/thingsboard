@@ -685,6 +685,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         loadSql(schemaUpdateFile, conn);
 
                         try {
+                            conn.createStatement().execute("VACUUM FULL ANALYZE alarm;"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        } catch (Exception e) {
+                        }
+
+                        try {
                             conn.createStatement().execute("ALTER TABLE asset_profile ADD COLUMN default_edge_rule_chain_id uuid"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                         } catch (Exception e) {
                         }
