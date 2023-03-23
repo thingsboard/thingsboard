@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import lombok.Getter;
+
+@Getter
 public enum NotificationRuleTriggerType {
 
     ALARM,
@@ -23,7 +26,17 @@ public enum NotificationRuleTriggerType {
     ENTITY_ACTION,
     RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
     ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT
+    NEW_PLATFORM_VERSION(false),
+    ENTITIES_LIMIT(false);
+
+    private final boolean tenantLevel;
+
+    NotificationRuleTriggerType(boolean tenantLevel) {
+        this.tenantLevel = tenantLevel;
+    }
+
+    NotificationRuleTriggerType() {
+        this(true);
+    }
 
 }

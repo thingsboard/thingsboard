@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 @Builder
 public class EntitiesLimitTrigger implements NotificationRuleTrigger {
 
+    private final TenantId tenantId;
     private final EntityType entityType;
     private final long currentCount;
     private final long limit;

@@ -253,6 +253,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
+    public PageData<User> findSysAdmins(PageLink pageLink) {
+        return userDao.findAllByAuthority(Authority.SYS_ADMIN, pageLink);
+    }
+
+    @Override
     public PageData<User> findAllTenantAdmins(PageLink pageLink) {
         return userDao.findAllByAuthority(Authority.TENANT_ADMIN, pageLink);
     }

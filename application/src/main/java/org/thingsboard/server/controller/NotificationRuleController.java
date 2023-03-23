@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -56,9 +57,16 @@ public class NotificationRuleController extends BaseController {
 
     @PostMapping("/rule")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule) throws Exception {
-        notificationRule.setTenantId(getTenantId());
+    public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule,
+                                                 @AuthenticationPrincipal SecurityUser user) throws Exception {
+        notificationRule.setTenantId(user.getTenantId());
         checkEntity(notificationRule.getId(), notificationRule, NOTIFICATION);
+
+        NotificationRuleTriggerType triggerType = notificationRule.getTriggerType();
+        if ((user.isTenantAdmin() && !triggerType.isTenantLevel()) || (user.isSystemAdmin() && triggerType.isTenantLevel())) {
+            throw new IllegalArgumentException("Trigger type " + triggerType + " is not available");
+        }
+
         return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
     }
 
@@ -66,17 +74,17 @@ public class NotificationRuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRuleInfo getNotificationRuleById(@PathVariable UUID id) throws ThingsboardException {
         NotificationRuleId notificationRuleId = new NotificationRuleId(id);
-        return checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleInfoById,  Operation.READ);
+        return checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleInfoById, Operation.READ);
     }
 
     @GetMapping("/rules")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public PageData<NotificationRuleInfo> getNotificationRules(@RequestParam int pageSize,
-                                                           @RequestParam int page,
-                                                           @RequestParam(required = false) String textSearch,
-                                                           @RequestParam(required = false) String sortProperty,
-                                                           @RequestParam(required = false) String sortOrder,
-                                                           @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+                                                               @RequestParam int page,
+                                                               @RequestParam(required = false) String textSearch,
+                                                               @RequestParam(required = false) String sortProperty,
+                                                               @RequestParam(required = false) String sortOrder,
+                                                               @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationRuleService.findNotificationRulesInfosByTenantId(user.getTenantId(), pageLink);
