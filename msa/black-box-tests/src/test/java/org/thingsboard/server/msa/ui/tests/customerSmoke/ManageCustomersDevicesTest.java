@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
@@ -29,7 +29,7 @@ public class ManageCustomersDevicesTest extends AbstractDriverBaseTest {
     private CustomerPageHelper customerPage;
     private final String manage = "Devices";
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
@@ -55,7 +55,7 @@ public class ManageCustomersDevicesTest extends AbstractDriverBaseTest {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersDeviceBtnView().click();
+        jsClick(customerPage.manageCustomersDeviceBtnView());
 
         Assert.assertTrue(urlContains(manage.toLowerCase()));
         Assert.assertNotNull(customerPage.customerDevicesIconHeader());

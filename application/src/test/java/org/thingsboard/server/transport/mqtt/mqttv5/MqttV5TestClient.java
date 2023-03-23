@@ -89,7 +89,9 @@ public class MqttV5TestClient { // We should copy part of MqttV3TestClient, due 
         if (client == null) {
             throw new RuntimeException("Failed to connect! MqttAsyncClient is not initialized!");
         }
-        return client.connect(options);
+        IMqttToken connect = client.connect(options);
+        connect.waitForCompletion(TIMEOUT_MS);
+        return connect;
     }
 
     public void disconnectAndWait() throws MqttException {

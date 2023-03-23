@@ -17,10 +17,10 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -33,7 +33,9 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleChainService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,24 +47,13 @@ import java.util.List;
  */
 public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
 
+    @Autowired
+    EdgeService edgeService;
+    @Autowired
+    RuleChainService ruleChainService;
+
     private IdComparator<RuleChain> idComparator = new IdComparator<>();
     private IdComparator<RuleNode> ruleNodeIdComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveRuleChain() throws IOException {
@@ -86,19 +77,23 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveRuleChainWithEmptyName() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
-        ruleChainService.saveRuleChain(ruleChain);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            ruleChainService.saveRuleChain(ruleChain);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveRuleChainWithInvalidTenant() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
         ruleChain.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        ruleChainService.saveRuleChain(ruleChain);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            ruleChainService.saveRuleChain(ruleChain);
+        });
     }
 
     @Test
@@ -128,12 +123,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindRuleChainsByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         List<RuleChain> ruleChains = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
             RuleChain ruleChain = new RuleChain();
@@ -164,8 +153,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -321,14 +308,18 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainById(tenantId, savedRuleChainMetaData.getRuleChainId());
     }
 
-    @Test(expected = DataValidationException.class)
-    public void testUpdateRuleChainMetaDataWithCirclingRelation() throws Exception {
-        ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation());
+    @Test
+    public void testUpdateRuleChainMetaDataWithCirclingRelation() {
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation());
+        });
     }
 
-    @Test(expected = DataValidationException.class)
-    public void testUpdateRuleChainMetaDataWithCirclingRelation2() throws Exception {
-        ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation2());
+    @Test
+    public void testUpdateRuleChainMetaDataWithCirclingRelation2() {
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation2());
+        });
     }
 
     @Test

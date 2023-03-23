@@ -16,9 +16,10 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -42,7 +43,7 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
     private final String absolutePathToFileImportTxt = getClass().getClassLoader().getResource(IMPORT_TXT_FILE_NAME).getPath();
     private String ruleChainName;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
@@ -100,8 +101,9 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
         ruleChainsPage.importBrowseFileBtn().click();
-        openRuleChainPage.doneBtn().click();
-        openRuleChainPage.waitUntilDoneBtnDisable();
+        WebElement doneBtn = openRuleChainPage.doneBtn();
+        doneBtn.click();
+        //openRuleChainPage.waitUntilBtnDisable(doneBtn);
         ruleChainName = IMPORT_RULE_CHAIN_NAME;
         sideBarMenuView.ruleChainsBtn().click();
 
@@ -120,8 +122,9 @@ public class CreateRuleChainImportTest extends AbstractDriverBaseTest {
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
         ruleChainsPage.importBrowseFileBtn().click();
-        openRuleChainPage.doneBtn().click();
-        openRuleChainPage.waitUntilDoneBtnDisable();
+        WebElement doneBtn = openRuleChainPage.doneBtn();
+        doneBtn.click();
+        //openRuleChainPage.waitUntilBtnDisable(doneBtn);
         sideBarMenuView.ruleChainsBtn().click();
 
         boolean entityNotNull = ruleChainsPage.entity(ruleChainName) != null;

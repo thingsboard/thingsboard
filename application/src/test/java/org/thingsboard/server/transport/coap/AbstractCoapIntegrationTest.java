@@ -45,6 +45,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @TestPropertySource(properties = {
+        "coap.enabled=true",
+        "service.integrations.supported=ALL",
         "transport.coap.enabled=true",
 })
 @Slf4j

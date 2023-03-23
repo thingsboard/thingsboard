@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -34,7 +34,7 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
     private RuleChainsPageHelper ruleChainsPage;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
@@ -76,7 +76,7 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ENTITY_NAME).click();
         String deletedRuleChain = ruleChainsPage.deleteRuleChainFromView(ruleChainName);
-        ruleChainsPage.refreshBtn().click();
+        jsClick(ruleChainsPage.refreshBtn());
 
         Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
     }
@@ -145,7 +145,7 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(deletedRuleChain).click();
-        ruleChainsPage.deleteBtnFromView().click();
+        jsClick(ruleChainsPage.deleteBtnFromView());
         ruleChainsPage.warningPopUpYesBtn().click();
 
         Assert.assertNotNull(ruleChainsPage.entity(deletedRuleChain));

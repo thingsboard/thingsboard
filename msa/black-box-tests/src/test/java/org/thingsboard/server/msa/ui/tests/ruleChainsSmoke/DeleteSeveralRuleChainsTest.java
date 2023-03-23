@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -34,7 +34,7 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
     private SideBarMenuViewElements sideBarMenuView;
     private RuleChainsPageHelper ruleChainsPage;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
@@ -49,9 +49,7 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.clickOnCheckBoxes(2);
-        ruleChainsPage.deleteSelectedBtn().click();
-        ruleChainsPage.warningPopUpYesBtn().click();
+        ruleChainsPage.deleteSelected(2);
         ruleChainsPage.refreshBtn().click();
 
         Assert.assertTrue(ruleChainsPage.ruleChainsIsNotPresent(ruleChainName));
@@ -66,7 +64,7 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.selectAllCheckBox().click();
-        ruleChainsPage.deleteSelectedBtn().click();
+        jsClick(ruleChainsPage.deleteSelectedBtn());
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.refreshBtn().click();
 
@@ -99,9 +97,7 @@ public class DeleteSeveralRuleChainsTest extends AbstractDriverBaseTest {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.clickOnCheckBoxes(2);
-        ruleChainsPage.deleteSelectedBtn().click();
-        ruleChainsPage.warningPopUpYesBtn().click();
+        ruleChainsPage.deleteSelected(2);
 
         Assert.assertTrue(ruleChainsPage.ruleChainsIsNotPresent(ruleChainName));
     }
