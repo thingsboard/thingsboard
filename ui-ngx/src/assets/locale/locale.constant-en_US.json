@@ -2801,6 +2801,8 @@
         "filter": "Filter",
         "first-recipient": "First recipient",
         "inbox": "Inbox",
+        "input-field-support-templatization": "Input field support templatization.",
+        "input-fields-support-templatization": "Input fields support templatization.",
         "link": "Link",
         "link-required": "Link is required",
         "link-type": {
@@ -2869,6 +2871,7 @@
         "search-rules": "Search rules",
         "search-targets": "Search recipients",
         "search-templates": "Search templates",
+        "see-documentation": "See documentation",
         "selected-notifications": "{ count, plural, =1 {1 notification} other {# notifications} } selected",
         "selected-requests": "{ count, plural, =1 {1 request} other {# requests} } selected",
         "send-notification": "Send notification",
@@ -2902,16 +2905,6 @@
         "targets": "Recipients",
         "targets-required": "Recipients is required",
         "template": "Template",
-        "template-hint": {
-            "alarm": "Available params: ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
-            "alarm-assignment": "Available params: ${assigneeFirstName}, ${assigneeLastName}, ${assigneeEmail}, ${assigneeFirstName}, ${userName}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
-            "alarm-comment": "Available params: ${comment}, ${alarmType}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}",
-            "device-inactivity": "Available params: ${deviceName}, ${deviceLabel}, ${deviceType}, ${deviceId}",
-            "entities-limit": "Available params: ${entityType}, ${currentCount}, ${limit}",
-            "entity-action": "Available params: ${actionType}, ${entityType}, ${entityName}, ${entityId}, ${originatorUserName}, ${originatorUserId}",
-            "general": "Available params: ${recipientEmail}, ${recipientFirstName}, ${recipientLastName}",
-            "rule-engine-lifecycle-event": "Available params: ${ruleChainName}, ${componentName}, ${eventType}, ${error}, ${ruleChainId}, ${componentId}"
-        },
         "template-name": "Template name",
         "template-required": "Template is required",
         "template-type": {

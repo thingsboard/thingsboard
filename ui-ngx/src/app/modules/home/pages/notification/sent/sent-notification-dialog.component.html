@@ -114,8 +114,13 @@
                       notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.WEB.enabled').value"
               [stepControl]="webTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.web' | translate }}</ng-template>
-      <div class="tb-hint tb-hint-available-params">
-        {{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).hint | translate }}
+      <div class="tb-hint-available-params mat-body-2">
+        {{ 'notification.input-fields-support-templatization' | translate}}
+        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+             tb-help-popup-placement="bottom"
+             trigger-style="letter-spacing:0.25px"
+             [tb-help-popup-style]="{maxWidth: '820px'}"
+             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
       </div>
       <form [formGroup]="webTemplateForm">
         <mat-form-field class="mat-block">
@@ -207,8 +212,13 @@
               [stepControl]="emailTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
       <ng-template matStepContent>
-        <div class="tb-hint tb-hint-available-params">
-          {{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).hint | translate }}
+        <div class="tb-hint-available-params mat-body-2">
+          {{ 'notification.input-fields-support-templatization' | translate}}
+          <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+               tb-help-popup-placement="bottom"
+               trigger-style="letter-spacing:0.25px"
+               [tb-help-popup-style]="{maxWidth: '820px'}"
+               trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
         </div>
         <form [formGroup]="emailTemplateForm">
           <mat-form-field class="mat-block">
@@ -227,8 +237,13 @@
                       notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SMS.enabled').value"
               [stepControl]="smsTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.sms' | translate }}</ng-template>
-      <div class="tb-hint tb-hint-available-params">
-        {{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).hint | translate }}
+      <div class="tb-hint-available-params mat-body-2">
+        {{ 'notification.input-field-support-templatization' | translate}}
+        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+             tb-help-popup-placement="bottom"
+             trigger-style="letter-spacing:0.25px"
+             [tb-help-popup-style]="{maxWidth: '820px'}"
+             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
       </div>
       <form [formGroup]="smsTemplateForm">
         <mat-form-field class="mat-block">
@@ -249,8 +264,13 @@
                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SLACK.enabled').value"
               [stepControl]="slackTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.slack' | translate }}</ng-template>
-      <div class="tb-hint tb-hint-available-params">
-        {{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).hint | translate }}
+      <div class="tb-hint-available-params mat-body-2">
+        {{ 'notification.input-field-support-templatization' | translate}}
+        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+             tb-help-popup-placement="bottom"
+             trigger-style="letter-spacing:0.25px"
+             [tb-help-popup-style]="{maxWidth: '820px'}"
+             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
       </div>
       <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
         <mat-form-field class="mat-block">

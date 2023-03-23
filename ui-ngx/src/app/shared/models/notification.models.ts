@@ -441,56 +441,56 @@ export const ActionButtonLinkTypeTranslateMap = new Map<ActionButtonLinkType, st
 
 interface NotificationTemplateTypeTranslate {
   name: string;
-  hint?: string;
+  helpId?: string;
 }
 
 export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, NotificationTemplateTypeTranslate>([
   [NotificationType.GENERAL,
     {
       name: 'notification.template-type.general',
-      hint: 'notification.template-hint.general'
+      helpId: 'notification/general'
     }
   ],
   [NotificationType.ALARM,
     {
       name: 'notification.template-type.alarm',
-      hint: 'notification.template-hint.alarm'
+      helpId: 'notification/alarm'
     }
   ],
   [NotificationType.DEVICE_INACTIVITY,
     {
       name: 'notification.template-type.device-inactivity',
-      hint: 'notification.template-hint.device-inactivity'
+      helpId: 'notification/device_inactivity'
     }
   ],
   [NotificationType.ENTITY_ACTION,
     {
       name: 'notification.template-type.entity-action',
-      hint: 'notification.template-hint.entity-action'
+      helpId: 'notification/entity_action'
     }
   ],
   [NotificationType.ALARM_COMMENT,
     {
       name: 'notification.template-type.alarm-comment',
-      hint: 'notification.template-hint.alarm-comment'
+      helpId: 'notification/alarm_comment'
     }
   ],
   [NotificationType.ALARM_ASSIGNMENT,
     {
       name: 'notification.template-type.alarm-assignment',
-      hint: 'notification.template-hint.alarm-assignment'
+      helpId: 'notification/alarm_assignment'
     }
   ],
   [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
     {
       name: 'notification.template-type.rule-engine-lifecycle-event',
-      hint: 'notification.template-hint.rule-engine-lifecycle-event'
+      helpId: 'notification/rule_engine_lifecycle_event'
     }
   ],
   [NotificationType.ENTITIES_LIMIT,
     {
       name: 'notification.template-type.entities-limit',
-      hint: 'notification.template-hint.entities-limit'
+      helpId: 'notification/entities_limit'
     }]
 ]);
 

@@ -1,0 +1,1 @@
+Available params: ${assigneeFirstName}, ${assigneeLastName}, ${assigneeEmail}, ${assigneeFirstName}, ${userName}, ${alarmId}, ${alarmType}, ${alarmSeverity}, ${alarmStatus}, ${alarmOriginatorEntityType}, ${alarmOriginatorId}, ${alarmId}, ${alarmAction}
