@@ -94,7 +94,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
         }
     }
 
-    private static boolean doValidateEmail(String email) {
+    public static boolean doValidateEmail(String email) {
         if (email == null) {
             return false;
         }

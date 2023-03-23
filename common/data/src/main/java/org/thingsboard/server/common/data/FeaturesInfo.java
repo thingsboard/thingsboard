@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.system;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.FeaturesInfo;
-import org.thingsboard.server.common.data.SystemInfo;
+import lombok.Data;
 
-public interface SystemInfoService {
-    SystemInfo getSystemInfo();
-
-    FeaturesInfo getFeaturesInfo();
+@Data
+public class FeaturesInfo {
+    boolean isEmailEnabled;
+    boolean isSmsEnabled;
+    boolean isNotificationEnabled;
+    boolean isOauthEnabled;
+    boolean isTwoFaEnabled;
 }
