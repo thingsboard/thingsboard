@@ -72,8 +72,6 @@ WHERE cleared = FALSE
              ORDER BY l.created_time DESC, l.id
              LIMIT 1);
 
-VACUUM FULL ANALYZE alarm;
-
 -- ALARM STATUS REFACTORING END
 
 -- ALARM COMMENTS START
