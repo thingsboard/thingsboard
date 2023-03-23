@@ -42,8 +42,10 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -58,9 +60,9 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
-import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -70,12 +72,12 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
+import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
@@ -435,6 +437,45 @@ public class UserController extends BaseController {
             if (!userCredentialsEnabled) {
                 eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
             }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Get usersForAssign (getUsersForAssign)",
+            notes = "Returns page of user data objects that can be assigned to provided alarmId. " +
+                    "Search is been executed by email, firstName and lastName fields. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/users/assign", params = {"alarmId", "pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<UserEmailInfo> getAssignees(
+            @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+            @RequestParam String alarmId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = USER_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = USER_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            checkParameter("alarmId", alarmId);
+            AlarmId alarmEntityId = new AlarmId(toUUID(alarmId));
+            Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
+            SecurityUser currentUser = getCurrentUser();
+            TenantId tenantId = currentUser.getTenantId();
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            PageData<User> pageData;
+            if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
+                pageData = userService.findUsersForAssignForTenant(tenantId, alarm.getCustomerId(), pageLink);
+            } else {
+                pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
+            }
+            return pageData.mapData(user -> new UserEmailInfo(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName()));
         } catch (Exception e) {
             throw handleException(e);
         }

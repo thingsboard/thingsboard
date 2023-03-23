@@ -44,6 +44,8 @@ import { AlarmService } from '@core/http/alarm.service';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
+import {Authority} from "@shared/models/authority.enum";
+import {NULL_UUID} from "@shared/models/id/has-uuid";
 
 export const ALARM_ASSIGNEE_PANEL_DATA = new InjectionToken<any>('AlarmAssigneePanelData');
 
@@ -144,7 +146,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
       property: 'email',
       direction: Direction.ASC
     });
-    return this.userService.findUsersByQuery(pageLink, {ignoreLoading: true})
+    return this.userService.getUsersForAssign(this.alarmId, pageLink, {ignoreLoading: true})
       .pipe(
       catchError(() => of(emptyPageData<UserEmailInfo>())),
       map(pageData => {

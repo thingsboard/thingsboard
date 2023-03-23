@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
@@ -42,6 +41,15 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
                                           @Param("customerId") UUID customerId,
                                           @Param("searchText") String searchText,
                                           @Param("authority") Authority authority,
+                                          Pageable pageable);
+
+    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
+            "AND u.customerId IN (:customerId, :nullCustomerId) " +
+            "AND LOWER(u.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    Page<UserEntity> findUsersByCustomerIdAndNullCustomerId(@Param("tenantId") UUID tenantId,
+                                          @Param("customerId") UUID customerId,
+                                          @Param("searchText") String searchText,
+                                          @Param("nullCustomerId") UUID nullCustomerId,
                                           Pageable pageable);
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
