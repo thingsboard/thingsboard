@@ -87,7 +87,7 @@ const commonMaterialIcons: Array<string> = ['more_horiz', 'more_vert', 'open_in_
   'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
   'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
   'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
-  'share', 'add', 'edit', 'done'];
+  'share', 'add', 'edit', 'done', 'delete'];
 
 // @dynamic
 @Injectable({
