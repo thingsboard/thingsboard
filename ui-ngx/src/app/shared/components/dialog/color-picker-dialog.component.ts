@@ -19,9 +19,19 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import {
+  FormGroupDirective,
+  NgForm,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
+import { ColorPickerControl } from '@iplab/ngx-color-picker';
+import { ColorType } from '@shared/components/color-picker/color-picker.component';
+import * as tinycolor_ from 'tinycolor2';
 
 export interface ColorPickerDialogData {
   color: string;
@@ -40,12 +50,16 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
 
   submitted = false;
 
+  colorType: ColorType = ColorType.rgba;
+
+  sketchControl = new ColorPickerControl().setValueFrom(this.data.color);
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ColorPickerDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<ColorPickerDialogComponent, string>,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,) {
     super(store, router, dialogRef);
   }
 

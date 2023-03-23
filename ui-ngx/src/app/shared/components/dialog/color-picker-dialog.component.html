@@ -17,12 +17,13 @@
 -->
 <form [formGroup]="colorPickerFormGroup" (ngSubmit)="select()">
   <div mat-dialog-content fxLayout="row" fxLayoutAlign="center">
-    <span [style.background]="colorPickerFormGroup.get('color').value"
-          [cpToggle]="true"
-          [cpDialogDisplay]="'inline'"
-          [colorPicker]="colorPickerFormGroup.get('color').value"
-          (colorPickerChange)="onColorChange($event)">
-    </span>
+<!--    <span [style.background]="colorPickerFormGroup.get('color').value"-->
+<!--          [cpToggle]="true"-->
+<!--          [cpDialogDisplay]="'inline'"-->
+<!--          [colorPicker]="colorPickerFormGroup.get('color').value"-->
+<!--          (colorPickerChange)="onColorChange($event)">-->
+<!--    </span>-->
+    <tb-color-picker [control]="sketchControl" (colorChange)="onColorChange($event)"></tb-color-picker>
   </div>
   <div mat-dialog-actions fxLayout="row">
     <span fxFlex></span>

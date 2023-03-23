@@ -1,0 +1,37 @@
+<saturation-component class="saturation-component" [hue]="control.hue" [(color)]="control.value"></saturation-component>
+
+<div class="controls">
+  <div class="controls-row hue-alpha">
+    <div class="column">
+      <indicator-component [colorType]="presentations[selectedPresentation]" [color]="control.value"></indicator-component>
+    </div>
+    <div class="column" class="hue-alpha-range">
+      <hue-component [(hue)]="control.hue" [(color)]="control.value"></hue-component>
+      <alpha-component *ngIf="control.alphaChannelVisibilityChanges | async" [(color)]="control.value"></alpha-component>
+    </div>
+  </div>
+
+  <mat-form-field class="mat-block">
+    <mat-select [(value)]="this.control.initType" (valueChange)="changeColorFormat($event)">
+      <mat-option *ngFor="let type of presentations" [value]="type">
+        {{type}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <tb-color-picker-input-component [alpha]="control.alphaChannelVisibilityChanges | async" [colorFormat]="this.control.initType" [(color)]="control.value" [(hue)]="control.hue">
+  </tb-color-picker-input-component>
+
+<!--  <div class="controls-row presentation">-->
+<!--    <div class="column" [ngSwitch]="presentations[selectedPresentation]">-->
+<!--      <rgba-input-component *ngSwitchCase="'rgba'" [alpha]="control.alphaChannelVisibilityChanges | async" label [(color)]="control.value" [(hue)]="control.hue"></rgba-input-component>-->
+<!--      <hsla-input-component *ngSwitchCase="'hsla'" [alpha]="control.alphaChannelVisibilityChanges | async" label [(color)]="control.value" [(hue)]="control.hue"></hsla-input-component>-->
+<!--      <hex-input-component *ngSwitchCase="'hex'" label prefix="#" [(color)]="control.value" [(hue)]="control.hue"></hex-input-component>-->
+<!--    </div>-->
+<!--    <div class="column type-column">-->
+<!--      <span class="type-btn" (click)="changePresentation()"></span>-->
+<!--    </div>-->
+<!--  </div>-->
+</div>
+
+<!--<color-presets-component *ngIf="control.presetsVisibilityChanges | async" [(color)]="control.value" [colorPresets]="control.presets" [(hue)]="control.hue"></color-presets-component>-->

@@ -1,0 +1,18 @@
+<div fxLayoutAlign="row">
+  <div fxLayoutAlign="row">
+    <mat-form-field class="mat-block">
+      <input matInput type="number" pattern="[0-9]*" min="0" max="255" [value]="value?.getRed().toString()" (input)="onInputChange($event, 'R')">
+    </mat-form-field>
+    <mat-form-field class="mat-block">
+      <input matInput type="number" pattern="[0-9]*" min="0" max="255" [value]="value?.getGreen().toString()" (input)="onInputChange($event, 'G')">
+    </mat-form-field>
+    <mat-form-field class="mat-block">
+      <input matInput type="number" pattern="[0-9]*" min="0" max="255" [value]="value?.getBlue().toString()" (input)="onInputChange($event, 'B')">
+    </mat-form-field>
+  </div>
+
+  <mat-form-field class="mat-block">
+    <input matInput type="number" min="0" max="1" [value]="value?.getAlpha().toString()" (input)="onInputChange($event, 'A')">
+  </mat-form-field>
+</div>
+

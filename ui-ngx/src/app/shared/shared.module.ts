@@ -62,7 +62,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
@@ -169,6 +169,8 @@ import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
+import { ColorPickerInputComponent } from '@shared/components/color-picker/color-picker-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -309,7 +311,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     BranchAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
-    DateAgoPipe
+    DateAgoPipe,
+    ColorPickerComponent,
+    ColorPickerInputComponent
   ],
   imports: [
     CommonModule,
@@ -514,7 +518,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     BranchAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
-    DateAgoPipe
+    DateAgoPipe,
+    ColorPickerComponent
   ]
 })
 export class SharedModule { }
