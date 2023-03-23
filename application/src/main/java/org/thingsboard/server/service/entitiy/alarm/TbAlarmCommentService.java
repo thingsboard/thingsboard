@@ -23,5 +23,5 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 public interface TbAlarmCommentService {
     AlarmComment saveAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException;
 
-    void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user);
+    void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException;
 }
