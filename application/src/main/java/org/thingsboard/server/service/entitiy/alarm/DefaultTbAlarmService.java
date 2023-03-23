@@ -70,7 +70,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             UserId newAssignee = alarm.getAssigneeId();
             UserId curAssignee = resultAlarm.getAssigneeId();
             if (newAssignee != null && !newAssignee.equals(curAssignee)) {
-                resultAlarm = assign(alarm, newAssignee, alarm.getAssignTs(), user);
+                resultAlarm = assign(resultAlarm, newAssignee, alarm.getAssignTs(), user);
             } else if (newAssignee == null && curAssignee != null) {
                 resultAlarm = unassign(alarm, alarm.getAssignTs(), user);
             }
