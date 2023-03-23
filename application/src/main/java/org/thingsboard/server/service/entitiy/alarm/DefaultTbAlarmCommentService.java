@@ -18,11 +18,14 @@ package org.thingsboard.server.service.entitiy.alarm;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
@@ -52,8 +55,17 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
     }
 
     @Override
-    public void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) {
-        alarmCommentService.deleteAlarmComment(alarm.getTenantId(), alarmComment.getId());
-        notificationEntityService.notifyAlarmComment(alarm, alarmComment, ActionType.DELETED_COMMENT, user);
+    public void deleteAlarmComment(Alarm alarm, AlarmComment alarmComment, User user) throws ThingsboardException {
+        if (alarmComment.getType() == AlarmCommentType.OTHER) {
+            alarmComment.setType(AlarmCommentType.SYSTEM);
+            alarmComment.setUserId(null);
+            alarmComment.setComment(JacksonUtil.newObjectNode().put("text",
+                    String.format("User %s deleted his comment",
+                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
+            AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment));
+            notificationEntityService.notifyAlarmComment(alarm, savedAlarmComment, ActionType.DELETED_COMMENT, user);
+        } else {
+            throw new ThingsboardException("System comment could not be deleted", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
     }
 }

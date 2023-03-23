@@ -64,6 +64,8 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -82,6 +84,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -488,6 +491,29 @@ public class RestClient implements Closeable {
     @Deprecated
     public Alarm createAlarm(Alarm alarm) {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
+    }
+
+    public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
+        return restTemplate.postForEntity(baseURL + "/api/alarm/{alarmId}/comment", alarmComment, AlarmComment.class, alarmId.getId()).getBody();
+    }
+
+    public void deleteAlarmComment(AlarmId alarmId, AlarmCommentId alarmCommentId) {
+        restTemplate.delete(baseURL + "/api/alarm/{alarmId}/comment/{alarmCommentId}",
+                alarmId.getId(), alarmCommentId.getId());
+    }
+
+    public PageData<AlarmCommentInfo> getAlarmComments(AlarmId alarmId, PageLink pageLink) {
+        String urlSecondPart = "/api/alarm/{alarmId}/comment";
+        Map<String, String> params = new HashMap<>();
+        params.put("alarmId", alarmId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + urlSecondPart + "&" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmCommentInfo>>() {
+                },
+                params).getBody();
     }
 
     public Optional<Asset> getAssetById(AssetId assetId) {

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -79,7 +80,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
 
 
     @Test
-    public void testSaveAndFetchAlarmComment() throws ExecutionException, InterruptedException {
+    public void testCreateAndFetchAlarmComment() throws ExecutionException, InterruptedException {
         AlarmComment alarmComment = AlarmComment.builder().alarmId(alarm.getId())
                 .userId(user.getId())
                 .type(OTHER)
@@ -142,7 +143,7 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testDeleteAlarmComment() throws ExecutionException, InterruptedException {
+    public void testSaveAlarmComment() throws ExecutionException, InterruptedException {
         UserId userId = new UserId(UUID.randomUUID());
         AlarmComment alarmComment = AlarmComment.builder().alarmId(alarm.getId())
                 .userId(userId)
@@ -152,13 +153,12 @@ public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
 
         AlarmComment createdComment = alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
 
-        Assert.assertNotNull(createdComment);
-        Assert.assertNotNull(createdComment.getId());
-
-        alarmCommentService.deleteAlarmComment(tenantId, createdComment.getId());
+        createdComment.setType(AlarmCommentType.SYSTEM);
+        createdComment.setUserId(null);
+        alarmCommentService.saveAlarmComment(tenantId, createdComment);
 
         AlarmComment fetched = alarmCommentService.findAlarmCommentByIdAsync(tenantId, createdComment.getId()).get();
-
-        Assert.assertNull("Alarm comment was returned when it was expected to be null", fetched);
+        Assert.assertNull(fetched.getUserId());
+        Assert.assertEquals(AlarmCommentType.SYSTEM, fetched.getType());
     }
 }
