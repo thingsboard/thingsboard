@@ -350,31 +350,42 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.NOTIFICATION,
       {
-        type: 'entity.type-notification'
+        type: 'entity.type-notification',
+        noEntities: 'notification.no-inbox-notification',
+        search: 'notification.search-notification',
+        selectedEntities: 'notification.selected-notifications'
       }
     ],
     [
       EntityType.NOTIFICATION_REQUEST,
       {
-        type: 'entity.type-notification-request'
+        type: 'entity.type-notification-request',
+        noEntities: 'notification.no-notification-request',
+        selectedEntities: 'notification.selected-requests'
       }
     ],
     [
       EntityType.NOTIFICATION_RULE,
       {
-        type: 'entity.type-notification-rule'
+        type: 'entity.type-notification-rule',
+        noEntities: 'notification.no-rules-notification',
+        search: 'notification.search-rules'
       }
     ],
     [
       EntityType.NOTIFICATION_TARGET,
       {
-        type: 'entity.type-notification-target'
+        type: 'entity.type-notification-target',
+        noEntities: 'notification.no-targets-notification',
+        search: 'notification.search-targets'
       }
     ],
     [
       EntityType.NOTIFICATION_TEMPLATE,
       {
-        type: 'entity.type-notification-template'
+        type: 'entity.type-notification-template',
+        noEntities: 'notification.no-notification-templates',
+        search: 'notification.search-templates'
       }
     ]
   ]

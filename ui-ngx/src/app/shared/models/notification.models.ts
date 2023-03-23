@@ -253,7 +253,7 @@ export enum NotificationTargetType {
 
 export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetType, string>([
   [NotificationTargetType.PLATFORM_USERS, 'notification.platform-users'],
-  [NotificationTargetType.SLACK, 'notification.slack']
+  [NotificationTargetType.SLACK, 'notification.delivery-method.slack']
 ]);
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
@@ -263,8 +263,6 @@ export interface NotificationTemplate extends Omit<BaseData<NotificationTemplate
 }
 
 interface NotificationTemplateConfig {
-  defaultTextTemplate: string;
-  notificationSubject: string;
   deliveryMethodsTemplates: {
     [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate
   };
@@ -321,10 +319,10 @@ export enum NotificationDeliveryMethod {
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
-  [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web'],
-  [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms'],
-  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack']
+  [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web'],
+  [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
+  [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack']
 ]);
 
 export enum NotificationRequestStatus {
@@ -357,7 +355,7 @@ export enum NotificationTargetConfigType {
   CUSTOMER_USERS = 'CUSTOMER_USERS',
   USER_LIST = 'USER_LIST',
   ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS',
-  ACTION_TARGET_USER = 'ACTION_TARGET_USER'
+  AFFECTED_USER = 'AFFECTED_USER'
 }
 
 interface NotificationTargetConfigTypeInfo {
@@ -392,7 +390,7 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
       hint: 'notification.target-type.users-entity-owner-hint'
     }
   ],
-  [NotificationTargetConfigType.ACTION_TARGET_USER,
+  [NotificationTargetConfigType.AFFECTED_USER,
     {
       name: 'notification.target-type.affected-user',
       hint: 'notification.target-type.affected-user-hint'

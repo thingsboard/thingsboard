@@ -36,10 +36,10 @@ export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogCom
   errorStats: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
 
   notificationDeliveryMethodErrorTranslateMap = new Map<NotificationDeliveryMethod, string>([
-    [NotificationDeliveryMethod.WEB, 'notification.delivery-method-type.web-failed-sent'],
-    [NotificationDeliveryMethod.SMS, 'notification.delivery-method-type.sms-failed-sent'],
-    [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method-type.email-failed-sent'],
-    [NotificationDeliveryMethod.SLACK, 'notification.delivery-method-type.slack-failed-sent'],
+    [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web-failed-sent'],
+    [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms-failed-sent'],
+    [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email-failed-sent'],
+    [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack-failed-sent'],
   ]);
 
   constructor(protected store: Store<AppState>,

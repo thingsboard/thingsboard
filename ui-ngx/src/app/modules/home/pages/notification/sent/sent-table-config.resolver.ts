@@ -32,7 +32,7 @@ import {
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { DatePipe } from '@angular/common';
 import { EntityAction } from '@home/models/entity/entity-component.models';
@@ -60,21 +60,20 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
               private dialog: MatDialog,
               private datePipe: DatePipe) {
 
+    this.config.entityType = EntityType.NOTIFICATION_REQUEST;
     this.config.detailsPanelEnabled = false;
-    this.config.selectionEnabled = false;
     this.config.addEnabled = false;
     this.config.searchEnabled = false;
-    this.config.entityTranslations = {
-      noEntities: 'notification.no-notification-request',
-    };
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_REQUEST);
     this.config.entityResources = {} as EntityTypeResource<NotificationRequest>;
 
-    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRequests(pageLink);
-
-    this.config.deleteEnabled = (request) => request.status === NotificationRequestStatus.SCHEDULED;
     this.config.deleteEntityTitle = () => this.translate.instant('notification.delete-request-title');
     this.config.deleteEntityContent = () => this.translate.instant('notification.delete-request-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('notification.delete-requests-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-requests-text');
+
     this.config.deleteEntity = id => this.notificationService.deleteNotificationRequest(id.id);
+    this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRequests(pageLink);
 
     this.config.cellActionDescriptors = this.configureCellActions();
 
@@ -91,11 +90,11 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.columns.push(
-      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'notification.created-time', this.datePipe, '170px'),
+      new DateEntityTableColumn<NotificationRequestInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<NotificationRequestInfo>('status', 'notification.status', '15%',
         request => `<span style="display: flex;">${this.requestStatus(request.status)}${this.requestStats(request.stats)}</span>`,
           request => this.requestStatusStyle(request.status)),
-      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method', '15%',
+      new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method.delivery-method', '15%',
         (request) => request.deliveryMethods
           .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodTranslateMap.get(deliveryMethod))).join(', '),
         () => ({}), false),
@@ -173,7 +172,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     if (countError === 0) {
       return '';
     }
-    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content;
+    return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content; cursor: pointer;
                         background-color: #D12730; color: #fff; font-weight: 500; margin-left: 8px" class="stats">
                 ${countError} ${this.translate.instant('notification.fails')} >
             </div>`;
@@ -182,8 +181,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
   private requestStatusStyle(status: NotificationRequestStatus): object {
     const styleObj = {
       fontSize: '14px',
-      color: '#198038',
-      cursor: 'pointer'
+      color: '#198038'
     };
     switch (status) {
       case NotificationRequestStatus.SCHEDULED:

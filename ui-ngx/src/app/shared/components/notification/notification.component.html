@@ -38,7 +38,8 @@
   <div class="description" fxLayout="column" fxLayoutAlign="start end">
     <div fxLayout="row" fxLayoutAlign="end center" class="mark-read">
       <span class="time">{{ notification.createdTime ?? currentDate | dateAgo }}</span>
-      <button mat-icon-button class="tb-mat-28" (click)="markRead($event)" *ngIf="!hideMarkAsReadButton">
+      <button mat-icon-button class="tb-mat-28" (click)="markRead($event)" *ngIf="!hideMarkAsReadButton"
+        matTooltip="{{ 'notification.mark-as-read' | translate }}" matTooltipPosition="above">
         <mat-icon>check_circle_outline</mat-icon>
       </button>
     </div>

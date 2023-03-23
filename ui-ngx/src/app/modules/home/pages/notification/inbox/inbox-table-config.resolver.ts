@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
 import {
@@ -50,17 +50,19 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
               private dialog: MatDialog,
               private datePipe: DatePipe) {
 
+    this.config.entityType = EntityType.NOTIFICATION;
     this.config.detailsPanelEnabled = false;
-    this.config.selectionEnabled = false;
     this.config.addEnabled = false;
-    this.config.entitiesDeleteEnabled = false;
     this.config.rowPointer = true;
-    this.config.entityTranslations = {
-      noEntities: 'notification.no-inbox-notification',
-      search: 'notification.search-notification'
-    };
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION);
     this.config.entityResources = {} as EntityTypeResource<Notification>;
 
+    this.config.deleteEntityTitle = () => this.translate.instant('notification.delete-notification-title');
+    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-notification-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('notification.delete-notifications-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-notifications-text');
+
+    this.config.deleteEntity = id => this.notificationService.deleteNotification(id.id);
     this.config.entitiesFetchFunction = pageLink =>
       this.notificationService.getNotifications(pageLink, this.config.componentsData.unreadOnly);
 
@@ -87,7 +89,7 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
     }];
 
     this.config.columns.push(
-      new DateEntityTableColumn<Notification>('createdTime', 'notification.created-time', this.datePipe, '170px'),
+      new DateEntityTableColumn<Notification>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<Notification>('type', 'notification.type', '10%', (notification) =>
         this.translate.instant(NotificationTemplateTypeTranslateMap.get(notification.type).name)),
       new EntityTableColumn<Notification>('subject', 'notification.subject', '30%'),
