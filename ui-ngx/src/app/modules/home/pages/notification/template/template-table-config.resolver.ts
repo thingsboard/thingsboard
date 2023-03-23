@@ -48,7 +48,6 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
 
     this.config.entityType = EntityType.NOTIFICATION_TEMPLATE;
     this.config.detailsPanelEnabled = false;
-    this.config.selectionEnabled = false;
     this.config.addEnabled = false;
     this.config.rowPointer = true;
 
@@ -59,6 +58,8 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
 
     this.config.deleteEntityTitle = template => this.translate.instant('notification.delete-template-title', {templateName: template.name});
     this.config.deleteEntityContent = () => this.translate.instant('notification.delete-template-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('notification.delete-templates-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-templates-text');
     this.config.deleteEntity = id => this.notificationService.deleteNotificationTemplate(id.id);
 
     this.config.cellActionDescriptors = this.configureCellActions();

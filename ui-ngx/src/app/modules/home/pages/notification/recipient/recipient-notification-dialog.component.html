@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="targetNotificationForm" class="tb-dialog-container">
   <mat-toolbar color="primary">
-    <h2>{{ (isAdd ? 'notification.add-notification-target' : 'notification.edit-notification-target') | translate }}</h2>
+    <h2>{{ (isAdd ? 'notification.add-notification-recipients-group' : 'notification.edit-notification-recipients-group') | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -30,10 +30,10 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <mat-form-field class="mat-block">
-      <mat-label translate>notification.target-name</mat-label>
+      <mat-label translate>notification.name</mat-label>
       <input matInput formControlName="name" required>
       <mat-error *ngIf="targetNotificationForm.get('name').hasError('required')">
-        {{ 'notification.target-name-required' | translate }}
+        {{ 'notification.name-required' | translate }}
       </mat-error>
     </mat-form-field>
     <section formGroupName="configuration">
@@ -48,7 +48,7 @@
       <section formGroupName="usersFilter"
                *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.PLATFORM_USERS">
         <mat-form-field class="mat-block" subscriptSizing="dynamic">
-          <mat-label translate>notification.target-type.user-filters</mat-label>
+          <mat-label translate>notification.recipient-type.user-filters</mat-label>
           <mat-select formControlName="type">
             <mat-option *ngFor="let type of notificationTargetConfigTypes" [value]="type">
               {{ notificationTargetConfigTypeInfoMap.get(type).name | translate }}
@@ -109,7 +109,7 @@
         </ng-container>
       </section>
       <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.SLACK">
-        <label class="tb-title">{{ 'notification.recipient-type' | translate }}</label>
+        <label class="tb-title">{{ 'notification.slack-chanel-type' | translate }}</label>
         <mat-radio-group formControlName="conversationType">
           <mat-radio-button *ngFor="let slackChanelType of slackChanelTypes" [value]="slackChanelType">
              {{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}

@@ -67,7 +67,7 @@
             formControlName="targets"
             subType="{{ ruleNotificationForm.get('triggerType').value }}"
             entityType="{{ entityType.NOTIFICATION_TARGET }}"
-            placeholderText="{{ 'notification.target' | translate }}">
+            placeholderText="{{ 'notification.recipient' | translate }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix
                     (click)="createTarget($event, createTargetButton)">
@@ -78,7 +78,7 @@
         <ng-template #alarmTargesConfig>
           <fieldset class="fields-group tb-hierarchy" formGroupName="recipientsConfig">
             <legend translate>notification.escalation-chain</legend>
-            <div class="mat-body-2" translate>notification.targets</div>
+            <div class="mat-body-2" translate>notification.recipients</div>
             <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
             <ng-container *ngTemplateOutlet="clearRules"></ng-container>
           </fieldset>

@@ -79,9 +79,9 @@
           <tb-entity-list
             required
             formControlName="targets"
-            labelText="{{ 'notification.targets' | translate }}"
-            placeholderText="{{ 'notification.target' | translate }}"
-            requiredText="{{ 'notification.targets-required' | translate }}"
+            labelText="{{ 'notification.recipients' | translate }}"
+            placeholderText="{{ 'notification.recipient' | translate }}"
+            requiredText="{{ 'notification.recipients-required' | translate }}"
             entityType="{{ entityType.NOTIFICATION_TARGET }}"
             subType="{{ notificationType.GENERAL }}">
             <button #createTargetButton
@@ -336,9 +336,18 @@
             <mat-icon  class="tb-mat-18">supervisor_account</mat-icon>
             <div class="group-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
           </div>
-          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value.length > 1">
+          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value?.length > 1">
             <div *ngFor="let detail of preview.recipientsCountByTarget | keyvalue" class="details-recipient">
               <span class="number">{{ detail.value }}</span>{{ detail.key }}
+            </div>
+          </div>
+          <mat-divider class="divider"></mat-divider>
+          <div class="details-recipients">
+            <div *ngFor="let user of preview.recipientsPreview" class="details-recipient">
+              <span *ngIf="(user.firstName || user.lastName); else email">{{ user.firstName }}&nbsp;{{ user.lastName }} ({{ user.email }})</span>
+              <ng-template #email>
+                {{ user.email }}
+              </ng-template>
             </div>
           </div>
         </section>

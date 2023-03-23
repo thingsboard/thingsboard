@@ -48,7 +48,6 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
 
     this.config.entityType = EntityType.NOTIFICATION_TARGET;
     this.config.detailsPanelEnabled = false;
-    this.config.selectionEnabled = false;
     this.config.addEnabled = false;
     this.config.rowPointer = true;
 
@@ -57,8 +56,11 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTargets(pageLink);
 
-    this.config.deleteEntityTitle = target => this.translate.instant('notification.delete-target-title', {targetName: target.name});
-    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-target-text');
+    this.config.deleteEntityTitle = target => this.translate.instant('notification.delete-recipient-title', {recipientName: target.name});
+    this.config.deleteEntityContent = () => this.translate.instant('notification.delete-recipient-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('notification.delete-recipients-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-recipients-text');
+
     this.config.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
 
     this.config.cellActionDescriptors = this.configureCellActions();
@@ -75,7 +77,7 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
 
     this.config.columns.push(
       new DateEntityTableColumn<NotificationTarget>('createdTime', 'common.created-time', this.datePipe, '170px'),
-      new EntityTableColumn<NotificationTarget>('name', 'notification.notification-target', '20%'),
+      new EntityTableColumn<NotificationTarget>('name', 'notification.recipient-group', '20%'),
       new EntityTableColumn<NotificationTarget>('configuration.type', 'notification.type', '20%',
         (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.configuration.type)),
         () => ({}), false),

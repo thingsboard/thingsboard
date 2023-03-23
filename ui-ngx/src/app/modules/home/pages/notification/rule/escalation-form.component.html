@@ -37,7 +37,7 @@
       subscriptSizing="dynamic"
       entityType="{{ entityType.NOTIFICATION_TARGET }}"
       subType="{{ notificationType.ALARM }}"
-      [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-target' | translate)">
+      [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-recipient' | translate)">
       <button #createTargetButton
               mat-button [fxHide]="disabled" matSuffix
               (click)="createTarget($event, createTargetButton)">

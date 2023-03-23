@@ -25,6 +25,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
 import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { User } from '@shared/models/user.model';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -70,6 +71,7 @@ export interface NotificationRequestPreview {
   totalRecipientsCount: number;
   recipientsCountByTarget: { [key in string]: number };
   processedTemplates: { [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate };
+  recipientsPreview: Array<User>;
 }
 
 export interface NotificationRequestStats {
@@ -366,34 +368,34 @@ interface NotificationTargetConfigTypeInfo {
 export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetConfigType, NotificationTargetConfigTypeInfo>([
   [NotificationTargetConfigType.ALL_USERS,
     {
-      name: 'notification.target-type.all-users'
+      name: 'notification.recipient-type.all-users'
     }
   ],
   [NotificationTargetConfigType.TENANT_ADMINISTRATORS,
     {
-      name: 'notification.target-type.tenant-administrators'
+      name: 'notification.recipient-type.tenant-administrators'
     }
   ],
   [NotificationTargetConfigType.CUSTOMER_USERS,
     {
-      name: 'notification.target-type.customer-users'
+      name: 'notification.recipient-type.customer-users'
     }
   ],
   [NotificationTargetConfigType.USER_LIST,
     {
-      name: 'notification.target-type.user-list'
+      name: 'notification.recipient-type.user-list'
     }
   ],
   [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
     {
-      name: 'notification.target-type.users-entity-owner',
-      hint: 'notification.target-type.users-entity-owner-hint'
+      name: 'notification.recipient-type.users-entity-owner',
+      hint: 'notification.recipient-type.users-entity-owner-hint'
     }
   ],
   [NotificationTargetConfigType.AFFECTED_USER,
     {
-      name: 'notification.target-type.affected-user',
-      hint: 'notification.target-type.affected-user-hint'
+      name: 'notification.recipient-type.affected-user',
+      hint: 'notification.recipient-type.affected-user-hint'
     }
   ]
 ]);

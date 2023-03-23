@@ -39,10 +39,10 @@
       <ng-template matStepLabel>{{ 'notification.basic-settings' | translate }}</ng-template>
       <form [formGroup]="templateNotificationForm" style="padding-bottom: 16px;">
         <mat-form-field class="mat-block">
-          <mat-label translate>notification.target-name</mat-label>
+          <mat-label translate>notification.name</mat-label>
           <input matInput formControlName="name" required>
           <mat-error *ngIf="templateNotificationForm.get('name').hasError('required')">
-            {{ 'notification.target-name-required' | translate }}
+            {{ 'notification.name-required' | translate }}
           </mat-error>
         </mat-form-field>
         <mat-form-field fxFlex class="mat-block" *ngIf="!hideSelectType">
