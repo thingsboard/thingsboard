@@ -43,10 +43,10 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
-import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
@@ -227,13 +227,10 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         ApiUsageState apiUsageState = apiUsageStateClient.getApiUsageState(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(apiUsageState);
 
-        SingleEntityFilter entityFilter = new SingleEntityFilter();
-        entityFilter.setSingleEntity(apiUsageState.getId());
-
         loginSysAdmin();
         long now = System.currentTimeMillis();
 
-        EntityDataUpdate update = getWsClient().sendEntityDataQuery(entityFilter);
+        EntityDataUpdate update = getWsClient().sendEntityDataQuery(new ApiUsageStateFilter());
 
         Assert.assertEquals(1, update.getCmdId());
         PageData<EntityData> pageData = update.getData();

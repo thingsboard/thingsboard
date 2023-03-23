@@ -94,8 +94,9 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
+            boolean myPartition = partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition();
             synchronized (this) {
-                if (partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+                if (myPartition) {
                     if (scheduler == null) {
                         scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
                         scheduler.scheduleAtFixedRate(this::saveCurrentSystemInfo, 0, 1, TimeUnit.MINUTES);
