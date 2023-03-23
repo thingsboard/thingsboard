@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.common.data.id;
 
-public enum MailOauth2Provider {
-    GOOGLE, OFFICE_365, SENDGRID, CUSTOM
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.UUID;
+
+public class MailConfigTemplateId extends UUIDBased {
+
+    @JsonCreator
+    public MailConfigTemplateId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    public static MailConfigTemplateId fromString(String clientRegistrationTemplateId) {
+        return new MailConfigTemplateId(UUID.fromString(clientRegistrationTemplateId));
+    }
 }

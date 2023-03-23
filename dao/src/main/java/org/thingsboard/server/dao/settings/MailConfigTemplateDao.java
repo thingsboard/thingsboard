@@ -13,8 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.dao.settings;
 
-public enum MailOauth2Provider {
-    GOOGLE, OFFICE_365, SENDGRID, CUSTOM
+import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mail.MailConfigTemplate;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
+import org.thingsboard.server.dao.Dao;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface MailConfigTemplateDao extends Dao<MailConfigTemplate> {
+
+    Optional<MailConfigTemplate> findByProviderId(String providerId);
+
+    List<MailConfigTemplate> findAll();
+
 }

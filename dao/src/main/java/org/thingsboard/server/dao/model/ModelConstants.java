@@ -106,6 +106,24 @@ public class ModelConstants {
 
     public static final String ADMIN_SETTINGS_BY_KEY_COLUMN_FAMILY_NAME = "admin_settings_by_key";
 
+
+    /**
+     * Mail config constants.
+     */
+
+    public static final String MAIL_CONFIG_TEMPLATE_COLUMN_FAMILY_NAME = "mail_config_template";
+    public static final String MAIL_CONFIG_PROVIDER_ID_PROPERTY = "provider_id";
+    public static final String MAIL_CONFIG_SMTP_PROTOCOL_PROPERTY = "smtp_protocol";
+    public static final String MAIL_CONFIG_SMTP_HOST_PROPERTY = "smtp_host";
+    public static final String MAIL_CONFIG_SMTP_PORT_PROPERTY = "smtp_port";
+    public static final String MAIL_CONFIG_SMTP_TIMEOUT_PROPERTY = "timeout";
+    public static final String MAIL_CONFIG_TLS_ENABLED_PROPERTY = "tls_enabled";
+    public static final String MAIL_CONFIG_TLS_VERSION_PROPERTY = "tls_version";
+    public static final String MAIL_CONFIG_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
+    public static final String MAIL_CONFIG_TOKEN_URI_PROPERTY = "token_uri";
+    public static final String MAIL_CONFIG_SCOPE_PROPERTY = "scope";
+    public static final String MAIL_CONFIG_HELP_LINK_PROPERTY = "help_link";
+
     /**
      * Cassandra contact constants.
      */

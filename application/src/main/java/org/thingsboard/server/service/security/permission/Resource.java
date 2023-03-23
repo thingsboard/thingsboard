@@ -21,6 +21,7 @@ import java.util.Optional;
 
 public enum Resource {
     ADMIN_SETTINGS(),
+    MAIL_CONFIGURATION_TEMPLATE(),
     ALARM(EntityType.ALARM),
     DEVICE(EntityType.DEVICE),
     ASSET(EntityType.ASSET),

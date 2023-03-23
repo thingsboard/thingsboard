@@ -1,0 +1,13 @@
+{
+  "providerId": "Google",
+  "smtpProtocol": "SMTPS",
+  "smtpHost": "smtp.gmail.com",
+  "smtpPort": 465,
+  "timeout": 1000,
+  "tlsEnabled": true,
+  "tlsVersion":"TLSv1.2",
+  "accessTokenUri": "https://oauth2.googleapis.com/token",
+  "authorizationUri": "https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&access_type=offline",
+  "scope": ["https://mail.google.com/"],
+  "helpLink": "https://support.google.com/googleapi/answer/6158849"
+}

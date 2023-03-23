@@ -671,4 +671,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         }
     }
 
+    @Override
+    public void createMailConfigTemplates() throws Exception {
+        installScripts.createMailConfigTemplates();
+    }
+
 }

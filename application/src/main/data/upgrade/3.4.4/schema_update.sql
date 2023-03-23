@@ -347,3 +347,20 @@ END
 $$;
 
 -- ALARM FUNCTIONS END
+-- drop table if exists mail_config_template;
+CREATE TABLE IF NOT EXISTS mail_config_template (
+   id uuid NOT NULL CONSTRAINT mail_config_template_pkey PRIMARY KEY,
+   created_time bigint NOT NULL,
+   provider_id varchar(255),
+   smtp_protocol varchar(255),
+   smtp_host varchar(255),
+   smtp_port int,
+   timeout int,
+   tls_enabled boolean,
+   tls_version varchar(255),
+   authorization_uri varchar(255),
+   token_uri varchar(255),
+   scope varchar(255),
+   help_link varchar(255),
+   CONSTRAINT mail_config_template_provider_id_unq_key UNIQUE (provider_id)
+);

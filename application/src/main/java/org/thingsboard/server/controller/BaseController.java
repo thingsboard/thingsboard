@@ -88,6 +88,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.mail.MailConfigTemplate;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -126,6 +127,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.settings.MailConfigTemplateService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -232,6 +234,9 @@ public abstract class BaseController {
 
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
+
+    @Autowired
+    protected MailConfigTemplateService mailConfigTemplateService;
 
     @Autowired
     protected ComponentDiscoveryService componentDescriptorService;

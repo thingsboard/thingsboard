@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.dao.sql.settings;
 
-public enum MailOauth2Provider {
-    GOOGLE, OFFICE_365, SENDGRID, CUSTOM
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.dao.model.sql.MailConfigTemplateEntity;
+import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationTemplateEntity;
+
+import java.util.UUID;
+
+public interface MailConfigTemplateRepository extends JpaRepository<MailConfigTemplateEntity, UUID> {
+
+    MailConfigTemplateEntity findByProviderId(String providerId);
+
 }

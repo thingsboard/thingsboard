@@ -1,0 +1,13 @@
+{
+  "providerId": "Office 365",
+  "smtpProtocol": "SMTP",
+  "smtpHost": "smtp.office365.com",
+  "smtpPort":587,
+  "timeout": 1000,
+  "tlsEnabled": true,
+  "tlsVersion":"TLSv1.2",
+  "accessTokenUri": "https://login.microsoftonline.com/%s/oauth2/v2.0/token",
+  "authorizationUri": "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize",
+  "scope": ["https://outlook.office365.com/SMTP.Send","offline_access","openid"],
+  "helpLink": "https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth"
+}

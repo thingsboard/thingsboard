@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mail.MailConfigTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -33,6 +34,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.settings.MailConfigTemplateService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
@@ -64,6 +66,7 @@ public class InstallScripts {
     public static final String RULE_CHAINS_DIR = "rule_chains";
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
+    public static final String MAIL_CONFIG_TEMPLATES_DIR = "mail_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
     public static final String MODELS_DIR = "models";
     public static final String CREDENTIALS_DIR = "credentials";
@@ -90,6 +93,9 @@ public class InstallScripts {
 
     @Autowired
     private OAuth2ConfigTemplateService oAuth2TemplateService;
+
+    @Autowired
+    private MailConfigTemplateService mailConfigTemplateService;
 
     @Autowired
     private ResourceService resourceService;
@@ -255,6 +261,29 @@ public class InstallScripts {
                         } catch (Exception e) {
                             log.error("Unable to load oauth2 config templates from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load oauth2 config templates from json", e);
+                        }
+                    }
+            );
+        }
+    }
+
+    public void createMailConfigTemplates() throws IOException {
+        Path mailConfigTemplatesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, MAIL_CONFIG_TEMPLATES_DIR);
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(mailConfigTemplatesDir, path -> path.toString().endsWith(JSON_EXT))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode mailConfigTemplateJson = objectMapper.readTree(path.toFile());
+                            MailConfigTemplate mailConfigTemplate = objectMapper.treeToValue(mailConfigTemplateJson, MailConfigTemplate.class);
+                            Optional<MailConfigTemplate> existingTemplate =
+                                    mailConfigTemplateService.findMailConfigTemplateByProviderId(mailConfigTemplate.getProviderId());
+                            if (existingTemplate.isPresent()) {
+                                mailConfigTemplate.setId(existingTemplate.get().getId());
+                            }
+                            mailConfigTemplateService.saveMailConfigTemplate(mailConfigTemplate);
+                        } catch (Exception e) {
+                            log.error("Unable to load mail config templates from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load mail config templates from json", e);
                         }
                     }
             );

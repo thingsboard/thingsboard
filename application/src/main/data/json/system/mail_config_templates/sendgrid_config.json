@@ -1,0 +1,13 @@
+{
+  "providerId": "SendGrid",
+  "smtpProtocol": "SMTPS",
+  "smtpHost": "smtp.sendgrid.net",
+  "smtpPort": 465,
+  "timeout": 1000,
+  "tlsEnabled": true,
+  "tlsVersion":"TLSv1.2",
+  "accessTokenUri": null,
+  "authorizationUri": null,
+  "scope": [],
+  "helpLink": null
+}

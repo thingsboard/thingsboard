@@ -38,4 +38,6 @@ public interface SystemDataLoaderService {
     void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
 
     void createQueues();
+
+    void createMailConfigTemplates() throws Exception;
 }
