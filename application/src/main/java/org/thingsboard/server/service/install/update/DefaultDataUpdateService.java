@@ -28,6 +28,16 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
+import org.thingsboard.rule.engine.metadata.FetchTo;
+import org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
+import org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode;
+import org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode;
+import org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
@@ -46,6 +56,7 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -83,6 +94,7 @@ import org.thingsboard.server.service.install.TbRuleEngineQueueConfigService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -203,8 +215,94 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     log.info("Skipping edge events migration");
                 }
                 break;
+            case "3.4.4":
+                log.info("Updating data from version 3.4.4 to 3.5.0 ...");
+                log.info("Started enrichment rule nodes update ...");
+                updateEnrichmentRuleNodes();
+                log.info("Finished enrichment rule nodes update ...");
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
+        }
+    }
+
+    private void updateEnrichmentRuleNodes() {
+        try {
+            var ruleNodeTypesToUpdate = List.of(
+                    TbGetOriginatorFieldsNode.class.getName(),
+                    TbFetchDeviceCredentialsNode.class.getName(),
+                    TbGetAttributesNode.class.getName(),
+                    TbGetDeviceAttrNode.class.getName(),
+                    TbGetRelatedAttributeNode.class.getName(),
+                    TbGetTenantAttributeNode.class.getName(),
+                    TbGetCustomerAttributeNode.class.getName(),
+                    TbGetCustomerDetailsNode.class.getName(),
+                    TbGetTenantDetailsNode.class.getName()
+            );
+            var ruleChainIdToTenantId = new HashMap<RuleChainId, TenantId>();
+            ruleNodeTypesToUpdate.forEach(ruleNodeType -> {
+                var ruleNodes = new PageDataIterable<>(
+                        pageLink -> ruleChainService.findAllRuleNodesByType(ruleNodeType, pageLink), 1024
+                );
+                for (var ruleNode : ruleNodes) {
+                    var configuration = ruleNode.getConfiguration();
+                    if (configuration == null) {
+                        log.error("Unable to update [{}] rule node with ID [{}]! Node configuration is null! Skipping this node!",
+                                ruleNodeType, ruleNode.getId());
+                        continue;
+                    }
+                    if (!configuration.isObject()) {
+                        log.error("Unable to update [{}] rule node with ID [{}]! Node configuration is not an object! Skipping this node!",
+                                ruleNodeType, ruleNode.getId());
+                        continue;
+                    }
+                    var configObjectNode = (ObjectNode) configuration;
+                    var fetchTo = FetchTo.METADATA;
+                    if (configObjectNode.has("fetchToMetadata")) {
+                        var fetchToMetadata = configObjectNode.get("fetchToMetadata").asText();
+                        if ("true".equals(fetchToMetadata)) {
+                            fetchTo = FetchTo.METADATA;
+                        } else if ("false".equals(fetchToMetadata)) {
+                            fetchTo = FetchTo.DATA;
+                        } else {
+                            log.error("[fetchToMetadata] property has unexpected value: {}! Expected true or false! Skipping this node ID[{}]!",
+                                    fetchToMetadata, ruleNode.getId());
+                        }
+                        configObjectNode.remove("fetchToMetadata");
+                    }
+                    if (configObjectNode.has("fetchToData")) {
+                        var fetchToData = configObjectNode.get("fetchToData").asText();
+                        if ("true".equals(fetchToData)) {
+                            fetchTo = FetchTo.DATA;
+                        } else if ("false".equals(fetchToData)) {
+                            fetchTo = FetchTo.METADATA;
+                        } else {
+                            log.error("[fetchToData] property has unexpected value: {}! Expected true or false! Skipping this node ID[{}]!",
+                                    fetchToData, ruleNode.getId());
+                        }
+                        configObjectNode.remove("fetchToData");
+                    }
+                    if (configObjectNode.has("addToMetadata")) {
+                        var addToMetadata = configObjectNode.get("addToMetadata").asText();
+                        if ("true".equals(addToMetadata)) {
+                            fetchTo = FetchTo.METADATA;
+                        } else if ("false".equals(addToMetadata)) {
+                            fetchTo = FetchTo.DATA;
+                        } else {
+                            log.error("[addToMetadata] property has unexpected value: {}! Skipping  Expected true or false! Skipping this node ID[{}]!",
+                                    addToMetadata, ruleNode.getId());
+                        }
+                        configObjectNode.remove("addToMetadata");
+                    }
+                    configObjectNode.put("fetchTo", fetchTo.toString());
+                    ruleNode.setConfiguration(configObjectNode);
+                    ruleChainIdToTenantId.computeIfAbsent(ruleNode.getRuleChainId(),
+                            ruleChainId -> ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, ruleNode.getRuleChainId()).getTenantId());
+                    ruleChainService.saveRuleNode(ruleChainIdToTenantId.get(ruleNode.getRuleChainId()), ruleNode);
+                }
+            });
+        } catch (Exception e) {
+            log.error("Unexpected error during enrichment rule nodes updating!", e);
         }
     }
 
