@@ -17,14 +17,16 @@ package org.thingsboard.server.dao.notification;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -78,6 +80,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
     private static final String SETTINGS_KEY = "notifications";
 
+    @CacheEvict(cacheNames = CacheConstants.NOTIFICATION_SETTINGS_CACHE, key = "#tenantId")
     @Override
     public void saveNotificationSettings(TenantId tenantId, NotificationSettings settings) {
         AdminSettings adminSettings = Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY))
@@ -91,6 +94,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         adminSettingsService.saveAdminSettings(tenantId, adminSettings);
     }
 
+    @Cacheable(cacheNames = CacheConstants.NOTIFICATION_SETTINGS_CACHE, key = "#tenantId")
     @Override
     public NotificationSettings findNotificationSettings(TenantId tenantId) {
         return Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY))

@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType")
 @JsonSubTypes({
@@ -32,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = NewPlatformVersionNotificationRuleTriggerConfig.class, name = "NEW_PLATFORM_VERSION"),
         @Type(value = EntitiesLimitNotificationRuleTriggerConfig.class, name = "ENTITIES_LIMIT")
 })
-public interface NotificationRuleTriggerConfig {
+public interface NotificationRuleTriggerConfig extends Serializable {
 
     NotificationRuleTriggerType getTriggerType();
 

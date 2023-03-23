@@ -22,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationId;
@@ -101,6 +103,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
     private final RateLimitService rateLimitService;
+    private final MailService mailService;
+    private final SmsService smsService;
 
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
@@ -121,13 +125,12 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
         List<NotificationTarget> targets = notificationTargetService.findNotificationTargetsByTenantIdAndIds(tenantId,
                 notificationRequest.getTargets().stream().map(NotificationTargetId::new).collect(Collectors.toList()));
+        Set<NotificationDeliveryMethod> availableDeliveryMethods = getAvailableDeliveryMethods(tenantId);
 
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
-            if (deliveryMethod == NotificationDeliveryMethod.SLACK) {
-                if (!settings.getDeliveryMethodsConfigs().containsKey(deliveryMethod)) {
-                    throw new IllegalArgumentException("Slack must be configured in the settings");
-                }
+            if (!availableDeliveryMethods.contains(deliveryMethod)) {
+                throw new IllegalArgumentException("Settings for " + deliveryMethod.getName() + " are missing");
             }
             if (notificationRequest.getRuleId() == null) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
@@ -338,6 +341,24 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     .build();
             onNotificationUpdate(tenantId, recipientId, update);
         }
+    }
+
+    @Override
+    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
+        Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>();
+        deliveryMethods.add(NotificationDeliveryMethod.WEB);
+        NotificationSettings notificationSettings = notificationSettingsService.findNotificationSettings(tenantId);
+        if (notificationSettings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.SLACK)) {
+            deliveryMethods.add(NotificationDeliveryMethod.SLACK);
+        }
+        try {
+            mailService.testConnection(tenantId);
+            deliveryMethods.add(NotificationDeliveryMethod.EMAIL);
+        } catch (Exception e) {}
+        if (smsService.isConfigured(tenantId)) {
+            deliveryMethods.add(NotificationDeliveryMethod.SMS);
+        }
+        return deliveryMethods;
     }
 
     @Override
