@@ -30,10 +30,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @Slf4j
@@ -56,7 +56,7 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
 
     private void safeGetAttributes(TbContext ctx, TbMsg msg, T entityId, ObjectNode msgDataAsJsonNode) {
         if (entityId == null || entityId.isNullUid()) {
-            ctx.tellNext(msg, FAILURE);
+            ctx.tellFailure(msg, new NoSuchElementException("Did not find entity! Msg ID: " + msg.getId()));
             return;
         }
 

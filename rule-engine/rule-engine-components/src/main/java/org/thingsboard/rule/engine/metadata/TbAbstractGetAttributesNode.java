@@ -40,12 +40,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
@@ -80,7 +80,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     private void safePutAttributes(TbContext ctx, TbMsg msg, T entityId) {
         if (entityId == null || entityId.isNullUid()) {
-            ctx.tellNext(msg, FAILURE);
+            ctx.tellFailure(msg, new NoSuchElementException("Did not find entity! Msg ID: " + msg.getId()));
             return;
         }
         ObjectNode msgDataNode;
