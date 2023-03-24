@@ -1501,7 +1501,7 @@
             "certificate-chain": "X509 Certificates Chain",
             "hint-certificate-chain": "X.509 certificates strategy is used to provision devices by client certificates in two-way TLS communication. This strategy can check for pre-provisioned devices, update X.509 device credentials, or create new devices. The user uploads X.509 certificate to the device profile and sets a regular expression to fetch the device name from Common Name (CN).<br><br>Client certificates must be signed by X.509 certificate, pre-uploaded for this device profile to provision devices by the strategy. The client must establish a TLS connection using the entire chain of certificates (this chain must include device profile X.509 certificate on the last level). If a device already exists with outdated X.509 credentials, this strategy automatically updates it with the device certificate's credentials from the chain. <br><br><b>Important:</b> Uploaded certificates should be neither root nor intermediate certificates that are provided by a well-known Certificate Authority (CA).",
             "allow-create-new-devices": "Create new devices",
-            "hint-allow-create-new-devices": "Hint: if selected new devices will be created with correct device credentials from client certificate.",
+            "hint-allow-create-new-devices": "Hint: if selected new devices will be created and client certificate will be used as device credentials.",
             "certificate-value": "Certificate in PEM format",
             "certificate-value-required": "Certificate in PEM format is required",
             "cn-regex-variable": "CN Regular Expression variable",
