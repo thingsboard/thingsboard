@@ -123,8 +123,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
         if (notificationTemplate == null) throw new IllegalArgumentException("Template is missing");
 
-        List<NotificationTarget> targets = notificationTargetService.findNotificationTargetsByTenantIdAndIds(tenantId,
-                notificationRequest.getTargets().stream().map(NotificationTargetId::new).collect(Collectors.toList()));
+        List<NotificationTarget> targets = notificationRequest.getTargets().stream().map(NotificationTargetId::new)
+                .map(id -> notificationTargetService.findNotificationTargetById(tenantId, id)).collect(Collectors.toList());
         Set<NotificationDeliveryMethod> availableDeliveryMethods = getAvailableDeliveryMethods(tenantId);
 
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {

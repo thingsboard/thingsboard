@@ -15,17 +15,22 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.notification.info.EntitiesLimitNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.notification.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 @Service
+@RequiredArgsConstructor
 public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerProcessor<EntitiesLimitTrigger, EntitiesLimitNotificationRuleTriggerConfig> {
+
+    private final TenantService tenantService;
 
     @Override
     public boolean matchesFilter(EntitiesLimitTrigger trigger, EntitiesLimitNotificationRuleTriggerConfig triggerConfig) {
@@ -42,6 +47,8 @@ public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerPro
                 .currentCount(trigger.getCurrentCount())
                 .limit(trigger.getLimit())
                 .percents((int) (((float)trigger.getCurrentCount() / trigger.getLimit()) * 100))
+                .tenantId(trigger.getTenantId())
+                .tenantName(tenantService.findTenantById(trigger.getTenantId()).getName())
                 .build();
     }
 

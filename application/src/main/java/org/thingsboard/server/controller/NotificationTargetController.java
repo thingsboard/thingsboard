@@ -191,6 +191,8 @@ public class NotificationTargetController extends BaseController {
                     throw new AccessDeniedException("");
                 }
                 break;
+            case SYSTEM_ADMINISTRATORS:
+                throw new AccessDeniedException("");
         }
     }
 

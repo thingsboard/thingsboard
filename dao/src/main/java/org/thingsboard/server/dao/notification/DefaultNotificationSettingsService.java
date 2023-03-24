@@ -48,10 +48,12 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedUserFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.OriginatorEntityOwnerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -119,14 +121,17 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 "Maintenance work is scheduled for tomorrow (7:00 a.m. - 9:00 a.m. UTC)");
 
         if (tenantId.isSysTenantId()) {
+            NotificationTarget sysAdmins = createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators");
+            NotificationTarget affectedTenantAdmins = createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), "");
+
             NotificationTemplate entitiesLimitNotificationTemplate = createTemplate(tenantId, "Entities limit notification", NotificationType.ENTITIES_LIMIT,
-                    "${entityType}s limit will be reached soon",
+                    "${entityType}s limit will be reached soon for tenant ${tenantName}",
                     "${entityType}s usage: ${currentCount}/${limit} (${percents}%)");
             EntitiesLimitNotificationRuleTriggerConfig entitiesLimitRuleTriggerConfig = new EntitiesLimitNotificationRuleTriggerConfig();
             entitiesLimitRuleTriggerConfig.setEntityTypes(null);
             entitiesLimitRuleTriggerConfig.setThreshold(0.8f);
             createRule(tenantId, "Entities limit", entitiesLimitNotificationTemplate.getId(), entitiesLimitRuleTriggerConfig,
-                    List.of(tenantAdmins.getId()), "Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit");
+                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit");
             return;
         }
 

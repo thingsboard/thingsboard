@@ -63,6 +63,8 @@ public interface UserService extends EntityDaoService {
 
     PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink);
 
+    PageData<User> findSysAdmins(PageLink pageLink);
+
     PageData<User> findAllTenantAdmins(PageLink pageLink);
 
     PageData<User> findTenantAdminsByTenantsIds(List<TenantId> tenantsIds, PageLink pageLink);
