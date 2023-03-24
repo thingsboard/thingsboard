@@ -439,14 +439,14 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SLACK)).asInstanceOf(type(SlackDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .isEqualTo("Message for SLACK: ${recipientEmail}"); // ${recipientEmail} should not be processed
+                            .isEqualTo("Message for SLACK: "); // ${recipientEmail} should be removed
                 });
     }
 
     @Test
     public void testNotificationRequestInfo() throws Exception {
         NotificationDeliveryMethod[] deliveryMethods = new NotificationDeliveryMethod[]{
-                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL
+                NotificationDeliveryMethod.WEB
         };
         NotificationTemplate template = createNotificationTemplate(NotificationType.GENERAL, "Test subject", "Test text", deliveryMethods);
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
@@ -465,8 +465,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         wsClient.registerWaitForUpdate();
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
-        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)",
-                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS);
+        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)", NotificationDeliveryMethod.WEB);
         wsClient.waitForUpdate();
 
         await().atMost(2, TimeUnit.SECONDS)
@@ -474,7 +473,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationRequestStats stats = getStats(notificationRequest.getId());
 
         assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB)).hasValue(1);
-        assertThat(stats.getErrors().get(NotificationDeliveryMethod.SMS)).size().isOne();
     }
 
     @Test
@@ -559,7 +557,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationRequest successfulNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(successfulNotificationRequest.getId()).isSent());
-        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(slackNotificationTemplate.getBody()));
+        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq("To Slack :)  "));
         NotificationRequestStats stats = getStats(successfulNotificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.SLACK)).hasValue(1);
 

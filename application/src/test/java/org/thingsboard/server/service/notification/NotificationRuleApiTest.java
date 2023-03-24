@@ -232,20 +232,17 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             double actualDelay = (double) (notification.getCreatedTime() - ts) / 1000;
             assertThat(actualDelay).isCloseTo(expectedDelay, offset(0.5));
 
-            AlarmStatus expectedStatus = AlarmStatus.ACTIVE_UNACK;
-            String expectedSeverity = AlarmSeverity.CRITICAL.toString().toLowerCase();
-
-            assertThat(notification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + expectedStatus + ", " +
-                    "severity: " + expectedSeverity + ", deviceId: " + device.getId());
-            assertThat(notification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity);
+            assertThat(notification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + AlarmStatus.ACTIVE_UNACK + ", " +
+                    "severity: " + AlarmSeverity.CRITICAL.toString().toLowerCase() + ", deviceId: " + device.getId());
+            assertThat(notification.getText()).isEqualTo("Status: " + AlarmStatus.ACTIVE_UNACK + ", severity: " + AlarmSeverity.CRITICAL.toString().toLowerCase());
 
             assertThat(notification.getType()).isEqualTo(NotificationType.ALARM);
             assertThat(notification.getInfo()).isInstanceOf(AlarmNotificationInfo.class);
             AlarmNotificationInfo info = (AlarmNotificationInfo) notification.getInfo();
             assertThat(info.getAlarmId()).isEqualTo(alarm.getUuidId());
             assertThat(info.getAlarmType()).isEqualTo(alarmType);
-            assertThat(info.getAlarmSeverity()).isEqualTo(expectedSeverity);
-            assertThat(info.getAlarmStatus()).isEqualTo(expectedStatus);
+            assertThat(info.getAlarmSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(info.getAlarmStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
 
         clients.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
@@ -256,8 +253,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             wsClient.waitForUpdate(true);
             Notification updatedNotification = wsClient.getLastDataUpdate().getUpdate();
             assertThat(updatedNotification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + expectedStatus + ", " +
-                    "severity: " + expectedSeverity + ", deviceId: " + device.getId());
-            assertThat(updatedNotification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity);
+                    "severity: " + expectedSeverity.toString().toLowerCase() + ", deviceId: " + device.getId());
+            assertThat(updatedNotification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity.toString().toLowerCase());
 
             wsClient.close();
         });
@@ -325,7 +322,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
         getWsClient().waitForUpdate(true);
         notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("CRITICAL alarm '" + alarmType + "' is CLEARED_UNACK");
+        assertThat(notification.getSubject()).isEqualTo("critical alarm '" + alarmType + "' is CLEARED_UNACK");
 
         assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
     }
