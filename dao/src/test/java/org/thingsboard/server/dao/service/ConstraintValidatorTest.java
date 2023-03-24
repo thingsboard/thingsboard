@@ -6,8 +6,6 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class ConstraintValidatorTest {
 
     @Test
