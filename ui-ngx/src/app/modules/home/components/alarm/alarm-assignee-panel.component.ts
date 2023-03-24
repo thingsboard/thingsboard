@@ -44,8 +44,6 @@ import { AlarmService } from '@core/http/alarm.service';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
-import {Authority} from "@shared/models/authority.enum";
-import {NULL_UUID} from "@shared/models/id/has-uuid";
 
 export const ALARM_ASSIGNEE_PANEL_DATA = new InjectionToken<any>('AlarmAssigneePanelData');
 

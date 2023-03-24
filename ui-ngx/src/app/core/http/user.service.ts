@@ -53,9 +53,8 @@ export class UserService {
 
   public getUsersForAssign(alarmId: string, pageLink: PageLink,
                           config?: RequestConfig): Observable<PageData<UserEmailInfo>> {
-    let url = `/api/users/assign${pageLink.toQuery()}`;
-    url += `&alarmId=` + alarmId;
-    return this.http.get<PageData<UserEmailInfo>>(url, defaultHttpOptionsFromConfig(config));
+    return this.http.get<PageData<UserEmailInfo>>(`/api/users/assign/${alarmId}${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getUser(userId: string, config?: RequestConfig): Observable<User> {

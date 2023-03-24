@@ -447,11 +447,11 @@ public class UserController extends BaseController {
                     "Search is been executed by email, firstName and lastName fields. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/users/assign", params = {"alarmId", "pageSize", "page"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/users/assign/{alarmId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<UserEmailInfo> getAssignees(
+    public PageData<UserEmailInfo> getUsersForAssign(
             @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
-            @RequestParam String alarmId,
+            @PathVariable("alarmId") String strAlarmId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -463,8 +463,8 @@ public class UserController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            checkParameter("alarmId", alarmId);
-            AlarmId alarmEntityId = new AlarmId(toUUID(alarmId));
+            checkParameter("alarmId", strAlarmId);
+            AlarmId alarmEntityId = new AlarmId(toUUID(strAlarmId));
             Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
             SecurityUser currentUser = getCurrentUser();
             TenantId tenantId = currentUser.getTenantId();
