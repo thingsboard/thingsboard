@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2023 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.util.EntityDetails;
 import org.thingsboard.server.common.data.ContactBased;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -56,10 +55,16 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     protected abstract ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg);
 
     protected MessageData getDataAsJson(TbMsg msg) {
-        if (config.getFetchTo() == FetchTo.METADATA) {
+        if (fetchTo == FetchTo.METADATA) {
             return new MessageData(gson.toJsonTree(msg.getMetaData().getData(), TYPE), DataSource.METADATA);
+        } else if (fetchTo == FetchTo.DATA) {
+            var msgDataJsonElement = JsonParser.parseString(msg.getData());
+            if (!msgDataJsonElement.isJsonObject()) {
+                throw new IllegalArgumentException("Message body is not an object!");
+            }
+            return new MessageData(msgDataJsonElement, DataSource.DATA);
         } else {
-            return new MessageData(JsonParser.parseString(msg.getData()), DataSource.DATA);
+            throw new IllegalArgumentException("Unsupported fetchTo value!");
         }
     }
 

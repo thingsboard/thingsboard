@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2023 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,12 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import java.util.List;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 
 /**
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
 public abstract class TbAbstractTransformNode implements TbNode {
-
     private TbTransformNodeConfiguration config;
 
     @Override
@@ -62,7 +60,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
         if (m != null) {
             ctx.tellSuccess(m);
         } else {
-            ctx.tellNext(msg, FAILURE);
+            ctx.tellFailure(msg, new RuntimeException("Message is null!"));
         }
     }
 
@@ -85,7 +83,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
                 msgs.forEach(newMsg -> ctx.enqueueForTellNext(newMsg, TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
             }
         } else {
-            ctx.tellNext(msg, FAILURE);
+            ctx.tellFailure(msg, new RuntimeException("Message or messages list are empty!"));
         }
     }
 
