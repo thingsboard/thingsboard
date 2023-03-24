@@ -90,7 +90,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
       provisionDeviceKey: [{value: null, disabled: true}, Validators.required],
       certificateValue: [{value: null, disabled: true}, Validators.required],
       certificateRegExPattern: [{value: null, disabled: true}, Validators.required],
-      allowCreateNewDevicesByX509Certificate: [{value: null, disabled: true}]
+      allowCreateNewDevicesByX509Certificate: [{value: null, disabled: true}, Validators.required]
     });
     this.provisionConfigurationFormGroup.get('type').valueChanges.subscribe((type) => {
       if (type === DeviceProvisionType.DISABLED) {
@@ -117,8 +117,6 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         this.provisionConfigurationFormGroup.get('certificateValue').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('certificateRegExPattern').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').enable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceKey').disable({emitEvent: false});
       } else {
         const provisionDeviceSecret: string = this.provisionConfigurationFormGroup.get('provisionDeviceSecret').value;
         if (!provisionDeviceSecret || !provisionDeviceSecret.length) {
@@ -130,9 +128,6 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         }
         this.provisionConfigurationFormGroup.get('provisionDeviceSecret').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').enable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('certificateValue').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('certificateRegExPattern').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').disable({emitEvent: false});
       }
     });
     this.provisionConfigurationFormGroup.valueChanges.subscribe(() => {
@@ -178,6 +173,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
 
   private updateModel(): void {
     let deviceProvisionConfiguration: DeviceProvisionConfiguration = null;
+    this.resetFormControls(this.provisionConfigurationFormGroup.value);
     if (this.provisionConfigurationFormGroup.valid) {
       deviceProvisionConfiguration = this.provisionConfigurationFormGroup.getRawValue();
     }
@@ -193,5 +189,16 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  private resetFormControls(value: DeviceProvisionConfiguration) {
+    if (value.type === DeviceProvisionType.CHECK_PRE_PROVISIONED_DEVICES || value.type === DeviceProvisionType.ALLOW_CREATE_NEW_DEVICES) {
+      this.provisionConfigurationFormGroup.get('certificateValue').reset({value: null, disabled: true}, {emitEvent: false});
+      this.provisionConfigurationFormGroup.get('certificateRegExPattern').reset({value: null, disabled: true}, {emitEvent: false});
+      this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').reset({value: null, disabled: true}, {emitEvent: false});
+    } else if (value.type === DeviceProvisionType.X509_CERTIFICATE_CHAIN) {
+      this.provisionConfigurationFormGroup.get('provisionDeviceSecret').reset({value: null, disabled: true}, {emitEvent: false});
+      this.provisionConfigurationFormGroup.get('provisionDeviceKey').reset({value: null, disabled: true}, {emitEvent: false});
+    }
   }
 }
