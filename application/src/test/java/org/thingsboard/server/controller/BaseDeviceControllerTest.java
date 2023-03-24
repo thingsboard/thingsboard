@@ -671,7 +671,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Incorrect deviceId null")));
+                .andExpect(statusReason(containsString("Invalid entity id")));
 
         testNotifyEntityNever(deviceCredentials.getDeviceId(), new Device());
         testNotificationUpdateGatewayNever();

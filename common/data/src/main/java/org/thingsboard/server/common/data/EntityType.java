@@ -50,6 +50,7 @@ public enum EntityType {
     NOTIFICATION_RULE;
 
     @Getter
-    private final String normalName = StringUtils.capitalize(name().toLowerCase().replaceAll("_", " "));
+    private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")
+            .toLowerCase().replaceAll("_", " "));
 
 }
