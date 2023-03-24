@@ -18,13 +18,48 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { NotificationRoutingModule } from '@home/pages/notification/notification-routing.module';
+import { InboxTableHeaderComponent } from '@home/pages/notification/inbox/inbox-table-header.component';
+import { InboxNotificationDialogComponent } from '@home/pages/notification/inbox/inbox-notification-dialog.component';
+import { HomeComponentsModule } from '@home/components/home-components.module';
+import { SentErrorDialogComponent } from '@home/pages/notification/sent/sent-error-dialog.component';
+import { SentNotificationDialogComponent } from '@home/pages/notification/sent/sent-notification-dialog.componet';
+import {
+  RecipientNotificationDialogComponent
+} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
+import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
+import { TemplateAutocompleteComponent } from '@home/pages/notification/template/template-autocomplete.component';
+import {
+  TemplateNotificationDialogComponent
+} from '@home/pages/notification/template/template-notification-dialog.component';
+import { TemplateTableHeaderComponent } from '@home/pages/notification/template/template-table-header.component';
+import { EscalationFormComponent } from '@home/pages/notification/rule/escalation-form.component';
+import { EscalationsComponent } from '@home/pages/notification/rule/escalations.component';
+import { RuleNotificationDialogComponent } from '@home/pages/notification/rule/rule-notification-dialog.component';
+import { RuleTableHeaderComponent } from '@home/pages/notification/rule/rule-table-header.component';
+import { SentTableHeaderComponent } from '@home/pages/notification/sent/sent-table-header.component';
 
 @NgModule({
-  declarations: [],
+  declarations: [
+    InboxTableHeaderComponent,
+    InboxNotificationDialogComponent,
+    SentErrorDialogComponent,
+    SentNotificationDialogComponent,
+    RecipientNotificationDialogComponent,
+    RecipientTableHeaderComponent,
+    TemplateAutocompleteComponent,
+    TemplateNotificationDialogComponent,
+    TemplateTableHeaderComponent,
+    EscalationFormComponent,
+    EscalationsComponent,
+    RuleNotificationDialogComponent,
+    RuleTableHeaderComponent,
+    SentTableHeaderComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,
-    NotificationRoutingModule
+    NotificationRoutingModule,
+    HomeComponentsModule
   ]
 })
 export class NotificationModule { }

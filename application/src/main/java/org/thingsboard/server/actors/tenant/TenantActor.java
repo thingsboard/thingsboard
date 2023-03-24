@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
@@ -105,7 +106,7 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     @Override
-    public void destroy() {
+    public void destroy(TbActorStopReason stopReason, Throwable cause) {
         log.info("[{}] Stopping tenant actor.", tenantId);
     }
 
@@ -208,6 +209,7 @@ public class TenantActor extends RuleChainManagerActor {
             log.trace("[{}] Ack message because Rule Engine is disabled", tenantId);
             tbMsg.getCallback().onSuccess();
         }
+        systemContext.getNotificationRuleProcessingService().process(tenantId, tbMsg);
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {

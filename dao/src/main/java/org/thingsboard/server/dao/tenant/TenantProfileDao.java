@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TenantProfileDao extends Dao<TenantProfile> {
@@ -37,5 +38,7 @@ public interface TenantProfileDao extends Dao<TenantProfile> {
     TenantProfile findDefaultTenantProfile(TenantId tenantId);
 
     EntityInfo findDefaultTenantProfileInfo(TenantId tenantId);
+
+    List<TenantProfile> findTenantProfilesByIds(TenantId tenantId, UUID[] ids);
 
 }

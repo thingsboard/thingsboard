@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import lombok.Getter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +28,15 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
-import org.thingsboard.server.service.telemetry.cmd.v1.AttributesSubscriptionCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityHistoryCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 
 import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
@@ -48,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 public class TbTestWebSocketClient extends WebSocketClient {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+
+    @Getter
     private volatile String lastMsg;
     private volatile CountDownLatch reply;
     private volatile CountDownLatch update;
@@ -113,35 +116,59 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public String waitForUpdate() {
-        return waitForUpdate(TIMEOUT);
+        return waitForUpdate(false);
+    }
+
+    public String waitForUpdate(boolean throwExceptionOnTimeout) {
+        return waitForUpdate(TIMEOUT, throwExceptionOnTimeout);
     }
 
     public String waitForUpdate(long ms) {
+        return waitForUpdate(ms, false);
+    }
+
+    public String waitForUpdate(long ms, boolean throwExceptionOnTimeout) {
         log.debug("waitForUpdate [{}]", ms);
         try {
-            if (!update.await(ms, TimeUnit.MILLISECONDS)) {
+            if (update.await(ms, TimeUnit.MILLISECONDS)) {
+                return lastMsg;
+            } else {
                 log.warn("Failed to await update (waiting time [{}]ms elapsed)", ms, new RuntimeException("stacktrace"));
             }
         } catch (InterruptedException e) {
             log.warn("Failed to await update", e);
         }
-        return lastMsg;
+        if (throwExceptionOnTimeout) {
+            throw new AssertionError("Waited for update for " + ms + " ms but none arrived");
+        } else {
+            return null;
+        }
     }
 
     public String waitForReply() {
-        return waitForReply(TIMEOUT);
+        return waitForReply(false);
     }
 
-    public String waitForReply(long ms) {
+    public String waitForReply(boolean throwExceptionOnTimeout) {
+        return waitForReply(TIMEOUT, throwExceptionOnTimeout);
+    }
+
+    public String waitForReply(long ms, boolean throwExceptionOnTimeout) {
         log.debug("waitForReply [{}]", ms);
         try {
-            if (!reply.await(ms, TimeUnit.MILLISECONDS)) {
+            if (reply.await(ms, TimeUnit.MILLISECONDS)) {
+                return lastMsg;
+            } else {
                 log.warn("Failed to await reply (waiting time [{}]ms elapsed)", ms, new RuntimeException("stacktrace"));
             }
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastMsg;
+        if (throwExceptionOnTimeout) {
+            throw new AssertionError("Waited for reply for " + ms + " ms but none arrived");
+        } else {
+            return null;
+        }
     }
 
     public EntityDataUpdate parseDataReply(String msg) {

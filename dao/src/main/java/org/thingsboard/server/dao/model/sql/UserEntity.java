@@ -69,6 +69,9 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
     @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
     private String lastName;
 
+    @Column(name = ModelConstants.PHONE_PROPERTY)
+    private String phone;
+
     @Type(type = "json")
     @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -91,6 +94,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.phone = user.getPhone();
         this.additionalInfo = user.getAdditionalInfo();
     }
 
@@ -118,6 +122,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
+        user.setPhone(phone);
         user.setAdditionalInfo(additionalInfo);
         return user;
     }

@@ -1,0 +1,64 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.dao.usagerecord;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
+import org.thingsboard.server.dao.notification.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+
+@Service
+@RequiredArgsConstructor
+public class DefaultApiLimitService implements ApiLimitService {
+
+    private final EntityService entityService;
+    private final TbTenantProfileCache tenantProfileCache;
+    @Autowired(required = false)
+    private NotificationRuleProcessingService notificationRuleProcessingService;
+
+    @Override
+    public boolean checkEntitiesLimit(TenantId tenantId, EntityType entityType) {
+        DefaultTenantProfileConfiguration profileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
+        long limit = profileConfiguration.getEntitiesLimit(entityType);
+        if (limit > 0) {
+            EntityTypeFilter filter = new EntityTypeFilter();
+            filter.setEntityType(entityType);
+            long currentCount = entityService.countEntitiesByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), new EntityCountQuery(filter));
+            if (notificationRuleProcessingService != null) {
+                notificationRuleProcessingService.process(tenantId, EntitiesLimitTrigger.builder()
+                        .tenantId(tenantId)
+                        .entityType(entityType)
+                        .currentCount(currentCount)
+                        .limit(limit)
+                        .build());
+            }
+            return currentCount < limit;
+        } else {
+            return true;
+        }
+    }
+
+}

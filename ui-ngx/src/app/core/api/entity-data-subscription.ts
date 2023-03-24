@@ -41,7 +41,6 @@ import {
   EntityDataCmd,
   IndexedSubscriptionData,
   SubscriptionData,
-  TelemetryService,
   TelemetrySubscriber
 } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
@@ -53,6 +52,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import Timeout = NodeJS.Timeout;
 
 declare type DataKeyFunction = (time: number, prevValue: any) => any;
@@ -96,7 +96,7 @@ export interface EntityDataSubscriptionOptions {
 export class EntityDataSubscription {
 
   constructor(private listener: EntityDataListener,
-              private telemetryService: TelemetryService,
+              private telemetryService: TelemetryWebsocketService,
               private utils: UtilsService) {
     this.initializeSubscription();
   }

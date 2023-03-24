@@ -45,9 +45,15 @@ public final class TenantId extends UUIDBased implements EntityId {
         super(id);
     }
 
+    @JsonIgnore
+    public boolean isSysTenantId() {
+        return this.equals(SYS_TENANT_ID);
+    }
+
     @ApiModelProperty(position = 2, required = true, value = "string", example = "TENANT", allowableValues = "TENANT")
     @Override
     public EntityType getEntityType() {
         return EntityType.TENANT;
     }
+
 }
