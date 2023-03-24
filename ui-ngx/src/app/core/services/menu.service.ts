@@ -374,6 +374,13 @@ export class MenuService {
         type: 'link',
         path: '/customers',
         icon: 'supervisor_account'
+      },
+      {
+        id: guid(),
+        name: 'rulechain.rulechains',
+        type: 'link',
+        path: '/ruleChains',
+        icon: 'settings_ethernet'
       }
     );
     if (authState.edgesSupportEnabled) {
@@ -411,13 +418,6 @@ export class MenuService {
         path: '/features',
         icon: 'construction',
         pages: [
-          {
-            id: guid(),
-            name: 'rulechain.rulechains',
-            type: 'link',
-            path: '/features/ruleChains',
-            icon: 'settings_ethernet'
-          },
           {
             id: guid(),
             name: 'ota-update.ota-updates',
