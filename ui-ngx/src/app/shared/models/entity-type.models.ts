@@ -449,7 +449,7 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.DEVICE, '/entities/devices'],
   [EntityType.DEVICE_PROFILE, '/profiles/deviceProfiles'],
   [EntityType.ASSET_PROFILE, '/profiles/assetProfiles'],
-  [EntityType.RULE_CHAIN, '/features/ruleChains'],
+  [EntityType.RULE_CHAIN, '/ruleChains'],
   [EntityType.EDGE, '/edgeManagement/instances'],
   [EntityType.ENTITY_VIEW, '/entities/entityViews'],
   [EntityType.TB_RESOURCE, '/resources/resources-library'],

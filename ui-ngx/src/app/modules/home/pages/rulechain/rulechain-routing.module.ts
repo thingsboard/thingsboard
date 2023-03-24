@@ -122,7 +122,7 @@ export const importRuleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<Rule
   return `${translate.instant('rulechain.import')}: ${component.ruleChain.name}`;
 });
 
-export const ruleChainsRoutes: Routes = [
+const routes: Routes = [
   {
     path: 'ruleChains',
     data: {
@@ -186,24 +186,6 @@ export const ruleChainsRoutes: Routes = [
         }
       }
     ]
-  }
-];
-
-const routes: Routes = [
-  {
-    path: 'ruleChains',
-    pathMatch: 'full',
-    redirectTo: '/features/ruleChains'
-  },
-  {
-    path: 'ruleChains/:ruleChainId',
-    pathMatch: 'full',
-    redirectTo: '/features/ruleChains/:ruleChainId'
-  },
-  {
-    path: 'ruleChains/ruleChain/import',
-    pathMatch: 'full',
-    redirectTo: '/features/ruleChains/ruleChain/import'
   }
 ];
 
