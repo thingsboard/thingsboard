@@ -72,7 +72,7 @@ export class NotificationWebsocketService extends WebsocketService<NotificationS
         }
       }
     );
-    if (this.cmdWrapper.markAsReadCmd || this.cmdWrapper.markAllAsReadCmd) {
+    if (this.cmdWrapper.unreadCountSubCmd || this.cmdWrapper.unreadSubCmd) {
       this.subscribersCount++;
     }
     this.publishCommands();

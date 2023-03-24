@@ -61,7 +61,6 @@ export class NotificationBellComponent implements OnDestroy {
     private renderer: Renderer2,
     private viewContainerRef: ViewContainerRef,
     private store: Store<AppState>,) {
-    this.initSubscription();
     this.store.pipe(select(selectIsAuthenticated)).subscribe((value) => {
       if (value) {
         this.initSubscription();
