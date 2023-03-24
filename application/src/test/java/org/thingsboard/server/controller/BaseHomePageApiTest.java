@@ -249,7 +249,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(7, listData.get(0).getTimeseries().size());
 
         for (TsValue[] tsv : listData.get(0).getTimeseries().values()) {
-            Assert.assertEquals(1, tsv.length);
+            Assert.assertTrue(tsv.length > 1);
         }
     }
 
