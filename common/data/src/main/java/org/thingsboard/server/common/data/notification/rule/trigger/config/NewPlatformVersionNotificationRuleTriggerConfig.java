@@ -19,8 +19,8 @@ import lombok.Data;
 
 @Data
 public class NewPlatformVersionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
-    private String toRegion;
-    private String numberFrom;
+//    private String toRegion;
+//    private String numberFrom;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
