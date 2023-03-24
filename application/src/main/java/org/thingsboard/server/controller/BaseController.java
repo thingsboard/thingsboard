@@ -605,7 +605,7 @@ public abstract class BaseController {
             validateId((UUIDBased) entityId, "Invalid entity id");
             SecurityUser user = getCurrentUser();
             E entity = findingFunction.apply(user.getTenantId(), entityId);
-            checkNotNull(entity, entityId.getEntityType() + " with id [" + entityId + "] not found");
+            checkNotNull(entity, entityId.getEntityType().getNormalName() + " with id [" + entityId + "] is not found");
             return checkEntity(user, entity, operation);
         } catch (Exception e) {
             throw handleException(e, false);
