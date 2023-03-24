@@ -36,7 +36,6 @@ import { EscalationFormComponent } from '@home/pages/notification/rule/escalatio
 import { EscalationsComponent } from '@home/pages/notification/rule/escalations.component';
 import { RuleNotificationDialogComponent } from '@home/pages/notification/rule/rule-notification-dialog.component';
 import { RuleTableHeaderComponent } from '@home/pages/notification/rule/rule-table-header.component';
-import { SentTableHeaderComponent } from '@home/pages/notification/sent/sent-table-header.component';
 
 @NgModule({
   declarations: [
@@ -52,8 +51,7 @@ import { SentTableHeaderComponent } from '@home/pages/notification/sent/sent-tab
     EscalationFormComponent,
     EscalationsComponent,
     RuleNotificationDialogComponent,
-    RuleTableHeaderComponent,
-    SentTableHeaderComponent
+    RuleTableHeaderComponent
   ],
   imports: [
     CommonModule,

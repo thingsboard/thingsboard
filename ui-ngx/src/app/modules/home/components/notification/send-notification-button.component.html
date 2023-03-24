@@ -15,10 +15,12 @@
     limitations under the License.
 
 -->
-<div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
-  <button mat-flat-button color="primary" (click)="sendNotification($event)">
-    <div fxLayout="row" fxLayoutAlign="start center">
-      <mat-icon>send</mat-icon>{{ 'notification.send-notification' | translate }}
-    </div>
+<div *ngIf="show()" fxLayout="row" fxLayoutAlign="end end" style="height: 100%; padding: 0 16px;">
+  <button fxHide.lt-md mat-flat-button color="primary" (click)="sendNotification($event)">
+    <mat-icon>send</mat-icon>
+    <span translate>notification.send-notification</span>
+  </button>
+  <button class="mat-elevation-z0" fxHide.gt-sm mat-mini-fab color="primary" (click)="sendNotification($event)">
+    <mat-icon>send</mat-icon>
   </button>
 </div>

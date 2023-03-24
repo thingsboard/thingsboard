@@ -178,6 +178,7 @@ import { modulesMap } from '@modules/common/modules-map';
 import { SlackConversationAutocompleteComponent } from '@home/components/notification/slack-conversation-autocomplete.component';
 import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assignee-panel.component';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
 
 @NgModule({
   declarations:
@@ -324,7 +325,8 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
       RateLimitsComponent,
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
-      SlackConversationAutocompleteComponent
+      SlackConversationAutocompleteComponent,
+      SendNotificationButtonComponent
     ],
   imports: [
     CommonModule,
@@ -464,7 +466,8 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
     RateLimitsComponent,
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
-    SlackConversationAutocompleteComponent
+    SlackConversationAutocompleteComponent,
+    SendNotificationButtonComponent
   ],
   providers: [
     WidgetComponentService,

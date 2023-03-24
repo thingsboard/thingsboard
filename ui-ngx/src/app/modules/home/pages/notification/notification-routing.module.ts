@@ -24,6 +24,7 @@ import { SentTableConfigResolver } from '@home/pages/notification/sent/sent-tabl
 import { RecipientTableConfigResolver } from '@home/pages/notification/recipient/recipient-table-config.resolver';
 import { TemplateTableConfigResolver } from '@home/pages/notification/template/template-table-config.resolver';
 import { RuleTableConfigResolver } from '@home/pages/notification/rule/rule-table-config.resolver';
+import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
 
 const routes: Routes = [
   {
@@ -34,7 +35,8 @@ const routes: Routes = [
       breadcrumb: {
         label: 'notification.notification-center',
         icon: 'mdi:message-badge'
-      }
+      },
+      routerTabsHeaderComponent: SendNotificationButtonComponent
     },
     children: [
       {
