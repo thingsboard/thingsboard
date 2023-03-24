@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
@@ -33,6 +34,7 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,8 +44,11 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
     public void testSendAlarmToCloud() throws Exception {
         Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
+        UUID alarmUUID = UUID.randomUUID();
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         AlarmUpdateMsg.Builder alarmUpdateMgBuilder = AlarmUpdateMsg.newBuilder();
+        alarmUpdateMgBuilder.setIdMSB(alarmUUID.getMostSignificantBits());
+        alarmUpdateMgBuilder.setIdLSB(alarmUUID.getLeastSignificantBits());
         alarmUpdateMgBuilder.setName("alarm from edge");
         alarmUpdateMgBuilder.setStatus(AlarmStatus.ACTIVE_UNACK.name());
         alarmUpdateMgBuilder.setSeverity(AlarmSeverity.CRITICAL.name());
@@ -65,6 +70,7 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
         Optional<AlarmInfo> foundAlarm = alarms.stream().filter(alarm -> alarm.getType().equals("alarm from edge")).findAny();
         Assert.assertTrue(foundAlarm.isPresent());
         AlarmInfo alarmInfo = foundAlarm.get();
+        Assert.assertEquals(new AlarmId(alarmUUID), alarmInfo.getId());
         Assert.assertEquals(device.getId(), alarmInfo.getOriginator());
         Assert.assertEquals(AlarmStatus.ACTIVE_UNACK, alarmInfo.getStatus());
         Assert.assertEquals(AlarmSeverity.CRITICAL, alarmInfo.getSeverity());
