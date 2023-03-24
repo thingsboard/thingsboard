@@ -73,7 +73,7 @@ public class DefaultUpdateService implements UpdateService {
 
     @PostConstruct
     private void init() {
-        updateMessage = new UpdateMessage("", false);
+        updateMessage = new UpdateMessage("", false, "");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
@@ -132,7 +132,8 @@ public class DefaultUpdateService implements UpdateService {
             UpdateMessage prevUpdateMessage = updateMessage;
             updateMessage = new UpdateMessage(
                     response.get("message").asText(),
-                    response.get("updateAvailable").asBoolean()
+                    response.get("updateAvailable").asBoolean(),
+                    version
             );
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
                 notificationRuleProcessingService.process(TenantId.SYS_TENANT_ID, NewPlatformVersionTrigger.builder()

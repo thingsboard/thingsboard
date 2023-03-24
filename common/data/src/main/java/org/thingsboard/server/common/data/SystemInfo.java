@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
-public interface TbServiceInfoProvider {
+import java.util.List;
 
-    String getServiceId();
-
-    String getServiceType();
-
-    ServiceInfo getServiceInfo();
-
-    boolean isService(ServiceType serviceType);
-
-    ServiceInfo getServiceInfoWithCurrentSystemInfo();
-
+@Data
+public class SystemInfo {
+    @ApiModelProperty(position = 1, value = "Is monolith.")
+    private boolean isMonolith;
+    @ApiModelProperty(position = 2, value = "System data.")
+    private List<SystemInfoData> systemData;
 }
