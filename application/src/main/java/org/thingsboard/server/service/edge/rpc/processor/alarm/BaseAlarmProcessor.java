@@ -19,10 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.UUID;
@@ -68,7 +67,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                     existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
                     existentAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
-                    alarmService.createOrUpdateAlarm(existentAlarm);
+                    alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(existentAlarm));
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
                     if (existentAlarm != null) {
