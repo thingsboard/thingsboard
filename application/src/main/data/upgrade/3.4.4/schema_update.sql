@@ -422,3 +422,190 @@ END
 $$;
 
 -- ALARM FUNCTIONS END
+
+-- TTL DROP PARTITIONS FUNCTIONS UPDATE START
+
+DROP PROCEDURE IF EXISTS drop_partitions_by_max_ttl(character varying, bigint, bigint);
+DROP FUNCTION IF EXISTS get_partition_by_max_ttl_date;
+
+CREATE OR REPLACE FUNCTION get_partition_by_system_ttl_date(IN partition_type varchar, IN date timestamp, OUT partition varchar) AS
+$$
+BEGIN
+    CASE
+        WHEN partition_type = 'DAYS' THEN
+            partition := 'ts_kv_' || to_char(date, 'yyyy') || '_' || to_char(date, 'MM') || '_' || to_char(date, 'dd');
+        WHEN partition_type = 'MONTHS' THEN
+            partition := 'ts_kv_' || to_char(date, 'yyyy') || '_' || to_char(date, 'MM');
+        WHEN partition_type = 'YEARS' THEN
+            partition := 'ts_kv_' || to_char(date, 'yyyy');
+        ELSE
+            partition := NULL;
+        END CASE;
+    IF partition IS NOT NULL THEN
+        IF NOT EXISTS(SELECT
+                      FROM pg_tables
+                      WHERE schemaname = 'public'
+                        AND tablename = partition) THEN
+            partition := NULL;
+            RAISE NOTICE 'Failed to found partition by ttl';
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE drop_partitions_by_system_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    date                       timestamp;
+    partition_by_max_ttl_date  varchar;
+    partition_by_max_ttl_month varchar;
+    partition_by_max_ttl_day   varchar;
+    partition_by_max_ttl_year  varchar;
+    partition                  varchar;
+    partition_year             integer;
+    partition_month            integer;
+    partition_day              integer;
+
+BEGIN
+    if system_ttl IS NOT NULL AND system_ttl > 0 THEN
+        date := to_timestamp(EXTRACT(EPOCH FROM current_timestamp) - system_ttl);
+        partition_by_max_ttl_date := get_partition_by_system_ttl_date(partition_type, date);
+        RAISE NOTICE 'Date by max ttl: %', date;
+        RAISE NOTICE 'Partition by max ttl: %', partition_by_max_ttl_date;
+        IF partition_by_max_ttl_date IS NOT NULL THEN
+            CASE
+                WHEN partition_type = 'DAYS' THEN
+                    partition_by_max_ttl_year := SPLIT_PART(partition_by_max_ttl_date, '_', 3);
+                    partition_by_max_ttl_month := SPLIT_PART(partition_by_max_ttl_date, '_', 4);
+                    partition_by_max_ttl_day := SPLIT_PART(partition_by_max_ttl_date, '_', 5);
+                WHEN partition_type = 'MONTHS' THEN
+                    partition_by_max_ttl_year := SPLIT_PART(partition_by_max_ttl_date, '_', 3);
+                    partition_by_max_ttl_month := SPLIT_PART(partition_by_max_ttl_date, '_', 4);
+                ELSE
+                    partition_by_max_ttl_year := SPLIT_PART(partition_by_max_ttl_date, '_', 3);
+                END CASE;
+            IF partition_by_max_ttl_year IS NULL THEN
+                RAISE NOTICE 'Failed to remove partitions by max ttl date due to partition_by_max_ttl_year is null!';
+            ELSE
+                IF partition_type = 'YEARS' THEN
+                    FOR partition IN SELECT tablename
+                                     FROM pg_tables
+                                     WHERE schemaname = 'public'
+                                       AND tablename like 'ts_kv_' || '%'
+                                       AND tablename != 'ts_kv_latest'
+                                       AND tablename != 'ts_kv_dictionary'
+                                       AND tablename != 'ts_kv_indefinite'
+                                       AND tablename != partition_by_max_ttl_date
+                        LOOP
+                            partition_year := SPLIT_PART(partition, '_', 3)::integer;
+                            IF partition_year < partition_by_max_ttl_year::integer THEN
+                                RAISE NOTICE 'Partition to delete by max ttl: %', partition;
+                                EXECUTE format('DROP TABLE IF EXISTS %I', partition);
+                                deleted := deleted + 1;
+                            END IF;
+                        END LOOP;
+                ELSE
+                    IF partition_type = 'MONTHS' THEN
+                        IF partition_by_max_ttl_month IS NULL THEN
+                            RAISE NOTICE 'Failed to remove months partitions by max ttl date due to partition_by_max_ttl_month is null!';
+                        ELSE
+                            FOR partition IN SELECT tablename
+                                             FROM pg_tables
+                                             WHERE schemaname = 'public'
+                                               AND tablename like 'ts_kv_' || '%'
+                                               AND tablename != 'ts_kv_latest'
+                                               AND tablename != 'ts_kv_dictionary'
+                                               AND tablename != 'ts_kv_indefinite'
+                                               AND tablename != partition_by_max_ttl_date
+                                LOOP
+                                    partition_year := SPLIT_PART(partition, '_', 3)::integer;
+                                    IF partition_year > partition_by_max_ttl_year::integer THEN
+                                        RAISE NOTICE 'Skip iteration! Partition: % is valid!', partition;
+                                        CONTINUE;
+                                    ELSE
+                                        IF partition_year < partition_by_max_ttl_year::integer THEN
+                                            RAISE NOTICE 'Partition to delete by max ttl: %', partition;
+                                            EXECUTE format('DROP TABLE IF EXISTS %I', partition);
+                                            deleted := deleted + 1;
+                                        ELSE
+                                            partition_month := SPLIT_PART(partition, '_', 4)::integer;
+                                            IF partition_year = partition_by_max_ttl_year::integer THEN
+                                                IF  partition_month >= partition_by_max_ttl_month::integer THEN
+                                                    RAISE NOTICE 'Skip iteration! Partition: % is valid!', partition;
+                                                    CONTINUE;
+                                                ELSE
+                                                    RAISE NOTICE 'Partition to delete by max ttl: %', partition;
+                                                    EXECUTE format('DROP TABLE IF EXISTS %I', partition);
+                                                    deleted := deleted + 1;
+                                                END IF;
+                                            END IF;
+                                        END IF;
+                                    END IF;
+                                END LOOP;
+                        END IF;
+                    ELSE
+                        IF partition_type = 'DAYS' THEN
+                            IF partition_by_max_ttl_month IS NULL THEN
+                                RAISE NOTICE 'Failed to remove days partitions by max ttl date due to partition_by_max_ttl_month is null!';
+                            ELSE
+                                IF partition_by_max_ttl_day IS NULL THEN
+                                    RAISE NOTICE 'Failed to remove days partitions by max ttl date due to partition_by_max_ttl_day is null!';
+                                ELSE
+                                    FOR partition IN SELECT tablename
+                                                     FROM pg_tables
+                                                     WHERE schemaname = 'public'
+                                                       AND tablename like 'ts_kv_' || '%'
+                                                       AND tablename != 'ts_kv_latest'
+                                                       AND tablename != 'ts_kv_dictionary'
+                                                       AND tablename != 'ts_kv_indefinite'
+                                                       AND tablename != partition_by_max_ttl_date
+                                        LOOP
+                                            partition_year := SPLIT_PART(partition, '_', 3)::integer;
+                                            IF partition_year > partition_by_max_ttl_year::integer THEN
+                                                RAISE NOTICE 'Skip iteration! Partition: % is valid!', partition;
+                                                CONTINUE;
+                                            ELSE
+                                                IF partition_year < partition_by_max_ttl_year::integer THEN
+                                                    RAISE NOTICE 'Partition to delete by max ttl: %', partition;
+                                                    EXECUTE format('DROP TABLE IF EXISTS %I', partition);
+                                                    deleted := deleted + 1;
+                                                ELSE
+                                                    partition_month := SPLIT_PART(partition, '_', 4)::integer;
+                                                    IF partition_month > partition_by_max_ttl_month::integer THEN
+                                                        RAISE NOTICE 'Skip iteration! Partition: % is valid!', partition;
+                                                        CONTINUE;
+                                                    ELSE
+                                                        IF partition_month < partition_by_max_ttl_month::integer THEN
+                                                            RAISE NOTICE 'Partition to delete by max ttl: %', partition;
+                                                            EXECUTE format('DROP TABLE IF EXISTS %I', partition);
+                                                            deleted := deleted + 1;
+                                                        ELSE
+                                                            partition_day := SPLIT_PART(partition, '_', 5)::integer;
+                                                            IF partition_day >= partition_by_max_ttl_day::integer THEN
+                                                                RAISE NOTICE 'Skip iteration! Partition: % is valid!', partition;
+                                                                CONTINUE;
+                                                            ELSE
+                                                                IF partition_day < partition_by_max_ttl_day::integer THEN
+                                                                    RAISE NOTICE 'Partition to delete by max ttl: %', partition;
+                                                                    EXECUTE format('DROP TABLE IF EXISTS %I', partition);
+                                                                    deleted := deleted + 1;
+                                                                END IF;
+                                                            END IF;
+                                                        END IF;
+                                                    END IF;
+                                                END IF;
+                                            END IF;
+                                        END LOOP;
+                                END IF;
+                            END IF;
+                        END IF;
+                    END IF;
+                END IF;
+            END IF;
+        END IF;
+    END IF;
+END
+$$;
+
+-- TTL DROP PARTITIONS FUNCTIONS UPDATE END
