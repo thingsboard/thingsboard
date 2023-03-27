@@ -49,13 +49,10 @@
   .country-select {
     width: 45px;
     height: 30px;
-
-    .mat-select-trigger {
+    .mat-mdc-select-trigger {
       height: 100%;
-      width: 100%;
     }
-
-    .mat-select-value {
+    .mat-mdc-select-value {
       visibility: hidden;
     }
   }

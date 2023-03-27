@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "device type switch",
+        name = "device profile switch",
         customRelations = true,
         relationTypes = {"default"},
         configClazz = EmptyNodeConfiguration.class,

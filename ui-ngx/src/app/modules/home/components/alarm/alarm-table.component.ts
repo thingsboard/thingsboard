@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -22,10 +22,14 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { DialogService } from '@core/services/dialog.service';
 import { AlarmTableConfig } from './alarm-table-config';
-import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { AlarmSearchStatus, AlarmsMode } from '@shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { Overlay } from '@angular/cdk/overlay';
+import { UtilsService } from '@core/services/utils.service';
+import { ActivatedRoute } from '@angular/router';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-alarm-table',
@@ -37,6 +41,8 @@ export class AlarmTableComponent implements OnInit {
   activeValue = false;
   dirtyValue = false;
   entityIdValue: EntityId;
+  alarmsMode = AlarmsMode.ENTITY;
+  detailsMode = true;
 
   @Input()
   set active(active: boolean) {
@@ -71,20 +77,38 @@ export class AlarmTableComponent implements OnInit {
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
-              private store: Store<AppState>) {
+              private store: Store<AppState>,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
+              private cd: ChangeDetectorRef,
+              private utilsService: UtilsService,
+              private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.dirtyValue = !this.activeValue;
+    const pageMode = !!this.route.snapshot.data.isPage;
+    if (pageMode) {
+      this.detailsMode = false;
+    }
+    if (isDefinedAndNotNull(this.route.snapshot.data.alarmsMode)) {
+      this.alarmsMode = this.route.snapshot.data.alarmsMode;
+    }
     this.alarmTableConfig = new AlarmTableConfig(
       this.alarmService,
       this.dialogService,
       this.translate,
       this.datePipe,
       this.dialog,
+      this.alarmsMode,
       this.entityIdValue,
       AlarmSearchStatus.ANY,
-      this.store
+      this.store,
+      this.viewContainerRef,
+      this.overlay,
+      this.cd,
+      this.utilsService,
+      pageMode
     );
   }
 

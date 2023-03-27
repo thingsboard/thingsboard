@@ -31,14 +31,6 @@
     margin-right: 5px;
   }
 
-  .interval-section {
-    min-height: 66px;
-    .interval-label {
-      margin-bottom: 7px;
-      margin-top: -1px;
-    }
-  }
-
   @media #{$mat-xs} {
     min-width: 0;
     width: 100%;
@@ -47,8 +39,8 @@
 
 :host ::ng-deep {
   .number-input {
-    .mat-form-field-infix {
-      width: 70px;
+    .mat-mdc-form-field-infix {
+      width: 50px;
     }
   }
 }

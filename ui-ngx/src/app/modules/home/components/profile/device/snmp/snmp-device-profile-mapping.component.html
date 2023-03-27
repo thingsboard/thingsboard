@@ -29,8 +29,7 @@
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
        fxLayoutGap="8px" [formGroup]="mappingConfig" class="mapping-list">
     <div fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
-      <mat-form-field fxFlex="26" floatLabel="always" hideRequiredMarker>
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="26">
         <mat-select formControlName="dataType" required>
           <mat-option *ngFor="let dataType of dataTypes" [value]="dataType">
             {{ dataTypesTranslationMap.get(dataType) | translate }}
@@ -40,15 +39,13 @@
           {{ 'device-profile.snmp.data-type-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="37">
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="37">
         <input matInput formControlName="key" required/>
         <mat-error *ngIf="mappingConfig.get('key').hasError('required')">
           {{ 'device-profile.snmp.data-key-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="37">
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="37">
         <input matInput formControlName="oid" required/>
         <mat-error *ngIf="mappingConfig.get('oid').hasError('required')">
           {{ 'device-profile.snmp.oid-required' | translate }}

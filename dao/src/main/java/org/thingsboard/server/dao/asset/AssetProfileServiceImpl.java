@@ -293,7 +293,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             };
 
     private AssetProfileInfo toAssetProfileInfo(AssetProfile profile) {
-        return profile == null ? null : new AssetProfileInfo(profile.getId(), profile.getName(), profile.getImage(),
+        return profile == null ? null : new AssetProfileInfo(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(),
                 profile.getDefaultDashboardId());
     }
 

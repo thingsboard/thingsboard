@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -34,6 +33,8 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -62,6 +64,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
@@ -79,8 +82,10 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbDeviceProfileNodeTest {
@@ -187,8 +192,8 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
         Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg);
@@ -204,6 +209,8 @@ public class TbDeviceProfileNodeTest {
 
         TbMsg theMsg2 = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "2");
         Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg2);
+
+        registerCreateAlarmMock(alarmService.updateAlarm(any()), false);
 
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
@@ -274,9 +281,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(attrListListenableFuture);
@@ -357,9 +364,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
@@ -430,9 +437,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
@@ -524,9 +531,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -642,9 +649,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
@@ -757,9 +764,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -867,9 +874,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
@@ -969,9 +976,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -1067,9 +1074,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -1149,9 +1156,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureActiveSchedule);
@@ -1246,8 +1253,8 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(null);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureInactiveSchedule);
@@ -1319,9 +1326,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
@@ -1394,10 +1401,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any()))
-                .thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
@@ -1474,10 +1480,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any()))
-                .thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
@@ -1485,7 +1490,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFutureWithLess);
         Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE),  Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
@@ -1560,10 +1565,9 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "greaterTemperatureAlarm"))
-                .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any()))
-                .thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "greaterTemperatureAlarm"))
+                .thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
@@ -1571,7 +1575,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFutureWithLess);
         Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE),  Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
@@ -1599,6 +1603,20 @@ public class TbDeviceProfileNodeTest {
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.createObjectNode());
         node = new TbDeviceProfileNode();
         node.init(ctx, nodeConfiguration);
+    }
+
+    private void registerCreateAlarmMock(AlarmApiCallResult a, boolean created) {
+        when(a).thenAnswer(invocationOnMock -> {
+//            AlarmCreateOrUpdateActiveRequest request = invocationOnMock.getArgument(0);
+            AlarmInfo alarm = new AlarmInfo(new Alarm(new AlarmId(UUID.randomUUID())));
+            alarm.setSeverity(AlarmSeverity.CRITICAL);
+            return AlarmApiCallResult.builder()
+                    .successful(true)
+                    .created(created)
+                    .modified(true)
+                    .alarm(alarm)
+                    .build();
+        });
     }
 
 }

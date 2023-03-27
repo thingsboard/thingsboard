@@ -26,17 +26,23 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -44,6 +50,7 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -52,10 +59,21 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.actors.DefaultTbActorSystem;
+import org.thingsboard.server.actors.TbActorId;
+import org.thingsboard.server.actors.TbActorMailbox;
+import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.device.DeviceActor;
+import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
+import org.thingsboard.server.actors.device.SessionInfo;
+import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -69,7 +87,9 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -80,10 +100,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
-import org.thingsboard.server.service.mail.TestMailService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
@@ -95,14 +118,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
@@ -111,6 +140,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @Slf4j
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
+
     public static final int TIMEOUT = 30;
 
     protected ObjectMapper mapper = new ObjectMapper();
@@ -143,6 +173,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected MockMvc mockMvc;
 
+    protected String currentActivateToken;
+    protected String currentResetPasswordToken;
+
     protected String token;
     protected String refreshToken;
     protected String username;
@@ -154,6 +187,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected TenantId differentTenantId;
     protected CustomerId differentCustomerId;
     protected UserId customerUserId;
+    protected UserId differentCustomerUserId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -166,6 +200,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     private TenantProfileService tenantProfileService;
+
+    @Autowired
+    public TimeseriesService tsService;
+
+    @Autowired
+    protected DefaultActorService actorService;
+
+    @SpyBean
+    protected MailService mailService;
 
     @Rule
     public TestRule watcher = new TestWatcher() {
@@ -197,7 +240,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Before
     public void setupWebTest() throws Exception {
-        log.info("Executing web test setup");
+        log.debug("Executing web test setup");
+
+        setupMailServiceMock();
 
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
@@ -237,12 +282,33 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         resetTokens();
 
-        log.info("Executed web test setup");
+        log.debug("Executed web test setup");
+    }
+
+    private void setupMailServiceMock() throws ThingsboardException {
+        Mockito.doNothing().when(mailService).sendAccountActivatedEmail(anyString(), anyString());
+        Mockito.doAnswer(new Answer<Void>() {
+            public Void answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                String activationLink = (String) args[0];
+                currentActivateToken = activationLink.split("=")[1];
+                return null;
+            }
+        }).when(mailService).sendActivationEmail(anyString(), anyString());
+
+        Mockito.doAnswer(new Answer<Void>() {
+            public Void answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                String passwordResetLink = (String) args[0];
+                currentResetPasswordToken = passwordResetLink.split("=")[1];
+                return null;
+            }
+        }).when(mailService).sendResetPasswordEmailAsync(anyString(), anyString());
     }
 
     @After
     public void teardownWebTest() throws Exception {
-        log.info("Executing web test teardown");
+        log.debug("Executing web test teardown");
 
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
@@ -291,24 +357,28 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected Tenant savedDifferentTenant;
     protected User savedDifferentTenantUser;
     private Customer savedDifferentCustomer;
+    protected User differentCustomerUser;
 
     protected void loginDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
             login(DIFFERENT_TENANT_ADMIN_EMAIL, DIFFERENT_TENANT_ADMIN_PASSWORD);
         } else {
-            loginSysAdmin();
-
-            Tenant tenant = new Tenant();
-            tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
-            savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
-            differentTenantId = savedDifferentTenant.getId();
-            Assert.assertNotNull(savedDifferentTenant);
-            User differentTenantAdmin = new User();
-            differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-            differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
-            differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
-            savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+            createDifferentTenant();
         }
+    }
+
+    protected void createDifferentTenant() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
+        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        differentTenantId = savedDifferentTenant.getId();
+        Assert.assertNotNull(savedDifferentTenant);
+        User differentTenantAdmin = new User();
+        differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
+        differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
+        savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
     }
 
     protected void loginDifferentCustomer() throws Exception {
@@ -318,13 +388,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             createDifferentCustomer();
 
             loginTenantAdmin();
-            User differentCustomerUser = new User();
+            differentCustomerUser = new User();
             differentCustomerUser.setAuthority(Authority.CUSTOMER_USER);
             differentCustomerUser.setTenantId(tenantId);
             differentCustomerUser.setCustomerId(savedDifferentCustomer.getId());
             differentCustomerUser.setEmail(DIFFERENT_CUSTOMER_USER_EMAIL);
 
-            createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentCustomerUser = createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentCustomerUserId = differentCustomerUser.getId();
         }
     }
 
@@ -367,11 +438,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     private JsonNode getActivateRequest(String password) throws Exception {
-        doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
+        doGet("/api/noauth/activate?activateToken={activateToken}", this.currentActivateToken)
                 .andExpect(status().isSeeOther())
-                .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
+                .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + this.currentActivateToken));
         return new ObjectMapper().createObjectNode()
-                .put("activateToken", TestMailService.currentActivateToken)
+                .put("activateToken", this.currentActivateToken)
                 .put("password", password);
     }
 
@@ -480,6 +551,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return protoTransportPayloadConfiguration;
     }
 
+    protected Device createDevice(String deviceName, String type, String accessToken) throws Exception {
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType(type);
+
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        credentials.setCredentialsId(accessToken);
+
+        SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
+        return doPost("/api/device-with-credentials", request, Device.class);
+    }
 
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
@@ -581,7 +664,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T, R> R doPost(String urlTemplate, T content, Class<R> responseClass, String... params) {
         try {
             return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {
@@ -611,6 +694,22 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T doPostClaimAsync(String urlTemplate, Object content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
+    }
+
+    protected <T> T doPut(String urlTemplate, T content, Class<T> responseClass, String... params) {
+        try {
+            return readResponse(doPut(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T> ResultActions doPut(String urlTemplate, T content, String... params) throws Exception {
+        MockHttpServletRequestBuilder postRequest = put(urlTemplate, params);
+        setJwtToken(postRequest);
+        String json = json(content);
+        postRequest.contentType(contentType).content(json);
+        return mockMvc.perform(postRequest);
     }
 
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
@@ -691,10 +790,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
+
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());
         }
+
     }
 
     protected static <T> ResultMatcher statusReason(Matcher<T> matcher) {
@@ -773,6 +874,42 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         return (T) field.get(target);
+    }
+
+    protected int getDeviceActorSubscriptionCount(DeviceId deviceId, FeatureType featureType) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
+        return subscriptions.size();
+    }
+
+    protected void awaitForDeviceActorToReceiveSubscription(DeviceId deviceId, FeatureType featureType, int subscriptionCount) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
+        Awaitility.await("Device actor received subscription command from the transport").atMost(5, TimeUnit.SECONDS).until(() -> {
+            log.warn("device {}, subscriptions.size() == {}", deviceId, subscriptions.size());
+            return subscriptions.size() == subscriptionCount;
+        });
+    }
+
+    protected static String getMapName(FeatureType featureType) {
+        switch (featureType) {
+            case ATTRIBUTES:
+                return "attributeSubscriptions";
+            case RPC:
+                return "rpcSubscriptions";
+            default:
+                throw new RuntimeException("Not supported feature " + featureType + "!");
+        }
+    }
+
+    protected DeviceActorMessageProcessor getDeviceActorProcessor(DeviceId deviceId) {
+        DefaultTbActorSystem actorSystem = (DefaultTbActorSystem) ReflectionTestUtils.getField(actorService, "system");
+        ConcurrentMap<TbActorId, TbActorMailbox> actors = (ConcurrentMap<TbActorId, TbActorMailbox>) ReflectionTestUtils.getField(actorSystem, "actors");
+        Awaitility.await("Device actor was created").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> actors.containsKey(new TbEntityActorId(deviceId)));
+        TbActorMailbox actorMailbox = actors.get(new TbEntityActorId(deviceId));
+        DeviceActor actor = (DeviceActor) ReflectionTestUtils.getField(actorMailbox, "actor");
+        return (DeviceActorMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
     }
 
 }

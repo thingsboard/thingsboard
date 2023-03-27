@@ -30,7 +30,8 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Subject, Subscription } from 'rxjs';
+import { SubscriptSizing } from '@angular/material/form-field';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
@@ -61,6 +62,9 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   @Input() valuePlaceholderText: string;
 
   @Input() noDataText: string;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   kvListFormGroup: UntypedFormGroup;
 

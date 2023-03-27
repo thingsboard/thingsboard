@@ -37,6 +37,10 @@
     display: block;
     margin: auto;
   }
+  .mat-mdc-button-touch-target {
+    width: #{$size}px;
+    height: #{$size}px;
+  }
 }
 
 @mixin tb-checkered-bg() {
