@@ -448,7 +448,7 @@ public class UserController extends BaseController {
     @RequestMapping(value = "/users/assign/{alarmId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<UserEmailInfo> getUsersForAssign(
-            @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+            @ApiParam(value = ALARM_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("alarmId") String strAlarmId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -469,7 +469,11 @@ public class UserController extends BaseController {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             PageData<User> pageData;
             if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
-                pageData = userService.findUsersForAssignForTenant(tenantId, alarm.getCustomerId(), pageLink);
+                if (alarm.getCustomerId() == null) {
+                    pageData = userService.findTenantAdmins(tenantId, pageLink);
+                } else {
+                    pageData = userService.findTenantAndCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
+                }
             } else {
                 pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
             }

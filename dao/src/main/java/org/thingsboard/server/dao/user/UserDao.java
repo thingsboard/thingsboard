@@ -90,7 +90,7 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
      * @param pageLink the page link
      * @return the list of user entities
      */
-    PageData<User> findUsersForAssignForTenant(UUID tenantId, UUID customerId, PageLink pageLink);
+    PageData<User> findTenantAndCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink);
 
     PageData<User> findAll(PageLink pageLink);
 

@@ -798,6 +798,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     }
 
+    public class EntityIdComparator<D extends EntityId> implements Comparator<D> {
+
+        @Override
+        public int compare(D o1, D o2) {
+            return o1.getId().compareTo(o2.getId());
+        }
+
+    }
+
     protected static <T> ResultMatcher statusReason(Matcher<T> matcher) {
         return jsonPath("$.message", matcher);
     }

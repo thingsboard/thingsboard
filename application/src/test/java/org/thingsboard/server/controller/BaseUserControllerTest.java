@@ -31,10 +31,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -53,7 +56,6 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -65,6 +67,8 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
     private IdComparator<UserEmailInfo> userDataIdComparator = new IdComparator<>();
+
+    private EntityIdComparator<UserId> userIdComparator = new EntityIdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
 
@@ -648,6 +652,89 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetUsersForAssign() throws Exception {
+        loginTenantAdmin();
+
+        String email = "testEmail1";
+        List<UserId> expectedCustomerUserIds = new ArrayList<>();
+        expectedCustomerUserIds.add(customerUserId);
+        for (int i = 0; i < 45; i++) {
+            User customerUser = createCustomerUser( customerId);
+            customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
+            User user = doPost("/api/user", customerUser, User.class);
+            expectedCustomerUserIds.add(user.getId());
+        }
+        List<UserId> expectedTenantUserIds = new ArrayList<>(List.copyOf(expectedCustomerUserIds));
+        expectedTenantUserIds.add(tenantAdminUserId);
+
+        Device device = new Device();
+        device.setName("testDevice");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Alarm alarm = createTestAlarm(savedDevice);
+
+        List<UserId> loadedTenantUserIds = new ArrayList<>();
+        PageLink pageLink = new PageLink(33, 0);
+        PageData<UserEmailInfo> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedTenantUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Assert.assertEquals(1, loadedTenantUserIds.size());
+        Assert.assertEquals(tenantAdminUserId, loadedTenantUserIds.get(0));
+
+        doDelete("/api/alarm/" + alarm.getId().getId().toString());
+
+        savedDevice.setCustomerId(customerId);
+        savedDevice = doPost("/api/customer/" + customerId.getId()
+                + "/device/" + savedDevice.getId().getId(), Device.class);
+
+        alarm = createTestAlarm(savedDevice);
+
+        List<UserId> loadedUserIds = new ArrayList<>();
+        pageLink = new PageLink(16, 0);
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        expectedTenantUserIds.sort(userIdComparator);
+        loadedUserIds.sort(userIdComparator);
+
+        Assert.assertEquals(expectedTenantUserIds, loadedUserIds);
+
+        loginCustomerUser();
+
+        loadedUserIds = new ArrayList<>();
+        pageLink = new PageLink(16, 0);
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        expectedCustomerUserIds.sort(userIdComparator);
+        loadedUserIds.sort(userIdComparator);
+
+        Assert.assertEquals(expectedCustomerUserIds, loadedUserIds);
+    }
+
+    @Test
     public void testDeleteUserWithDeleteRelationsOk() throws Exception {
         loginSysAdmin();
         User tenantAdminUser = createTenantAdminUser();
@@ -982,6 +1069,16 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
         return loadedCustomerUsers;
+    }
+
+    private Alarm createTestAlarm(Device device) {
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setCustomerId(device.getCustomerId());
+        alarm.setSeverity(AlarmSeverity.MAJOR);
+        alarm.setType("testAlarm");
+        alarm.setStartTs(System.currentTimeMillis());
+        return doPost("/api/alarm", alarm, Alarm.class);
     }
 
 }
