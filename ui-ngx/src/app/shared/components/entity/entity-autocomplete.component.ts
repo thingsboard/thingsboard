@@ -61,6 +61,24 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   entitySubtypeValue: string;
 
+  entityText: string;
+
+  noEntitiesMatchingText: string;
+
+  entityRequiredText: string;
+
+  filteredEntities: Observable<Array<BaseData<EntityId>>>;
+
+  searchText = '';
+
+  private requiredValue: boolean;
+
+  private dirty = false;
+
+  private refresh$ = new Subject<Array<BaseData<EntityId>>>();
+
+  private propagateChange = (v: any) => { };
+
   @Input()
   set entityType(entityType: EntityType) {
     if (this.entityTypeValue !== entityType) {
@@ -71,6 +89,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       this.dirty = true;
     }
   }
+
   @Input()
   set entitySubtype(entitySubtype: string) {
     if (this.entitySubtypeValue !== entitySubtype) {
@@ -99,13 +118,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
+  }
+  get required(): boolean {
+    return this.requiredValue;
   }
 
   @Input()
@@ -116,19 +134,20 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
-  entityText: string;
-  noEntitiesMatchingText: string;
-  entityRequiredText: string;
+  get requiredErrorText(): string {
+    if (this.requiredText && this.requiredText.length) {
+      return this.requiredText;
+    }
+    return this.entityRequiredText;
+  }
 
-  filteredEntities: Observable<Array<BaseData<EntityId>>>;
+  get label(): string {
+    if (this.labelText && this.labelText.length) {
+      return this.labelText;
+    }
+    return this.entityText;
+  }
 
-  searchText = '';
-
-  private dirty = false;
-
-  private refresh$ = new Subject<Array<BaseData<EntityId>>>();
-
-  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
@@ -376,19 +395,5 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       }
     }
     return entityType;
-  }
-
-  get label(): string {
-    if (this.labelText && this.labelText.length) {
-      return this.labelText;
-    }
-    return this.entityText;
-  }
-
-  get requiredErrorText(): string {
-    if (this.requiredText && this.requiredText.length) {
-      return this.requiredText;
-    }
-    return this.entityRequiredText;
   }
 }
