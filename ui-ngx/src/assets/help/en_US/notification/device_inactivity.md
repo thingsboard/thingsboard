@@ -15,10 +15,10 @@ Available template parameters:
   * *deviceName* - the device name;    
   * *deviceLabel* - the device label;    
   * *deviceType* - the device type;
-  * *actionType* - one of: 'inactive', 'active';    
+  * *actionType* - one of: 'inactive', 'active';    // TODO: fix and rename the type
 
 Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`
