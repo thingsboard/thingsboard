@@ -417,7 +417,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-mdc-table .mat-mdc-header-cell {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-table .mat-cell, .mat-table .mat-header-cell {\n' +
+    '.mat-mdc-table .mat-mdc-cell, .mat-mdc-table .mat-mdc-header-cell {\n' +
     'border-bottom-color: ' + mdDarkDivider + ';\n' +
     '}\n' +
     '.mat-mdc-table .mat-mdc-cell .mat-mdc-checkbox ' +
