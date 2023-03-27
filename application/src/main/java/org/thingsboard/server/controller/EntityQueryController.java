@@ -56,7 +56,7 @@ public class EntityQueryController extends BaseController {
     private static final int MAX_PAGE_SIZE = 100;
 
     @ApiOperation(value = "Count Entities by Query", notes = ENTITY_COUNT_QUERY_DESCRIPTION)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
     @ResponseBody
     public long countEntitiesByQuery(
