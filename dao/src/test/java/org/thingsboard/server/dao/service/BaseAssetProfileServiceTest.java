@@ -254,7 +254,7 @@ public abstract class BaseAssetProfileServiceTest extends AbstractServiceTest {
         Collections.sort(loadedAssetProfileInfos, assetProfileInfoIdComparator);
 
         List<AssetProfileInfo> assetProfileInfos = assetProfiles.stream()
-                .map(assetProfile -> new AssetProfileInfo(assetProfile.getId(),
+                .map(assetProfile -> new AssetProfileInfo(assetProfile.getId(), assetProfile.getTenantId(),
                         assetProfile.getName(), assetProfile.getImage(), assetProfile.getDefaultDashboardId())).collect(Collectors.toList());
 
         Assert.assertEquals(assetProfileInfos, loadedAssetProfileInfos);

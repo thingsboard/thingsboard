@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
+import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -57,6 +58,17 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Page<UserEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                     @Param("searchText") String searchText,
                                     Pageable pageable);
+
+    Page<UserEntity> findAllByAuthority(Authority authority, Pageable pageable);
+
+    Page<UserEntity> findByAuthorityAndTenantIdIn(Authority authority, Collection<UUID> tenantsIds, Pageable pageable);
+
+    @Query("SELECT u FROM UserEntity u INNER JOIN TenantEntity t ON u.tenantId = t.id AND u.authority = :authority " +
+            "INNER JOIN TenantProfileEntity p ON t.tenantProfileId = p.id " +
+            "WHERE p.id IN :profiles")
+    Page<UserEntity> findByAuthorityAndTenantProfilesIds(@Param("authority") Authority authority,
+                                                         @Param("profiles") Collection<UUID> tenantProfilesIds,
+                                                         Pageable pageable);
 
     Long countByTenantId(UUID tenantId);
 
