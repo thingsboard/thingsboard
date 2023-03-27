@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -42,18 +43,25 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -67,6 +75,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -199,6 +208,8 @@ public interface TbContext {
      *
      */
 
+    void schedule(Runnable runnable, long delay, TimeUnit timeUnit);
+
     void checkTenantEntity(EntityId entityId);
 
     boolean isLocalEntity(EntityId entityId);
@@ -223,6 +234,10 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
+    DeviceProfileService getDeviceProfileService();
+
+    AssetProfileService getAssetProfileService();
+
     DeviceCredentialsService getDeviceCredentialsService();
 
     TbClusterService getClusterService();
@@ -230,6 +245,8 @@ public interface TbContext {
     DashboardService getDashboardService();
 
     RuleEngineAlarmService getAlarmService();
+
+    AlarmCommentService getAlarmCommentService();
 
     RuleChainService getRuleChainService();
 
@@ -265,11 +282,25 @@ public interface TbContext {
 
     ListeningExecutor getExternalCallExecutor();
 
+    ListeningExecutor getNotificationExecutor();
+
     MailService getMailService(boolean isSystem);
 
     SmsService getSmsService();
 
     SmsSenderFactory getSmsSenderFactory();
+
+    NotificationCenter getNotificationCenter();
+
+    NotificationTargetService getNotificationTargetService();
+
+    NotificationTemplateService getNotificationTemplateService();
+
+    NotificationRequestService getNotificationRequestService();
+
+    NotificationRuleService getNotificationRuleService();
+
+    SlackService getSlackService();
 
     /**
      * Creates JS Script Engine

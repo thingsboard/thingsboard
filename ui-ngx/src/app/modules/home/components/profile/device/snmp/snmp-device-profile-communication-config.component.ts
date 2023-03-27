@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -52,17 +52,17 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
   snmpSpecTypes = Object.values(SnmpSpecType);
   snmpSpecTypeTranslationMap = SnmpSpecTypeTranslationMap;
 
-  deviceProfileCommunicationConfig: FormGroup;
+  deviceProfileCommunicationConfig: UntypedFormGroup;
 
   @Input()
   disabled: boolean;
 
   private usedSpecType: SnmpSpecType[] = [];
   private valueChange$: Subscription = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: UntypedFormBuilder) { }
 
   ngOnInit(): void {
     this.deviceProfileCommunicationConfig = this.fb.group({
@@ -78,8 +78,8 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     this.destroy$.complete();
   }
 
-  communicationConfigFormArray(): FormArray {
-    return this.deviceProfileCommunicationConfig.get('communicationConfig') as FormArray;
+  communicationConfigFormArray(): UntypedFormArray {
+    return this.deviceProfileCommunicationConfig.get('communicationConfig') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -175,7 +175,7 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     });
   }
 
-  private createdFormGroup(value?: SnmpCommunicationConfig): FormGroup {
+  private createdFormGroup(value?: SnmpCommunicationConfig): UntypedFormGroup {
     if (isUndefinedOrNull(value)) {
       value = {
         spec: this.getFirstUnusedSeverity(),

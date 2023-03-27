@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-// tslint:disable-next-line:no-reference
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
 
 import { Inject, Injectable, NgZone } from '@angular/core';
@@ -25,7 +25,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   deleteNullProperties,
-  guid,
+  guid, hashCode,
   isDefined,
   isDefinedAndNotNull,
   isString,
@@ -403,6 +403,13 @@ export class UtilsService {
         index++;
       });
     });
+  }
+
+  public stringToHslColor(str: string, saturationPercentage: number, lightnessPercentage: number): string {
+    if (str && str.length) {
+      let hue = hashCode(str) % 360;
+      return `hsl(${hue}, ${saturationPercentage}%, ${lightnessPercentage}%)`;
+    }
   }
 
   public currentPerfTime(): number {

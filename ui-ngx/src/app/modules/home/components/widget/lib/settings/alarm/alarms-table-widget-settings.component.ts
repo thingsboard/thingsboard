@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
@@ -27,14 +27,14 @@ import { AppState } from '@core/core.state';
 })
 export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  alarmsTableWidgetSettingsForm: FormGroup;
+  alarmsTableWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.alarmsTableWidgetSettingsForm;
   }
 
@@ -51,6 +51,7 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       displayDetails: true,
       allowAcknowledgment: true,
       allowClear: true,
+      allowAssign: true,
       displayPagination: true,
       defaultPageSize: 10,
       defaultSortOrder: '-createdTime',
@@ -72,6 +73,8 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       displayDetails: [settings.displayDetails, []],
       allowAcknowledgment: [settings.allowAcknowledgment, []],
       allowClear: [settings.allowClear, []],
+      allowAssign: [settings.allowAssign, []],
+      displayComments: [settings.displayComments, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
       defaultSortOrder: [settings.defaultSortOrder, []],

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.apiusage;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -86,6 +88,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService<EntityId> implements TbApiUsageStateService {
 
     public static final String HOURLY = "Hourly";
@@ -105,6 +108,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private final ApiUsageStateService apiUsageStateService;
     private final TbTenantProfileCache tenantProfileCache;
     private final MailService mailService;
+    private final NotificationRuleProcessingService notificationRuleProcessingService;
     private final DbCallbackExecutorService dbExecutor;
 
     @Lazy
@@ -126,26 +130,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
 
     private final Lock updateLock = new ReentrantLock();
 
-    private final ExecutorService mailExecutor;
-
-    public DefaultTbApiUsageStateService(TbClusterService clusterService,
-                                         PartitionService partitionService,
-                                         TenantService tenantService,
-                                         TimeseriesService tsService,
-                                         ApiUsageStateService apiUsageStateService,
-                                         TbTenantProfileCache tenantProfileCache,
-                                         MailService mailService,
-                                         DbCallbackExecutorService dbExecutor) {
-        this.clusterService = clusterService;
-        this.partitionService = partitionService;
-        this.tenantService = tenantService;
-        this.tsService = tsService;
-        this.apiUsageStateService = apiUsageStateService;
-        this.tenantProfileCache = tenantProfileCache;
-        this.mailService = mailService;
-        this.mailExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("api-usage-svc-mail"));
-        this.dbExecutor = dbExecutor;
-    }
+    private final ExecutorService mailExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("api-usage-svc-mail"));
 
     @PostConstruct
     public void init() {
@@ -355,6 +340,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, VOID_CALLBACK);
 
         if (state.getEntityType() == EntityType.TENANT && !state.getEntityId().equals(TenantId.SYS_TENANT_ID)) {
+
             String email = tenantService.findTenantById(state.getTenantId()).getEmail();
             if (StringUtils.isNotEmpty(email)) {
                 result.forEach((apiFeature, stateValue) -> {

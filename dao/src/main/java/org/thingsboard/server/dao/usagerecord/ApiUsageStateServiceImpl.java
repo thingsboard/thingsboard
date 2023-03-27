@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -42,10 +43,11 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("ApiUsageStateDaoService")
 @Slf4j
 public class ApiUsageStateServiceImpl extends AbstractEntityService implements ApiUsageStateService {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -159,6 +161,16 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(id, "Incorrect apiUsageStateId " + id);
         return apiUsageStateDao.findById(tenantId, id.getId());
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findApiUsageStateById(tenantId, new ApiUsageStateId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.API_USAGE_STATE;
     }
 
 }

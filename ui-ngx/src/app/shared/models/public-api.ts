@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ export * from './error.models';
 export * from './event.models';
 export * from './login.models';
 export * from './material.models';
+export * from './notification.models';
+export * from './websocket/notification-ws.models';
+export * from './websocket/websocket.models';
 export * from './oauth2.models';
 export * from './queue.models';
 export * from './relation.models';
@@ -48,6 +51,7 @@ export * from './rule-node.models';
 export * from './settings.models';
 export * from './tenant.model';
 export * from './user.model';
+export * from './user-settings.models';
 export * from './widget.models';
 export * from './widgets-bundle.model';
 export * from './window-message.model';

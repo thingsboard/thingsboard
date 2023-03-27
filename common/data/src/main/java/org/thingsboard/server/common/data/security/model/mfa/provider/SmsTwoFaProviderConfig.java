@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import javax.validation.constraints.Pattern;
 @Data
 public class SmsTwoFaProviderConfig extends OtpBasedTwoFaProviderConfig {
 
-    @NotBlank(message = "verification message template is required")
-    @Pattern(regexp = ".*\\$\\{code}.*", message = "template must contain verification code")
+    @NotBlank(message = "is required")
+    @Pattern(regexp = ".*\\$\\{code}.*", message = "must contain verification code")
     private String smsVerificationMessageTemplate;
 
     @Override
