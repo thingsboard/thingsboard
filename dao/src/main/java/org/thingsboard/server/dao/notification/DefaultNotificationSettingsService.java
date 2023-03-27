@@ -124,18 +124,18 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             NotificationTarget sysAdmins = createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators");
             NotificationTarget affectedTenantAdmins = createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), "");
 
-            NotificationTemplate entitiesLimitNotificationTemplate = createTemplate(tenantId, "Entities limit notification", NotificationType.ENTITIES_LIMIT,
+            NotificationTemplate entitiesLimitNotificationTemplate = createTemplate(tenantId, "Entities count limit notification", NotificationType.ENTITIES_LIMIT,
                     "${entityType}s limit will be reached soon for tenant ${tenantName}",
                     "${entityType}s usage: ${currentCount}/${limit} (${percents}%)");
             EntitiesLimitNotificationRuleTriggerConfig entitiesLimitRuleTriggerConfig = new EntitiesLimitNotificationRuleTriggerConfig();
             entitiesLimitRuleTriggerConfig.setEntityTypes(null);
             entitiesLimitRuleTriggerConfig.setThreshold(0.8f);
-            createRule(tenantId, "Entities limit", entitiesLimitNotificationTemplate.getId(), entitiesLimitRuleTriggerConfig,
+            createRule(tenantId, "Entities count limit", entitiesLimitNotificationTemplate.getId(), entitiesLimitRuleTriggerConfig,
                     List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit");
             return;
         }
 
-        NotificationTarget originatorEntityOwnerUsers = createTarget(tenantId, "Users of rule trigger entity's owner", new OriginatorEntityOwnerUsersFilter(),
+        NotificationTarget originatorEntityOwnerUsers = createTarget(tenantId, "Users of the entity owner", new OriginatorEntityOwnerUsersFilter(),
                 "Customer users in case trigger entity (e.g. alarm) has customer, tenant admins otherwise");
         NotificationTarget affectedUser = createTarget(tenantId, "Affected user", new AffectedUserFilter(),
                 "If rule trigger is an action that affects some user (e.g. alarm assigned to user) - this user");
@@ -154,7 +154,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
         NotificationTemplate deviceActionNotificationTemplate = createTemplate(tenantId, "Device action notification", NotificationType.ENTITY_ACTION,
                 "${entityType} was ${actionType}",
-                "${entityType} '${entityName}' was ${actionType} by user ${originatorUserName}",
+                "${entityType} '${entityName}' was ${actionType} by user ${userEmail}",
                 "info", "Go to Device", "/devices/${entityId}");
         EntityActionNotificationRuleTriggerConfig deviceActionRuleTriggerConfig = new EntityActionNotificationRuleTriggerConfig();
         deviceActionRuleTriggerConfig.setEntityType(EntityType.DEVICE);
@@ -178,7 +178,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
         NotificationTemplate alarmCommentNotificationTemplate = createTemplate(tenantId, "Alarm comment notification", NotificationType.ALARM_COMMENT,
                 "Comment on '${alarmType}' alarm",
-                "${userName} ${action} comment: ${comment}",
+                "${userEmail} ${action} comment: ${comment}",
                 "people", null, null);
         AlarmCommentNotificationRuleTriggerConfig alarmCommentRuleTriggerConfig = new AlarmCommentNotificationRuleTriggerConfig();
         alarmCommentRuleTriggerConfig.setAlarmTypes(null);
@@ -192,7 +192,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
         NotificationTemplate alarmAssignedNotificationTemplate = createTemplate(tenantId, "Alarm assigned notification", NotificationType.ALARM_ASSIGNMENT,
                 "Alarm '${alarmType}' (${alarmSeverity}) was assigned to user",
-                "${userName} assigned alarm on ${alarmOriginatorEntityType} '${alarmOriginatorName}' to ${assigneeEmail}",
+                "${userEmail} assigned alarm on ${alarmOriginatorEntityType} '${alarmOriginatorName}' to ${assigneeEmail}",
                 "person", null, null);
         AlarmAssignmentNotificationRuleTriggerConfig alarmAssignmentRuleTriggerConfig = new AlarmAssignmentNotificationRuleTriggerConfig();
         alarmAssignmentRuleTriggerConfig.setAlarmTypes(null);
