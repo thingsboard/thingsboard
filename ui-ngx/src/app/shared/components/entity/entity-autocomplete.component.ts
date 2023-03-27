@@ -36,10 +36,10 @@ import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { isEqual } from '@core/utils';
+import {coerceBoolean} from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -70,8 +70,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
   searchText = '';
-
-  private requiredValue: boolean;
 
   private dirty = false;
 
@@ -119,14 +117,11 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
-  get required(): boolean {
-    return this.requiredValue;
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Output()
