@@ -71,7 +71,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       this.dirty = true;
     }
   }
-
   @Input()
   set entitySubtype(entitySubtype: string) {
     if (this.entitySubtypeValue !== entitySubtype) {
@@ -249,12 +248,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           break;
       }
     }
-    if (this.labelText && this.labelText.length) {
-      this.entityText = this.labelText;
-    }
-    if (this.requiredText && this.requiredText.length) {
-      this.entityRequiredText = this.requiredText;
-    }
     const currentEntity = this.getCurrentEntity();
     if (currentEntity) {
       const currentEntityType = currentEntity.id.entityType;
@@ -383,5 +376,19 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       }
     }
     return entityType;
+  }
+
+  get label(): string {
+    if (this.labelText && this.labelText.length) {
+      return this.labelText;
+    }
+    return this.entityText;
+  }
+
+  get requiredErrorText(): string {
+    if (this.requiredText && this.requiredText.length) {
+      return this.requiredText;
+    }
+    return this.entityRequiredText;
   }
 }
