@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -51,7 +51,7 @@ import { takeUntil } from 'rxjs/operators';
     }
   ]
 })
-export class KeyValMapComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
+export class KeyValMapComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 
   @Input() disabled: boolean;
 
