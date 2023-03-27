@@ -40,7 +40,8 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignm
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceInactivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
@@ -155,26 +156,27 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         NotificationTemplate deviceActionNotificationTemplate = createTemplate(tenantId, "Device action notification", NotificationType.ENTITY_ACTION,
                 "${entityType} was ${actionType}",
                 "${entityType} '${entityName}' was ${actionType} by user ${userEmail}",
-                "info", "Go to Device", "/devices/${entityId}");
+                "info", "Go to device", "/devices/${entityId}");
         EntityActionNotificationRuleTriggerConfig deviceActionRuleTriggerConfig = new EntityActionNotificationRuleTriggerConfig();
-        deviceActionRuleTriggerConfig.setEntityType(EntityType.DEVICE);
+        deviceActionRuleTriggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
         deviceActionRuleTriggerConfig.setCreated(true);
         deviceActionRuleTriggerConfig.setUpdated(false);
-        deviceActionRuleTriggerConfig.setDeleted(true);
-        createRule(tenantId, "Device created or deleted", deviceActionNotificationTemplate.getId(), deviceActionRuleTriggerConfig,
+        deviceActionRuleTriggerConfig.setDeleted(false);
+        createRule(tenantId, "Device created", deviceActionNotificationTemplate.getId(), deviceActionRuleTriggerConfig,
                 List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when device is created or deleted");
+                        "when device is created");
 
-        NotificationTemplate deviceInactivityNotificationTemplate = createTemplate(tenantId, "Device inactivity notification", NotificationType.DEVICE_INACTIVITY,
-                "Device '${deviceName}' inactive",
-                "Device '${deviceName}' with type '${deviceType}' became inactive",
-                "info", "Go to Device", "/devices/${deviceId}");
-        DeviceInactivityNotificationRuleTriggerConfig deviceInactivityRuleTriggerConfig = new DeviceInactivityNotificationRuleTriggerConfig();
-        deviceInactivityRuleTriggerConfig.setDevices(null);
-        deviceInactivityRuleTriggerConfig.setDeviceProfiles(null);
-        createRule(tenantId, "Device became inactive", deviceInactivityNotificationTemplate.getId(), deviceInactivityRuleTriggerConfig,
+        NotificationTemplate deviceActivityNotificationTemplate = createTemplate(tenantId, "Device activity notification", NotificationType.DEVICE_ACTIVITY,
+                "Device '${deviceName}' became ${eventType}",
+                "Device '${deviceName}' of type '${deviceType}' is now ${eventType}",
+                "info", "Go to device", "/devices/${deviceId}");
+        DeviceActivityNotificationRuleTriggerConfig deviceActivityRuleTriggerConfig = new DeviceActivityNotificationRuleTriggerConfig();
+        deviceActivityRuleTriggerConfig.setDevices(null);
+        deviceActivityRuleTriggerConfig.setDeviceProfiles(null);
+        deviceActivityRuleTriggerConfig.setNotifyOn(Set.of(DeviceEvent.ACTIVE, DeviceEvent.INACTIVE));
+        createRule(tenantId, "Device activity status change", deviceActivityNotificationTemplate.getId(), deviceActivityRuleTriggerConfig,
                 List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when any device became inactive");
+                        "when any device changes its activity state");
 
         NotificationTemplate alarmCommentNotificationTemplate = createTemplate(tenantId, "Alarm comment notification", NotificationType.ALARM_COMMENT,
                 "Comment on '${alarmType}' alarm",
@@ -205,7 +207,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         NotificationTemplate ruleEngineComponentLifecycleFailureNotificationTemplate = createTemplate(tenantId, "Rule chain/node lifecycle failure notification", NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
                 "${componentType} '${componentName}' failed to ${action}",
                 "Rule chain '${ruleChainName}' - ${action} failure:<br/>${error}",
-                "warning", "Go to Rule chain", "/ruleChains/${ruleChainId}");
+                "warning", "Go to rule chain", "/ruleChains/${ruleChainId}");
         RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig ruleEngineComponentLifecycleEventRuleTriggerConfig = new RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig();
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChains(null);
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChainEvents(Set.of(ComponentLifecycleEvent.STARTED, ComponentLifecycleEvent.UPDATED, ComponentLifecycleEvent.STOPPED));

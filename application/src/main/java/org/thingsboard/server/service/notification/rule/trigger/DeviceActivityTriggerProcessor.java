@@ -22,9 +22,10 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.info.DeviceInactivityNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.DeviceActivityNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceInactivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
@@ -34,12 +35,16 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<DeviceInactivityNotificationRuleTriggerConfig> {
+public class DeviceActivityTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<DeviceActivityNotificationRuleTriggerConfig> {
 
     private final TbDeviceProfileCache deviceProfileCache;
 
     @Override
-    public boolean matchesFilter(RuleEngineMsgTrigger trigger, DeviceInactivityNotificationRuleTriggerConfig triggerConfig) {
+    public boolean matchesFilter(RuleEngineMsgTrigger trigger, DeviceActivityNotificationRuleTriggerConfig triggerConfig) {
+        DeviceEvent event = trigger.getMsg().getType().equals(DataConstants.ACTIVITY_EVENT) ? DeviceEvent.ACTIVE : DeviceEvent.INACTIVE;
+        if (!triggerConfig.getNotifyOn().contains(event)) {
+            return false;
+        }
         DeviceId deviceId = (DeviceId) trigger.getMsg().getOriginator();
         if (CollectionUtils.isNotEmpty(triggerConfig.getDevices())) {
             return triggerConfig.getDevices().contains(deviceId.getId());
@@ -54,7 +59,8 @@ public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificati
     @Override
     public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
         TbMsg msg = trigger.getMsg();
-        return DeviceInactivityNotificationInfo.builder()
+        return DeviceActivityNotificationInfo.builder()
+                .eventType(trigger.getMsg().getType().equals(DataConstants.ACTIVITY_EVENT) ? "active" : "inactive")
                 .deviceId(msg.getOriginator().getId())
                 .deviceName(msg.getMetaData().getValue("deviceName"))
                 .deviceType(msg.getMetaData().getValue("deviceType"))
@@ -65,12 +71,12 @@ public class DeviceInactivityTriggerProcessor implements RuleEngineMsgNotificati
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.DEVICE_INACTIVITY;
+        return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }
 
     @Override
     public Set<String> getSupportedMsgTypes() {
-        return Set.of(DataConstants.INACTIVITY_EVENT);
+        return Set.of(DataConstants.ACTIVITY_EVENT, DataConstants.INACTIVITY_EVENT);
     }
 
 }

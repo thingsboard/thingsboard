@@ -15,7 +15,7 @@ Available template parameters:
   * *deviceName* - the device name;    
   * *deviceLabel* - the device label;    
   * *deviceType* - the device type;
-  * *actionType* - one of: 'inactive', 'active';    // TODO: fix and rename the type
+  * *eventType* - one of: 'inactive', 'active';
 
 Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
 You may also modify the value of the parameter with one of the suffixes:
@@ -50,7 +50,7 @@ Device 'Sensor T1' inactive
 The following template:
 
 ```text
-${deviceType:capitalize} '${deviceName}' became inactive
+${deviceType:capitalize} '${deviceName}' became ${eventType}
 {:copy-code}
 ```
 

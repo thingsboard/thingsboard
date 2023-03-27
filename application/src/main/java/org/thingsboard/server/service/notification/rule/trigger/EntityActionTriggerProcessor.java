@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
+
 @Service
 public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<EntityActionNotificationRuleTriggerConfig> {
 
@@ -51,7 +53,7 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
         } else {
             return false;
         }
-        return triggerConfig.getEntityType() == null || getEntityType(trigger.getMsg()) == triggerConfig.getEntityType();
+        return isEmpty(triggerConfig.getEntityTypes()) || triggerConfig.getEntityTypes().contains(getEntityType(trigger.getMsg()));
     }
 
     @Override

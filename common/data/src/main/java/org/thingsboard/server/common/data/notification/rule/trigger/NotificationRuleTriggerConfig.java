@@ -26,7 +26,7 @@ import java.io.Serializable;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType")
 @JsonSubTypes({
         @Type(value = AlarmNotificationRuleTriggerConfig.class, name = "ALARM"),
-        @Type(value = DeviceInactivityNotificationRuleTriggerConfig.class, name = "DEVICE_INACTIVITY"),
+        @Type(value = DeviceActivityNotificationRuleTriggerConfig.class, name = "DEVICE_INACTIVITY"),
         @Type(value = EntityActionNotificationRuleTriggerConfig.class, name = "ENTITY_ACTION"),
         @Type(value = AlarmCommentNotificationRuleTriggerConfig.class, name = "ALARM_COMMENT"),
         @Type(value = RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig.class, name = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT"),
