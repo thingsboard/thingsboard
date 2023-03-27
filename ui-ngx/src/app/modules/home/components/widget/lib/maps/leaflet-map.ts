@@ -503,13 +503,16 @@ export default abstract class LeafletMap {
           };
           navigator.geolocation.getCurrentPosition(
               position => {
-                this.browserLocation = [position.coords.latitude, position.coords.longitude]
-                this.map.panTo(this.browserLocation)
+                this.browserLocation = [position.coords.latitude, position.coords.longitude];
+                this.map.panTo(this.browserLocation);
+                this.bounds = map.getBounds();
               },
               () => {
                 if (this.options.useDefaultCenterPosition) {
                   this.map.panTo(this.options.parsedDefaultCenterPosition);
                   this.bounds = map.getBounds();
+                } else {
+                  this.bounds = new L.LatLngBounds(null, null);
                 }
               },
               options
