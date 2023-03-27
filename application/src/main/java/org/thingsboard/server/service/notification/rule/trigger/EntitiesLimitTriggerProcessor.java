@@ -18,7 +18,7 @@ package org.thingsboard.server.service.notification.rule.trigger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.notification.info.EntitiesLimitNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.notification.trigger.EntitiesLimitTrigger;
@@ -41,7 +41,7 @@ public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerPro
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(EntitiesLimitTrigger trigger, EntitiesLimitNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(EntitiesLimitTrigger trigger) {
         return EntitiesLimitNotificationInfo.builder()
                 .entityType(trigger.getEntityType())
                 .currentCount(trigger.getCurrentCount())

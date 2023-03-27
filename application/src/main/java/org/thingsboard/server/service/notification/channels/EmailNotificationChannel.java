@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.mail.MailExecutorService;
@@ -38,6 +39,16 @@ public class EmailNotificationChannel implements NotificationChannel<User, Email
             mailService.sendEmail(recipient.getTenantId(), recipient.getEmail(), processedTemplate.getSubject(), processedTemplate.getBody());
             return null;
         });
+    }
+
+    @Override
+    public boolean check(TenantId tenantId) {
+        try {
+            mailService.testConnection(tenantId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override

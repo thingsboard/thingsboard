@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.dao.notification.trigger;
 
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 public interface NotificationRuleTrigger {
 
     NotificationRuleTriggerType getType();
+
+    TenantId getTenantId();
 
     EntityId getOriginatorEntityId();
 

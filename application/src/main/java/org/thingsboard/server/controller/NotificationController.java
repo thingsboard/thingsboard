@@ -42,10 +42,10 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
-import org.thingsboard.server.common.data.notification.info.UserOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
+import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
@@ -187,9 +187,7 @@ public class NotificationController extends BaseController {
         checkEntity(notificationRequest.getId(), notificationRequest, NOTIFICATION);
 
         notificationRequest.setOriginatorEntityId(user.getId());
-        if (notificationRequest.getInfo() != null && !(notificationRequest.getInfo() instanceof UserOriginatedNotificationInfo)) {
-            throw new IllegalArgumentException("Unsupported notification info type");
-        }
+        notificationRequest.setInfo(null);
         notificationRequest.setRuleId(null);
         notificationRequest.setStatus(null);
         notificationRequest.setStats(null);
@@ -241,8 +239,8 @@ public class NotificationController extends BaseController {
         for (NotificationTarget target : targets) {
             int recipientsCount;
             if (target.getConfiguration().getType() == NotificationTargetType.PLATFORM_USERS) {
-                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null,
-                        target.getConfiguration(), new PageLink(recipientsPreviewSize));
+                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
+                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize));
                 recipientsCount = (int) recipients.getTotalElements();
                 for (User recipient : recipients.getData()) {
                     if (recipientsPreview.size() < recipientsPreviewSize) {

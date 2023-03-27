@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
+import org.thingsboard.server.dao.notification.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
@@ -28,7 +28,7 @@ public interface NotificationRuleTriggerProcessor<T extends NotificationRuleTrig
         return false;
     }
 
-    NotificationInfo constructNotificationInfo(T trigger, C triggerConfig);
+    RuleOriginatedNotificationInfo constructNotificationInfo(T trigger);
 
     NotificationRuleTriggerType getTriggerType();
 

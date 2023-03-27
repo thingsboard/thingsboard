@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.dao.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 @Data
 @Builder
@@ -30,6 +31,11 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
     @Override
     public NotificationRuleTriggerType getType() {
         return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
+    }
+
+    @Override
+    public TenantId getTenantId() {
+        return TenantId.SYS_TENANT_ID;
     }
 
     @Override

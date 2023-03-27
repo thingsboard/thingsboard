@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.notification.trigger;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Builder
 public class RuleEngineMsgTrigger implements NotificationRuleTrigger {
 
+    private final TenantId tenantId;
     private final TbMsg msg;
     private final NotificationRuleTriggerType triggerType;
 

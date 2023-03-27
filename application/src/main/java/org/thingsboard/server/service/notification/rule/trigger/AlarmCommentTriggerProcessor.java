@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -59,14 +59,16 @@ public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRu
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
         TbMsg msg = trigger.getMsg();
         AlarmComment comment = JacksonUtil.fromString(msg.getMetaData().getValue("comment"), AlarmComment.class);
         AlarmInfo alarmInfo = JacksonUtil.fromString(msg.getData(), AlarmInfo.class);
         return AlarmCommentNotificationInfo.builder()
                 .comment(comment.getComment().get("text").asText())
                 .action(msg.getType().equals(DataConstants.COMMENT_CREATED) ? "added" : "updated")
-                .userName(msg.getMetaData().getValue("userName"))
+                .userEmail(trigger.getMsg().getMetaData().getValue("userEmail"))
+                .userFirstName(trigger.getMsg().getMetaData().getValue("userFirstName"))
+                .userLastName(trigger.getMsg().getMetaData().getValue("userLastName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
                 .alarmOriginator(alarmInfo.getOriginator())

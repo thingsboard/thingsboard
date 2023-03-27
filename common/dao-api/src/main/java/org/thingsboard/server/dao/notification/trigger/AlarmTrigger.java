@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.notification.trigger;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 
@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 @Builder
 public class AlarmTrigger implements NotificationRuleTrigger {
 
+    private final TenantId tenantId;
     private final AlarmApiCallResult alarmUpdate;
 
     @Override

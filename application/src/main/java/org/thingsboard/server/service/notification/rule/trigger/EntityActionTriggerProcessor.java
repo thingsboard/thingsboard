@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -55,7 +55,7 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, EntityActionNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
         TbMsg msg = trigger.getMsg();
         String msgType = msg.getType();
         ActionType actionType = msgType.equals(DataConstants.ENTITY_CREATED) ? ActionType.ADDED :
@@ -65,8 +65,10 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
                 .entityId(msg.getOriginator())
                 .entityName(msg.getMetaData().getValue("entityName"))
                 .actionType(actionType)
-                .originatorUserId(UUID.fromString(msg.getMetaData().getValue("userId")))
-                .originatorUserName(msg.getMetaData().getValue("userName"))
+                .userId(UUID.fromString(msg.getMetaData().getValue("userId")))
+                .userEmail(trigger.getMsg().getMetaData().getValue("userEmail"))
+                .userFirstName(trigger.getMsg().getMetaData().getValue("userFirstName"))
+                .userLastName(trigger.getMsg().getMetaData().getValue("userLastName"))
                 .entityCustomerId(msg.getCustomerId())
                 .build();
     }

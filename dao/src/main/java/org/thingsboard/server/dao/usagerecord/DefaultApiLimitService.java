@@ -48,7 +48,7 @@ public class DefaultApiLimitService implements ApiLimitService {
             filter.setEntityType(entityType);
             long currentCount = entityService.countEntitiesByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), new EntityCountQuery(filter));
             if (notificationRuleProcessingService != null) {
-                notificationRuleProcessingService.process(tenantId, EntitiesLimitTrigger.builder()
+                notificationRuleProcessingService.process(EntitiesLimitTrigger.builder()
                         .tenantId(tenantId)
                         .entityType(entityType)
                         .currentCount(currentCount)

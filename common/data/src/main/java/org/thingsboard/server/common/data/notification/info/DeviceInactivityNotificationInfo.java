@@ -41,11 +41,6 @@ public class DeviceInactivityNotificationInfo implements RuleOriginatedNotificat
     private CustomerId deviceCustomerId;
 
     @Override
-    public CustomerId getOriginatorEntityCustomerId() {
-        return deviceCustomerId;
-    }
-
-    @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
                 "deviceId", deviceId.toString(),
@@ -53,6 +48,11 @@ public class DeviceInactivityNotificationInfo implements RuleOriginatedNotificat
                 "deviceLabel", deviceLabel,
                 "deviceType", deviceType
         );
+    }
+
+    @Override
+    public CustomerId getAffectedCustomerId() {
+        return deviceCustomerId;
     }
 
     @Override

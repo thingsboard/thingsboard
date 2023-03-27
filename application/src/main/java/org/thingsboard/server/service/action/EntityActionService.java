@@ -142,6 +142,13 @@ public class EntityActionService {
                 if (user != null) {
                     metaData.putValue("userId", user.getId().toString());
                     metaData.putValue("userName", user.getName());
+                    metaData.putValue("userEmail", user.getEmail());
+                    if (user.getFirstName() != null) {
+                        metaData.putValue("userFirstName", user.getFirstName());
+                    }
+                    if (user.getLastName() != null) {
+                        metaData.putValue("userLastName", user.getLastName());
+                    }
                 }
                 if (customerId != null && !customerId.isNullUid()) {
                     metaData.putValue("customerId", customerId.toString());
