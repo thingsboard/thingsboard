@@ -29,9 +29,13 @@
 </mat-progress-bar>
 <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
 <div mat-dialog-content>
-  <mat-horizontal-stepper [linear]="true" #addDeviceProfileStepper (selectionChange)="changeStep($event)">
+  <mat-horizontal-stepper [linear]="true"
+                          #addDeviceProfileStepper
+                          [labelPosition]="(stepperLabelPosition | async)"
+                          [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
     <mat-step [stepControl]="deviceProfileDetailsFormGroup">
-      <form [formGroup]="deviceProfileDetailsFormGroup" style="padding-bottom: 16px;">
+      <form [formGroup]="deviceProfileDetailsFormGroup">
         <ng-template matStepLabel>{{ 'device-profile.device-profile-details' | translate }}</ng-template>
         <fieldset [disabled]="isLoading$ | async">
           <mat-form-field class="mat-block">
