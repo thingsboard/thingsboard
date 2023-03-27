@@ -138,6 +138,53 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: guid(),
+            name: 'notification.inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          },
+          {
+            id: guid(),
+            name: 'notification.sent',
+            type: 'link',
+            path: '/notification/sent',
+            icon: 'outbox'
+          },
+          {
+            id: guid(),
+            name: 'notification.recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: guid(),
+            name: 'notification.templates',
+            type: 'link',
+            path: '/notification/templates',
+            icon: 'mdi:message-draw',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
+            name: 'notification.rules',
+            type: 'link',
+            path: '/notification/rules',
+            icon: 'mdi:message-cog',
+            isMdiIcon: true
+          }
+        ]
+      },
+      {
+        id: guid(),
         name: 'admin.settings',
         type: 'link',
         path: '/settings',
@@ -374,6 +421,13 @@ export class MenuService {
         type: 'link',
         path: '/customers',
         icon: 'supervisor_account'
+      },
+      {
+        id: guid(),
+        name: 'rulechain.rulechains',
+        type: 'link',
+        path: '/ruleChains',
+        icon: 'settings_ethernet'
       }
     );
     if (authState.edgesSupportEnabled) {
@@ -411,13 +465,6 @@ export class MenuService {
         path: '/features',
         icon: 'construction',
         pages: [
-          {
-            id: guid(),
-            name: 'rulechain.rulechains',
-            type: 'link',
-            path: '/features/ruleChains',
-            icon: 'settings_ethernet'
-          },
           {
             id: guid(),
             name: 'ota-update.ota-updates',
@@ -482,18 +529,18 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'notification.recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: guid(),
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
             icon: 'mdi:message-draw',
             isMdiIcon: true
-          },
-          {
-            id: guid(),
-            name: 'notification.recipients',
-            type: 'link',
-            path: '/notification/recipients',
-            icon: 'contacts'
           },
           {
             id: guid(),
@@ -788,6 +835,34 @@ export class MenuService {
         }
       );
     }
+    sections.push(
+      {
+        id: guid(),
+        name: 'dashboard.dashboards',
+        type: 'link',
+        path: '/dashboards',
+        icon: 'dashboard'
+      }
+    );
+    sections.push(
+      {
+        id: guid(),
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: guid(),
+            name: 'notification.inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          }
+        ]
+      }
+    );
     return sections;
   }
 

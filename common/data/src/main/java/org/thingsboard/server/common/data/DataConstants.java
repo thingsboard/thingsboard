@@ -77,6 +77,8 @@ public class DataConstants {
     public static final String ALARM_ASSIGN = "ALARM_ASSIGN";
     public static final String ALARM_UNASSIGN = "ALARM_UNASSIGN";
     public static final String ALARM_DELETE = "ALARM_DELETE";
+    public static final String COMMENT_CREATED = "COMMENT_CREATED";
+    public static final String COMMENT_UPDATED = "COMMENT_UPDATED";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";

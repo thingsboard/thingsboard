@@ -22,7 +22,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.thingsboard.common.util.CollectionsUtil;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;

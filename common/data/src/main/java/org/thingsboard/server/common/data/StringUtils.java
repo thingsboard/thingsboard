@@ -147,6 +147,15 @@ public class StringUtils {
         return org.apache.commons.lang3.StringUtils.equals(str1, str2);
     }
 
+    public static boolean equalsAny(String string, String... otherStrings) {
+        for (String otherString : otherStrings) {
+            if (equals(string, otherString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String substringAfterLast(String str, String sep) {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }

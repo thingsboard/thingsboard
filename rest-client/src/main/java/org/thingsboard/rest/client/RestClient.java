@@ -32,7 +32,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -56,6 +55,8 @@ import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -64,6 +65,8 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -82,6 +85,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -391,6 +395,10 @@ public class RestClient implements Closeable {
         }
     }
 
+    public SystemInfo getSystemInfo() {
+        return restTemplate.getForEntity(baseURL + "/api/admin/systemInfo", SystemInfo.class).getBody();
+    }
+
     public Optional<Alarm> getAlarmById(AlarmId alarmId) {
         try {
             ResponseEntity<Alarm> alarm = restTemplate.getForEntity(baseURL + "/api/alarm/{alarmId}", Alarm.class, alarmId.getId());
@@ -488,6 +496,29 @@ public class RestClient implements Closeable {
     @Deprecated
     public Alarm createAlarm(Alarm alarm) {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
+    }
+
+    public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
+        return restTemplate.postForEntity(baseURL + "/api/alarm/{alarmId}/comment", alarmComment, AlarmComment.class, alarmId.getId()).getBody();
+    }
+
+    public void deleteAlarmComment(AlarmId alarmId, AlarmCommentId alarmCommentId) {
+        restTemplate.delete(baseURL + "/api/alarm/{alarmId}/comment/{alarmCommentId}",
+                alarmId.getId(), alarmCommentId.getId());
+    }
+
+    public PageData<AlarmCommentInfo> getAlarmComments(AlarmId alarmId, PageLink pageLink) {
+        String urlSecondPart = "/api/alarm/{alarmId}/comment";
+        Map<String, String> params = new HashMap<>();
+        params.put("alarmId", alarmId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + urlSecondPart + "&" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmCommentInfo>>() {
+                },
+                params).getBody();
     }
 
     public Optional<Asset> getAssetById(AssetId assetId) {

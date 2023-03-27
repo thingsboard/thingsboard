@@ -185,7 +185,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
-            return AlarmApiCallResult.builder().alarm(alarm).successful(true).build();
+            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
         }
     }
 

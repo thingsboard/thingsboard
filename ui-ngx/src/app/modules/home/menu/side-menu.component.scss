@@ -47,7 +47,6 @@
       border-bottom: none;
     }
     &.tb-active {
-      font-weight: 500;
       background-color: rgba(255, 255, 255, .15);
     }
     mat-icon {
@@ -63,7 +62,6 @@
       white-space: nowrap;
       display: inline-flex;
       & > span {
-        letter-spacing: .03125em;
         overflow: hidden;
         text-overflow: ellipsis;
       }
