@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="stringItemsForm">
-  <mat-form-field fxFlex class="mat-block" [floatLabel]="floatLabel" [appearance]="appearance">
+  <mat-form-field fxFlex class="mat-block" [floatLabel]="floatLabel" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
     <mat-label *ngIf="label">{{ label }}</mat-label>
     <mat-chip-grid #itemsChipList formControlName="items" [required]="required">
       <mat-chip-row *ngFor="let item of stringItemsList"

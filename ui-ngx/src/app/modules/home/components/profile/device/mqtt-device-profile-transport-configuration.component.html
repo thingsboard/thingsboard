@@ -22,14 +22,14 @@
   <div *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
        class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
   <tb-string-items-list *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
-    editable
-    label="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate }}"
-    placeholder="{{'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate}}"
-    floatLabel="always"
-    formControlName="sparkplugAttributesMetricNames">
+                        editable
+                        label="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate }}"
+                        placeholder="{{'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate}}"
+                        hint="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"
+                        floatLabel="always"
+                        subscriptSizing="dynamic"
+                        formControlName="sparkplugAttributesMetricNames">
   </tb-string-items-list>
-  <div *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
-       class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"></div>
 </form>
 <form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value">
   <fieldset class="fields-group">
