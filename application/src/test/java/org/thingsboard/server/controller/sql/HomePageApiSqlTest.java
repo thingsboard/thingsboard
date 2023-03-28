@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.controller.sql;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+import org.thingsboard.server.controller.BaseHomePageApiTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-public interface TbServiceInfoProvider {
-
-    String getServiceId();
-
-    String getServiceType();
-
-    ServiceInfo getServiceInfo();
-
-    boolean isService(ServiceType serviceType);
-
-    ServiceInfo getServiceInfoWithCurrentSystemInfo();
-
+@DaoSqlTest
+public class HomePageApiSqlTest extends BaseHomePageApiTest {
 }

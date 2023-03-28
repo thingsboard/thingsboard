@@ -241,6 +241,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
+        entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -311,12 +312,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         EntityType entityType = resolveEntityType(query.getEntityFilter());
-        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType));
+        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType, TenantId.SYS_TENANT_ID.equals(tenantId)));
         if (query.getKeyFilters() == null || query.getKeyFilters().isEmpty()) {
             ctx.append("select count(e.id) from ");
             ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
             ctx.append(" e where ");
             ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
+
             return transactionTemplate.execute(status -> {
                 long startTs = System.currentTimeMillis();
                 try {
@@ -514,7 +516,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String buildPermissionQuery(QueryContext ctx, EntityFilter entityFilter) {
-        if(ctx.isIgnorePermissionCheck()){
+        if (ctx.isIgnorePermissionCheck()) {
             return "1=1";
         }
         switch (entityFilter.getType()) {
