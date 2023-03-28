@@ -37,6 +37,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EdgeService } from '@core/http/edge.service';
+import { MatFormFieldAppearance } from '@angular/material/form-field/form-field';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -70,6 +71,12 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  excludeSubTypes: Array<string>;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'legacy';
 
   @ViewChild('subTypeInput', {static: true}) subTypeInput: ElementRef;
 
@@ -238,9 +245,14 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
           break;
       }
       if (subTypesObservable) {
+        const excludeSubTypesSet = new Set(this.excludeSubTypes);
         this.subTypes = subTypesObservable.pipe(
           catchError(() => of([] as Array<EntitySubtype>)),
-          map(subTypes => subTypes.map(subType => subType.type)),
+          map(subTypes => {
+            const filteredSubTypes: Array<string> = [];
+            subTypes.forEach(subType => !excludeSubTypesSet.has(subType.type) && filteredSubTypes.push(subType.type));
+            return filteredSubTypes;
+          }),
           publishReplay(1),
           refCount()
         );

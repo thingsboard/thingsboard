@@ -42,7 +42,7 @@
                     icon="format_color_fill"
                     label="{{ 'widgets.gauge.major-ticks-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.minor-ticks-count</mat-label>
         <input matInput type="number" min="0" formControlName="minorTicks">
@@ -71,7 +71,7 @@
     <mat-slide-toggle formControlName="showBorder" class="slide-block">
       {{ 'widgets.gauge.show-plate-border' | translate }}
     </mat-slide-toggle>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <tb-color-input fxFlex
                       formControlName="colorBorder"
                       icon="format_color_fill"
@@ -89,7 +89,7 @@
       <mat-label translate>widgets.gauge.needle-circle-size</mat-label>
       <input matInput type="number" min="0" formControlName="needleCircleSize">
     </mat-form-field>
-    <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <tb-color-input fxFlex
                       formControlName="colorNeedle"
                       icon="format_color_fill"

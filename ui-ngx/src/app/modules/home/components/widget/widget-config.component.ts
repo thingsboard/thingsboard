@@ -255,7 +255,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     });
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
-      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]],
+      mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       mobileHide: [false],
       desktopHide: [false]
     });
