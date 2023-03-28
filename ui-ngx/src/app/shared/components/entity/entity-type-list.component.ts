@@ -24,8 +24,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
+import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { SubscriptSizing } from '@angular/material/form-field';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 interface EntityTypeInfo {
   name: string;
@@ -67,14 +69,18 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   disabled: boolean;
 
   @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
   allowedEntityTypes: Array<EntityType | AliasEntityType>;
 
   @Input()
+  @coerceBoolean()
   ignoreAuthorityFilter: boolean;
 
   @ViewChild('entityTypeInput') entityTypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityTypeAutocomplete') entityTypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   allEntityTypeList: Array<EntityTypeInfo> = [];
   entityTypeList: Array<EntityTypeInfo> = [];

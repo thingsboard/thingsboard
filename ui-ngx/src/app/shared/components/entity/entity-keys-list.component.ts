@@ -25,7 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isEqual } from '@core/utils';
@@ -33,7 +33,7 @@ import { isEqual } from '@core/utils';
 @Component({
   selector: 'tb-entity-keys-list',
   templateUrl: './entity-keys-list.component.html',
-  styleUrls: ['./entity-keys-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -78,7 +78,7 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
 
   @ViewChild('keyInput') keyInput: ElementRef<HTMLInputElement>;
   @ViewChild('keyAutocomplete') matAutocomplete: MatAutocomplete;
-  @ViewChild('chipList') chipList: MatChipList;
+  @ViewChild('chipList') chipList: MatChipGrid;
 
   filteredKeys: Observable<Array<string>>;
 

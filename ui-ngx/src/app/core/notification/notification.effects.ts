@@ -19,13 +19,13 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { map } from 'rxjs/operators';
 
 import { NotificationActions, NotificationActionTypes } from '@app/core/notification/notification.actions';
-import { NotificationService } from '@app/core/services/notification.service';
+import { ToastNotificationService } from '@core/services/toast-notification.service';
 
 @Injectable()
 export class NotificationEffects {
   constructor(
     private actions$: Actions<NotificationActions>,
-    private notificationService: NotificationService
+    private notificationService: ToastNotificationService
   ) {
   }
 

@@ -60,16 +60,9 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
     @Autowired
     private TenantService tenantService;
 
-    @Autowired
-    @Lazy
-    private TbTenantProfileCache tenantProfileCache;
-
     @Override
     protected void validateCreate(TenantId tenantId, RuleChain data) {
-        DefaultTenantProfileConfiguration profileConfiguration =
-                (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-        long maxRuleChains = profileConfiguration.getMaxRuleChains();
-        validateNumberOfEntitiesPerTenant(tenantId, ruleChainDao, maxRuleChains, EntityType.RULE_CHAIN);
+         validateNumberOfEntitiesPerTenant(tenantId, EntityType.RULE_CHAIN);
     }
 
     @Override

@@ -48,6 +48,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-device-profile-autocomplete',
@@ -64,6 +65,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   selectDeviceProfileFormGroup: UntypedFormGroup;
 
   modelValue: DeviceProfileId | null;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   selectDefaultProfile = false;

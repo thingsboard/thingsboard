@@ -520,6 +520,13 @@ export default abstract class LeafletMap {
         this.createdControlButtonTooltip();
     }
 
+    resetState() {
+      if (this.options.initDragMode) {
+        this.initDragModeIgnoreUpdateBoundsSet = false;
+        this.ignoreUpdateBounds = false;
+      }
+    }
+
     private createdControlButtonTooltip() {
       import('tooltipster').then(() => {
         if ($.tooltipster) {
@@ -841,7 +848,7 @@ export default abstract class LeafletMap {
         this.fitBounds(bounds);
       }
     }
-    if (this.options.initDragMode && !this.initDragModeIgnoreUpdateBoundsSet) {
+    if (this.options.initDragMode && !this.initDragModeIgnoreUpdateBoundsSet && bounds.isValid()) {
       this.initDragModeIgnoreUpdateBoundsSet = true;
       this.ignoreUpdateBounds = true;
     }

@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.user.UserDao;
-import org.thingsboard.server.service.mail.TestMailService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +53,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -106,12 +107,12 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService);
 
         resetTokens();
-        doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
+        doGet("/api/noauth/activate?activateToken={activateToken}", this.currentActivateToken)
                 .andExpect(status().isSeeOther())
-                .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
+                .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + this.currentActivateToken));
 
         JsonNode activateRequest = new ObjectMapper().createObjectNode()
-                .put("activateToken", TestMailService.currentActivateToken)
+                .put("activateToken", this.currentActivateToken)
                 .put("password", "testPassword");
 
         JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk()), JsonNode.class);
@@ -208,17 +209,19 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         doPost("/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest)
                 .andExpect(status().isOk());
         Thread.sleep(1000);
-        doGet("/api/noauth/resetPassword?resetToken={resetToken}", TestMailService.currentResetPasswordToken)
+        doGet("/api/noauth/resetPassword?resetToken={resetToken}", this.currentResetPasswordToken)
                 .andExpect(status().isSeeOther())
-                .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + TestMailService.currentResetPasswordToken));
+                .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + this.currentResetPasswordToken));
 
         JsonNode resetPasswordRequest = new ObjectMapper().createObjectNode()
-                .put("resetToken", TestMailService.currentResetPasswordToken)
+                .put("resetToken", this.currentResetPasswordToken)
                 .put("password", "testPassword2");
 
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
         JsonNode tokenInfo = readResponse(
                 doPost("/api/noauth/resetPassword", resetPasswordRequest)
                         .andExpect(status().isOk()), JsonNode.class);
+        Mockito.verify(mailService).sendPasswordWasResetEmail(anyString(), anyString());
         validateAndSetJwtToken(tokenInfo, email);
 
         doGet("/api/auth/user")

@@ -45,6 +45,7 @@ import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileDialogComponent, AssetProfileDialogData } from './asset-profile-dialog.component';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-asset-profile-autocomplete',
@@ -61,6 +62,9 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   selectAssetProfileFormGroup: UntypedFormGroup;
 
   modelValue: AssetProfileId | null;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   selectDefaultProfile = false;

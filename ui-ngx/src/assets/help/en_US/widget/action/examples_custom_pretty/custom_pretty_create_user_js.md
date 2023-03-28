@@ -94,7 +94,7 @@ let activationLinkDialogTemplate = `<form style="min-width: 400px; position: rel
   <mat-toolbar color="primary">
     <h2 translate>user.activation-link</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="close()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>

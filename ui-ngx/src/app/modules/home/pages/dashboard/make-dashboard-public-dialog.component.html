@@ -19,7 +19,7 @@
   <mat-toolbar fxLayout="row" color="primary">
     <h2>{{ 'dashboard.public-dashboard-title' | translate }}</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="close()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -34,7 +34,7 @@
     </span>
     <div fxLayout="row" fxLayoutAlign="start center">
       <pre class="tb-highlight" fxFlex><code>{{ publicLink }}</code></pre>
-      <button mat-button mat-icon-button
+      <button mat-icon-button
               ngxClipboard
               (cbOnSuccess)="onPublicLinkCopied($event)"
               cbContent="{{publicLink}}"

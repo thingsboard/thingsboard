@@ -67,6 +67,7 @@
         <jackson.version>2.13.4</jackson.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
         <fasterxml-classmate.version>1.3.4</fasterxml-classmate.version>
+        <auth0-jwt.version>4.2.1</auth0-jwt.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>3.0.0</californium.version>
         <leshan.version>2.0.0-M5</leshan.version>
@@ -85,7 +86,7 @@
         <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
-        <surefire.version>3.0.0-M6</surefire.version>
+        <surefire.version>3.0.0-M9</surefire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>3.0.4</springfox-swagger.version>
         <swagger-annotations.version>1.6.3</swagger-annotations.version>
@@ -126,7 +127,6 @@
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
-        <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
         <dbunit.version>2.7.2</dbunit.version>
         <java-websocket.version>1.5.2</java-websocket.version>
         <jupiter.version>5.8.2</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
@@ -147,8 +147,10 @@
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
         <selenium.version>4.6.0</selenium.version>
         <webdrivermanager.version>5.2.0</webdrivermanager.version>
-        <allure-testng.version>2.19.0</allure-testng.version>
-        <allure-maven.version>2.8</allure-maven.version>
+        <allure-testng.version>2.21.0</allure-testng.version>
+        <allure-maven.version>2.12.0</allure-maven.version>
+        <slack-api.version>1.12.1</slack-api.version>
+        <oshi.version>3.4.0</oshi.version>
     </properties>
 
     <modules>
@@ -659,7 +661,7 @@
                     <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
-                            --illegal-access=permit
+                            --illegal-access=permit -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
                         </argLine>
                     </configuration>
                 </plugin>
@@ -827,6 +829,7 @@
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
+                            <exclude>**/lwm2m-registry/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -1431,6 +1434,11 @@
                 <version>${fasterxml-classmate.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.auth0</groupId>
+                <artifactId>java-jwt</artifactId>
+                <version>${auth0-jwt.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.github.fge</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${json-schema-validator.version}</version>
@@ -1604,26 +1612,6 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>org.cassandraunit</groupId>
-                <artifactId>cassandra-unit</artifactId>
-                <version>${cassandra-unit.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-library</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
                 <version>${cassandra-all.version}</version>
@@ -1745,6 +1733,12 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>cassandra</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
@@ -1982,6 +1976,11 @@
                 <version>${aerogear-otp.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.slack.api</groupId>
+                <artifactId>slack-api-client</artifactId>
+                <version>${slack-api.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
                 <version>${jgit.version}</version>
@@ -1995,6 +1994,11 @@
                 <groupId>net.objecthunter</groupId>
                 <artifactId>exp4j</artifactId>
                 <version>${exp4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dblock</groupId>
+                <artifactId>oshi-core</artifactId>
+                <version>${oshi.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

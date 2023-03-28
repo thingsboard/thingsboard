@@ -19,12 +19,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminSettings, SmsProviderConfiguration } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { MatDialog } from '@angular/material/dialog';
 import { SendTestSmsDialogComponent, SendTestSmsDialogData } from '@home/pages/admin/send-test-sms-dialog.component';
+import { NotificationSettings } from '@shared/models/notification.models';
+import { deepTrim, isEmptyStr } from '@core/utils';
+import { NotificationService } from '@core/http/notification.service';
 
 @Component({
   selector: 'tb-sms-provider',
@@ -33,35 +36,46 @@ import { SendTestSmsDialogComponent, SendTestSmsDialogData } from '@home/pages/a
 })
 export class SmsProviderComponent extends PageComponent implements OnInit, HasConfirmForm {
 
-  smsProvider: UntypedFormGroup;
+  smsProvider: FormGroup;
   adminSettings: AdminSettings<SmsProviderConfiguration>;
+
+  notificationSettingsForm: FormGroup;
+  private notificationSettings: NotificationSettings;
 
   constructor(protected store: Store<AppState>,
               private router: Router,
               private adminService: AdminService,
+              private notificationService: NotificationService,
               private dialog: MatDialog,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store);
   }
 
   ngOnInit() {
     this.buildSmsProviderForm();
-    this.adminService.getAdminSettings<SmsProviderConfiguration>('sms', {ignoreErrors: true}).subscribe(
-      (adminSettings) => {
+    this.buildGeneralServerSettingsForm();
+    this.notificationService.getNotificationSettings().subscribe(
+      (settings) => {
+        this.notificationSettings = settings;
+        this.notificationSettingsForm.reset(this.notificationSettings);
+      }
+    );
+    this.adminService.getAdminSettings<SmsProviderConfiguration>('sms', {ignoreErrors: true}).subscribe({
+      next: adminSettings => {
         this.adminSettings = adminSettings;
         this.smsProvider.reset({configuration: this.adminSettings.jsonValue});
       },
-      () => {
+      error: () => {
         this.adminSettings = {
           key: 'sms',
           jsonValue: null
         };
         this.smsProvider.reset({configuration: this.adminSettings.jsonValue});
       }
-    );
+    });
   }
 
-  buildSmsProviderForm() {
+  private buildSmsProviderForm() {
     this.smsProvider = this.fb.group({
       configuration: [null, [Validators.required]]
     });
@@ -88,8 +102,38 @@ export class SmsProviderComponent extends PageComponent implements OnInit, HasCo
     );
   }
 
-  confirmForm(): UntypedFormGroup {
-    return this.smsProvider;
+  confirmForm(): FormGroup {
+    return this.smsProvider.dirty ? this.smsProvider : this.notificationSettingsForm;
+  }
+
+  private buildGeneralServerSettingsForm() {
+    this.notificationSettingsForm = this.fb.group({
+      deliveryMethodsConfigs: this.fb.group({
+        SLACK: this.fb.group({
+          botToken: ['']
+        })
+      })
+    });
+  }
+
+  saveNotification(): void {
+    this.notificationSettings = deepTrim({
+      ...this.notificationSettings,
+      ...this.notificationSettingsForm.value
+    });
+    // eslint-disable-next-line guard-for-in
+    for (const method in this.notificationSettings.deliveryMethodsConfigs) {
+      const keys = Object.keys(this.notificationSettings.deliveryMethodsConfigs[method]);
+      if (keys.some(item => isEmptyStr(this.notificationSettings.deliveryMethodsConfigs[method][item]))) {
+        delete this.notificationSettings.deliveryMethodsConfigs[method];
+      } else {
+        this.notificationSettings.deliveryMethodsConfigs[method].method = method;
+      }
+    }
+    this.notificationService.saveNotificationSettings(this.notificationSettings).subscribe(setting => {
+      this.notificationSettings = setting;
+      this.notificationSettingsForm.reset(this.notificationSettings);
+    });
   }
 
 }
