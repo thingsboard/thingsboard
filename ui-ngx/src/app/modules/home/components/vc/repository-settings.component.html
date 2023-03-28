@@ -74,6 +74,7 @@
                 <input matInput formControlName="password" type="password"
                        placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
                 <tb-toggle-password matSuffix></tb-toggle-password>
+                <mat-hint [innerHTML] = "'admin.auth-method-username-password-hint' | translate"></mat-hint>
               </mat-form-field>
             </section>
             <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
