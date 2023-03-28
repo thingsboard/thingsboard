@@ -55,6 +55,11 @@
                 "output": "/"
               },
               {
+                "glob": "**/*",
+                "input": "node_modules/tinymce",
+                "output": "/assets/tinymce/"
+              },
+              {
                 "glob": "marker-icon-2x.png",
                 "input": "node_modules/leaflet/dist/images/",
                 "output": "/"

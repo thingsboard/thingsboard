@@ -44,6 +44,7 @@ public class ModelConstants {
     public static final String ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String DEVICE_ID_PROPERTY = "device_id";
     public static final String TITLE_PROPERTY = "title";
+    public static final String NAME_PROPERTY = "name";
     public static final String ALIAS_PROPERTY = "alias";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
@@ -674,6 +675,45 @@ public class ModelConstants {
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
 
+    /**
+     * Notification constants
+     * */
+
+    public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
+    public static final String NOTIFICATION_TARGET_CONFIGURATION_PROPERTY = "configuration";
+
+    public static final String NOTIFICATION_TABLE_NAME = "notification";
+    public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
+    public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
+    public static final String NOTIFICATION_TYPE_PROPERTY = "type";
+    public static final String NOTIFICATION_SUBJECT_PROPERTY = "subject";
+    public static final String NOTIFICATION_TEXT_PROPERTY = "body";
+    public static final String NOTIFICATION_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+    public static final String NOTIFICATION_STATUS_PROPERTY = "status";
+
+    public static final String NOTIFICATION_REQUEST_TABLE_NAME = "notification_request";
+    public static final String NOTIFICATION_REQUEST_TARGETS_PROPERTY = "targets";
+    public static final String NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY = "template_id";
+    public static final String NOTIFICATION_REQUEST_TEMPLATE_PROPERTY = "template";
+    public static final String NOTIFICATION_REQUEST_INFO_PROPERTY = "info";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY = "originator_entity_id";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_TYPE_PROPERTY = "originator_entity_type";
+    public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+    public static final String NOTIFICATION_REQUEST_STATUS_PROPERTY = "status";
+    public static final String NOTIFICATION_REQUEST_RULE_ID_PROPERTY = "rule_id";
+    public static final String NOTIFICATION_REQUEST_STATS_PROPERTY = "stats";
+
+    public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
+    public static final String NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY = "template_id";
+    public static final String NOTIFICATION_RULE_TRIGGER_TYPE_PROPERTY = "trigger_type";
+    public static final String NOTIFICATION_RULE_TRIGGER_CONFIG_PROPERTY = "trigger_config";
+    public static final String NOTIFICATION_RULE_RECIPIENTS_CONFIG_PROPERTY = "recipients_config";
+    public static final String NOTIFICATION_RULE_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+
+    public static final String NOTIFICATION_TEMPLATE_TABLE_NAME = "notification_template";
+    public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
+    public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
+
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN), max(TS_COLUMN)};
@@ -720,4 +760,5 @@ public class ModelConstants {
                 throw new RuntimeException("Aggregation type: " + aggregation + " is not supported!");
         }
     }
+
 }

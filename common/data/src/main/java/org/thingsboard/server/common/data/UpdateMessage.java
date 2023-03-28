@@ -25,7 +25,8 @@ public class UpdateMessage {
 
     @ApiModelProperty(position = 1, value = "The message about new platform update available.")
     private final String message;
-    @ApiModelProperty(position = 1, value = "'True' if new platform update is available.")
+    @ApiModelProperty(position = 2, value = "'True' if new platform update is available.")
     private final boolean isUpdateAvailable;
-
+    @ApiModelProperty(position = 3, value = "Current ThingsBoard version.")
+    private final String currentVersion;
 }

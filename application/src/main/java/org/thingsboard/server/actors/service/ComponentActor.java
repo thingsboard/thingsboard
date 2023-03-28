@@ -25,6 +25,7 @@ import org.thingsboard.server.actors.stats.StatsPersistMsg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
@@ -82,7 +83,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     }
 
     @Override
-    public void destroy() {
+    public void destroy(TbActorStopReason stopReason, Throwable cause) {
         try {
             log.debug("[{}][{}][{}] Stopping processor.", tenantId, id, id.getEntityType());
             if (processor != null) {
@@ -181,9 +182,10 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         logLifecycleEvent(event, null);
     }
 
-    private void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
+    protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         systemContext.persistLifecycleEvent(tenantId, id, event, e);
     }
 
     protected abstract long getErrorPersistFrequency();
+
 }

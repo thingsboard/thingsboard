@@ -14,33 +14,35 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, ComponentRef, OnInit, Type, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { WINDOW } from '@core/services/window.service';
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/services/menu.service';
 import { distinctUntilChanged, filter, map, mergeMap, take } from 'rxjs/operators';
 import { merge } from 'rxjs';
 import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
+import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 
 @Component({
   selector: 'tb-router-tabs',
   templateUrl: './router-tabs.component.html',
   styleUrls: ['./router-tabs.component.scss']
 })
-export class RouterTabsComponent extends PageComponent {
+export class RouterTabsComponent extends PageComponent implements OnInit {
+
+  @ViewChild('tabsHeaderComponent', {static: true}) tabsHeaderComponentAnchor: TbAnchorComponent;
+
+  tabsHeaderComponentRef: ComponentRef<any>;
 
   hideCurrentTabs = false;
 
   tabs$ = merge(this.menuService.menuSections(),
     this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd ),
-      distinctUntilChanged()
-    )
+      distinctUntilChanged())
   ).pipe(
     mergeMap(() => this.menuService.menuSections().pipe(take(1))),
     map((sections) => this.buildTabs(this.activatedRoute, sections))
@@ -50,10 +52,14 @@ export class RouterTabsComponent extends PageComponent {
               private activatedRoute: ActivatedRoute,
               public router: Router,
               private menuService: MenuService,
-              private activeComponentService: ActiveComponentService,
-              @Inject(WINDOW) private window: Window,
-              public breakpointObserver: BreakpointObserver) {
+              private activeComponentService: ActiveComponentService) {
     super(store);
+  }
+
+  ngOnInit() {
+    this.activatedRoute.data.subscribe(
+      (data) => this.buildTabsHeaderComponent(data)
+    );
   }
 
   activeComponentChanged(activeComponent: any) {
@@ -101,6 +107,19 @@ export class RouterTabsComponent extends PageComponent {
       }
     }
     return null;
+  }
+
+  private buildTabsHeaderComponent(snapshotData: any) {
+    const viewContainerRef = this.tabsHeaderComponentAnchor.viewContainerRef;
+    if (this.tabsHeaderComponentRef) {
+      this.tabsHeaderComponentRef.destroy();
+      this.tabsHeaderComponentRef = null;
+      viewContainerRef.clear();
+    }
+    const tabsHeaderComponentType: Type<any> = snapshotData.routerTabsHeaderComponent;
+    if (tabsHeaderComponentType) {
+      this.tabsHeaderComponentRef = viewContainerRef.createComponent(tabsHeaderComponentType, {index: 0});
+    }
   }
 
 }
