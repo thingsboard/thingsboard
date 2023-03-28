@@ -21,24 +21,15 @@
   </mat-checkbox>
   <div *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
        class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
-  <mat-form-field floatLabel="always" class="mat-block" style="padding-top: 8px;"
-                  *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value">
-    <mat-label translate>device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names</mat-label>
-    <mat-chip-grid #attrMetricNamesChipList formControlName="sparkplugAttributesMetricNames">
-      <mat-chip-row
-        *ngFor="let name of mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplugAttributesMetricNames').value;"
-        (removed)="removeAttributeMetricName(name)">
-        {{name}}
-        <mat-icon matChipRemove>close</mat-icon>
-      </mat-chip-row>
-      <input matInput type="text" placeholder="{{'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate}}"
-             [matChipInputFor]="attrMetricNamesChipList"
-             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-             matChipInputAddOnBlur
-             (matChipInputTokenEnd)="addAttributeMetricName($event)">
-    </mat-chip-grid>
-    <mat-hint innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"></mat-hint>
-  </mat-form-field>
+  <tb-string-items-list *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
+                        editable
+                        label="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate }}"
+                        placeholder="{{'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate}}"
+                        hint="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"
+                        floatLabel="always"
+                        subscriptSizing="dynamic"
+                        formControlName="sparkplugAttributesMetricNames">
+  </tb-string-items-list>
 </form>
 <form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value">
   <fieldset class="fields-group">
