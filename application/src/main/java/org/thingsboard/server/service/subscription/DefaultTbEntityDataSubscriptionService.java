@@ -95,7 +95,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private final Map<String, Map<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
     @Autowired
-    @Lazy
     private WebSocketService wsService;
 
     @Autowired
