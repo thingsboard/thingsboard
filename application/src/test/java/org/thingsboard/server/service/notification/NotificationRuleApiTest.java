@@ -132,7 +132,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
 
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
-        triggerConfig.setEntityType(EntityType.DEVICE);
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
         triggerConfig.setCreated(true);
         triggerConfig.setUpdated(true);
         triggerConfig.setDeleted(true);

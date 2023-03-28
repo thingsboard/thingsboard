@@ -156,7 +156,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delayInSec, targets);
                 notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest);
             } catch (Exception e) {
-                log.error("Failed to process notification request for rule {}", rule.getId(), e);
+                log.error("Failed to process notification request for tenant {} for rule {}", rule.getTenantId(), rule.getId(), e);
             }
         });
     }

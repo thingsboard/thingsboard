@@ -27,7 +27,8 @@ public enum NotificationRuleTriggerType {
     RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
     ALARM_ASSIGNMENT,
     NEW_PLATFORM_VERSION(false),
-    ENTITIES_LIMIT(false);
+    ENTITIES_LIMIT(false),
+    API_USAGE_LIMIT(false);
 
     private final boolean tenantLevel;
 

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignm
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
+import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
@@ -132,7 +134,16 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             entitiesLimitRuleTriggerConfig.setEntityTypes(null);
             entitiesLimitRuleTriggerConfig.setThreshold(0.8f);
             createRule(tenantId, "Entities count limit", entitiesLimitNotificationTemplate.getId(), entitiesLimitRuleTriggerConfig,
-                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit");
+                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins and system admins when count of entities of some type reached 80% threshold of the limit");
+
+            NotificationTemplate apiUsageLimitNotificationTemplate = createTemplate(tenantId, "API usage limit notification", NotificationType.API_USAGE_LIMIT,
+                    "${feature} feature - ${status:upperCase}",
+                    "Tenant '${tenantName}': usage - ${currentValue} out of ${limit} ${unitLabel}s");
+            ApiUsageLimitNotificationRuleTriggerConfig apiUsageLimitRuleTriggerConfig = new ApiUsageLimitNotificationRuleTriggerConfig();
+            apiUsageLimitRuleTriggerConfig.setApiFeatures(null);
+            apiUsageLimitRuleTriggerConfig.setNotifyOn(Set.of(ApiUsageStateValue.WARNING, ApiUsageStateValue.DISABLED));
+            createRule(tenantId, "API usage limit", apiUsageLimitNotificationTemplate.getId(), apiUsageLimitRuleTriggerConfig,
+                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins and system admins when API feature usage state changed");
             return;
         }
 

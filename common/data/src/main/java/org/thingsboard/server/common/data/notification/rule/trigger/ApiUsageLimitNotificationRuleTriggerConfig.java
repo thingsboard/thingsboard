@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
+
+import java.util.Set;
 
 @Data
-public class ApiUsageStateMailMessage {
-    private final ApiUsageRecordKey key;
-    private final long threshold;
-    private final long value;
+public class ApiUsageLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    private Set<ApiFeature> apiFeatures;
+    private Set<ApiUsageStateValue> notifyOn;
+
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.API_USAGE_LIMIT;
+    }
+
 }
