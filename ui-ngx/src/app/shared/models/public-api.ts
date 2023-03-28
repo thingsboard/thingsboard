@@ -20,6 +20,7 @@ export * from './telemetry/telemetry.models';
 export * from './time/time.models';
 export * from './alarm.models';
 export * from './alias.models';
+export * from './api-usage.models';
 export * from './asset.models';
 export * from './audit-log.models';
 export * from './authority.enum';

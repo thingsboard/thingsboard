@@ -342,14 +342,14 @@
             </div>
           </div>
           <mat-divider class="divider"></mat-divider>
-          <div class="details-recipients">
-            <div *ngFor="let user of preview.recipientsPreview" class="details-recipient">
-              <span *ngIf="(user.firstName || user.lastName); else email">{{ user.firstName }}&nbsp;{{ user.lastName }} ({{ user.email }})</span>
+          <mat-chip-listbox>
+            <mat-chip *ngFor="let user of preview.recipientsPreview">
+              <span *ngIf="(user.firstName || user.lastName); else email">{{ user.firstName }}&nbsp;{{ user.lastName }}</span>
               <ng-template #email>
                 {{ user.email }}
               </ng-template>
-            </div>
-          </div>
+            </mat-chip>
+          </mat-chip-listbox>
         </section>
       </div>
     </mat-step>

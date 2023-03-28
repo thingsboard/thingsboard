@@ -441,6 +441,42 @@
       </form>
     </mat-step>
 
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.API_USAGE_LIMIT"
+              [stepControl]="apiUsageLimitTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.api-usage-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="apiUsageLimitTemplateForm">
+        <section formGroupName="triggerConfig">
+          <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
+            <mat-label translate>api-usage.api-features</mat-label>
+            <mat-select formControlName="apiFeatures" multiple>
+              <mat-option *ngFor="let apiFeature of apiFeatures" [value]="apiFeature">
+                {{ apiFeatureTranslationMap.get(apiFeature) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>{{ 'notification.api-feature-hint' | translate }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let apiUsageStateValue of apiUsageStateValues" [value]="apiUsageStateValue">
+                {{ apiUsageStateValueTranslationMap.get(apiUsageStateValue) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="apiUsageLimitTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>
