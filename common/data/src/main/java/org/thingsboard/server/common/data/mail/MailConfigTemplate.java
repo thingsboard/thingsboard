@@ -52,7 +52,7 @@ public class MailConfigTemplate extends SearchTextBasedWithAdditionalInfo<MailCo
     private Integer timeout;
     @Length(fieldName = "enableTls")
     @ApiModelProperty(value = "Tls settings (e.g. true/false)", required = true)
-    private Boolean tlsEnabled;
+    private Boolean enableTls;
     @Length(fieldName = "tlsVersion")
     @ApiModelProperty(value = "Tls version (e.g. TLSv1.2)", required = true)
     private String tlsVersion;

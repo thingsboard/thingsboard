@@ -70,7 +70,7 @@ public class MailConfigTemplateEntity extends BaseSqlEntity<MailConfigTemplate> 
         this.smtpHost = mailConfigTemplate.getSmtpHost();
         this.smtpPort = mailConfigTemplate.getSmtpPort();
         this.timeout = mailConfigTemplate.getTimeout();
-        this.tlsEnabled = mailConfigTemplate.getTlsEnabled();
+        this.tlsEnabled = mailConfigTemplate.getEnableTls();
         this.tlsVersion = mailConfigTemplate.getTlsVersion();
         this.authorizationUri = mailConfigTemplate.getAuthorizationUri();
         this.tokenUri = mailConfigTemplate.getAccessTokenUri();
@@ -88,7 +88,7 @@ public class MailConfigTemplateEntity extends BaseSqlEntity<MailConfigTemplate> 
         mailConfigTemplate.setSmtpHost(smtpHost);
         mailConfigTemplate.setSmtpPort(smtpPort);
         mailConfigTemplate.setTimeout(timeout);
-        mailConfigTemplate.setTlsEnabled(tlsEnabled);
+        mailConfigTemplate.setEnableTls(tlsEnabled);
         mailConfigTemplate.setTlsVersion(tlsVersion);
         mailConfigTemplate.setAuthorizationUri(authorizationUri);
         mailConfigTemplate.setAccessTokenUri(tokenUri);

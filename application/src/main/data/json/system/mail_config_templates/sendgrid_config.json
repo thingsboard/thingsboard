@@ -1,5 +1,5 @@
 {
-  "providerId": "SendGrid",
+  "providerId": "SENDGRID",
   "smtpProtocol": "SMTPS",
   "smtpHost": "smtp.sendgrid.net",
   "smtpPort": 465,

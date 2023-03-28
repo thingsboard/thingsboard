@@ -1,5 +1,5 @@
 {
-  "providerId": "Google",
+  "providerId": "GOOGLE",
   "smtpProtocol": "SMTPS",
   "smtpHost": "smtp.gmail.com",
   "smtpPort": 465,
