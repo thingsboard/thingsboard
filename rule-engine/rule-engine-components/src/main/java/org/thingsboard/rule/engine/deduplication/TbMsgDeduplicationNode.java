@@ -51,7 +51,9 @@ import java.util.concurrent.TimeUnit;
         nodeDetails = "Rule node allows you to select one of the following strategy to deduplicate messages: <br></br>" +
                 "<b>FIRST</b> - return first message that arrived during deduplication period.<br></br>" +
                 "<b>LAST</b> - return last message that arrived during deduplication period.<br></br>" +
-                "<b>ALL</b> - return all messages as a single JSON array message. Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>",
+                "<b>ALL</b> - return all messages as a single JSON array message. Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>" +
+                "<b>Important note:</b> If the incoming message is processed in the queue with a sequential processing strategy configured, " +
+                "the message acknowledgment that used in the rule node logic will trigger the next message to be processed by the queue.",
         icon = "content_copy",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDeduplicationConfig"
@@ -169,7 +171,15 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
                         }
                     }
                     if (resultMsg != null) {
-                        deduplicationResults.add(new TbPair<>(resultMsg, pack));
+                        TbMsg newMsg = TbMsg.newMsg(
+                                resultMsg.getQueueName(),
+                                resultMsg.getType(),
+                                resultMsg.getOriginator(),
+                                resultMsg.getCustomerId(),
+                                resultMsg.getMetaData(),
+                                resultMsg.getData()
+                        );
+                        deduplicationResults.add(new TbPair<>(newMsg, pack));
                     }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
