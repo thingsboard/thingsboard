@@ -19,8 +19,8 @@
   <mat-tab label="{{ 'widget-config.data' | translate }}" *ngIf="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
       <div *ngIf="displayTimewindowConfig()" fxFlex="100"
-           fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
-        <div fxLayout="column" fxLayoutGap="8px" fxFlex.gt-xs>
+           fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
+        <div fxLayout="column" fxFlex.gt-xs>
           <mat-checkbox formControlName="useDashboardTimewindow">
             {{ 'widget-config.use-dashboard-timewindow' | translate }}
           </mat-checkbox>
@@ -29,7 +29,7 @@
           </mat-checkbox>
         </div>
         <section fxLayout="row" fxLayoutAlign="start center" fxLayout.lt-lg="column" fxLayoutAlign.lt-lg="center start"
-                 fxFlex.gt-xs style="margin-bottom: 16px;">
+                 fxFlex.gt-xs>
           <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate
                 style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
@@ -43,7 +43,7 @@
       </div>
       <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
         <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
-             fxLayoutGap="8px">
+             fxLayoutGap.gt-xs="8px">
           <mat-form-field fxFlex class="mat-block" floatLabel="always">
             <mat-label translate>alarm.alarm-status-list</mat-label>
             <mat-select formControlName="alarmStatusList" multiple
@@ -63,8 +63,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
-             fxLayoutGap="8px">
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center">
           <mat-form-field fxFlex class="mat-block" floatLabel="always">
             <mat-label translate>alarm.alarm-type-list</mat-label>
             <mat-chip-grid #alarmTypeChipList formControlName="alarmTypeList">
@@ -355,7 +354,7 @@
           <mat-slide-toggle class="mat-slide" formControlName="showTitle">
             {{ 'widget-config.display-title' | translate }}
           </mat-slide-toggle>
-          <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px">
+          <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
             <mat-form-field fxFlex>
               <mat-label translate>widget-config.title</mat-label>
               <input matInput formControlName="title">
@@ -365,12 +364,12 @@
               <input matInput formControlName="titleTooltip">
             </mat-form-field>
           </div>
-          <fieldset class="fields-group" fxLayoutGap="8px" style="margin: 0">
+          <fieldset class="fields-group" fxLayoutGap.gt-xs="8px" style="margin: 0">
             <legend class="group-title" translate>widget-config.title-icon</legend>
             <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
               {{ 'widget-config.display-icon' | translate }}
             </mat-slide-toggle>
-            <div fxLayout.xs="column" fxLayout="row wrap" fxLayoutGap="8px">
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
               <tb-material-icon-select fxFlex
                                        formControlName="titleIcon">
               </tb-material-icon-select>
@@ -404,8 +403,8 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widget-config.widget-style</legend>
-          <div fxLayout="column" fxLayout.gt-md="row wrap" fxFlex fxLayoutGap="8px" class="tb-widget-style">
-            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxFlex>
+          <div fxLayout="column" fxLayout.gt-md="row wrap" fxFlex fxLayoutGap.gt-xs="8px" class="tb-widget-style">
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
               <tb-color-input fxFlex
                               label="{{'widget-config.background-color' | translate}}"
                               icon="format_color_fill"
@@ -419,7 +418,7 @@
                               formControlName="color">
               </tb-color-input>
             </div>
-            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
               <mat-form-field fxFlex>
                 <mat-label translate>widget-config.padding</mat-label>
                 <input matInput formControlName="padding">
@@ -477,8 +476,8 @@
         <fieldset [formGroup]="layoutSettings" class="fields-group fields-group-slider">
           <legend class="group-title" translate>widget-config.mobile-mode-settings</legend>
           <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header>
-              <mat-panel-title fxLayout.xs="column" fxLayoutAlign.xs="center start" fxLayout="row" fxLayoutGap="8px" fxFlex="70">
+            <mat-expansion-panel-header style="height: fit-content;">
+              <mat-panel-title fxLayout.xs="column" fxLayoutAlign.xs="center start" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex="70">
                 <mat-slide-toggle formControlName="mobileHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
                   {{ 'widget-config.mobile-hide' | translate }}
                 </mat-slide-toggle>
@@ -491,7 +490,7 @@
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxFlex>
+              <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
                 <mat-form-field fxFlex>
                   <mat-label translate>widget-config.order</mat-label>
                   <input matInput formControlName="mobileOrder" type="number" step="1">

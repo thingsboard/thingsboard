@@ -45,7 +45,7 @@
     <div fxLayout="column" fxLayoutGap="0.5em">
       <mat-divider></mat-divider>
       <section class="tb-widget-settings" fxLayout="column">
-        <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.gpio.pin</mat-label>
             <input required matInput type="number" min="1" step="1" formControlName="pin">
@@ -55,7 +55,7 @@
             <input required matInput formControlName="label">
           </mat-form-field>
         </section>
-        <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.gpio.row</mat-label>
             <input required matInput type="number" min="0" step="1" formControlName="row">
