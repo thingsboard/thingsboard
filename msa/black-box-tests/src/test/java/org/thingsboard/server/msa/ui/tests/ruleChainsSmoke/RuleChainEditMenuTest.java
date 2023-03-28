@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -54,8 +56,10 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Change name by edit menu")
     public void changeName() {
         String newRuleChainName = "Changed" + getRandomNumber();
         String ruleChainName = ENTITY_NAME + random();
@@ -77,8 +81,10 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(newRuleChainName, nameAfter);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Delete name and save")
     public void deleteName() {
         String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
@@ -92,8 +98,10 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertFalse(ruleChainsPage.doneBtnEditViewVisible().isEnabled());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Save only with space")
     public void saveOnlyWithSpace() {
         String ruleChainName = ENTITY_NAME +random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
@@ -110,8 +118,10 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(ruleChainsPage.warningMessage().getText(), EMPTY_RULE_CHAIN_MESSAGE);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
-    @Description
+    @Description("Write the description and save the changes/Change the description and save the changes/Delete the description and save the changes")
     public void editDescription(String description, String newDescription, String finalDescription) {
         String name = ENTITY_NAME + random();
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(name, description));
@@ -127,8 +137,10 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(ruleChainsPage.getDescription(), finalDescription);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Enable debug mode/Disable debug mode")
     public void debugMode() {
         String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));

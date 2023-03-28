@@ -96,10 +96,10 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
         } else {
             if (hasCustomerId.getCustomerId().isNullUid()) {
                 if (hasCustomerId instanceof HasName) {
-                    var hasName = (HasName) hasCustomerId;
-                    throw new RuntimeException(originator.getEntityType().getDisplayName() + " with name '" + hasName.getName() + "' is not assigned to Customer.");
+                    HasName hasName = (HasName) hasCustomerId;
+                    throw new RuntimeException(originator.getEntityType().getNormalName() + " with name '" + hasName.getName() + "' is not assigned to Customer.");
                 }
-                throw new RuntimeException(originator.getEntityType().getDisplayName() + " with id '" + originator + "' is not assigned to Customer.");
+                throw new RuntimeException(originator.getEntityType().getNormalName() + " with id '" + originator + "' is not assigned to Customer.");
             } else {
                 return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), hasCustomerId.getCustomerId());
             }

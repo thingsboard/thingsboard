@@ -15,40 +15,42 @@
  */
 package org.thingsboard.server.common.data;
 
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author Andrew Shvayka
  */
 public enum EntityType {
+    TENANT,
+    CUSTOMER,
+    USER,
+    DASHBOARD,
+    ASSET,
+    DEVICE,
+    ALARM,
+    RULE_CHAIN,
+    RULE_NODE,
+    ENTITY_VIEW,
+    WIDGETS_BUNDLE,
+    WIDGET_TYPE,
+    TENANT_PROFILE,
+    DEVICE_PROFILE,
+    ASSET_PROFILE,
+    API_USAGE_STATE,
+    TB_RESOURCE,
+    OTA_PACKAGE,
+    EDGE,
+    RPC,
+    QUEUE,
+    NOTIFICATION_TARGET,
+    NOTIFICATION_TEMPLATE,
+    NOTIFICATION_REQUEST,
+    NOTIFICATION,
+    NOTIFICATION_RULE;
 
-    TENANT("Tenant"),
-    CUSTOMER("Customer"),
-    USER("User"),
-    DASHBOARD("Dashboard"),
-    ASSET("Asset"),
-    DEVICE("Device"),
-    ALARM("Alarm"),
-    RULE_CHAIN("Rule chain"),
-    RULE_NODE("Rule node"),
-    ENTITY_VIEW("Entity view"),
-    WIDGETS_BUNDLE("Widget bundle"),
-    WIDGET_TYPE("Widget type"),
-    TENANT_PROFILE("Tenant profile"),
-    DEVICE_PROFILE("Device profile"),
-    ASSET_PROFILE("Asset profile"),
-    API_USAGE_STATE("Api usage state"),
-    TB_RESOURCE("TB resource"),
-    OTA_PACKAGE("OTA package"),
-    EDGE("Edge"),
-    RPC("Rpc"),
-    QUEUE("Queue");
+    @Getter
+    private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")
+            .toLowerCase().replaceAll("_", " "));
 
-    private final String displayName;
-
-    EntityType(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
 }

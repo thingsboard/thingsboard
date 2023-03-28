@@ -253,7 +253,6 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                             .setDeviceType(deviceType)
                             .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
                             .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits())
-                            .setSparkplug(this.deviceSessionCtx.isSparkplug())
                             .build(),
                     new TransportServiceCallback<>() {
                         @Override

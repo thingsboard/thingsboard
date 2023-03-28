@@ -49,6 +49,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.fail;
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
@@ -122,7 +123,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             wait.until(ExpectedConditions.urlContains(urlPath));
         } catch (WebDriverException e) {
-            log.error("This URL path is missing");
+            return fail("URL not contains " + urlPath);
         }
         return driver.getCurrentUrl().contains(urlPath);
     }

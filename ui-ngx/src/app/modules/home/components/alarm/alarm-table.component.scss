@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  tb-entities-table {
+  tb-entities-table.tb-details-mode {
     .mat-drawer-container {
       background-color: white;
       .assignee-cell {

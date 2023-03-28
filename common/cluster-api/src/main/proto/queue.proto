@@ -27,6 +27,17 @@ message ServiceInfo {
   string serviceId = 1;
   repeated string serviceTypes = 2;
   repeated string transports = 6;
+  SystemInfoProto systemInfo = 10;
+}
+
+message SystemInfoProto {
+  double cpuUsage = 1;
+  double totalCpuUsage = 2;
+  int64 memoryUsage = 3;
+  int64 totalMemory = 4;
+  int64 freeMemory = 5;
+  int64 freeDiscSpace = 6;
+  int64 totalDiscSpace = 7;
 }
 
 /**
@@ -186,7 +197,6 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
   int64 gatewayIdLSB = 2;
   string deviceName = 3;
   string deviceType = 4;
-  bool sparkplug = 5;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {
@@ -548,6 +558,15 @@ message TbAlarmSubscriptionProto {
   int64 ts = 2;
 }
 
+message NotificationsSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  int32 limit = 2;
+}
+
+message NotificationsCountSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+}
+
 message TbSubscriptionUpdateProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
@@ -563,6 +582,27 @@ message TbAlarmSubscriptionUpdateProto {
   string errorMsg = 4;
   string alarm = 5;
   bool deleted = 6;
+}
+
+message NotificationsSubscriptionUpdateProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  string notificationUpdate = 3;
+  string notificationRequestUpdate = 4;
+}
+
+message NotificationUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 recipientIdMSB = 3;
+  int64 recipientIdLSB = 4;
+  string update = 5;
+}
+
+message NotificationRequestUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string update = 6;
 }
 
 message TbAttributeUpdateProto {
@@ -667,11 +707,16 @@ message SubscriptionMgrMsgProto {
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
   TbTimeSeriesDeleteProto tsDelete = 10;
+  NotificationsSubscriptionProto notificationsSub = 11;
+  NotificationsCountSubscriptionProto notificationsCountSub = 12;
+  NotificationUpdateProto notificationUpdate = 13;
+  NotificationRequestUpdateProto notificationRequestUpdate = 14;
 }
 
 message LocalSubscriptionServiceMsgProto {
   TbSubscriptionUpdateProto subUpdate = 1;
   TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2;
+  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3;
 }
 
 message FromDeviceRPCResponseProto {
@@ -923,6 +968,7 @@ message ToCoreMsg {
   bytes toDeviceActorNotificationMsg = 4;
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
   DeviceActivityProto deviceActivityMsg = 6;
+  NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -936,6 +982,7 @@ message ToCoreNotificationMsg {
   VersionControlResponseMsg vcResponseMsg = 7;
   bytes toEdgeSyncRequestMsg = 8;
   bytes fromEdgeSyncResponseMsg = 9;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1000,4 +1047,10 @@ message ToOtaPackageStateServiceMsg {
   string type = 8;
 }
 
-
+message NotificationSchedulerServiceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 ts = 5;
+}

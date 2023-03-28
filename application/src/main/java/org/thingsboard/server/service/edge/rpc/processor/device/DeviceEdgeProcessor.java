@@ -87,7 +87,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                     return handleUnsupportedMsgType(deviceUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            if (e.getMessage().contains("Can't create more then")) {
+            if (e.getMessage().contains("limit reached")) {
                 log.warn("[{}] Number of allowed devices violated {}", tenantId, deviceUpdateMsg, e);
                 return Futures.immediateFuture(null);
             } else {

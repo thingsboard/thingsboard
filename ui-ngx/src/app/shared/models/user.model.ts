@@ -24,6 +24,7 @@ export interface User extends BaseData<UserId> {
   tenantId: TenantId;
   customerId: CustomerId;
   email: string;
+  phone: string;
   authority: Authority;
   firstName: string;
   lastName: string;
