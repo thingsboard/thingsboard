@@ -37,7 +37,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EdgeService } from '@core/http/edge.service';
-import { MatFormFieldAppearance } from '@angular/material/form-field/form-field';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -76,7 +76,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   excludeSubTypes: Array<string>;
 
   @Input()
-  appearance: MatFormFieldAppearance = 'legacy';
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('subTypeInput', {static: true}) subTypeInput: ElementRef;
 
