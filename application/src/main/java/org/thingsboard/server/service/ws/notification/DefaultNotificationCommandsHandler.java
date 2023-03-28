@@ -130,7 +130,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     private void handleNotificationUpdate(NotificationsSubscription subscription, NotificationUpdate update) {
         log.trace("[{}, subId: {}] Handling notification update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
         Notification notification = update.getNotification();
-        UUID notificationId = update.getNotificationId();
+        UUID notificationId = notification != null ? notification.getUuidId() : update.getNotificationId().getId();
         if (update.isCreated()) {
             subscription.getLatestUnreadNotifications().put(notificationId, notification);
             subscription.getTotalUnreadCounter().incrementAndGet();
