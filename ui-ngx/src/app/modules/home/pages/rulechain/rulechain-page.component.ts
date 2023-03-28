@@ -1456,7 +1456,7 @@ export class RuleChainPageComponent extends PageComponent
           this.isDirtyValue = false;
           this.isImport = false;
           if (this.ruleChainType !== RuleChainType.EDGE) {
-            this.router.navigateByUrl(`features/ruleChains/${this.ruleChain.id.id}`);
+            this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
           } else {
             this.router.navigateByUrl(`edgeManagement/ruleChains/${this.ruleChain.id.id}`);
           }
