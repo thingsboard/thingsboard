@@ -61,7 +61,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     @Autowired
     private DataValidator<DeviceCredentials> credentialsValidator;
 
-    @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
     @Override
     public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
         cache.evict(event.getNewCedentialsId());
@@ -109,7 +109,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         }
         try {
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
-            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            eventPublisher.publishEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             return value;
         } catch (Exception t) {
             handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
@@ -398,7 +398,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
-        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+        eventPublisher.publishEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
     }
 
 }

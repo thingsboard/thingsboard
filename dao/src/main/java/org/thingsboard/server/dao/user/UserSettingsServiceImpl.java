@@ -105,7 +105,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         try {
             validateJsonKeys(userSettings.getSettings());
             UserSettings saved = userSettingsDao.save(tenantId, userSettings);
-            publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
+            eventPublisher.publishEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             return saved;
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
@@ -113,7 +113,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         }
     }
 
-    @TransactionalEventListener(classes = UserSettingsEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
     @Override
     public void handleEvictEvent(UserSettingsEvictEvent event) {
         List<UserId> keys = new ArrayList<>();

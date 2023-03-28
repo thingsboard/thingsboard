@@ -105,7 +105,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Getter
     private boolean edgesEnabled;
 
-    @TransactionalEventListener(classes = EdgeCacheEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
     @Override
     public void handleEvictEvent(EdgeCacheEvictEvent event) {
         List<EdgeCacheKey> keys = new ArrayList<>(2);
@@ -160,7 +160,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
             var savedEdge = edgeDao.save(edge.getTenantId(), edge);
-            publishEvictEvent(evictEvent);
+            eventPublisher.publishEvent(evictEvent);
             return savedEdge;
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
@@ -202,7 +202,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
         edgeDao.removeById(tenantId, edgeId.getId());
 
-        publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
+        eventPublisher.publishEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
     }
 
     @Override

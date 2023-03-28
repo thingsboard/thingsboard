@@ -56,7 +56,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     @Autowired
     private DataValidator<TenantProfile> tenantProfileValidator;
 
-    @TransactionalEventListener(classes = TenantProfileEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
     @Override
     public void handleEvictEvent(TenantProfileEvictEvent event) {
         List<TenantProfileCacheKey> keys = new ArrayList<>(2);
@@ -91,7 +91,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         TenantProfile savedTenantProfile;
         try {
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
-            publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
+            eventPublisher.publishEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
         } catch (Exception t) {
             handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -127,7 +127,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             }
         }
         deleteEntityRelations(tenantId, tenantProfileId);
-        publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
+        eventPublisher.publishEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
     }
 
     @Override
@@ -188,14 +188,14 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             boolean changed = false;
             if (previousDefaultTenantProfile == null) {
                 tenantProfileDao.save(tenantId, tenantProfile);
-                publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
+                eventPublisher.publishEvent(new TenantProfileEvictEvent(tenantProfileId, true));
                 changed = true;
             } else if (!previousDefaultTenantProfile.getId().equals(tenantProfile.getId())) {
                 previousDefaultTenantProfile.setDefault(false);
                 tenantProfileDao.save(tenantId, previousDefaultTenantProfile);
                 tenantProfileDao.save(tenantId, tenantProfile);
-                publishEvictEvent(new TenantProfileEvictEvent(previousDefaultTenantProfile.getId(), false));
-                publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
+                eventPublisher.publishEvent(new TenantProfileEvictEvent(previousDefaultTenantProfile.getId(), false));
+                eventPublisher.publishEvent(new TenantProfileEvictEvent(tenantProfileId, true));
                 changed = true;
             }
             return changed;

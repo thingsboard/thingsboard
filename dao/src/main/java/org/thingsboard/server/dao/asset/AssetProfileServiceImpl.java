@@ -69,7 +69,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Autowired
     private DataValidator<AssetProfile> assetProfileValidator;
 
-    @TransactionalEventListener(classes = AssetProfileEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
     @Override
     public void handleEvictEvent(AssetProfileEvictEvent event) {
         List<AssetProfileCacheKey> keys = new ArrayList<>(2);
@@ -116,7 +116,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         AssetProfile savedAssetProfile;
         try {
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
-            publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
+            eventPublisher.publishEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));
         } catch (Exception t) {
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
@@ -158,7 +158,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         try {
             deleteEntityRelations(tenantId, assetProfileId);
             assetProfileDao.removeById(tenantId, assetProfileId.getId());
-            publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
+            eventPublisher.publishEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     null, assetProfile.getId(), assetProfile.isDefault()));
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -235,6 +235,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         return toAssetProfileInfo(findDefaultAssetProfile(tenantId));
     }
 
+    @Transactional
     @Override
     public boolean setDefaultAssetProfile(TenantId tenantId, AssetProfileId assetProfileId) {
         log.trace("Executing setDefaultAssetProfile [{}]", assetProfileId);
@@ -246,14 +247,14 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             boolean changed = false;
             if (previousDefaultAssetProfile == null) {
                 assetProfileDao.save(tenantId, assetProfile);
-                publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(), null, assetProfile.getId(), true));
+                eventPublisher.publishEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(), null, assetProfile.getId(), true));
                 changed = true;
             } else if (!previousDefaultAssetProfile.getId().equals(assetProfile.getId())) {
                 previousDefaultAssetProfile.setDefault(false);
                 assetProfileDao.save(tenantId, previousDefaultAssetProfile);
                 assetProfileDao.save(tenantId, assetProfile);
-                publishEvictEvent(new AssetProfileEvictEvent(previousDefaultAssetProfile.getTenantId(), previousDefaultAssetProfile.getName(), null, previousDefaultAssetProfile.getId(), false));
-                publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(), null, assetProfile.getId(), true));
+                eventPublisher.publishEvent(new AssetProfileEvictEvent(previousDefaultAssetProfile.getTenantId(), previousDefaultAssetProfile.getName(), null, previousDefaultAssetProfile.getId(), false));
+                eventPublisher.publishEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(), null, assetProfile.getId(), true));
                 changed = true;
             }
             return changed;

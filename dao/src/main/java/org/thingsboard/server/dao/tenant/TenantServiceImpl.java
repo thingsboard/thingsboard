@@ -146,7 +146,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
-    @TransactionalEventListener(classes = TenantEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
     @Override
     public void handleEvictEvent(TenantEvictEvent event) {
         TenantId tenantId = event.getTenantId();
@@ -190,7 +190,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         tenantValidator.validate(tenant, Tenant::getId);
         boolean create = tenant.getId() == null;
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
-        publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
+        eventPublisher.publishEvent(new TenantEvictEvent(savedTenant.getId(), create));
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             assetProfileService.createDefaultAssetProfile(savedTenant.getId());
@@ -235,7 +235,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         notificationTargetService.deleteNotificationTargetsByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
-        publishEvictEvent(new TenantEvictEvent(tenantId, true));
+        eventPublisher.publishEvent(new TenantEvictEvent(tenantId, true));
         deleteEntityRelations(tenantId, tenantId);
     }
 
