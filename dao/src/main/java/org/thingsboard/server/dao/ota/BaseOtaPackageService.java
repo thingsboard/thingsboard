@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -62,6 +64,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     private final DataValidator<OtaPackage> otaPackageValidator;
 
     @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(OtaPackageCacheEvictEvent event) {
         cache.evict(new OtaPackageCacheKey(event.getId()));

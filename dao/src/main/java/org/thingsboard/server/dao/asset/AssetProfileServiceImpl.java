@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.asset;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -70,6 +72,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     private DataValidator<AssetProfile> assetProfileValidator;
 
     @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(AssetProfileEvictEvent event) {
         List<AssetProfileCacheKey> keys = new ArrayList<>(2);

@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.tenant;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -57,6 +59,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     private DataValidator<TenantProfile> tenantProfileValidator;
 
     @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(TenantProfileEvictEvent event) {
         List<TenantProfileCacheKey> keys = new ArrayList<>(2);
