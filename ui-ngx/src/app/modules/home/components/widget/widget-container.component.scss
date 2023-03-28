@@ -97,6 +97,12 @@ div.tb-widget {
     }
   }
 
+  .tb-widget-title, .tb-widget-actions {
+    .mat-icon {
+      vertical-align: bottom;
+    }
+  }
+
   .tb-widget-content {
     &.tb-no-interaction {
       pointer-events: none;

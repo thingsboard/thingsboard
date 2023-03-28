@@ -25,7 +25,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   deleteNullProperties,
-  guid,
+  guid, hashCode,
   isDefined,
   isDefinedAndNotNull,
   isString,
@@ -403,6 +403,13 @@ export class UtilsService {
         index++;
       });
     });
+  }
+
+  public stringToHslColor(str: string, saturationPercentage: number, lightnessPercentage: number): string {
+    if (str && str.length) {
+      let hue = hashCode(str) % 360;
+      return `hsl(${hue}, ${saturationPercentage}%, ${lightnessPercentage}%)`;
+    }
   }
 
   public currentPerfTime(): number {

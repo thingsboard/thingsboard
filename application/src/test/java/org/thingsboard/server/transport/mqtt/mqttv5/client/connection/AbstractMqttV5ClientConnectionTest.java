@@ -25,6 +25,7 @@ import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
@@ -101,6 +102,7 @@ public abstract class AbstractMqttV5ClientConnectionTest extends AbstractMqttInt
         MqttV5TestCallback onUpdateCallback = new MqttV5TestCallback();
         client.setCallback(onUpdateCallback);
         client.subscribeAndWait(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(savedDevice.getId(), FeatureType.ATTRIBUTES, 1);
 
         String payload = "{\"sharedStr\":\"" + StringUtils.repeat("*", valueLen) + "\"}";
 

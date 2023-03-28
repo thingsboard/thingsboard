@@ -24,6 +24,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -31,6 +33,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -40,28 +43,22 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
+
+    @Autowired
+    CustomerService customerService;
+
     static final int TIMEOUT = 30;
 
     ListeningExecutorService executor;
 
-    private TenantId tenantId;
-
     @Before
     public void before() {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
+      }
 
     @After
     public void after() {
         executor.shutdownNow();
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -99,35 +96,43 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         customerService.deleteCustomer(tenantId, savedCustomer.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveCustomerWithEmptyTitle() {
         Customer customer = new Customer();
         customer.setTenantId(tenantId);
-        customerService.saveCustomer(customer);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            customerService.saveCustomer(customer);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveCustomerWithEmptyTenant() {
         Customer customer = new Customer();
         customer.setTitle("My customer");
-        customerService.saveCustomer(customer);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            customerService.saveCustomer(customer);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveCustomerWithInvalidTenant() {
         Customer customer = new Customer();
         customer.setTitle("My customer");
         customer.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        customerService.saveCustomer(customer);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            customerService.saveCustomer(customer);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveCustomerWithInvalidEmail() {
         Customer customer = new Customer();
         customer.setTenantId(tenantId);
         customer.setTitle("My customer");
         customer.setEmail("invalid@mail");
-        customerService.saveCustomer(customer);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            customerService.saveCustomer(customer);
+        });
     }
 
     @Test
@@ -143,11 +148,6 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindCustomersByTenantId() throws Exception {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
 
         List<ListenableFuture<Customer>> futures = new ArrayList<>(135);
         for (int i = 0; i < 135; i++) {
@@ -178,8 +178,6 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test

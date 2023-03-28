@@ -25,6 +25,7 @@ import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
 import { MAT_AUTOCOMPLETE_DEFAULT_OPTIONS, MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -64,6 +65,7 @@ import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
+import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -84,6 +86,7 @@ import { MarkdownEditorComponent } from '@shared/components/markdown-editor.comp
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { DashboardStateAutocompleteComponent } from '@shared/components/dashboard-state-autocomplete.component';
 import { EntitySubTypeAutocompleteComponent } from '@shared/components/entity/entity-subtype-autocomplete.component';
 import { EntitySubTypeSelectComponent } from '@shared/components/entity/entity-subtype-select.component';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
@@ -93,6 +96,7 @@ import { EntitySelectComponent } from '@shared/components/entity/entity-select.c
 import { DatetimeComponent } from '@shared/components/time/datetime.component';
 import { EntityKeysListComponent } from '@shared/components/entity/entity-keys-list.component';
 import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.component';
+import { StringItemsListComponent } from '@shared/components/string-items-list.component';
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
@@ -168,6 +172,8 @@ import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
+import { NotificationComponent } from '@shared/components/notification/notification.component';
+import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -182,10 +188,16 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
+    DateAgoPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
+    },
+    {
+      provide: TINYMCE_SCRIPT_SRC,
+      useValue: 'assets/tinymce/tinymce.min.js'
     },
     {
       provide: MAT_DATE_LOCALE,
@@ -244,6 +256,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimezoneSelectComponent,
     ValueInputComponent,
     DashboardAutocompleteComponent,
+    DashboardStateAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntitySubTypeListComponent,
@@ -257,6 +270,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    StringItemsListComponent,
     JsonObjectEditComponent,
     JsonObjectViewComponent,
     JsonContentComponent,
@@ -291,6 +305,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
@@ -306,12 +321,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
-    TbScriptLangComponent
+    TbScriptLangComponent,
+    NotificationComponent,
+    DateAgoPipe
   ],
   imports: [
     CommonModule,
     RouterModule,
     TranslateModule,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
@@ -399,6 +417,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DatetimeComponent,
     TimezoneSelectComponent,
     DashboardAutocompleteComponent,
+    DashboardStateAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntitySubTypeListComponent,
@@ -412,6 +431,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    StringItemsListComponent,
     JsonObjectEditComponent,
     JsonObjectViewComponent,
     JsonContentComponent,
@@ -423,6 +443,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
@@ -467,6 +488,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
+    EditorModule,
     DndModule,
     NgxFlowchartModule,
     MarkdownModule,
@@ -495,6 +517,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
     SelectableColumnsPipe,
     RouterModule,
@@ -510,7 +533,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
-    TbScriptLangComponent
+    TbScriptLangComponent,
+    NotificationComponent,
+    DateAgoPipe
   ]
 })
 export class SharedModule { }

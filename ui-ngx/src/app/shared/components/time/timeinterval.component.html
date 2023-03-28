@@ -40,9 +40,9 @@
       </mat-form-field>
     </section>
   </section>
-  <section class="interval-section" fxLayout="row" fxFlex [fxShow]="!advanced && (isEdit || !hideFlag)">
-    <mat-form-field fxFlex>
-      <mat-label translate>{{ predefinedName }}</mat-label>
+  <section fxLayout="row" fxFlex [fxShow]="!advanced && (isEdit || !hideFlag)">
+    <mat-form-field fxFlex [subscriptSizing]="subscriptSizing">
+      <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
       <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="intervalMs" (ngModelChange)="onIntervalMsChange()" style="min-width: 150px;">
         <mat-option *ngFor="let interval of intervals" [value]="interval.value">
           {{ interval.name | translate:interval.translateParams }}
@@ -50,7 +50,7 @@
       </mat-select>
     </mat-form-field>
   </section>
-  <section fxLayout="column" fxLayoutAlign="center center" [fxShow]="(isEdit || !hideFlag)">
+  <section fxLayout="column" fxLayoutAlign="center center" [fxShow]="(isEdit || !hideFlag) && !disabledAdvanced">
     <label class="tb-small advanced-label" translate>timeinterval.advanced</label>
     <mat-slide-toggle [disabled]="hideFlag || disabled" class="advanced-switch" [(ngModel)]="advanced" (ngModelChange)="onAdvancedChange()"></mat-slide-toggle>
   </section>
