@@ -17,23 +17,28 @@ package org.thingsboard.server.dao.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ApiUsageRecordState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 @Data
 @Builder
-public class EntitiesLimitTrigger implements NotificationRuleTrigger {
+public class ApiUsageLimitTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final EntityType entityType;
-    private final long currentCount;
-    private final long limit;
+    private final ApiUsageRecordState state;
+    private final ApiUsageStateValue status;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ENTITIES_LIMIT;
+        return NotificationRuleTriggerType.API_USAGE_LIMIT;
+    }
+
+    @Override
+    public TenantId getTenantId() {
+        return tenantId;
     }
 
     @Override
