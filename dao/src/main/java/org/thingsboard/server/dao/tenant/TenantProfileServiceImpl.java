@@ -40,6 +40,7 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -200,6 +201,11 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             return changed;
         }
         return false;
+    }
+
+    @Override
+    public List<TenantProfile> findTenantProfilesByIds(TenantId tenantId, UUID[] ids) {
+        return tenantProfileDao.findTenantProfilesByIds(tenantId, ids);
     }
 
     @Override

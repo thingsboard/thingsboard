@@ -24,7 +24,8 @@ export enum AuthActionTypes {
   LOAD_USER = '[Auth] Load User',
   UPDATE_USER_DETAILS = '[Auth] Update User Details',
   UPDATE_LAST_PUBLIC_DASHBOARD_ID = '[Auth] Update Last Public Dashboard Id',
-  UPDATE_HAS_REPOSITORY = '[Auth] Change Has Repository'
+  UPDATE_HAS_REPOSITORY = '[Auth] Change Has Repository',
+  UPDATE_OPENED_MENU_SECTION = '[Preferences] Update Opened Menu Section'
 }
 
 export class ActionAuthAuthenticated implements Action {
@@ -61,5 +62,12 @@ export class ActionAuthUpdateHasRepository implements Action {
   constructor(readonly payload: { hasRepository: boolean }) {}
 }
 
+export class ActionPreferencesUpdateOpenedMenuSection implements Action {
+  readonly type = AuthActionTypes.UPDATE_OPENED_MENU_SECTION;
+
+  constructor(readonly payload: { path: string; opened: boolean }) {}
+}
+
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
-  ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository;
+  ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository |
+  ActionPreferencesUpdateOpenedMenuSection;

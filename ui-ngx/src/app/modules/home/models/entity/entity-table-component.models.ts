@@ -85,4 +85,5 @@ export interface IEntitiesTableComponent {
   cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
   trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>>): string;
   trackByEntityId(index: number, entity: BaseData<HasId>): string;
+  detectChanges(): void;
 }

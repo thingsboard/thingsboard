@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,12 +39,14 @@ public class ManageCustomersUsersTest extends AbstractDriverBaseTest {
         customerPage = new CustomerPageHelper(driver);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Manage customer users")
     @Test(groups = "smoke")
-    @Description
+    @Description("Open manage window by right corner btn")
     public void openWindowByRightCornerBtn() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
-        customerPage.manageCustomersUserBtn(customerPage.getCustomerName()).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerPage.getCustomerName()));
 
         Assert.assertTrue(urlContains("user"));
         Assert.assertNotNull(customerPage.customerUserIconHeader());
@@ -50,13 +54,15 @@ public class ManageCustomersUsersTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.customerManageWindowIconHead().getText().contains(iconText));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Manage customer users")
     @Test(groups = "smoke")
-    @Description
+    @Description("Open manage window by btn in entity view")
     public void openWindowByView() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersUserBtnView().click();
+        jsClick(customerPage.manageCustomersUserBtnView());
 
         Assert.assertTrue(urlContains("user"));
         Assert.assertNotNull(customerPage.customerUserIconHeader());

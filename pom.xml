@@ -67,6 +67,7 @@
         <jackson.version>2.13.4</jackson.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
         <fasterxml-classmate.version>1.3.4</fasterxml-classmate.version>
+        <auth0-jwt.version>4.2.1</auth0-jwt.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>3.0.0</californium.version>
         <leshan.version>2.0.0-M5</leshan.version>
@@ -148,6 +149,8 @@
         <webdrivermanager.version>5.2.0</webdrivermanager.version>
         <allure-testng.version>2.21.0</allure-testng.version>
         <allure-maven.version>2.12.0</allure-maven.version>
+        <slack-api.version>1.12.1</slack-api.version>
+        <oshi.version>3.4.0</oshi.version>
     </properties>
 
     <modules>
@@ -826,6 +829,7 @@
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
+                            <exclude>**/lwm2m-registry/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -1430,6 +1434,11 @@
                 <version>${fasterxml-classmate.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.auth0</groupId>
+                <artifactId>java-jwt</artifactId>
+                <version>${auth0-jwt.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.github.fge</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${json-schema-validator.version}</version>
@@ -1967,6 +1976,11 @@
                 <version>${aerogear-otp.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.slack.api</groupId>
+                <artifactId>slack-api-client</artifactId>
+                <version>${slack-api.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
                 <version>${jgit.version}</version>
@@ -1980,6 +1994,11 @@
                 <groupId>net.objecthunter</groupId>
                 <artifactId>exp4j</artifactId>
                 <version>${exp4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dblock</groupId>
+                <artifactId>oshi-core</artifactId>
+                <version>${oshi.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

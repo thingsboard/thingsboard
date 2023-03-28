@@ -546,6 +546,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                deviceProfile.getTenantId(),
                 deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getDefaultDashboardId(),
                 deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 

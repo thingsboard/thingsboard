@@ -19,19 +19,18 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -46,21 +45,10 @@ public abstract class BaseAssetProfileServiceTest extends AbstractServiceTest {
     private IdComparator<AssetProfile> idComparator = new IdComparator<>();
     private IdComparator<AssetProfileInfo> assetProfileInfoIdComparator = new IdComparator<>();
 
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
+    @Autowired
+    AssetProfileService assetProfileService;
+    @Autowired
+    AssetService assetService;
 
     @Test
     public void testSaveAssetProfile() {
@@ -266,7 +254,7 @@ public abstract class BaseAssetProfileServiceTest extends AbstractServiceTest {
         Collections.sort(loadedAssetProfileInfos, assetProfileInfoIdComparator);
 
         List<AssetProfileInfo> assetProfileInfos = assetProfiles.stream()
-                .map(assetProfile -> new AssetProfileInfo(assetProfile.getId(),
+                .map(assetProfile -> new AssetProfileInfo(assetProfile.getId(), assetProfile.getTenantId(),
                         assetProfile.getName(), assetProfile.getImage(), assetProfile.getDefaultDashboardId())).collect(Collectors.toList());
 
         Assert.assertEquals(assetProfileInfos, loadedAssetProfileInfos);

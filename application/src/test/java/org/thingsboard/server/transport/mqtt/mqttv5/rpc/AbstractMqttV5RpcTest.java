@@ -22,6 +22,7 @@ import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.mqtt.mqttv5.AbstractMqttV5Test;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
@@ -45,6 +46,7 @@ public abstract class AbstractMqttV5RpcTest extends AbstractMqttV5Test {
         MqttV5TestCallback callback = new MqttV5TestCallback(DEVICE_RPC_REQUESTS_SUB_TOPIC.replace("+", "0"));
         client.setCallback(callback);
         client.subscribeAndWait(DEVICE_RPC_REQUESTS_SUB_TOPIC, MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(savedDevice.getId(), FeatureType.RPC, 1);
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String result = doPostAsync("/api/rpc/oneway/" + savedDevice.getId(), setGpioRequest, String.class, status().isOk());
@@ -59,6 +61,7 @@ public abstract class AbstractMqttV5RpcTest extends AbstractMqttV5Test {
         MqttV5TestClient client = new MqttV5TestClient();
         client.connectAndWait(accessToken);
         client.subscribeAndWait(DEVICE_RPC_REQUESTS_SUB_TOPIC, MqttQoS.AT_LEAST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(savedDevice.getId(), FeatureType.RPC, 1);
         MqttV5TestRpcCallback callback = new MqttV5TestRpcCallback(client, DEVICE_RPC_REQUESTS_SUB_TOPIC.replace("+", "0"));
         client.setCallback(callback);
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";

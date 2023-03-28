@@ -17,6 +17,7 @@ package org.thingsboard.server.msa.ui.pages;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
@@ -111,11 +112,9 @@ public class CustomerPageHelper extends CustomerPageElements {
         titleFieldEntityView().sendKeys(newTitle);
     }
 
-    public void chooseDashboard() {
+    public void chooseDashboard(String dashboardName) {
         editMenuDashboardField().click();
-        sleep(0.5);
-        editMenuDashboard().click();
-        sleep(0.5);
+        editMenuDashboard(dashboardName).click();
     }
 
     public void createCustomersUser() {
@@ -155,5 +154,10 @@ public class CustomerPageHelper extends CustomerPageElements {
 
     public void addCustomerViewEnterName(CharSequence keysToEnter) {
         enterText(titleFieldAddEntityView(), keysToEnter);
+    }
+
+    public void enterPhoneNumber(String number) {
+        phoneNumberEntityView().sendKeys(number);
+        phoneNumberEntityView().sendKeys(Keys.TAB);
     }
 }
