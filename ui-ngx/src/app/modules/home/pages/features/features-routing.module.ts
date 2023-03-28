@@ -17,7 +17,6 @@
 import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NgModule } from '@angular/core';
-import { ruleChainsRoutes } from '@home/pages/rulechain/rulechain-routing.module';
 import { otaUpdatesRoutes } from '@home/pages/ota-update/ota-update-routing.module';
 import { vcRoutes } from '@home/pages/vc/vc-routing.module';
 
@@ -37,10 +36,9 @@ const routes: Routes = [
         children: [],
         data: {
           auth: [Authority.TENANT_ADMIN],
-          redirectTo: '/features/ruleChains'
+          redirectTo: '/features/otaUpdates'
         }
       },
-      ...ruleChainsRoutes,
       ...otaUpdatesRoutes,
       ...vcRoutes
     ]

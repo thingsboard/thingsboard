@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS alarm_comment (
     type varchar(255) NOT NULL,
     comment varchar(10000),
     CONSTRAINT fk_alarm_comment_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
-    ) PARTITION BY RANGE (created_time);
+) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS entity_alarm (
     tenant_id uuid NOT NULL,
@@ -442,6 +442,7 @@ CREATE TABLE IF NOT EXISTS tb_user (
     email varchar(255) UNIQUE,
     first_name varchar(255),
     last_name varchar(255),
+    phone varchar(255),
     search_text varchar(255),
     tenant_id uuid
 );
@@ -790,6 +791,66 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     two_fa_settings varchar
 );
 
+CREATE TABLE IF NOT EXISTS notification_target (
+    id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    configuration VARCHAR(10000) NOT NULL,
+    CONSTRAINT uq_notification_target_name UNIQUE (tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS notification_template (
+    id UUID NOT NULL CONSTRAINT notification_template_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    notification_type VARCHAR(50) NOT NULL,
+    configuration VARCHAR(10000) NOT NULL,
+    CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS notification_rule (
+    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
+    trigger_type VARCHAR(50) NOT NULL,
+    trigger_config VARCHAR(1000) NOT NULL,
+    recipients_config VARCHAR(10000) NOT NULL,
+    additional_config VARCHAR(255),
+    CONSTRAINT uq_notification_rule_name UNIQUE (tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS notification_request (
+    id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    targets VARCHAR(10000) NOT NULL,
+    template_id UUID,
+    template VARCHAR(10000),
+    info VARCHAR(1000),
+    additional_config VARCHAR(1000),
+    originator_entity_id UUID,
+    originator_entity_type VARCHAR(32),
+    rule_id UUID NULL,
+    status VARCHAR(32),
+    stats VARCHAR(10000)
+);
+
+CREATE TABLE IF NOT EXISTS notification (
+    id UUID NOT NULL,
+    created_time BIGINT NOT NULL,
+    request_id UUID NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
+    recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    subject VARCHAR(255),
+    body VARCHAR(1000) NOT NULL,
+    additional_config VARCHAR(1000),
+    status VARCHAR(32)
+) PARTITION BY RANGE (created_time);
+
 CREATE TABLE IF NOT EXISTS user_settings (
     user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
     settings varchar(10000),
@@ -962,7 +1023,7 @@ BEGIN
         UPDATE alarm a SET acknowledged = true, ack_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
     END IF;
     SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
-    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
+    RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result), 'old', row_to_json(existing))::text;
 END
 $$;
 

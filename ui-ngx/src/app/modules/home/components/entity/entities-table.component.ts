@@ -702,4 +702,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       this.updateData();
     }
   }
+
+  detectChanges() {
+    this.cd.markForCheck();
+  }
 }

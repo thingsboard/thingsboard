@@ -35,6 +35,9 @@ import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
+import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
+
+import static org.thingsboard.server.service.install.update.DefaultDataUpdateService.getEnv;
 
 @Service
 @Profile("install")
@@ -246,6 +249,11 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
+                            if (!getEnv("SKIP_DEFAULT_NOTIFICATION_CONFIGS_CREATION", false)) {
+                                systemDataLoaderService.createDefaultNotificationConfigs();
+                            } else {
+                                log.info("Skipping default notification configs creation");
+                            }
                             installScripts.loadSystemLwm2mResources();
                             break;
                         //TODO update CacheCleanupService on the next version upgrade

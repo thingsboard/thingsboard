@@ -71,7 +71,9 @@ $tb-mat-theme: mat.define-light-theme((
     primary: $tb-primary,
     accent: $tb-accent
   ),
-  typography: mat.define-typography-config(),
+  typography: mat.define-typography-config(
+    $button: mat.define-typography-level(14px, 36px, 500, $letter-spacing: 0.03125em)
+  ),
   density: 0
 ));
 
