@@ -36,10 +36,10 @@ import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { isEqual } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -60,6 +60,22 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   entityTypeValue: EntityType | AliasEntityType;
 
   entitySubtypeValue: string;
+
+  entityText: string;
+
+  noEntitiesMatchingText: string;
+
+  entityRequiredText: string;
+
+  filteredEntities: Observable<Array<BaseData<EntityId>>>;
+
+  searchText = '';
+
+  private dirty = false;
+
+  private refresh$ = new Subject<Array<BaseData<EntityId>>>();
+
+  private propagateChange = (v: any) => { };
 
   @Input()
   set entityType(entityType: EntityType) {
@@ -100,16 +116,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Output()
@@ -117,19 +129,20 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
-  entityText: string;
-  noEntitiesMatchingText: string;
-  entityRequiredText: string;
+  get requiredErrorText(): string {
+    if (this.requiredText && this.requiredText.length) {
+      return this.requiredText;
+    }
+    return this.entityRequiredText;
+  }
 
-  filteredEntities: Observable<Array<BaseData<EntityId>>>;
+  get label(): string {
+    if (this.labelText && this.labelText.length) {
+      return this.labelText;
+    }
+    return this.entityText;
+  }
 
-  searchText = '';
-
-  private dirty = false;
-
-  private refresh$ = new Subject<Array<BaseData<EntityId>>>();
-
-  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
@@ -248,12 +261,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           }
           break;
       }
-    }
-    if (this.labelText && this.labelText.length) {
-      this.entityText = this.labelText;
-    }
-    if (this.requiredText && this.requiredText.length) {
-      this.entityRequiredText = this.requiredText;
     }
     const currentEntity = this.getCurrentEntity();
     if (currentEntity) {
