@@ -133,7 +133,6 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        distinctUntilChanged(),
         switchMap(name => this.fetchTemplate(name)),
         share()
       );

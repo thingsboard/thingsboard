@@ -25,7 +25,7 @@ import { SentErrorDialogComponent } from '@home/pages/notification/sent/sent-err
 import { SentNotificationDialogComponent } from '@home/pages/notification/sent/sent-notification-dialog.componet';
 import {
   RecipientNotificationDialogComponent
-} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
+} from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
 import { TemplateAutocompleteComponent } from '@home/pages/notification/template/template-autocomplete.component';
 import {

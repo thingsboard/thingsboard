@@ -41,7 +41,7 @@ import { getCurrentTime } from '@shared/models/time/time.models';
 import {
   RecipientNotificationDialogComponent,
   RecipientNotificationDialogData
-} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
+} from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatButton } from '@angular/material/button';
 import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
 

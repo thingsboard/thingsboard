@@ -39,6 +39,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { AuthState } from '@core/auth/auth.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';
+import { control } from 'leaflet';
 
 export interface RecipientNotificationDialogData {
   target?: NotificationTarget;
@@ -48,7 +49,7 @@ export interface RecipientNotificationDialogData {
 @Component({
   selector: 'tb-target-notification-dialog',
   templateUrl: './recipient-notification-dialog.component.html',
-  styleUrls: ['recipient-notification-dialog.componet.scss']
+  styleUrls: ['recipient-notification-dialog.component.scss']
 })
 export class RecipientNotificationDialogComponent extends
   DialogComponent<RecipientNotificationDialogComponent, NotificationTarget> implements OnDestroy {
@@ -70,6 +71,7 @@ export class RecipientNotificationDialogComponent extends
   isAdd = true;
 
   private readonly destroy$ = new Subject<void>();
+  private userFilterFormControls: string[];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -119,10 +121,15 @@ export class RecipientNotificationDialogComponent extends
       this.targetNotificationForm.get('configuration.description').enable({emitEvent: false});
     });
 
+    this.userFilterFormControls = Object.keys((this.targetNotificationForm.get('configuration.usersFilter') as FormGroup).controls)
+      .filter((controlName) => controlName !== 'type');
+
     this.targetNotificationForm.get('configuration.usersFilter.type').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((type: NotificationTargetConfigType) => {
-      this.targetNotificationForm.get('configuration.usersFilter').disable({emitEvent: false});
+      this.userFilterFormControls.forEach(
+        controlName => this.targetNotificationForm.get(`configuration.usersFilter.${controlName}`).disable({emitEvent: false})
+      );
       switch (type) {
         case NotificationTargetConfigType.TENANT_ADMINISTRATORS:
           if (this.isSysAdmin()) {
@@ -136,7 +143,6 @@ export class RecipientNotificationDialogComponent extends
           this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
           break;
       }
-      this.targetNotificationForm.get('configuration.usersFilter.type').enable({emitEvent: false});
     });
 
     this.targetNotificationForm.get('configuration.usersFilter.filterByTenants').valueChanges.pipe(

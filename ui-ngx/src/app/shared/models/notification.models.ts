@@ -203,6 +203,16 @@ export const AlarmAssignmentActionTranslationMap = new Map<AlarmAssignmentAction
   [AlarmAssignmentAction.UNASSIGNED, 'notification.notify-alarm-action.unassigned']
 ]);
 
+export enum DeviceEvent {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE'
+}
+
+export const DeviceEventTranslationMap = new Map<DeviceEvent, string>([
+  [DeviceEvent.ACTIVE, 'notification.active'],
+  [DeviceEvent.INACTIVE, 'notification.inactive']
+]);
+
 export interface NotificationRuleRecipientConfig {
   targets?: Array<string>;
   escalationTable?: {[key: number]: Array<string>};
@@ -415,7 +425,7 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
 export enum NotificationType {
   GENERAL = 'GENERAL',
   ALARM = 'ALARM',
-  DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
+  DEVICE_ACTIVITY = 'DEVICE_ACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT',
   ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
@@ -425,7 +435,7 @@ export enum NotificationType {
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ALARM, 'warning'],
-  [NotificationType.DEVICE_INACTIVITY, 'phonelink_off'],
+  [NotificationType.DEVICE_ACTIVITY, 'phonelink_off'],
   [NotificationType.ENTITY_ACTION, 'devices'],
   [NotificationType.ALARM_COMMENT, 'comment'],
   [NotificationType.ALARM_ASSIGNMENT, 'assignment_turned_in'],
@@ -471,10 +481,10 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       helpId: 'notification/alarm'
     }
   ],
-  [NotificationType.DEVICE_INACTIVITY,
+  [NotificationType.DEVICE_ACTIVITY,
     {
-      name: 'notification.template-type.device-inactivity',
-      helpId: 'notification/device_inactivity'
+      name: 'notification.template-type.device-activity',
+      helpId: 'notification/device_activity'
     }
   ],
   [NotificationType.ENTITY_ACTION,
@@ -510,7 +520,7 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
 
 export enum TriggerType {
   ALARM = 'ALARM',
-  DEVICE_INACTIVITY = 'DEVICE_INACTIVITY',
+  DEVICE_ACTIVITY = 'DEVICE_ACTIVITY',
   ENTITY_ACTION = 'ENTITY_ACTION',
   ALARM_COMMENT = 'ALARM_COMMENT',
   ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
@@ -520,7 +530,7 @@ export enum TriggerType {
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.ALARM, 'notification.trigger.alarm'],
-  [TriggerType.DEVICE_INACTIVITY, 'notification.trigger.device-inactivity'],
+  [TriggerType.DEVICE_ACTIVITY, 'notification.trigger.device-activity'],
   [TriggerType.ENTITY_ACTION, 'notification.trigger.entity-action'],
   [TriggerType.ALARM_COMMENT, 'notification.trigger.alarm-comment'],
   [TriggerType.ALARM_ASSIGNMENT, 'notification.trigger.alarm-assignment'],
