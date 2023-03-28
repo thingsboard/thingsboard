@@ -26,6 +26,7 @@ import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
 import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { User } from '@shared/models/user.model';
+import { ApiFeature, ApiUsageStateValue } from '@shared/models/api-usage.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -113,7 +114,8 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
 
 export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
   EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
-  RuleEngineLifecycleEventNotificationRuleTriggerConfig & EntitiesLimitNotificationRuleTriggerConfig>;
+  RuleEngineLifecycleEventNotificationRuleTriggerConfig & EntitiesLimitNotificationRuleTriggerConfig &
+  ApiUsageLimitNotificationRuleTriggerConfig>;
 
 export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
@@ -132,7 +134,7 @@ export interface DeviceInactivityNotificationRuleTriggerConfig {
 }
 
 export interface EntityActionNotificationRuleTriggerConfig {
-  entityType: EntityType;
+  entityTypes: EntityType[];
   created: boolean;
   updated: boolean;
   deleted: boolean;
@@ -165,6 +167,11 @@ export interface RuleEngineLifecycleEventNotificationRuleTriggerConfig {
 export interface EntitiesLimitNotificationRuleTriggerConfig {
   entityTypes: EntityType[];
   threshold: number;
+}
+
+export interface ApiUsageLimitNotificationRuleTriggerConfig {
+  apiFeatures: ApiFeature[];
+  notifyOn: ApiUsageStateValue[];
 }
 
 export enum ComponentLifecycleEvent {
@@ -430,7 +437,8 @@ export enum NotificationType {
   ALARM_COMMENT = 'ALARM_COMMENT',
   ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
   RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
-  ENTITIES_LIMIT = 'ENTITIES_LIMIT'
+  ENTITIES_LIMIT = 'ENTITIES_LIMIT',
+  API_USAGE_LIMIT = 'API_USAGE_LIMIT'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -441,6 +449,7 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ALARM_ASSIGNMENT, 'assignment_turned_in'],
   [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'settings_ethernet'],
   [NotificationType.ENTITIES_LIMIT, 'data_thresholding'],
+  [NotificationType.API_USAGE_LIMIT, 'insert_chart'],
 ]);
 
 export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
@@ -515,6 +524,11 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
     {
       name: 'notification.template-type.entities-limit',
       helpId: 'notification/entities_limit'
+    }],
+  [NotificationType.API_USAGE_LIMIT,
+    {
+      name: 'notification.template-type.api-usage-limit',
+      helpId: 'notification/api_usage_limit'
     }]
 ]);
 
@@ -525,7 +539,8 @@ export enum TriggerType {
   ALARM_COMMENT = 'ALARM_COMMENT',
   ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
   RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
-  ENTITIES_LIMIT = 'ENTITIES_LIMIT'
+  ENTITIES_LIMIT = 'ENTITIES_LIMIT',
+  API_USAGE_LIMIT = 'API_USAGE_LIMIT'
 }
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
@@ -536,4 +551,5 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.ALARM_ASSIGNMENT, 'notification.trigger.alarm-assignment'],
   [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'notification.trigger.rule-engine-lifecycle-event'],
   [TriggerType.ENTITIES_LIMIT, 'notification.trigger.entities-limit'],
+  [TriggerType.API_USAGE_LIMIT, 'notification.trigger.api-usage-limit'],
 ]);

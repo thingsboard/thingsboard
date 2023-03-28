@@ -673,6 +673,7 @@
         "no-telemetry-text": "No telemetry found"
     },
     "api-usage": {
+        "api-features": "API features",
         "api-usage": "Api Usage",
         "alarm": "Alarm",
         "alarms-created": "Alarms created",
@@ -681,6 +682,7 @@
         "alarms-created-monthly-activity": "Alarms created monthly activity",
         "data-points": "Data points",
         "data-points-storage-days": "Data points storage days",
+        "device-api": "Device API",
         "email": "Email",
         "email-messages": "Email messages",
         "email-messages-daily-activity": "Email messages daily activity",
@@ -2742,6 +2744,8 @@
         "alarm-comment-trigger-settings": "Alarm comment trigger settings",
         "alarm-trigger-settings": "Alarm trigger settings",
         "all": "All",
+        "api-feature-hint": "If the field is empty, the trigger will be applied to all api features",
+        "api-usage-trigger-settings": "API usage trigger settings",
         "at-least-one-should-be-selected": "At least one should be selected",
         "basic-settings": "Basic settings",
         "button-text": "Button text",
@@ -2795,10 +2799,12 @@
         "device-activity-trigger-settings": "Device active trigger settings",
         "device-list-rule-hint": "If the field is empty, the trigger will be applied to all devices",
         "device-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all device profiles",
+        "disabled": "Disabled",
         "edit-notification-recipients-group": "Edit notification recipients group",
         "edit-notification-template": "Edit notification template",
         "edit-rule": "Edit rule",
         "edit-template": "Edit template",
+        "enabled": "Enabled",
         "entities-limit-trigger-settings": "Entities limit trigger settings",
         "entity-action-trigger-settings": "Entity action trigger settings",
         "entity-type": "Entity type",
@@ -2921,6 +2927,7 @@
             "alarm": "Alarm",
             "alarm-assignment": "Alarm assignment",
             "alarm-comment": "Alarm comment",
+            "api-usage-limit": "API usage limit",
             "device-activity": "Device activity",
             "entities-limit": "Entities limit",
             "entity-action": "Entity action",
@@ -2937,6 +2944,7 @@
             "alarm": "Alarm",
             "alarm-assignment": "Alarm assignment",
             "alarm-comment": "Alarm comment",
+            "api-usage-limit": "API usage limit",
             "device-activity": "Device activity",
             "entities-limit": "Entities limit",
             "entity-action": "Entity action",
@@ -2948,7 +2956,8 @@
         "unread": "Unread",
         "updated": "Updated",
         "use-template": "Use template",
-        "view-all": "View all"
+        "view-all": "View all",
+        "warning": "Warning"
     },
     "ota-update": {
       "add": "Add package",
