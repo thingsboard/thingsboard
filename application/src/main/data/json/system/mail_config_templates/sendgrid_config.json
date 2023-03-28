@@ -4,7 +4,7 @@
   "smtpHost": "smtp.sendgrid.net",
   "smtpPort": 465,
   "timeout": 1000,
-  "tlsEnabled": true,
+  "enableTls": true,
   "tlsVersion":"TLSv1.2",
   "accessTokenUri": null,
   "authorizationUri": null,

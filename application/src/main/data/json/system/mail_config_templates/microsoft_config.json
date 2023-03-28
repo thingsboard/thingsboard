@@ -4,7 +4,7 @@
   "smtpHost": "smtp.office365.com",
   "smtpPort":587,
   "timeout": 1000,
-  "tlsEnabled": true,
+  "enableTls": true,
   "tlsVersion":"TLSv1.2",
   "accessTokenUri": "https://login.microsoftonline.com/%s/oauth2/v2.0/token",
   "authorizationUri": "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize",

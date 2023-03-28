@@ -4,7 +4,7 @@
   "smtpHost": "smtp.gmail.com",
   "smtpPort": 465,
   "timeout": 1000,
-  "tlsEnabled": true,
+  "enableTls": true,
   "tlsVersion":"TLSv1.2",
   "accessTokenUri": "https://oauth2.googleapis.com/token",
   "authorizationUri": "https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&access_type=offline",
