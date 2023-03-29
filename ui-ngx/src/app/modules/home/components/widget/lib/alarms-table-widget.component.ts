@@ -804,11 +804,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (descriptors.length) {
       let entityId;
       let entityName;
+      let entityLabel;
       if (alarm && alarm.originator) {
         entityId = alarm.originator;
         entityName = alarm.originatorName;
+        entityLabel = alarm.originatorLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {alarm});
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {alarm}, entityLabel);
     }
   }
 
@@ -827,11 +829,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       }
       let entityId;
       let entityName;
+      let entityLabel;
       if (alarm && alarm.originator) {
         entityId = alarm.originator;
         entityName = alarm.originatorName;
+        entityLabel = alarm.originatorLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {alarm});
+      this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {alarm}, entityLabel);
     }
   }
 
