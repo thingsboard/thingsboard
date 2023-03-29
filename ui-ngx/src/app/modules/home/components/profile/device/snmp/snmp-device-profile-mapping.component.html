@@ -25,7 +25,7 @@
     </div>
   </div>
   <mat-divider></mat-divider>
-  <div *ngFor="let mappingConfig of mappingsConfigFormArray().controls; let $index = index;
+  <div *ngFor="let mappingConfig of mappingsConfigFormArray.controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
        fxLayoutGap="8px" [formGroup]="mappingConfig" class="mapping-list">
     <div fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
@@ -64,7 +64,7 @@
       </button>
     </div>
   </div>
-  <div *ngIf="!mappingsConfigFormArray().controls.length && !disabled">
+  <div *ngIf="!mappingsConfigFormArray.controls.length && !disabled">
       <span fxLayoutAlign="center center" class="tb-prompt required required-text" translate>device-profile.snmp.please-add-mapping-config</span>
   </div>
   <div *ngIf="!disabled">

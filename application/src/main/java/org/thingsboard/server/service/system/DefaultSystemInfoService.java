@@ -112,13 +112,11 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     public SystemInfo getSystemInfo() {
         SystemInfo systemInfo = new SystemInfo();
 
-        ServiceInfo serviceInfo = serviceInfoProvider.getServiceInfoWithCurrentSystemInfo();
-
         if (discoveryService.isMonolith()) {
             systemInfo.setMonolith(true);
-            systemInfo.setSystemData(Collections.singletonList(createSystemInfoData(serviceInfo)));
+            systemInfo.setSystemData(Collections.singletonList(createSystemInfoData(serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo())));
         } else {
-            systemInfo.setSystemData(getSystemData(serviceInfo));
+            systemInfo.setSystemData(getSystemData(serviceInfoProvider.getServiceInfo()));
         }
 
         return systemInfo;
@@ -156,7 +154,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
 
     private void saveCurrentClusterSystemInfo() {
         long ts = System.currentTimeMillis();
-        List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfoWithCurrentSystemInfo());
+        List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
         doSave(Collections.singletonList(clusterDataKv));
     }
@@ -164,7 +162,6 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private void saveCurrentMonolithSystemInfo() {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
-
         getMemoryUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", v))));
         getTotalMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalMemory", v))));
         getFreeMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeMemory", v))));
