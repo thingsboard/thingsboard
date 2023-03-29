@@ -58,6 +58,7 @@ public class SslUtil {
         try {
             x500name = new JcaX509CertificateHolder(certificate).getSubject();
         } catch (CertificateEncodingException e) {
+            log.warn("Cannot parse CN from device certificate");
             throw new RuntimeException(e);
         }
         RDN cn = x500name.getRDNs(BCStyle.CN)[0];

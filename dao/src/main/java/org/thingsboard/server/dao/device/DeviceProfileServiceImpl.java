@@ -135,12 +135,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
-        X509CertificateChainProvisionConfiguration x509Configuration = new X509CertificateChainProvisionConfiguration();
         if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
-            x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
-        }
-        if (x509Configuration.getCertificateValue() != null) {
-            formatDeviceProfileCertificate(deviceProfile, x509Configuration);
+            X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+            if (x509Configuration.getCertificateValue() != null) {
+                formatDeviceProfileCertificate(deviceProfile, x509Configuration);
+            }
         }
         DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         DeviceProfile savedDeviceProfile;
@@ -351,24 +350,25 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     private void formatDeviceProfileCertificate(DeviceProfile deviceProfile, X509CertificateChainProvisionConfiguration x509Configuration) {
-        String certificateValue = formatCertificateValue(x509Configuration.getCertificateValue());
-        String cert = regexCertificateChain(certificateValue);
+        String formattedCertificateValue = formatCertificateValue(x509Configuration.getCertificateValue());
+        String cert = fetchLeafCertificateFromChain(formattedCertificateValue);
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
         DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
-        x509Configuration.setCertificateValue(certificateValue);
+        x509Configuration.setCertificateValue(formattedCertificateValue);
         deviceProfileData.setProvisionConfiguration(x509Configuration);
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setCertificateHash(sha3Hash);
     }
 
-    private String regexCertificateChain(String chain) {
+    private String fetchLeafCertificateFromChain(String value) {
         String regex = "-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----";
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(chain);
+        Matcher matcher = pattern.matcher(value);
         if (matcher.find()) {
+            // if the method receives a chain it fetches the leaf (end-entity) certificate, else if it gets a single certificate, it returns the single certificate
             return matcher.group(0);
         }
-        return chain;
+        return value;
     }
 
     private String formatCertificateValue(String certificateValue) {

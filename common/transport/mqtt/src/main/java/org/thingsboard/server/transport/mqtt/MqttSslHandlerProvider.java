@@ -164,8 +164,14 @@ public class MqttSslHandlerProvider {
                             }
                         });
                 latch.await(10, TimeUnit.SECONDS);
-                if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
-                    throw new CertificateException("Invalid Certificate's chain. Cannot find such device credentials.");
+                if (chain.length == 1) {
+                    if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                        throw new CertificateException("Invalid Device Certificate");
+                    }
+                } else {
+                    if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                        throw new CertificateException("Invalid Chain of X509 Certificates");
+                    }
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);

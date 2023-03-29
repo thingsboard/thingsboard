@@ -96,33 +96,34 @@ public class DefaultTransportApiServiceTest {
 
     private final String deviceCertificate = "-----BEGIN CERTIFICATE-----Device certificate value-----END CERTIFICATE-----";
     private final String deviceProfileCertificate = "-----BEGIN CERTIFICATE-----Device profile certificate value-----END CERTIFICATE-----";
+    private final String[] chain = new String[]{deviceCertificate, deviceProfileCertificate};
 
     @Test
     public void validateExistingDeviceX509Certificate() {
         var device = createDevice();
         when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
 
-        var deviceCredentials = createDeviceCredentials(deviceCertificate, device.getId());
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
         when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(deviceCredentials);
 
-        service.validateOrCreateDeviceX509Certificate(deviceCertificate, DeviceCredentialsType.X509_CERTIFICATE);
+        service.validateOrCreateDeviceX509Certificate(chain[0]);
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
     }
 
     @Test
     public void updateExistingDeviceX509Certificate() {
-        var deviceProfile = createDeviceProfile(deviceProfileCertificate);
+        var deviceProfile = createDeviceProfile(chain[1]);
         when(deviceProfileService.findDeviceProfileByCertificateHash(any())).thenReturn(deviceProfile);
 
         var device = createDevice();
         when(deviceService.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
         when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
 
-        var deviceCredentials = createDeviceCredentials(deviceCertificate, device.getId());
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
         when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
-        service.validateOrCreateDeviceX509Certificate(deviceProfileCertificate, DeviceCredentialsType.X509_CERTIFICATE);
+        service.validateOrCreateDeviceX509Certificate(chain[1]);
         verify(deviceProfileService, times(1)).findDeviceProfileByCertificateHash(any());
         verify(deviceService, times(1)).findDeviceByTenantIdAndName(any(), any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
@@ -131,18 +132,18 @@ public class DefaultTransportApiServiceTest {
 
     @Test
     public void createDeviceByX509Provision() {
-        var deviceProfile = createDeviceProfile(deviceProfileCertificate);
+        var deviceProfile = createDeviceProfile(chain[1]);
         when(deviceProfileService.findDeviceProfileByCertificateHash(any())).thenReturn(deviceProfile);
 
         var device = createDevice();
         when(deviceService.saveDevice(any())).thenReturn(device);
         when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
 
-        var deviceCredentials = createDeviceCredentials(deviceCertificate, device.getId());
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
         when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
-        service.validateOrCreateDeviceX509Certificate(deviceProfileCertificate, DeviceCredentialsType.X509_CERTIFICATE);
+        service.validateOrCreateDeviceX509Certificate(chain[1]);
         verify(deviceProfileService, times(1)).findDeviceProfileByCertificateHash(any());
         verify(deviceService, times(1)).findDeviceByTenantIdAndName(any(), any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
