@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.apiusage.ApiStatsKey;
 import org.thingsboard.server.service.apiusage.BaseApiUsageState;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.stats.device.DeviceClass;
 import org.thingsboard.server.service.stats.device.DeviceStats;
 import org.thingsboard.server.service.stats.device.DevicesStatisticsService;
@@ -86,6 +87,8 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     private TimeseriesService timeseriesService;
     @Autowired
     private DeviceService deviceService;
+    @Autowired
+    private DeviceStateService deviceStateService;
 
     private ApiUsageStateId apiUsageStateId;
 
@@ -212,6 +215,8 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     @Test
     public void testDevicesActivityStats() throws Exception {
         setStaticFieldValue(BaseApiUsageState.class, "gaugeReportInterval", TimeUnit.SECONDS.toMillis(1));
+        this.<Map>getFieldValue(deviceStateService, "deviceStates").clear();
+
         int activeDevicesCount = 5;
         List<Device> activeDevices = new ArrayList<>();
         for (int i = 1; i <= activeDevicesCount; i++) {
