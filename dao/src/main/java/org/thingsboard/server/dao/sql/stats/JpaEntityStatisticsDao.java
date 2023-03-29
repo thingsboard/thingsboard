@@ -65,11 +65,11 @@ public class JpaEntityStatisticsDao implements EntityStatisticsDao {
     }
 
     @Override
-    public int countByTenantIdAndLatestValueProperty(TenantId tenantId, String property, String value) {
+    public int countByTenantIdAndTsBetweenAndLatestValueProperty(TenantId tenantId, long startTs, long endTs, String property, String value) {
         if (tenantId != null) {
-            return repository.countByTenantIdAndLatestValueProperty(tenantId.getId(), property, value);
+            return repository.countByTenantIdAndTsBetweenAndLatestValueProperty(tenantId.getId(), startTs, endTs, property, value);
         } else {
-            return repository.countByLatestValueProperty(property, value);
+            return repository.countByTsBetweenAndLatestValueProperty(startTs, endTs, property, value);
         }
     }
 
@@ -82,8 +82,8 @@ public class JpaEntityStatisticsDao implements EntityStatisticsDao {
     }
 
     @Override
-    public void deleteByEntityId(TenantId tenantId, EntityId entityId) {
-        repository.deleteByEntityIdAndEntityType(entityId.getId(), entityId.getEntityType());
+    public void deleteByTsBefore(long expTime) {
+        repository.deleteByTsBefore(expTime);
     }
 
     private boolean isCurrentPeriod(long ts) {

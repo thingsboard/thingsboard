@@ -143,6 +143,7 @@ usage:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
     devices:
       enabled: "${DEVICES_STATS_ENABLED:false}"
+      ttl_in_days: "${DEVICES_STATS_TTL_DAYS:45}"
 
 # UI parameters
 ui:

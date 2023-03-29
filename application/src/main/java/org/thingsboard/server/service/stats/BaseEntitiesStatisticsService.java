@@ -64,7 +64,7 @@ public abstract class BaseEntitiesStatisticsService<I extends EntityId> {
         if (!partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
             return;
         }
-        log.info("[{}] Calculating stats", getClass().getSimpleName());
+        int n = 0;
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 5000);
         for (TenantId tenantId : tenants) {
             log.debug("[{}] Calculating stats for tenant {}", getClass().getSimpleName(), tenantId);
@@ -88,6 +88,7 @@ public abstract class BaseEntitiesStatisticsService<I extends EntityId> {
                                 return value;
                             }
                         }, calculationPeriod.getFirst());
+                        n++;
                     } catch (Exception e) {
                         log.error("Failed to calculate stats for {} {}", entityId.getEntityType(), entityId, e);
                     }
@@ -96,7 +97,7 @@ public abstract class BaseEntitiesStatisticsService<I extends EntityId> {
                 log.error("Failed to calculate entity stats for tenant {}", tenants, e);
             }
         }
-        log.info("[{}] Finished stats calculation", getClass().getSimpleName());
+        log.info("[{}] Calculated stats for {} entities", getClass().getSimpleName(), n);
     }
 
     protected abstract EntityStatisticsValue calculateStats(TenantId tenantId, I entityId, Function<ApiUsageRecordKey, Long> statsAssembler);

@@ -36,7 +36,7 @@ public class DeviceStats implements EntityStatisticsValue {
         DeviceStats newStats = (DeviceStats) newValue;
 
         DeviceStats updatedStats = new DeviceStats();
-        if (newStats.getDeviceClass().ordinal() > deviceClass.ordinal()) {
+        if (newStats.getDeviceClass().isHigherThan(deviceClass)) {
             updatedStats.setDeviceClass(newStats.getDeviceClass());
         } else {
             // ignoring device class downgrades

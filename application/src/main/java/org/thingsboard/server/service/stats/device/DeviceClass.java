@@ -34,6 +34,10 @@ public enum DeviceClass {
         return dailyMsgCount <= maxDailyMsgCount && dailyDataPointsCount <= maxDailyDataPointsCount;
     }
 
+    public boolean isHigherThan(DeviceClass otherClass) {
+        return ordinal() > otherClass.ordinal();
+    }
+
     public static DeviceClass defineClass(long dailyMsgCount, long dailyDataPointsCount) {
         for (DeviceClass deviceClass : values()) {
             if (deviceClass.matches(dailyMsgCount, dailyDataPointsCount)) {

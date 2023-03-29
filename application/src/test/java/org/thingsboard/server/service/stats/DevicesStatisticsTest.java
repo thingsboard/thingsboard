@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.service.stats;
 
+import lombok.SneakyThrows;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
@@ -25,11 +28,13 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.stats.EntityStatistics;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.stats.EntityStatisticsDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -42,11 +47,12 @@ import org.thingsboard.server.service.stats.device.DevicesStatisticsService;
 import org.thingsboard.server.service.stats.device.DevicesSummaryStatistics;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -57,6 +63,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ApiUsageRecordKey.ACTIVE_DEVICES;
 import static org.thingsboard.server.common.data.ApiUsageRecordKey.INACTIVE_DEVICES;
+import static org.thingsboard.server.common.msg.tools.SchedulerUtils.getStartOfCurrentHour;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -77,6 +84,8 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     private EntityStatisticsDao entityStatisticsDao;
     @Autowired
     private TimeseriesService timeseriesService;
+    @Autowired
+    private DeviceService deviceService;
 
     private ApiUsageStateId apiUsageStateId;
 
@@ -84,67 +93,120 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     public void beforeEach() throws Exception {
         loginTenantAdmin();
         apiUsageStateId = apiUsageStateService.getApiUsageState(tenantId).getId();
+
+        when(((BaseEntitiesStatisticsService) statisticsService).getCalculationPeriod())
+                .thenReturn(Pair.of(
+                        getStartOfCurrentDay(),
+                        getStartOfCurrentDay() + TimeUnit.DAYS.toMillis(1)
+                ));
+    }
+
+    @After
+    public void afterEach() {
+        Mockito.reset(statisticsService);
+        entityStatisticsDao.deleteByTsBefore(System.currentTimeMillis());
     }
 
     @Test
     public void testDevicesClassification() throws Exception {
-        Device deviceS = createDevice("S", "s");
-        Device deviceM = createDevice("M", "m");
+        Device deviceS = createDevice("s", "s");
+        Device deviceM = createDevice("m", "m");
 
-        long msgCountS = DeviceClass.S.getMaxDailyMsgCount() - 1;
-        long dpCountS = msgCountS * 2;
-        for (long i = 0; i < msgCountS; i++) {
-            String telemetry = "{\"dp1\": 1, \"dp2\": 2}";
-            postTelemetry("s", telemetry);
-        }
+        Pair<Long, Long> msgsAndDpsS = generateTelemetryAccordingToClasses(Map.of(DeviceClass.S, List.of(deviceS))).get(DeviceClass.S);
+        Pair<Long, Long> msgsAndDpsM = generateTelemetryAccordingToClasses(Map.of(DeviceClass.M, List.of(deviceM))).get(DeviceClass.M);
 
-        long msgCountM = DeviceClass.M.getMaxDailyMsgCount() - 1;
-        long dpCountM = msgCountM * 2;
-        for (long i = 0; i < msgCountM; i++) {
-            String telemetry = "{\"dp1\": 1, \"dp2\": 2}";
-            postTelemetry("m", telemetry);
-        }
-
-        await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> Long.valueOf(msgCountS).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_MSG_COUNT, deviceS.getUuidId()), true)) &&
-                        Long.valueOf(dpCountS).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_DP_COUNT, deviceS.getUuidId()), true)) &&
-                        Long.valueOf(msgCountM).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_MSG_COUNT, deviceM.getUuidId()), true)) &&
-                        Long.valueOf(dpCountM).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_DP_COUNT, deviceM.getUuidId()), true)));
-
-        when(((BaseEntitiesStatisticsService) statisticsService).getCalculationPeriod())
-                .thenReturn(Pair.of(
-                        LocalDate.now().atStartOfDay().atZone(ZoneOffset.UTC).toInstant().toEpochMilli(),
-                        LocalDate.now().atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant().toEpochMilli()
-                ));
         statisticsService.calculateStats();
 
         Map<EntityId, EntityStatistics> devicesStats = entityStatisticsDao.findByTenantIdAndEntityType(tenantId, EntityType.DEVICE, new PageLink(10)).getData().stream()
                 .collect(Collectors.toMap(EntityStatistics::getEntityId, v -> v));
         assertThat(devicesStats.get(deviceS.getId())).extracting(EntityStatistics::getLatestValue).asInstanceOf(type(DeviceStats.class))
                 .satisfies(stats -> {
-                    assertThat(stats.getDailyMsgCount()).isEqualTo(msgCountS);
-                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(dpCountS);
+                    assertThat(stats.getDailyMsgCount()).isEqualTo(msgsAndDpsS.getFirst());
+                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(msgsAndDpsS.getSecond());
                     assertThat(stats.getDeviceClass()).isEqualTo(DeviceClass.S);
                 });
         assertThat(devicesStats.get(deviceM.getId())).extracting(EntityStatistics::getLatestValue).asInstanceOf(type(DeviceStats.class))
                 .satisfies(stats -> {
-                    assertThat(stats.getDailyMsgCount()).isEqualTo(msgCountM);
-                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(dpCountM);
+                    assertThat(stats.getDailyMsgCount()).isEqualTo(msgsAndDpsM.getFirst());
+                    assertThat(stats.getDailyDataPointsCount()).isEqualTo(msgsAndDpsM.getSecond());
                     assertThat(stats.getDeviceClass()).isEqualTo(DeviceClass.M);
                 });
 
         loginSysAdmin();
-        DevicesSummaryStatistics systemScopeDevicesStatistics = doGet("/api/admin/statistics/devices", DevicesSummaryStatistics.class);
+        DevicesSummaryStatistics systemScopeDevicesStatistics = doGet("/api/admin/statistics/devices?periodTs=" + System.currentTimeMillis(), DevicesSummaryStatistics.class);
         assertThat(systemScopeDevicesStatistics.getTenantId()).isNull();
-        assertThat(systemScopeDevicesStatistics.getCurrentTotalDevicesCount()).isEqualTo(2);
-        assertThat(systemScopeDevicesStatistics.getCurrentPerClassDevicesCount().get(DeviceClass.S)).isEqualTo(1);
-        assertThat(systemScopeDevicesStatistics.getCurrentPerClassDevicesCount().get(DeviceClass.M)).isEqualTo(1);
+        assertThat(systemScopeDevicesStatistics.getTotalDevicesCount()).isEqualTo(2);
+        assertThat(systemScopeDevicesStatistics.getPerClassDevicesCount().get(DeviceClass.S)).isEqualTo(1);
+        assertThat(systemScopeDevicesStatistics.getPerClassDevicesCount().get(DeviceClass.M)).isEqualTo(1);
 
-        DevicesSummaryStatistics tenantScopeDevicesStatistics = doGet("/api/admin/statistics/devices?tenantId=" + tenantId, DevicesSummaryStatistics.class);
+        DevicesSummaryStatistics tenantScopeDevicesStatistics = doGet("/api/admin/statistics/devices?periodTs=" + System.currentTimeMillis() + "&tenantId=" + tenantId, DevicesSummaryStatistics.class);
         assertThat(tenantScopeDevicesStatistics.getTenantId()).isEqualTo(tenantId);
-        assertThat(tenantScopeDevicesStatistics.getCurrentTotalDevicesCount()).isEqualTo(2);
-        assertThat(tenantScopeDevicesStatistics.getCurrentPerClassDevicesCount().get(DeviceClass.S)).isEqualTo(1);
-        assertThat(tenantScopeDevicesStatistics.getCurrentPerClassDevicesCount().get(DeviceClass.M)).isEqualTo(1);
+        assertThat(tenantScopeDevicesStatistics.getTotalDevicesCount()).isEqualTo(2);
+        assertThat(tenantScopeDevicesStatistics.getPerClassDevicesCount().get(DeviceClass.S)).isEqualTo(1);
+        assertThat(tenantScopeDevicesStatistics.getPerClassDevicesCount().get(DeviceClass.M)).isEqualTo(1);
+    }
+
+    @Test
+    public void testDevicesClassificationWithDeletedDevices() throws Exception {
+        Map<DeviceClass, List<Device>> devices = new HashMap<>();
+        int devicesOfEachClass = 5;
+        Set<DeviceClass> classes = Set.of(DeviceClass.S, DeviceClass.M);
+        int totalCount = classes.size() * devicesOfEachClass;
+
+        Map<DeviceId, DeviceClass> devicesClasses = new HashMap<>();
+        for (DeviceClass deviceClass : classes) {
+            devices.put(deviceClass, new ArrayList<>());
+            for (int i = 0; i < devicesOfEachClass; i++) {
+                String name = deviceClass + "_" + i;
+                Device device = createDevice(name, name);
+                devices.get(deviceClass).add(device);
+                devicesClasses.put(device.getId(), deviceClass);
+            }
+        }
+        generateTelemetryAccordingToClasses(devices);
+
+        statisticsService.calculateStats();
+        List<EntityStatistics> stats = entityStatisticsDao.findByTenantIdAndEntityType(tenantId, EntityType.DEVICE, new PageLink(100)).getData();
+        assertThat(stats).size().isEqualTo(totalCount);
+
+        // so that stats timestamp is updated for existing devices
+        when(((BaseEntitiesStatisticsService) statisticsService).getCalculationPeriod())
+                .thenReturn(Pair.of(
+                        getStartOfCurrentHour(),
+                        getStartOfCurrentHour() + 40_000
+                ));
+
+        Map<DeviceId, DeviceClass> deletedDevices = new HashMap<>();
+        devices.forEach((deviceClass, classDevices) -> {
+            for (int i = 0; i < 2; i++) {
+                Device device = classDevices.remove(i);
+                deviceService.deleteDevice(tenantId, device.getId());
+                deletedDevices.put(device.getId(), deviceClass);
+            }
+        });
+
+        statisticsService.calculateStats();
+        stats = entityStatisticsDao.findByTenantIdAndEntityType(tenantId, EntityType.DEVICE, new PageLink(100)).getData();
+        assertThat(stats).size().isEqualTo(totalCount);
+
+        Map<EntityId, EntityStatistics> perDeviceStats = stats.stream().collect(Collectors.toMap(EntityStatistics::getEntityId, s -> s));
+        long statsTsForDeletedDevices = getStartOfCurrentDay();
+        long statsTsForPresentDevices = getStartOfCurrentHour();
+
+        perDeviceStats.forEach((deviceId, deviceStats) -> {
+            DeviceStats statsValue = (DeviceStats) deviceStats.getLatestValue();
+            assertThat(statsValue.getDeviceClass()).isEqualTo(devicesClasses.get(deviceId));
+
+            if (deletedDevices.containsKey(deviceId)) {
+                assertThat(deviceStats.getTs()).isEqualTo(statsTsForDeletedDevices);
+            } else {
+                assertThat(deviceStats.getTs()).isEqualTo(statsTsForPresentDevices);
+            }
+        });
+
+        entityStatisticsDao.deleteByTsBefore(statsTsForPresentDevices - 1);
+        stats = entityStatisticsDao.findByTenantIdAndEntityType(tenantId, EntityType.DEVICE, new PageLink(100)).getData();
+        assertThat(stats).size().isEqualTo(totalCount - deletedDevices.size());
     }
 
     @Test
@@ -174,18 +236,42 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
             postTelemetry(device.getName(), "{\"dp\":1}");
         }
 
-        await().atMost(15, TimeUnit.SECONDS)
-                .until(() -> getLatestStats(ApiStatsKey.of(ACTIVE_DEVICES), false) > 0);
-        assertThat(getLatestStats(ApiStatsKey.of(ACTIVE_DEVICES), false)).isEqualTo(activeDevicesCount);
-        assertThat(getLatestStats(ApiStatsKey.of(INACTIVE_DEVICES), false)).isEqualTo(inactiveDevicesCount);
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> getLatestStats(ApiStatsKey.of(ACTIVE_DEVICES), false) == activeDevicesCount &&
+                        getLatestStats(ApiStatsKey.of(INACTIVE_DEVICES), false) == inactiveDevicesCount);
     }
 
-    private Long getLatestStats(ApiStatsKey statsKey, boolean hourly) throws Exception {
+    private Map<DeviceClass, Pair<Long, Long>> generateTelemetryAccordingToClasses(Map<DeviceClass, List<Device>> devices) throws Exception {
+        Map<DeviceClass, Pair<Long, Long>> msgsAndDps = new HashMap<>();
+        devices.forEach((deviceClass, classDevices) -> {
+            long msgCount = deviceClass.getMaxDailyMsgCount() - 1;
+            long dpCount = msgCount * 2;
+            for (Device device : classDevices) {
+                for (long i = 0; i < msgCount; i++) {
+                    String telemetry = "{\"dp1\": 1, \"dp2\": 2}";
+                    postTelemetry(device.getName(), telemetry);
+                }
+            }
+            await().atMost(20, TimeUnit.SECONDS)
+                    .until(() -> classDevices.stream().allMatch(device -> Long.valueOf(msgCount).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_MSG_COUNT, device.getUuidId()), true)) &&
+                            Long.valueOf(dpCount).equals(getLatestStats(ApiStatsKey.of(ApiUsageRecordKey.TRANSPORT_DP_COUNT, device.getUuidId()), true))));
+            msgsAndDps.put(deviceClass, Pair.of(msgCount, dpCount));
+        });
+        return msgsAndDps;
+    }
+
+    private long getStartOfCurrentDay() {
+        return LocalDate.now().atStartOfDay().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
+    }
+
+    @SneakyThrows
+    private Long getLatestStats(ApiStatsKey statsKey, boolean hourly) {
         return timeseriesService.findLatest(tenantId, apiUsageStateId, List.of(statsKey.getEntryKey(hourly))).get().stream()
                 .findFirst().flatMap(KvEntry::getLongValue).orElse(null);
     }
 
-    private void postTelemetry(String accessToken, String json) throws Exception {
+    @SneakyThrows
+    private void postTelemetry(String accessToken, String json) {
         doPost("/api/v1/" + accessToken + "/telemetry", json, new String[0]).andExpect(status().isOk());
     }
 

@@ -29,10 +29,10 @@ public interface EntityStatisticsDao {
 
     void updateStats(TenantId tenantId, EntityId entityId, UnaryOperator<EntityStatisticsValue> newValue, long ts);
 
-    int countByTenantIdAndLatestValueProperty(TenantId tenantId, String property, String value);
+    int countByTenantIdAndTsBetweenAndLatestValueProperty(TenantId tenantId, long startTs, long endTs, String property, String value);
 
     PageData<EntityStatistics> findByTenantIdAndEntityType(TenantId tenantId, EntityType entityType, PageLink pageLink);
 
-    void deleteByEntityId(TenantId tenantId, EntityId entityId);
+    void deleteByTsBefore(long expTime);
 
 }

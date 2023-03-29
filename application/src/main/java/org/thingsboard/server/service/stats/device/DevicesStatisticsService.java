@@ -17,8 +17,10 @@ package org.thingsboard.server.service.stats.device;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.util.Pair;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -26,13 +28,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.stats.EntityStatisticsValue;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.stats.BaseEntitiesStatisticsService;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,6 +52,9 @@ import static org.thingsboard.server.common.data.ApiUsageRecordKey.TRANSPORT_MSG
 public class DevicesStatisticsService extends BaseEntitiesStatisticsService<DeviceId> {
 
     private final DeviceService deviceService;
+    private final PartitionService partitionService;
+    @Value("${usage.stats.devices.ttl_in_days:45}")
+    private int ttlInDays;
 
     @Override
     protected EntityStatisticsValue calculateStats(TenantId tenantId, DeviceId entityId, Function<ApiUsageRecordKey, Long> statsAssembler) {
@@ -76,18 +84,28 @@ public class DevicesStatisticsService extends BaseEntitiesStatisticsService<Devi
     /*
      * tenantId is optional. If not specified - statistics will be calculated in scope of the whole platform
      * */
-    public DevicesSummaryStatistics getSummaryStatistics(TenantId tenantId) {
+    public DevicesSummaryStatistics getSummaryStatistics(TenantId tenantId, long startTs, long endTs) {
         long totalCount = tenantId != null ? deviceService.countByTenantId(tenantId) : deviceService.count();
         Map<DeviceClass, Integer> perClassCount = Arrays.stream(DeviceClass.values())
                 .collect(Collectors.toMap(k -> k, deviceClass -> {
-                    return entityStatisticsDao.countByTenantIdAndLatestValueProperty(tenantId, "deviceClass", deviceClass.name());
+                    return entityStatisticsDao.countByTenantIdAndTsBetweenAndLatestValueProperty(tenantId, startTs, endTs, "deviceClass", deviceClass.name());
                 }));
 
         return DevicesSummaryStatistics.builder()
                 .tenantId(tenantId)
-                .currentTotalDevicesCount((int) totalCount)
-                .currentPerClassDevicesCount(perClassCount)
+                .totalDevicesCount((int) totalCount)
+                .perClassDevicesCount(perClassCount)
                 .build();
+    }
+
+    @Scheduled(initialDelay = 1, fixedDelay = 24, timeUnit = TimeUnit.HOURS)
+    public void cleanUpOldStats() {
+        if (ttlInDays == 0 || !partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+            return;
+        }
+
+        long expTime = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(ttlInDays);
+        entityStatisticsDao.deleteByTsBefore(expTime);
     }
 
 }

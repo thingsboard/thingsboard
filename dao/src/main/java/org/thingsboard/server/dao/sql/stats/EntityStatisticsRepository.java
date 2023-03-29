@@ -32,21 +32,28 @@ public interface EntityStatisticsRepository extends JpaRepository<EntityStatisti
 
     EntityStatisticsEntity findByEntityIdAndEntityType(UUID entityId, EntityType entityType);
 
-    @Query(value = "SELECT count(*) FROM entity_statistics WHERE tenant_id = :tenantId AND " +
-            "latest_value ->> :property = :value", nativeQuery = true)
-    int countByTenantIdAndLatestValueProperty(@Param("tenantId") UUID tenantId,
-                                              @Param("property") String property,
-                                              @Param("value") String value);
+    @Query(value = "SELECT count(*) FROM entity_statistics WHERE tenant_id = :tenantId " +
+            "AND ts >= :startTs AND ts <= :endTs " +
+            "AND latest_value ->> :property = :value", nativeQuery = true)
+    int countByTenantIdAndTsBetweenAndLatestValueProperty(@Param("tenantId") UUID tenantId,
+                                                          @Param("startTs") long startTs,
+                                                          @Param("endTs") long endTs,
+                                                          @Param("property") String property,
+                                                          @Param("value") String value);
 
-    @Query(value = "SELECT count(*) FROM entity_statistics WHERE latest_value ->> :property = :value", nativeQuery = true)
-    int countByLatestValueProperty(@Param("property") String property,
-                                   @Param("value") String value);
+    @Query(value = "SELECT count(*) FROM entity_statistics WHERE " +
+            "ts >= :startTs AND ts <= :endTs " +
+            "AND latest_value ->> :property = :value", nativeQuery = true)
+    int countByTsBetweenAndLatestValueProperty(@Param("startTs") long startTs,
+                                               @Param("endTs") long endTs,
+                                               @Param("property") String property,
+                                               @Param("value") String value);
 
     Page<EntityStatisticsEntity> findByTenantIdAndEntityType(UUID tenantId, EntityType entityType, Pageable pageable);
 
     Page<EntityStatisticsEntity> findByEntityType(EntityType entityType, Pageable pageable);
 
     @Transactional
-    void deleteByEntityIdAndEntityType(UUID entityId, EntityType entityType);
+    void deleteByTsBefore(long ts);
 
 }

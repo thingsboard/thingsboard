@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
+import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -68,8 +69,12 @@ import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsSer
 import org.thingsboard.server.service.system.SystemInfoService;
 import org.thingsboard.server.service.update.UpdateService;
 
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
@@ -386,14 +391,41 @@ public class AdminController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get devices summary statistics (getDevicesSummaryStatistics)",
+            notes = "Calculates summary statistics of devices for a given tenant if specified, or in scope of the whole platform." + NEW_LINE +
+                    "Stats for each device is generated every day for the previous day. " +
+                    "So, for each non-deleted device the stats timestamp would be the start of the previous day. " +
+                    "For deleted device, the stats timestamp is the start of the day before the day it was deleted." + NEW_LINE +
+                    "With that in mind, you can specify either both `startTs` and `endTs`, or `periodTs` (UTC). " +
+                    "If `periodTs` is specified, the start and end ts will be the start and the end of the month for this `periodTs`.\n" +
+                    "If neither `periodTs` nor `startTs` and `endTs` are specified, the default start and end ts " +
+                    "will be the start and the end of the previous month." + NEW_LINE +
+                    "Usage example: summary statistics are retrieved on the first day of the month " +
+                    "(after the stats were generated for the previous day), without specifying timestamp ranges, " +
+                    "so that the stats cover all present devices, and all the devices that were deleted during the previous month.")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/statistics/devices")
-    public DevicesSummaryStatistics getDevicesSummaryStatistics(@RequestParam(value = "tenantId", required = false) UUID tenantUuid) {
+    public DevicesSummaryStatistics getDevicesSummaryStatistics(@RequestParam(value = "tenantId", required = false) UUID tenantUuid,
+                                                                @RequestParam(value = "periodTs", required = false) Long periodTs,
+                                                                @RequestParam(value = "periodTs", required = false) Long startTs,
+                                                                @RequestParam(value = "periodTs", required = false) Long endTs) {
         if (devicesStatisticsService == null) {
             throw new IllegalArgumentException("Devices statistics calculation is disabled. Use 'usage.stats.devices.enabled' ('DEVICES_STATS_ENABLED') property to enable");
         }
         TenantId tenantId = tenantUuid != null && !tenantUuid.equals(EntityId.NULL_UUID) ? TenantId.fromUUID(tenantUuid) : null;
-        return devicesStatisticsService.getSummaryStatistics(tenantId);
+
+        ZonedDateTime period = null;
+        if (periodTs != null && periodTs != 0) {
+            period = SchedulerUtils.fromMillis(periodTs);
+        } else if (startTs == null || startTs == 0 || endTs == null || endTs == 0) {
+            period = SchedulerUtils.fromMillis(System.currentTimeMillis()).minusMonths(1);
+        }
+        if (period != null) {
+            startTs = period.withDayOfMonth(1).with(LocalTime.MIN).toInstant().toEpochMilli();
+            endTs = period.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX).toInstant().toEpochMilli();
+        }
+
+        return devicesStatisticsService.getSummaryStatistics(tenantId, startTs, endTs);
     }
 
     @ApiOperation(value = "Check for new Platform Releases (checkUpdates)",

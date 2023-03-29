@@ -26,7 +26,7 @@ import java.util.Map;
 public class DevicesSummaryStatistics {
 
     private final TenantId tenantId;
-    private final int currentTotalDevicesCount;
-    private final Map<DeviceClass, Integer> currentPerClassDevicesCount;
+    private final int totalDevicesCount;
+    private final Map<DeviceClass, Integer> perClassDevicesCount;
 
 }

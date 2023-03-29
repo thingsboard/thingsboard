@@ -83,6 +83,10 @@ public class SchedulerUtils {
         return toMillis(LocalDateTime.now(UTC).minusDays(1).with(LocalTime.MAX).atZone(UTC));
     }
 
+    public static ZonedDateTime fromMillis(long millis) {
+        return Instant.ofEpochMilli(millis).atZone(UTC);
+    }
+
     private static long toMillis(ZonedDateTime zonedDateTime) {
         return zonedDateTime.toInstant().toEpochMilli();
     }
