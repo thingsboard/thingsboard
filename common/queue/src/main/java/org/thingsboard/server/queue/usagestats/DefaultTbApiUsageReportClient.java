@@ -130,7 +130,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                         .newByTopic(msgProducer.getDefaultTopic());
                 msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
             } catch (Exception e) {
-                log.warn("Failed to report usage stats for tenant {}", parent.getTenantId(), e);
+                log.warn("Failed to report usage stats for tenant {}: {}", parent.getTenantId(), statsMsg.build(), e);
             }
         }));
 
