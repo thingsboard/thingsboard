@@ -168,7 +168,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   showAlarmDetails(entity: AlarmInfo) {
-    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId.id === this.authUser.customerId;
+    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId?.id === this.authUser.customerId;
     this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
     (AlarmDetailsDialogComponent,
       {
@@ -179,7 +179,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           alarm: entity,
           allowAcknowledgment: isPermissionWrite,
           allowClear: isPermissionWrite,
-          displayDetails: true
+          displayDetails: true,
+          allowAssign: true
         }
       }).afterClosed().subscribe(
       (res) => {

@@ -14,17 +14,17 @@
 /// limitations under the License.
 ///
 
-import {
-  Component, EventEmitter, Injector, Input, Output, StaticProvider, ViewContainerRef
-} from '@angular/core';
+import { Component, EventEmitter, Injector, Input, Output, StaticProvider, ViewContainerRef } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmAssignee, AlarmInfo } from '@shared/models/alarm.models';
 import {
-  ALARM_ASSIGNEE_PANEL_DATA, AlarmAssigneePanelComponent,
+  ALARM_ASSIGNEE_PANEL_DATA,
+  AlarmAssigneePanelComponent,
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-alarm-assignee',
@@ -35,12 +35,26 @@ export class AlarmAssigneeComponent {
   @Input()
   alarm: AlarmInfo;
 
+  @Input()
+  allowAssign: boolean;
+
   @Output()
   alarmReassigned = new EventEmitter<boolean>();
 
   constructor(private utilsService: UtilsService,
               private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private translateService: TranslateService) {
+  }
+
+  getAssignee() {
+    if (this.alarm) {
+      if (this.alarm.assignee) {
+        return this.getUserDisplayName(this.alarm.assignee);
+      } else {
+        return this.translateService.instant('alarm.unassigned');
+      }
+    }
   }
 
   getUserDisplayName(entity: AlarmAssignee) {
@@ -103,39 +117,41 @@ export class AlarmAssigneeComponent {
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
-    config.minWidth = '260px';
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-    const providers: StaticProvider[] = [
-      {
-        provide: ALARM_ASSIGNEE_PANEL_DATA,
-        useValue: {
-          alarmId: alarm.id.id,
-          assigneeId: alarm.assigneeId?.id
-        } as AlarmAssigneePanelData
-      },
-      {
-        provide: OverlayRef,
-        useValue: overlayRef
-      }
-    ];
-    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
-      this.viewContainerRef, injector)).onDestroy(() => this.alarmReassigned.emit(true));
+    if (this.allowAssign) {
+      const target = $event.currentTarget;
+      const config = new OverlayConfig();
+      config.backdropClass = 'cdk-overlay-transparent-backdrop';
+      config.hasBackdrop = true;
+      const connectedPosition: ConnectedPosition = {
+        originX: 'center',
+        originY: 'center',
+        overlayX: 'center',
+        overlayY: 'top'
+      };
+      config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+        .withPositions([connectedPosition]);
+      config.width = (target as HTMLElement).offsetWidth;
+      const overlayRef = this.overlay.create(config);
+      overlayRef.backdropClick().subscribe(() => {
+        overlayRef.dispose();
+      });
+      const providers: StaticProvider[] = [
+        {
+          provide: ALARM_ASSIGNEE_PANEL_DATA,
+          useValue: {
+            alarmId: alarm.id.id,
+            assigneeId: alarm.assigneeId?.id
+          } as AlarmAssigneePanelData
+        },
+        {
+          provide: OverlayRef,
+          useValue: overlayRef
+        }
+      ];
+      const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+      overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
+        this.viewContainerRef, injector)).onDestroy(() => this.alarmReassigned.emit(true));
+    }
   }
 
 }

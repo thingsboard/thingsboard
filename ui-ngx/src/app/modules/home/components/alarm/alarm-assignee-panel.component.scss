@@ -37,7 +37,6 @@
   .tb-assignee-autocomplete {
     &.tb-assignee-autocomplete.mat-mdc-autocomplete-panel {
       position: relative;
-      left: -8px;
       margin-top: 8px;
       box-shadow: none !important;
     }
@@ -58,7 +57,6 @@
         align-items: center;
         margin-right: 8px;
         border-radius: 50%;
-        background-color: #5cb445;
         width: 28px;
         height: 28px;
         min-width: 28px;

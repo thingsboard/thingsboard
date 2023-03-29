@@ -34,9 +34,11 @@ import { EntityType } from '@shared/models/entity-type.models';
 interface AlarmCommentsDisplayData {
   commentId?: string,
   displayName?: string,
+  createdTime: number,
   createdDateAgo?: string,
   edit?: boolean,
   isEdited?: boolean,
+  editedTime?: number;
   editedDateAgo?: string,
   showActions?: boolean,
   commentText?: string,
@@ -54,7 +56,7 @@ export class AlarmCommentComponent implements OnInit {
   alarmId: string;
 
   @Input()
-  commentsHeaderEnabled: boolean = true;
+  alarmActivityOnly: boolean = false;
 
   authUser: AuthUser;
 
@@ -110,7 +112,8 @@ export class AlarmCommentComponent implements OnInit {
         this.alarmComments = pagedData.data;
         this.displayData.length = 0;
         for (let alarmComment of pagedData.data) {
-          let displayDataElement: AlarmCommentsDisplayData = {};
+          let displayDataElement = {} as AlarmCommentsDisplayData;
+          displayDataElement.createdTime = alarmComment.createdTime;
           displayDataElement.createdDateAgo = this.dateAgoPipe.transform(alarmComment.createdTime);
           displayDataElement.commentText = alarmComment.comment.text;
           displayDataElement.isSystemComment = alarmComment.type === AlarmCommentType.SYSTEM;
@@ -119,7 +122,9 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.displayName = this.getUserDisplayName(alarmComment);
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;
-            displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn).toLowerCase();
+            displayDataElement.editedTime = alarmComment.comment.editedOn;
+            displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) +
+              ' ' + this.translate.instant('alarm-activity.ago') + '\n';
             displayDataElement.showActions = false;
             displayDataElement.isSystemComment = false;
             displayDataElement.avatarBgColor = this.utilsService.stringToHslColor(displayDataElement.displayName,
@@ -194,7 +199,7 @@ export class AlarmCommentComponent implements OnInit {
     const alarmCommentInfo: AlarmComment = this.getAlarmCommentById(commentId);
     const commentText: string = alarmCommentInfo.comment.text;
     this.dialogService.confirm(
-      this.translate.instant('alarm-comment.delete-alarm-comment'),
+      this.translate.instant('alarm-activity.delete-alarm-comment'),
       commentText,
       this.translate.instant('action.cancel'),
       this.translate.instant('action.delete')).subscribe(
@@ -211,15 +216,17 @@ export class AlarmCommentComponent implements OnInit {
   }
 
   getSortDirectionIcon() {
-    return this.alarmCommentSortOrder.direction === Direction.DESC ? 'arrow_downward' : 'arrow_upward'
+    return this.alarmCommentSortOrder.direction === Direction.DESC ? 'mdi:sort-descending' : 'mdi:sort-ascending'
+  }
+
+  getSortDirectionTooltipText() {
+    let text = this.alarmCommentSortOrder.direction === Direction.DESC ? 'alarm-activity.newest-first' :
+      'alarm-activity.oldest-first';
+    return this.translate.instant(text);
   }
 
   isDirectionAscending() {
     return this.alarmCommentSortOrder.direction === Direction.ASC;
-  }
-
-  isDirectionDescending() {
-    return this.alarmCommentSortOrder.direction === Direction.DESC;
   }
 
   onCommentMouseEnter(commentId: string, displayDataIndex: number): void {
