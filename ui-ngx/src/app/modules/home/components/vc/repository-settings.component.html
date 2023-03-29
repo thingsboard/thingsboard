@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<div>
-  <mat-card appearance="outlined" class="repository-settings" [ngClass]="{'settings-card': !detailsMode}" [ngStyle]="popoverComponent ? {boxShadow: 'none', width: '800px'} : {}">
+<div style="height: min-content; max-height: 80vh;">
+  <mat-card appearance="outlined" class="repository-settings"
+            [ngClass]="{'settings-card': !detailsMode}"
+            [ngStyle]="popoverComponent ? {boxShadow: 'none', maxWidth: '100%', minWidth: '100%', width: '800px'} : {}">
     <mat-card-header>
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.repository-settings</span>
@@ -41,10 +43,10 @@
             <mat-label translate>admin.default-branch</mat-label>
             <input matInput formControlName="defaultBranch">
           </mat-form-field>
-          <mat-checkbox formControlName="readOnly">
-            {{ 'admin.repository-read-only' | translate }}
-          </mat-checkbox>
-          <div>
+          <div fxLayout="column">
+            <mat-checkbox formControlName="readOnly">
+              {{ 'admin.repository-read-only' | translate }}
+            </mat-checkbox>
             <mat-checkbox formControlName="showMergeCommits">
               {{ 'admin.show-merge-commits' | translate }}
             </mat-checkbox>
@@ -74,6 +76,7 @@
                 <input matInput formControlName="password" type="password"
                        placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
                 <tb-toggle-password matSuffix></tb-toggle-password>
+                <mat-hint [innerHTML] = "'admin.auth-method-username-password-hint' | translate"></mat-hint>
               </mat-form-field>
             </section>
             <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
