@@ -48,16 +48,16 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration> {
-
     private static final String CUSTOMER_PREFIX = "customer_";
 
     @Override
-    protected TbGetCustomerDetailsNodeConfiguration loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+    protected TbGetCustomerDetailsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbGetCustomerDetailsNodeConfiguration.class);
     }
 
     @Override
     protected ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg) {
+        ctx.checkTenantEntity(msg.getOriginator());
         return getTbMsgListenableFuture(ctx, msg, getDataAsJson(msg), CUSTOMER_PREFIX);
     }
 

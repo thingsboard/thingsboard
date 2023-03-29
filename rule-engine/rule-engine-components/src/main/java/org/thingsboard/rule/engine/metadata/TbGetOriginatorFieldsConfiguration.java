@@ -16,25 +16,27 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class TbGetOriginatorFieldsConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
-
+@EqualsAndHashCode(callSuper = true)
+public class TbGetOriginatorFieldsConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
     private Map<String, String> fieldsMapping;
     private boolean ignoreNullStrings;
 
     @Override
     public TbGetOriginatorFieldsConfiguration defaultConfiguration() {
-        TbGetOriginatorFieldsConfiguration configuration = new TbGetOriginatorFieldsConfiguration();
-        Map<String, String> fieldsMapping = new HashMap<>();
+        var configuration = new TbGetOriginatorFieldsConfiguration();
+        var fieldsMapping = new HashMap<String, String>();
         fieldsMapping.put("name", "originatorName");
         fieldsMapping.put("type", "originatorType");
         configuration.setFieldsMapping(fieldsMapping);
         configuration.setIgnoreNullStrings(false);
+        configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
 }

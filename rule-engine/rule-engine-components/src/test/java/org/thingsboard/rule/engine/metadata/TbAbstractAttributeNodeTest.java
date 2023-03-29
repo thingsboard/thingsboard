@@ -52,7 +52,9 @@ import org.thingsboard.server.dao.user.UserService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,11 +63,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractAttributeNodeTest {
+public abstract class TbAbstractAttributeNodeTest {
     final CustomerId customerId = new CustomerId(Uuids.timeBased());
     final TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
     final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
@@ -86,9 +87,9 @@ public abstract class AbstractAttributeNodeTest {
     DeviceService deviceService;
     TbMsg msg;
     Map<String, String> metaData;
-    TbEntityGetAttrNode node;
+    TbAbstractGetEntityAttrNode node;
 
-    void init(TbEntityGetAttrNode node) throws TbNodeException {
+    void init(TbAbstractGetEntityAttrNode node) throws TbNodeException {
         ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfig()));
 
@@ -117,7 +118,6 @@ public abstract class AbstractAttributeNodeTest {
     }
 
     void errorThrownIfCannotLoadAttributesAsync(User user) {
-
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
@@ -137,7 +137,10 @@ public abstract class AbstractAttributeNodeTest {
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, FAILURE);
+        var exceptionCaptor = ArgumentCaptor.forClass(NoSuchElementException.class);
+        verify(ctx).tellFailure(eq(msg), exceptionCaptor.capture());
+
+        assertThat(exceptionCaptor.getValue().getMessage()).contains("Did not find entity! Msg ID: ");
         assertTrue(msg.getMetaData().getData().isEmpty());
     }
 
@@ -168,7 +171,7 @@ public abstract class AbstractAttributeNodeTest {
         ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfigForTelemetry()));
 
-        TbEntityGetAttrNode node = getEmptyNode();
+        TbAbstractGetEntityAttrNode node = getEmptyNode();
         node.init(null, nodeConfiguration);
 
         msg = TbMsg.newMsg("DEVICE", device.getId(), new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
@@ -210,10 +213,11 @@ public abstract class AbstractAttributeNodeTest {
         conf.put(keyAttrConf, valueAttrConf);
         config.setAttrMapping(conf);
         config.setTelemetry(isTelemetry);
+        config.setFetchTo(FetchTo.METADATA);
         return config;
     }
 
-    protected abstract TbEntityGetAttrNode getEmptyNode();
+    protected abstract TbAbstractGetEntityAttrNode getEmptyNode();
 
     abstract EntityId getEntityId();
 

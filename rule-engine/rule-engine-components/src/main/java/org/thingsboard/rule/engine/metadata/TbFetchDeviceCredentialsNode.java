@@ -15,24 +15,18 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.concurrent.ExecutionException;
 
@@ -48,39 +42,37 @@ import java.util.concurrent.ExecutionException;
                 "- send Message via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
-public class TbFetchDeviceCredentialsNode implements TbNode {
-
+public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFetchDeviceCredentialsNodeConfiguration> {
     private static final String CREDENTIALS = "credentials";
     private static final String CREDENTIALS_TYPE = "credentialsType";
 
-    TbFetchDeviceCredentialsNodeConfiguration config;
-    boolean fetchToMetadata;
-
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbFetchDeviceCredentialsNodeConfiguration.class);
-        this.fetchToMetadata = config.isFetchToMetadata();
+    protected TbFetchDeviceCredentialsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbFetchDeviceCredentialsNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        EntityId originator = msg.getOriginator();
+        var originator = msg.getOriginator();
+        ctx.checkTenantEntity(originator);
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
             ctx.tellFailure(msg, new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!"));
             return;
         }
-        DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
-        DeviceCredentials deviceCredentials = ctx.getDeviceCredentialsService().findDeviceCredentialsByDeviceId(ctx.getTenantId(), deviceId);
+
+        var deviceId = new DeviceId(msg.getOriginator().getId());
+        var deviceCredentials = ctx.getDeviceCredentialsService().findDeviceCredentialsByDeviceId(ctx.getTenantId(), deviceId);
         if (deviceCredentials == null) {
             ctx.tellFailure(msg, new RuntimeException("Failed to get Device Credentials for device: " + deviceId + "!"));
             return;
         }
 
-        TbMsg transformedMsg;
-        DeviceCredentialsType credentialsType = deviceCredentials.getCredentialsType();
-        JsonNode credentialsInfo = ctx.getDeviceCredentialsService().toCredentialsInfo(deviceCredentials);
-        if (fetchToMetadata) {
-            TbMsgMetaData metaData = msg.getMetaData();
+        TbMsg transformedMsg = null;
+        var credentialsType = deviceCredentials.getCredentialsType();
+        var credentialsInfo = ctx.getDeviceCredentialsService().toCredentialsInfo(deviceCredentials);
+
+        if (FetchTo.METADATA.equals(fetchTo)) {
+            var metaData = msg.getMetaData();
             metaData.putValue(CREDENTIALS_TYPE, credentialsType.name());
             if (credentialsType.equals(DeviceCredentialsType.ACCESS_TOKEN) || credentialsType.equals(DeviceCredentialsType.X509_CERTIFICATE)) {
                 metaData.putValue(CREDENTIALS, credentialsInfo.asText());
@@ -88,8 +80,8 @@ public class TbFetchDeviceCredentialsNode implements TbNode {
                 metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
             }
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, metaData, msg.getData());
-        } else {
-            ObjectNode data = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
+        } else if (FetchTo.DATA.equals(fetchTo)) {
+            var data = getMsgDataAsObjectNode(msg);
             data.put(CREDENTIALS_TYPE, credentialsType.name());
             data.set(CREDENTIALS, credentialsInfo);
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, msg.getMetaData(), JacksonUtil.toString(data));

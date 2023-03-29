@@ -15,17 +15,13 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -36,42 +32,34 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
-public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
-
+public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> extends TbAbstractNodeWithFetchTo<C> {
     private static final String VALUE = "value";
     private static final String TS = "ts";
-
-    protected C config;
-    private boolean fetchToData;
     private boolean isTellFailureIfAbsent;
     private boolean getLatestValueWithTs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = loadGetAttributesNodeConfig(configuration);
-        this.fetchToData = config.isFetchToData();
-        this.getLatestValueWithTs = config.isGetLatestValueWithTs();
-        this.isTellFailureIfAbsent = BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true);
+        super.init(ctx, configuration);
+        getLatestValueWithTs = config.isGetLatestValueWithTs();
+        isTellFailureIfAbsent = config.isTellFailureIfAbsent();
     }
-
-    protected abstract C loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
@@ -89,20 +77,16 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     private void safePutAttributes(TbContext ctx, TbMsg msg, T entityId) {
         if (entityId == null || entityId.isNullUid()) {
-            ctx.tellNext(msg, FAILURE);
+            ctx.tellFailure(msg, new NoSuchElementException("Did not find entity! Msg ID: " + msg.getId()));
             return;
         }
-        JsonNode msgDataNode;
-        if (fetchToData) {
-            msgDataNode = JacksonUtil.toJsonNode(msg.getData());
-            if (!msgDataNode.isObject()) {
-                ctx.tellFailure(msg, new IllegalArgumentException("Msg body is not an object!"));
-                return;
-            }
+        ObjectNode msgDataNode;
+        if (FetchTo.DATA.equals(fetchTo)) {
+            msgDataNode = getMsgDataAsObjectNode(msg);
         } else {
             msgDataNode = null;
         }
-        ConcurrentHashMap<String, List<String>> failuresMap = new ConcurrentHashMap<>();
+        var failuresMap = new ConcurrentHashMap<String, List<String>>();
         ListenableFuture<List<Map<String, ? extends List<? extends KvEntry>>>> allFutures = Futures.allAsList(
                 getLatestTelemetry(ctx, entityId, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresMap),
                 getAttrAsync(ctx, entityId, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresMap),
@@ -110,23 +94,28 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 getAttrAsync(ctx, entityId, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresMap)
         );
         withCallback(allFutures, futuresList -> {
-            TbMsgMetaData msgMetaData = msg.getMetaData().copy();
+            var msgMetaData = msg.getMetaData().copy();
             futuresList.stream().filter(Objects::nonNull).forEach(kvEntriesMap -> {
                 kvEntriesMap.forEach((keyScope, kvEntryList) -> {
-                    String prefix = getPrefix(keyScope);
+                    var prefix = getPrefix(keyScope);
                     kvEntryList.forEach(kvEntry -> {
-                        String key = prefix + kvEntry.getKey();
-                        if (fetchToData) {
-                            JacksonUtil.addKvEntry((ObjectNode) msgDataNode, kvEntry, key);
-                        } else {
+                        var key = prefix + kvEntry.getKey();
+                        if (FetchTo.DATA.equals(fetchTo)) {
+                            JacksonUtil.addKvEntry(msgDataNode, kvEntry, key);
+                        } else if (FetchTo.METADATA.equals(fetchTo)) {
                             msgMetaData.putValue(key, kvEntry.getValueAsString());
                         }
                     });
                 });
             });
-            TbMsg outMsg = fetchToData ?
-                    TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode)) :
-                    TbMsg.transformMsg(msg, msgMetaData);
+
+            TbMsg outMsg = null;
+            if (FetchTo.DATA.equals(fetchTo)) {
+                outMsg = TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode));
+            } else if (FetchTo.METADATA.equals(fetchTo)) {
+                outMsg = TbMsg.transformMsg(msg, msgMetaData);
+            }
+
             if (failuresMap.isEmpty()) {
                 ctx.tellSuccess(outMsg);
             } else {
@@ -139,12 +128,12 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<AttributeKvEntry>> attributeKvEntryListFuture = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
+        var attributeKvEntryListFuture = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(attributeKvEntryListFuture, attributeKvEntryList -> {
             if (isTellFailureIfAbsent && attributeKvEntryList.size() != keys.size()) {
                 getNotExistingKeys(attributeKvEntryList, keys).forEach(key -> computeFailuresMap(scope, failuresMap, key));
             }
-            Map<String, List<AttributeKvEntry>> mapAttributeKvEntry = new HashMap<>();
+            var mapAttributeKvEntry = new HashMap<String, List<AttributeKvEntry>>();
             mapAttributeKvEntry.put(scope, attributeKvEntryList);
             return mapAttributeKvEntry;
         }, MoreExecutors.directExecutor());
@@ -156,7 +145,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }
         ListenableFuture<List<TsKvEntry>> latestTelemetryFutures = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
         return Futures.transform(latestTelemetryFutures, tsKvEntries -> {
-            List<TsKvEntry> listTsKvEntry = new ArrayList<>();
+            var listTsKvEntry = new ArrayList<TsKvEntry>();
             tsKvEntries.forEach(tsKvEntry -> {
                 if (tsKvEntry.getValue() == null) {
                     if (isTellFailureIfAbsent) {
@@ -168,22 +157,22 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                     listTsKvEntry.add(new BasicTsKvEntry(tsKvEntry.getTs(), tsKvEntry));
                 }
             });
-            Map<String, List<TsKvEntry>> mapTsKvEntry = new HashMap<>();
+            var mapTsKvEntry = new HashMap<String, List<TsKvEntry>>();
             mapTsKvEntry.put(LATEST_TS, listTsKvEntry);
             return mapTsKvEntry;
         }, MoreExecutors.directExecutor());
     }
 
     private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
-        ObjectMapper mapper = fetchToData ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
-        ObjectNode value = JacksonUtil.newObjectNode(mapper);
+        var mapper = FetchTo.DATA.equals(fetchTo) ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
+        var value = JacksonUtil.newObjectNode(mapper);
         value.put(TS, tsKvEntry.getTs());
         JacksonUtil.addKvEntry(value, tsKvEntry, VALUE, mapper);
         return new BasicTsKvEntry(tsKvEntry.getTs(), new JsonDataEntry(tsKvEntry.getKey(), value.toString()));
     }
 
     private String getPrefix(String scope) {
-        String prefix = "";
+        var prefix = "";
         switch (scope) {
             case CLIENT_SCOPE:
                 prefix = "cs_";
@@ -209,7 +198,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private RuntimeException reportFailures(ConcurrentHashMap<String, List<String>> failuresMap) {
-        StringBuilder errorMessage = new StringBuilder("The following attribute/telemetry keys is not present in the DB: ").append("\n");
+        var errorMessage = new StringBuilder("The following attribute/telemetry keys is not present in the DB: ").append("\n");
         if (failuresMap.containsKey(CLIENT_SCOPE)) {
             errorMessage.append("\t").append("[" + CLIENT_SCOPE + "]:").append(failuresMap.get(CLIENT_SCOPE).toString()).append("\n");
         }

@@ -16,25 +16,26 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Data
-public class TbGetEntityAttrNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
-
+@EqualsAndHashCode(callSuper = true)
+public class TbGetEntityAttrNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
     private Map<String, String> attrMapping;
     private boolean isTelemetry = false;
 
     @Override
     public TbGetEntityAttrNodeConfiguration defaultConfiguration() {
-        TbGetEntityAttrNodeConfiguration configuration = new TbGetEntityAttrNodeConfiguration();
-        Map<String, String> attrMapping = new HashMap<>();
-        attrMapping.putIfAbsent("temperature", "tempo");
+        var configuration = new TbGetEntityAttrNodeConfiguration();
+        var attrMapping = new HashMap<String, String>();
+        attrMapping.putIfAbsent("serialNumber", "sn");
         configuration.setAttrMapping(attrMapping);
         configuration.setTelemetry(false);
+        configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
 }

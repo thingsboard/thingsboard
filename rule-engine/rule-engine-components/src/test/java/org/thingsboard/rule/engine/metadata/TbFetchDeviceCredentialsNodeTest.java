@@ -64,7 +64,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
-        config.setFetchToMetadata(true);
+        config.setFetchTo(FetchTo.METADATA);
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbFetchDeviceCredentialsNode());
         node.init(ctx, nodeConfiguration);
@@ -89,13 +89,13 @@ public class TbFetchDeviceCredentialsNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenOK() {
         assertThat(node.config).isEqualTo(config);
-        assertThat(node.fetchToMetadata).isEqualTo(true);
+        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
     }
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbFetchDeviceCredentialsNodeConfiguration defaultConfig = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.isFetchToMetadata()).isEqualTo(true);
+        assertThat(defaultConfig.getFetchTo()).isEqualTo(FetchTo.METADATA);
     }
 
     @Test
