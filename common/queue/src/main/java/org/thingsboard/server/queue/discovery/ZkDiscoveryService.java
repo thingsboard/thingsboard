@@ -143,7 +143,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
         if (currentServerExists()) {
             log.trace("[{}] Updating ZK node for current instance: {}", self.getServiceId(), nodePath);
-            client.setData().forPath(nodePath, serviceInfoProvider.getServiceInfoWithCurrentSystemInfo().toByteArray());
+            client.setData().forPath(nodePath, serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo().toByteArray());
         } else {
             try {
                 log.info("[{}] Creating ZK node for current instance", self.getServiceId());
