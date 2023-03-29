@@ -18,6 +18,7 @@ package org.thingsboard.server.service.transport;
 
 import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -49,7 +50,14 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -94,9 +102,20 @@ public class DefaultTransportApiServiceTest {
     @SpyBean
     DefaultTransportApiService service;
 
-    private final String deviceCertificate = "-----BEGIN CERTIFICATE-----Device certificate value-----END CERTIFICATE-----";
-    private final String deviceProfileCertificate = "-----BEGIN CERTIFICATE-----Device profile certificate value-----END CERTIFICATE-----";
-    private final String[] chain = new String[]{deviceCertificate, deviceProfileCertificate};
+    private String certificateChain;
+    private String[] chain;
+
+    @Before
+    public void setUp() {
+        String filePath = "src/test/resources/mqtt/x509ChainProvisionTest.pem";
+        try {
+            certificateChain = Files.readString(Paths.get(filePath));
+            certificateChain = certTrimNewLinesForChainInDeviceProfile(certificateChain);
+            chain = fetchLeafCertificateFromChain(certificateChain);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Test
     public void validateExistingDeviceX509Certificate() {
@@ -106,7 +125,7 @@ public class DefaultTransportApiServiceTest {
         var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
         when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(deviceCredentials);
 
-        service.validateOrCreateDeviceX509Certificate(chain[0]);
+        service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
     }
 
@@ -123,7 +142,7 @@ public class DefaultTransportApiServiceTest {
         when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
-        service.validateOrCreateDeviceX509Certificate(chain[1]);
+        service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceProfileService, times(1)).findDeviceProfileByCertificateHash(any());
         verify(deviceService, times(1)).findDeviceByTenantIdAndName(any(), any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
@@ -143,7 +162,7 @@ public class DefaultTransportApiServiceTest {
         when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
-        service.validateOrCreateDeviceX509Certificate(chain[1]);
+        service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceProfileService, times(1)).findDeviceProfileByCertificateHash(any());
         verify(deviceService, times(1)).findDeviceByTenantIdAndName(any(), any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
@@ -164,7 +183,7 @@ public class DefaultTransportApiServiceTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         X509CertificateChainProvisionConfiguration provision = new X509CertificateChainProvisionConfiguration();
         provision.setCertificateValue(certificateValue);
-        provision.setCertificateRegExPattern("^$");
+        provision.setCertificateRegExPattern("([^@]+)");
         provision.setAllowCreateNewDevicesByX509Certificate(true);
         deviceProfileData.setProvisionConfiguration(provision);
         deviceProfile.setProfileData(deviceProfileData);
@@ -177,5 +196,24 @@ public class DefaultTransportApiServiceTest {
         Device device = new Device();
         device.setId(new DeviceId(UUID.randomUUID()));
         return device;
+    }
+
+    public static String certTrimNewLinesForChainInDeviceProfile(String input) {
+        return input.replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\n")
+                .replaceAll("-----END CERTIFICATE-----", "\n-----END CERTIFICATE-----\n")
+                .trim();
+    }
+
+    private String[] fetchLeafCertificateFromChain(String value) {
+        List<String> chain = new ArrayList<>();
+        String regex = "-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(value);
+        while (matcher.find()) {
+            chain.add(matcher.group(0));
+        }
+        return chain.toArray(new String[0]);
     }
 }

@@ -252,15 +252,17 @@ public class DefaultTransportApiService implements TransportApiService {
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByCertificateHash(certificateHash);
             if (deviceProfile != null) {
-                X509CertificateChainProvisionConfiguration x509Configuration = new X509CertificateChainProvisionConfiguration();
+                X509CertificateChainProvisionConfiguration x509Configuration;
                 if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
                     x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
                 } else {
                     log.warn("Device Profile provision configuration is not X509CertificateChainProvisionConfiguration");
+                    return getEmptyTransportApiResponseFuture();
                 }
                 String deviceName = extractDeviceNameFromCertificateCNByRegEx(chain.get(0), x509Configuration.getCertificateRegExPattern());
                 if (deviceName == null) {
-                    log.warn("Device name has to be extract by regex from CN.");
+                    log.warn("Cannot extract device name from device's CN using regex [{}]", x509Configuration.getCertificateRegExPattern());
+                    return getEmptyTransportApiResponseFuture();
                 }
                 Device device = deviceService.findDeviceByTenantIdAndName(deviceProfile.getTenantId(), deviceName);
                 String updateDeviceCertificateValue = chain.get(0);
