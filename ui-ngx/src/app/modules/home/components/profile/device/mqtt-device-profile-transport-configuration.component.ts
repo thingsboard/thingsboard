@@ -41,8 +41,6 @@ import {
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
@@ -78,8 +76,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   disabled: boolean;
 
   private propagateChange = (v: any) => { };
-
-  separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
   constructor(private store: Store<AppState>,
               private fb: UntypedFormBuilder) {
@@ -172,34 +168,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       if (!this.disabled) {
         this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').updateValueAndValidity({onlySelf: true});
       }
-    }
-  }
-
-  removeAttributeMetricName(name: string): void {
-    const names: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplugAttributesMetricNames').value;
-    const index = names.indexOf(name);
-    if (index >= 0) {
-      names.splice(index, 1);
-      this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplugAttributesMetricNames').setValue(names);
-    }
-  }
-
-  addAttributeMetricName(event: MatChipInputEvent): void {
-    const input = event.input;
-    let value = event.value;
-    if ((value || '').trim()) {
-      value = value.trim();
-      let names: string[] = this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplugAttributesMetricNames').value;
-      if (!names || names.indexOf(value) === -1) {
-        if (!names) {
-          names = [];
-        }
-        names.push(value);
-        this.mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplugAttributesMetricNames').setValue(names, {emitEvent: true});
-      }
-    }
-    if (input) {
-      input.value = '';
     }
   }
 

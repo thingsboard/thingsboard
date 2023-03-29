@@ -113,6 +113,10 @@ fieldset {
   border: none;
 }
 
+.fields-group {
+  display: grid;
+}
+
 section.tb-header-buttons {
   position: absolute;
   top: 86px;
