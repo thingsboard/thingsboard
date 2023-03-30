@@ -123,8 +123,7 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;
             displayDataElement.editedTime = alarmComment.comment.editedOn;
-            displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) +
-              ' ' + this.translate.instant('alarm-activity.ago') + '\n';
+            displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
             displayDataElement.isSystemComment = false;
             displayDataElement.avatarBgColor = this.utilsService.stringToHslColor(displayDataElement.displayName,

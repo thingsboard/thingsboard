@@ -501,7 +501,8 @@
         "any-type": "Any type",
         "search-propagated-alarms": "Search propagated alarms",
         "comments": "Alarm comments",
-        "show-more": "Show more"
+        "show-more": "Show more",
+        "additional-info": "Additional info"
     },
     "alarm-activity": {
         "add": "Add a comment...",
@@ -511,7 +512,6 @@
         "refresh": "Refresh",
         "oldest-first": "Oldest first",
         "newest-first": "Newest first",
-        "ago": "ago",
         "activity": "Activity",
         "export":  "Export to CSV"
     },

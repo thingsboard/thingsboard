@@ -16,12 +16,12 @@
 @use '@angular/material' as mat;
 @import '../theme.scss';
 
-$main-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.4);
+$primary-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.4);
 $border: 1px solid mat.get-color-from-palette($tb-primary);
 
 :host {
   .tb-alarm-comments {
-    background-color: $main-color;
+    background-color: $primary-color;
     max-width: 600px;
     width: 100%;
 
@@ -32,7 +32,7 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
       .inner-wrap {
         border: $border;
         padding: 0 24px;
-        background-color: $main-color;
+        background-color: $primary-color;
       }
 
       &.oldest-first {
@@ -83,7 +83,7 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
 
       &-container {
         padding: 0 24px;
-        background-color: $main-color;
+        background-color: $primary-color;
         border: $border;
         border-bottom: none;
         border-radius: 8px 8px 0px 0px;
@@ -132,7 +132,7 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
       padding: 4px;
       border-radius: 8px;
       &:hover {
-        background-color: $main-color;
+        background-color: $primary-color;
       }
     }
 

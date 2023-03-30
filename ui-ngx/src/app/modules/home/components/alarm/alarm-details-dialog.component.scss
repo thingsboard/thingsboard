@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@use '@angular/material' as mat;
+@import '../theme.scss';
+
 :host ::ng-deep {
+  .mat-mdc-text-field-wrapper.mdc-text-field {
+    background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.4);
+  }
   .assignee-field {
     .mat-form-field-label-wrapper {
       overflow: visible;
