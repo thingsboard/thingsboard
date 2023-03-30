@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.notification;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -28,22 +26,24 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.HasSubject;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @SuppressWarnings("unchecked")
 public class NotificationProcessingContext {
@@ -65,8 +65,7 @@ public class NotificationProcessingContext {
     private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\$\\{([a-zA-Z]+)(:[a-zA-Z]+)?}");
 
     @Builder
-    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationSettings settings,
-                                         NotificationTemplate template) {
+    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationTemplate template, NotificationSettings settings) {
         this.tenantId = tenantId;
         this.request = request;
         this.settings = settings;
@@ -80,6 +79,7 @@ public class NotificationProcessingContext {
         NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
         templateConfig.getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (template.isEnabled()) {
+                template = processTemplate(template, null); // processing template with immutable params
                 templates.put(deliveryMethod, template);
             }
         });
@@ -90,36 +90,43 @@ public class NotificationProcessingContext {
         return (C) settings.getDeliveryMethodsConfigs().get(deliveryMethod);
     }
 
-    public <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, Map<String, String> templateContext) {
-        NotificationInfo info = request.getInfo();
-        if (info != null) {
-            templateContext = new HashMap<>(templateContext);
-            templateContext.putAll(info.getTemplateData());
+    public <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient) {
+        T template = (T) templates.get(deliveryMethod);
+        Map<String, String> additionalTemplateContext = null;
+        if (recipient != null) {
+            additionalTemplateContext = createTemplateContextForRecipient(recipient);
         }
+        if (MapUtils.isNotEmpty(additionalTemplateContext) && template.containsAny(additionalTemplateContext.keySet().toArray(String[]::new))) {
+            template = processTemplate(template, additionalTemplateContext);
+        }
+        return template;
+    }
 
-        T template = (T) templates.get(deliveryMethod).copy();
+    private <T extends DeliveryMethodNotificationTemplate> T processTemplate(T template, Map<String, String> additionalTemplateContext) {
+        Map<String, String> templateContext = new HashMap<>();
+        if (request.getInfo() != null) {
+            templateContext.putAll(request.getInfo().getTemplateData());
+        }
+        if (additionalTemplateContext != null) {
+            templateContext.putAll(additionalTemplateContext);
+        }
+        if (templateContext.isEmpty()) return template;
+
+        template = (T) template.copy();
         template.setBody(processTemplate(template.getBody(), templateContext));
         if (template instanceof HasSubject) {
             String subject = ((HasSubject) template).getSubject();
             ((HasSubject) template).setSubject(processTemplate(subject, templateContext));
         }
-
-        if (deliveryMethod == NotificationDeliveryMethod.WEB) {
+        if (template instanceof WebDeliveryMethodNotificationTemplate) {
             WebDeliveryMethodNotificationTemplate webNotificationTemplate = (WebDeliveryMethodNotificationTemplate) template;
-            Optional<ObjectNode> buttonConfig = Optional.ofNullable(webNotificationTemplate.getAdditionalConfig())
-                    .map(config -> config.get("actionButtonConfig")).filter(JsonNode::isObject)
-                    .map(config -> (ObjectNode) config);
-            if (buttonConfig.isPresent()) {
-                JsonNode text = buttonConfig.get().get("text");
-                if (text != null && text.isTextual()) {
-                    text = new TextNode(processTemplate(text.asText(), templateContext));
-                    buttonConfig.get().set("text", text);
-                }
-                JsonNode link = buttonConfig.get().get("link");
-                if (link != null && link.isTextual()) {
-                    link = new TextNode(processTemplate(link.asText(), templateContext));
-                    buttonConfig.get().set("link", link);
-                }
+            String buttonText = webNotificationTemplate.getButtonText();
+            if (isNotEmpty(buttonText)) {
+                webNotificationTemplate.setButtonText(processTemplate(buttonText, templateContext));
+            }
+            String buttonLink = webNotificationTemplate.getButtonLink();
+            if (isNotEmpty(buttonLink)) {
+                webNotificationTemplate.setButtonLink(processTemplate(buttonLink, templateContext));
             }
         }
         return template;
@@ -128,6 +135,9 @@ public class NotificationProcessingContext {
     private static String processTemplate(String template, Map<String, String> context) {
         return TEMPLATE_PARAM_PATTERN.matcher(template).replaceAll(matchResult -> {
             String key = matchResult.group(1);
+            if (!context.containsKey(key)) {
+                return "\\" + matchResult.group(); // adding escape char due to special meaning of '$' to matcher
+            }
             String value = Strings.nullToEmpty(context.get(key));
             String function = matchResult.group(2);
             if (function != null) {
@@ -144,12 +154,16 @@ public class NotificationProcessingContext {
         });
     }
 
-    public Map<String, String> createTemplateContext(User recipient) {
-        Map<String, String> templateContext = new HashMap<>();
-        templateContext.put("recipientEmail", recipient.getEmail());
-        templateContext.put("recipientFirstName", Strings.nullToEmpty(recipient.getFirstName()));
-        templateContext.put("recipientLastName", Strings.nullToEmpty(recipient.getLastName()));
-        return templateContext;
+    private Map<String, String> createTemplateContextForRecipient(NotificationRecipient recipient) {
+        if (recipient instanceof User) {
+            User user = (User) recipient;
+            return Map.of(
+                    "recipientEmail", user.getEmail(),
+                    "recipientFirstName", Strings.nullToEmpty(user.getFirstName()),
+                    "recipientLastName", Strings.nullToEmpty(user.getLastName())
+            );
+        }
+        return Collections.emptyMap();
     }
 
     public CustomerId getCustomerId() {

@@ -152,8 +152,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationProcessingContext ctx = NotificationProcessingContext.builder()
                 .tenantId(tenantId)
                 .request(request)
-                .settings(settings)
                 .template(notificationTemplate)
+                .settings(settings)
                 .build();
 
         notificationExecutor.submit(() -> {
@@ -230,15 +230,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
             return Futures.immediateFailedFuture(new AlreadySentException());
         }
-        Map<String, String> templateContext;
-        if (recipient instanceof User) {
-            templateContext = ctx.createTemplateContext(((User) recipient));
-        } else {
-            templateContext = Collections.emptyMap();
-        }
+
         DeliveryMethodNotificationTemplate processedTemplate;
         try {
-            processedTemplate = ctx.getProcessedTemplate(deliveryMethod, templateContext);
+            processedTemplate = ctx.getProcessedTemplate(deliveryMethod, recipient);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
@@ -300,7 +295,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             log.trace("Marked notification {} as read (recipient id: {}, tenant id: {})", notificationId, recipientId, tenantId);
             NotificationUpdate update = NotificationUpdate.builder()
                     .updated(true)
-                    .notificationId(notificationId)
+                    .notificationId(notificationId.getId())
                     .newStatus(NotificationStatus.READ)
                     .build();
             onNotificationUpdate(tenantId, recipientId, update);

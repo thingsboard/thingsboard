@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.notification;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.java_websocket.client.WebSocketClient;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.api.NotificationCenter;
@@ -39,7 +37,6 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
-import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
@@ -52,8 +49,6 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationDao;
@@ -66,8 +61,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
@@ -377,7 +370,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         WebDeliveryMethodNotificationTemplate webNotificationTemplate = new WebDeliveryMethodNotificationTemplate();
         webNotificationTemplate.setEnabled(true);
-        webNotificationTemplate.setBody("Message for WEB: ${recipientEmail}");
+        webNotificationTemplate.setBody("Message for WEB: ${recipientEmail} ${unknownParam}");
         webNotificationTemplate.setSubject("Subject for WEB: ${recipientEmail}");
         templates.put(NotificationDeliveryMethod.WEB, webNotificationTemplate);
 
@@ -416,7 +409,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .satisfies(template -> {
                     assertThat(template.getBody())
                             .startsWith("Message for WEB")
-                            .endsWith(requestorEmail);
+                            .endsWith(requestorEmail + " ${unknownParam}");
                     assertThat(template.getSubject())
                             .startsWith("Subject for WEB")
                             .endsWith(requestorEmail);
@@ -439,7 +432,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(processedTemplates.get(NotificationDeliveryMethod.SLACK)).asInstanceOf(type(SlackDeliveryMethodNotificationTemplate.class))
                 .satisfies(template -> {
                     assertThat(template.getBody())
-                            .isEqualTo("Message for SLACK: "); // ${recipientEmail} should be removed
+                            .isEqualTo("Message for SLACK: ${recipientEmail}"); // ${recipientEmail} should not be processed
                 });
     }
 
@@ -476,53 +469,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    @Ignore
-    public void testNotificationsForALotOfUsers() throws Exception {
-        int usersCount = 5000;
-
-        List<User> users = new ArrayList<>();
-        for (int i = 1; i <= usersCount; i++) {
-            User user = new User();
-            user.setTenantId(tenantId);
-            user.setAuthority(Authority.TENANT_ADMIN);
-            user.setEmail("test-user-" + i + "@thingsboard.org");
-            user = doPost("/api/user", user, User.class);
-            users.add(user);
-        }
-
-        NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setTenantId(tenantId);
-        notificationTarget.setName("All my users");
-        PlatformUsersNotificationTargetConfig config = new PlatformUsersNotificationTargetConfig();
-        AllUsersFilter filter = new AllUsersFilter();
-        config.setUsersFilter(filter);
-        notificationTarget.setConfiguration(config);
-        notificationTarget = saveNotificationTarget(notificationTarget);
-        NotificationTargetId notificationTargetId = notificationTarget.getId();
-
-        ListenableFuture<NotificationRequest> request = executor.submit(() -> {
-            return submitNotificationRequest(notificationTargetId, "Hello, ${recipientEmail}", 0, NotificationDeliveryMethod.WEB);
-        });
-        await().atMost(10, TimeUnit.SECONDS).until(request::isDone);
-        NotificationRequest notificationRequest = request.get();
-
-        await().atMost(5, TimeUnit.SECONDS)
-                .pollInterval(200, TimeUnit.MILLISECONDS)
-                .until(() -> {
-                    PageData<Notification> sentNotifications = notificationDao.findByRequestId(tenantId, notificationRequest.getId(), new PageLink(1));
-                    return sentNotifications.getTotalElements() >= usersCount;
-                });
-
-        PageData<Notification> sentNotifications = notificationDao.findByRequestId(tenantId, notificationRequest.getId(), new PageLink(Integer.MAX_VALUE));
-        assertThat(sentNotifications.getData()).extracting(Notification::getRecipientId)
-                .containsAll(users.stream().map(User::getId).collect(Collectors.toSet()));
-
-        NotificationRequestStats stats = getStats(notificationRequest.getId());
-        assertThat(stats.getSent().values().stream().mapToInt(AtomicInteger::get).sum()).isGreaterThanOrEqualTo(usersCount);
-    }
-
-    @Test
-    @Ignore
     public void testSlackNotifications() throws Exception {
         NotificationSettings settings = new NotificationSettings();
         SlackNotificationDeliveryMethodConfig slackConfig = new SlackNotificationDeliveryMethodConfig();
@@ -559,7 +505,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationRequest successfulNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(successfulNotificationRequest.getId()).isSent());
-        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq("To Slack :)  "));
+        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(slackNotificationTemplate.getBody()));
         NotificationRequestStats stats = getStats(successfulNotificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.SLACK)).hasValue(1);
 

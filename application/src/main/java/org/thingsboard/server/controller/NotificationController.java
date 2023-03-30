@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -62,7 +63,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -215,19 +215,17 @@ public class NotificationController extends BaseController {
         NotificationProcessingContext tmpProcessingCtx = NotificationProcessingContext.builder()
                 .tenantId(user.getTenantId())
                 .request(request)
-                .settings(null)
                 .template(template)
+                .settings(null)
                 .build();
 
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = tmpProcessingCtx.getDeliveryMethods().stream()
                 .collect(Collectors.toMap(m -> m, deliveryMethod -> {
-                    Map<String, String> templateContext;
+                    NotificationRecipient recipient = null;
                     if (NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods().contains(deliveryMethod)) {
-                        templateContext = tmpProcessingCtx.createTemplateContext(user);
-                    } else {
-                        templateContext = Collections.emptyMap();
+                        recipient = userService.findUserById(user.getTenantId(), user.getId());
                     }
-                    return tmpProcessingCtx.getProcessedTemplate(deliveryMethod, templateContext);
+                    return tmpProcessingCtx.getProcessedTemplate(deliveryMethod, recipient);
                 }));
         preview.setProcessedTemplates(processedTemplates);
 
