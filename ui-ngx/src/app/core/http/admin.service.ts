@@ -139,4 +139,8 @@ export class AdminService {
   public generateAccessToken(config?: RequestConfig): Observable<string> {
     return this.http.get<string>(`/api/admin/mail/oauth2/authorize`, defaultHttpOptionsFromConfig(config));
   }
+
+  public getMailConfigTemplate(config?: RequestConfig): Observable<Array<any>> {
+    return this.http.get<Array<any>>('/api/mail/config/template', defaultHttpOptionsFromConfig(config));
+  }
 }

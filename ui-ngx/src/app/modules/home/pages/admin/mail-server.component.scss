@@ -22,6 +22,7 @@
     border: 1px groove rgba(0, 0, 0, .25);
     border-radius: 4px;
     legend {
+      margin-bottom: 8px;
       color: rgba(0, 0, 0, .7);
       width: fit-content;
     }
@@ -35,6 +36,33 @@
   }
 
   ::ng-deep{
+    .mat-expansion-panel {
+      &.configuration-panel {
+        box-shadow: none;
+
+        .mat-expansion-panel-header {
+          padding: 0;
+
+          &:hover {
+            background: none !important;
+          }
+
+          .mat-expansion-indicator {
+            padding: 2px;
+          }
+        }
+
+        > .mat-expansion-panel-content {
+          > .mat-expansion-panel-body {
+            padding: 0;
+          }
+        }
+
+        .mat-expansion-panel-header-description {
+          align-items: center;
+        }
+      }
+    }
     .mat-button-toggle-group.tb-notification-unread-toggle-group {
       &.mat-button-toggle-group-appearance-standard {
         border: none;

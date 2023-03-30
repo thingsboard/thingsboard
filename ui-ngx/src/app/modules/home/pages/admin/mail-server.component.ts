@@ -56,9 +56,13 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
+  helpLink: string;
+
   private destroy$ = new Subject<void>();
   private DOMAIN_AND_PORT_REGEXP = /^(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?$/;
   private loginProcessingUrl: string;
+
+  private mailConfigTemplate: any;
 
   mailSettings = this.fb.group({
     mailFrom: ['', [Validators.required]],
@@ -81,7 +85,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     changePassword: [false],
     password: [''],
     enableOauth2: [false],
-    providerId: [{ value: MailServerOauth2Provider.GOOGLE, disabled: true }],
+    providerId: [MailServerOauth2Provider.CUSTOM, [Validators.required]],
     clientId: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(255)]],
     clientSecret: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(2048)]],
     providerTenantId: [{value: '', disabled: true}, [Validators.required]],
@@ -90,6 +94,29 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     scope: [{value: '', disabled: true}, [Validators.required]],
     redirectUri: [{ value:'', disabled: true}]
   });
+
+  private defaultConfiguration = {
+    providerId: MailServerOauth2Provider.CUSTOM,
+    smtpProtocol: SmtpProtocol.SMTP,
+    smtpHost: '',
+    smtpPort: null,
+    timeout: null,
+    enableTls: false,
+    tlsVersion: null,
+    enableProxy: false,
+    proxyHost: '',
+    proxyPort: null,
+    proxyUser: '',
+    proxyPassword: '',
+    enableOauth2: false,
+    clientId: '',
+    clientSecret: '',
+    providerTenantId: '',
+    authUri: '',
+    tokenUri: '',
+    scope: '',
+    redirectUri: ''
+  };
 
   domainForm = this.fb.group({
     name: [this.window.location.hostname, [
@@ -114,29 +141,35 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.mailServerSettingsForm();
     this.domainFormConfiguration();
 
-    forkJoin([this.adminService.getLoginProcessingUrl(), this.adminService.getAdminSettings<MailServerSettings>('mail')]).subscribe(
-      ([loginProcessingUrl, adminSettings]) => {
-        this.loginProcessingUrl = loginProcessingUrl;
-        this.adminSettings = adminSettings;
-        if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
-          this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
-        }
-        this.showChangePassword = isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword)
-          ? this.adminSettings.jsonValue.showChangePassword : true;
-        delete this.adminSettings.jsonValue.showChangePassword;
-        this.mailSettings.reset(this.adminSettings.jsonValue);
-        this.enableMailPassword(!this.showChangePassword);
-        this.enableProxyChanged();
-        this.enableTls(this.adminSettings.jsonValue.enableTls);
-        if (this.adminSettings.jsonValue.enableOauth2) {
-          this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
-          this.parseUrl(this.adminSettings.jsonValue.redirectUri);
-          this.mailSettings.get('redirectUri').patchValue(this.adminSettings.jsonValue.redirectUri, {emitEvent: false});
-        } else {
-          this.mailSettings.get('enableOauth2').patchValue(false, {emitEvent: false});
-        }
+    forkJoin([
+      this.adminService.getLoginProcessingUrl(),
+      this.adminService.getMailConfigTemplate(),
+      this.adminService.getAdminSettings<MailServerSettings>('mail')
+    ]).subscribe(([loginProcessingUrl, mailConfigTemplate, adminSettings]) => {
+      this.loginProcessingUrl = loginProcessingUrl;
+      this.mailConfigTemplate = mailConfigTemplate;
+      this.adminSettings = adminSettings;
+      if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
+        this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
       }
-    );
+      this.showChangePassword = isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword)
+        ? this.adminSettings.jsonValue.showChangePassword : true;
+      delete this.adminSettings.jsonValue.showChangePassword;
+      this.mailSettings.reset(this.adminSettings.jsonValue);
+      this.enableMailPassword(!this.showChangePassword);
+      this.enableProxyChanged();
+      this.enableTls(this.adminSettings.jsonValue.enableTls);
+      this.helpLink = this.mailConfigTemplate.find(
+        mailConfig => mailConfig.providerId === this.mailServerOauth2Provider[this.adminSettings.jsonValue.providerId]
+      ).helpLink;
+      if (this.adminSettings.jsonValue.enableOauth2) {
+        this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
+        this.parseUrl(this.adminSettings.jsonValue.redirectUri);
+        this.mailSettings.get('redirectUri').patchValue(this.adminSettings.jsonValue.redirectUri, {emitEvent: false});
+      } else {
+        this.mailSettings.get('enableOauth2').patchValue(false, {emitEvent: false});
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -173,13 +206,54 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.enableOauth2(value);
       if (value && !this.mailSettings.get('redirectUri').value) {
         this.mailSettings.get('redirectUri').patchValue(this.redirectURI(), {emitEvent: false});
-        this.mailSettings.get('providerId').patchValue(MailServerOauth2Provider.GOOGLE, {emitEvent: false});
       }
     });
 
     this.mailSettings.get('providerId').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe( value => this.enableProviderIdChanged(value));
+    ).subscribe( value => {
+      let config;
+      if (value) {
+        config = this.mailConfigTemplate.find(mailConfig => mailConfig.providerId === this.mailServerOauth2Provider[value]);
+      }
+      if (this.adminSettings.jsonValue.providerId !== this.mailServerOauth2Provider[value]) {
+        if (value === this.mailServerOauth2Provider.CUSTOM || !value) {
+          this.mailSettings.reset({...this.adminSettings.jsonValue, ...this.defaultConfiguration}, {emitEvent: false});
+        } else {
+          this.helpLink = config.helpLink;
+          this.mailSettings.patchValue({
+            smtpProtocol: SmtpProtocol[config.smtpProtocol],
+            smtpHost: config.smtpHost,
+            smtpPort: config.smtpPort,
+            timeout: config.timeout,
+            enableTls: config.enableTls,
+            tlsVersion: config.tlsVersion,
+            authUri: config.authorizationUri,
+            tokenUri: config.accessTokenUri,
+            scope: config.scope,
+            enableOauth2: false,
+            enableProxy: false,
+            proxyHost: '',
+            proxyPort: null,
+            proxyUser: '',
+            proxyPassword: '',
+            clientId: '',
+            clientSecret: '',
+            providerTenantId: '',
+            redirectUri: ''
+          }, {emitEvent: false});
+        }
+      } else if (this.adminSettings.jsonValue.providerId === this.mailServerOauth2Provider[value]) {
+        this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
+      }
+      if (value === this.mailServerOauth2Provider.SENDGRID) {
+        this.mailSettings.get('enableOauth2').disable({emitEvent: false});
+      } else {
+        this.mailSettings.get('enableOauth2').enable({emitEvent: false});
+      }
+      this.enableOauth2(this.mailSettings.get('enableOauth2').value);
+      this.enableProviderTenantIdChanged(value);
+    });
   }
 
   private domainFormConfiguration(): void {
@@ -213,30 +287,27 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
 
   private enableOauth2(value: boolean): void {
     if (value) {
-      this.mailSettings.get('providerId').enable({emitEvent: false});
       this.mailSettings.get('clientId').enable({emitEvent: false});
       this.mailSettings.get('clientSecret').enable({emitEvent: false});
       this.mailSettings.get('redirectUri').enable({emitEvent: false});
-    } else {
-      this.mailSettings.get('providerId').disable({emitEvent: false});
-      this.mailSettings.get('clientId').disable({emitEvent: false});
-      this.mailSettings.get('clientSecret').disable({emitEvent: false});
-      this.mailSettings.get('redirectUri').disable({emitEvent: false});
-    }
-  }
-
-  private enableProviderIdChanged(value: MailServerOauth2Provider): void {
-    if (value === this.mailServerOauth2Provider.MICROSOFT) {
-      this.mailSettings.get('providerTenantId').enable({emitEvent: false});
-    } else if (value === this.mailServerOauth2Provider.CUSTOM) {
       this.mailSettings.get('authUri').enable({emitEvent: false});
       this.mailSettings.get('tokenUri').enable({emitEvent: false});
       this.mailSettings.get('scope').enable({emitEvent: false});
     } else {
-      this.mailSettings.get('providerTenantId').disable({emitEvent: false});
+      this.mailSettings.get('clientId').disable({emitEvent: false});
+      this.mailSettings.get('clientSecret').disable({emitEvent: false});
+      this.mailSettings.get('redirectUri').disable({emitEvent: false});
       this.mailSettings.get('authUri').disable({emitEvent: false});
       this.mailSettings.get('tokenUri').disable({emitEvent: false});
       this.mailSettings.get('scope').disable({emitEvent: false});
+    }
+  }
+
+  private enableProviderTenantIdChanged(value: MailServerOauth2Provider): void {
+    if (value === this.mailServerOauth2Provider.OFFICE_365) {
+      this.mailSettings.get('providerTenantId').enable({emitEvent: false});
+    } else {
+      this.mailSettings.get('providerTenantId').disable({emitEvent: false});
     }
   }
 
@@ -310,11 +381,13 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   private parseUrl(value: string) {
-    const url = new URL(value);
-    this.domainForm.get('scheme').patchValue(
-      url.protocol.startsWith('https') ? DomainSchema.HTTPS : DomainSchema.HTTP, {emitEvent: false}
-    );
-    this.domainForm.get('name').patchValue(url.host, {emitEvent: false});
+    if (value) {
+      const url = new URL(value);
+      this.domainForm.get('scheme').patchValue(
+        url.protocol.startsWith('https') ? DomainSchema.HTTPS : DomainSchema.HTTP, {emitEvent: false}
+      );
+      this.domainForm.get('name').patchValue(url.host, {emitEvent: false});
+    }
   }
 
   get accessTokenButtonName() {

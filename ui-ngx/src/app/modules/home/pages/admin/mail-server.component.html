@@ -37,105 +37,132 @@
               {{ 'admin.mail-from-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field class="mat-block">
-            <mat-label translate>admin.smtp-protocol</mat-label>
-            <mat-select formControlName="smtpProtocol">
-              <mat-option *ngFor="let protocol of smtpProtocols" [value]="protocol">
-                {{protocol.toUpperCase()}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="10px">
-            <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="60">
-              <mat-label translate>admin.smtp-host</mat-label>
-              <input matInput formControlName="smtpHost" placeholder="localhost" required/>
-              <mat-error *ngIf="mailSettings.get('smtpHost').hasError('required')">
-                {{ 'admin.smtp-host-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-            <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="40">
-              <mat-label translate>admin.smtp-port</mat-label>
-              <input matInput #smtpPortInput formControlName="smtpPort" placeholder="25" maxlength="5" required/>
-              <mat-hint align="end">{{smtpPortInput.value?.length || 0}}/5</mat-hint>
-              <mat-error *ngIf="mailSettings.get('smtpPort').hasError('required')">
-                {{ 'admin.smtp-port-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="mailSettings.get('smtpPort').hasError('pattern') || mailSettings.get('smtpPort').hasError('maxlength')">
-                {{ 'admin.smtp-port-invalid' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <mat-form-field class="mat-block">
-            <mat-label translate>admin.timeout-msec</mat-label>
-            <input matInput #timeoutInput formControlName="timeout" placeholder="10000" maxlength="6" required/>
-            <mat-hint align="end">{{timeoutInput.value?.length || 0}}/6</mat-hint>
-            <mat-error *ngIf="mailSettings.get('timeout').hasError('required')">
-              {{ 'admin.timeout-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="mailSettings.get('timeout').hasError('pattern') || mailSettings.get('timeout').hasError('maxlength')">
-              {{ 'admin.timeout-invalid' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <tb-checkbox formControlName="enableTls" style="display: block; padding-bottom: 16px;">
-            {{ 'admin.enable-tls' | translate }}
-          </tb-checkbox>
-          <mat-form-field class="mat-block" *ngIf="mailSettings.get('enableTls').value">
-            <mat-label translate>admin.tls-version</mat-label>
-            <mat-select formControlName="tlsVersion">
-              <mat-option *ngFor="let tlsVersion of tlsVersions" [value]="tlsVersion">
-                {{ tlsVersion }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <tb-checkbox formControlName="enableProxy" style="display: block; padding-bottom: 16px;">
-            {{ 'admin.enable-proxy' | translate }}
-          </tb-checkbox>
-          <div *ngIf="mailSettings.get('enableProxy').value">
-            <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="8px">
-              <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="60">
-                <mat-label translate>admin.proxy-host</mat-label>
-                <input matInput required formControlName="proxyHost">
-                <mat-error *ngIf="mailSettings.get('proxyHost').hasError('required')">
-                  {{ 'admin.proxy-host-required' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="40">
-                <mat-label translate>admin.proxy-port</mat-label>
-                <input matInput required formControlName="proxyPort" type="number" step="1" min="1" max="65535">
-                <mat-error *ngIf="mailSettings.get('proxyPort').hasError('required')">
-                  {{ 'admin.proxy-port-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="mailSettings.get('proxyPort').hasError('pattern')
-              || mailSettings.get('proxyPort').hasError('min')
-              || mailSettings.get('proxyPort').hasError('max')">
-                  {{ 'admin.proxy-port-range' | translate }}
-                </mat-error>
-              </mat-form-field>
-            </div>
-            <mat-form-field class="mat-block">
-              <mat-label translate>admin.proxy-user</mat-label>
-              <input matInput formControlName="proxyUser">
-            </mat-form-field>
-            <mat-form-field class="mat-block">
-              <mat-label translate>admin.proxy-password</mat-label>
-              <input matInput type="password" formControlName="proxyPassword" autocomplete="new-proxy-password">
-              <tb-toggle-password matSuffix></tb-toggle-password>
-            </mat-form-field>
-          </div>
 
-          <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.oauth2.smtp-provider</mat-label>
+            <mat-select formControlName="providerId">
+              <mat-option *ngFor="let provider of mailServerOauth2Providers" [value]="provider">
+                {{ mailServerOauth2ProvidersTranslations.get(provider) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-expansion-panel class="configuration-panel" [expanded]="mailSettings.get('providerId').value === mailServerOauth2Provider.CUSTOM">
+            <mat-expansion-panel-header>
+              <mat-panel-description fxLayoutAlign="end" translate>
+                tenant-profile.advanced-settings
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <fieldset class="fields-group" fxLayout="column">
+                <legend class="group-title" translate>admin.connection-settings</legend>
+                <mat-form-field class="mat-block">
+                  <mat-label translate>admin.smtp-protocol</mat-label>
+                  <mat-select formControlName="smtpProtocol">
+                    <mat-option *ngFor="let protocol of smtpProtocols" [value]="protocol">
+                      {{protocol.toUpperCase()}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="10px">
+                  <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="60">
+                    <mat-label translate>admin.smtp-host</mat-label>
+                    <input matInput formControlName="smtpHost" placeholder="localhost" required/>
+                    <mat-error *ngIf="mailSettings.get('smtpHost').hasError('required')">
+                      {{ 'admin.smtp-host-required' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="40">
+                    <mat-label translate>admin.smtp-port</mat-label>
+                    <input matInput #smtpPortInput formControlName="smtpPort" placeholder="25" maxlength="5" required/>
+                    <mat-hint align="end">{{smtpPortInput.value?.length || 0}}/5</mat-hint>
+                    <mat-error *ngIf="mailSettings.get('smtpPort').hasError('required')">
+                      {{ 'admin.smtp-port-required' | translate }}
+                    </mat-error>
+                    <mat-error *ngIf="mailSettings.get('smtpPort').hasError('pattern') || mailSettings.get('smtpPort').hasError('maxlength')">
+                      {{ 'admin.smtp-port-invalid' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                <mat-form-field class="mat-block">
+                  <mat-label translate>admin.timeout-msec</mat-label>
+                  <input matInput #timeoutInput formControlName="timeout" placeholder="10000" maxlength="6" required/>
+                  <mat-hint align="end">{{timeoutInput.value?.length || 0}}/6</mat-hint>
+                  <mat-error *ngIf="mailSettings.get('timeout').hasError('required')">
+                    {{ 'admin.timeout-required' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="mailSettings.get('timeout').hasError('pattern') || mailSettings.get('timeout').hasError('maxlength')">
+                    {{ 'admin.timeout-invalid' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <tb-checkbox formControlName="enableTls" style="display: block;">
+                  {{ 'admin.enable-tls' | translate }}
+                </tb-checkbox>
+                <mat-form-field class="mat-block" *ngIf="mailSettings.get('enableTls').value">
+                  <mat-label translate>admin.tls-version</mat-label>
+                  <mat-select formControlName="tlsVersion">
+                    <mat-option *ngFor="let tlsVersion of tlsVersions" [value]="tlsVersion">
+                      {{ tlsVersion }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <tb-checkbox formControlName="enableProxy" style="display: block;">
+                  {{ 'admin.enable-proxy' | translate }}
+                </tb-checkbox>
+                <div *ngIf="mailSettings.get('enableProxy').value">
+                  <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="8px">
+                    <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="60">
+                      <mat-label translate>admin.proxy-host</mat-label>
+                      <input matInput required formControlName="proxyHost">
+                      <mat-error *ngIf="mailSettings.get('proxyHost').hasError('required')">
+                        {{ 'admin.proxy-host-required' | translate }}
+                      </mat-error>
+                    </mat-form-field>
+                    <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="40">
+                      <mat-label translate>admin.proxy-port</mat-label>
+                      <input matInput required formControlName="proxyPort" type="number" step="1" min="1" max="65535">
+                      <mat-error *ngIf="mailSettings.get('proxyPort').hasError('required')">
+                        {{ 'admin.proxy-port-required' | translate }}
+                      </mat-error>
+                      <mat-error *ngIf="mailSettings.get('proxyPort').hasError('pattern')
+                    || mailSettings.get('proxyPort').hasError('min')
+                    || mailSettings.get('proxyPort').hasError('max')">
+                        {{ 'admin.proxy-port-range' | translate }}
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <mat-form-field class="mat-block">
+                    <mat-label translate>admin.proxy-user</mat-label>
+                    <input matInput formControlName="proxyUser">
+                  </mat-form-field>
+                  <mat-form-field class="mat-block">
+                    <mat-label translate>admin.proxy-password</mat-label>
+                    <input matInput type="password" formControlName="proxyPassword" autocomplete="new-proxy-password">
+                    <tb-toggle-password matSuffix></tb-toggle-password>
+                  </mat-form-field>
+                </div>
+              </fieldset>
+            </ng-template>
+          </mat-expansion-panel>
+
+          <fieldset class="fields-group" fxLayout="column">
             <legend class="group-title" translate>admin.oauth2.authentication</legend>
             <mat-form-field class="mat-block">
               <mat-label translate>common.username</mat-label>
               <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
                      autocomplete="new-username"/>
             </mat-form-field>
-            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
-                                     style="width: 250px;"
-                                     formControlName="enableOauth2">
-              <mat-button-toggle fxFlex [value]=false>{{ 'admin.oauth2.basic' | translate }}</mat-button-toggle>
-              <mat-button-toggle fxFlex [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</mat-button-toggle>
-            </mat-button-toggle-group>
+            <div fxLayoutAlign="space-between center">
+              <mat-button-toggle-group class="tb-notification-unread-toggle-group"
+                                       style="width: 250px;"
+                                       formControlName="enableOauth2">
+                <mat-button-toggle fxFlex [value]=false>{{ 'admin.oauth2.basic' | translate }}</mat-button-toggle>
+                <mat-button-toggle fxFlex [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</mat-button-toggle>
+              </mat-button-toggle-group>
+              <div class="details-buttons">
+                <div fxHIde="true" [tb-help]="helpLink"></div>
+              </div>
+            </div>
             <section *ngIf="!mailSettings.get('enableOauth2').value">
               <mat-checkbox *ngIf="showChangePassword" formControlName="changePassword" style="padding-bottom: 16px;">
                 {{ 'admin.change-password' | translate }}
@@ -148,14 +175,6 @@
               </mat-form-field>
             </section>
             <section *ngIf="mailSettings.get('enableOauth2').value">
-              <mat-form-field fxFlex class="mat-block">
-                <mat-label translate>admin.oauth2.login-provider</mat-label>
-                <mat-select formControlName="providerId">
-                  <mat-option *ngFor="let provider of mailServerOauth2Providers" [value]="provider">
-                    {{ mailServerOauth2ProvidersTranslations.get(provider) | translate }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
               <mat-form-field fxFlex class="mat-block">
                 <mat-label translate>admin.oauth2.client-id</mat-label>
                 <input matInput formControlName="clientId" required>
@@ -178,7 +197,7 @@
                 </mat-error>
               </mat-form-field>
 
-              <mat-form-field fxFlex class="mat-block" *ngIf="mailSettings.get('providerId').value === mailServerOauth2Provider.MICROSOFT">
+              <mat-form-field fxFlex class="mat-block" *ngIf="mailSettings.get('providerId').value === mailServerOauth2Provider.OFFICE_365">
                 <mat-label translate>admin.oauth2.microsoft-tenant-id</mat-label>
                 <input matInput formControlName="providerTenantId" required>
                 <mat-error *ngIf="mailSettings.get('providerTenantId').hasError('required')">
@@ -208,7 +227,7 @@
                   </mat-error>
                 </mat-form-field>
               </section>
-              <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
+              <fieldset class="fields-group" fxLayout="column">
                 <legend class="group-title" translate>admin.oauth2.redirect-uri</legend>
                 <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                   <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50" [formGroup]="domainForm">
