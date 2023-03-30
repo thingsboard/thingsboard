@@ -21,27 +21,25 @@
 
 @mixin _mat-form-field-overwrites($primary, $config-or-theme) {
   .mat-mdc-form-field.mat-form-field-appearance-fill {
-    .mdc-text-field--filled {
+    .mdc-text-field--filled, .mat-mdc-form-field-focus-overlay {
       &:before {
         content: "";
+        display: block;
         width: 100%;
         height: 100%;
         position: absolute;
         left: 0;
         top: 0;
         background-color: mat.get-color-from-palette($primary);
-        opacity: 0.03;
       }
       background-color: transparent;
+    }
+    .mdc-text-field--filled {
+      &:before {
+        opacity: 0.03;
+      }
       &:not(.mdc-text-field--disabled) {
         &:before {
-          content: "";
-          width: 100%;
-          height: 100%;
-          position: absolute;
-          left: 0;
-          top: 0;
-          background-color: mat.get-color-from-palette($primary);
           opacity: 0.06;
         }
         background-color: transparent;
@@ -49,16 +47,8 @@
     }
     .mat-mdc-form-field-focus-overlay {
       &:before {
-        content: "";
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        left: 0;
-        top: 0;
-        background-color: mat.get-color-from-palette($primary);
         opacity: 0.87;
       }
-      background-color: transparent;
     }
   }
 }
