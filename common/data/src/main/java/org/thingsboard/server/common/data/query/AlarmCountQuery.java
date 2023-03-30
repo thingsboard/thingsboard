@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.common.data.query;
 
-public enum CmdUpdateType {
-    ENTITY_DATA,
-    ALARM_DATA,
-    ALARM_COUNT_DATA,
-    COUNT_DATA,
-    NOTIFICATIONS,
-    NOTIFICATIONS_COUNT
+public class AlarmCountQuery extends AbstractDataQuery<AlarmDataPageLink> {
+
+    public AlarmCountQuery() {
+    }
+
+    public AlarmCountQuery(AlarmDataPageLink pageLink) {
+        super(null, pageLink, null, null, null);
+    }
 }

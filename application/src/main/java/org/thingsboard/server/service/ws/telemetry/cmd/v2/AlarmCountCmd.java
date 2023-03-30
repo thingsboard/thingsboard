@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.query;
+package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
-import org.thingsboard.server.common.data.query.AlarmData;
-import org.thingsboard.server.common.data.query.AlarmDataQuery;
 
-import java.util.Collection;
+public class AlarmCountCmd extends DataCmd {
 
-public interface AlarmQueryRepository {
+    @Getter
+    private final AlarmCountQuery query;
 
-    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
-                                                        AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
-
-    long countAlarmsByQuery(TenantId tenantId, AlarmCountQuery query);
-
+    @JsonCreator
+    public AlarmCountCmd(@JsonProperty("cmdId") int cmdId,
+                         @JsonProperty("query") AlarmCountQuery query) {
+        super(cmdId);
+        this.query = query;
+    }
 }

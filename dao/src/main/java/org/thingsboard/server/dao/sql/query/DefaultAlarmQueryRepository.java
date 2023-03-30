@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -302,6 +304,88 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 queryLog.logQuery(ctx, dataQuery, System.currentTimeMillis() - queryTs);
             }
             return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
+        });
+    }
+
+    @Override
+    public long countAlarmsByQuery(TenantId tenantId, AlarmCountQuery query) {
+        AlarmDataPageLink pageLink = query.getPageLink();
+        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+
+        ctx.append("select count(id) from alarm_info a ");
+
+        if (pageLink.isSearchPropagatedAlarms()) {
+            ctx.append(JOIN_ENTITY_ALARMS);
+            ctx.append(" where");
+            ctx.append(buildPermissionsQuery(tenantId, ctx));
+        } else {
+            ctx.append("where a.tenant_id = :tenantId");
+            ctx.addUuidParameter("tenantId",tenantId.getId());
+        }
+
+        long startTs;
+        long endTs;
+        if (pageLink.getTimeWindow() > 0) {
+            endTs = System.currentTimeMillis();
+            startTs = endTs - pageLink.getTimeWindow();
+        } else {
+            startTs = pageLink.getStartTs();
+            endTs = pageLink.getEndTs();
+        }
+
+        if (startTs > 0) {
+            ctx.append(" and a.created_time >= :startTime");
+            ctx.addLongParameter("startTime", startTs);
+            if (pageLink.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.created_time >= :startTime");
+            }
+        }
+
+        if (endTs > 0) {
+            ctx.append(" and a.created_time <= :endTime");
+            ctx.addLongParameter("endTime", endTs);
+            if (pageLink.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.created_time <= :endTime");
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(pageLink.getTypeList())) {
+            ctx.append(" and a.type in (:alarmTypes)");
+            ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
+            if (pageLink.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.alarm_type in (:alarmTypes)");
+            }
+        }
+
+        if (pageLink.getSeverityList() != null && !pageLink.getSeverityList().isEmpty()) {
+            ctx.append(" and a.severity in (:alarmSeverities)");
+            ctx.addStringListParameter("alarmSeverities", pageLink.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
+        }
+
+        AlarmStatusFilter asf = AlarmStatusFilter.from(pageLink.getStatusList());
+        if (asf.hasAnyFilter()) {
+            if (asf.hasAckFilter()) {
+                ctx.append(" and a.acknowledged = :ackStatus");
+                ctx.addBooleanParameter("ackStatus", asf.getAckFilter());
+            }
+            if (asf.hasClearFilter()) {
+                ctx.append(" and a.cleared = :clearStatus");
+                ctx.addBooleanParameter("clearStatus", asf.getClearFilter());
+            }
+        }
+
+        if (pageLink.getAssigneeId() != null) {
+            ctx.addUuidParameter("assigneeId", pageLink.getAssigneeId().getId());
+            ctx.append(" and a.assignee_id = :assigneeId");
+        }
+
+        return transactionTemplate.execute(trStatus -> {
+            long queryTs = System.currentTimeMillis();
+            try {
+                return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
+            } finally {
+                queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - queryTs);
+            }
         });
     }
 

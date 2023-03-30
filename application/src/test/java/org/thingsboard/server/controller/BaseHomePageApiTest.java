@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
@@ -43,6 +45,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
+import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -50,6 +54,8 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -329,6 +335,75 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isOauthEnabled());
     }
 
+    //for tenant
+    @Test
+    public void testCountAlarmsByQuery() throws Exception {
+        loginTenantAdmin();
+
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, new AlarmCountQuery(new AlarmDataPageLink()));
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(tenantId);
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd2 = new AlarmCountCmd(2, new AlarmCountQuery(new AlarmDataPageLink()));
+
+        getWsClient().send(cmd2);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(2, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        AlarmDataPageLink alarmDataPageLink = new AlarmDataPageLink();
+        alarmDataPageLink.setAssigneeId(tenantAdminUserId);
+        AlarmCountCmd cmd3 = new AlarmCountCmd(3, new AlarmCountQuery(alarmDataPageLink));
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(3, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        alarm.setAssigneeId(tenantAdminUserId);
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd4 = new AlarmCountCmd(4, new AlarmCountQuery(alarmDataPageLink));
+
+        getWsClient().send(cmd4);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(4, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        alarmDataPageLink.setSeverityList(Collections.singletonList(AlarmSeverity.CRITICAL));
+        AlarmCountCmd cmd5 = new AlarmCountCmd(5, new AlarmCountQuery(alarmDataPageLink));
+
+        getWsClient().send(cmd5);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(5, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd6 = new AlarmCountCmd(6, new AlarmCountQuery(alarmDataPageLink));
+
+        getWsClient().send(cmd6);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(6, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+    }
 
     private OAuth2Info createDefaultOAuth2Info() {
         return new OAuth2Info(true, Lists.newArrayList(
