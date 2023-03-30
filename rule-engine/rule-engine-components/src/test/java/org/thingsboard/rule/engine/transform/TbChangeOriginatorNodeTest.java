@@ -53,6 +53,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 @RunWith(MockitoJUnitRunner.class)
 public class TbChangeOriginatorNodeTest {
 
+    private static final String CUSTOMER_SOURCE = "CUSTOMER";
+
     private TbChangeOriginatorNode node;
 
     @Mock
@@ -158,7 +160,7 @@ public class TbChangeOriginatorNodeTest {
 
     public void init() throws TbNodeException {
         TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
-        config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
+        config.setOriginatorSource(CUSTOMER_SOURCE);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 

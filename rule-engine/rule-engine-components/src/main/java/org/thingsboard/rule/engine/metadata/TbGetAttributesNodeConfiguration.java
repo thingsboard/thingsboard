@@ -28,6 +28,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbGetAttributesNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetAttributesNodeConfiguration> {
+
     private List<String> clientAttributeNames;
     private List<String> sharedAttributeNames;
     private List<String> serverAttributeNames;
@@ -49,4 +50,5 @@ public class TbGetAttributesNodeConfiguration extends TbAbstractFetchToNodeConfi
         configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
+
 }

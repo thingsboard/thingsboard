@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
  * Created by ashvayka on 19.01.18.
  */
 public interface TbNode {
+
     void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException;
 
     void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException;
@@ -33,4 +34,5 @@ public interface TbNode {
 
     default void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
     }
+
 }

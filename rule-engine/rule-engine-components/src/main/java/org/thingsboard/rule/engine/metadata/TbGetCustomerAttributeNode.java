@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -30,22 +31,30 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         type = ComponentType.ENRICHMENT,
         name = "customer attributes",
         configClazz = TbGetEntityAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata/Data",
-        nodeDetails = "Enrich the Message Metadata/Data with the corresponding customer's latest attributes or telemetry value. " +
+        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message or Metadata",
+        nodeDetails = "Enrich the Message or Metadata with the corresponding customer's latest attributes or telemetry value. " +
                 "The customer is selected based on the originator of the message: device, asset, etc. " +
                 "</br>" +
                 "Useful when you store some parameters on the customer level and would like to use them for message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityAttrNode<CustomerId> {
-    @Override
-    protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
-        ctx.checkTenantEntity(originator);
-        return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator);
-    }
+
+    private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id %s and type %s";
 
     @Override
     protected TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
+        var config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrThrow(config);
+        return config;
     }
+
+    @Override
+    protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
+        return Futures.transformAsync(EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator),
+                checkIfEntityIsPresentOrThrow(String.format(CUSTOMER_NOT_FOUND_MESSAGE, originator.getId(), originator.getEntityType().getNormalName())),
+                ctx.getDbCallbackExecutor()
+        );
+    }
+
 }

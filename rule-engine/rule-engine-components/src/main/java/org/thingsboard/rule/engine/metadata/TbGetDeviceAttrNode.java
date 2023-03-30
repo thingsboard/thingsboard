@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -39,6 +40,9 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeDeviceAttributesConfig")
 public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDeviceAttrNodeConfiguration, DeviceId> {
+
+    private static final String RELATED_DEVICE_NOT_FOUND_MESSAGE = "Failed to find related device to message originator using relation query specified in the configuration!";
+
     @Override
     protected TbGetDeviceAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbGetDeviceAttrNodeConfiguration.class);
@@ -46,7 +50,10 @@ public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDevice
 
     @Override
     protected ListenableFuture<DeviceId> findEntityIdAsync(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
-        return EntitiesRelatedDeviceIdAsyncLoader.findDeviceAsync(ctx, msg.getOriginator(), config.getDeviceRelationsQuery());
+        return Futures.transformAsync(
+                EntitiesRelatedDeviceIdAsyncLoader.findDeviceAsync(ctx, msg.getOriginator(), config.getDeviceRelationsQuery()),
+                checkIfEntityIsPresentOrThrow(RELATED_DEVICE_NOT_FOUND_MESSAGE),
+                ctx.getDbCallbackExecutor());
     }
+
 }

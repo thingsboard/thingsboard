@@ -40,14 +40,17 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
 public class TbGetTenantAttributeNode extends TbAbstractGetEntityAttrNode<TenantId> {
-    @Override
-    public ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
-        ctx.checkTenantEntity(originator);
-        return Futures.immediateFuture(ctx.getTenantId());
-    }
 
     @Override
     public TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
+        var config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrThrow(config);
+        return config;
     }
+
+    @Override
+    public ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
+        return Futures.immediateFuture(ctx.getTenantId());
+    }
+
 }

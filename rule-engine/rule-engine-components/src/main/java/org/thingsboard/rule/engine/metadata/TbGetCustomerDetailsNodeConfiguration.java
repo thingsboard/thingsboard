@@ -24,11 +24,13 @@ import java.util.Collections;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbGetCustomerDetailsNodeConfiguration extends TbAbstractGetEntityDetailsNodeConfiguration implements NodeConfiguration<TbGetCustomerDetailsNodeConfiguration> {
+
     @Override
     public TbGetCustomerDetailsNodeConfiguration defaultConfiguration() {
         var configuration = new TbGetCustomerDetailsNodeConfiguration();
         configuration.setDetailsList(Collections.emptyList());
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(FetchTo.DATA);
         return configuration;
     }
+
 }

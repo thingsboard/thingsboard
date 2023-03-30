@@ -15,9 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -25,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.ContactBased;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -38,25 +37,25 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "If the originator of the message is not assigned to Tenant, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
-public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration> {
+public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration, TenantId> {
+
     private static final String TENANT_PREFIX = "tenant_";
 
     @Override
     protected TbGetTenantDetailsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetTenantDetailsNodeConfiguration.class);
+        var config = TbNodeUtils.convert(configuration, TbGetTenantDetailsNodeConfiguration.class);
+        checkIfDetailsListIsNotEmptyOrThrow(config);
+        return config;
     }
 
     @Override
-    protected ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
-        return getTbMsgListenableFuture(ctx, msg, getDataAsJson(msg), TENANT_PREFIX);
+    protected String getPrefix() {
+        return TENANT_PREFIX;
     }
 
     @Override
-    protected ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
-        return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId()), tenant ->
-                        tenant == null ? Futures.immediateFuture(null) : Futures.immediateFuture(tenant),
-                MoreExecutors.directExecutor());
+    protected ListenableFuture<? extends ContactBased<TenantId>> getContactBasedFuture(TbContext ctx, TbMsg msg) {
+        return ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId());
     }
+
 }

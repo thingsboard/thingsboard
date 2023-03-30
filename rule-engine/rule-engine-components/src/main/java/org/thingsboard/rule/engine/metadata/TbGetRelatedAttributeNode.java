@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -39,15 +40,23 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
 public class TbGetRelatedAttributeNode extends TbAbstractGetEntityAttrNode<EntityId> {
+
+    private static final String RELATED_ENTITY_NOT_FOUND_MESSAGE = "Failed to find related entity to message originator using relation query specified in the configuration!";
+
     @Override
     public TbGetRelatedAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
+        var config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrThrow(config);
+        return config;
     }
 
     @Override
     public ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
-        ctx.checkTenantEntity(originator);
         var relatedAttrConfig = (TbGetRelatedAttrNodeConfiguration) config;
-        return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, relatedAttrConfig.getRelationsQuery());
+        return Futures.transformAsync(
+                EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, relatedAttrConfig.getRelationsQuery()),
+                checkIfEntityIsPresentOrThrow(RELATED_ENTITY_NOT_FOUND_MESSAGE),
+                ctx.getDbCallbackExecutor());
     }
+
 }

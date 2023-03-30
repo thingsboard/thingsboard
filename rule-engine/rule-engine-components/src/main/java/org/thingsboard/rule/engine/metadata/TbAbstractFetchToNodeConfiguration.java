@@ -19,5 +19,7 @@ import lombok.Data;
 
 @Data
 public abstract class TbAbstractFetchToNodeConfiguration {
+
     private FetchTo fetchTo;
+
 }

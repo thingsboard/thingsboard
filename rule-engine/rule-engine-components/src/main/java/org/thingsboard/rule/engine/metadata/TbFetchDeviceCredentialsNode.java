@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -43,6 +44,7 @@ import java.util.concurrent.ExecutionException;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
 public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFetchDeviceCredentialsNodeConfiguration> {
+
     private static final String CREDENTIALS = "credentials";
     private static final String CREDENTIALS_TYPE = "credentialsType";
 
@@ -55,6 +57,7 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         var originator = msg.getOriginator();
         ctx.checkTenantEntity(originator);
+        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
             ctx.tellFailure(msg, new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!"));
             return;
@@ -66,26 +69,22 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
             ctx.tellFailure(msg, new RuntimeException("Failed to get Device Credentials for device: " + deviceId + "!"));
             return;
         }
-
-        TbMsg transformedMsg = null;
         var credentialsType = deviceCredentials.getCredentialsType();
         var credentialsInfo = ctx.getDeviceCredentialsService().toCredentialsInfo(deviceCredentials);
-
+        var metaData = msg.getMetaData().copy();
         if (FetchTo.METADATA.equals(fetchTo)) {
-            var metaData = msg.getMetaData();
             metaData.putValue(CREDENTIALS_TYPE, credentialsType.name());
             if (credentialsType.equals(DeviceCredentialsType.ACCESS_TOKEN) || credentialsType.equals(DeviceCredentialsType.X509_CERTIFICATE)) {
                 metaData.putValue(CREDENTIALS, credentialsInfo.asText());
             } else {
                 metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
             }
-            transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, metaData, msg.getData());
         } else if (FetchTo.DATA.equals(fetchTo)) {
-            var data = getMsgDataAsObjectNode(msg);
-            data.put(CREDENTIALS_TYPE, credentialsType.name());
-            data.set(CREDENTIALS, credentialsInfo);
-            transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, msg.getMetaData(), JacksonUtil.toString(data));
+            msgDataAsObjectNode.put(CREDENTIALS_TYPE, credentialsType.name());
+            msgDataAsObjectNode.set(CREDENTIALS, credentialsInfo);
         }
+        TbMsg transformedMsg = transformMessage(msg, msgDataAsObjectNode, metaData);
         ctx.tellSuccess(transformedMsg);
     }
+
 }

@@ -29,9 +29,7 @@ import org.thingsboard.server.common.data.id.UserId;
 
 public class EntitiesCustomerIdAsyncLoader {
 
-
     public static ListenableFuture<CustomerId> findEntityIdAsync(TbContext ctx, EntityId original) {
-
         switch (original.getEntityType()) {
             case CUSTOMER:
                 return Futures.immediateFuture((CustomerId) original);

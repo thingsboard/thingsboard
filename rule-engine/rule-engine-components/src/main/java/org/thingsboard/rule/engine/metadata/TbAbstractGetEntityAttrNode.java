@@ -20,8 +20,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -30,7 +30,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
@@ -38,35 +37,31 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @Slf4j
 public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends TbAbstractNodeWithFetchTo<TbGetEntityAttrNodeConfiguration> {
+
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ObjectNode msgDataAsJsonNode;
-        if (FetchTo.DATA.equals(fetchTo)) {
-            msgDataAsJsonNode = getMsgDataAsObjectNode(msg);
-        } else {
-            msgDataAsJsonNode = null;
-        }
         ctx.checkTenantEntity(msg.getOriginator());
+        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(findEntityAsync(ctx, msg.getOriginator()),
-                entityId -> safeGetAttributes(ctx, msg, entityId, msgDataAsJsonNode),
+                entityId -> safeGetAttributes(ctx, msg, entityId, msgDataAsObjectNode),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     protected abstract ListenableFuture<T> findEntityAsync(TbContext ctx, EntityId originator);
 
-    private void safeGetAttributes(TbContext ctx, TbMsg msg, T entityId, ObjectNode msgDataAsJsonNode) {
-        if (entityId == null || entityId.isNullUid()) {
-            ctx.tellFailure(msg, new NoSuchElementException("Did not find entity! Msg ID: " + msg.getId()));
-            return;
+    protected void checkIfMappingIsNotEmptyOrThrow(TbGetEntityAttrNodeConfiguration config) throws TbNodeException {
+        if (config.getAttrMapping().isEmpty()) {
+            throw new TbNodeException("At least one attribute mapping should be specified!");
         }
+    }
 
-        Map<String, String> mappingsMap = new HashMap<>();
+    private void safeGetAttributes(TbContext ctx, TbMsg msg, T entityId, ObjectNode msgDataAsJsonNode) {
+        var mappingsMap = new HashMap<String, String>();
         config.getAttrMapping().forEach((key, value) -> {
             String patternProcessedSourceKey = TbNodeUtils.processPattern(key, msg);
             String patternProcessedTargetKey = TbNodeUtils.processPattern(value, msg);
             mappingsMap.put(patternProcessedSourceKey, patternProcessedTargetKey);
         });
-
         var sourceKeys = List.copyOf(mappingsMap.keySet());
         withCallback(config.isTelemetry() ? getLatestTelemetryAsync(ctx, entityId, sourceKeys) : getAttributesAsync(ctx, entityId, sourceKeys),
                 data -> putDataAndTell(ctx, msg, data, mappingsMap, msgDataAsJsonNode),
@@ -91,20 +86,13 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
                 MoreExecutors.directExecutor());
     }
 
-    private void putDataAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> data, Map<String, String> map, ObjectNode msgDataAsJsonNode) {
+    private void putDataAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> data, Map<String, String> map, ObjectNode msgData) {
+        var msgMetaData = msg.getMetaData().copy();
         for (KvEntry entry : data) {
             String targetKey = map.get(entry.getKey());
-            String value = entry.getValueAsString();
-            if (FetchTo.DATA.equals(fetchTo)) {
-                msgDataAsJsonNode.put(targetKey, value);
-            } else if (FetchTo.METADATA.equals(fetchTo)) {
-                msg.getMetaData().putValue(targetKey, value);
-            }
+            enrichMessage(msgData, msgMetaData, entry, targetKey);
         }
-        if (FetchTo.DATA.equals(fetchTo)) {
-            ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataAsJsonNode)));
-        } else if (FetchTo.METADATA.equals(fetchTo)) {
-            ctx.tellSuccess(msg);
-        }
+        ctx.tellSuccess(transformMessage(msg, msgData, msgMetaData));
     }
+
 }

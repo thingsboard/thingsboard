@@ -36,12 +36,13 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
-public abstract class TbAbstractTransformNode implements TbNode {
-    private TbTransformNodeConfiguration config;
+public abstract class TbAbstractTransformNode<C> implements TbNode {
+
+    protected C config;
 
     @Override
-    public void init(TbContext context, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbTransformNodeConfiguration.class);
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        config = loadNodeConfiguration(ctx, configuration);
     }
 
     @Override
@@ -52,16 +53,10 @@ public abstract class TbAbstractTransformNode implements TbNode {
                 MoreExecutors.directExecutor());
     }
 
+    protected abstract C loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException;
+
     protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
         ctx.tellFailure(msg, t);
-    }
-
-    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
-        if (m != null) {
-            ctx.tellSuccess(m);
-        } else {
-            ctx.tellFailure(msg, new RuntimeException("Message is null!"));
-        }
     }
 
     protected void transformSuccess(TbContext ctx, TbMsg msg, List<TbMsg> msgs) {
@@ -89,7 +84,4 @@ public abstract class TbAbstractTransformNode implements TbNode {
 
     protected abstract ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg);
 
-    public void setConfig(TbTransformNodeConfiguration config) {
-        this.config = config;
-    }
 }

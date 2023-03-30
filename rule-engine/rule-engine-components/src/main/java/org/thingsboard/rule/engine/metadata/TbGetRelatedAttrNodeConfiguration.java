@@ -28,6 +28,7 @@ import java.util.HashMap;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfiguration {
+
     private RelationsQuery relationsQuery;
 
     @Override
@@ -37,14 +38,16 @@ public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfig
         attrMapping.putIfAbsent("serialNumber", "sn");
         configuration.setAttrMapping(attrMapping);
         configuration.setTelemetry(false);
+        configuration.setFetchTo(FetchTo.METADATA);
 
         var relationsQuery = new RelationsQuery();
+        var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
         relationsQuery.setDirection(EntitySearchDirection.FROM);
         relationsQuery.setMaxLevel(1);
-        var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
         relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
         configuration.setRelationsQuery(relationsQuery);
 
         return configuration;
     }
+
 }

@@ -25,17 +25,19 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbGetEntityAttrNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
+
     private Map<String, String> attrMapping;
-    private boolean isTelemetry = false;
+    private boolean isTelemetry;
 
     @Override
     public TbGetEntityAttrNodeConfiguration defaultConfiguration() {
         var configuration = new TbGetEntityAttrNodeConfiguration();
         var attrMapping = new HashMap<String, String>();
-        attrMapping.putIfAbsent("serialNumber", "sn");
+        attrMapping.putIfAbsent("alarmThreshold", "threshold");
         configuration.setAttrMapping(attrMapping);
         configuration.setTelemetry(false);
         configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
+
 }

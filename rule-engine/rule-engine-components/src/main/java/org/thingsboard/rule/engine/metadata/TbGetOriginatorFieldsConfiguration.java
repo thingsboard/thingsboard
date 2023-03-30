@@ -25,6 +25,7 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbGetOriginatorFieldsConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
+
     private Map<String, String> fieldsMapping;
     private boolean ignoreNullStrings;
 
@@ -39,4 +40,5 @@ public class TbGetOriginatorFieldsConfiguration extends TbAbstractFetchToNodeCon
         configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
+
 }

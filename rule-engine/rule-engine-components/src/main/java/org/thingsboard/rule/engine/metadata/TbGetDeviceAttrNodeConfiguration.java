@@ -26,6 +26,7 @@ import java.util.Collections;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbGetDeviceAttrNodeConfiguration extends TbGetAttributesNodeConfiguration {
+
     private DeviceRelationsQuery deviceRelationsQuery;
 
     @Override
@@ -49,4 +50,5 @@ public class TbGetDeviceAttrNodeConfiguration extends TbGetAttributesNodeConfigu
 
         return configuration;
     }
+
 }

@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -36,6 +37,8 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.NoSuchElementException;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
@@ -47,28 +50,24 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "If the originator of the message is not assigned to Customer, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
-public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration> {
+public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration, CustomerId> {
+
     private static final String CUSTOMER_PREFIX = "customer_";
 
     @Override
     protected TbGetCustomerDetailsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetCustomerDetailsNodeConfiguration.class);
+        var config = TbNodeUtils.convert(configuration, TbGetCustomerDetailsNodeConfiguration.class);
+        checkIfDetailsListIsNotEmptyOrThrow(config);
+        return config;
     }
 
     @Override
-    protected ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
-        return getTbMsgListenableFuture(ctx, msg, getDataAsJson(msg), CUSTOMER_PREFIX);
+    protected String getPrefix() {
+        return CUSTOMER_PREFIX;
     }
 
     @Override
-    protected ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg) {
-        return Futures.transformAsync(getCustomer(ctx, msg), customer ->
-                        customer == null ? Futures.immediateFuture(null) : Futures.immediateFuture(customer),
-                MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Customer> getCustomer(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<? extends ContactBased<CustomerId>> getContactBasedFuture(TbContext ctx, TbMsg msg) {
         switch (msg.getOriginator().getEntityType()) {
             case DEVICE:
                 return Futures.transformAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId())),
@@ -86,7 +85,7 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
                 return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId())),
                         edge -> getCustomerFuture(ctx, edge, msg.getOriginator()), MoreExecutors.directExecutor());
             default:
-                throw new RuntimeException("Entity with entityType '" + msg.getOriginator().getEntityType() + "' is not supported.");
+                return Futures.immediateFailedFuture(new NoSuchElementException("Entity with entityType '" + msg.getOriginator().getEntityType() + "' is not supported."));
         }
     }
 
@@ -96,7 +95,7 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
         } else {
             if (hasCustomerId.getCustomerId().isNullUid()) {
                 if (hasCustomerId instanceof HasName) {
-                    HasName hasName = (HasName) hasCustomerId;
+                    var hasName = (HasName) hasCustomerId;
                     throw new RuntimeException(originator.getEntityType().getNormalName() + " with name '" + hasName.getName() + "' is not assigned to Customer.");
                 }
                 throw new RuntimeException(originator.getEntityType().getNormalName() + " with id '" + originator + "' is not assigned to Customer.");

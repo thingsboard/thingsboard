@@ -217,9 +217,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 break;
             case "3.4.4":
                 log.info("Updating data from version 3.4.4 to 3.5.0 ...");
-                log.info("Started enrichment rule nodes update ...");
+                log.info("Starting enrichment rule nodes update ...");
                 updateEnrichmentRuleNodes();
-                log.info("Finished enrichment rule nodes update ...");
+                log.info("Finished enrichment rule nodes update!");
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -247,12 +247,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 for (var ruleNode : ruleNodes) {
                     var configuration = ruleNode.getConfiguration();
                     if (configuration == null) {
-                        log.error("Unable to update [{}] rule node with ID [{}]! Node configuration is null! Skipping this node!",
+                        log.error("Failed to update rule node: [{}] with id: [{}] Node configuration is null! Skipping this node!",
                                 ruleNodeType, ruleNode.getId());
                         continue;
                     }
                     if (!configuration.isObject()) {
-                        log.error("Unable to update [{}] rule node with ID [{}]! Node configuration is not an object! Skipping this node!",
+                        log.error("Failed to update rule node: [{}] with id: [{}] Node configuration is not an object! Skipping this node!",
                                 ruleNodeType, ruleNode.getId());
                         continue;
                     }
@@ -265,8 +265,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         } else if ("false".equals(fetchToMetadata)) {
                             fetchTo = FetchTo.DATA;
                         } else {
-                            log.error("[fetchToMetadata] property has unexpected value: {}! Expected true or false! Skipping this node ID[{}]!",
-                                    fetchToMetadata, ruleNode.getId());
+                            log.error("Failed to updated rule node: [{}] with id: [{}] " +
+                                    "Reason: fetchToMetadata property has unexpected value: {} Allowed values: true or false!",
+                                    ruleNodeType, ruleNode.getId(), fetchToMetadata);
+                            continue;
                         }
                         configObjectNode.remove("fetchToMetadata");
                     }
@@ -277,8 +279,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         } else if ("false".equals(fetchToData)) {
                             fetchTo = FetchTo.METADATA;
                         } else {
-                            log.error("[fetchToData] property has unexpected value: {}! Expected true or false! Skipping this node ID[{}]!",
-                                    fetchToData, ruleNode.getId());
+                            log.error("Failed to updated rule node: [{}] with id: [{}] " +
+                                    "Reason: fetchToData property has unexpected value: {} Allowed values: true or false!",
+                                    ruleNodeType, ruleNode.getId(), fetchToData);
+                            continue;
                         }
                         configObjectNode.remove("fetchToData");
                     }
@@ -289,16 +293,28 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         } else if ("false".equals(addToMetadata)) {
                             fetchTo = FetchTo.DATA;
                         } else {
-                            log.error("[addToMetadata] property has unexpected value: {}! Skipping  Expected true or false! Skipping this node ID[{}]!",
-                                    addToMetadata, ruleNode.getId());
+                            log.error("Failed to updated rule node: [{}] with id: [{}] " +
+                                    "Reason: addToMetadata property has unexpected value: {} Allowed values: true or false!",
+                                    ruleNodeType, ruleNode.getId(), addToMetadata);
+                            continue;
                         }
                         configObjectNode.remove("addToMetadata");
                     }
-                    configObjectNode.put("fetchTo", fetchTo.toString());
+                    configObjectNode.put("fetchTo", fetchTo.name());
                     ruleNode.setConfiguration(configObjectNode);
-                    ruleChainIdToTenantId.computeIfAbsent(ruleNode.getRuleChainId(),
-                            ruleChainId -> ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, ruleNode.getRuleChainId()).getTenantId());
-                    ruleChainService.saveRuleNode(ruleChainIdToTenantId.get(ruleNode.getRuleChainId()), ruleNode);
+                    RuleChainId ruleChainId = ruleNode.getRuleChainId();
+                    TenantId tenantId = ruleChainIdToTenantId.computeIfAbsent(ruleChainId,
+                            id -> {
+                                RuleChain ruleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, id);
+                                if (ruleChain == null) {
+                                    log.error("Failed to find rule chain by id: [{}], ruleNodeId: [{}]", ruleChainId, ruleNode.getId());
+                                    return null;
+                                }
+                                return ruleChain.getTenantId();
+                            });
+                    if (tenantId != null) {
+                        ruleChainService.saveRuleNode(tenantId, ruleNode);
+                    }
                 }
             });
         } catch (Exception e) {
