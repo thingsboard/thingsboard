@@ -35,14 +35,18 @@
       <ng-container *ngTemplateOutlet="default"></ng-container>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceProvisionType.X509_CERTIFICATE_CHAIN">
-      <div class="tb-hint" style="max-width: 800px">
-        <span [innerHTML]="readMore ? ('device-profile.provision-strategy-x509.hint-certificate-chain' | translate) : ('device-profile.provision-strategy-x509.hint-certificate-chain' | translate | truncate:true:355:&apos;...&apos;)"></span>
-        <a (click)="readMore=!readMore">{{ readMore ? ('&nbsp;' + ('action.less' | translate)) : ('action.more' | translate) }}</a>
+      <div fxFlex fxLayoutAlign="start center" class="tb-hint">
+        <span [innerHTML]="'device-profile.provision-strategy-x509.certificate-chain-hint' | translate"></span>
+        <div tb-help-popup="device-profile/x509-chain-hint"
+             tb-help-popup-placement="bottom"
+             trigger-style="letter-spacing:0.25px; font-size: 12px"
+             [tb-help-popup-style]="{maxWidth: '820px'}"
+             trigger-text="{{ 'action.more' | translate }}"></div>
       </div>
       <mat-slide-toggle formControlName="allowCreateNewDevicesByX509Certificate">
         {{ 'device-profile.provision-strategy-x509.allow-create-new-devices' | translate }}
       </mat-slide-toggle>
-      <div class="tb-hint" style="padding:0 40px 16px" [innerHTML]="'device-profile.provision-strategy-x509.hint-allow-create-new-devices' | translate"></div>
+      <div class="tb-hint" style="padding:0 40px 16px" [innerHTML]="'device-profile.provision-strategy-x509.allow-create-new-devices-hint' | translate"></div>
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.provision-strategy-x509.certificate-value</mat-label>
         <textarea matInput formControlName="certificateValue" cols="15" rows="5" required></textarea>
@@ -53,14 +57,16 @@
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.provision-strategy-x509.cn-regex-variable</mat-label>
         <input matInput type="text" formControlName="certificateRegExPattern" required>
+        <div matSuffix
+             tb-help-popup="device-profile/x509-chain-regex-examples"
+             tb-help-popup-placement="bottom"
+             trigger-style="letter-spacing:0.25px"
+             [tb-help-popup-style]="{maxWidth: '820px'}"></div>
         <mat-error *ngIf="provisionConfigurationFormGroup.get('certificateRegExPattern').hasError('required')">
           {{ 'device-profile.provision-strategy-x509.cn-regex-variable-required' | translate }}
         </mat-error>
-        <mat-hint translate>device-profile.provision-strategy-x509.hint-cn-regex-variable</mat-hint>
+        <mat-hint translate>device-profile.provision-strategy-x509.cn-regex-variable-hint</mat-hint>
       </mat-form-field>
-      <div class="tb-hint" style="max-width: 800px; margin-top: 16px"
-           [innerHTML]="'device-profile.provision-strategy-x509.regex-examples' | translate">
-      </div>
     </ng-template>
     <ng-template #default>
       <section fxLayoutGap.gt-xs="8px" fxLayout="row" fxLayout.xs="column">
