@@ -1507,7 +1507,7 @@
             "certificate-chain": "X509 Certificates Chain",
             "certificate-chain-hint": "X.509 certificates strategy is used to provision devices by client certificates in two-way TLS communication.",
             "allow-create-new-devices": "Create new devices",
-            "allow-create-new-devices-hint": "Hint: if selected new devices will be created and client certificate will be used as device credentials.",
+            "allow-create-new-devices-hint": "If selected new devices will be created and client certificate will be used as device credentials.",
             "certificate-value": "Certificate in PEM format",
             "certificate-value-required": "Certificate in PEM format is required",
             "cn-regex-variable": "CN Regular Expression variable",
