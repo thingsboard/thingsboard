@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="markersSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.markers-settings</legend>
-    <section fxLayout="row" fxLayoutGap="8px">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.maps.marker-offset-x</mat-label>
         <input matInput type="number" formControlName="markerOffsetX">
@@ -113,7 +113,7 @@
                       functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"
                       helpId="widget/lib/map/tooltip_fn">
           </tb-js-func>
-          <section  fxLayout="row" fxLayoutGap="8px">
+          <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.maps.tooltip-offset-x</mat-label>
               <input matInput type="number" formControlName="tooltipOffsetX">

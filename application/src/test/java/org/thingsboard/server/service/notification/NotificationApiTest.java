@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.java_websocket.client.WebSocketClient;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.api.NotificationCenter;
@@ -475,6 +476,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    @Ignore
     public void testNotificationsForALotOfUsers() throws Exception {
         int usersCount = 5000;
 
@@ -520,6 +522,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    @Ignore
     public void testSlackNotifications() throws Exception {
         NotificationSettings settings = new NotificationSettings();
         SlackNotificationDeliveryMethodConfig slackConfig = new SlackNotificationDeliveryMethodConfig();

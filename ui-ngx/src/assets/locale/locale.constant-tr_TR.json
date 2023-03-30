@@ -2631,7 +2631,6 @@
     "maximum-ota-packages-sum-data-size": "Ota paketi dosyalarının bayt cinsinden maksimum toplamı (0 - sınırsız)",
     "maximum-ota-package-sum-data-size-required": "Ota paketi dosyalarının maksimum toplamı gerekli.",
     "maximum-ota-package-sum-data-size-range": "Ota paketi dosyalarının maksimum toplamı negatif olamaz",
-    "transport-tenant-msg-rate-limit": "Taşıma tenant mesajları hız sınırı.",
     "transport-tenant-telemetry-msg-rate-limit": "Taşıma tenant telemetri iletileri hız sınırı.",
     "transport-tenant-telemetry-data-points-rate-limit": "Taşıma tenant telemetri veri noktaları hız sınırı.",
     "transport-device-msg-rate-limit": "Taşıma cihazı mesajları hız sınırı.",
