@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.dao.DaoUtil;
@@ -42,13 +41,13 @@ public class JpaUserSettingsDao extends JpaAbstractDaoListeningExecutorService i
     }
 
     @Override
-    public UserSettings findById(TenantId tenantId, UserId userId, String type) {
-        return DaoUtil.getData(userSettingsRepository.findById(new UserSettingsCompositeKey(userId.getId(), type)));
+    public UserSettings findById(TenantId tenantId, UserSettingsCompositeKey id) {
+        return DaoUtil.getData(userSettingsRepository.findById(id));
     }
 
     @Override
-    public void removeById(TenantId tenantId, UserId userId, String type) {
-        userSettingsRepository.deleteById(new UserSettingsCompositeKey(userId.getId(), type));
+    public void removeById(TenantId tenantId, UserSettingsCompositeKey id) {
+        userSettingsRepository.deleteById(id);
     }
 
 }

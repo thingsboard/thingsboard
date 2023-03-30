@@ -504,7 +504,7 @@ public class UserController extends BaseController {
     @ApiOperation(value = "Report action of User over the dashboard (reportUserDashboardAction)",
             notes = "Enables or Disables user credentials. Useful when you would like to block user account without deleting it. " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/user/dashboards/{dashboardId}/{action}", method = RequestMethod.POST)
+    @RequestMapping(value = "/user/dashboards/{dashboardId}/{action}", method = RequestMethod.GET)
     @ResponseBody
     public UserDashboardsInfo reportUserDashboardAction(
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)

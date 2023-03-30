@@ -18,6 +18,7 @@ package org.thingsboard.server.service.entitiy.user;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.HasTitle;
@@ -35,8 +36,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.user.UserSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -49,7 +53,7 @@ import java.util.stream.Collectors;
 public class DefaultTbUserSettingsService implements TbUserSettingsService {
 
     private static final int MAX_DASHBOARD_INFO_LIST_SIZE = 10;
-    private static final Predicate<HasTitle> EMPTY_TITLE = i -> StringUtils.isNotEmpty(i.getTitle());
+    private static final Predicate<HasTitle> EMPTY_TITLE = i -> StringUtils.isEmpty(i.getTitle());
 
     private final UserSettingsService settingsService;
     private final DashboardService dashboardService;
@@ -96,24 +100,7 @@ public class DefaultTbUserSettingsService implements TbUserSettingsService {
             return UserDashboardsInfo.EMPTY;
         }
         UserDashboardsInfo stored = JacksonUtil.convertValue(us.getSettings(), UserDashboardsInfo.class);
-        if (stored == null) {
-            return UserDashboardsInfo.EMPTY;
-        }
-
-        if (!stored.getLast().isEmpty()) {
-            stored.getLast().forEach(i -> setTitleIfEmpty(tenantId, i));
-            stored.getLast().removeIf(EMPTY_TITLE);
-        }
-        if (!stored.getStarred().isEmpty()) {
-            Map<UUID, LastVisitedDashboardInfo> lastMap = stored.getLast().stream().collect(Collectors.toMap(LastVisitedDashboardInfo::getId, Function.identity()));
-            stored.getStarred().forEach(i -> {
-                var last = lastMap.get(i.getId());
-                i.setTitle(last != null ? last.getTitle() : null);
-            });
-            stored.getStarred().forEach(i -> setTitleIfEmpty(tenantId, i));
-            stored.getStarred().removeIf(EMPTY_TITLE);
-        }
-        return stored;
+        return getUserDashboardsInfo(tenantId, stored);
     }
 
     @Override
@@ -144,12 +131,26 @@ public class DefaultTbUserSettingsService implements TbUserSettingsService {
         us.setType(UserSettings.STARRED_DASHBOARDS);
         us.setSettings(JacksonUtil.valueToTree(stored));
         saveUserSettings(tenantId, us);
-        return stored;
+        return getUserDashboardsInfo(tenantId, stored);
     }
 
     private void addToVisited(UserDashboardsInfo stored, DashboardId dashboardId) {
         UUID id = dashboardId.getId();
-        stored.getStarred().removeIf(d -> id.equals(d.getId()));
+        long ts = System.currentTimeMillis();
+        var opt = stored.getLast().stream().filter(d -> id.equals(d.getId())).findFirst();
+        if (opt.isPresent()) {
+            opt.get().setLastVisited(ts);
+        } else {
+            var newInfo = new LastVisitedDashboardInfo();
+            newInfo.setId(id);
+            newInfo.setStarred(stored.getStarred().stream().anyMatch(d -> id.equals(d.getId())));
+            newInfo.setLastVisited(System.currentTimeMillis());
+            stored.getLast().add(newInfo);
+        }
+        stored.getLast().sort(Comparator.comparing(LastVisitedDashboardInfo::getLastVisited).reversed());
+        if (stored.getLast().size() > MAX_DASHBOARD_INFO_LIST_SIZE) {
+            stored.setLast(stored.getLast().stream().limit(MAX_DASHBOARD_INFO_LIST_SIZE).collect(Collectors.toList()));
+        }
     }
 
     private void removeFromStarred(UserDashboardsInfo stored, DashboardId dashboardId) {
@@ -170,9 +171,13 @@ public class DefaultTbUserSettingsService implements TbUserSettingsService {
             newInfo.setStarredAt(System.currentTimeMillis());
             stored.getStarred().add(newInfo);
         }
-        stored.getLast().stream().filter(d -> id.equals(d.getId())).forEach(d -> d.setStarred(true));
-        //TODO: self-heal if some of the dashboards were deleted.
-        //TODO: limit by size.
+        stored.getStarred().sort(Comparator.comparing(StarredDashboardInfo::getStarredAt).reversed());
+        if (stored.getStarred().size() > MAX_DASHBOARD_INFO_LIST_SIZE) {
+            stored.setStarred(stored.getStarred().stream().limit(MAX_DASHBOARD_INFO_LIST_SIZE).collect(Collectors.toList()));
+        }
+        Set<UUID> starredMap =
+                stored.getStarred().stream().map(AbstractUserDashboardInfo::getId).collect(Collectors.toSet());
+        stored.getLast().forEach(d -> d.setStarred(starredMap.contains(d.getId())));
     }
 
     private void setTitleIfEmpty(TenantId tenantId, AbstractUserDashboardInfo i) {
@@ -182,5 +187,25 @@ public class DefaultTbUserSettingsService implements TbUserSettingsService {
         }
     }
 
+    private UserDashboardsInfo getUserDashboardsInfo(TenantId tenantId, UserDashboardsInfo stored) {
+        if (stored == null) {
+            return UserDashboardsInfo.EMPTY;
+        }
+
+        if (!stored.getLast().isEmpty()) {
+            stored.getLast().forEach(i -> setTitleIfEmpty(tenantId, i));
+            stored.getLast().removeIf(EMPTY_TITLE);
+        }
+        if (!stored.getStarred().isEmpty()) {
+            Map<UUID, LastVisitedDashboardInfo> lastMap = stored.getLast().stream().collect(Collectors.toMap(LastVisitedDashboardInfo::getId, Function.identity()));
+            stored.getStarred().forEach(i -> {
+                var last = lastMap.get(i.getId());
+                i.setTitle(last != null ? last.getTitle() : null);
+            });
+            stored.getStarred().forEach(i -> setTitleIfEmpty(tenantId, i));
+            stored.getStarred().removeIf(EMPTY_TITLE);
+        }
+        return stored;
+    }
 
 }
