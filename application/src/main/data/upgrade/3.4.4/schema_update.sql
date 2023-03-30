@@ -620,4 +620,3 @@ END
 $$;
 
 -- TTL DROP PARTITIONS FUNCTIONS UPDATE END
->>>>>>> develop/3.5
