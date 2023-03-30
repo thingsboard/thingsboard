@@ -113,6 +113,10 @@ fieldset {
   border: none;
 }
 
+.fields-group {
+  display: grid;
+}
+
 section.tb-header-buttons {
   position: absolute;
   top: 86px;
@@ -1077,6 +1081,14 @@ mat-label {
     padding-bottom: 6px;
     line-height: 1.5;
     white-space: pre-line;
+  }
+
+  // TinyMCE
+
+  .tox-tinymce {
+    button:not(.mat-mdc-menu-item):not(.mat-sort-header-button) {
+      text-transform: none;
+    }
   }
 
   .tb-toast-panel {

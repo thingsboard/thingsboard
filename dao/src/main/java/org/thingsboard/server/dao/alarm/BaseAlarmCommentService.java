@@ -22,12 +22,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -39,7 +43,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class BaseAlarmCommentService extends AbstractEntityService implements AlarmCommentService{
+public class BaseAlarmCommentService extends AbstractEntityService implements AlarmCommentService {
 
     @Autowired
     private AlarmCommentDao alarmCommentDao;
@@ -58,9 +62,10 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     }
 
     @Override
-    public void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId) {
-        log.debug("Deleting Alarm Comment with id: {}", alarmCommentId);
-        alarmCommentDao.deleteAlarmComment(tenantId, alarmCommentId);
+    public AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
+        log.debug("Deleting Alarm Comment: {}", alarmComment);
+        alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
+        return alarmCommentDao.save(tenantId, alarmComment);
     }
 
     @Override

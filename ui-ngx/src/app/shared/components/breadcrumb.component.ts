@@ -18,10 +18,12 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { BreadCrumb, BreadCrumbConfig } from './breadcrumb';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { guid } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
+import { ActiveComponentService } from '@core/services/active-component.service';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-breadcrumb',
@@ -34,8 +36,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   activeComponentValue: any;
   updateBreadcrumbsSubscription: Subscription = null;
 
-  @Input()
-  set activeComponent(activeComponent: any) {
+  setActiveComponent(activeComponent: any) {
     if (this.updateBreadcrumbsSubscription) {
       this.updateBreadcrumbsSubscription.unsubscribe();
       this.updateBreadcrumbsSubscription = null;
@@ -48,13 +49,15 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     }
   }
 
-  breadcrumbs$: Subject<Array<BreadCrumb>> = new BehaviorSubject<Array<BreadCrumb>>(this.buildBreadCrumbs(this.activatedRoute.snapshot));
+  breadcrumbs$: Subject<Array<BreadCrumb>> = new BehaviorSubject<Array<BreadCrumb>>([]);
 
   routerEventsSubscription = this.router.events.pipe(
     filter((event) => event instanceof NavigationEnd ),
     distinctUntilChanged(),
     map( () => this.buildBreadCrumbs(this.activatedRoute.snapshot) )
   ).subscribe(breadcrumns => this.breadcrumbs$.next(breadcrumns) );
+
+  activeComponentSubscription = this.activeComponentService.onActiveComponentChanged().subscribe(comp => this.setActiveComponent(comp));
 
   lastBreadcrumb$ = this.breadcrumbs$.pipe(
     map( breadcrumbs => breadcrumbs[breadcrumbs.length - 1])
@@ -63,19 +66,25 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
               private broadcast: BroadcastService,
+              private activeComponentService: ActiveComponentService,
               private cd: ChangeDetectorRef,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              public utils: UtilsService) {
   }
 
   ngOnInit(): void {
     this.broadcast.on('updateBreadcrumb', () => {
       this.cd.markForCheck();
     });
+    this.setActiveComponent(this.activeComponentService.getCurrentActiveComponent());
   }
 
   ngOnDestroy(): void {
     if (this.routerEventsSubscription) {
       this.routerEventsSubscription.unsubscribe();
+    }
+    if (this.activeComponentSubscription) {
+      this.activeComponentSubscription.unsubscribe();
     }
   }
 

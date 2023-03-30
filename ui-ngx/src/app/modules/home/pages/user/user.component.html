@@ -92,6 +92,11 @@
         <mat-label translate>user.last-name</mat-label>
         <input matInput formControlName="lastName">
       </mat-form-field>
+      <tb-phone-input [required]="false"
+                      label="{{ 'contact.phone' | translate }}"
+                      [enableFlagsSelect]="true"
+                      formControlName="phone">
+      </tb-phone-input>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>user.description</mat-label>

@@ -47,6 +47,7 @@ public interface MailService {
     void sendTwoFaVerificationEmail(String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException;
 
     void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException;
+
     void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException;
 
     void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException;

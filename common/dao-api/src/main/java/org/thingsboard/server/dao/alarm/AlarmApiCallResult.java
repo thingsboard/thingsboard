@@ -32,16 +32,18 @@ public class AlarmApiCallResult {
     private final boolean created;
     private final boolean modified;
     private final boolean cleared;
+    private final boolean deleted;
     private final AlarmInfo alarm;
     private final Alarm old;
     private final List<EntityId> propagatedEntitiesList;
 
     @Builder
-    private AlarmApiCallResult(boolean successful, boolean created, boolean modified, boolean cleared, AlarmInfo alarm, Alarm old, List<EntityId> propagatedEntitiesList) {
+    private AlarmApiCallResult(boolean successful, boolean created, boolean modified, boolean cleared, boolean deleted, AlarmInfo alarm, Alarm old, List<EntityId> propagatedEntitiesList) {
         this.successful = successful;
         this.created = created;
         this.modified = modified;
         this.cleared = cleared;
+        this.deleted = deleted;
         this.alarm = alarm;
         this.old = old;
         this.propagatedEntitiesList = propagatedEntitiesList;
@@ -52,6 +54,7 @@ public class AlarmApiCallResult {
         this.created = other.created;
         this.modified = other.modified;
         this.cleared = other.cleared;
+        this.deleted = other.deleted;
         this.alarm = other.alarm;
         this.old = other.old;
         this.propagatedEntitiesList = propagatedEntitiesList;
@@ -62,6 +65,14 @@ public class AlarmApiCallResult {
             return false;
         } else {
             return !alarm.getSeverity().equals(old.getSeverity());
+        }
+    }
+
+    public boolean isAcknowledged() {
+        if (alarm == null || old == null) {
+            return false;
+        } else {
+            return alarm.isAcknowledged() != old.isAcknowledged();
         }
     }
 

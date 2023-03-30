@@ -3092,7 +3092,6 @@
         "maximum-ota-packages-sum-data-size": "Tamaño máximo de paquetes OTA en bytes (0 - sin límite)",
         "maximum-ota-package-sum-data-size-required": "Tamaño máximo de paquetes OTA requerido.",
         "maximum-ota-package-sum-data-size-range": "Tamaño máximo de paquetes OTA no puede ser negativo",
-        "transport-tenant-msg-rate-limit": "Tasa de mensajes de transporte por propietario.",
         "transport-tenant-telemetry-msg-rate-limit": "Tasa de mensajes de telemetría por propietario.",
         "transport-tenant-telemetry-data-points-rate-limit": "Tasa de datapoints por propietario.",
         "transport-device-msg-rate-limit": "Tasa de mensajes de dispositivo.",

@@ -141,6 +141,9 @@ public class AlarmController extends BaseController {
         checkNotNull(alarm.getOriginator());
         checkEntity(alarm.getId(), alarm, Resource.ALARM);
         checkEntityId(alarm.getOriginator(), Operation.READ);
+        if (alarm.getAssigneeId() != null) {
+            checkUserId(alarm.getAssigneeId(), Operation.READ);
+        }
         return tbAlarmService.save(alarm, getCurrentUser());
     }
 

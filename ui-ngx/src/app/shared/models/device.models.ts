@@ -500,12 +500,14 @@ export interface CustomTimeSchedulerItem{
   endsOn: number;
 }
 
-export interface AlarmRule {
+interface AlarmRule {
   condition: AlarmCondition;
   alarmDetails?: string;
   dashboardId?: DashboardId;
   schedule?: AlarmSchedule;
 }
+
+export { AlarmRule as DeviceProfileAlarmRule };
 
 export function alarmRuleValidator(control: AbstractControl): ValidationErrors | null {
   const alarmRule: AlarmRule = control.value;
@@ -585,6 +587,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId>, ExportableEnti
 }
 
 export interface DeviceProfileInfo extends EntityInfoData {
+  tenantId?: TenantId;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
   image?: string;

@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -48,8 +50,11 @@ public class SearchAssetProfileTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Search asset profile")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "assetProfileSearch")
-    @Description
+    @Description("Search asset profile by first word in the name/Search asset profile by second word in the name/" +
+            "Search asset profile by symbol in the name/Search asset profile by number in the name")
     public void searchFirstWord(String name, String namePath) {
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;

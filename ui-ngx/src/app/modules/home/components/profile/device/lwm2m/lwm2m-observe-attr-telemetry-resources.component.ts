@@ -29,7 +29,7 @@ import {
 } from '@angular/forms';
 import { ResourceLwM2M } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { combineLatest, Subject, Subscription } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import { startWith, takeUntil } from 'rxjs/operators';
 
 @Component({
@@ -71,19 +71,19 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
   }
 
   private destroy$ = new Subject<void>();
-  private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder) {
     this.resourcesFormGroup = this.fb.group({
       resources: this.fb.array([])
     });
+
+    this.resourcesFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel(this.resourcesFormGroup.getRawValue().resources));
   }
 
   ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -131,24 +131,18 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
 
   private updatedResources(resources: ResourceLwM2M[]): void {
     if (resources.length === this.resourcesFormArray.length) {
-      this.resourcesFormArray.patchValue(resources, {onlySelf: true});
+      this.resourcesFormArray.patchValue(resources, {onlySelf: true, emitEvent: false});
     } else {
-      if (this.valueChange$) {
-        this.valueChange$.unsubscribe();
-      }
       const resourcesControl: Array<AbstractControl> = [];
       if (resources) {
         resources.forEach((resource) => {
           resourcesControl.push(this.createdResourceFormGroup(resource));
         });
       }
-      this.resourcesFormGroup.setControl('resources', this.fb.array(resourcesControl));
+      this.resourcesFormGroup.setControl('resources', this.fb.array(resourcesControl), {emitEvent: false});
       if (this.disabled) {
         this.resourcesFormGroup.disable({emitEvent: false});
       }
-      this.valueChange$ = this.resourcesFormGroup.valueChanges.subscribe(() => {
-        this.updateModel(this.resourcesFormGroup.getRawValue().resources);
-      });
     }
   }
 
