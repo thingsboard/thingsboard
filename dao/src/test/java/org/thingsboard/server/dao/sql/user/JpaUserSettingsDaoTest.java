@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.UserSettings;
+import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.user.UserDao;
@@ -66,17 +66,18 @@ public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
     public void testFindSettingsByUserId() {
         UserSettings userSettings = createUserSettings(user.getId());
 
-        UserSettings retrievedUserSettings = userSettingsDao.findById(SYSTEM_TENANT_ID, user.getId());
+        UserSettings retrievedUserSettings = userSettingsDao.findById(SYSTEM_TENANT_ID, user.getId(), UserSettings.GENERAL);
         assertEquals(retrievedUserSettings.getSettings(), userSettings.getSettings());
 
-        userSettingsDao.removeById(SYSTEM_TENANT_ID, user.getId());
+        userSettingsDao.removeById(SYSTEM_TENANT_ID, user.getId(), UserSettings.GENERAL);
 
-        UserSettings retrievedUserSettings2 = userSettingsDao.findById(SYSTEM_TENANT_ID, user.getId());
+        UserSettings retrievedUserSettings2 = userSettingsDao.findById(SYSTEM_TENANT_ID, user.getId(), UserSettings.GENERAL);
         assertNull(retrievedUserSettings2);
     }
 
     private UserSettings createUserSettings(UserId userId) {
         UserSettings userSettings = new UserSettings();
+        userSettings.setType(UserSettings.GENERAL);
         userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
         userSettings.setUserId(userId);
         return userSettingsDao.save(SYSTEM_TENANT_ID, userSettings);

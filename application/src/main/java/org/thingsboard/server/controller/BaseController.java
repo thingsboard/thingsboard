@@ -146,6 +146,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.instructions.EdgeInstallService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -202,7 +203,7 @@ public abstract class BaseController {
     protected UserService userService;
 
     @Autowired
-    protected UserSettingsService userSettingsService;
+    protected TbUserSettingsService userSettingsService;
 
     @Autowired
     protected DeviceService deviceService;

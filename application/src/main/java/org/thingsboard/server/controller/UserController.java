@@ -38,12 +38,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -55,7 +57,10 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.security.UserSettings;
+import org.thingsboard.server.common.data.settings.LastVisitedDashboardInfo;
+import org.thingsboard.server.common.data.settings.UserDashboardAction;
+import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
+import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -76,6 +81,7 @@ import java.util.Map;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -438,13 +444,14 @@ public class UserController extends BaseController {
     }
 
     @ApiOperation(value = "Save user settings (saveUserSettings)",
-            notes = "Save user settings represented in json format for authorized user. " )
+            notes = "Save user settings represented in json format for authorized user. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/user/settings")
     public JsonNode saveUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
 
         UserSettings userSettings = new UserSettings();
+        userSettings.setType(UserSettings.GENERAL);
         userSettings.setSettings(settings);
         userSettings.setUserId(currentUser.getId());
         return userSettingsService.saveUserSettings(currentUser.getTenantId(), userSettings).getSettings();
@@ -462,27 +469,60 @@ public class UserController extends BaseController {
     }
 
     @ApiOperation(value = "Get user settings (getUserSettings)",
-            notes = "Fetch the User settings based on authorized user. " )
+            notes = "Fetch the User settings based on authorized user. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings")
     public JsonNode getUserSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
 
         UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId());
-        return userSettings == null ? JacksonUtil.newObjectNode(): userSettings.getSettings();
+        return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
     }
 
     @ApiOperation(value = "Delete user settings (deleteUserSettings)",
             notes = "Delete user settings by specifying list of json element xpaths. \n " +
-                    "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter" )
+                    "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user/settings/{paths}", method = RequestMethod.DELETE)
     public void deleteUserSettings(@ApiParam(value = PATHS)
-                                        @PathVariable(PATHS) String paths) throws ThingsboardException {
+                                   @PathVariable(PATHS) String paths) throws ThingsboardException {
         checkParameter(USER_ID, paths);
 
         SecurityUser currentUser = getCurrentUser();
         userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(paths.split(",")));
+    }
+
+    @ApiOperation(value = "Get information about last visited and starred dashboards (getLastVisitedDashboards)",
+            notes = "Fetch the list of last visited and starred dashboards. Both lists are limited to 10 items.")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/dashboards")
+    public UserDashboardsInfo getUserDashboardsInfo() throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        return userSettingsService.findUserDashboardsInfo(currentUser.getTenantId(), currentUser.getId());
+    }
+
+    @ApiOperation(value = "Report action of User over the dashboard (reportUserDashboardAction)",
+            notes = "Enables or Disables user credentials. Useful when you would like to block user account without deleting it. " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/user/dashboards/{dashboardId}/{action}", method = RequestMethod.POST)
+    @ResponseBody
+    public UserDashboardsInfo reportUserDashboardAction(
+            @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
+            @PathVariable(DashboardController.DASHBOARD_ID) String strDashboardId,
+            @ApiParam(value = "Dashboard action, one of: \"visit\", \"star\" or \"unstar\".")
+            @PathVariable("action") String strAction) throws ThingsboardException {
+        checkParameter(DashboardController.DASHBOARD_ID, strDashboardId);
+        checkParameter("action", strAction);
+        DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+        DashboardInfo dashboard = checkDashboardInfoId(dashboardId, Operation.READ);
+        UserDashboardAction action;
+        try {
+            action = UserDashboardAction.valueOf(strAction.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ThingsboardException("Action: " + strAction + " is not supported!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        SecurityUser currentUser = getCurrentUser();
+        return userSettingsService.reportUserDashboardAction(currentUser.getTenantId(), currentUser.getId(), dashboardId, action);
     }
 
 }
