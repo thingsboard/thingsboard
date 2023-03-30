@@ -86,6 +86,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     this.modelsFormGroup = this.fb.group({
       models: this.fb.array([])
     });
+
+    this.valueChange$ = this.modelsFormGroup.valueChanges.subscribe(value => this.updateModel(value.models));
   }
 
   ngOnDestroy() {
@@ -130,20 +132,14 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     if (models.length === this.modelsFormArray.length) {
       this.modelsFormArray.patchValue(models, {emitEvent: false});
     } else {
-      if (this.valueChange$) {
-        this.valueChange$.unsubscribe();
-      }
       const modelControls: Array<AbstractControl> = [];
       models.forEach(model => {
         modelControls.push(this.createModelFormGroup(model));
       });
-      this.modelsFormGroup.setControl('models', this.fb.array(modelControls));
+      this.modelsFormGroup.setControl('models', this.fb.array(modelControls), {emitEvent: false});
       if (this.disabled) {
         this.modelsFormGroup.disable({emitEvent: false});
       }
-      this.valueChange$ = this.modelsFormGroup.valueChanges.subscribe(value => {
-        this.updateModel(value.models);
-      });
     }
   }
 

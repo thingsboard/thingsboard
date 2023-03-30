@@ -40,7 +40,7 @@
     <div fxLayout="column" fxLayoutGap="0.5em">
       <mat-divider></mat-divider>
       <section class="tb-widget-settings" fxLayout="column">
-        <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
           <mat-form-field fxFlex>
             <mat-label translate>widgets.gauge.highlight-from</mat-label>
             <input matInput type="number" formControlName="from">

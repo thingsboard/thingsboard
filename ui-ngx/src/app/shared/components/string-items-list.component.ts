@@ -18,7 +18,7 @@ import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-field';
+import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
@@ -78,6 +78,9 @@ export class StringItemsListComponent implements ControlValueAccessor{
   @Input()
   @coerceBoolean()
   editable = false;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed'
 
   private propagateChange = (v: any) => { };
 
