@@ -101,8 +101,7 @@ public class EntityQueryController extends BaseController {
     public long countAlarmsByQuery(@ApiParam(value = "A JSON value representing the alarm count query.")
                                    @RequestBody AlarmCountQuery query) throws ThingsboardException {
         checkNotNull(query);
-        checkNotNull(query.getPageLink());
-        UserId assigneeId = query.getPageLink().getAssigneeId();
+        UserId assigneeId = query.getAssigneeId();
         if (assigneeId != null) {
             checkUserId(assigneeId, Operation.READ);
         }

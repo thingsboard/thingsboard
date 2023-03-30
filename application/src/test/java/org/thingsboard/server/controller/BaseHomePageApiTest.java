@@ -46,7 +46,6 @@ import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
-import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -340,7 +339,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
     public void testCountAlarmsByQuery() throws Exception {
         loginTenantAdmin();
 
-        AlarmCountCmd cmd1 = new AlarmCountCmd(1, new AlarmCountQuery(new AlarmDataPageLink()));
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, new AlarmCountQuery());
 
         getWsClient().send(cmd1);
 
@@ -355,7 +354,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        AlarmCountCmd cmd2 = new AlarmCountCmd(2, new AlarmCountQuery(new AlarmDataPageLink()));
+        AlarmCountCmd cmd2 = new AlarmCountCmd(2, new AlarmCountQuery());
 
         getWsClient().send(cmd2);
 
@@ -363,9 +362,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(2, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
-        AlarmDataPageLink alarmDataPageLink = new AlarmDataPageLink();
-        alarmDataPageLink.setAssigneeId(tenantAdminUserId);
-        AlarmCountCmd cmd3 = new AlarmCountCmd(3, new AlarmCountQuery(alarmDataPageLink));
+        AlarmCountCmd cmd3 = new AlarmCountCmd(3, AlarmCountQuery.builder().assigneeId(tenantAdminUserId).build());
 
         getWsClient().send(cmd3);
 
@@ -376,7 +373,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         alarm.setAssigneeId(tenantAdminUserId);
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        AlarmCountCmd cmd4 = new AlarmCountCmd(4, new AlarmCountQuery(alarmDataPageLink));
+        AlarmCountCmd cmd4 = new AlarmCountCmd(4, AlarmCountQuery.builder().assigneeId(tenantAdminUserId).build());
 
         getWsClient().send(cmd4);
 
@@ -384,8 +381,8 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(4, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
-        alarmDataPageLink.setSeverityList(Collections.singletonList(AlarmSeverity.CRITICAL));
-        AlarmCountCmd cmd5 = new AlarmCountCmd(5, new AlarmCountQuery(alarmDataPageLink));
+        AlarmCountCmd cmd5 = new AlarmCountCmd(5,
+                AlarmCountQuery.builder().severityList(Collections.singletonList(AlarmSeverity.CRITICAL)).build());
 
         getWsClient().send(cmd5);
 
@@ -396,7 +393,8 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         doPost("/api/alarm", alarm, Alarm.class);
 
-        AlarmCountCmd cmd6 = new AlarmCountCmd(6, new AlarmCountQuery(alarmDataPageLink));
+        AlarmCountCmd cmd6 = new AlarmCountCmd(6,
+                AlarmCountQuery.builder().severityList(Collections.singletonList(AlarmSeverity.CRITICAL)).build());
 
         getWsClient().send(cmd6);
 

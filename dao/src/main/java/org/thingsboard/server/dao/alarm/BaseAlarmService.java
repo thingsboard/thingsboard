@@ -361,7 +361,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public long countAlarmsByQuery(TenantId tenantId, AlarmCountQuery query) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-//        validateEntityDataPageLink(query.getPageLink());
         return alarmDao.countAlarmsByQuery(tenantId, query);
     }
 

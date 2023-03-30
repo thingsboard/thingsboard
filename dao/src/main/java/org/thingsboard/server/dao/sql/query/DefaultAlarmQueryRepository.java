@@ -309,34 +309,33 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     @Override
     public long countAlarmsByQuery(TenantId tenantId, AlarmCountQuery query) {
-        AlarmDataPageLink pageLink = query.getPageLink();
         QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
 
         ctx.append("select count(id) from alarm_info a ");
 
-        if (pageLink.isSearchPropagatedAlarms()) {
+        if (query.isSearchPropagatedAlarms()) {
             ctx.append(JOIN_ENTITY_ALARMS);
             ctx.append(" where");
             ctx.append(buildPermissionsQuery(tenantId, ctx));
         } else {
             ctx.append("where a.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId",tenantId.getId());
+            ctx.addUuidParameter("tenantId", tenantId.getId());
         }
 
         long startTs;
         long endTs;
-        if (pageLink.getTimeWindow() > 0) {
+        if (query.getTimeWindow() > 0) {
             endTs = System.currentTimeMillis();
-            startTs = endTs - pageLink.getTimeWindow();
+            startTs = endTs - query.getTimeWindow();
         } else {
-            startTs = pageLink.getStartTs();
-            endTs = pageLink.getEndTs();
+            startTs = query.getStartTs();
+            endTs = query.getEndTs();
         }
 
         if (startTs > 0) {
             ctx.append(" and a.created_time >= :startTime");
             ctx.addLongParameter("startTime", startTs);
-            if (pageLink.isSearchPropagatedAlarms()) {
+            if (query.isSearchPropagatedAlarms()) {
                 ctx.append(" and ea.created_time >= :startTime");
             }
         }
@@ -344,25 +343,25 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         if (endTs > 0) {
             ctx.append(" and a.created_time <= :endTime");
             ctx.addLongParameter("endTime", endTs);
-            if (pageLink.isSearchPropagatedAlarms()) {
+            if (query.isSearchPropagatedAlarms()) {
                 ctx.append(" and ea.created_time <= :endTime");
             }
         }
 
-        if (!CollectionUtils.isEmpty(pageLink.getTypeList())) {
+        if (!CollectionUtils.isEmpty(query.getTypeList())) {
             ctx.append(" and a.type in (:alarmTypes)");
-            ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
-            if (pageLink.isSearchPropagatedAlarms()) {
+            ctx.addStringListParameter("alarmTypes", query.getTypeList());
+            if (query.isSearchPropagatedAlarms()) {
                 ctx.append(" and ea.alarm_type in (:alarmTypes)");
             }
         }
 
-        if (pageLink.getSeverityList() != null && !pageLink.getSeverityList().isEmpty()) {
+        if (query.getSeverityList() != null && !query.getSeverityList().isEmpty()) {
             ctx.append(" and a.severity in (:alarmSeverities)");
-            ctx.addStringListParameter("alarmSeverities", pageLink.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
+            ctx.addStringListParameter("alarmSeverities", query.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
         }
 
-        AlarmStatusFilter asf = AlarmStatusFilter.from(pageLink.getStatusList());
+        AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
         if (asf.hasAnyFilter()) {
             if (asf.hasAckFilter()) {
                 ctx.append(" and a.acknowledged = :ackStatus");
@@ -374,8 +373,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
         }
 
-        if (pageLink.getAssigneeId() != null) {
-            ctx.addUuidParameter("assigneeId", pageLink.getAssigneeId().getId());
+        if (query.getAssigneeId() != null) {
+            ctx.addUuidParameter("assigneeId", query.getAssigneeId().getId());
             ctx.append(" and a.assignee_id = :assigneeId");
         }
 
