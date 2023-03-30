@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.user;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -90,7 +91,7 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
      * @param pageLink the page link
      * @return the list of user entities
      */
-    PageData<User> findTenantAndCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink);
+    PageData<User> findUsersByCustomerIds(UUID tenantId, List<CustomerId> customerIds, PageLink pageLink);
 
     PageData<User> findAll(PageLink pageLink);
 

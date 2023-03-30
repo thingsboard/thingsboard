@@ -45,12 +45,11 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
                                           Pageable pageable);
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
-            "AND (:customerId IS NULL OR u.customerId IN (:customerId, :nullCustomerId)) " +
+            "AND u.customerId IN (:customerIds) " +
             "AND LOWER(u.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<UserEntity> findTenantAndCustomerUsers(@Param("tenantId") UUID tenantId,
-                                                @Param("customerId") UUID customerId,
+                                                @Param("customerIds") Collection<UUID> customerIds,
                                                 @Param("searchText") String searchText,
-                                                @Param("nullCustomerId") UUID nullCustomerId,
                                                 Pageable pageable);
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +

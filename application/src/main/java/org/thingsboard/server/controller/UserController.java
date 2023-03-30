@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
 import org.thingsboard.server.service.query.EntityQueryService;
@@ -71,7 +72,9 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +123,9 @@ public class UserController extends BaseController {
 
     @Autowired
     private EntityQueryService entityQueryService;
+
+    @Autowired
+    private EntityService entityService;
 
     @ApiOperation(value = "Get User (getUserById)",
             notes = "Fetch the User object based on the provided User Id. " +
@@ -466,13 +472,18 @@ public class UserController extends BaseController {
             Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
             SecurityUser currentUser = getCurrentUser();
             TenantId tenantId = currentUser.getTenantId();
+            CustomerId originatorCustomerId = entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).get();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             PageData<User> pageData;
             if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
                 if (alarm.getCustomerId() == null) {
                     pageData = userService.findTenantAdmins(tenantId, pageLink);
                 } else {
-                    pageData = userService.findTenantAndCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
+                    ArrayList<CustomerId> customerIds = new ArrayList<>(Collections.singletonList(new CustomerId(CustomerId.NULL_UUID)));
+                    if (!CustomerId.NULL_UUID.equals(originatorCustomerId.getId())) {
+                        customerIds.add(originatorCustomerId);
+                    }
+                    pageData = userService.findUsersByCustomerIds(tenantId, customerIds, pageLink);
                 }
             } else {
                 pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
