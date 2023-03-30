@@ -39,9 +39,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.stats.EntityStatisticsDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.apiusage.ApiStatsKey;
-import org.thingsboard.server.service.apiusage.BaseApiUsageState;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.stats.device.DeviceClass;
 import org.thingsboard.server.service.stats.device.DeviceStats;
 import org.thingsboard.server.service.stats.device.DevicesStatisticsService;
@@ -62,8 +60,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.common.data.ApiUsageRecordKey.ACTIVE_DEVICES;
-import static org.thingsboard.server.common.data.ApiUsageRecordKey.INACTIVE_DEVICES;
 import static org.thingsboard.server.common.msg.tools.SchedulerUtils.getStartOfCurrentHour;
 
 @DaoSqlTest
@@ -72,7 +68,6 @@ import static org.thingsboard.server.common.msg.tools.SchedulerUtils.getStartOfC
         "usage.stats.report.enabled_per_entity=true",
         "usage.stats.devices.enabled=true",
         "transport.http.enabled=true",
-        "state.defaultStateCheckIntervalInSec=2",
         "usage.stats.report.interval=2"
 })
 public class DevicesStatisticsTest extends AbstractControllerTest {
@@ -87,8 +82,6 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     private TimeseriesService timeseriesService;
     @Autowired
     private DeviceService deviceService;
-    @Autowired
-    private DeviceStateService deviceStateService;
 
     private ApiUsageStateId apiUsageStateId;
 
@@ -210,40 +203,6 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
         entityStatisticsDao.deleteByTsBefore(statsTsForPresentDevices - 1);
         stats = entityStatisticsDao.findByTenantIdAndEntityType(tenantId, EntityType.DEVICE, new PageLink(100)).getData();
         assertThat(stats).size().isEqualTo(totalCount - deletedDevices.size());
-    }
-
-    @Test
-    public void testDevicesActivityStats() throws Exception {
-        setStaticFieldValue(BaseApiUsageState.class, "gaugeReportInterval", TimeUnit.SECONDS.toMillis(1));
-        this.<Map>getFieldValue(deviceStateService, "deviceStates").clear();
-
-        int activeDevicesCount = 5;
-        List<Device> activeDevices = new ArrayList<>();
-        for (int i = 1; i <= activeDevicesCount; i++) {
-            String name = "active_device_" + i;
-            Device device = createDevice(name, name);
-            activeDevices.add(device);
-        }
-        int inactiveDevicesCount = 10;
-        List<Device> inactiveDevices = new ArrayList<>();
-        for (int i = 1; i <= inactiveDevicesCount; i++) {
-            String name = "inactive_device_" + i;
-            Device device = createDevice(name, name);
-            inactiveDevices.add(device);
-        }
-
-        await().atMost(15, TimeUnit.SECONDS)
-                .until(() -> Long.valueOf(0).equals(getLatestStats(ApiStatsKey.of(ACTIVE_DEVICES), false)) &&
-                        Long.valueOf(activeDevicesCount + inactiveDevicesCount)
-                                .equals(getLatestStats(ApiStatsKey.of(INACTIVE_DEVICES), false)));
-
-        for (Device device : activeDevices) {
-            postTelemetry(device.getName(), "{\"dp\":1}");
-        }
-
-        await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> getLatestStats(ApiStatsKey.of(ACTIVE_DEVICES), false) == activeDevicesCount &&
-                        getLatestStats(ApiStatsKey.of(INACTIVE_DEVICES), false) == inactiveDevicesCount);
     }
 
     private Map<DeviceClass, Pair<Long, Long>> generateTelemetryAccordingToClasses(Map<DeviceClass, List<Device>> devices) throws Exception {

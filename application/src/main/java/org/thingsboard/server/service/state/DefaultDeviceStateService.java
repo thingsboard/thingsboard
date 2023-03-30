@@ -460,8 +460,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 int active = Optional.ofNullable(countByActivityStatus.get(true)).map(AtomicInteger::get).orElse(0);
                 int inactive = Optional.ofNullable(countByActivityStatus.get(false)).map(AtomicInteger::get).orElse(0);
                 apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
-                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES,inactive);
-                log.debug("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
+                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
+                if (active > 0) {
+                    log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
+                }
             });
         } catch (Throwable t) {
             log.warn("Failed to check devices states", t);
