@@ -20,20 +20,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormattedData } from '@shared/models/widget.models';
-import { GenericFunction } from '@home/components/widget/lib/maps/map-models';
-import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
-import { parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export interface SelectEntityDialogData {
   entities: FormattedData[];
-  labelSettings: {
-    showLabel: boolean;
-    useLabelFunction: boolean;
-    parsedLabelFunction: GenericFunction;
-    label: string;
-  };
 }
 
 @Component({
@@ -42,13 +33,13 @@ export interface SelectEntityDialogData {
   styleUrls: ['./select-entity-dialog.component.scss']
 })
 export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDialogComponent, FormattedData> {
-  selectEntityFormGroup: UntypedFormGroup;
+  selectEntityFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: SelectEntityDialogData,
               public dialogRef: MatDialogRef<SelectEntityDialogComponent, FormattedData>,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.selectEntityFormGroup = this.fb.group(
@@ -58,25 +49,7 @@ export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDia
     );
   }
 
-  public parseName(entity) {
-    let name;
-    if (this.data.labelSettings?.showLabel) {
-      const pattern = this.data.labelSettings.useLabelFunction ? safeExecute(this.data.labelSettings.parsedLabelFunction,
-        [entity, this.data.entities, entity.dsIndex]) : this.data.labelSettings.label;
-      const markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
-      const replaceInfoLabelMarker = processDataPattern(pattern, entity);
-      const div = document.createElement('div');
-      div.innerHTML = fillDataPattern(markerLabelText, replaceInfoLabelMarker, entity);
-      name = div.textContent || div.innerText || '';
-    } else {
-      name = entity.entityName;
-    }
-    return name;
-  }
-
   save(): void {
-    const entity = this.selectEntityFormGroup.value.entity;
-    entity.parseName = this.parseName(this.selectEntityFormGroup.value.entity);
-    this.dialogRef.close(entity);
+    this.dialogRef.close(this.selectEntityFormGroup.value.entity);
   }
 }
