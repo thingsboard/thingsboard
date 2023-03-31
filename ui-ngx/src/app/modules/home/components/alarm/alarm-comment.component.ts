@@ -30,15 +30,17 @@ import { map } from 'rxjs/operators';
 import { AlarmComment, AlarmCommentInfo, AlarmCommentType } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
+import { DatePipe } from '@angular/common';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 interface AlarmCommentsDisplayData {
   commentId?: string,
   displayName?: string,
-  createdTime: number,
+  createdTime: string,
   createdDateAgo?: string,
   edit?: boolean,
   isEdited?: boolean,
-  editedTime?: number;
+  editedTime?: string;
   editedDateAgo?: string,
   showActions?: boolean,
   commentText?: string,
@@ -87,7 +89,9 @@ export class AlarmCommentComponent implements OnInit {
               public fb: FormBuilder,
               private dialogService: DialogService,
               public dateAgoPipe: DateAgoPipe,
-              private utilsService: UtilsService) {
+              private utilsService: UtilsService,
+              private datePipe: DatePipe,
+              private importExportService: ImportExportService) {
 
     this.authUser = getCurrentAuthUser(store);
 
@@ -113,7 +117,7 @@ export class AlarmCommentComponent implements OnInit {
         this.displayData.length = 0;
         for (let alarmComment of pagedData.data) {
           let displayDataElement = {} as AlarmCommentsDisplayData;
-          displayDataElement.createdTime = alarmComment.createdTime;
+          displayDataElement.createdTime = this.datePipe.transform(alarmComment.createdTime, 'yyyy-MM-dd HH:mm:ss');
           displayDataElement.createdDateAgo = this.dateAgoPipe.transform(alarmComment.createdTime);
           displayDataElement.commentText = alarmComment.comment.text;
           displayDataElement.isSystemComment = alarmComment.type === AlarmCommentType.SYSTEM;
@@ -122,7 +126,7 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.displayName = this.getUserDisplayName(alarmComment);
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;
-            displayDataElement.editedTime = alarmComment.comment.editedOn;
+            displayDataElement.editedTime = this.datePipe.transform(alarmComment.comment.editedOn, 'yyyy-MM-dd HH:mm:ss');
             displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
             displayDataElement.isSystemComment = false;
@@ -139,6 +143,11 @@ export class AlarmCommentComponent implements OnInit {
     let currentDirection = this.alarmCommentSortOrder.direction;
     this.alarmCommentSortOrder.direction = currentDirection === Direction.DESC ? Direction.ASC : Direction.DESC;
     this.loadAlarmComments();
+  }
+
+  exportAlarmActivity() {
+    let fileName = this.translate.instant('alarm.alarm') + '_' + this.translate.instant('alarm-activity.activity');
+    this.importExportService.exportCsv(this.getDataForExport(), fileName.toLowerCase());
   }
 
   saveComment(): void {
@@ -296,6 +305,21 @@ export class AlarmCommentComponent implements OnInit {
 
   private getDataElementByCommentId(commentId: string): AlarmCommentsDisplayData {
     return this.displayData.find(commentDisplayData => commentDisplayData.commentId === commentId);
+  }
+
+  private getDataForExport() {
+    let dataToExport = [];
+    for (let row of this.displayData) {
+      let exportRow = {
+        [this.translate.instant('alarm-activity.author')]: row.isSystemComment ?
+          this.translate.instant('alarm-activity.system') : row.displayName,
+        [this.translate.instant('alarm-activity.created-date')]: row.createdTime,
+        [this.translate.instant('alarm-activity.edited-date')]: row.editedTime,
+        [this.translate.instant('alarm-activity.text')]: row.commentText
+      }
+      dataToExport.push(exportRow)
+    }
+    return dataToExport;
   }
 
 }

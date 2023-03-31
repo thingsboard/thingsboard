@@ -17,7 +17,7 @@
 :host {
   width: 100%;
   overflow: auto;
-  background: #fff;
+  background: white;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
   border-radius: 4px;
 }
@@ -27,7 +27,7 @@
     padding: 8px;
     height: 340px;
     font-size: 14px;
-    background-color: #fff;
+    background-color: white;
   }
 
   .mat-form-field-appearance-outline .mdc-notched-outline__trailing{
@@ -61,12 +61,12 @@
         height: 28px;
         min-width: 28px;
         min-height: 28px;
-        color: #fff;
+        color: white;
         font-size: 13px;
         font-weight: 700
       }
       .user-display-name {
-        max-width: 180px;
+        max-width: 80%;
         overflow: hidden;
         span {
           overflow: hidden;
@@ -77,8 +77,8 @@
         }
       }
       .mdc-list-item__primary-text {
+        width: 100%;
         display: flex;
-        justify-content: start;
         align-items: center;
         line-height: normal;
       }

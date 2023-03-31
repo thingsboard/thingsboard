@@ -513,7 +513,12 @@
         "oldest-first": "Oldest first",
         "newest-first": "Newest first",
         "activity": "Activity",
-        "export":  "Export to CSV"
+        "export":  "Export to CSV",
+        "author": "Author",
+        "created-date": "Created date",
+        "edited-date": "Edited date",
+        "text": "Text",
+        "system": "System"
     },
     "alias": {
         "add": "Add alias",

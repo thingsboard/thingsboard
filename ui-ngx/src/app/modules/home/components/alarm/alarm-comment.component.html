@@ -26,6 +26,13 @@
       <div style="margin-left: auto">
         <button mat-icon-button
                 type="button"
+                (click)="exportAlarmActivity()"
+                matTooltip="{{ 'alarm-activity.export' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon class="material-icons" svgIcon="mdi:file-export"></mat-icon>
+        </button>
+        <button mat-icon-button
+                type="button"
                 (click)="changeSortDirection()"
                 [matTooltip]="getSortDirectionTooltipText()"
                 matTooltipPosition="above">
@@ -53,7 +60,7 @@
             {{ displayDataElement.commentText }}
           </span>
           <span class="time" style="padding: 3px"
-                matTooltip="{{ displayDataElement.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}"
+                [matTooltip]="displayDataElement.createdTime"
                 matTooltipPosition="right">
             {{ displayDataElement.createdDateAgo }}
           </span>
@@ -72,12 +79,12 @@
               <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
                 <span class="user-name">{{ displayDataElement.displayName }}</span>
                 <span class="time"
-                      matTooltip="{{ displayDataElement.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}"
+                      [matTooltip]="displayDataElement.createdTime"
                       matTooltipPosition="right">
                   {{ displayDataElement.createdDateAgo }}
                 </span>
                 <span class="time" *ngIf="displayDataElement.isEdited"
-                      matTooltip="{{ displayDataElement.editedDateAgo }} {{ displayDataElement.editedTime | date:'yyyy-MM-dd HH:mm:ss' }}"
+                      matTooltip="{{ displayDataElement.editedDateAgo }} {{ displayDataElement.editedTime }}"
                       matTooltipPosition="right">
                   Edited
                 </span>
