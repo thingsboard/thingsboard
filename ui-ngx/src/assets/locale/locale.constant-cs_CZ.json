@@ -2612,7 +2612,6 @@
         "maximum-ota-packages-sum-data-size": "Maximální součet velikosti souborů ota balíčků v bajtech (0 - neomezeno)",
         "maximum-ota-package-sum-data-size-required": "Maximální součet velikosti souborů ota balíčků je povinný.",
         "maximum-ota-package-sum-data-size-range": "Maximální součet velikosti souborů ota balíčků nemůže být záporný",
-        "transport-tenant-msg-rate-limit": "Limit přenosu zpráv tenanta.",
         "transport-tenant-telemetry-msg-rate-limit": "Limit přenosu zpráv telemetrie tenanta.",
         "transport-tenant-telemetry-data-points-rate-limit": "Limit přenosu datových bodů telemetrie tenanta.",
         "transport-device-msg-rate-limit": "Limit přenosu zpráv zařízení.",
