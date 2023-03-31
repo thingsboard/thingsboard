@@ -185,9 +185,9 @@ public class DefaultTbUserSettingsService implements TbUserSettingsService {
 
         Map<UUID, String> dashboardTitles = new HashMap<>();
         uniqueIds.forEach(id -> {
-                    var dashboardInfo = dashboardService.findDashboardInfoById(tenantId, new DashboardId(id));
-                    if (dashboardInfo != null && StringUtils.isNotEmpty(dashboardInfo.getTitle())) {
-                        dashboardTitles.put(id, dashboardInfo.getTitle());
+                    var title = dashboardService.findDashboardTitleById(tenantId, new DashboardId(id));
+                    if (StringUtils.isNotEmpty(title)) {
+                        dashboardTitles.put(id, title);
                     }
                 }
         );
