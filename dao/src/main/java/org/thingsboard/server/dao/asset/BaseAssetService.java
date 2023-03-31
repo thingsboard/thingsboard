@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -83,7 +85,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Autowired
     private DataValidator<Asset> assetValidator;
 
-    @TransactionalEventListener(classes = AssetCacheEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(AssetCacheEvictEvent event) {
         List<AssetCacheKey> keys = new ArrayList<>(2);
@@ -150,7 +153,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             }
             asset.setType(assetProfile.getName());
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
-            publishEvictEvent(evictEvent);
+            eventPublisher.publishEvent(evictEvent);
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
             checkConstraintViolation(t,
@@ -188,7 +191,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             throw new DataValidationException("Can't delete asset that has entity views!");
         }
 
-        publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
+        eventPublisher.publishEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
 
         assetDao.removeById(tenantId, assetId.getId());
     }

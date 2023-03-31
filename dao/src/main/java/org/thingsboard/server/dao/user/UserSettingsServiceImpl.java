@@ -26,6 +26,8 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -105,7 +107,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         try {
             validateJsonKeys(userSettings.getSettings());
             UserSettings saved = userSettingsDao.save(tenantId, userSettings);
-            publishEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
+            eventPublisher.publishEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
             return saved;
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(userSettings.getUserId()));
@@ -113,7 +115,8 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserId, UserS
         }
     }
 
-    @TransactionalEventListener(classes = UserSettingsEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(UserSettingsEvictEvent event) {
         List<UserId> keys = new ArrayList<>();

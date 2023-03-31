@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -234,7 +236,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
             Device result = deviceDao.saveAndFlush(device.getTenantId(), device);
-            publishEvictEvent(deviceCacheEvictEvent);
+            eventPublisher.publishEvent(deviceCacheEvictEvent);
             return result;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
@@ -245,7 +247,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
     }
 
-    @TransactionalEventListener(classes = DeviceCacheEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(DeviceCacheEvictEvent event) {
         List<DeviceCacheKey> keys = new ArrayList<>(3);
@@ -327,7 +330,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         deviceDao.removeById(tenantId, deviceId.getId());
 
-        publishEvictEvent(deviceCacheEvictEvent);
+        eventPublisher.publishEvent(deviceCacheEvictEvent);
     }
 
 
@@ -561,8 +564,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         // explicitly remove device with previous tenant id from cache
         // result device object will have different tenant id and will not remove entity from cache
-        publishEvictEvent(oldTenantEvent);
-        publishEvictEvent(newTenantEvent);
+        eventPublisher.publishEvent(oldTenantEvent);
+        eventPublisher.publishEvent(newTenantEvent);
 
         return savedDevice;
     }
@@ -610,7 +613,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             }
         }
 
-        publishEvictEvent(new DeviceCacheEvictEvent(savedDevice.getTenantId(), savedDevice.getId(), provisionRequest.getDeviceName(), null));
+        eventPublisher.publishEvent(new DeviceCacheEvictEvent(savedDevice.getTenantId(), savedDevice.getId(), provisionRequest.getDeviceName(), null));
         return savedDevice;
     }
 

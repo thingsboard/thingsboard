@@ -53,7 +53,7 @@ public class DefaultNotificationRuleService extends AbstractCachedEntityService<
         }
         try {
             notificationRule = notificationRuleDao.saveAndFlush(tenantId, notificationRule);
-            publishEvictEvent(notificationRule);
+            eventPublisher.publishEvent(notificationRule);
         } catch (Exception e) {
             handleEvictEvent(notificationRule);
             checkConstraintViolation(e, Map.of(
@@ -99,7 +99,7 @@ public class DefaultNotificationRuleService extends AbstractCachedEntityService<
     @Override
     public void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
         NotificationRule notificationRule = findNotificationRuleById(tenantId, id);
-        publishEvictEvent(notificationRule);
+        eventPublisher.publishEvent(notificationRule);
         notificationRuleDao.removeById(tenantId, id.getId());
     }
 

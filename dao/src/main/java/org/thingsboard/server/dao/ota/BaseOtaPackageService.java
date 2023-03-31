@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -61,7 +63,8 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
     private final DataValidator<OtaPackage> otaPackageValidator;
 
-    @TransactionalEventListener(classes = OtaPackageCacheEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(OtaPackageCacheEvictEvent event) {
         cache.evict(new OtaPackageCacheKey(event.getId()));
@@ -79,7 +82,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         try {
             var result = otaPackageInfoDao.save(otaPackageInfo.getTenantId(), otaPackageInfo);
             if (otaPackageId != null) {
-                publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
+                eventPublisher.publishEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             return result;
         } catch (Exception t) {
@@ -103,7 +106,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         try {
             var result = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
             if (otaPackageId != null) {
-                publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
+                eventPublisher.publishEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             return result;
         } catch (Exception t) {
@@ -194,7 +197,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
         try {
             otaPackageDao.removeById(tenantId, otaPackageId.getId());
-            publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
+            eventPublisher.publishEvent(new OtaPackageCacheEvictEvent(otaPackageId));
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_firmware_device")) {

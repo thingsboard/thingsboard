@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,7 +113,8 @@ public class BaseRelationService implements RelationService {
         }
     }
 
-    @TransactionalEventListener(classes = EntityRelationEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     public void handleEvictEvent(EntityRelationEvent event) {
         List<RelationCacheKey> keys = new ArrayList<>(5);
         keys.add(new RelationCacheKey(event.getFrom(), event.getTo(), event.getType(), event.getTypeGroup()));
@@ -155,7 +158,7 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
         var result = relationDao.saveRelation(tenantId, relation);
-        publishEvictEvent(EntityRelationEvent.from(relation));
+        eventPublisher.publishEvent(EntityRelationEvent.from(relation));
         return result;
     }
 
@@ -169,7 +172,7 @@ public class BaseRelationService implements RelationService {
             relationDao.saveRelations(tenantId, partition);
         }
         for (EntityRelation relation : relations) {
-            publishEvictEvent(EntityRelationEvent.from(relation));
+            eventPublisher.publishEvent(EntityRelationEvent.from(relation));
         }
     }
 
@@ -188,7 +191,7 @@ public class BaseRelationService implements RelationService {
         validate(relation);
         var result = relationDao.deleteRelation(tenantId, relation);
         //TODO: evict cache only if the relation was deleted. Note: relationDao.deleteRelation requires improvement.
-        publishEvictEvent(EntityRelationEvent.from(relation));
+        eventPublisher.publishEvent(EntityRelationEvent.from(relation));
         return result;
     }
 
@@ -207,7 +210,7 @@ public class BaseRelationService implements RelationService {
         validate(from, to, relationType, typeGroup);
         var result = relationDao.deleteRelation(tenantId, from, to, relationType, typeGroup);
         //TODO: evict cache only if the relation was deleted. Note: relationDao.deleteRelation requires improvement.
-        publishEvictEvent(new EntityRelationEvent(from, to, relationType, typeGroup));
+        eventPublisher.publishEvent(new EntityRelationEvent(from, to, relationType, typeGroup));
         return result;
     }
 
@@ -626,14 +629,6 @@ public class BaseRelationService implements RelationService {
             relations = findByTo(tenantId, rootId, relationTypeGroup);
         }
         return relations;
-    }
-
-    private void publishEvictEvent(EntityRelationEvent event) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            eventPublisher.publishEvent(event);
-        } else {
-            handleEvictEvent(event);
-        }
     }
 
 }

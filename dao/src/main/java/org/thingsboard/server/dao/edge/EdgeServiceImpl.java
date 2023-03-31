@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -105,7 +107,8 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Getter
     private boolean edgesEnabled;
 
-    @TransactionalEventListener(classes = EdgeCacheEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(EdgeCacheEvictEvent event) {
         List<EdgeCacheKey> keys = new ArrayList<>(2);
@@ -160,7 +163,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
             var savedEdge = edgeDao.save(edge.getTenantId(), edge);
-            publishEvictEvent(evictEvent);
+            eventPublisher.publishEvent(evictEvent);
             return savedEdge;
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
@@ -202,7 +205,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
         edgeDao.removeById(tenantId, edgeId.getId());
 
-        publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
+        eventPublisher.publishEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
     }
 
     @Override

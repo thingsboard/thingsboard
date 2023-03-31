@@ -22,6 +22,8 @@ import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +63,8 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     @Autowired
     private DataValidator<DeviceCredentials> credentialsValidator;
 
-    @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
         cache.evict(event.getNewCedentialsId());
@@ -109,7 +112,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         }
         try {
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
-            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            eventPublisher.publishEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             return value;
         } catch (Exception t) {
             handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
@@ -398,7 +401,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
-        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+        eventPublisher.publishEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
     }
 
 }

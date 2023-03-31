@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -81,7 +83,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     @Autowired
     protected JpaExecutorService service;
 
-    @TransactionalEventListener(classes = EntityViewEvictEvent.class)
+    @TransactionalEventListener(fallbackExecution = true)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Override
     public void handleEvictEvent(EntityViewEvictEvent event) {
         List<EntityViewCacheKey> keys = new ArrayList<>(5);
@@ -103,7 +106,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         EntityView old = entityViewValidator.validate(entityView, EntityView::getTenantId);
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
-            publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
+            eventPublisher.publishEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,
@@ -304,7 +307,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         deleteEntityRelations(tenantId, entityViewId);
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
         entityViewDao.removeById(tenantId, entityViewId.getId());
-        publishEvictEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
+        eventPublisher.publishEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
     }
 
     @Override
