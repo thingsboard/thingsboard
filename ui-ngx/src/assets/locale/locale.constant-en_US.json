@@ -4818,6 +4818,8 @@
             "credentials": "Credentials",
             "here-app-id": "HERE app id",
             "here-app-code": "HERE app code",
+            "here-api-key": "HERE API key",
+            "here-use-new-version-api-3": "Use API version 3",
             "tencent-maps-api-key": "Tencent Maps API Key",
             "tencent-map-type-roadmap": "Roadmap",
             "tencent-map-type-satelite": "Satellite",
