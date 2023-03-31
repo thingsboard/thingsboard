@@ -22,9 +22,18 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { FormattedData } from '@shared/models/widget.models';
+import { GenericFunction } from '@home/components/widget/lib/maps/map-models';
+import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
+import { parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export interface SelectEntityDialogData {
   entities: FormattedData[];
+  labelSettings: {
+    showLabel: boolean;
+    useLabelFunction: boolean;
+    parsedLabelFunction: GenericFunction;
+    label: string;
+  };
 }
 
 @Component({
@@ -33,7 +42,6 @@ export interface SelectEntityDialogData {
   styleUrls: ['./select-entity-dialog.component.scss']
 })
 export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDialogComponent, FormattedData> {
-
   selectEntityFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
@@ -48,6 +56,20 @@ export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDia
         entity: ['', Validators.required]
       }
     );
+  }
+
+  public parseName(entity) {
+    let name;
+    if (this.data.labelSettings?.showLabel) {
+      const pattern = this.data.labelSettings.useLabelFunction ? safeExecute(this.data.labelSettings.parsedLabelFunction,
+        [entity, this.data.entities, entity.dsIndex]) : this.data.labelSettings.label;
+      const markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
+      const replaceInfoLabelMarker = processDataPattern(pattern, entity);
+      name = fillDataPattern(markerLabelText, replaceInfoLabelMarker, entity);
+    } else {
+      name = entity.entityName;
+    }
+    return name;
   }
 
   save(): void {

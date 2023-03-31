@@ -182,16 +182,35 @@ export default abstract class LeafletMap {
 
     private selectEntityWithoutLocationDialog(shapes: L.PM.SUPPORTED_SHAPES): Observable<FormattedData> {
       let entities;
+      let labelSettings;
       switch (shapes) {
         case 'Polygon':
         case 'Rectangle':
           entities = this.datasources.filter(pData => !this.isValidPolygonPosition(pData));
+          labelSettings = {
+            showLabel: this.options.showPolygonLabel,
+            useLabelFunction:  this.options.usePolygonLabelFunction,
+            parsedLabelFunction: this.options.parsedPolygonLabelFunction,
+            label: this.options.polygonLabel
+          };
           break;
         case 'Marker':
           entities = this.datasources.filter(mData => !this.extractPosition(mData));
+          labelSettings = {
+            showLabel: this.options.showLabel,
+            useLabelFunction:  this.options.useLabelFunction,
+            parsedLabelFunction: this.options.parsedLabelFunction,
+            label: this.options.label
+          };
           break;
         case 'Circle':
           entities = this.datasources.filter(mData => !this.isValidCircle(mData));
+          labelSettings = {
+            showLabel: this.options.showCircleLabel,
+            useLabelFunction:  this.options.useCircleLabelFunction,
+            parsedLabelFunction: this.options.parsedCircleLabelFunction,
+            label: this.options.circleLabel
+          };
           break;
         default:
           return of(null);
@@ -205,7 +224,8 @@ export default abstract class LeafletMap {
           disableClose: true,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            entities
+            entities,
+            labelSettings
           }
         }).afterClosed();
     }
