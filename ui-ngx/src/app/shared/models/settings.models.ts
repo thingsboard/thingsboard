@@ -17,7 +17,6 @@
 import { ValidatorFn } from '@angular/forms';
 import { isNotEmptyStr, isNumber } from '@core/utils';
 import { VersionCreateConfig } from '@shared/models/vc.models';
-import { MailServerOauth2Provider } from '@shared/models/oauth2.models';
 
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
@@ -58,6 +57,37 @@ export interface MailServerSettings {
   scope?: string;
   redirectUri?: string;
   tokenGenerated?: boolean;
+}
+
+export enum MailServerOauth2Provider {
+  GOOGLE = 'GOOGLE',
+  OFFICE_365 = 'OFFICE_365',
+  SENDGRID = 'SENDGRID',
+  CUSTOM = 'CUSTOM'
+}
+export const mailServerOauth2ProvidersTranslations = new Map<MailServerOauth2Provider, string>(
+  [
+    [MailServerOauth2Provider.GOOGLE, 'admin.oauth2.google-provider'],
+    [MailServerOauth2Provider.OFFICE_365, 'admin.oauth2.microsoft-provider'],
+    [MailServerOauth2Provider.SENDGRID, 'admin.oauth2.sendgrid-provider'],
+    [MailServerOauth2Provider.CUSTOM, 'admin.oauth2.custom-provider']
+  ]
+);
+
+export interface MailConfigTemplate {
+  name: MailServerOauth2Provider;
+  providerId: MailServerOauth2Provider;
+  helpLink: string;
+  scope: Array<string>;
+  accessTokenUri: string;
+  authorizationUri: string;
+  enableTls: boolean;
+  tlsVersion: string;
+  smtpProtocol: SmtpProtocol;
+  smtpHost: string;
+  smtpPort: number;
+  timeout: number;
+  additionalInfo: any;
 }
 
 export interface GeneralSettings {

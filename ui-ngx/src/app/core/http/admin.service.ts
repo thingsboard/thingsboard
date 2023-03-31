@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
   AutoCommitSettings,
-  JwtSettings,
+  JwtSettings, MailConfigTemplate,
   MailServerSettings,
   RepositorySettings,
   RepositorySettingsInfo,
@@ -140,7 +140,7 @@ export class AdminService {
     return this.http.get<string>(`/api/admin/mail/oauth2/authorize`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getMailConfigTemplate(config?: RequestConfig): Observable<Array<any>> {
-    return this.http.get<Array<any>>('/api/mail/config/template', defaultHttpOptionsFromConfig(config));
+  public getMailConfigTemplate(config?: RequestConfig): Observable<Array<MailConfigTemplate>> {
+    return this.http.get<Array<MailConfigTemplate>>('/api/mail/config/template', defaultHttpOptionsFromConfig(config));
   }
 }

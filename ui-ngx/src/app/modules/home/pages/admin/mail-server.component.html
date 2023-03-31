@@ -39,7 +39,7 @@
           </mat-form-field>
 
           <mat-form-field class="mat-block">
-            <mat-label translate>admin.oauth2.smtp-provider</mat-label>
+            <mat-label translate>admin.oauth2.login-provider</mat-label>
             <mat-select formControlName="providerId">
               <mat-option *ngFor="let provider of mailServerOauth2Providers" [value]="provider">
                 {{ mailServerOauth2ProvidersTranslations.get(provider) | translate }}

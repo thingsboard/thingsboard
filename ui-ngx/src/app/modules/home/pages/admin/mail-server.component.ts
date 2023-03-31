@@ -20,7 +20,13 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AdminSettings, MailServerSettings, smtpPortPattern, SmtpProtocol } from '@shared/models/settings.models';
+import {
+  AdminSettings,
+  MailServerOauth2Provider, mailServerOauth2ProvidersTranslations,
+  MailServerSettings,
+  smtpPortPattern,
+  SmtpProtocol
+} from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,8 +37,6 @@ import { takeUntil } from 'rxjs/operators';
 import {
   DomainSchema,
   domainSchemaTranslations,
-  MailServerOauth2Provider,
-  mailServerOauth2ProvidersTranslations
 } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
 import { AuthService } from '@core/auth/auth.service';
@@ -178,7 +182,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     super.ngOnDestroy();
   }
 
-  private mailServerSettingsForm() {
+  private mailServerSettingsForm(): void {
     this.registerDisableOnLoadFormControl(this.mailSettings.get('smtpProtocol'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableTls'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableProxy'));
@@ -344,11 +348,11 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
 
   sendTestMail(): void {
     this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.mailSettingsFormValue};
-    this.adminService.sendTestMail(this.adminSettings).subscribe(
-      () => this.store.dispatch(new ActionNotificationShow({ message: this.translate.instant('admin.test-mail-sent'),
-          type: 'success' })),
-      error => this.store.dispatch(new ActionNotificationShow({message: error.error.message, type: 'error'}))
-    );
+    this.adminService.sendTestMail(this.adminSettings).subscribe({
+      next: () => this.store.dispatch(new ActionNotificationShow({ message: this.translate.instant('admin.test-mail-sent'),
+        type: 'success' })),
+      error: error => this.store.dispatch(new ActionNotificationShow({message: error.error.message, type: 'error'}))
+    });
   }
 
   save(): void {
@@ -364,7 +368,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     );
   }
 
-  generateAccessToken() {
+  generateAccessToken(): void {
     this.adminService.generateAccessToken().subscribe(
       uri => this.window.location.href = uri
     );
@@ -380,7 +384,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     return '';
   }
 
-  private parseUrl(value: string) {
+  private parseUrl(value: string): void {
     if (value) {
       const url = new URL(value);
       this.domainForm.get('scheme').patchValue(
@@ -390,13 +394,13 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     }
   }
 
-  get accessTokenButtonName() {
+  get accessTokenButtonName(): string {
     return this.translate.instant(
       this.adminSettings.jsonValue.tokenGenerated ? 'admin.oauth2.update-access-token' : 'admin.oauth2.generate-access-token'
     );
   }
 
-  get accessTokenStatus() {
+  get accessTokenStatus(): string {
     return this.translate.instant(
       this.adminSettings.jsonValue.tokenGenerated ? 'admin.oauth2.token-status-generated' : 'admin.oauth2.token-status-not-generated'
     );

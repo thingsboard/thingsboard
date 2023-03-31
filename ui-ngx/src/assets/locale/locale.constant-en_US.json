@@ -208,7 +208,7 @@
           "login-button-label": "Provider label",
           "login-button-label-placeholder": "Login with $(Provider label)",
           "login-button-label-required": "Label is required.",
-          "smtp-provider": "SMTP provider",
+          "login-provider": "SMTP provider",
           "mapper": "Mapper",
           "new-domain": "New domain",
           "oauth2": "OAuth2",
