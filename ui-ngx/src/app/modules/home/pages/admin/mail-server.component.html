@@ -152,14 +152,14 @@
               <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
                      autocomplete="new-username"/>
             </mat-form-field>
-            <div fxLayoutAlign="space-between center">
+            <div fxLayoutAlign="space-between center" style="height: 50px;">
               <mat-button-toggle-group class="tb-notification-unread-toggle-group"
                                        style="width: 250px;"
                                        formControlName="enableOauth2">
                 <mat-button-toggle fxFlex [value]=false>{{ 'admin.oauth2.basic' | translate }}</mat-button-toggle>
                 <mat-button-toggle fxFlex [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</mat-button-toggle>
               </mat-button-toggle-group>
-              <div class="details-buttons">
+              <div class="details-buttons" *ngIf="helpLink && mailSettings.get('enableOauth2').value">
                 <div fxHIde="true" [tb-help]="helpLink"></div>
               </div>
             </div>

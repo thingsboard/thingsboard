@@ -165,9 +165,10 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.enableTls(this.adminSettings.jsonValue.enableTls);
       this.helpLink = this.mailConfigTemplate.find(
         mailConfig => mailConfig.providerId === this.mailServerOauth2Provider[this.adminSettings.jsonValue.providerId]
-      ).helpLink;
+      )?.helpLink;
       if (this.adminSettings.jsonValue.enableOauth2) {
         this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
+        this.enableProviderTenantIdChanged(this.adminSettings.jsonValue.providerId);
         this.parseUrl(this.adminSettings.jsonValue.redirectUri);
         this.mailSettings.get('redirectUri').patchValue(this.adminSettings.jsonValue.redirectUri, {emitEvent: false});
       } else {
@@ -208,6 +209,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       takeUntil(this.destroy$)
     ).subscribe( value => {
       this.enableOauth2(value);
+      this.enableProviderTenantIdChanged(this.mailSettings.get('providerId').value);
       if (value && !this.mailSettings.get('redirectUri').value) {
         this.mailSettings.get('redirectUri').patchValue(this.redirectURI(), {emitEvent: false});
       }
@@ -308,7 +310,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   private enableProviderTenantIdChanged(value: MailServerOauth2Provider): void {
-    if (value === this.mailServerOauth2Provider.OFFICE_365) {
+    if (value === this.mailServerOauth2Provider.OFFICE_365 && this.mailSettings.get('enableOauth2').value) {
       this.mailSettings.get('providerTenantId').enable({emitEvent: false});
     } else {
       this.mailSettings.get('providerTenantId').disable({emitEvent: false});
@@ -361,7 +363,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       (adminSettings) => {
         this.adminSettings = adminSettings;
         this.showChangePassword = true;
-        this.mailSettings.reset(this.adminSettings.jsonValue);
+        this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
         this.domainForm.reset(this.domainForm.value);
         this.parseUrl(this.adminSettings.jsonValue.redirectUri);
       }
@@ -411,7 +413,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   }
 
   private get mailSettingsFormValue(): MailServerSettings {
-    const formValue = this.mailSettings.value as Required<typeof this.mailSettings.value>;
+    const formValue = this.mailSettings.getRawValue() as Required<typeof this.mailSettings.value>;
     delete formValue.changePassword;
     return formValue;
   }
