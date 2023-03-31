@@ -488,6 +488,8 @@ public abstract class BaseEdgeProcessor {
 
     protected boolean isEntityExists(TenantId tenantId, EntityId entityId) {
         switch (entityId.getEntityType()) {
+            case TENANT:
+                return tenantService.findTenantById(tenantId) != null;
             case DEVICE:
                 return deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
             case ASSET:
