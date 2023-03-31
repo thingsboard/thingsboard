@@ -1,18 +1,35 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <div fxLayoutAlign="row">
   <div fxLayoutAlign="row">
     <mat-form-field class="mat-block">
-      <input matInput type="number" pattern="[0-9]*" min="0" max="255" [value]="value?.getRed().toString()" (input)="onInputChange($event, 'R')">
+      <input matInput pattern="[0-9]*" min="0" max="255" [value]="value?.getRed().toString()" (input)="onInputChange($event, 'R')">
     </mat-form-field>
     <mat-form-field class="mat-block">
-      <input matInput type="number" pattern="[0-9]*" min="0" max="255" [value]="value?.getGreen().toString()" (input)="onInputChange($event, 'G')">
+      <input matInput pattern="[0-9]*" min="0" max="255" [value]="value?.getGreen().toString()" (input)="onInputChange($event, 'G')">
     </mat-form-field>
     <mat-form-field class="mat-block">
-      <input matInput type="number" pattern="[0-9]*" min="0" max="255" [value]="value?.getBlue().toString()" (input)="onInputChange($event, 'B')">
+      <input matInput pattern="[0-9]*" min="0" max="255" [value]="value?.getBlue().toString()" (input)="onInputChange($event, 'B')">
     </mat-form-field>
   </div>
 
   <mat-form-field class="mat-block">
-    <input matInput type="number" min="0" max="1" [value]="value?.getAlpha().toString()" (input)="onInputChange($event, 'A')">
+    <input matInput min="0" max="1" [value]="value?.getAlpha().toString()" (input)="onInputChange($event, 'A')">
   </mat-form-field>
 </div>
 
