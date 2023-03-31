@@ -65,7 +65,9 @@ export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDia
         [entity, this.data.entities, entity.dsIndex]) : this.data.labelSettings.label;
       const markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
       const replaceInfoLabelMarker = processDataPattern(pattern, entity);
-      name = fillDataPattern(markerLabelText, replaceInfoLabelMarker, entity);
+      const div = document.createElement('div');
+      div.innerHTML = fillDataPattern(markerLabelText, replaceInfoLabelMarker, entity);
+      name = div.textContent || div.innerText || '';
     } else {
       name = entity.entityName;
     }
@@ -73,6 +75,8 @@ export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDia
   }
 
   save(): void {
-    this.dialogRef.close(this.selectEntityFormGroup.value.entity);
+    const entity = this.selectEntityFormGroup.value.entity;
+    entity.parseName = this.parseName(this.selectEntityFormGroup.value.entity);
+    this.dialogRef.close(entity);
   }
 }
