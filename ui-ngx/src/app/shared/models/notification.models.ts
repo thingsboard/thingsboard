@@ -379,7 +379,7 @@ export enum NotificationTargetConfigType {
   AFFECTED_TENANT_ADMINISTRATORS = 'AFFECTED_TENANT_ADMINISTRATORS'
 }
 
-interface NotificationTargetConfigTypeInfo {
+export interface NotificationTargetConfigTypeInfo {
   name: string;
   hint?: string;
 }
@@ -472,7 +472,7 @@ export const ActionButtonLinkTypeTranslateMap = new Map<ActionButtonLinkType, st
   [ActionButtonLinkType.DASHBOARD, 'notification.link-type.dashboard']
 ]);
 
-interface NotificationTemplateTypeTranslate {
+export interface NotificationTemplateTypeTranslate {
   name: string;
   helpId?: string;
 }
