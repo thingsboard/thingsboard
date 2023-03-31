@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -55,11 +56,11 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserSettingsC
     }
 
     @Override
-    public void updateUserSettings(TenantId tenantId, UserId userId, String type, JsonNode settings) {
+    public void updateUserSettings(TenantId tenantId, UserId userId, UserSettingsType type, JsonNode settings) {
         log.trace("Executing updateUserSettings for user [{}], [{}]", userId, settings);
         validateId(userId, INCORRECT_USER_ID + userId);
 
-        var key = new UserSettingsCompositeKey(userId.getId(), type);
+        var key = new UserSettingsCompositeKey(userId.getId(), type.name());
         UserSettings oldSettings = userSettingsDao.findById(tenantId, key);
         JsonNode oldSettingsJson = oldSettings != null ? oldSettings.getSettings() : JacksonUtil.newObjectNode();
 
@@ -71,20 +72,20 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserSettingsC
     }
 
     @Override
-    public UserSettings findUserSettings(TenantId tenantId, UserId userId, String type) {
+    public UserSettings findUserSettings(TenantId tenantId, UserId userId, UserSettingsType type) {
         log.trace("Executing findUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
 
-        var key = new UserSettingsCompositeKey(userId.getId(), type);
+        var key = new UserSettingsCompositeKey(userId.getId(), type.name());
         return cache.getAndPutInTransaction(key,
                 () -> userSettingsDao.findById(tenantId, key), true);
     }
 
     @Override
-    public void deleteUserSettings(TenantId tenantId, UserId userId, String type, List<String> jsonPaths) {
+    public void deleteUserSettings(TenantId tenantId, UserId userId, UserSettingsType type, List<String> jsonPaths) {
         log.trace("Executing deleteUserSettings for user [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
-        var key = new UserSettingsCompositeKey(userId.getId(), type);
+        var key = new UserSettingsCompositeKey(userId.getId(), type.name());
         UserSettings userSettings = userSettingsDao.findById(tenantId, key);
         if (userSettings == null) {
             return;

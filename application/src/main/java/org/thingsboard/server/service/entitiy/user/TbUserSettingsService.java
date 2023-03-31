@@ -22,24 +22,19 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserDashboardAction;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.common.data.settings.UserSettings;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
 
 import java.util.List;
 
 public interface TbUserSettingsService {
 
-    void updateUserSettings(TenantId tenantId, UserId userId, JsonNode settings);
-
-    void updateUserSettings(TenantId tenantId, UserId userId, String type, JsonNode settings);
+    void updateUserSettings(TenantId tenantId, UserId userId, UserSettingsType type, JsonNode settings);
 
     UserSettings saveUserSettings(TenantId tenantId, UserSettings userSettings);
 
-    UserSettings findUserSettings(TenantId tenantId, UserId userId);
+    UserSettings findUserSettings(TenantId tenantId, UserId userId, UserSettingsType type);
 
-    UserSettings findUserSettings(TenantId tenantId, UserId userId, String type);
-
-    void deleteUserSettings(TenantId tenantId, UserId userId, List<String> jsonPaths);
-
-    void deleteUserSettings(TenantId tenantId, UserId userId, String type, List<String> jsonPaths);
+    void deleteUserSettings(TenantId tenantId, UserId userId, UserSettingsType type, List<String> jsonPaths);
 
     UserDashboardsInfo findUserDashboardsInfo(TenantId tenantId, UserId id);
 

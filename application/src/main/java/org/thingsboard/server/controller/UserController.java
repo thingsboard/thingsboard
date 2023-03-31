@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
 import org.thingsboard.server.service.query.EntityQueryService;
@@ -451,7 +452,7 @@ public class UserController extends BaseController {
         SecurityUser currentUser = getCurrentUser();
 
         UserSettings userSettings = new UserSettings();
-        userSettings.setType(UserSettings.GENERAL);
+        userSettings.setType(UserSettingsType.GENERAL);
         userSettings.setSettings(settings);
         userSettings.setUserId(currentUser.getId());
         return userSettingsService.saveUserSettings(currentUser.getTenantId(), userSettings).getSettings();
@@ -465,7 +466,7 @@ public class UserController extends BaseController {
     @PutMapping(value = "/user/settings")
     public void putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-        userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), settings);
+        userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, settings);
     }
 
     @ApiOperation(value = "Get user settings (getUserSettings)",
@@ -475,7 +476,7 @@ public class UserController extends BaseController {
     public JsonNode getUserSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
 
-        UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId());
+        UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL);
         return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
     }
 
@@ -489,7 +490,50 @@ public class UserController extends BaseController {
         checkParameter(USER_ID, paths);
 
         SecurityUser currentUser = getCurrentUser();
-        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), Arrays.asList(paths.split(",")));
+        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, Arrays.asList(paths.split(",")));
+    }
+
+    @ApiOperation(value = "Update user settings (saveUserSettings)",
+            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
+                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
+                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PutMapping(value = "/user/settings/{type}")
+    public void putUserSettings(@ApiParam(value = "Settings type, one of: \"visit\", \"star\" or \"unstar\".")
+                                @PathVariable("type") String strType, @RequestBody JsonNode settings) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        UserSettingsType type = checkEnumParameter("Settings type", strType, UserSettingsType::valueOf);
+        checkNotReserved(strType, type);
+        userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), type, settings);
+    }
+
+    @ApiOperation(value = "Get user settings (getUserSettings)",
+            notes = "Fetch the User settings based on authorized user. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/settings/{type}")
+    public JsonNode getUserSettings(@ApiParam(value = "Settings type, one of: \"visit\", \"star\" or \"unstar\".")
+                                    @PathVariable("type") String strType) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        UserSettingsType type = checkEnumParameter("Settings type", strType, UserSettingsType::valueOf);
+        checkNotReserved(strType, type);
+        UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId(), type);
+        return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
+    }
+
+    @ApiOperation(value = "Delete user settings (deleteUserSettings)",
+            notes = "Delete user settings by specifying list of json element xpaths. \n " +
+                    "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/user/settings/{type}/{paths}", method = RequestMethod.DELETE)
+    public void deleteUserSettings(@ApiParam(value = PATHS)
+                                   @PathVariable(PATHS) String paths,
+                                   @ApiParam(value = "Settings type, one of: \"visit\", \"star\" or \"unstar\".")
+                                   @PathVariable("type") String strType) throws ThingsboardException {
+        checkParameter(USER_ID, paths);
+        UserSettingsType type = checkEnumParameter("Settings type", strType, UserSettingsType::valueOf);
+        checkNotReserved(strType, type);
+        SecurityUser currentUser = getCurrentUser();
+        userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), type, Arrays.asList(paths.split(",")));
     }
 
     @ApiOperation(value = "Get information about last visited and starred dashboards (getLastVisitedDashboards)",
@@ -513,16 +557,17 @@ public class UserController extends BaseController {
             @PathVariable("action") String strAction) throws ThingsboardException {
         checkParameter(DashboardController.DASHBOARD_ID, strDashboardId);
         checkParameter("action", strAction);
+        UserDashboardAction action = checkEnumParameter("Action", strAction, UserDashboardAction::valueOf);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        DashboardInfo dashboard = checkDashboardInfoId(dashboardId, Operation.READ);
-        UserDashboardAction action;
-        try {
-            action = UserDashboardAction.valueOf(strAction.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new ThingsboardException("Action: " + strAction + " is not supported!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
+        checkDashboardInfoId(dashboardId, Operation.READ);
         SecurityUser currentUser = getCurrentUser();
         return userSettingsService.reportUserDashboardAction(currentUser.getTenantId(), currentUser.getId(), dashboardId, action);
+    }
+
+    private void checkNotReserved(String strType, UserSettingsType type) throws ThingsboardException {
+        if (type.isReserved()) {
+            throw new ThingsboardException("Settings with type: " + strType + " are reserved for internal use!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
     }
 
 }

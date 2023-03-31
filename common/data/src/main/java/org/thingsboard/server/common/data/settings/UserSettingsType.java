@@ -15,30 +15,20 @@
  */
 package org.thingsboard.server.common.data.settings;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-import java.io.Serializable;
-import java.util.UUID;
+public enum UserSettingsType {
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class UserSettingsCompositeKey implements Serializable {
+    GENERAL, VISITED_DASHBOARDS(true), QUICK_LINKS, DOC_LINKS, DASHBOARDS;
 
-    private static final long serialVersionUID = -7883642552545291489L;
+    @Getter
+    private final boolean reserved;
 
-    private UUID userId;
-    private String type;
-
-    public UserSettingsCompositeKey(UserSettings userSettings) {
-        this.userId = userSettings.getUserId().getId();
-        this.type = userSettings.getType().name();
+    UserSettingsType() {
+        this.reserved = false;
     }
 
-    @Override
-    public String toString() {
-        return userId.toString() + "_" + type;
+    UserSettingsType(boolean reserved) {
+        this.reserved = reserved;
     }
 }

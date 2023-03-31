@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.user.UserDao;
@@ -67,18 +68,18 @@ public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
     public void testFindSettingsByUserId() {
         UserSettings userSettings = createUserSettings(user.getId());
 
-        UserSettings retrievedUserSettings = userSettingsDao.findById(SYSTEM_TENANT_ID, new UserSettingsCompositeKey(user.getId().getId(), UserSettings.GENERAL));
+        UserSettings retrievedUserSettings = userSettingsDao.findById(SYSTEM_TENANT_ID, new UserSettingsCompositeKey(user.getId().getId(), UserSettingsType.GENERAL.name()));
         assertEquals(retrievedUserSettings.getSettings(), userSettings.getSettings());
 
-        userSettingsDao.removeById(SYSTEM_TENANT_ID, new UserSettingsCompositeKey(user.getId().getId(), UserSettings.GENERAL));
+        userSettingsDao.removeById(SYSTEM_TENANT_ID, new UserSettingsCompositeKey(user.getId().getId(), UserSettingsType.GENERAL.name()));
 
-        UserSettings retrievedUserSettings2 = userSettingsDao.findById(SYSTEM_TENANT_ID, new UserSettingsCompositeKey(user.getId().getId(), UserSettings.GENERAL));
+        UserSettings retrievedUserSettings2 = userSettingsDao.findById(SYSTEM_TENANT_ID, new UserSettingsCompositeKey(user.getId().getId(), UserSettingsType.GENERAL.name()));
         assertNull(retrievedUserSettings2);
     }
 
     private UserSettings createUserSettings(UserId userId) {
         UserSettings userSettings = new UserSettings();
-        userSettings.setType(UserSettings.GENERAL);
+        userSettings.setType(UserSettingsType.GENERAL);
         userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
         userSettings.setUserId(userId);
         return userSettingsDao.save(SYSTEM_TENANT_ID, userSettings);

@@ -40,16 +40,13 @@ public class UserSettings implements Serializable {
 
     private static final long serialVersionUID = 2628320657987010348L;
 
-    public static final String GENERAL = "general";
-    public static final String STARRED_DASHBOARDS = "starred_dashboards";
-
     @ApiModelProperty(position = 1, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private UserId userId;
 
     @ApiModelProperty(position = 2, value = "Type of the settings.")
     @NoXss
     @Length(fieldName = "type", max = 50)
-    private transient String type;
+    private UserSettingsType type;
 
     @ApiModelProperty(position = 3, value = "JSON object with user settings.", dataType = "com.fasterxml.jackson.databind.JsonNode")
     @NoXss

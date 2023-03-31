@@ -23,6 +23,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
@@ -54,7 +55,7 @@ public class UserSettingsEntity implements ToData<UserSettings> {
 
     public UserSettingsEntity(UserSettings userSettings) {
         this.userId = userSettings.getUserId().getId();
-        this.type = userSettings.getType();
+        this.type = userSettings.getType().name();
         if (userSettings.getSettings() != null) {
             this.settings = userSettings.getSettings();
         }
@@ -64,7 +65,7 @@ public class UserSettingsEntity implements ToData<UserSettings> {
     public UserSettings toData() {
         UserSettings userSettings = new UserSettings();
         userSettings.setUserId(new UserId(userId));
-        userSettings.setType(type);
+        userSettings.setType(UserSettingsType.valueOf(type));
         if (settings != null) {
             userSettings.setSettings(settings);
         }

@@ -1103,6 +1103,30 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         starred = newSettings.getStarred().get(0);
         Assert.assertEquals(savedDashboard2.getId().getId(), starred.getId());
         Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
+
+        doDelete("/api/dashboard/" + savedDashboard1.getId().getId().toString()).andExpect(status().isOk());
+
+        newSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(1, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        Assert.assertEquals(1, newSettings.getStarred().size());
+        starred = newSettings.getStarred().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), starred.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
+
+        doDelete("/api/dashboard/" + savedDashboard2.getId().getId().toString()).andExpect(status().isOk());
+
+        retrievedSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(retrievedSettings);
+        Assert.assertNotNull(retrievedSettings.getLast());
+        Assert.assertTrue(retrievedSettings.getLast().isEmpty());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
     }
 
 }
