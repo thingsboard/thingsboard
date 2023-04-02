@@ -21,10 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   FormGroupDirective,
   NgForm,
   Validators
@@ -67,7 +67,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
 
   aliasToWidgetsMap: {[aliasId: string]: Array<string>} = {};
 
-  entityAliasesFormGroup: FormGroup;
+  entityAliasesFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -76,7 +76,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
               @Inject(MAT_DIALOG_DATA) public data: EntityAliasesDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<EntityAliasesDialogComponent, EntityAliases>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private utils: UtilsService,
               private translate: TranslateService,
               private dialogs: DialogService,
@@ -157,14 +157,14 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
   }
 
 
-  entityAliasesFormArray(): FormArray {
-    return this.entityAliasesFormGroup.get('entityAliases') as FormArray;
+  entityAliasesFormArray(): UntypedFormArray {
+    return this.entityAliasesFormGroup.get('entityAliases') as UntypedFormArray;
   }
 
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -183,7 +183,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
       this.dialogs.alert(this.translate.instant('entity.unable-delete-entity-alias-title'),
         message, this.translate.instant('action.close'), true);
     } else {
-      (this.entityAliasesFormGroup.get('entityAliases') as FormArray).removeAt(index);
+      (this.entityAliasesFormGroup.get('entityAliases') as UntypedFormArray).removeAt(index);
       this.entityAliasesFormGroup.markAsDirty();
     }
   }
@@ -216,10 +216,10 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
     }).afterClosed().subscribe((entityAlias) => {
       if (entityAlias) {
         if (isAdd) {
-          (this.entityAliasesFormGroup.get('entityAliases') as FormArray)
+          (this.entityAliasesFormGroup.get('entityAliases') as UntypedFormArray)
             .push(this.createEntityAliasFormControl(entityAlias.id, entityAlias));
         } else {
-          const aliasFormControl = (this.entityAliasesFormGroup.get('entityAliases') as FormArray).at(index);
+          const aliasFormControl = (this.entityAliasesFormGroup.get('entityAliases') as UntypedFormArray).at(index);
           aliasFormControl.get('alias').patchValue(entityAlias.alias);
           aliasFormControl.get('filter').patchValue(entityAlias.filter);
           aliasFormControl.get('resolveMultiple').patchValue(entityAlias.filter.resolveMultiple);

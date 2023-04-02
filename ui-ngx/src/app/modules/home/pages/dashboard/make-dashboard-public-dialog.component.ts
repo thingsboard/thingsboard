@@ -18,7 +18,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
@@ -47,7 +47,7 @@ export class MakeDashboardPublicDialogComponent extends DialogComponent<MakeDash
               public translate: TranslateService,
               private dashboardService: DashboardService,
               public dialogRef: MatDialogRef<MakeDashboardPublicDialogComponent>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.dashboard = data.dashboard;

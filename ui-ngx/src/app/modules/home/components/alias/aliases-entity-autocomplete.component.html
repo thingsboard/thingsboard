@@ -16,14 +16,15 @@
 
 -->
 <mat-form-field [formGroup]="selectEntityInfoFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ alias }}"
+  <mat-label>{{ alias }}</mat-label>
+  <input matInput type="text"
          #entityInfoInput
          formControlName="entityInfo"
          [required]="required"
          [matAutocomplete]="entityInfoAutocomplete">
   <button *ngIf="selectEntityInfoFormGroup.get('entityInfo').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>

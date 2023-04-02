@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +63,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -82,13 +84,13 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -97,6 +99,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -170,6 +173,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private JwtSettingsService jwtSettingsService;
+
+    @Autowired
+    private NotificationSettingsService notificationSettingsService;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -668,6 +674,33 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             sequentialByOriginatorQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
             sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
             queueService.saveQueue(sequentialByOriginatorQueue);
+        }
+    }
+
+    @Override
+    public void createDefaultNotificationConfigs() {
+        try {
+            log.info("Creating default notification configs for system admin");
+            notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+        } catch (Exception e) {
+            if (StringUtils.contains(e.getMessage(), "already exists")) {
+                log.info("Default notification configs are already present for system admin, skipping");
+            } else {
+                throw e;
+            }
+        }
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        log.info("Creating default notification configs for all tenants");
+        for (TenantId tenantId : tenants) {
+            try {
+                notificationSettingsService.createDefaultNotificationConfigs(tenantId);
+            } catch (Exception e) {
+                if (StringUtils.contains(e.getMessage(), "already exists")) {
+                    log.info("Default notification configs are already present for tenant {}, skipping", tenantId);
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 

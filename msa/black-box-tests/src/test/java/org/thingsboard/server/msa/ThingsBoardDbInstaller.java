@@ -82,6 +82,9 @@ public class ThingsBoardDbInstaller {
         ));
         if (IS_HYBRID_MODE) {
             composeFiles.add(new File("./../../docker/docker-compose.cassandra.volumes.yml"));
+            composeFiles.add(new File("src/test/resources/docker-compose.hybrid-test-extras.yml"));
+        } else {
+            composeFiles.add(new File("src/test/resources/docker-compose.postgres-test-extras.yml"));
         }
 
         String identifier = Base58.randomString(6).toLowerCase();

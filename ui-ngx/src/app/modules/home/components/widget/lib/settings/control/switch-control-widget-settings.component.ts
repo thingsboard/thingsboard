@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/control/switch-rpc-settings.component';
@@ -29,10 +29,10 @@ import { deepClone } from '@core/utils';
 })
 export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  switchControlWidgetSettingsForm: FormGroup;
+  switchControlWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -44,7 +44,7 @@ export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponen
     return null;
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.switchControlWidgetSettingsForm;
   }
 

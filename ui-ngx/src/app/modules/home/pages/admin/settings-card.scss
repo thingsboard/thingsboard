@@ -16,8 +16,19 @@
 @import "../../../../../scss/constants";
 
 :host {
- mat-card.settings-card {
+ .mat-mdc-card.settings-card {
    margin: 8px;
+
+   .fields-group {
+     padding: 8px 16px 0;
+     margin: 10px 0;
+     border: 1px groove rgba(0, 0, 0, .25);
+     border-radius: 4px;
+
+     legend {
+       color: rgba(0, 0, 0, .7);
+     }
+   }
 
    @media #{$mat-md} {
      width: 80%;

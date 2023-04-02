@@ -112,6 +112,15 @@
       <span translate>edge.sync</span>
     </button>
   </div>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openInstructions')"
+            [fxShow]="!isEdit">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ 'edge.install-connect-instructions' | translate }}</span>
+    </button>
+  </div>
 </div>
 <div class="mat-padding" fxLayout="column">
   <mat-form-field class="mat-block"
@@ -147,7 +156,7 @@
           <mat-label translate>edge.edge-key</mat-label>
           <input matInput formControlName="routingKey">
         </mat-form-field>
-      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
+      <button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
               [cbContent]="entityForm?.get('routingKey').value"
               matTooltip="{{'edge.copy-edge-key' | translate}}">
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
@@ -158,7 +167,7 @@
           <mat-label translate>edge.edge-secret</mat-label>
           <input matInput formControlName="secret">
         </mat-form-field>
-      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
+      <button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
               [cbContent]="entityForm?.get('secret').value"
               matTooltip="{{'edge.copy-edge-secret' | translate}}">
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>

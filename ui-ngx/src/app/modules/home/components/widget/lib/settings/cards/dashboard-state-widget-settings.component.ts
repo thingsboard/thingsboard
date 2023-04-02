@@ -16,7 +16,7 @@
 
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { WidgetActionType, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable, of } from 'rxjs';
@@ -31,17 +31,17 @@ export class DashboardStateWidgetSettingsComponent extends WidgetSettingsCompone
 
   @ViewChild('dashboardStateInput') dashboardStateInput: ElementRef;
 
-  dashboardStateWidgetSettingsForm: FormGroup;
+  dashboardStateWidgetSettingsForm: UntypedFormGroup;
 
   filteredDashboardStates: Observable<Array<string>>;
   dashboardStateSearchText = '';
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.dashboardStateWidgetSettingsForm;
   }
 
