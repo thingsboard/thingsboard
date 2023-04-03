@@ -34,7 +34,7 @@ import {
 } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
-import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { RequestConfig } from '@core/http/http-utils';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -134,7 +134,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private datasources: Array<Datasource>;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   public sources: Array<MultipleInputWidgetSource> = [];
   private isSavingInProgress = false;
 
@@ -148,7 +148,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   datasourceDetected = false;
   isAllParametersValid = true;
 
-  multipleInputFormGroup: FormGroup;
+  multipleInputFormGroup: UntypedFormGroup;
 
   toastTargetId = 'multiple-input-widget' + this.utils.guid();
 
@@ -158,7 +158,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private attributeService: AttributeService,
               private translate: TranslateService,
               private sanitizer: DomSanitizer) {

@@ -24,10 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -42,10 +45,11 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Service
+@Service("DashboardDaoService")
 @Slf4j
 public class DashboardServiceImpl extends AbstractEntityService implements DashboardService {
 
@@ -306,6 +310,16 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
                 }
             };
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findDashboardById(tenantId, new DashboardId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DASHBOARD;
+    }
 
     private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
 

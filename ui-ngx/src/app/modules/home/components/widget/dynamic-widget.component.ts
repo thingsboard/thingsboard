@@ -26,7 +26,7 @@ import {
   NotificationType,
   NotificationVerticalPosition
 } from '@core/notification/notification.models';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
@@ -47,9 +47,10 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TbInject } from '@shared/decorators/tb-inject';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
+import { UserSettingsService } from '@core/http/user-settings.service';
 
 @Directive()
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
   executingRpcRequest: boolean;
@@ -63,7 +64,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   constructor(@TbInject(RafService) public raf: RafService,
               @TbInject(Store) protected store: Store<AppState>,
-              @TbInject(FormBuilder) public fb: FormBuilder,
+              @TbInject(UntypedFormBuilder) public fb: UntypedFormBuilder,
               @TbInject(Injector) public readonly $injector: Injector,
               @TbInject('widgetContext') public readonly ctx: WidgetContext,
               @TbInject('errorMessages') public readonly errorMessages: string[]) {
@@ -82,6 +83,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.dialogs = $injector.get(DialogService);
     this.ctx.customDialog = $injector.get(CustomDialogService);
     this.ctx.resourceService = $injector.get(ResourceService);
+    this.ctx.userSettingsService = $injector.get(UserSettingsService);
     this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
     this.ctx.date = $injector.get(DatePipe);
     this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);

@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>dashboard.manage-states</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -32,7 +32,7 @@
       <div class="manage-dashboard-states">
         <div class="tb-entity-table">
           <div fxLayout="column" class="tb-entity-table-content">
-            <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
+            <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
               <div class="mat-toolbar-tools">
                 <span class="tb-entity-table-title" translate>dashboard.states</span>
                 <span fxFlex></span>
@@ -51,7 +51,7 @@
                 </button>
               </div>
             </mat-toolbar>
-            <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+            <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
               <div class="mat-toolbar-tools">
                 <button mat-icon-button
                         type="button"

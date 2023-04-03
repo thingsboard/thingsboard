@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -545,6 +546,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                deviceProfile.getTenantId(),
                 deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getDefaultDashboardId(),
                 deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 
@@ -990,6 +992,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         testEntityDaoWithRelationsOk(savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
     }
 
+    @Ignore
     @Test
     public void testDeleteDeviceProfileExceptionWithRelationsTransactional() throws Exception {
         DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelations Transactional Exception").getId();

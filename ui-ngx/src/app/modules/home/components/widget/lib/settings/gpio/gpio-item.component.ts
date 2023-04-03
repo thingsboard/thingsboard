@@ -18,9 +18,9 @@ import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@ang
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
-  NG_VALUE_ACCESSOR, ValidationErrors, ValidatorFn,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  NG_VALUE_ACCESSOR, ValidatorFn,
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
@@ -28,7 +28,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { isNumber } from '@core/utils';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface GpioItem {
   pin: number;
@@ -38,23 +37,21 @@ export interface GpioItem {
   color?: string;
 }
 
-export function gpioItemValidator(hasColor: boolean): ValidatorFn {
-  return (control: AbstractControl) => {
-    const gpioItem: GpioItem = control.value;
-    if (!gpioItem
-      || !isNumber(gpioItem.pin) || gpioItem.pin < 1
-      || !isNumber(gpioItem.row) || gpioItem.row < 0
-      || !isNumber(gpioItem.col) || gpioItem.col < 0 || gpioItem.col > 1
-      || !gpioItem.label
-      || (hasColor && !gpioItem.color)
-    ) {
-      return {
-        gpioItem: true
-      };
-    }
-    return null;
-  };
-}
+export const gpioItemValidator = (hasColor: boolean): ValidatorFn => (control: AbstractControl) => {
+  const gpioItem: GpioItem = control.value;
+  if (!gpioItem
+    || !isNumber(gpioItem.pin) || gpioItem.pin < 1
+    || !isNumber(gpioItem.row) || gpioItem.row < 0
+    || !isNumber(gpioItem.col) || gpioItem.col < 0 || gpioItem.col > 1
+    || !gpioItem.label
+    || (hasColor && !gpioItem.color)
+  ) {
+    return {
+      gpioItem: true
+    };
+  }
+  return null;
+};
 
 @Component({
   selector: 'tb-gpio-item',
@@ -86,12 +83,11 @@ export class GpioItemComponent extends PageComponent implements OnInit, ControlV
 
   private propagateChange = null;
 
-  public gpioItemFormGroup: FormGroup;
+  public gpioItemFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private domSanitizer: DomSanitizer,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -133,13 +129,8 @@ export class GpioItemComponent extends PageComponent implements OnInit, ControlV
     );
   }
 
-  gpioItemHtml(): SafeHtml {
-    const value: GpioItem = this.gpioItemFormGroup.value;
-    const pin = isNumber(value.pin) && value.pin > 0 ? value.pin : 'Undefined';
-    const row = isNumber(value.row) && value.row > -1 ? value.row : 'Undefined';
-    const col = isNumber(value.col) && value.col > -1 ? value.col : 'Undefined';
-    const label = value.label || 'Undefined';
-    return this.domSanitizer.bypassSecurityTrustHtml(`${label} (<small>pin:</small>${pin}) - [<small>row:</small>${row}:<small>col:</small>${col}]`);
+  numberText(value: any, minValue: number): string {
+    return isNumber(value) && value > minValue ? value : 'Undefined';
   }
 
   private updateModel() {

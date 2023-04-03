@@ -29,7 +29,7 @@ import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { AssetId } from '@shared/models/id/asset-id';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
@@ -140,8 +140,12 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     });
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.detailsForm;
+  }
+
+  goBack(): void {
+    this.router.navigate(['../'], { relativeTo: this.route });
   }
 
   private onUpdateEntity() {
@@ -164,7 +168,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
       if (result) {
         this.entitiesTableConfig.deleteEntity(entity.id).subscribe(
           () => {
-            this.router.navigate(['../'], {relativeTo: this.route});
+            this.goBack();
           }
         );
       }

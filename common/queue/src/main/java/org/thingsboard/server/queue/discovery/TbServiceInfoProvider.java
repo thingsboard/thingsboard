@@ -28,4 +28,6 @@ public interface TbServiceInfoProvider {
 
     boolean isService(ServiceType serviceType);
 
+    ServiceInfo generateNewServiceInfoWithCurrentSystemInfo();
+
 }

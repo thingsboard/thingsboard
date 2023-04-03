@@ -20,11 +20,19 @@ CREATE INDEX IF NOT EXISTS idx_alarm_originator_created_time ON alarm(originator
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_created_time ON alarm(tenant_id, created_time DESC);
 
-CREATE INDEX IF NOT EXISTS idx_alarm_tenant_status_created_time ON alarm(tenant_id, status, created_time DESC);
+-- Drop index by 'status' column and replace with new one that has only active alarms;
+CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type_active
+    ON alarm USING btree (originator_id, type) WHERE cleared = false;
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_alarm_type_created_time ON alarm(tenant_id, type, created_time DESC);
 
+CREATE INDEX IF NOT EXISTS idx_alarm_tenant_assignee_created_time ON alarm(tenant_id, assignee_id, created_time DESC);
+
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_created_time ON entity_alarm(tenant_id, entity_id, created_time DESC);
+
+-- Cover index by alarm type to optimize propagated alarm queries;
+CREATE INDEX IF NOT EXISTS idx_entity_alarm_entity_id_alarm_type_created_time_alarm_id ON entity_alarm
+USING btree (tenant_id, entity_id, alarm_type, created_time DESC) INCLUDE(alarm_id);
 
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_alarm_id ON entity_alarm(alarm_id);
 
@@ -79,3 +87,24 @@ CREATE INDEX IF NOT EXISTS idx_rule_node_external_id ON rule_node(rule_chain_id,
 CREATE INDEX IF NOT EXISTS idx_rule_node_type ON rule_node(type);
 
 CREATE INDEX IF NOT EXISTS idx_api_usage_state_entity_id ON api_usage_state(entity_id);
+
+CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
+
+CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON notification_target(tenant_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_template_tenant_id_created_time ON notification_template(tenant_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_trigger_type_created_time ON notification_rule(tenant_id, trigger_type, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_user_created_time ON notification_request(tenant_id, created_time DESC)
+    WHERE originator_entity_type = 'USER';
+
+CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id)
+    WHERE originator_entity_type = 'ALARM';
+
+CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_request(status)
+    WHERE status = 'SCHEDULED';
+
+CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
+
+CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);

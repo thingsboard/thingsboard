@@ -18,15 +18,14 @@
 <section [formGroup]="instancesListFormGroup" class="lwm2m-instances-list">
   <mat-form-field class="mat-block">
     <mat-label>{{ 'device-profile.lwm2m.instances-list' | translate }}</mat-label>
-    <mat-chip-list #chipList formControlName="instanceList" [required]="required" (focus)="onFocus()">
-      <mat-chip
+    <mat-chip-grid #chipList formControlName="instanceList" [required]="required" (focus)="onFocus()">
+      <mat-chip-row
         *ngFor="let instanceId of instancesId"
-        [selectable]="!disabled"
         [removable]="!disabled"
         (removed)="remove(instanceId)">
         {{instanceId}}
         <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input matInput type="text"
              #instanceId
              style="max-width: 70px;"
@@ -35,7 +34,7 @@
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              matChipInputAddOnBlur
              (matChipInputTokenEnd)="add($event)">
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-error *ngIf="instancesListFormGroup.get('instanceList').hasError('required')">
       {{ 'device-profile.lwm2m.instances-list-required' | translate }}
     </mat-error>

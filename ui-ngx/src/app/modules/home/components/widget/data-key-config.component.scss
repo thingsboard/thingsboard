@@ -69,8 +69,8 @@
 
 :host ::ng-deep {
   .tb-datakey-config {
-    .mat-tab-body.mat-tab-body-active {
-      .mat-tab-body-content > div {
+    .mat-mdc-tab-body.mat-mdc-tab-body-active {
+      .mat-mdc-tab-body-content > div {
         height: calc(65vh - 50px);
         overflow: initial;
         @media #{$mat-xs} {
@@ -101,7 +101,7 @@
 
         &.comparison {
           .mat-expansion-panel-header {
-            height: 100%;
+            height: fit-content;
           }
         }
 
@@ -123,10 +123,6 @@
 
     .mat-slide {
       margin: 8px 0;
-    }
-
-    .mat-slide-toggle-content {
-      white-space: normal;
     }
   }
 }
