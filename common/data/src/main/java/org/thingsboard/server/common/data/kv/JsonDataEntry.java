@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import org.thingsboard.server.common.data.validation.NoXss;
-
 import java.util.Objects;
 import java.util.Optional;
 
