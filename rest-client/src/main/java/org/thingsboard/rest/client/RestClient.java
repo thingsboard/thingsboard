@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
@@ -2465,6 +2466,14 @@ public class RestClient implements Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<TenantInfo>>() {
                 }, params).getBody();
+    }
+
+    public UsageInfo getUsageInfo() {
+        return restTemplate.exchange(
+                baseURL + "/api/tenant/usageInfo",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                UsageInfo.class).getBody();
     }
 
     public Optional<TenantProfile> getTenantProfileById(TenantProfileId tenantProfileId) {
