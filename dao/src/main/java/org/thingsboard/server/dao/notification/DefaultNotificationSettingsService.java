@@ -216,8 +216,8 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 List.of(affectedUser.getId()), "Send notification to user when any alarm was assigned to him");
 
         NotificationTemplate ruleEngineComponentLifecycleFailureNotificationTemplate = createTemplate(tenantId, "Rule chain/node lifecycle failure notification", NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+                "${action:capitalize} failure in Rule chain '${ruleChainName}'",
                 "${componentType} '${componentName}' failed to ${action}",
-                "Rule chain '${ruleChainName}' - ${action} failure:<br/>${error}",
                 "warning", "Go to rule chain", "/ruleChains/${ruleChainId}");
         RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig ruleEngineComponentLifecycleEventRuleTriggerConfig = new RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig();
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChains(null);

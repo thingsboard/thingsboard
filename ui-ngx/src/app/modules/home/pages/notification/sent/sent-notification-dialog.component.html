@@ -343,11 +343,8 @@
           </div>
           <mat-divider class="divider"></mat-divider>
           <mat-chip-listbox>
-            <mat-chip *ngFor="let user of preview.recipientsPreview">
-              <span *ngIf="(user.firstName || user.lastName); else email">{{ user.firstName }}&nbsp;{{ user.lastName }}</span>
-              <ng-template #email>
-                {{ user.email }}
-              </ng-template>
+            <mat-chip *ngFor="let recipientTitle of preview.recipientsPreview">
+              <span>{{ recipientTitle }}</span>
             </mat-chip>
           </mat-chip-listbox>
         </section>

@@ -172,7 +172,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     }
     return `<div style="border-radius: 12px; height: 24px; line-height: 24px; padding: 0 10px; width: max-content; cursor: pointer;
                         background-color: #D12730; color: #fff; font-weight: 500; margin-left: 8px" class="stats">
-                ${countError} ${this.translate.instant('notification.fails')} >
+                ${this.translate.instant('notification.fails', {count: countError})}
             </div>`;
   }
 
