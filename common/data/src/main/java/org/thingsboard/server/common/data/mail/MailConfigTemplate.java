@@ -70,7 +70,11 @@ public class MailConfigTemplate extends SearchTextBasedWithAdditionalInfo<MailCo
 
     @Override
     public String getName() {
-        return providerId;
+        try {
+            return MailOauth2Provider.valueOf(providerId).toString();
+        } catch (IllegalArgumentException iae) {
+            return providerId;
+        }
     }
 
     @Override

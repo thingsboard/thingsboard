@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest;
@@ -35,10 +37,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
-import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -55,9 +56,6 @@ import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.config.MailOAuth2Configuration;
-import org.thingsboard.server.config.MailOauth2ProviderConfiguration;
-import org.thingsboard.server.config.MailOauth2Provider;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -76,7 +74,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,9 +113,6 @@ public class AdminController extends BaseController {
 
     @Autowired
     private UpdateService updateService;
-
-    @Autowired
-    private MailOAuth2Configuration mailOAuth2Configuration;
 
     private static final String PREV_URI_PATH_PARAMETER = "prevUri";
     private static final String PREV_URI_COOKIE_NAME = "prev_uri";
@@ -160,9 +154,7 @@ public class AdminController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
             adminSettings.setTenantId(getTenantId());
-            if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
-                updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
-            }
+            ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
@@ -259,8 +251,12 @@ public class AdminController extends BaseController {
                 if (refreshToken == null) {
                     throw new ThingsboardException("Refresh token was not generated. Please, generate refresh token.", ThingsboardErrorCode.GENERAL);
                 }
-                ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", refreshToken.asText());
-                updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
+                ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
+                settings.put("refreshToken", refreshToken.asText());
+                if (settings.has("providerTenantId")){
+                    settings.put("authUri", String.format(settings.get("authUri").asText(), settings.get("providerTenantId").asText()));
+                    settings.put("tokenUri", String.format(settings.get("tokenUri").asText(), settings.get("providerTenantId").asText()));
+                }
             }
             else {
                 if (!adminSettings.getJsonValue().has("password")) {
@@ -476,10 +472,11 @@ public class AdminController extends BaseController {
         String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
         String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
         String redirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
-        String scope = checkNotNull(jsonValue.get("scope"), "No scope was configured").asText();
+        List<String> scope =  JacksonUtil.convertValue(checkNotNull(jsonValue.get("scope"), "No scope was configured"), new TypeReference<>() {
+        });
 
         return "\"" + new AuthorizationCodeRequestUrl(authUri, clientId)
-                .setScopes(List.of(scope))
+                .setScopes(scope)
                 .setState(state)
                 .setRedirectUri(redirectUri)
                 .build() + "\"";
@@ -525,21 +522,5 @@ public class AdminController extends BaseController {
 
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);
-    }
-
-    private void updateSettingsWithOauth2ProviderTemplateInfo(AdminSettings adminSettings) throws ThingsboardException {
-        try {
-            MailOauth2Provider providerId = MailOauth2Provider.valueOf(adminSettings.getJsonValue().get("providerId").asText());
-            MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
-            if (providerConfig != null) {
-                ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
-                JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
-                settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
-                settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
-                settings.put("scope", providerConfig.getScope());
-            }
-        } catch (Exception e) {
-            throw new ThingsboardException(String.format("Unable to retrieve provider info: %s", e.getMessage()), ThingsboardErrorCode.GENERAL);
-        }
     }
 }

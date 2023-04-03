@@ -13,8 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.common.data.mail;
 
 public enum MailOauth2Provider {
-    GOOGLE, OFFICE_365, SENDGRID, CUSTOM
+    GOOGLE("Google"), OFFICE_365("Office 365"), SENDGRID("SendGrid"), CUSTOM("Custom");
+
+    public final String label;
+
+    MailOauth2Provider(String label) {
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
 }
