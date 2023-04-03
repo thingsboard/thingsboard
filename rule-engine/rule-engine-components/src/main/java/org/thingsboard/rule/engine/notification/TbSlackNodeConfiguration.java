@@ -17,8 +17,10 @@ package org.thingsboard.rule.engine.notification;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -26,14 +28,14 @@ import javax.validation.constraints.NotNull;
 public class TbSlackNodeConfiguration implements NodeConfiguration<TbSlackNodeConfiguration> {
 
     private String botToken;
-    private boolean useDefaultNotificationSettings;
+    private boolean useSystemSettings;
     @NotEmpty
     private String messageTemplate;
 
-    @NotNull
     private SlackConversationType conversationType;
-    private String conversationId; // if not set, need to specify conversationNamePattern
-    private String conversationNamePattern;
+    @NotNull
+    @Valid
+    private SlackConversation conversation;
 
     @Override
     public TbSlackNodeConfiguration defaultConfiguration() {

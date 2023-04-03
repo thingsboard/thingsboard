@@ -148,21 +148,33 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         }
 
         NotificationTarget originatorEntityOwnerUsers = createTarget(tenantId, "Users of the entity owner", new OriginatorEntityOwnerUsersFilter(),
-                "Customer users in case trigger entity (e.g. alarm) has customer, tenant admins otherwise");
+                "In case trigger entity (e.g. created device or alarm) is owned by customer, then recipients are this customer's users, otherwise tenant admins");
         NotificationTarget affectedUser = createTarget(tenantId, "Affected user", new AffectedUserFilter(),
                 "If rule trigger is an action that affects some user (e.g. alarm assigned to user) - this user");
 
-        NotificationTemplate alarmNotificationTemplate = createTemplate(tenantId, "Alarm notification", NotificationType.ALARM,
+        NotificationTemplate newAlarmNotificationTemplate = createTemplate(tenantId, "New alarm notification", NotificationType.ALARM,
+                "New alarm '${alarmType}'",
+                "Severity: ${alarmSeverity}, originator: ${alarmOriginatorEntityType} '${alarmOriginatorName}'",
+                "notifications", null, null);
+        AlarmNotificationRuleTriggerConfig newAlarmRuleTriggerConfig = new AlarmNotificationRuleTriggerConfig();
+        newAlarmRuleTriggerConfig.setAlarmTypes(null);
+        newAlarmRuleTriggerConfig.setAlarmSeverities(null);
+        newAlarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED));
+        createRule(tenantId, "New alarm", newAlarmNotificationTemplate.getId(), newAlarmRuleTriggerConfig,
+                List.of(tenantAdmins.getId(), originatorEntityOwnerUsers.getId()), "Send notification to tenant admins and alarm's customer users " +
+                        "when an alarm is created");
+
+        NotificationTemplate alarmUpdateNotificationTemplate = createTemplate(tenantId, "Alarm update notification", NotificationType.ALARM,
                 "Alarm '${alarmType}' - ${action}",
                 "Severity: ${alarmSeverity}, originator: ${alarmOriginatorEntityType} '${alarmOriginatorName}'",
                 "notifications", null, null);
         AlarmNotificationRuleTriggerConfig alarmRuleTriggerConfig = new AlarmNotificationRuleTriggerConfig();
         alarmRuleTriggerConfig.setAlarmTypes(null);
         alarmRuleTriggerConfig.setAlarmSeverities(null);
-        alarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED, AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED, AlarmAction.CLEARED));
-        createRule(tenantId, "Alarm", alarmNotificationTemplate.getId(), alarmRuleTriggerConfig,
-                List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when any alarm is created, updated or cleared");
+        alarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED, AlarmAction.CLEARED));
+        createRule(tenantId, "Alarm update", alarmUpdateNotificationTemplate.getId(), alarmRuleTriggerConfig,
+                List.of(tenantAdmins.getId(), originatorEntityOwnerUsers.getId()), "Send notification to tenant admins and alarm's customer users " +
+                        "when any alarm is updated or cleared");
 
         NotificationTemplate deviceActionNotificationTemplate = createTemplate(tenantId, "Device action notification", NotificationType.ENTITY_ACTION,
                 "${entityType} was ${actionType}",
