@@ -72,7 +72,7 @@ export interface NotificationRequestPreview {
   totalRecipientsCount: number;
   recipientsCountByTarget: { [key in string]: number };
   processedTemplates: { [key in NotificationDeliveryMethod]: DeliveryMethodNotificationTemplate };
-  recipientsPreview: Array<User>;
+  recipientsPreview: Array<string>;
 }
 
 export interface NotificationRequestStats {
@@ -100,7 +100,10 @@ interface SlackNotificationDeliveryMethodConfig {
 
 export interface SlackConversation {
   id: string;
-  name: string;
+  title: string;
+  shortName: string;
+  wholeName: string;
+  email: string;
 }
 
 export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{

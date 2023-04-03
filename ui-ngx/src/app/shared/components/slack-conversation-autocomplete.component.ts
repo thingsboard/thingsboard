@@ -177,7 +177,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
   }
 
   displaySlackConversationFn(slackConversation?: SlackConversation): string | undefined {
-    return slackConversation ? slackConversation.name : undefined;
+    return slackConversation ? slackConversation.title : undefined;
   }
 
   private fetchSlackConversation(searchText?: string): Observable<Array<SlackConversation>> {
@@ -215,7 +215,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
 
   private createSlackConversationFilter(query: string): (key: SlackConversation) => boolean {
     const lowercaseQuery = query.toLowerCase();
-    return key => key.name.toLowerCase().includes(lowercaseQuery);
+    return key => key.title.toLowerCase().includes(lowercaseQuery);
   }
 
   private clearSlackCache(): void {

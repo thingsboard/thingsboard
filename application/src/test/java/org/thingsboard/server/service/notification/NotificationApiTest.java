@@ -498,7 +498,10 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName(conversationName + " in Slack");
         SlackNotificationTargetConfig targetConfig = new SlackNotificationTargetConfig();
-        targetConfig.setConversation(new SlackConversation(conversationId, conversationName));
+        targetConfig.setConversation(SlackConversation.builder()
+                .id(conversationId)
+                .title(conversationName)
+                .build());
         notificationTarget.setConfiguration(targetConfig);
         notificationTarget = saveNotificationTarget(notificationTarget);
 

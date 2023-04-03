@@ -20,13 +20,10 @@ import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
-import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
@@ -36,7 +33,6 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -155,23 +151,11 @@ public class NotificationProcessingContext {
     }
 
     private Map<String, String> createTemplateContextForRecipient(NotificationRecipient recipient) {
-        if (recipient instanceof User) {
-            User user = (User) recipient;
-            return Map.of(
-                    "recipientEmail", user.getEmail(),
-                    "recipientFirstName", Strings.nullToEmpty(user.getFirstName()),
-                    "recipientLastName", Strings.nullToEmpty(user.getLastName())
-            );
-        }
-        return Collections.emptyMap();
-    }
-
-    public CustomerId getCustomerId() {
-        if (request.getInfo() instanceof RuleOriginatedNotificationInfo) {
-            return ((RuleOriginatedNotificationInfo) request.getInfo()).getAffectedCustomerId();
-        } else {
-            return null;
-        }
+        return Map.of(
+                "recipientEmail", Strings.nullToEmpty(recipient.getEmail()),
+                "recipientFirstName", Strings.nullToEmpty(recipient.getFirstName()),
+                "recipientLastName", Strings.nullToEmpty(recipient.getLastName())
+        );
     }
 
 }
