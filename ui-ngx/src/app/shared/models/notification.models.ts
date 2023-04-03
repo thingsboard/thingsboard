@@ -441,7 +441,8 @@ export enum NotificationType {
   ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
   RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
-  API_USAGE_LIMIT = 'API_USAGE_LIMIT'
+  API_USAGE_LIMIT = 'API_USAGE_LIMIT',
+  RULE_ENGINE = 'RULE_ENGINE'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -527,12 +528,20 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
     {
       name: 'notification.template-type.entities-limit',
       helpId: 'notification/entities_limit'
-    }],
+    }
+  ],
   [NotificationType.API_USAGE_LIMIT,
     {
       name: 'notification.template-type.api-usage-limit',
       helpId: 'notification/api_usage_limit'
-    }]
+    }
+  ],
+  [NotificationType.RULE_ENGINE,
+    {
+      name: 'notification.template-type.rule-engine',
+      helpId: 'notification/rule-engine'
+    }
+  ]
 ]);
 
 export enum TriggerType {

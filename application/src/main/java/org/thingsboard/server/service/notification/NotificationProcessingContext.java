@@ -19,7 +19,6 @@ import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -32,12 +31,12 @@ import org.thingsboard.server.common.data.notification.template.HasSubject;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.util.TemplateUtils;
 
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -58,7 +57,6 @@ public class NotificationProcessingContext {
     @Getter
     private final NotificationRequestStats stats;
 
-    private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\$\\{([a-zA-Z]+)(:[a-zA-Z]+)?}");
 
     @Builder
     public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationTemplate template, NotificationSettings settings) {
@@ -109,45 +107,23 @@ public class NotificationProcessingContext {
         if (templateContext.isEmpty()) return template;
 
         template = (T) template.copy();
-        template.setBody(processTemplate(template.getBody(), templateContext));
+        template.setBody(TemplateUtils.processTemplate(template.getBody(), templateContext));
         if (template instanceof HasSubject) {
             String subject = ((HasSubject) template).getSubject();
-            ((HasSubject) template).setSubject(processTemplate(subject, templateContext));
+            ((HasSubject) template).setSubject(TemplateUtils.processTemplate(subject, templateContext));
         }
         if (template instanceof WebDeliveryMethodNotificationTemplate) {
             WebDeliveryMethodNotificationTemplate webNotificationTemplate = (WebDeliveryMethodNotificationTemplate) template;
             String buttonText = webNotificationTemplate.getButtonText();
             if (isNotEmpty(buttonText)) {
-                webNotificationTemplate.setButtonText(processTemplate(buttonText, templateContext));
+                webNotificationTemplate.setButtonText(TemplateUtils.processTemplate(buttonText, templateContext));
             }
             String buttonLink = webNotificationTemplate.getButtonLink();
             if (isNotEmpty(buttonLink)) {
-                webNotificationTemplate.setButtonLink(processTemplate(buttonLink, templateContext));
+                webNotificationTemplate.setButtonLink(TemplateUtils.processTemplate(buttonLink, templateContext));
             }
         }
         return template;
-    }
-
-    private static String processTemplate(String template, Map<String, String> context) {
-        return TEMPLATE_PARAM_PATTERN.matcher(template).replaceAll(matchResult -> {
-            String key = matchResult.group(1);
-            if (!context.containsKey(key)) {
-                return "\\" + matchResult.group(); // adding escape char due to special meaning of '$' to matcher
-            }
-            String value = Strings.nullToEmpty(context.get(key));
-            String function = matchResult.group(2);
-            if (function != null) {
-                switch (function) {
-                    case ":upperCase":
-                        return value.toUpperCase();
-                    case ":lowerCase":
-                        return value.toLowerCase();
-                    case ":capitalize":
-                        return StringUtils.capitalize(value.toLowerCase());
-                }
-            }
-            return value;
-        });
     }
 
     private Map<String, String> createTemplateContextForRecipient(NotificationRecipient recipient) {

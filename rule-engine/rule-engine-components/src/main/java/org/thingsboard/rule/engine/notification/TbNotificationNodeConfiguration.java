@@ -32,14 +32,11 @@ public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNoti
     @NotEmpty
     private List<UUID> targets;
     @NotNull
-    private NotificationTemplateId templateId;
-    private NotificationRequestConfig additionalConfig;
+    private UUID templateId;
 
     @Override
     public TbNotificationNodeConfiguration defaultConfiguration() {
-        TbNotificationNodeConfiguration config = new TbNotificationNodeConfiguration();
-        config.setAdditionalConfig(new NotificationRequestConfig());
-        return config;
+        return new TbNotificationNodeConfiguration();
     }
 
 }

@@ -193,7 +193,7 @@ public class NotificationController extends BaseController {
         notificationRequest.setStatus(null);
         notificationRequest.setStats(null);
 
-        return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationCenter::processNotificationRequest);
+        return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, (tenantId, request) -> notificationCenter.processNotificationRequest(tenantId, request, null));
     }
 
     @PostMapping("/notification/request/preview")

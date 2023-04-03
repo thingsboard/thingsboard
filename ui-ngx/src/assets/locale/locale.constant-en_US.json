@@ -2931,7 +2931,8 @@
             "entities-limit": "Entities limit",
             "entity-action": "Entity action",
             "general": "General",
-            "rule-engine-lifecycle-event": "Rule engine lifecycle event"
+            "rule-engine-lifecycle-event": "Rule engine lifecycle event",
+            "rule-engine": "Rule engine"
         },
         "templates": "Templates",
         "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",

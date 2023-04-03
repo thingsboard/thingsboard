@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -333,8 +332,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         target1Config.setUsersFilter(userListFilter);
         target1.setConfiguration(target1Config);
         target1 = saveNotificationTarget(target1);
-        List<UserId> recipients = new ArrayList<>();
-        recipients.add(tenantAdminUserId);
+        List<String> recipients = new ArrayList<>();
+        recipients.add(TENANT_ADMIN_EMAIL);
 
         createDifferentCustomer();
         loginTenantAdmin();
@@ -346,7 +345,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
             customerUser.setCustomerId(differentCustomerId);
             customerUser.setEmail("other-customer-" + i + "@thingsboard.org");
             customerUser = createUser(customerUser, "12345678");
-            recipients.add(customerUser.getId());
+            recipients.add(customerUser.getEmail());
         }
         NotificationTarget target2 = new NotificationTarget();
         target2.setName("Other customer users");
@@ -402,7 +401,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(preview.getRecipientsCountByTarget().get(target1.getName())).isEqualTo(1);
         assertThat(preview.getRecipientsCountByTarget().get(target2.getName())).isEqualTo(customerUsersCount);
         assertThat(preview.getTotalRecipientsCount()).isEqualTo(1 + customerUsersCount);
-        assertThat(preview.getRecipientsPreview()).extracting(User::getId).containsAll(recipients);
+        assertThat(preview.getRecipientsPreview()).containsAll(recipients);
 
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = preview.getProcessedTemplates();
         assertThat(processedTemplates.get(NotificationDeliveryMethod.WEB)).asInstanceOf(type(WebDeliveryMethodNotificationTemplate.class))
@@ -485,7 +484,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationTemplateConfig config = new NotificationTemplateConfig();
         SlackDeliveryMethodNotificationTemplate slackNotificationTemplate = new SlackDeliveryMethodNotificationTemplate();
         slackNotificationTemplate.setEnabled(true);
-        slackNotificationTemplate.setBody("To Slack :)  ${recipientEmail}");
+        slackNotificationTemplate.setBody("To Slack :)");
         config.setDeliveryMethodsTemplates(Map.of(
                 NotificationDeliveryMethod.SLACK, slackNotificationTemplate
         ));

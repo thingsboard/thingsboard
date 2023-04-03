@@ -82,6 +82,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -105,7 +106,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
     @Override
-    public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest request) {
+    public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest request, Consumer<NotificationRequestStats> callback) {
         if (!rateLimitService.checkRateLimit(tenantId, LimitedApi.NOTIFICATION_REQUEST)) {
             throw new TbRateLimitsException(EntityType.TENANT);
         }
@@ -172,6 +173,14 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
                 } catch (Exception e) {
                     log.error("[{}] Failed to update stats for notification request", requestId, e);
+                }
+
+                if (callback != null) {
+                    try {
+                        callback.accept(stats);
+                    } catch (Exception e) {
+                        log.error("Failed to process callback for notification request {}", requestId, e);
+                    }
                 }
             }, dbCallbackExecutorService);
         });

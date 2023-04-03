@@ -110,7 +110,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
             notificationExecutor.executeAsync(() -> {
                 try {
-                    notificationCenter.processNotificationRequest(tenantId, notificationRequest);
+                    notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
                 } catch (Exception e) {
                     log.error("Failed to process scheduled notification request {}", notificationRequest.getId(), e);
                     NotificationRequestStats stats = new NotificationRequestStats();
