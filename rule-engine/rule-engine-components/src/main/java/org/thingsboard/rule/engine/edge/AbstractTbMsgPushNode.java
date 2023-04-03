@@ -74,7 +74,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     protected S buildEvent(TbMsg msg, TbContext ctx) {
         String msgType = msg.getType();
         if (DataConstants.ALARM.equals(msgType)) {
-            return buildEvent(ctx.getTenantId(), EdgeEventActionType.ADDED, getUUIDFromMsgData(msg), getAlarmEventType(), null);
+            EdgeEventActionType actionType = getAlarmActionType(msg);
+            return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
             EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msgType);
             Map<String, Object> entityBody = new HashMap<>();
@@ -105,6 +106,20 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     getEventTypeByEntityType(msg.getOriginator().getEntityType()),
                     JacksonUtil.valueToTree(entityBody));
         }
+    }
+
+    private static EdgeEventActionType getAlarmActionType(TbMsg msg) {
+        boolean isNewAlarm = Boolean.parseBoolean(msg.getMetaData().getValue(DataConstants.IS_NEW_ALARM));
+        boolean isClearedAlarm = Boolean.parseBoolean(msg.getMetaData().getValue(DataConstants.IS_CLEARED_ALARM));
+        EdgeEventActionType eventAction;
+        if (isNewAlarm) {
+            eventAction = EdgeEventActionType.ADDED;
+        } else if (isClearedAlarm) {
+            eventAction = EdgeEventActionType.ALARM_CLEAR;
+        } else {
+            eventAction = EdgeEventActionType.UPDATED;
+        }
+        return eventAction;
     }
 
     abstract S buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId, U eventType, JsonNode entityBody);

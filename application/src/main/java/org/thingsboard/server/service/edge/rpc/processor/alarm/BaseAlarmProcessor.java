@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -51,15 +52,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    Alarm alarm = alarmService.findAlarmById(tenantId, alarmId);
-                    if (alarm == null) {
-                        alarm = new Alarm();
-                        alarm.setTenantId(tenantId);
-                        alarm.setType(alarmUpdateMsg.getName());
-                        alarm.setOriginator(originatorId);
-                        alarm.setSeverity(AlarmSeverity.valueOf(alarmUpdateMsg.getSeverity()));
-                        alarm.setStartTs(alarmUpdateMsg.getStartTs());
-                    }
+                    Alarm alarm = new Alarm();
+                    alarm.setId(alarmId);
+                    alarm.setTenantId(tenantId);
+                    alarm.setType(alarmUpdateMsg.getName());
+                    alarm.setOriginator(originatorId);
+                    alarm.setSeverity(AlarmSeverity.valueOf(alarmUpdateMsg.getSeverity()));
+                    alarm.setStartTs(alarmUpdateMsg.getStartTs());
                     var alarmStatus = AlarmStatus.valueOf(alarmUpdateMsg.getStatus());
                     alarm.setClearTs(alarmUpdateMsg.getClearTs());
                     alarm.setPropagate(alarmUpdateMsg.getPropagate());
@@ -68,7 +67,11 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     alarm.setAckTs(alarmUpdateMsg.getAckTs());
                     alarm.setEndTs(alarmUpdateMsg.getEndTs());
                     alarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
-                    alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
+                    if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(alarmUpdateMsg.getMsgType())) {
+                        alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
+                    } else {
+                        alarmService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
+                    }
                     return Futures.immediateFuture(null);
                 case ALARM_ACK_RPC_MESSAGE:
                     Alarm alarmToAck = alarmService.findAlarmById(tenantId, alarmId);
