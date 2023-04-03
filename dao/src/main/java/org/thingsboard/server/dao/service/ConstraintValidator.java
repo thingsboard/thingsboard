@@ -20,6 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.HibernateValidatorConfiguration;
 import org.hibernate.validator.cfg.ConstraintMapping;
+import org.hibernate.validator.internal.cfg.context.DefaultConstraintMapping;
+import org.hibernate.validator.internal.engine.ConfigurationImpl;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -27,10 +32,12 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import javax.validation.Path;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.validation.constraints.AssertTrue;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Configuration
 public class ConstraintValidator {
 
     private static Validator fieldsValidator;
@@ -69,12 +76,26 @@ public class ConstraintValidator {
     private static void initializeValidators() {
         HibernateValidatorConfiguration validatorConfiguration = Validation.byProvider(HibernateValidator.class).configure();
 
-        ConstraintMapping constraintMapping = validatorConfiguration.createConstraintMapping();
-        constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
-        constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
+        ConstraintMapping constraintMapping = getCustomConstraintMapping();
         validatorConfiguration.addMapping(constraintMapping);
 
         fieldsValidator = validatorConfiguration.buildValidatorFactory().getValidator();
+    }
+
+    @Bean
+    public LocalValidatorFactoryBean validatorFactoryBean() {
+        LocalValidatorFactoryBean localValidatorFactoryBean = new LocalValidatorFactoryBean();
+        localValidatorFactoryBean.setConfigurationInitializer(configuration -> {
+            ((ConfigurationImpl) configuration).addMapping(getCustomConstraintMapping());
+        });
+        return localValidatorFactoryBean;
+    }
+
+    private static ConstraintMapping getCustomConstraintMapping() {
+        ConstraintMapping constraintMapping = new DefaultConstraintMapping();
+        constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
+        constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
+        return constraintMapping;
     }
 
 }

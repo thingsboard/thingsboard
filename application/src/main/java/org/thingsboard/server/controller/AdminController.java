@@ -31,36 +31,50 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.FeaturesInfo;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
-import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -68,6 +82,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
+import org.thingsboard.server.service.system.SystemInfoService;
 import org.thingsboard.server.service.update.UpdateService;
 
 import javax.servlet.http.Cookie;
@@ -78,41 +93,28 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.controller.ControllerConstants.*;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
 @Slf4j
 @RequestMapping("/api/admin")
+@RequiredArgsConstructor
 public class AdminController extends BaseController {
 
-    @Autowired
-    private MailService mailService;
-
-    @Autowired
-    private SmsService smsService;
-
-    @Autowired
-    private AdminSettingsService adminSettingsService;
-
-    @Autowired
-    private SystemSecurityService systemSecurityService;
-
+    private final MailService mailService;
+    private final SmsService smsService;
+    private final AdminSettingsService adminSettingsService;
+    private final SystemSecurityService systemSecurityService;
     @Lazy
-    @Autowired
-    private JwtSettingsService jwtSettingsService;
-
+    private final JwtSettingsService jwtSettingsService;
     @Lazy
-    @Autowired
-    private JwtTokenFactory tokenFactory;
-
-    @Autowired
-    private EntitiesVersionControlService versionControlService;
-
-    @Autowired
-    private TbAutoCommitSettingsService autoCommitSettingsService;
-
-    @Autowired
-    private UpdateService updateService;
+    private final JwtTokenFactory tokenFactory;
+    private final EntitiesVersionControlService versionControlService;
+    private final TbAutoCommitSettingsService autoCommitSettingsService;
+    private final UpdateService updateService;
+    private final SystemInfoService systemInfoService;
 
     private static final String PREV_URI_PATH_PARAMETER = "prevUri";
     private static final String PREV_URI_COOKIE_NAME = "prev_uri";
@@ -139,7 +141,6 @@ public class AdminController extends BaseController {
             throw handleException(e);
         }
     }
-
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Creates or Updates the Administration Settings. Platform generates random Administration Settings Id during settings creation. " +
@@ -362,7 +363,6 @@ public class AdminController extends BaseController {
         }
     }
 
-
     @ApiOperation(value = "Check repository access (checkRepositoryAccess)",
             notes = "Attempts to check repository access. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -441,6 +441,26 @@ public class AdminController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @ApiOperation(value = "Get system info (getSystemInfo)",
+            notes = "Get main information about system. "
+                    + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/systemInfo", method = RequestMethod.GET)
+    @ResponseBody
+    public SystemInfo getSystemInfo() throws ThingsboardException {
+        return systemInfoService.getSystemInfo();
+    }
+
+    @ApiOperation(value = "Get features info (getFeaturesInfo)",
+            notes = "Get information about enabled/disabled features. "
+                    + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/featuresInfo", method = RequestMethod.GET)
+    @ResponseBody
+    public FeaturesInfo getFeaturesInfo() {
+        return systemInfoService.getFeaturesInfo();
     }
 
     @ApiOperation(value = "Get OAuth2 log in processing URL (getMailProcessingUrl)", notes = "Returns the URL enclosed in " +

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Zumtobel Group. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+  <Object ObjectType="MODefinition">
+		<Name>oA Device</Name>
+		<Description1><![CDATA[The 'oA Device' represents the OpenAIS specific parameters of a Device that are necessary in addition to the LWM2M Device.]]></Description1>
+		<ObjectID>3388</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3388</ObjectURN>
+		<LWM2MVersion>1.1</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="4001">
+				<Name>ObjectVersion</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[LWM2M Object versioning label.]]></Description>
+			</Item>
+			<Item ID="901">
+				<Name>Documentary Description</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..256 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Resource to hold a documentary text description of the object.]]></Description>
+			</Item>
+			<Item ID="907">
+				<Name>Error Status</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Error status is a bit coded value that shows all current errors on the object. The error status changes as soon as a new error occurs or an old one is resolved. Bitwise: 0 (LSB): Communication_Error, 1: Power_Supply_Error, 2: Firmware_Error, 3: Over_Temperature, 4: Vendor_Specific_Error_1, 5: Vendor_Specific_Error_2, 6: Vendor_Specific_Error_3, 7: Vendor_Specific_Error_4, 8: Vendor_Specific_Error_5, 9: Vendor_Specific_Error_6, 10: Vendor_Specific_Error_7, 11: Vendor_Specific_Error_8, 12: Vendor_Specific_Error_9, 13: Vendor_Specific_Error_10, 14: Vendor_Specific_Error_11, 15: Vendor_Specific_Error_12]]></Description>
+			</Item>
+			<Item ID="500">
+				<Name>OEM ID</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..64 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[OEM ID: Identifies the OEM product (using its GTIN) that has this (electronic) device built in]]></Description>
+			</Item>
+			<Item ID="501">
+				<Name>OEM String</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..64 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Human readable OEM ID, e.g. the OEM company and product name that has this (electronic) device built in]]></Description>
+			</Item>
+			<Item ID="929">
+				<Name>BMS ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[ID to be used in BMS: identifies the devices role in the (BMS) system]]></Description>
+			</Item>
+			<Item ID="503">
+				<Name>CPU Temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>-128..127</RangeEnumeration>
+				<Units>C</Units>
+				<Description><![CDATA[Current temperature of the CPU]]></Description>
+			</Item>
+			<Item ID="504">
+				<Name>Executing Objects</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Corelnk</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Link to Physical Object Instances that are part of this device in CoRE Link Format [RFC6690](https://tools.ietf.org/html/rfc6690)]]></Description>
+			</Item>
+			<Item ID="910">
+				<Name>Total Energy Usage</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..18446744073709551615</RangeEnumeration>
+				<Units>Ws</Units>
+				<Description><![CDATA[The total energy usage of the device (accumulated value)]]></Description>
+			</Item>
+			<Item ID="911">
+				<Name>Actual Power Usage</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..4294967295</RangeEnumeration>
+				<Units>W</Units>
+				<Description><![CDATA[The actual power usage of the device. Scaling is 0.1W / unit]]></Description>
+			</Item>
+			<Item ID="912">
+				<Name>Accuracy Class</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..64 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The accuracy class of the energy sensor on the device (using either % accuracy or a letter that defines the accuracy class)]]></Description>
+			</Item>
+			<Item ID="908">
+				<Name>Mounting Location</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1..64 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Describes the location of the device within the building. The content of the string is site specific.]]></Description>
+			</Item>
+			<Item ID="505">
+				<Name>System Failure Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[When the Object is not able to communicate with a control function in the network, in this case for a period of 10s, the connection is considered lost and the light point automatically sets to the value indicated in 'System Failure Intensity'.]]></Description>
+			</Item>
+		</Resources>
+		<Description2><![CDATA[]]></Description2>
+	</Object>
+</LWM2M>
