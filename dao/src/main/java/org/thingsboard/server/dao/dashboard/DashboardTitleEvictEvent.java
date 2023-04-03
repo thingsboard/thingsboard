@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.server.dao.dashboard;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.settings.UserSettings;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 
-public interface UserSettingsDao {
-
-    UserSettings save(TenantId tenantId, UserSettings userSettings);
-
-    UserSettings findById(TenantId tenantId, UserSettingsCompositeKey key);
-
-    void removeById(TenantId tenantId, UserSettingsCompositeKey key);
-
+@Data
+public class DashboardTitleEvictEvent {
+    private final DashboardId key;
 }

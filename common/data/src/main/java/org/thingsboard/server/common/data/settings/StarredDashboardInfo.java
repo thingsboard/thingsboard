@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.server.common.data.settings;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.HasTitle;
+import org.thingsboard.server.common.data.id.DashboardId;
 
+import java.io.Serializable;
+
+@EqualsAndHashCode(callSuper = true)
+@ApiModel
 @Data
-public class UserSettingsEvictEvent {
-    private final UserSettingsCompositeKey key;
+public class StarredDashboardInfo extends AbstractUserDashboardInfo implements Serializable {
+
+    private static final long serialVersionUID = -7830828696329673361L;
+    @ApiModelProperty(position = 4, value = "Starred timestamp")
+    private long starredAt;
+
 }
