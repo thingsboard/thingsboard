@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.server.common.data.settings;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.settings.UserSettings;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import lombok.Getter;
 
-public interface UserSettingsDao {
+public enum UserSettingsType {
 
-    UserSettings save(TenantId tenantId, UserSettings userSettings);
+    GENERAL, VISITED_DASHBOARDS(true), QUICK_LINKS, DOC_LINKS, DASHBOARDS;
 
-    UserSettings findById(TenantId tenantId, UserSettingsCompositeKey key);
+    @Getter
+    private final boolean reserved;
 
-    void removeById(TenantId tenantId, UserSettingsCompositeKey key);
+    UserSettingsType() {
+        this.reserved = false;
+    }
 
+    UserSettingsType(boolean reserved) {
+        this.reserved = reserved;
+    }
 }
