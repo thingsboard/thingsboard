@@ -33,6 +33,8 @@ import {
 } from '@home/models/entity/entities-table-config.models';
 import { ActivatedRoute } from '@angular/router';
 
+export type EntitiesTableAction = 'add';
+
 export interface IEntitiesTableComponent {
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
   translations: EntityTypeTranslation;

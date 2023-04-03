@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.SystemInfoData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -50,6 +51,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -154,13 +156,13 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         long ts = System.currentTimeMillis();
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
-        doSave(Collections.singletonList(clusterDataKv));
+        doSave(Arrays.asList(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", true)), clusterDataKv));
     }
 
     private void saveCurrentMonolithSystemInfo() {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
-
+        tsList.add(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", false)));
         getCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", (long) v))));
         getMemoryUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", (long) v))));
         getDiscSpaceUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", (long) v))));

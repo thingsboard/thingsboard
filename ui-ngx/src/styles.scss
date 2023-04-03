@@ -74,7 +74,7 @@ body {
   line-height: normal;
 }
 
-a {
+a:not(.mdc-button) {
   font-weight: 400;
   color: #106cc8;
   text-decoration: none;
@@ -85,7 +85,9 @@ a {
 
 a:hover,
 a:focus {
-  border-bottom: 1px solid #4054b2;
+  &:not(.mdc-button) {
+    border-bottom: 1px solid #4054b2;
+  }
 }
 
 p {
