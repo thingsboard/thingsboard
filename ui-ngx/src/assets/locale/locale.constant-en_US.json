@@ -2785,16 +2785,12 @@
         "delivery-method": {
             "delivery-method": "Delivery method",
             "email": "Email",
-            "email-failed-sent": "Email",
             "email-preview": "Email notification preview",
             "slack": "Slack",
-            "slack-failed-sent": "Slack",
             "slack-preview": "Slack notification preview",
             "sms": "SMS",
-            "sms-failed-sent": "SMS",
             "sms-preview": "SMS notification preview",
             "web": "Web",
-            "web-failed-sent": "Web",
             "web-preview": "Web notification preview"
         },
         "delivery-methods": "Delivery methods",
