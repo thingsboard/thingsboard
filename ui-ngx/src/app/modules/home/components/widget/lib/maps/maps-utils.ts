@@ -95,13 +95,13 @@ interface labelSettings {
 }
 
 export function entitiesParseName(entities: FormattedData[], labelSettings: labelSettings):  FormattedData[] {
+  const div = document.createElement('div');
   for (const entity of entities) {
     if (labelSettings?.showLabel) {
       const pattern = labelSettings.useLabelFunction ? safeExecute(labelSettings.parsedLabelFunction,
         [entity, entities, entity.dsIndex]) : labelSettings.label;
       const markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
       const replaceInfoLabelMarker = processDataPattern(pattern, entity);
-      const div = document.createElement('div');
       div.innerHTML = fillDataPattern(markerLabelText, replaceInfoLabelMarker, entity);
       entity.entityParseName = div.textContent || div.innerText || '';
     } else {
