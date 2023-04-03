@@ -21,12 +21,19 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.security.Authority;
 
 public class EntityPrototypes {
 
@@ -96,5 +103,30 @@ public class EntityPrototypes {
         assetProfile.setName(entityName);
         assetProfile.setDescription(description);
         return assetProfile;
+    }
+
+    public static Alarm defaultAlarm(EntityId id) {
+        Alarm alarm = new Alarm();
+        alarm.setType("default");
+        alarm.setOriginator(id);
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        return alarm;
+    }
+
+    public static Alarm defaultAlarm(EntityId id, UserId userId) {
+        Alarm alarm = new Alarm();
+        alarm.setType("default");
+        alarm.setOriginator(id);
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        alarm.setAssigneeId(userId);
+        return alarm;
+    }
+
+    public static User defaultUser(CustomerId customerId) {
+        User user = new User();
+        user.setEmail("test@thingsboard.org");
+        user.setCustomerId(customerId);
+        user.setAuthority(Authority.CUSTOMER_USER);
+        return user;
     }
 }
