@@ -16,8 +16,10 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
@@ -30,15 +32,17 @@ public class ManageCustomersEdgesTest extends AbstractDriverBaseTest {
     private CustomerPageHelper customerPage;
     private final String iconText = "Edge instances";
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
         customerPage = new CustomerPageHelper(driver);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Manage customer edges")
     @Test(groups = "smoke")
-    @Description
+    @Description("Open manage window by right corner btn")
     public void openWindowByRightCornerBtn() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
@@ -50,13 +54,15 @@ public class ManageCustomersEdgesTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.customerManageWindowIconHead().getText().contains(iconText));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Manage customer edges")
     @Test(groups = "smoke")
-    @Description
+    @Description("Open manage window by btn in entity view")
     public void openWindowByView() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        customerPage.manageCustomersEdgeBtnView().click();
+        jsClick(customerPage.manageCustomersEdgeBtnView());
 
         Assert.assertTrue(urlContains("edgeInstances"));
         Assert.assertNotNull(customerPage.customerEdgeIconHeader());

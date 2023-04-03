@@ -15,9 +15,15 @@
     limitations under the License.
 
 -->
-<mat-card class="settings-card">
+<mat-card appearance="outlined" class="settings-card">
   <mat-toolbar class="details-toolbar">
-    <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center">
+    <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <button mat-icon-button
+              matTooltip="{{ 'action.back' | translate }}"
+              matTooltipPosition="above"
+              (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
       <div class="tb-details-title-header" fxLayout="column" fxLayoutAlign="center start">
         <div class="tb-details-title tb-ellipsis">{{ headerTitle }}</div>
         <div class="tb-details-subtitle tb-ellipsis">{{ headerSubtitle }}</div>
@@ -46,7 +52,7 @@
     </div>
   </mat-toolbar>
   <mat-card-content fxFlex="100">
-    <mat-tab-group class="tb-absolute-fill" [ngClass]="{'tb-headless': hideDetailsTabs()}" [(selectedIndex)]="selectedTab" fxFill>
+    <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill" [ngClass]="{'tb-headless': hideDetailsTabs()}" [(selectedIndex)]="selectedTab" fxFill>
       <mat-tab label="{{ 'details.details' | translate }}">
         <tb-anchor #entityDetailsForm></tb-anchor>
       </mat-tab>

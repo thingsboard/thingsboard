@@ -144,6 +144,10 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     return this.detailsForm;
   }
 
+  goBack(): void {
+    this.router.navigate(['../'], { relativeTo: this.route });
+  }
+
   private onUpdateEntity() {
     this.broadcast.broadcast('updateBreadcrumb');
     this.isReadOnly = this.entitiesTableConfig.detailsReadonly(this.entity);
@@ -164,7 +168,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
       if (result) {
         this.entitiesTableConfig.deleteEntity(entity.id).subscribe(
           () => {
-            this.router.navigate(['../'], {relativeTo: this.route});
+            this.goBack();
           }
         );
       }

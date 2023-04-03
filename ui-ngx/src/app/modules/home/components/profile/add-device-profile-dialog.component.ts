@@ -44,13 +44,17 @@ import {
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { MatStepper } from '@angular/material/stepper';
+import { MatStepper, StepperOrientation } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
 import { ServiceType } from '@shared/models/queue.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { RuleChainType } from '@shared/models/rule-chain.models';
+import { Observable } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { map } from 'rxjs/operators';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -67,7 +71,8 @@ export class AddDeviceProfileDialogComponent extends
   DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> implements AfterViewInit {
 
   @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatStepper;
-
+  stepperOrientation: Observable<StepperOrientation>;
+  stepperLabelPosition: Observable<'bottom' | 'end'>;
   selectedIndex = 0;
 
   showNext = true;
@@ -102,10 +107,17 @@ export class AddDeviceProfileDialogComponent extends
               public dialogRef: MatDialogRef<AddDeviceProfileDialogComponent, DeviceProfile>,
               private componentFactoryResolver: ComponentFactoryResolver,
               private injector: Injector,
+              private breakpointObserver: BreakpointObserver,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private deviceProfileService: DeviceProfileService,
               private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
+    this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
+      .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
+
+    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
+      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
+
     this.deviceProfileDetailsFormGroup = this.fb.group(
       {
         name: [data.deviceProfileName, [Validators.required, Validators.maxLength(255)]],

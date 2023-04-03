@@ -15,9 +15,18 @@
  */
 @import "../../../../../scss/constants";
 
-:host-context(.tb-fullscreen-dialog .mat-dialog-container) {
+:host {
+  height: 100%;
+  display: grid;
+
+  .dialog-actions-row {
+    padding: 8px;
+  }
+}
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
   @media #{$mat-lt-sm} {
-    .mat-dialog-content {
+    .mat-mdc-dialog-content {
       max-height: 75vh;
     }
   }
@@ -28,7 +37,7 @@
 }
 
 :host ::ng-deep {
-  .mat-dialog-content {
+  .mat-mdc-dialog-content {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -36,37 +45,21 @@
 
     .mat-stepper-horizontal {
       display: flex;
-      flex-direction: column;
       height: 100%;
       overflow: hidden;
-      @media #{$mat-lt-sm} {
-        .mat-step-label {
-          white-space: normal;
-          overflow: visible;
-          .mat-step-text-label {
-            overflow: visible;
-          }
-        }
+
+      .mat-horizontal-stepper-wrapper {
+        flex: 1 1 100%;
       }
+
       .mat-horizontal-content-container {
-        height: 530px;
+        height: 680px;
         max-height: 100%;
         width: 100%;;
         overflow-y: auto;
+        scrollbar-gutter: stable;
         @media #{$mat-gt-sm} {
-          min-width: 800px;
-        }
-      }
-      .mat-horizontal-stepper-content[aria-expanded=true] {
-        height: 100%;
-        form {
-          height: 100%;
-        }
-      }
-
-      tb-device-profile-autocomplete, tb-queue-autocomplete{
-        .mat-form-field-wrapper{
-          width: 180px !important;
+          min-width: 500px;
         }
       }
     }

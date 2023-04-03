@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -50,6 +52,10 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
     @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY, unique = true)
     private String resetToken;
 
+    @Type(type = "json")
+    @Column(name = ModelConstants.USER_CREDENTIALS_ADDITIONAL_PROPERTY)
+    private JsonNode additionalInfo;
+
     public UserCredentialsEntity() {
         super();
     }
@@ -66,6 +72,7 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         this.password = userCredentials.getPassword();
         this.activateToken = userCredentials.getActivateToken();
         this.resetToken = userCredentials.getResetToken();
+        this.additionalInfo = userCredentials.getAdditionalInfo();
     }
 
     @Override
@@ -79,6 +86,7 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         userCredentials.setPassword(password);
         userCredentials.setActivateToken(activateToken);
         userCredentials.setResetToken(resetToken);
+        userCredentials.setAdditionalInfo(additionalInfo);
         return userCredentials;
     }
 

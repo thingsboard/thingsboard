@@ -55,7 +55,7 @@
       </mat-error>
     </mat-form-field>
     <div fxLayout="column" fxLayoutAlign="center" fxFlex="60" *ngIf="valueType === valueTypeEnum.BOOLEAN">
-      <mat-checkbox [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" style="margin-bottom: 0;">
+      <mat-checkbox [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" style="min-width: 180px;">
         {{ (modelValue ? 'value.true' : 'value.false') | translate }}
       </mat-checkbox>
     </div>
@@ -64,7 +64,7 @@
         <mat-label translate>value.json-value</mat-label>
         <input [disabled]="disabled" matInput tb-json-to-string required name="value" #value="ngModel"
                [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"/>
-        <button matSuffix mat-button mat-icon-button (click)="openEditJSONDialog($event)">
+        <button matSuffix mat-icon-button (click)="openEditJSONDialog($event)">
           <mat-icon>open_in_new</mat-icon>
         </button>
         <mat-error *ngIf="value.hasError('required')">

@@ -27,14 +27,13 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface DataKeySelectOption {
   value: string;
   label?: string;
 }
 
-export function dataKeySelectOptionValidator(control: AbstractControl) {
+export const dataKeySelectOptionValidator = (control: AbstractControl) => {
     const selectOption: DataKeySelectOption = control.value;
     if (!selectOption || !selectOption.value) {
       return {
@@ -42,7 +41,7 @@ export function dataKeySelectOptionValidator(control: AbstractControl) {
       };
     }
     return null;
-}
+};
 
 @Component({
   selector: 'tb-datakey-select-option',
@@ -75,7 +74,6 @@ export class DataKeySelectOptionComponent extends PageComponent implements OnIni
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private domSanitizer: DomSanitizer,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -111,13 +109,6 @@ export class DataKeySelectOptionComponent extends PageComponent implements OnIni
     this.selectOptionFormGroup.patchValue(
       value, {emitEvent: false}
     );
-  }
-
-  selectOptionHtml(): SafeHtml {
-    const selectOption: DataKeySelectOption = this.selectOptionFormGroup.value;
-    const value = selectOption?.value || 'Undefined';
-    const label = selectOption?.label || '';
-    return this.domSanitizer.bypassSecurityTrustHtml(`${value} ${label ? '(<small>' + label + '</small>)' : ''}`);
   }
 
   private updateModel() {

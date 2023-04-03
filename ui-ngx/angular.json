@@ -30,6 +30,11 @@
               "src/thingsboard.ico",
               "src/assets",
               {
+                "glob": "*.svg",
+                "input": "./node_modules/@mdi/svg/svg/",
+                "output": "/assets/mdi/"
+              },
+              {
                 "glob": "worker-html.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
@@ -48,6 +53,11 @@
                 "glob": "worker-javascript.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/tinymce",
+                "output": "/assets/tinymce/"
               },
               {
                 "glob": "marker-icon-2x.png",
@@ -140,7 +150,8 @@
               "ace",
               "ace-builds",
               "diff-match-patch",
-              "tv4"
+              "tv4",
+              "@messageformat/parser"
             ]
           },
           "configurations": {

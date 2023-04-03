@@ -92,7 +92,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
     }
 
     @Test
-    public void testCountEntitiesByQuery() throws Exception {
+    public void testTenantCountEntitiesByQuery() throws Exception {
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
@@ -116,6 +116,56 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Assert.assertEquals(0, count.longValue());
 
         filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("Device1");
+
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(11, count.longValue());
+
+        EntityListFilter entityListFilter = new EntityListFilter();
+        entityListFilter.setEntityType(EntityType.DEVICE);
+        entityListFilter.setEntityList(devices.stream().map(Device::getId).map(DeviceId::toString).collect(Collectors.toList()));
+
+        countQuery = new EntityCountQuery(entityListFilter);
+
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        EntityTypeFilter filter2 = new EntityTypeFilter();
+        filter2.setEntityType(EntityType.DEVICE);
+
+        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
+
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
+        Assert.assertEquals(97, count2.longValue());
+    }
+
+    @Test
+    public void testSysAdminCountEntitiesByQuery() throws Exception {
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceType("default");
+        filter.setDeviceNameFilter("");
+
+        loginSysAdmin();
+
+        EntityCountQuery countQuery = new EntityCountQuery(filter);
+
+        Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        filter.setDeviceType("unknown");
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
+
+        filter.setDeviceType("default");
         filter.setDeviceNameFilter("Device1");
 
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);

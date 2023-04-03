@@ -18,19 +18,20 @@ import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
   UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
 import { SnmpMapping } from '@shared/models/device.models';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { DataType, DataTypeTranslationMap } from '@shared/models/constants';
 import { isUndefinedOrNull } from '@core/utils';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-snmp-device-profile-mapping',
@@ -60,7 +61,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
 
   private readonly oidPattern: RegExp  = /^\.?([0-2])((\.0)|(\.[1-9][0-9]*))*$/;
 
-  private valueChange$: Subscription = null;
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder) { }
@@ -69,12 +70,14 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
     this.mappingsConfigForm = this.fb.group({
       mappings: this.fb.array([])
     });
+    this.mappingsConfigForm.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
   ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   registerOnChange(fn: any) {
@@ -100,38 +103,36 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
   }
 
   writeValue(mappings: SnmpMapping[]) {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
-    const mappingsControl: Array<AbstractControl> = [];
-    if (mappings) {
-      mappings.forEach((config) => {
-        mappingsControl.push(this.createdFormGroup(config));
-      });
-    }
-    this.mappingsConfigForm.setControl('mappings', this.fb.array(mappingsControl));
-    if (!mappings || !mappings.length) {
-      this.addMappingConfig();
-    }
-    if (this.disabled) {
-      this.mappingsConfigForm.disable({emitEvent: false});
+    if (mappings?.length === this.mappingsConfigFormArray.length) {
+      this.mappingsConfigFormArray.patchValue(mappings, {emitEvent: false});
     } else {
-      this.mappingsConfigForm.enable({emitEvent: false});
+      const mappingsControl: Array<AbstractControl> = [];
+      if (mappings) {
+        mappings.forEach((config) => {
+          mappingsControl.push(this.createdFormGroup(config));
+        });
+      }
+      this.mappingsConfigForm.setControl('mappings', this.fb.array(mappingsControl), {emitEvent: false});
+      if (!mappings || !mappings.length) {
+        this.addMappingConfig();
+      }
+      if (this.disabled) {
+        this.mappingsConfigForm.disable({emitEvent: false});
+      } else {
+        this.mappingsConfigForm.enable({emitEvent: false});
+      }
     }
-    this.valueChange$ = this.mappingsConfigForm.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
     if (!this.disabled && !this.mappingsConfigForm.valid) {
       this.updateModel();
     }
   }
 
-  mappingsConfigFormArray(): UntypedFormArray {
+  get mappingsConfigFormArray(): UntypedFormArray {
     return this.mappingsConfigForm.get('mappings') as UntypedFormArray;
   }
 
   public addMappingConfig() {
-    this.mappingsConfigFormArray().push(this.createdFormGroup());
+    this.mappingsConfigFormArray.push(this.createdFormGroup());
     this.mappingsConfigForm.updateValueAndValidity();
     if (!this.mappingsConfigForm.valid) {
       this.updateModel();
@@ -139,7 +140,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
   }
 
   public removeMappingConfig(index: number) {
-    this.mappingsConfigFormArray().removeAt(index);
+    this.mappingsConfigFormArray.removeAt(index);
   }
 
   private createdFormGroup(value?: SnmpMapping): UntypedFormGroup {
