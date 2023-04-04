@@ -5,7 +5,7 @@ Put your PR description here instead of this sentence.
 ## General checklist
 
 - [ ] You have reviewed the guidelines [document](https://docs.google.com/document/d/1wqcOafLx5hth8SAg4dqV_LV3un3m5WYR8RdTJ4MbbUM/edit?usp=sharing).
-- [ ] PR name contains fix version. For example, "[3.3.4] Hotfix of some UI component" or "[3.4] New Super Feature".
+- [ ] [Labels](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/managing-labels#about-labels) that classify your pull request have been added.
 - [ ] The [milestone](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones) is specified and corresponds to fix version.  
 - [ ] Description references specific [issue](https://github.com/thingsboard/thingsboard/issues).
 - [ ] Description contains human-readable scope of changes.
