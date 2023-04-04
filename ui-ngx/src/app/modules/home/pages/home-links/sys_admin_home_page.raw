@@ -868,7 +868,13 @@
                   "label": "clusterMode",
                   "color": "#2196f3",
                   "settings": {},
-                  "_hash": 0.7272123990942316
+                  "_hash": 0.7272123990942316,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": false,
+                  "postFuncBody": ""
                 }
               ]
             }
@@ -903,7 +909,7 @@
           "padding": "0px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "let clusterMode = data[0]['clusterMode'];\nlet targetState = 'monolith_system_info';\nif (clusterMode === 'true') {\n    targetState = 'cluster_system_info';\n}\nreturn '<div style=\"width: 100%; height: 100%;\"><tb-dashboard-state stateId=\"' + targetState + '\" [ctx]=\"ctx\"></tb-dashboard-state></div>';\n",
+            "markdownTextFunction": "let html = '<div style=\"width: 100%; height: 100%;\">';\nlet clusterMode = data[0]['clusterMode'];\nif (clusterMode === 'true') {\n    html += '<tb-cluster-info-table></tb-cluster-info-table>';\n} else {\n    html += '<tb-dashboard-state stateId=\"monolith_system_info\" [ctx]=\"ctx\"></tb-dashboard-state>';\n}\nhtml += '</div>';\nreturn html;",
             "applyDefaultMarkdownStyle": false
           },
           "title": "Transport messages",
@@ -915,7 +921,6 @@
           "enableFullscreen": false,
           "widgetStyle": {
             "border": "none",
-            "borderRadius": "0",
             "boxShadow": "none"
           },
           "titleStyle": {
@@ -957,6 +962,42 @@
                   "color": "#2196f3",
                   "settings": {},
                   "_hash": 0.659021918423117
+                },
+                {
+                  "name": "cpuCount",
+                  "type": "timeseries",
+                  "label": "cpuCount",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949
+                },
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = 'Critically high CPU usage. To avoid system failure, optimize system performance.';\n} else if (value > 75) {\n    text = 'Running high on CPU usage. To avoid system failure, optimize system performance.';\n}\nreturn text;"
                 }
               ]
             }
@@ -991,9 +1032,9 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">CPU</div>\n    </div>\n    <div class=\"tb-count\">${cpuUsage:0}%</div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">CPU</div>\n        <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n    </div>\n    <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n        <span class=\"tb-count\">${cpuUsage:0}%</span>\n        <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
           },
           "title": "CPU",
           "showTitleIcon": false,
@@ -1016,188 +1057,6 @@
         "row": 0,
         "col": 0,
         "id": "76607897-dfd0-8946-7451-3de6a39e4bbf"
-      },
-      "8c2f02bc-ca69-2955-8730-4e945f77da28": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "name": null,
-              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "memoryUsage",
-                  "type": "timeseries",
-                  "label": "memoryUsage",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.659021918423117,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">RAM</div>\n    </div>\n    <div class=\"tb-count\">${memoryUsage:0}%</div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n"
-          },
-          "title": "RAM",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-right: 6px;\n    margin-left: 6px;\n}",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "8c2f02bc-ca69-2955-8730-4e945f77da28"
-      },
-      "e3686199-5117-fa5a-d59c-aada6269653e": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "name": null,
-              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "discUsage",
-                  "type": "timeseries",
-                  "label": "discUsage",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.659021918423117,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">Disk</div>\n    </div>\n    <div class=\"tb-count\">${discUsage:0}%</div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n"
-          },
-          "title": "Disk",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-left: 6px;\n}",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "e3686199-5117-fa5a-d59c-aada6269653e"
       },
       "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
         "isSystemType": true,
@@ -1380,7 +1239,7 @@
               "tickDecimals": 0,
               "ticksFormatter": ""
             },
-            "shadowSize": 4,
+            "shadowSize": 0,
             "smoothLines": true,
             "comparisonEnabled": false,
             "timeForComparison": "previousInterval",
@@ -1424,6 +1283,363 @@
         "row": 0,
         "col": 0,
         "id": "eace9148-b02a-48fe-1a95-acd9928aa8c5"
+      },
+      "d755208a-81cf-edb4-5db8-f4859f5359cc": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "memoryUsage",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.659021918423117,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "totalMemory",
+                  "type": "timeseries",
+                  "label": "totalMemory",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value / 1073741824;"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = 'Critically low reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.';\n} else if (value > 75) {\n    text = 'Running low on reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.';\n}\nreturn text;"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\">RAM</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
+          },
+          "title": "RAM",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-right: 6px;\n}",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d755208a-81cf-edb4-5db8-f4859f5359cc"
+      },
+      "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "discUsage",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.659021918423117,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "totalDiscSpace",
+                  "type": "timeseries",
+                  "label": "totalDiscSpace",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value / 1073741824;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = 'Critically low disk space. To avoid data loss, free up or expand the disk space.';\n} else if (value > 75) {\n    text = 'Running low on disk space. To avoid data loss, free up or expand the disk space.';\n}\nreturn text;"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextFunction": "const discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\">Disk</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
+          },
+          "title": "Disk",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-right: 6px;\n}",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7"
+      },
+      "8acbf5df-f9fc-114d-216f-86f081aa4779": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "ae870700-071f-b3bc-406c-16ba554c5a55",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "tenantProfilesCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\">Functions</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" \n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">Switch to PE</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div fxFlex fxLayout=\"column\" fxLayoutAlign=\"space-around\">\n            <div class=\"feature\">Alarms</div>\n            <div class=\"feature\">Dashboards</div>\n            <div class=\"feature\">Entities & Relations</div>\n            <div class=\"feature\">Profiles</div>\n            <div class=\"feature\">Advanced features</div>\n        </div>\n        <div fxFlex fxLayout=\"column\" fxLayoutAlign=\"space-around\">\n            <div class=\"feature\">Notification center</div>\n            <div class=\"feature\">API usage</div>\n            <div class=\"feature\">Customers</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Customers hierarchy</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Roles & Permissions</div>\n        </div>\n        <div fxFlex fxLayout=\"column\" fxLayoutAlign=\"space-around\">\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Groups</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Integrations</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Solution templates</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Scheduler</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">White-labeling</div>\n        </div>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-header {\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    margin-top: 18px;\n}\n\n.feature {\n    position: relative;\n    cursor: default;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.76);\n}\n\n.feature:before {\n    content: \"check\";\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n    color: #198038;\n    font-weight: 600;\n    position: relative;\n    background: #F3F6FA;\n    border-radius: 4px;\n    width: 24px;\n    height: 24px;\n    margin-right: 8px;\n    vertical-align: middle;\n}\n\n.feature.pe:before {\n    content: \"close\";\n    background: #F4F4F4;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.feature.pe:after {\n    position: relative;\n    display: inline-block;\n    margin-left: 4px;\n    vertical-align: baseline;\n    top: -0.5em;\n    content: \"PE\";\n    color: #305680;\n    font-weight: 700;\n    font-size: 12px;\n    line-height: 12px;\n    letter-spacing: 0.0015em;\n}\n\n.feature+.feature {\n    margin-top: 10px;\n}\n"
+          },
+          "title": "Functions",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "8acbf5df-f9fc-114d-216f-86f081aa4779"
       }
     },
     "states": {
@@ -1486,6 +1702,12 @@
                 "sizeY": 11,
                 "row": 0,
                 "col": 20
+              },
+              "8acbf5df-f9fc-114d-216f-86f081aa4779": {
+                "sizeX": 27,
+                "sizeY": 7,
+                "row": 19,
+                "col": 11
               }
             },
             "gridSettings": {
@@ -1539,23 +1761,23 @@
                 "row": 0,
                 "col": 0
               },
-              "8c2f02bc-ca69-2955-8730-4e945f77da28": {
-                "sizeX": 8,
-                "sizeY": 3,
-                "row": 0,
-                "col": 8
-              },
-              "e3686199-5117-fa5a-d59c-aada6269653e": {
-                "sizeX": 8,
-                "sizeY": 3,
-                "row": 0,
-                "col": 16
-              },
               "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
                 "sizeX": 24,
                 "sizeY": 8,
                 "row": 3,
                 "col": 0
+              },
+              "d755208a-81cf-edb4-5db8-f4859f5359cc": {
+                "sizeX": 8,
+                "sizeY": 3,
+                "row": 0,
+                "col": 8
+              },
+              "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7": {
+                "sizeX": 8,
+                "sizeY": 3,
+                "row": 0,
+                "col": 16
               }
             },
             "gridSettings": {
@@ -1567,21 +1789,6 @@
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
               "mobileRowHeight": 70
-            }
-          }
-        }
-      },
-      "cluster_system_info": {
-        "name": "Cluster System Info",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {},
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 10,
-              "backgroundSizeMode": "100%"
             }
           }
         }
