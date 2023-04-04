@@ -68,6 +68,9 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
   @Input()
   slackChanelType: SlackChanelType;
 
+  @Input()
+  token: string;
+
   @ViewChild('slackInput', {static: true}) slackInput: ElementRef;
 
   slackConversation$: Observable<Array<SlackConversation>>;
@@ -119,7 +122,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
             this.clear();
           }
         }),
-        map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
+        map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
         switchMap(name => this.fetchSlackConversation(name)),
         share()
       );
@@ -129,7 +132,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'slackChanelType') {
+        if (propName === 'slackChanelType' || propName === 'token') {
           this.clearSlackCache();
           this.conversationSlackFormGroup.get('conversation').patchValue('');
         }
@@ -196,7 +199,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     if (this.slackConversetionFetchObservable$ === null) {
       let fetchObservable: Observable<Array<SlackConversation>>;
       if (this.slackChanelType) {
-        fetchObservable = this.notificationService.listSlackConversations(this.slackChanelType, {ignoreLoading: true});
+        fetchObservable = this.notificationService.listSlackConversations(this.slackChanelType, this.token, {ignoreLoading: true});
       } else {
         fetchObservable = of([]);
       }

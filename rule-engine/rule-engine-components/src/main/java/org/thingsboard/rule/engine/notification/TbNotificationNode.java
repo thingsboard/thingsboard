@@ -39,7 +39,9 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbNotificationNodeConfiguration.class,
         nodeDescription = "Sends notification to targets using the template",
         nodeDetails = "Will send notification to the specified targets using the template",
-        uiResources = {"static/rulenode/rulenode-core-config.js"}
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbExternalNodeNotificationConfig",
+        icon = "notifications"
 )
 public class TbNotificationNode implements TbNode {
 
