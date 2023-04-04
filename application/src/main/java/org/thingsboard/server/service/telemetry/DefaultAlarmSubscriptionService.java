@@ -51,7 +51,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -70,7 +70,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     private final TbAlarmCommentService alarmCommentService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
-    private final NotificationRuleProcessingService notificationRuleProcessingService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     @Override
     protected String getExecutorPrefix() {
@@ -235,7 +235,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                     return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
                 });
             }
-            notificationRuleProcessingService.process(AlarmTrigger.builder()
+            notificationRuleProcessor.process(AlarmTrigger.builder()
                     .tenantId(tenantId)
                     .alarmUpdate(result)
                     .build());
@@ -253,7 +253,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                     return TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
                 });
             }
-            notificationRuleProcessingService.process(AlarmTrigger.builder()
+            notificationRuleProcessor.process(AlarmTrigger.builder()
                     .tenantId(tenantId)
                     .alarmUpdate(result)
                     .build());

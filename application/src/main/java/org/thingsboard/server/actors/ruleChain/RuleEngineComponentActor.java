@@ -50,7 +50,7 @@ public abstract class RuleEngineComponentActor<T extends EntityId, P extends Com
     }
 
     private void processNotificationRule(ComponentLifecycleEvent event, Throwable e) {
-        systemContext.getNotificationRuleProcessingService().process(RuleEngineComponentLifecycleEventTrigger.builder()
+        systemContext.getNotificationRuleProcessor().process(RuleEngineComponentLifecycleEventTrigger.builder()
                 .tenantId(tenantId)
                 .ruleChainId(getRuleChainId())
                 .ruleChainName(getRuleChainName())

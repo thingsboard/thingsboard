@@ -22,17 +22,20 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Map;
+
 @Data
 @Builder
 public class RuleEngineMsgTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
     private final TbMsg msg;
-    private final NotificationRuleTriggerType triggerType;
+
+    public static Map<String, NotificationRuleTriggerType> msgTypeToTriggerType; // set on init by DefaultNotificationRuleProcessor
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return triggerType;
+        return msgTypeToTriggerType != null ? msgTypeToTriggerType.get(msg.getType()) : null;
     }
 
     @Override
