@@ -320,7 +320,6 @@ public class InstallScripts {
             );
         }
     }
-}
 
     private void doSaveLwm2mResource(TbResource resource) throws ThingsboardException {
         try {
