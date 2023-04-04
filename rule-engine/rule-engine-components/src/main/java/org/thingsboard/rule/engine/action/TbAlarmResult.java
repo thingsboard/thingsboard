@@ -17,9 +17,8 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 
 @Data
 @AllArgsConstructor

@@ -13,37 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification.trigger;
+package org.thingsboard.server.common.msg.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.ApiUsageRecordState;
-import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.msg.TbMsg;
 
 @Data
 @Builder
-public class ApiUsageLimitTrigger implements NotificationRuleTrigger {
+public class RuleEngineMsgTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final ApiUsageRecordState state;
-    private final ApiUsageStateValue status;
+    private final TbMsg msg;
+    private final NotificationRuleTriggerType triggerType;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.API_USAGE_LIMIT;
-    }
-
-    @Override
-    public TenantId getTenantId() {
-        return tenantId;
+        return triggerType;
     }
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return tenantId;
+        return msg.getOriginator();
     }
 
 }

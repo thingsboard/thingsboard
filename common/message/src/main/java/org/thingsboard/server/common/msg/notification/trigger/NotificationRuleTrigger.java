@@ -13,32 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification.trigger;
+package org.thingsboard.server.common.msg.notification.trigger;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
-@Data
-@Builder
-public class EntitiesLimitTrigger implements NotificationRuleTrigger {
+import java.io.Serializable;
 
-    private final TenantId tenantId;
-    private final EntityType entityType;
-    private final long currentCount;
-    private final long limit;
+public interface NotificationRuleTrigger extends Serializable {
 
-    @Override
-    public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ENTITIES_LIMIT;
-    }
+    NotificationRuleTriggerType getType();
 
-    @Override
-    public EntityId getOriginatorEntityId() {
-        return tenantId;
-    }
+    TenantId getTenantId();
+
+    EntityId getOriginatorEntityId();
 
 }

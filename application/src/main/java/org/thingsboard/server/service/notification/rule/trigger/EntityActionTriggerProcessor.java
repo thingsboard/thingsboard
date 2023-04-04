@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotifi
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Optional;
 import java.util.Set;

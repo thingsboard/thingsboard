@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.notification.info.EntitiesLimitNotific
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.dao.notification.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;

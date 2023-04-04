@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.notification.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.TbMsg;
 
 public interface NotificationRuleProcessingService {

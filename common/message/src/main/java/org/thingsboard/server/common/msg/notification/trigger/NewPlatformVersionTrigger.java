@@ -13,30 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification.trigger;
+package org.thingsboard.server.common.msg.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
 
 @Data
 @Builder
-public class AlarmTrigger implements NotificationRuleTrigger {
+public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
-    private final TenantId tenantId;
-    private final AlarmApiCallResult alarmUpdate;
+    private final UpdateMessage message;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ALARM;
+        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
+    }
+
+    @Override
+    public TenantId getTenantId() {
+        return TenantId.SYS_TENANT_ID;
     }
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return alarmUpdate.getAlarm().getId();
+        return TenantId.SYS_TENANT_ID;
     }
 
 }

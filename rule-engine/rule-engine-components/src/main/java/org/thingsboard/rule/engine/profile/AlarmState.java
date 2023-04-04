@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.notification.info.ApiUsageLimitNotific
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.dao.notification.trigger.ApiUsageLimitTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;

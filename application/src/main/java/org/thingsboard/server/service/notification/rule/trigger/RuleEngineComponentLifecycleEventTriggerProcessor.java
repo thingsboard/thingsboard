@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineComponentLifecycleEventTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineComponentLifecycleEventTrigger;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.io.PrintWriter;

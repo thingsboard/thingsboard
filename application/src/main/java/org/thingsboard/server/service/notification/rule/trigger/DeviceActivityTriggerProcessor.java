@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivi
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.Set;
