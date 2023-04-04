@@ -26,7 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -57,7 +57,7 @@ public class DefaultUpdateService implements UpdateService {
     private boolean updatesEnabled;
 
     @Autowired
-    private NotificationRuleProcessingService notificationRuleProcessingService;
+    private NotificationRuleProcessor notificationRuleProcessor;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-update-service"));
 
@@ -135,7 +135,7 @@ public class DefaultUpdateService implements UpdateService {
                     version
             );
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
-                notificationRuleProcessingService.process(NewPlatformVersionTrigger.builder()
+                notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
                         .message(updateMessage)
                         .build());
             }

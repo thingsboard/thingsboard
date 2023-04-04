@@ -52,7 +52,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
-import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -107,7 +107,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private final ApiUsageStateService apiUsageStateService;
     private final TbTenantProfileCache tenantProfileCache;
     private final MailService mailService;
-    private final NotificationRuleProcessingService notificationRuleProcessingService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
     private final DbCallbackExecutorService dbExecutor;
     private final MailExecutorService mailExecutor;
 
@@ -341,7 +341,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             String email = tenantService.findTenantById(state.getTenantId()).getEmail();
             result.forEach((apiFeature, stateValue) -> {
                 ApiUsageRecordState recordState = createApiUsageRecordState((TenantApiUsageState) state, apiFeature, stateValue);
-                notificationRuleProcessingService.process(ApiUsageLimitTrigger.builder()
+                notificationRuleProcessor.process(ApiUsageLimitTrigger.builder()
                         .tenantId(state.getTenantId())
                         .state(recordState)
                         .status(stateValue)

@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification;
+package org.thingsboard.server.common.msg.notification;
 
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
-import org.thingsboard.server.common.msg.TbMsg;
 
-public interface NotificationRuleProcessingService {
+public interface NotificationRuleProcessor {
 
     void process(NotificationRuleTrigger trigger);
-
-    void process(TenantId tenantId, TbMsg ruleEngineMsg);
 
 }
