@@ -292,17 +292,15 @@ public class InstallScripts {
     }
 
     private void doSaveLwm2mResource(TbResource resource) throws ThingsboardException {
-        try {
-            log.trace("Executing saveResource [{}]", resource);
-            if (StringUtils.isEmpty(resource.getData())) {
-                throw new DataValidationException("Resource data should be specified!");
-            }
-            toLwm2mResource(resource);
+        log.trace("Executing saveResource [{}]", resource);
+        if (StringUtils.isEmpty(resource.getData())) {
+            throw new DataValidationException("Resource data should be specified!");
+        }
+        toLwm2mResource(resource);
+        TbResource foundResource =
+                resourceService.getResource(TenantId.SYS_TENANT_ID, ResourceType.LWM2M_MODEL, resource.getResourceKey());
+        if (foundResource == null) {
             resourceService.saveResource(resource);
-        } catch (DataValidationException e) {
-            log.debug("[{}] {}", resource.getFileName(), e.getMessage());
-        } catch (Exception ex) {
-            throw ex;
         }
     }
 }
