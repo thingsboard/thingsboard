@@ -65,7 +65,7 @@ server:
       max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
-    max_queue_messages_per_session: "${TB_SERVER_WS_MAX_QUEUE_MESSAGES_PER_SESSION:1000}"
+    default_queue_messages_per_session: "${TB_SERVER_WS_DEFAULT_QUEUE_MESSAGES_PER_SESSION:1000}"
   rest:
     server_side_rpc:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.

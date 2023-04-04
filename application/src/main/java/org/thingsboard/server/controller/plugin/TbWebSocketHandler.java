@@ -84,7 +84,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private long sendTimeout;
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
-    @Value("${server.ws.max_queue_messages_per_session:1000}")
+    @Value("${server.ws.default_queue_messages_per_session:1000}")
     private int wsQueueMessagesPerSession;
 
     private final ConcurrentMap<String, WebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
