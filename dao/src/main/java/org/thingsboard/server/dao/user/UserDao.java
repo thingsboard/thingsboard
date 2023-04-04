@@ -17,11 +17,14 @@ package org.thingsboard.server.dao.user;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserDao extends Dao<User>, TenantEntityDao {
@@ -78,5 +81,13 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
      * @return the list of user entities
      */
     PageData<User> findCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink);
+
+    PageData<User> findAll(PageLink pageLink);
+
+    PageData<User> findAllByAuthority(Authority authority, PageLink pageLink);
+
+    PageData<User> findByAuthorityAndTenantsIds(Authority authority, List<TenantId> tenantsIds, PageLink pageLink);
+
+    PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink);
 
 }

@@ -4241,7 +4241,6 @@
         "maximum-ota-packages-sum-data-size": "Suma màxima de la mida dels fitxers del paquet ota en bytes (0 - il·limitat)",
         "maximum-ota-package-sum-data-size-required": "Cal suma màxima de la mida dels fitxers del paquet ota.",
         "maximum-ota-package-sum-data-size-range": "Suma màxima de la mida dels fitxers del paquet ota no pot ser negatiu",
-        "transport-tenant-msg-rate-limit": "Taxa de missatges de transport per propietari.",
         "transport-tenant-telemetry-msg-rate-limit": "Taxa de missatges de telemetria per propietari.",
         "transport-tenant-telemetry-data-points-rate-limit": "Taxa de punts de dades per propietari.",
         "transport-device-msg-rate-limit": "Taxa de missatges de dispositiu.",

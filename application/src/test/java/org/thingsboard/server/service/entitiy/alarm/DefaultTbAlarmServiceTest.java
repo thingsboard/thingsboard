@@ -67,7 +67,7 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected AlarmService alarmService;
     @MockBean
-    protected AlarmCommentService alarmCommentService;
+    protected TbAlarmCommentService alarmCommentService;
     @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
@@ -101,7 +101,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
+        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
@@ -114,7 +114,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
+        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }

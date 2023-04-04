@@ -48,8 +48,13 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -63,6 +68,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -121,9 +131,20 @@ public class TenantIdLoaderTest {
     private RuleEngineRpcService rpcService;
     @Mock
     private RuleEngineApiUsageStateService ruleEngineApiUsageStateService;
+    @Mock
+    private NotificationTargetService notificationTargetService;
+    @Mock
+    private NotificationTemplateService notificationTemplateService;
+    @Mock
+    private NotificationRequestService notificationRequestService;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private NotificationRuleService notificationRuleService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
+    private NotificationId notificationId;
     private AbstractListeningExecutor dbExecutor;
 
     @Before
@@ -137,6 +158,7 @@ public class TenantIdLoaderTest {
         dbExecutor.init();
         this.tenantId = new TenantId(UUID.randomUUID());
         this.tenantProfileId = new TenantProfileId(UUID.randomUUID());
+        this.notificationId = new NotificationId(UUID.randomUUID());
 
         when(ctx.getTenantId()).thenReturn(tenantId);
 
@@ -153,6 +175,7 @@ public class TenantIdLoaderTest {
     private void initMocks(EntityType entityType, TenantId tenantId) {
         switch (entityType) {
             case TENANT:
+            case NOTIFICATION:
                 break;
             case CUSTOMER:
                 Customer customer = new Customer();
@@ -310,6 +333,30 @@ public class TenantIdLoaderTest {
 
                 when(ctx.getTenantProfile()).thenReturn(tenantProfile);
 
+                break;
+            case NOTIFICATION_TARGET:
+                NotificationTarget notificationTarget = new NotificationTarget();
+                notificationTarget.setTenantId(tenantId);
+                when(ctx.getNotificationTargetService()).thenReturn(notificationTargetService);
+                doReturn(notificationTarget).when(notificationTargetService).findNotificationTargetById(eq(tenantId), any());
+                break;
+            case NOTIFICATION_TEMPLATE:
+                NotificationTemplate notificationTemplate = new NotificationTemplate();
+                notificationTemplate.setTenantId(tenantId);
+                when(ctx.getNotificationTemplateService()).thenReturn(notificationTemplateService);
+                doReturn(notificationTemplate).when(notificationTemplateService).findNotificationTemplateById(eq(tenantId), any());
+                break;
+            case NOTIFICATION_REQUEST:
+                NotificationRequest notificationRequest = new NotificationRequest();
+                notificationRequest.setTenantId(tenantId);
+                when(ctx.getNotificationRequestService()).thenReturn(notificationRequestService);
+                doReturn(notificationRequest).when(notificationRequestService).findNotificationRequestById(eq(tenantId), any());
+                break;
+            case NOTIFICATION_RULE:
+                NotificationRule notificationRule = new NotificationRule();
+                notificationRule.setTenantId(tenantId);
+                when(ctx.getNotificationRuleService()).thenReturn(notificationRuleService);
+                doReturn(notificationRule).when(notificationRuleService).findNotificationRuleById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected original EntityType " + entityType);

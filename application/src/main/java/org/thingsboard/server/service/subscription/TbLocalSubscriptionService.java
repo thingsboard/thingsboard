@@ -18,8 +18,9 @@ package org.thingsboard.server.service.subscription;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
-import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
+import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
+import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 public interface TbLocalSubscriptionService {
 
@@ -32,6 +33,8 @@ public interface TbLocalSubscriptionService {
     void onSubscriptionUpdate(String sessionId, TelemetrySubscriptionUpdate update, TbCallback callback);
 
     void onSubscriptionUpdate(String sessionId, AlarmSubscriptionUpdate update, TbCallback callback);
+
+    void onSubscriptionUpdate(String sessionId, int subscriptionId, NotificationsSubscriptionUpdate update, TbCallback callback);
 
     void onApplicationEvent(PartitionChangeEvent event);
 

@@ -30,10 +30,11 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { QueueInfo } from '@shared/models/queue.models';
 import { UtilsService } from '@core/services/utils.service';
 import { guid } from '@core/utils';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-tenant-profile-queues',
@@ -70,8 +71,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
   @Input()
   disabled: boolean;
 
-  private valueChangeSubscription$: Subscription = null;
-
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -83,12 +83,6 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     this.propagateChange = fn;
   }
 
-  ngOnDestroy() {
-    if (this.valueChangeSubscription$) {
-      this.valueChangeSubscription$.unsubscribe();
-    }
-  }
-
   registerOnTouched(fn: any): void {
   }
 
@@ -96,6 +90,15 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     this.tenantProfileQueuesFormGroup = this.fb.group({
       queues: this.fb.array([])
     });
+
+    this.tenantProfileQueuesFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get queuesFormArray(): UntypedFormArray {
@@ -112,30 +115,28 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(queues: Array<QueueInfo> | null): void {
-    if (this.valueChangeSubscription$) {
-      this.valueChangeSubscription$.unsubscribe();
-    }
-    const queuesControls: Array<AbstractControl> = [];
-    if (queues) {
-      queues.forEach((queue, index) => {
-        if (!queue.id) {
-          if (!this.idMap[index]) {
-            this.idMap.push(guid());
-          }
-          queue.id = this.idMap[index];
-        }
-        queuesControls.push(this.fb.control(queue, [Validators.required]));
-      });
-    }
-    this.tenantProfileQueuesFormGroup.setControl('queues', this.fb.array(queuesControls));
-    if (this.disabled) {
-      this.tenantProfileQueuesFormGroup.disable({emitEvent: false});
+    if (queues.length === this.queuesFormArray.length) {
+      this.queuesFormArray.patchValue(queues, {emitEvent: false});
     } else {
-      this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
+      const queuesControls: Array<AbstractControl> = [];
+      if (queues) {
+        queues.forEach((queue, index) => {
+          if (!queue.id) {
+            if (!this.idMap[index]) {
+              this.idMap.push(guid());
+            }
+            queue.id = this.idMap[index];
+          }
+          queuesControls.push(this.fb.control(queue, [Validators.required]));
+        });
+      }
+      this.tenantProfileQueuesFormGroup.setControl('queues', this.fb.array(queuesControls), {emitEvent: false});
+      if (this.disabled) {
+        this.tenantProfileQueuesFormGroup.disable({emitEvent: false});
+      } else {
+        this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
+      }
     }
-    this.valueChangeSubscription$ = this.tenantProfileQueuesFormGroup.valueChanges.subscribe(() =>
-      this.updateModel()
-    );
   }
 
   public trackByQueue(index: number, queueControl: AbstractControl) {
