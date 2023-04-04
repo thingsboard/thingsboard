@@ -245,7 +245,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         return toAlarmApiResult(alarmRepository.createOrUpdateActiveAlarm(
                 request.getTenantId().getId(),
                 request.getCustomerId() != null ? request.getCustomerId().getId() : CustomerId.NULL_UUID,
-                UUID.randomUUID(),
+                request.getEdgeAlarmId() != null ? request.getEdgeAlarmId().getId() : UUID.randomUUID(),
                 System.currentTimeMillis(),
                 request.getOriginator().getId(),
                 request.getOriginator().getEntityType().ordinal(),
