@@ -16,19 +16,17 @@
 package org.thingsboard.server.controller;
 
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@RunWith(SpringRunner.class)
 public class BaseTelemetryControllerTest extends AbstractControllerTest {
-    @SpyBean
-    private GatewayNotificationsService gatewayNotificationsService;
 
     @Test
     public void testConstraintValidatorCalledAtLeastOnce() throws Exception {
@@ -52,8 +50,6 @@ public class BaseTelemetryControllerTest extends AbstractControllerTest {
         deviceCredentials.setCredentialsId(testToken);
 
         SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, deviceCredentials);
-
-        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         Device savedDevice = readResponse(doPost("/api/device-with-credentials", saveRequest).andExpect(status().isOk()), Device.class);
         return savedDevice;
