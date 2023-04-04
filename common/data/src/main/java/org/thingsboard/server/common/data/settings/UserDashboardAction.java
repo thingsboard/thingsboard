@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.server.common.data.settings;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.settings.UserSettings;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+public enum UserDashboardAction {
 
-public interface UserSettingsDao {
-
-    UserSettings save(TenantId tenantId, UserSettings userSettings);
-
-    UserSettings findById(TenantId tenantId, UserSettingsCompositeKey key);
-
-    void removeById(TenantId tenantId, UserSettingsCompositeKey key);
+    VISIT, STAR, UNSTAR
 
 }

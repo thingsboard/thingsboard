@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,11 +62,17 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
 
     private UserId userId;
 
+    private AlarmId edgeAlarmId;
+
     public static AlarmCreateOrUpdateActiveRequest fromAlarm(Alarm a) {
         return fromAlarm(a, null);
     }
 
     public static AlarmCreateOrUpdateActiveRequest fromAlarm(Alarm a, UserId userId) {
+        return fromAlarm(a, userId, null);
+    }
+
+    public static AlarmCreateOrUpdateActiveRequest fromAlarm(Alarm a, UserId userId, AlarmId edgeAlarmId) {
         return AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(a.getTenantId())
                 .customerId(a.getCustomerId())
@@ -81,6 +88,7 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
                         .propagateToTenant(a.isPropagateToTenant())
                         .propagateRelationTypes(a.getPropagateRelationTypes()).build())
                 .userId(userId)
+                .edgeAlarmId(edgeAlarmId)
                 .build();
     }
 

@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.server.dao.dashboard;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.settings.UserSettings;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import org.thingsboard.server.common.data.id.DashboardId;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("UserSettingsCache")
-public class UserSettingsCaffeineCache extends CaffeineTbTransactionalCache<UserSettingsCompositeKey, UserSettings> {
+@Service("DashboardTitlesCache")
+public class DashboardTitlesCaffeineCache extends CaffeineTbTransactionalCache<DashboardId, String> {
 
-    public UserSettingsCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.USER_SETTINGS_CACHE);
+    public DashboardTitlesCaffeineCache(CacheManager cacheManager) {
+        super(cacheManager, CacheConstants.DASHBOARD_TITLES_CACHE);
     }
 
 }
