@@ -36,7 +36,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
-import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType } from '@shared/models/entity-type.models';
 import { deepClone, deepTrim, isDefined } from '@core/utils';
 import { Observable, Subject } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
@@ -129,8 +129,16 @@ export class RuleNotificationDialogComponent extends
   apiFeatureTranslationMap = ApiFeatureTranslationMap;
 
   entityType = EntityType;
-  entityTypes = Array.from(entityTypeTranslations.keys()).filter(type => !!this.entityType[type]);
   isAdd = true;
+
+  allowEntityTypeForEntitiesLimit = [
+    EntityType.DEVICE,
+    EntityType.ASSET,
+    EntityType.CUSTOMER,
+    EntityType.USER,
+    EntityType.DASHBOARD,
+    EntityType.RULE_CHAIN
+  ];
 
   selectedIndex = 0;
 
@@ -143,6 +151,7 @@ export class RuleNotificationDialogComponent extends
   private triggerTypeFormsMap: Map<TriggerType, FormGroup>;
   private authState: AuthState = getCurrentAuthState(this.store);
   private authUser: AuthUser = this.authState.authUser;
+  private _allowEntityTypeForEntityAction: EntityType[];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -427,5 +436,21 @@ export class RuleNotificationDialogComponent extends
       return [TriggerType.ENTITIES_LIMIT, TriggerType.API_USAGE_LIMIT];
     }
     return Object.values(TriggerType).filter(type => type !== TriggerType.ENTITIES_LIMIT && type !== TriggerType.API_USAGE_LIMIT);
+  }
+
+  get allowEntityTypeForEntityAction(): EntityType[] {
+    if (!this._allowEntityTypeForEntityAction) {
+      const excludeEntityType: Set<EntityType> = new Set([
+        EntityType.API_USAGE_STATE,
+        EntityType.TENANT_PROFILE,
+        EntityType.RPC,
+        EntityType.QUEUE,
+        EntityType.NOTIFICATION,
+        EntityType.NOTIFICATION_REQUEST,
+        EntityType.WIDGET_TYPE
+      ]);
+      this._allowEntityTypeForEntityAction = Object.values(EntityType).filter(type => !excludeEntityType.has(type));
+    }
+    return this._allowEntityTypeForEntityAction;
   }
 }

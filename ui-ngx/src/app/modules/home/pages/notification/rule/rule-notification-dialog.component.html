@@ -215,7 +215,7 @@
           <legend translate>notification.filter</legend>
           <tb-entity-type-list required
                                ignoreAuthorityFilter
-                               [allowedEntityTypes]="entityTypes"
+                               [allowedEntityTypes]="allowEntityTypeForEntityAction"
                                formControlName="entityTypes">
           </tb-entity-type-list>
           <section fxLayout="column" fxLayoutGap="8px">
@@ -413,7 +413,7 @@
           <legend translate>notification.filter</legend>
           <tb-entity-type-list formControlName="entityTypes"
                                ignoreAuthorityFilter
-                               [allowedEntityTypes]="entityTypes">
+                               [allowedEntityTypes]="allowEntityTypeForEntitiesLimit">
           </tb-entity-type-list>
           <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
                fxLayout.xs="column"  fxLayoutAlign.xs="stretch">
