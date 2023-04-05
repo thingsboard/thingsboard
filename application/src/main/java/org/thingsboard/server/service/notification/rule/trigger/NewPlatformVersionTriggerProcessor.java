@@ -44,7 +44,7 @@ public class NewPlatformVersionTriggerProcessor implements NotificationRuleTrigg
     @Override
     public NotificationInfo constructNotificationInfo(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
         return NewPlatformVersionNotificationInfo.builder()
-                .message(trigger.getMessage().getMessage())
+                .message("New version available - " + trigger.getMessage().getLatestVersion())
                 .build();
     }
 
