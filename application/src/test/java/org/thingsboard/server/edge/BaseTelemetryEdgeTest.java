@@ -17,10 +17,7 @@ package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.AbstractMessage;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
@@ -271,10 +268,7 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
                 .setEntityType(savedAsset.getId().getEntityType().name());
         AttributeDeleteMsg.Builder attributeDeleteMsg = AttributeDeleteMsg.newBuilder();
         attributeDeleteMsg.setScope(DataConstants.SERVER_SCOPE);
-        ArrayNode arrayNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
-        arrayNode.add(attributeKey);
-        List<String> keys = new Gson().fromJson(arrayNode.toString(), new TypeToken<>(){}.getType());
-        attributeDeleteMsg.addAllAttributeNames(keys);
+        attributeDeleteMsg.addAllAttributeNames(List.of(attributeKey));
         attributeDeleteMsg.build();
         builder.setAttributeDeleteMsg(attributeDeleteMsg);
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
