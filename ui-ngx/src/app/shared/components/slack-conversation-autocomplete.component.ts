@@ -134,6 +134,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'slackChanelType' || propName === 'token') {
           this.clearSlackCache();
+          this.dirty = true;
           this.conversationSlackFormGroup.get('conversation').patchValue('');
         }
       }
@@ -167,8 +168,8 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
 
   onFocus() {
     if (this.dirty) {
-      this.conversationSlackFormGroup.get('conversation').updateValueAndValidity({onlySelf: true, emitEvent: true});
       this.dirty = false;
+      this.conversationSlackFormGroup.get('conversation').updateValueAndValidity({onlySelf: true, emitEvent: true});
     }
   }
 
@@ -184,6 +185,9 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
   }
 
   private fetchSlackConversation(searchText?: string): Observable<Array<SlackConversation>> {
+    if (this.dirty) {
+      return of([]);
+    }
     if (this.slackSearchText !== searchText || this.latestSearchConversetionResult === null) {
       this.slackSearchText = searchText;
       const slackConversationFilter = this.createSlackConversationFilter(this.slackSearchText);
