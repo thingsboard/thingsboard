@@ -21,18 +21,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.asset.AssetDao;
-import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.dashboard.DashboardDao;
-import org.thingsboard.server.dao.device.DeviceDao;
+import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.dao.user.UserDao;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,11 +42,7 @@ import java.util.concurrent.ExecutionException;
 @RequiredArgsConstructor
 public class BasicUsageInfoService implements UsageInfoService {
 
-    private final DeviceDao deviceDao;
-    private final AssetDao assetDao;
-    private final CustomerDao customerDao;
-    private final UserDao userDao;
-    private final DashboardDao dashboardDao;
+    private final EntityCountService countService;
     private final ApiUsageStateService apiUsageStateService;
     private final TimeseriesService tsService;
     @Lazy
@@ -60,15 +53,15 @@ public class BasicUsageInfoService implements UsageInfoService {
         DefaultTenantProfileConfiguration profileConfiguration =
                 (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
         UsageInfo usageInfo = new UsageInfo();
-        usageInfo.setDevices(deviceDao.countByTenantId(tenantId));
+        usageInfo.setDevices(countService.countByTenantIdAndEntityType(tenantId, EntityType.DEVICE));
         usageInfo.setMaxDevices(profileConfiguration.getMaxDevices());
-        usageInfo.setAssets(assetDao.countByTenantId(tenantId));
+        usageInfo.setAssets(countService.countByTenantIdAndEntityType(tenantId, EntityType.ASSET));
         usageInfo.setMaxAssets(profileConfiguration.getMaxAssets());
-        usageInfo.setCustomers(customerDao.countByTenantId(tenantId));
+        usageInfo.setCustomers(countService.countByTenantIdAndEntityType(tenantId, EntityType.CUSTOMER));
         usageInfo.setMaxCustomers(profileConfiguration.getMaxCustomers());
-        usageInfo.setUsers(userDao.countByTenantId(tenantId));
+        usageInfo.setUsers(countService.countByTenantIdAndEntityType(tenantId, EntityType.USER));
         usageInfo.setMaxUsers(profileConfiguration.getMaxUsers());
-        usageInfo.setDashboards(dashboardDao.countByTenantId(tenantId));
+        usageInfo.setDashboards(countService.countByTenantIdAndEntityType(tenantId, EntityType.DASHBOARD));
         usageInfo.setMaxDashboards(profileConfiguration.getMaxDashboards());
 
         usageInfo.setMaxAlarms(profileConfiguration.getMaxCreatedAlarms());
