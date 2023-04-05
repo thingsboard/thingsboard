@@ -42,5 +42,6 @@ public class CacheConstants {
     public static final String TWO_FA_VERIFICATION_CODES_CACHE = "twoFaVerificationCodes";
     public static final String VERSION_CONTROL_TASK_CACHE = "versionControlTask";
     public static final String USER_SETTINGS_CACHE = "userSettings";
+    public static final String DASHBOARD_TITLES_CACHE = "dashboardTitles";
     public static final String ENTITY_COUNT_CACHE = "entityCount";
 }

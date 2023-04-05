@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security;
+package org.thingsboard.server.common.data.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,7 +43,12 @@ public class UserSettings implements Serializable {
     @ApiModelProperty(position = 1, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private UserId userId;
 
-    @ApiModelProperty(position = 2, value = "JSON object with user settings.", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 2, value = "Type of the settings.")
+    @NoXss
+    @Length(fieldName = "type", max = 50)
+    private UserSettingsType type;
+
+    @ApiModelProperty(position = 3, value = "JSON object with user settings.", dataType = "com.fasterxml.jackson.databind.JsonNode")
     @NoXss
     @Length(fieldName = "settings", max = 100000)
     private transient JsonNode settings;

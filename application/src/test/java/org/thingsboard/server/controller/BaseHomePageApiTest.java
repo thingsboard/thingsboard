@@ -245,15 +245,16 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(1, pageData.getData().size());
         Assert.assertEquals(apiUsageState.getId(), pageData.getData().get(0).getEntityId());
 
+        List<String> metrics = List.of("cpuUsage", "memoryUsage", "discUsage", "cpuCount", "totalMemory", "totalDiscSpace");
         update = getWsClient().subscribeTsUpdate(
-                List.of("memoryUsage", "totalMemory", "freeMemory", "cpuUsage", "totalCpuUsage", "freeDiscSpace", "totalDiscSpace"),
+                metrics,
                 now, TimeUnit.HOURS.toMillis(1));
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> listData = update.getUpdate();
         Assert.assertNotNull(listData);
         Assert.assertEquals(1, listData.size());
         Assert.assertEquals(apiUsageState.getId(), listData.get(0).getEntityId());
-        Assert.assertEquals(7, listData.get(0).getTimeseries().size());
+        Assert.assertEquals(metrics.size(), listData.get(0).getTimeseries().size());
 
         for (TsValue[] tsv : listData.get(0).getTimeseries().values()) {
             Assert.assertTrue(tsv.length > 0);
