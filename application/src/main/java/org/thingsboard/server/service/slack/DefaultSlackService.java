@@ -155,7 +155,7 @@ public class DefaultSlackService implements SlackService {
                 String neededScope = response.getNeeded();
                 error = "bot token scope '" + neededScope + "' is needed";
             }
-            throw new RuntimeException("Failed to send message via Slack: " + error);
+            throw new RuntimeException("Slack API error: " + error);
         }
 
         return response;

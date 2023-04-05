@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 
 @RuleNode(
         type = ComponentType.EXTERNAL,
-        name = "send to Slack",
+        name = "send to slack",
         configClazz = TbSlackNodeConfiguration.class,
         nodeDescription = "Send message via Slack",
         nodeDetails = "Sends message to a Slack channel or user",

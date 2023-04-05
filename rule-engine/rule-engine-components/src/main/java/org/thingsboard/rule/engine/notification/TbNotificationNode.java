@@ -64,7 +64,7 @@ public class TbNotificationNode implements TbNode {
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .targets(config.getTargets())
-                .templateId(new NotificationTemplateId(config.getTemplateId()))
+                .templateId(config.getTemplateId())
                 .info(notificationInfo)
                 .additionalConfig(new NotificationRequestConfig())
                 .originatorEntityId(ctx.getSelf().getRuleChainId())
