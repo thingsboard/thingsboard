@@ -17,6 +17,7 @@
 import { ValidatorFn } from '@angular/forms';
 import { isNotEmptyStr, isNumber } from '@core/utils';
 import { VersionCreateConfig } from '@shared/models/vc.models';
+import { HasUUID } from '@shared/models/id/has-uuid';
 
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
@@ -48,13 +49,13 @@ export interface MailServerSettings {
   proxyUser: string;
   proxyPassword: string;
   enableOauth2: boolean;
-  providerId?: MailServerOauth2Provider;
+  providerId?: string;
   clientId?: string;
   clientSecret?: string;
   providerTenantId?: string;
   authUri?: string;
   tokenUri?: string;
-  scope?: string;
+  scope?: Array<string>;
   redirectUri?: string;
   tokenGenerated?: boolean;
 }
@@ -75,8 +76,10 @@ export const mailServerOauth2ProvidersTranslations = new Map<MailServerOauth2Pro
 );
 
 export interface MailConfigTemplate {
-  name: MailServerOauth2Provider;
-  providerId: MailServerOauth2Provider;
+  id: HasUUID;
+  createdTime: number;
+  name: string;
+  providerId: string;
   helpLink: string;
   scope: Array<string>;
   accessTokenUri: string;

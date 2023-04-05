@@ -41,21 +41,19 @@
           <mat-form-field class="mat-block">
             <mat-label translate>admin.oauth2.login-provider</mat-label>
             <mat-select formControlName="providerId">
-              <mat-option *ngFor="let provider of mailServerOauth2Providers" [value]="provider">
-                {{ mailServerOauth2ProvidersTranslations.get(provider) | translate }}
+              <mat-option *ngFor="let provider of templateProvider" [value]="provider">
+                {{ (mailServerOauth2ProvidersTranslations.get(provider) || provider) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
 
-          <mat-expansion-panel class="configuration-panel" [expanded]="mailSettings.get('providerId').value === mailServerOauth2Provider.CUSTOM">
+          <mat-expansion-panel class="configuration-panel mat-elevation-z0" [expanded]="mailSettings.get('providerId').value === mailServerOauth2Provider.CUSTOM">
             <mat-expansion-panel-header>
-              <mat-panel-description fxLayoutAlign="end" translate>
-                tenant-profile.advanced-settings
-              </mat-panel-description>
+              <mat-panel-title fxLayoutAlign="start center" translate>
+                admin.connection-settings
+              </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <fieldset class="fields-group" fxLayout="column">
-                <legend class="group-title" translate>admin.connection-settings</legend>
                 <mat-form-field class="mat-block">
                   <mat-label translate>admin.smtp-protocol</mat-label>
                   <mat-select formControlName="smtpProtocol">
@@ -141,7 +139,6 @@
                     <tb-toggle-password matSuffix></tb-toggle-password>
                   </mat-form-field>
                 </div>
-              </fieldset>
             </ng-template>
           </mat-expansion-panel>
 
@@ -152,7 +149,7 @@
               <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
                      autocomplete="new-username"/>
             </mat-form-field>
-            <div fxLayoutAlign="space-between center" style="height: 50px;">
+            <div fxLayoutAlign="space-between center" style="height: 50px;" [fxHide]="mailSettings.get('providerId').value === mailServerOauth2Provider.SENDGRID">
               <mat-button-toggle-group class="tb-notification-unread-toggle-group"
                                        style="width: 250px;"
                                        formControlName="enableOauth2">
@@ -160,7 +157,7 @@
                 <mat-button-toggle fxFlex [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</mat-button-toggle>
               </mat-button-toggle-group>
               <div class="details-buttons" *ngIf="helpLink && mailSettings.get('enableOauth2').value">
-                <div fxHIde="true" [tb-help]="helpLink"></div>
+                <div [tb-help]="helpLink"></div>
               </div>
             </div>
             <section *ngIf="!mailSettings.get('enableOauth2').value">
@@ -204,29 +201,64 @@
                   {{ 'admin.oauth2.microsoft-tenant-id-required' | translate }}
                 </mat-error>
               </mat-form-field>
-              <section *ngIf="mailSettings.get('providerId').value === mailServerOauth2Provider.CUSTOM">
-                <mat-form-field fxFlex class="mat-block">
-                  <mat-label translate>admin.oauth2.authorization-uri</mat-label>
-                  <input matInput formControlName="authUri" required>
-                  <mat-error *ngIf="mailSettings.get('authUri').hasError('required')">
-                    {{ 'admin.oauth2.authorization-uri-required' | translate }}
-                  </mat-error>
-                </mat-form-field>
-                <mat-form-field fxFlex class="mat-block">
-                  <mat-label translate>admin.oauth2.token-uri</mat-label>
-                  <input matInput formControlName="tokenUri" required>
-                  <mat-error *ngIf="mailSettings.get('tokenUri').hasError('required')">
-                    {{ 'admin.oauth2.token-uri-required' | translate }}
-                  </mat-error>
-                </mat-form-field>
-                <mat-form-field fxFlex class="mat-block">
-                  <mat-label translate>admin.oauth2.scope</mat-label>
-                  <input matInput formControlName="scope" required>
-                  <mat-error *ngIf="mailSettings.get('scope').hasError('required')">
-                    {{ 'admin.oauth2.scope-required' | translate }}
-                  </mat-error>
-                </mat-form-field>
-              </section>
+              <mat-expansion-panel class="mat-elevation-z0" [expanded]="mailSettings.get('providerId').value === mailServerOauth2Provider.CUSTOM">
+                <mat-expansion-panel-header>
+                  <mat-panel-description fxLayoutAlign="end" translate>
+                    tenant-profile.advanced-settings
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <mat-form-field fxFlex class="mat-block">
+                    <mat-label translate>admin.oauth2.authorization-uri</mat-label>
+                    <input matInput formControlName="authUri" required>
+                    <button mat-icon-button matSuffix
+                            type="button"
+                            (click)="toggleEditMode('authUri')">
+                      <mat-icon class="material-icons">create</mat-icon>
+                    </button>
+                    <mat-error *ngIf="mailSettings.get('authUri').hasError('required')">
+                      {{ 'admin.oauth2.access-token-uri-required' | translate }}
+                    </mat-error>
+                    <mat-error *ngIf="mailSettings.get('authUri').hasError('pattern')">
+                      {{ 'admin.oauth2.uri-pattern-error' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field fxFlex class="mat-block">
+                    <mat-label translate>admin.oauth2.token-uri</mat-label>
+                    <input matInput formControlName="tokenUri" required>
+                    <button mat-icon-button matSuffix
+                            type="button"
+                            (click)="toggleEditMode('tokenUri')">
+                      <mat-icon class="material-icons">create</mat-icon>
+                    </button>
+                    <mat-error *ngIf="mailSettings.get('tokenUri').hasError('required')">
+                      {{ 'admin.oauth2.access-token-uri-required' | translate }}
+                    </mat-error>
+                    <mat-error *ngIf="mailSettings.get('tokenUri').hasError('pattern')">
+                      {{ 'admin.oauth2.uri-pattern-error' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field fxFlex class="mat-block">
+                    <mat-label translate>admin.oauth2.scope</mat-label>
+                    <mat-chip-grid #scopeList>
+                      <mat-chip-row *ngFor="let scope of mailSettings.get('scope').value; let k = index; trackBy: trackByParams"
+                                    removable (removed)="removeScope(k)">
+                        {{scope}}
+                        <mat-icon matChipRemove>cancel</mat-icon>
+                      </mat-chip-row>
+                      <input [matChipInputFor]="scopeList"
+                             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                             matChipInputAddOnBlur
+                             (matChipInputTokenEnd)="addScope($event)">
+                    </mat-chip-grid>
+                    <mat-error *ngIf="mailSettings.get('scope').hasError('required')">
+                      {{ 'admin.oauth2.scope-required' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+                </ng-template>
+              </mat-expansion-panel>
+
               <fieldset class="fields-group" fxLayout="column">
                 <legend class="group-title" translate>admin.oauth2.redirect-uri</legend>
                 <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">

@@ -18,11 +18,13 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, UntypedFormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   AdminSettings,
-  MailServerOauth2Provider, mailServerOauth2ProvidersTranslations,
+  MailConfigTemplate,
+  MailServerOauth2Provider,
+  mailServerOauth2ProvidersTranslations,
   MailServerSettings,
   smtpPortPattern,
   SmtpProtocol
@@ -34,12 +36,11 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import {
-  DomainSchema,
-  domainSchemaTranslations,
-} from '@shared/models/oauth2.models';
+import { DomainSchema, domainSchemaTranslations, } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
 import { AuthService } from '@core/auth/auth.service';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-mail-server',
@@ -55,18 +56,22 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   domainSchemaTranslations = domainSchemaTranslations;
 
   mailServerOauth2Provider = MailServerOauth2Provider;
-  mailServerOauth2Providers = Object.values(MailServerOauth2Provider);
   mailServerOauth2ProvidersTranslations = mailServerOauth2ProvidersTranslations;
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
   helpLink: string;
 
+  templates = new Map<string, MailConfigTemplate>();
+
+  templateProvider = ['CUSTOM'];
+
+  readonly separatorKeysCodes: number[] = [ENTER, COMMA];
+
   private destroy$ = new Subject<void>();
   private DOMAIN_AND_PORT_REGEXP = /^(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?$/;
+  private URL_REGEXP = /^[A-Za-z][A-Za-z\d.+-]*:\/*(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?(?:\/[\w#!:.,?+=&%@\-/]*)?$/;
   private loginProcessingUrl: string;
-
-  private mailConfigTemplate: any;
 
   mailSettings = this.fb.group({
     mailFrom: ['', [Validators.required]],
@@ -89,13 +94,13 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     changePassword: [false],
     password: [''],
     enableOauth2: [false],
-    providerId: [MailServerOauth2Provider.CUSTOM, [Validators.required]],
+    providerId: ['', [Validators.required]],
     clientId: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(255)]],
     clientSecret: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(2048)]],
     providerTenantId: [{value: '', disabled: true}, [Validators.required]],
-    authUri: [{value: '', disabled: true}, [Validators.required]],
-    tokenUri: [{value: '', disabled: true}, [Validators.required]],
-    scope: [{value: '', disabled: true}, [Validators.required]],
+    authUri: [{value: '', disabled: true}, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
+    tokenUri: [{value: '', disabled: true}, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
+    scope: [],
     redirectUri: [{ value:'', disabled: true}]
   });
 
@@ -118,7 +123,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     providerTenantId: '',
     authUri: '',
     tokenUri: '',
-    scope: '',
+    scope: [],
     redirectUri: ''
   };
 
@@ -151,7 +156,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.adminService.getAdminSettings<MailServerSettings>('mail')
     ]).subscribe(([loginProcessingUrl, mailConfigTemplate, adminSettings]) => {
       this.loginProcessingUrl = loginProcessingUrl;
-      this.mailConfigTemplate = mailConfigTemplate;
+      this.initTemplates(mailConfigTemplate);
       this.adminSettings = adminSettings;
       if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
         this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
@@ -159,13 +164,11 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.showChangePassword = isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword)
         ? this.adminSettings.jsonValue.showChangePassword : true;
       delete this.adminSettings.jsonValue.showChangePassword;
-      this.mailSettings.reset(this.adminSettings.jsonValue);
+      this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
       this.enableMailPassword(!this.showChangePassword);
       this.enableProxyChanged();
       this.enableTls(this.adminSettings.jsonValue.enableTls);
-      this.helpLink = this.mailConfigTemplate.find(
-        mailConfig => mailConfig.providerId === this.mailServerOauth2Provider[this.adminSettings.jsonValue.providerId]
-      )?.helpLink;
+      this.helpLink = this.templates.get(this.adminSettings.jsonValue.providerId)?.helpLink || null;
       if (this.adminSettings.jsonValue.enableOauth2) {
         this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
         this.enableProviderTenantIdChanged(this.adminSettings.jsonValue.providerId);
@@ -181,6 +184,15 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.destroy$.next();
     this.destroy$.complete();
     super.ngOnDestroy();
+  }
+
+  private initTemplates(templates): void {
+    templates.map(provider => {
+      delete provider.additionalInfo;
+      this.templates.set(provider.providerId, provider);
+    });
+    this.templateProvider.push(...Array.from(this.templates.keys()));
+    this.templateProvider.sort();
   }
 
   private mailServerSettingsForm(): void {
@@ -215,47 +227,44 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       }
     });
 
+    this.mailSettings.get('providerTenantId').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(tenantId => {
+      const authorizationUri = this.templates.get(this.mailServerOauth2Provider.OFFICE_365).authorizationUri.replace('%s', `${tenantId}`);
+      const accessTokenUri = this.templates.get(this.mailServerOauth2Provider.OFFICE_365).accessTokenUri.replace('%s', `${tenantId}`);
+      this.mailSettings.get('authUri').patchValue(authorizationUri, {emitEvent: false});
+      this.mailSettings.get('tokenUri').patchValue(accessTokenUri, {emitEvent: false});
+    });
+
     this.mailSettings.get('providerId').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe( value => {
-      let config;
-      if (value) {
-        config = this.mailConfigTemplate.find(mailConfig => mailConfig.providerId === this.mailServerOauth2Provider[value]);
-      }
-      if (this.adminSettings.jsonValue.providerId !== this.mailServerOauth2Provider[value]) {
-        if (value === this.mailServerOauth2Provider.CUSTOM || !value) {
-          this.mailSettings.reset({...this.adminSettings.jsonValue, ...this.defaultConfiguration}, {emitEvent: false});
-        } else {
-          this.helpLink = config.helpLink;
-          this.mailSettings.patchValue({
-            smtpProtocol: SmtpProtocol[config.smtpProtocol],
-            smtpHost: config.smtpHost,
-            smtpPort: config.smtpPort,
-            timeout: config.timeout,
-            enableTls: config.enableTls,
-            tlsVersion: config.tlsVersion,
-            authUri: config.authorizationUri,
-            tokenUri: config.accessTokenUri,
-            scope: config.scope,
-            enableOauth2: false,
-            enableProxy: false,
-            proxyHost: '',
-            proxyPort: null,
-            proxyUser: '',
-            proxyPassword: '',
-            clientId: '',
-            clientSecret: '',
-            providerTenantId: '',
-            redirectUri: ''
-          }, {emitEvent: false});
-        }
-      } else if (this.adminSettings.jsonValue.providerId === this.mailServerOauth2Provider[value]) {
-        this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
-      }
-      if (value === this.mailServerOauth2Provider.SENDGRID) {
-        this.mailSettings.get('enableOauth2').disable({emitEvent: false});
+      if (value === this.mailServerOauth2Provider.CUSTOM || !value) {
+        this.mailSettings.reset({...this.adminSettings.jsonValue, ...this.defaultConfiguration}, {emitEvent: false});
       } else {
-        this.mailSettings.get('enableOauth2').enable({emitEvent: false});
+        const config = this.templates.get(value);
+        this.helpLink = config.helpLink;
+        this.mailSettings.patchValue({
+          smtpProtocol: SmtpProtocol[config.smtpProtocol],
+          smtpHost: config.smtpHost,
+          smtpPort: config.smtpPort,
+          timeout: config.timeout,
+          enableTls: config.enableTls,
+          tlsVersion: config.tlsVersion,
+          authUri: config.authorizationUri,
+          tokenUri: config.accessTokenUri,
+          scope: config.scope,
+          enableOauth2: false,
+          enableProxy: false,
+          proxyHost: '',
+          proxyPort: null,
+          proxyUser: '',
+          proxyPassword: '',
+          clientId: '',
+          clientSecret: '',
+          providerTenantId: '',
+          redirectUri: ''
+        }, {emitEvent: false});
       }
       this.enableOauth2(this.mailSettings.get('enableOauth2').value);
       this.enableProviderTenantIdChanged(value);
@@ -296,20 +305,23 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.mailSettings.get('clientId').enable({emitEvent: false});
       this.mailSettings.get('clientSecret').enable({emitEvent: false});
       this.mailSettings.get('redirectUri').enable({emitEvent: false});
-      this.mailSettings.get('authUri').enable({emitEvent: false});
-      this.mailSettings.get('tokenUri').enable({emitEvent: false});
-      this.mailSettings.get('scope').enable({emitEvent: false});
+      if (this.mailSettings.get('providerId').value === this.mailServerOauth2Provider.CUSTOM) {
+        this.mailSettings.get('authUri').enable({emitEvent: false});
+        this.mailSettings.get('tokenUri').enable({emitEvent: false});
+      } else {
+        this.mailSettings.get('authUri').disable({emitEvent: false});
+        this.mailSettings.get('tokenUri').disable({emitEvent: false});
+      }
     } else {
       this.mailSettings.get('clientId').disable({emitEvent: false});
       this.mailSettings.get('clientSecret').disable({emitEvent: false});
       this.mailSettings.get('redirectUri').disable({emitEvent: false});
       this.mailSettings.get('authUri').disable({emitEvent: false});
       this.mailSettings.get('tokenUri').disable({emitEvent: false});
-      this.mailSettings.get('scope').disable({emitEvent: false});
     }
   }
 
-  private enableProviderTenantIdChanged(value: MailServerOauth2Provider): void {
+  private enableProviderTenantIdChanged(value: string): void {
     if (value === this.mailServerOauth2Provider.OFFICE_365 && this.mailSettings.get('enableOauth2').value) {
       this.mailSettings.get('providerTenantId').enable({emitEvent: false});
     } else {
@@ -417,4 +429,34 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     delete formValue.changePassword;
     return formValue;
   }
+
+  trackByParams(index: number): number {
+    return index;
+  }
+
+  removeScope(i: number): void {
+    const controller = this.mailSettings.get('scope') as UntypedFormArray;
+    controller.removeAt(i);
+    controller.markAsTouched();
+    controller.markAsDirty();
+  }
+
+  addScope(event: MatChipInputEvent): void {
+    const input = event.chipInput.inputElement;
+    const value = event.value;
+    const controller = this.mailSettings.get('scope') as UntypedFormArray;
+    if ((value.trim() !== '')) {
+      controller.push(this.fb.control(value.trim()));
+      controller.markAsDirty();
+    }
+
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  toggleEditMode(path: string): void {
+    this.mailSettings.get(path).disabled ? this.mailSettings.get(path).enable() : this.mailSettings.get(path).disable();
+  }
+
 }

@@ -37,30 +37,18 @@
 
   ::ng-deep{
     .mat-expansion-panel {
+      .mat-expansion-panel-header {
+        height: 48px;
+        padding: 0 12px;
+        &.mat-expanded {
+          height: 48px;
+        }
+      }
+      .mat-expansion-panel-body {
+        padding: 0 12px;
+      }
       &.configuration-panel {
-        box-shadow: none;
-
-        .mat-expansion-panel-header {
-          padding: 0;
-
-          &:hover {
-            background: none !important;
-          }
-
-          .mat-expansion-indicator {
-            padding: 2px;
-          }
-        }
-
-        > .mat-expansion-panel-content {
-          > .mat-expansion-panel-body {
-            padding: 0;
-          }
-        }
-
-        .mat-expansion-panel-header-description {
-          align-items: center;
-        }
+        border: 1px solid rgba(0, 0, 0, 0.2);
       }
     }
     .mat-button-toggle-group.tb-notification-unread-toggle-group {
