@@ -37,7 +37,7 @@ public class UsageInfoController extends BaseController {
     private UsageInfoService usageInfoService;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/usageInfo", method = RequestMethod.GET)
+    @RequestMapping(value = "/usage", method = RequestMethod.GET)
     @ResponseBody
     public UsageInfo getTenantUsageInfo() throws ThingsboardException {
         return checkNotNull(usageInfoService.getUsageInfo(getCurrentUser().getTenantId()));

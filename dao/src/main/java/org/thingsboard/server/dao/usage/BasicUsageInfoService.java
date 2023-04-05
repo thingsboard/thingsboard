@@ -100,10 +100,6 @@ public class BasicUsageInfoService implements UsageInfoService {
 
     private long getLongValueFromTsEntries(List<TsKvEntry> entries, String key) {
         Optional<TsKvEntry> entryOpt = entries.stream().filter(e -> e.getKey().equals(key)).findFirst();
-        if (entryOpt.isPresent() && entryOpt.get().getLongValue().isPresent()) {
-            return entryOpt.get().getLongValue().get();
-        } else {
-            return 0;
-        }
+        return entryOpt.map(entry -> entry.getLongValue().orElse(0L)).orElse(0L);
     }
 }

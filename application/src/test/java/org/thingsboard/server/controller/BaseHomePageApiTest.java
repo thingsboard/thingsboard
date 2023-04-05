@@ -346,7 +346,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
 
-        UsageInfo usageInfo = doGet("/api/tenant/usageInfo", UsageInfo.class);
+        UsageInfo usageInfo = doGet("/api/usage", UsageInfo.class);
         Assert.assertNotNull(usageInfo);
         Assert.assertEquals(0, usageInfo.getDevices());
         Assert.assertEquals(configuration.getMaxDevices(), usageInfo.getMaxDevices());
@@ -385,7 +385,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
             devices.add(doPost("/api/device", device, Device.class));
         }
 
-        usageInfo = doGet("/api/tenant/usageInfo", UsageInfo.class);
+        usageInfo = doGet("/api/usage", UsageInfo.class);
         Assert.assertEquals(devices.size(), usageInfo.getDevices());
 
         List<Asset> assets = new ArrayList<>();
@@ -395,7 +395,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
 
-        usageInfo = doGet("/api/tenant/usageInfo", UsageInfo.class);
+        usageInfo = doGet("/api/usage", UsageInfo.class);
         Assert.assertEquals(assets.size(), usageInfo.getAssets());
 
         List<Customer> customers = new ArrayList<>();
@@ -405,7 +405,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
             customers.add(doPost("/api/customer", customer, Customer.class));
         }
 
-        usageInfo = doGet("/api/tenant/usageInfo", UsageInfo.class);
+        usageInfo = doGet("/api/usage", UsageInfo.class);
         Assert.assertEquals(customers.size() + 1, usageInfo.getCustomers());
 
         List<User> users = new ArrayList<>();
@@ -416,7 +416,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
             users.add(doPost("/api/user", user, User.class));
         }
 
-        usageInfo = doGet("/api/tenant/usageInfo", UsageInfo.class);
+        usageInfo = doGet("/api/usage", UsageInfo.class);
         Assert.assertEquals(users.size() + 2, usageInfo.getUsers());
 
         List<Dashboard> dashboards = new ArrayList<>();
@@ -426,7 +426,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
             dashboards.add(doPost("/api/dashboard", dashboard, Dashboard.class));
         }
 
-        usageInfo = doGet("/api/tenant/usageInfo", UsageInfo.class);
+        usageInfo = doGet("/api/usage", UsageInfo.class);
         Assert.assertEquals(dashboards.size(), usageInfo.getDashboards());
     }
 
