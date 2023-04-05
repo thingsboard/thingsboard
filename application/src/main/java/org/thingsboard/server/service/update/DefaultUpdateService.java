@@ -78,7 +78,7 @@ public class DefaultUpdateService implements UpdateService {
     @PostConstruct
     private void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
-        updateMessage = new UpdateMessage(false, version, "", "");
+        updateMessage = new UpdateMessage(false, version, "", "", "", "");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
@@ -129,14 +129,8 @@ public class DefaultUpdateService implements UpdateService {
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());
-            JsonNode response = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/thingsboard/updates", request, JsonNode.class);
             UpdateMessage prevUpdateMessage = updateMessage;
-            updateMessage = new UpdateMessage(
-                    response.get("updateAvailable").asBoolean(),
-                    version,
-                    "3.5.0",
-                    "https://thingsboard.io/docs/user-guide/install/pe/upgrade-instructions"
-            );
+            updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", request, UpdateMessage.class);
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
                 notificationRuleProcessingService.process(TenantId.SYS_TENANT_ID, NewPlatformVersionTrigger.builder()
                         .message(updateMessage)
