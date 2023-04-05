@@ -26,6 +26,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.FeaturesInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.SystemInfoData;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -145,9 +146,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (mailSettings != null) {
             JsonNode mailFrom = mailSettings.getJsonValue().get("mailFrom");
-            if (mailFrom != null) {
-                return DataValidator.doValidateEmail(mailFrom.asText());
-            }
+            return StringUtils.isNotEmpty(mailFrom.asText());
         }
         return false;
     }

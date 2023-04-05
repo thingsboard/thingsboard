@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -44,8 +44,7 @@ export interface SystemInfoData {
 @Component({
   selector: 'tb-cluster-info-table',
   templateUrl: './cluster-info-table.component.html',
-  styleUrls: ['./cluster-info-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./cluster-info-table.component.scss']
 })
 export class ClusterInfoTableComponent extends PageComponent implements OnInit, AfterViewInit {
 

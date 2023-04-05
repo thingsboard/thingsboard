@@ -1561,30 +1561,7 @@
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "ae870700-071f-b3bc-406c-16ba554c5a55",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "tenantProfilesCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
+          "datasources": [],
           "timewindow": {
             "displayValue": "",
             "selectedTab": 0,
@@ -1640,6 +1617,140 @@
         "row": 0,
         "col": 0,
         "id": "8acbf5df-f9fc-114d-216f-86f081aa4779"
+      },
+      "d2784f6c-0518-fd95-1d28-b21f70bdcb10": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div style=\"height: 100%;\">\n    <tb-configured-features></tb-configured-features>\n</div>",
+            "applyDefaultMarkdownStyle": false
+          },
+          "title": "Configured features",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d2784f6c-0518-fd95-1d28-b21f70bdcb10"
+      },
+      "66dcf1a2-9d83-6873-c693-d6a5d989b3f8": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div style=\"height: 100%;\">\n    <tb-version-info></tb-version-info>\n</div>",
+            "applyDefaultMarkdownStyle": false
+          },
+          "title": "Version",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "66dcf1a2-9d83-6873-c693-d6a5d989b3f8"
       }
     },
     "states": {
@@ -1708,6 +1819,18 @@
                 "sizeY": 7,
                 "row": 19,
                 "col": 11
+              },
+              "d2784f6c-0518-fd95-1d28-b21f70bdcb10": {
+                "sizeX": 20,
+                "sizeY": 7,
+                "row": 12,
+                "col": 0
+              },
+              "66dcf1a2-9d83-6873-c693-d6a5d989b3f8": {
+                "sizeX": 11,
+                "sizeY": 7,
+                "row": 19,
+                "col": 0
               }
             },
             "gridSettings": {
@@ -1810,7 +1933,7 @@
         "filter": {
           "type": "entityType",
           "resolveMultiple": true,
-          "entityType": "TENANT"
+          "entityType": "TENANT_PROFILE"
         }
       },
       "a1ddb8fa-90ff-5598-e7f2-e254194d055d": {

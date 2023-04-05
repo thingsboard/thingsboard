@@ -18,18 +18,24 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { ClusterInfoTableComponent } from '@home/components/widget/lib/home-page/cluster-info-table.component';
+import { ConfiguredFeaturesComponent } from '@home/components/widget/lib/home-page/configured-features.component';
+import { VersionInfoComponent } from '@home/components/widget/lib/home-page/version-info.component';
 
 @NgModule({
   declarations:
     [
-      ClusterInfoTableComponent
+      ClusterInfoTableComponent,
+      ConfiguredFeaturesComponent,
+      VersionInfoComponent
     ],
   imports: [
     CommonModule,
     SharedModule
   ],
   exports: [
-    ClusterInfoTableComponent
+    ClusterInfoTableComponent,
+    ConfiguredFeaturesComponent,
+    VersionInfoComponent
   ]
 })
 export class HomePageWidgetsModule { }

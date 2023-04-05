@@ -1,0 +1,66 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
+  <div class="tb-title">Configured features
+    <mat-icon
+      matTooltip="Status of features that require configuration"
+      matTooltipPosition="above"
+      class="tb-info-icon">info</mat-icon>
+  </div>
+  <div fxLayout="column" fxFlex fxLayoutGap="12px">
+    <div fxLayout="row" fxFlex fxLayoutGap="12px">
+      <a class="tb-feature-button" fxFlex
+         [matTooltip]="featureTooltip(featuresInfo?.emailEnabled)"
+         matTooltipPosition="above"
+         [ngClass]="{'configured': featuresInfo?.emailEnabled}"
+         routerLink="/settings/outgoing-mail">
+        <div class="tb-feature-text">Email</div>
+      </a>
+      <a class="tb-feature-button" fxFlex
+         [matTooltip]="featureTooltip(featuresInfo?.smsEnabled)"
+         matTooltipPosition="above"
+         [ngClass]="{'configured': featuresInfo?.smsEnabled}"
+         routerLink="/settings/notifications">
+        <div class="tb-feature-text">SMS</div>
+      </a>
+    </div>
+    <div fxLayout="row" fxFlex fxLayoutGap="12px">
+      <a class="tb-feature-button" fxFlex
+         [matTooltip]="featureTooltip(featuresInfo?.notificationEnabled)"
+         matTooltipPosition="above"
+         [ngClass]="{'configured': featuresInfo?.notificationEnabled}"
+         routerLink="/settings/notifications">
+        <div class="tb-feature-text">Slack</div>
+      </a>
+      <a class="tb-feature-button" fxFlex
+         [matTooltip]="featureTooltip(featuresInfo?.oauthEnabled)"
+         matTooltipPosition="above"
+         [ngClass]="{'configured': featuresInfo?.oauthEnabled}"
+         routerLink="/security-settings/oauth2">
+        <div class="tb-feature-text">OAuth 2</div>
+      </a>
+      <a class="tb-feature-button" fxFlex
+         [matTooltip]="featureTooltip(featuresInfo?.twoFaEnabled)"
+         matTooltipPosition="above"
+         [ngClass]="{'configured': featuresInfo?.twoFaEnabled}"
+         routerLink="/security-settings/2fa">
+        <div class="tb-feature-text">2FA</div>
+      </a>
+    </div>
+  </div>
+</div>

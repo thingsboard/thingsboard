@@ -1,0 +1,44 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
+  <div class="tb-card-header">
+    <div class="tb-title">Version</div>
+    <a mat-button color="primary" href="https://thingsboard.io/docs/contact-us/" target="_blank">Contact us</a>
+  </div>
+  <div fxLayout="column" fxFlex fxLayoutGap="12px">
+    <div class="tb-version-info-container" fxFlex>
+      <div class="tb-card-header">
+        <a class="tb-version-link" [href]="updateMessage?.currentVersionReleaseNotesUrl" target="_blank">Current version</a>
+      </div>
+      <div class="tb-version">{{ updateMessage?.currentVersion }}</div>
+    </div>
+    <div class="tb-version-info-container" fxFlex *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
+      <div class="tb-card-header">
+        <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">Available version</a>
+        <a mat-flat-button color="primary" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">Upgrade</a>
+      </div>
+      <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
+    </div>
+  </div>
+</div>
+<ng-template #versionUpToDate>
+  <div class="tb-version-info-container up-to-date" fxFlex>
+    <div class="material-icons-round check-icon">check</div>
+    <div class="up-to-date-text">Version is up to date</div>
+  </div>
+</ng-template>
