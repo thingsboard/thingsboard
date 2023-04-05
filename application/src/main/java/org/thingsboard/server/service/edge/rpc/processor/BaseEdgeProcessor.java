@@ -485,4 +485,27 @@ public abstract class BaseEdgeProcessor {
         }
         return customerId;
     }
+
+    protected boolean isEntityExists(TenantId tenantId, EntityId entityId) {
+        switch (entityId.getEntityType()) {
+            case TENANT:
+                return tenantService.findTenantById(tenantId) != null;
+            case DEVICE:
+                return deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
+            case ASSET:
+                return assetService.findAssetById(tenantId, new AssetId(entityId.getId())) != null;
+            case ENTITY_VIEW:
+                return entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
+            case CUSTOMER:
+                return customerService.findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
+            case USER:
+                return userService.findUserById(tenantId, new UserId(entityId.getId())) != null;
+            case DASHBOARD:
+                return dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
+            case EDGE:
+                return edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId())) != null;
+            default:
+                return false;
+        }
+    }
 }
