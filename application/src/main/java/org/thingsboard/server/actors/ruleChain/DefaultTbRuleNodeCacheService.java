@@ -17,14 +17,17 @@ package org.thingsboard.server.actors.ruleChain;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.SerializationUtils;
 import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.server.cache.rule.RuleNodeCache;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 @RequiredArgsConstructor
@@ -35,57 +38,114 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
 
     @Override
     public void add(String key, String value) {
-        cache.add(ruleNodeId, key, value);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        cache.add(cacheKey, value.getBytes());
     }
 
     @Override
     public void add(String key, EntityId id) {
-        cache.add(ruleNodeId, key, id);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        cache.add(cacheKey, SerializationUtils.serialize(id));
     }
 
     @Override
     public void add(EntityId key, Integer partition, TbMsg value) {
-        cache.add(ruleNodeId, partition, key, value);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, key);
+        cache.add(cacheKey, TbMsg.toByteArray(value));
     }
 
     @Override
     public void removeTbMsgList(EntityId key, Integer partition, List<TbMsg> values) {
-        cache.removeTbMsgList(ruleNodeId, partition, key, values);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, key);
+        byte[][] valuesBytes = tbMsgListToBytes(values);
+        cache.remove(cacheKey, valuesBytes);
     }
 
     @Override
     public void removeStringList(String key, List<String> values) {
-        cache.removeStringList(ruleNodeId, key, values);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        byte[][] valuesBytes = stringListToBytes(values);
+        cache.remove(cacheKey, valuesBytes);
     }
 
     @Override
     public void removeEntityIdList(String key, List<EntityId> values) {
-        cache.removeEntityIdList(ruleNodeId, key, values);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        byte[][] valuesBytes = entityIdListToBytes(values);
+        cache.remove(cacheKey, valuesBytes);
     }
 
     @Override
     public Set<String> getStrings(String key) {
-        return cache.getStringSetByKey(ruleNodeId, key);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        return toStringSet(cache.get(cacheKey));
     }
 
     @Override
     public Set<EntityId> getEntityIds(String key) {
-        return cache.getEntityIdSetByKey(ruleNodeId, key);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        return toEntityIdSet(cache.get(cacheKey));
     }
 
     @Override
     public Set<TbMsg> getTbMsgs(EntityId key, Integer partition) {
-        return cache.getTbMsgSetByKey(ruleNodeId, partition, key);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, key);
+        return toTbMsgSet(cache.get(cacheKey));
     }
 
     @Override
     public void evictTbMsgs(EntityId key, Integer partition) {
-        cache.evict(ruleNodeId, partition, key);
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, key);
+        cache.evict(cacheKey);
     }
 
     @Override
     public void evict(String key) {
-        cache.evict(ruleNodeId, key);
+        cache.evict(key.getBytes());
+    }
+
+    private byte[][] stringListToBytes(List<String> values) {
+        return values.stream()
+                .map(String::getBytes)
+                .toArray(byte[][]::new);
+    }
+
+    private byte[][] entityIdListToBytes(List<EntityId> values) {
+        return values.stream()
+                .map(SerializationUtils::serialize)
+                .toArray(byte[][]::new);
+    }
+
+    private byte[][] tbMsgListToBytes(List<TbMsg> values) {
+        return values.stream()
+                .map(TbMsg::toByteArray)
+                .toArray(byte[][]::new);
+    }
+
+    private Set<String> toStringSet(Set<byte[]> values) {
+        return values.stream()
+                .map(String::new)
+                .collect(Collectors.toSet());
+    }
+
+    private Set<EntityId> toEntityIdSet(Set<byte[]> values) {
+        return values.stream()
+                .map(bytes -> (EntityId) SerializationUtils.deserialize(bytes))
+                .collect(Collectors.toSet());
+    }
+
+    private Set<TbMsg> toTbMsgSet(Set<byte[]> values) {
+        return values.stream()
+                .map(bytes -> TbMsg.fromBytes(bytes, TbMsgCallback.EMPTY))
+                .collect(Collectors.toSet());
+    }
+
+    private byte[] toRuleNodeCacheKey(RuleNodeId ruleNodeId, String key) {
+        return String.format("%s::%s", ruleNodeId.getId().toString(), key).getBytes();
+    }
+
+    private byte[] toRuleNodeCacheKey(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
+        return String.format("%s::%s::%s", ruleNodeId.getId().toString(), partition, key.getId().toString()).getBytes();
     }
 
 }

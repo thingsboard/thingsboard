@@ -20,6 +20,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class DeduplicationData {
@@ -39,7 +40,7 @@ public class DeduplicationData {
         msgList.add(msg);
     }
 
-    public void addAll(List<TbMsg> tbMsgs) {
+    public void addAll(Set<TbMsg> tbMsgs) {
         msgList.addAll(tbMsgs);
     }
 

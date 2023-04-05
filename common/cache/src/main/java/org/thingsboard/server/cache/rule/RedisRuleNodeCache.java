@@ -22,16 +22,9 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
-import org.springframework.util.SerializationUtils;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
@@ -44,92 +37,30 @@ public class RedisRuleNodeCache implements RuleNodeCache {
     private final RedisConnectionFactory redisConnectionFactory;
 
     @Override
-    public void add(RuleNodeId ruleNodeId, String key, String value) {
-        processAdd(ruleNodeId, key, value.getBytes());
-    }
-
-    @Override
-    public void add(RuleNodeId ruleNodeId, String key, EntityId value) {
-        processAdd(ruleNodeId, key, SerializationUtils.serialize(value));
-    }
-
-    @Override
-    public void add(RuleNodeId ruleNodeId, Integer partition, EntityId key, TbMsg value) {
-        processAdd(ruleNodeId, partition, key.getId().toString(), TbMsg.toByteArray(value));
-    }
-
-    @Override
-    public void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values) {
-        processRemove(ruleNodeId, key, stringListToBytes(values));
-    }
-
-    @Override
-    public void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values) {
-        processRemove(ruleNodeId, key, entityIdListToBytes(values));
-    }
-
-    @Override
-    public void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, EntityId key, List<TbMsg> values) {
-        processRemove(ruleNodeId, partition, key.getId().toString(), tbMsgListToBytes(values));
-    }
-
-    @Override
-    public Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key) {
-        return toStringSet(processGetMembers(ruleNodeId, key));
-    }
-
-    @Override
-    public Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key) {
-        return toEntityIdSet(processGetMembers(ruleNodeId, key));
-    }
-
-    @Override
-    public Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
-        return toTbMsgSet(processGetMembers(ruleNodeId, partition, key.getId().toString()));
-    }
-
-    @Override
-    public void evict(RuleNodeId ruleNodeId, String key) {
-        processEvict(toRuleNodeCacheKey(ruleNodeId, null, key));
-    }
-
-    @Override
-    public void evict(RuleNodeId ruleNodeId, Integer partition, EntityId key) {
-        processEvict(toRuleNodeCacheKey(ruleNodeId, partition, key.getId().toString()));
-    }
-
-    private void processAdd(RuleNodeId ruleNodeId, String key, byte[] value) {
-        processAdd(ruleNodeId, null, key, value);
-    }
-
-    private void processAdd(RuleNodeId ruleNodeId, Integer partition, String key, byte[] value) {
-        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.setCommands().sAdd(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), value);
-        }
-    }
-
-    private void processRemove(RuleNodeId ruleNodeId, String key, byte[][] values) {
-        processRemove(ruleNodeId, null, key, values);
-    }
-
-    private void processRemove(RuleNodeId ruleNodeId, Integer partition, String key, byte[][] values) {
-        if (values.length == 0) {
+    public void add(byte[] key, byte[] value) {
+        if (value == null || value.length == 0) {
             return;
         }
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.setCommands().sRem(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), values);
+            connection.setCommands().sAdd(key, value);
         }
     }
 
-    private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, String key) {
-        return processGetMembers(ruleNodeId, null, key);
+    @Override
+    public void remove(byte[] key, byte[][] values) {
+        if (values == null || values.length == 0) {
+            return;
+        }
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
+            connection.setCommands().sRem(key, values);
+        }
     }
 
-    private Set<byte[]> processGetMembers(RuleNodeId ruleNodeId, Integer partition, String key) {
+    @Override
+    public Set<byte[]> get(byte[] key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             Set<byte[]> bytes = new HashSet<>();
-            Cursor<byte[]> cursor = connection.setCommands()
-                    .sScan(toRuleNodeCacheKey(ruleNodeId, partition, key).getBytes(), OPTIONS);
+            Cursor<byte[]> cursor = connection.setCommands().sScan(key, OPTIONS);
             while (cursor.hasNext()) {
                 bytes.add(cursor.next());
             }
@@ -137,52 +68,11 @@ public class RedisRuleNodeCache implements RuleNodeCache {
         }
     }
 
-    private void processEvict(String ruleNodeId) {
+    @Override
+    public void evict(byte[] key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.del(ruleNodeId.getBytes());
+            connection.del(key);
         }
-    }
-
-    private byte[][] stringListToBytes(List<String> values) {
-        return values.stream()
-                .map(String::getBytes)
-                .toArray(byte[][]::new);
-    }
-
-    private byte[][] entityIdListToBytes(List<EntityId> values) {
-        return values.stream()
-                .map(SerializationUtils::serialize)
-                .toArray(byte[][]::new);
-    }
-
-    private byte[][] tbMsgListToBytes(List<TbMsg> values) {
-        return values.stream()
-                .map(TbMsg::toByteArray)
-                .toArray(byte[][]::new);
-    }
-
-    private Set<String> toStringSet(Set<byte[]> values) {
-        return values.stream()
-                .map(String::new)
-                .collect(Collectors.toSet());
-    }
-
-    private Set<EntityId> toEntityIdSet(Set<byte[]> values) {
-        return values.stream()
-                .map(bytes -> (EntityId) SerializationUtils.deserialize(bytes))
-                .collect(Collectors.toSet());
-    }
-
-    private Set<TbMsg> toTbMsgSet(Set<byte[]> values) {
-        return values.stream()
-                .map(bytes -> TbMsg.fromBytes(bytes, TbMsgCallback.EMPTY))
-                .collect(Collectors.toSet());
-    }
-
-    private String toRuleNodeCacheKey(RuleNodeId ruleNodeId, Integer partition, String key) {
-        return partition == null ?
-                String.format("%s::%s", ruleNodeId.getId().toString(), key) :
-                String.format("%s::%s::%s", ruleNodeId.getId().toString(), partition, key);
     }
 
 }

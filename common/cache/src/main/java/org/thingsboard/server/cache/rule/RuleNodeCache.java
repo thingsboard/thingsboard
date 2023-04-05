@@ -15,35 +15,16 @@
  */
 package org.thingsboard.server.cache.rule;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.List;
 import java.util.Set;
 
 public interface RuleNodeCache {
 
-    void add(RuleNodeId ruleNodeId, String key, String value);
+    void add(byte[] key, byte[] value);
 
-    void add(RuleNodeId ruleNodeId, String key, EntityId value);
+    void remove(byte[] key, byte[][] values);
 
-    void add(RuleNodeId ruleNodeId, Integer partition, EntityId key, TbMsg value);
+    Set<byte[]> get(byte[] key);
 
-    void removeStringList(RuleNodeId ruleNodeId, String key, List<String> values);
-
-    void removeEntityIdList(RuleNodeId ruleNodeId, String key, List<EntityId> values);
-
-    void removeTbMsgList(RuleNodeId ruleNodeId, Integer partition, EntityId key, List<TbMsg> values);
-
-    Set<String> getStringSetByKey(RuleNodeId ruleNodeId, String key);
-
-    Set<EntityId> getEntityIdSetByKey(RuleNodeId ruleNodeId, String key);
-
-    Set<TbMsg> getTbMsgSetByKey(RuleNodeId ruleNodeId, Integer partition, EntityId key);
-
-    void evict(RuleNodeId ruleNodeId, String key);
-
-    void evict(RuleNodeId ruleNodeId, Integer partition, EntityId key);
+    void evict(byte[] key);
 
 }

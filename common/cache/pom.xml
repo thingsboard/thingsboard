@@ -95,10 +95,6 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>message</artifactId>
-        </dependency>
     </dependencies>
 
     <build>

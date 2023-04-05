@@ -76,7 +76,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
 
     @Override
     protected void getValuesFromCacheAndSchedule(TbContext ctx, RuleNodeCacheService cache, Integer partition, EntityId id) {
-        List<TbMsg> tbMsgs = new ArrayList<>(cache.getTbMsgs(id, partition));
+        Set<TbMsg> tbMsgs = cache.getTbMsgs(id, partition);
         DeduplicationData deduplicationData = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
         if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
             return;
