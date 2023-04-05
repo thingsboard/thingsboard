@@ -1751,6 +1751,43 @@
         "row": 0,
         "col": 0,
         "id": "66dcf1a2-9d83-6873-c693-d6a5d989b3f8"
+      },
+      "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "documentation_links",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 3
+          },
+          "title": "Documentation",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4"
       }
     },
     "states": {
@@ -1822,14 +1859,20 @@
               },
               "d2784f6c-0518-fd95-1d28-b21f70bdcb10": {
                 "sizeX": 20,
-                "sizeY": 7,
-                "row": 12,
+                "sizeY": 6,
+                "row": 13,
                 "col": 0
               },
               "66dcf1a2-9d83-6873-c693-d6a5d989b3f8": {
                 "sizeX": 11,
                 "sizeY": 7,
                 "row": 19,
+                "col": 0
+              },
+              "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
+                "sizeX": 20,
+                "sizeY": 6,
+                "row": 7,
                 "col": 0
               }
             },
@@ -1933,7 +1976,7 @@
         "filter": {
           "type": "entityType",
           "resolveMultiple": true,
-          "entityType": "TENANT_PROFILE"
+          "entityType": "TENANT"
         }
       },
       "a1ddb8fa-90ff-5598-e7f2-e254194d055d": {

@@ -16,10 +16,15 @@
 
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { initialUserSettings, UserSettings } from '@shared/models/user-settings.models';
+import {
+  DocumentationLink, DocumentationLinks,
+  initialUserSettings,
+  UserSettings,
+  UserSettingsType
+} from '@shared/models/user-settings.models';
 import { map } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
-import { defaultHttpOptionsFromConfig } from '@core/http/http-utils';
+import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +54,16 @@ export class UserSettingsService {
   public deleteUserSettings(paths: string[]) {
     return this.http.delete(`/api/user/settings/${paths.join(',')}`,
       defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true}));
+  }
+
+  public getDocumentationLinks(config?: RequestConfig): Observable<DocumentationLinks> {
+    return this.http.get<DocumentationLinks>(`/api/user/settings/${UserSettingsType.DOC_LINKS}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateDocumentationLinks(documentationLinks: DocumentationLinks, config?: RequestConfig): Observable<void> {
+    return this.http.put<void>(`/api/user/settings/${UserSettingsType.DOC_LINKS}`, documentationLinks,
+      defaultHttpOptionsFromConfig(config));
   }
 
 }

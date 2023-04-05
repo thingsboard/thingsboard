@@ -22,8 +22,8 @@
       matTooltipPosition="above"
       class="tb-info-icon">info</mat-icon>
   </div>
-  <div fxLayout="column" fxFlex fxLayoutGap="12px">
-    <div fxLayout="row" fxFlex fxLayoutGap="12px">
+  <mat-grid-list fxFlex cols="6" rowHeight="fit" gutterSize="12px">
+    <mat-grid-tile class="tb-feature-tile" colspan="3">
       <a class="tb-feature-button" fxFlex
          [matTooltip]="featureTooltip(featuresInfo?.emailEnabled)"
          matTooltipPosition="above"
@@ -31,6 +31,8 @@
          routerLink="/settings/outgoing-mail">
         <div class="tb-feature-text">Email</div>
       </a>
+    </mat-grid-tile>
+    <mat-grid-tile class="tb-feature-tile" colspan="3">
       <a class="tb-feature-button" fxFlex
          [matTooltip]="featureTooltip(featuresInfo?.smsEnabled)"
          matTooltipPosition="above"
@@ -38,8 +40,8 @@
          routerLink="/settings/notifications">
         <div class="tb-feature-text">SMS</div>
       </a>
-    </div>
-    <div fxLayout="row" fxFlex fxLayoutGap="12px">
+    </mat-grid-tile>
+    <mat-grid-tile class="tb-feature-tile" colspan="2">
       <a class="tb-feature-button" fxFlex
          [matTooltip]="featureTooltip(featuresInfo?.notificationEnabled)"
          matTooltipPosition="above"
@@ -47,6 +49,8 @@
          routerLink="/settings/notifications">
         <div class="tb-feature-text">Slack</div>
       </a>
+    </mat-grid-tile>
+    <mat-grid-tile class="tb-feature-tile" colspan="2">
       <a class="tb-feature-button" fxFlex
          [matTooltip]="featureTooltip(featuresInfo?.oauthEnabled)"
          matTooltipPosition="above"
@@ -54,6 +58,8 @@
          routerLink="/security-settings/oauth2">
         <div class="tb-feature-text">OAuth 2</div>
       </a>
+    </mat-grid-tile>
+    <mat-grid-tile class="tb-feature-tile" colspan="2">
       <a class="tb-feature-button" fxFlex
          [matTooltip]="featureTooltip(featuresInfo?.twoFaEnabled)"
          matTooltipPosition="above"
@@ -61,6 +67,6 @@
          routerLink="/security-settings/2fa">
         <div class="tb-feature-text">2FA</div>
       </a>
-    </div>
-  </div>
+    </mat-grid-tile>
+  </mat-grid-list>
 </div>

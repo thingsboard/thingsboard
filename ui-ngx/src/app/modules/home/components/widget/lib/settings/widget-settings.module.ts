@@ -259,6 +259,9 @@ import {
 import {
   TripAnimationPointSettingsComponent
 } from '@home/components/widget/lib/settings/map/trip-animation-point-settings.component';
+import {
+  DocLinksWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/home-page/doc-links-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -357,7 +360,8 @@ import {
     TripAnimationPointSettingsComponent,
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
-    TripAnimationWidgetSettingsComponent
+    TripAnimationWidgetSettingsComponent,
+    DocLinksWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -460,7 +464,8 @@ import {
     TripAnimationPointSettingsComponent,
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
-    TripAnimationWidgetSettingsComponent
+    TripAnimationWidgetSettingsComponent,
+    DocLinksWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -527,5 +532,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent,
   'tb-map-widget-settings': MapWidgetSettingsComponent,
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
-  'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent
+  'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
+  'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent
 };

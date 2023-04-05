@@ -49,12 +49,4 @@ export class VersionInfoComponent extends PageComponent implements OnInit {
       }
     );
   }
-
-  featureTooltip(configured: boolean): string {
-    if (configured) {
-      return 'Feature is configured.\nClick to setup';
-    } else {
-      return 'Feature is not configured.\nClick to setup';
-    }
-  }
 }

@@ -1,0 +1,50 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
+  <div class="tb-card-header">
+    <a class="tb-title-link" href="https://thingsboard.io/docs/" target="_blank">Documentation</a>
+    <button class="tb-title-icon"
+            matTooltip="Edit"
+            matTooltipPosition="above"
+            mat-icon-button
+            (click)="edit()">
+      <mat-icon>edit</mat-icon>
+    </button>
+  </div>
+  <mat-grid-list fxFlex [cols]="columns" rowHeight="fit" gutterSize="12px">
+    <mat-grid-tile class="tb-docs-tile" *ngFor="let docLink of documentationLinks?.links">
+      <a fxFlex class="tb-doc-button"
+         [href]="docLink.link" target="_blank">
+        <div class="tb-doc-container">
+          <div class="tb-doc-icon-container">
+            <mat-icon color="primary">{{ docLink.icon }}</mat-icon>
+          </div>
+          <div class="tb-doc-text">{{ docLink.name }}</div>
+        </div>
+      </a>
+    </mat-grid-tile>
+    <mat-grid-tile class="tb-docs-tile">
+      <div fxFlex class="tb-add-doc-button"
+           matTooltip="Add link"
+           matTooltipPosition="above"
+           (click)="addLink()">
+        <mat-icon class="tb-add-icon">add</mat-icon>
+      </div>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>

@@ -20,13 +20,15 @@ import { SharedModule } from '@app/shared/shared.module';
 import { ClusterInfoTableComponent } from '@home/components/widget/lib/home-page/cluster-info-table.component';
 import { ConfiguredFeaturesComponent } from '@home/components/widget/lib/home-page/configured-features.component';
 import { VersionInfoComponent } from '@home/components/widget/lib/home-page/version-info.component';
+import { DocLinksWidgetComponent } from '@home/components/widget/lib/home-page/doc-links-widget.component';
 
 @NgModule({
   declarations:
     [
       ClusterInfoTableComponent,
       ConfiguredFeaturesComponent,
-      VersionInfoComponent
+      VersionInfoComponent,
+      DocLinksWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -35,7 +37,8 @@ import { VersionInfoComponent } from '@home/components/widget/lib/home-page/vers
   exports: [
     ClusterInfoTableComponent,
     ConfiguredFeaturesComponent,
-    VersionInfoComponent
+    VersionInfoComponent,
+    DocLinksWidgetComponent
   ]
 })
 export class HomePageWidgetsModule { }

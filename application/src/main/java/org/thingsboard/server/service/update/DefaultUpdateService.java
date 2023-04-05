@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -131,16 +130,8 @@ public class DefaultUpdateService implements UpdateService {
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());
-            JsonNode response = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/thingsboard/updates", request, JsonNode.class);
             UpdateMessage prevUpdateMessage = updateMessage;
-            updateMessage = new UpdateMessage(
-                    response.get("updateAvailable").asBoolean(),
-                    version,
-                    "3.5.0",
-                    "https://thingsboard.io/docs/user-guide/install/upgrade-instructions",
-                    "https://thingsboard.io/docs/reference/releases",
-                    "https://thingsboard.io/docs/reference/releases"
-            );
+            updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", request, UpdateMessage.class);
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
                 notificationRuleProcessingService.process(TenantId.SYS_TENANT_ID, NewPlatformVersionTrigger.builder()
                         .message(updateMessage)

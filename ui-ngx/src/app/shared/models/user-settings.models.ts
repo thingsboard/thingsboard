@@ -21,3 +21,20 @@ export interface UserSettings {
 export const initialUserSettings: UserSettings = {
   openedMenuSections: []
 };
+
+export enum UserSettingsType {
+  GENERAL = 'GENERAL',
+  QUICK_LINKS = 'QUICK_LINKS',
+  DOC_LINKS = 'DOC_LINKS',
+  DASHBOARDS = 'DASHBOARDS'
+}
+
+export interface DocumentationLink {
+  icon: string;
+  name: string;
+  link: string;
+}
+
+export interface DocumentationLinks {
+  links?: DocumentationLink[];
+}

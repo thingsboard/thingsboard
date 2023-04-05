@@ -37,8 +37,12 @@
     vertical-align: middle;
   }
 
+  .mat-grid-tile.tb-feature-tile {
+    overflow: visible;
+  }
+
   .tb-feature-button {
-    flex: 1;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;

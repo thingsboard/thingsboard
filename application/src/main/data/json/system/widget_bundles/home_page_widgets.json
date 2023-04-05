@@ -1,0 +1,31 @@
+{
+  "widgetsBundle": {
+    "alias": "home_page_widgets",
+    "title": "Home page widgets",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "Home page widgets"
+  },
+  "widgetTypes": [
+    {
+      "alias": "documentation_links",
+      "name": "Documentation links",
+      "image": null,
+      "description": null,
+      "descriptor": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "resources": [],
+        "templateHtml": "<tb-doc-links-widget\n    [ctx]=\"ctx\">\n</tb-doc-links-widget>\n",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n}",
+        "settingsSchema": "",
+        "dataKeySettingsSchema": "",
+        "settingsDirective": "tb-doc-links-widget-settings",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"columns\":3},\"title\":\"Documentation links\",\"dropShadow\":true}"
+      }
+    }
+  ]
+}

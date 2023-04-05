@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.UpdateMessage;
 
 import java.util.Map;
 
@@ -30,13 +31,11 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 @Builder
 public class NewPlatformVersionNotificationInfo implements NotificationInfo {
 
-    private String message;
+    private Map<String, String> message;
 
     @Override
     public Map<String, String> getTemplateData() {
-        return mapOf(
-                "message", message
-        );
+        return message;
     }
 
 }
