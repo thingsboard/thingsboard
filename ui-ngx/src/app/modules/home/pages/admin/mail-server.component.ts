@@ -266,6 +266,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
           redirectUri: ''
         }, {emitEvent: false});
       }
+      this.enableTls(this.mailSettings.get('enableTls').value);
       this.enableOauth2(this.mailSettings.get('enableOauth2').value);
       this.enableProviderTenantIdChanged(value);
     });
