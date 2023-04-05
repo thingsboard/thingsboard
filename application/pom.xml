@@ -351,6 +351,10 @@
             <artifactId>aerogear-otp-java</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.slack.api</groupId>
+            <artifactId>slack-api-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
         </dependency>

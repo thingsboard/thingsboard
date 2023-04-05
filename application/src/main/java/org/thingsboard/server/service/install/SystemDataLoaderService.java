@@ -39,5 +39,8 @@ public interface SystemDataLoaderService {
 
     void createQueues();
 
+    void createDefaultNotificationConfigs();
+
+
     void createMailConfigTemplates() throws Exception;
 }

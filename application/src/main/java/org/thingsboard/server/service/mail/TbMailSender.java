@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.config.MailOauth2Provider;
+import org.thingsboard.server.common.data.mail.MailOauth2Provider;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import javax.mail.internet.MimeMessage;
@@ -42,11 +42,12 @@ import java.util.Properties;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static org.thingsboard.server.service.mail.RefreshTokenExpCheckService.AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS;
+
 @Slf4j
 public class TbMailSender extends JavaMailSenderImpl {
 
     private static final String MAIL_PROP = "mail.";
-    private static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
     private final TbMailContextComponent ctx;
     private final Lock lock;
     private final Boolean oauth2Enabled;

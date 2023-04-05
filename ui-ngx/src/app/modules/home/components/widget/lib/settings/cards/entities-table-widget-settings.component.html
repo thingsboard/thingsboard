@@ -51,7 +51,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <section fxLayout="column" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayoutGap.gt-xs="8px">
       <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
         <mat-slide-toggle fxFlex formControlName="displayEntityName">
           {{ 'widgets.table.display-entity-name' | translate }}

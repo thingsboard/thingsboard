@@ -41,6 +41,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.TENANT_PROFILE, PermissionChecker.allowAllPermissionChecker);
         put(Resource.TB_RESOURCE, systemEntityPermissionChecker);
         put(Resource.QUEUE, systemEntityPermissionChecker);
+        put(Resource.NOTIFICATION, systemEntityPermissionChecker);
     }
 
     private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker() {

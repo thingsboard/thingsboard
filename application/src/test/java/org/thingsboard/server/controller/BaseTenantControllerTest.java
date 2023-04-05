@@ -511,7 +511,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         for (Queue queue : foundTenantQueues) {
             doGet("/api/queues/" + queue.getId())
                     .andExpect(status().isNotFound())
-                    .andExpect(statusReason(containsString(msgErrorNotFound)));
+                    .andExpect(statusReason(containsString(msgErrorNoFound("Queue", queue.getId().toString()))));
         }
 
         loginSysAdmin();

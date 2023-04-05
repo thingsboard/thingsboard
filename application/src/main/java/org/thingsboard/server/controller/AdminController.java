@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
@@ -29,40 +30,48 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
-import org.springframework.security.crypto.keygen.StringKeyGenerator;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.FeaturesInfo;
+import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
-import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.config.MailOAuth2Configuration;
-import org.thingsboard.server.config.MailOauth2ProviderConfiguration;
-import org.thingsboard.server.config.MailOauth2Provider;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -70,55 +79,39 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
+import org.thingsboard.server.service.system.SystemInfoService;
 import org.thingsboard.server.service.update.UpdateService;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.controller.ControllerConstants.*;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
 @Slf4j
 @RequestMapping("/api/admin")
+@RequiredArgsConstructor
 public class AdminController extends BaseController {
 
-    @Autowired
-    private MailService mailService;
-
-    @Autowired
-    private SmsService smsService;
-
-    @Autowired
-    private AdminSettingsService adminSettingsService;
-
-    @Autowired
-    private SystemSecurityService systemSecurityService;
-
+    private final MailService mailService;
+    private final SmsService smsService;
+    private final AdminSettingsService adminSettingsService;
+    private final SystemSecurityService systemSecurityService;
     @Lazy
-    @Autowired
-    private JwtSettingsService jwtSettingsService;
-
+    private final JwtSettingsService jwtSettingsService;
     @Lazy
-    @Autowired
-    private JwtTokenFactory tokenFactory;
-
-    @Autowired
-    private EntitiesVersionControlService versionControlService;
-
-    @Autowired
-    private TbAutoCommitSettingsService autoCommitSettingsService;
-
-    @Autowired
-    private UpdateService updateService;
-
-    @Autowired
-    private MailOAuth2Configuration mailOAuth2Configuration;
+    private final JwtTokenFactory tokenFactory;
+    private final EntitiesVersionControlService versionControlService;
+    private final TbAutoCommitSettingsService autoCommitSettingsService;
+    private final UpdateService updateService;
+    private final SystemInfoService systemInfoService;
 
     private static final String PREV_URI_PATH_PARAMETER = "prevUri";
     private static final String PREV_URI_COOKIE_NAME = "prev_uri";
@@ -146,7 +139,6 @@ public class AdminController extends BaseController {
         }
     }
 
-
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Creates or Updates the Administration Settings. Platform generates random Administration Settings Id during settings creation. " +
                     "The Administration Settings Id will be present in the response. Specify the Administration Settings Id when you would like to update the Administration Settings. " +
@@ -160,9 +152,7 @@ public class AdminController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
             adminSettings.setTenantId(getTenantId());
-            if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
-                updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
-            }
+            ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
@@ -259,8 +249,12 @@ public class AdminController extends BaseController {
                 if (refreshToken == null) {
                     throw new ThingsboardException("Refresh token was not generated. Please, generate refresh token.", ThingsboardErrorCode.GENERAL);
                 }
-                ((ObjectNode) adminSettings.getJsonValue()).put("refreshToken", refreshToken.asText());
-                updateSettingsWithOauth2ProviderTemplateInfo(adminSettings);
+                ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
+                settings.put("refreshToken", refreshToken.asText());
+                if (settings.has("providerTenantId")){
+                    settings.put("authUri", String.format(settings.get("authUri").asText(), settings.get("providerTenantId").asText()));
+                    settings.put("tokenUri", String.format(settings.get("tokenUri").asText(), settings.get("providerTenantId").asText()));
+                }
             }
             else {
                 if (!adminSettings.getJsonValue().has("password")) {
@@ -366,7 +360,6 @@ public class AdminController extends BaseController {
         }
     }
 
-
     @ApiOperation(value = "Check repository access (checkRepositoryAccess)",
             notes = "Attempts to check repository access. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -447,6 +440,26 @@ public class AdminController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get system info (getSystemInfo)",
+            notes = "Get main information about system. "
+                    + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/systemInfo", method = RequestMethod.GET)
+    @ResponseBody
+    public SystemInfo getSystemInfo() throws ThingsboardException {
+        return systemInfoService.getSystemInfo();
+    }
+
+    @ApiOperation(value = "Get features info (getFeaturesInfo)",
+            notes = "Get information about enabled/disabled features. "
+                    + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/featuresInfo", method = RequestMethod.GET)
+    @ResponseBody
+    public FeaturesInfo getFeaturesInfo() {
+        return systemInfoService.getFeaturesInfo();
+    }
+
     @ApiOperation(value = "Get OAuth2 log in processing URL (getMailProcessingUrl)", notes = "Returns the URL enclosed in " +
             "double quotes. After successful authentication with OAuth2 provider and user consent for requested scope, it makes a redirect to this path so that the platform can do " +
             "further log in processing and generating access tokens. " + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -476,10 +489,11 @@ public class AdminController extends BaseController {
         String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
         String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
         String redirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
-        String scope = checkNotNull(jsonValue.get("scope"), "No scope was configured").asText();
+        List<String> scope =  JacksonUtil.convertValue(checkNotNull(jsonValue.get("scope"), "No scope was configured"), new TypeReference<>() {
+        });
 
         return "\"" + new AuthorizationCodeRequestUrl(authUri, clientId)
-                .setScopes(List.of(scope))
+                .setScopes(scope)
                 .setState(state)
                 .setRedirectUri(redirectUri)
                 .build() + "\"";
@@ -525,21 +539,5 @@ public class AdminController extends BaseController {
 
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);
-    }
-
-    private void updateSettingsWithOauth2ProviderTemplateInfo(AdminSettings adminSettings) throws ThingsboardException {
-        try {
-            MailOauth2Provider providerId = MailOauth2Provider.valueOf(adminSettings.getJsonValue().get("providerId").asText());
-            MailOauth2ProviderConfiguration providerConfig = mailOAuth2Configuration.getProviderConfig(providerId);
-            if (providerConfig != null) {
-                ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
-                JsonNode providerTenantId = adminSettings.getJsonValue().get("providerTenantId");
-                settings.put("authUri", String.format(providerConfig.getAuthUri(), providerTenantId == null ? null : providerTenantId.asText()));
-                settings.put("tokenUri", String.format(providerConfig.getTokenUri(), providerTenantId == null ? null : providerTenantId.asText()));
-                settings.put("scope", providerConfig.getScope());
-            }
-        } catch (Exception e) {
-            throw new ThingsboardException(String.format("Unable to retrieve provider info: %s", e.getMessage()), ThingsboardErrorCode.GENERAL);
-        }
     }
 }

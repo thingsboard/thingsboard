@@ -2047,7 +2047,6 @@
         "maximum-rule-chains": "Maximum number of rule chains (0 - unlimited)",
         "maximum-rule-chains-required": "Maximum number of rule chains is required.",
         "maximum-rule-chains-range": "Maximum number of rule chains can't be negative",
-        "transport-tenant-msg-rate-limit": "Transport tenant messages rate limit.",
         "transport-tenant-telemetry-msg-rate-limit": "Transport tenant telemetry messages rate limit.",
         "transport-tenant-telemetry-data-points-rate-limit": "Transport tenant telemetry data points rate limit.",
         "transport-device-msg-rate-limit": "Transport device messages rate limit.",

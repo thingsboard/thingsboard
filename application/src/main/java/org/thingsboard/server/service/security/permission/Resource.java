@@ -17,7 +17,9 @@ package org.thingsboard.server.service.security.permission;
 
 import org.thingsboard.server.common.data.EntityType;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 public enum Resource {
     ADMIN_SETTINGS(),
@@ -44,25 +46,27 @@ public enum Resource {
     EDGE(EntityType.EDGE),
     RPC(EntityType.RPC),
     QUEUE(EntityType.QUEUE),
-    VERSION_CONTROL;
+    VERSION_CONTROL,
+    NOTIFICATION(EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_TEMPLATE,
+            EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE);
 
-    private final EntityType entityType;
+    private final Set<EntityType> entityTypes;
 
     Resource() {
-        this.entityType = null;
+        this.entityTypes = Collections.emptySet();
     }
 
-    Resource(EntityType entityType) {
-        this.entityType = entityType;
+    Resource(EntityType... entityTypes) {
+        this.entityTypes = Set.of(entityTypes);
     }
 
-    public Optional<EntityType> getEntityType() {
-        return Optional.ofNullable(entityType);
+    public Set<EntityType> getEntityTypes() {
+        return entityTypes;
     }
 
     public static Resource of(EntityType entityType) {
         for (Resource resource : Resource.values()) {
-            if (resource.getEntityType().orElse(null) == entityType) {
+            if (resource.getEntityTypes().contains(entityType)) {
                 return resource;
             }
         }
