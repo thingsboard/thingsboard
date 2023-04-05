@@ -47,13 +47,13 @@ public class TbAlarmCountSubCtx extends TbAbstractSubCtx<AlarmCountQuery> {
 
     @Override
     public void fetchData() {
-        result = (int) alarmService.countAlarmsByQuery(getTenantId(), query);
+        result = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query);
         sendWsMsg(new AlarmCountUpdate(cmdId, result));
     }
 
     @Override
     protected void update() {
-        int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), query);
+        int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query);
         if (newCount != result) {
             result = newCount;
             sendWsMsg(new AlarmCountUpdate(cmdId, result));

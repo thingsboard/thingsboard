@@ -95,7 +95,7 @@ public class EntityQueryController extends BaseController {
     }
 
     @ApiOperation(value = "Count Alarms by Query (countAlarmsByQuery)", notes = "Returns the number of alarms that match the query definition.")
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarmsQuery/count", method = RequestMethod.POST)
     @ResponseBody
     public long countAlarmsByQuery(@ApiParam(value = "A JSON value representing the alarm count query.")

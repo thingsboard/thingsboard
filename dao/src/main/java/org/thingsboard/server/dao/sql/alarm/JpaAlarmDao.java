@@ -299,8 +299,8 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public long countAlarmsByQuery(TenantId tenantId, AlarmCountQuery query) {
-        return alarmQueryRepository.countAlarmsByQuery(tenantId, query);
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
+        return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, query);
     }
 
     @NotNull
