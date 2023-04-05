@@ -176,7 +176,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         customersByTenantRemover.removeEntities(tenantId, tenantId);
-        countService.publishCountEntityEvictEvent(tenantId, EntityType.CUSTOMER);
     }
 
     private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
